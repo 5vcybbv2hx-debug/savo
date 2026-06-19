@@ -300,7 +300,7 @@ export default function Settings() {
                 </div>
 
                 {/* Betriebsdaten – nur für Manager/Admin */}
-                {permissions.isManager && (
+                {(permissions.isManager || permissions.isAdmin) && (
                     <div className="mt-8 space-y-6">
                         <div>
                             <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
