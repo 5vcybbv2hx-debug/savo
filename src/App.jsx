@@ -1,4 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
+import { useEffect } from 'react';
+import { applyBranding } from '@/lib/branding';
+import { base44 } from '@/api/base44Client';
 import RoleGuard from '@/components/auth/RoleGuard';
 import { PAGE_PERMISSIONS } from '@/lib/pagePermissions';
 import ConsentDialog from '@/components/legal/ConsentDialog';
@@ -40,6 +43,22 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+function BrandingLoader() {
+  useEffect(() => {
+    base44.entities.CompanyInfo.list().then(records => {
+      const company = records?.[0];
+      if (company?.branding_color) {
+        applyBranding({
+          primaryHex: company.branding_color,
+          logoUrl: company.logo_url,
+          barName: company.company_name,
+        });
+      }
+    }).catch(() => {});
+  }, []);
+  return null;
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const { needsNewConsent, saveConsent, isLoading: isConsentLoading } = useConsent();
@@ -67,6 +86,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <>
+    <BrandingLoader />
     <Routes>
       {/* Main landing page — guarded: non-dashboard roles redirect to MeinTag */}
       <Route path="/" element={

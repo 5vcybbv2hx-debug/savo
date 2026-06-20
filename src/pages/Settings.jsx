@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanyInfoEditor from '@/components/settings/CompanyInfoEditor';
 import CalendarExportTab from '@/components/settings/CalendarExportTab';
 import PrintSettingsTab from '@/components/settings/PrintSettingsTab';
+import BrandingTab from '@/components/settings/BrandingTab';
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,11 @@ const notificationTypes = [
 export default function Settings() {
      const queryClient = useQueryClient();
      const permissions = usePermissions();
+
+     const { data: company } = useQuery({
+         queryKey: ['company-info'],
+         queryFn: () => base44.entities.CompanyInfo.list().then(r => r[0] || null),
+     });
      const [activeTab, setActiveTab] = useState('appearance');
      const [theme, setTheme] = useState('system');
      const [timeFormat, setTimeFormat] = useState('24h');
@@ -193,10 +199,14 @@ export default function Settings() {
 
                  {/* Tabs */}
                  <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                     <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 bg-card border border-border h-auto p-1">
+                     <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 bg-card border border-border h-auto p-1">
                          <TabsTrigger value="appearance" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
                              <SettingsIcon className="w-5 h-5 sm:w-4 sm:h-4" />
                              <span>Allgemein</span>
+                         </TabsTrigger>
+                         <TabsTrigger value="branding" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
+                             <Palette className="w-5 h-5 sm:w-4 sm:h-4" />
+                             <span>Branding</span>
                          </TabsTrigger>
                          <TabsTrigger value="calendar" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
                              <Calendar className="w-5 h-5 sm:w-4 sm:h-4" />
@@ -454,6 +464,21 @@ export default function Settings() {
                         </div>
                     </Card>
                      </div>
+                     </TabsContent>
+
+                     {/* Branding Tab */}
+                     <TabsContent value="branding" className="space-y-6">
+                         <BrandingTab
+                             company={company}
+                             onSave={async (data) => {
+                                 if (company?.id) {
+                                     await base44.entities.CompanyInfo.update(company.id, data);
+                                 } else {
+                                     await base44.entities.CompanyInfo.create(data);
+                                 }
+                                 queryClient.invalidateQueries({ queryKey: ['company-info'] });
+                             }}
+                         />
                      </TabsContent>
 
                      {/* Calendar Tab */}

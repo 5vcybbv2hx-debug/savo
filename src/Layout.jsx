@@ -47,6 +47,7 @@ export default function Layout({ children, currentPageName }) {
     const [scannerOpen, setScannerOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [currentUser, setCurrentUser] = React.useState(null);
+    const [company, setCompany] = React.useState(null);
     const [mobileNavPages, setMobileNavPages] = React.useState([]);
     // Optimistic active tab — sofortiges Highlighting beim Tap (vor URL-Wechsel)
     const [optimisticTab, setOptimisticTab] = React.useState(null);
@@ -108,6 +109,10 @@ export default function Layout({ children, currentPageName }) {
 
     // ── Effects ──────────────────────────────────────────────────────────────
     React.useEffect(() => {
+        base44.entities.CompanyInfo.list().then(records => {
+            if (records?.[0]) setCompany(records[0]);
+        }).catch(() => {});
+
         base44.auth.me().then(user => {
             setCurrentUser(user);
             if (user?.email) {
@@ -265,7 +270,10 @@ export default function Layout({ children, currentPageName }) {
                             <Link to={createPageUrl('Dashboard')} className={`flex items-center gap-3 group transition-all ${sidebarCollapsed ? 'justify-center w-full' : ''}`}>
                                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shrink-0"
                                     style={{ background: 'linear-gradient(135deg, var(--brand-from), var(--brand-via))', boxShadow: '0 4px 20px color-mix(in srgb, var(--brand-from) 30%, transparent)' }}>
-                                    <span className="font-bold text-lg" style={{ color: 'var(--brand-fg)' }}>B</span>
+                                    {currentUser && company?.logo_url
+                                        ? <img src={company.logo_url} alt="Logo" className="w-8 h-8 object-contain rounded" />
+                                        : <span className="font-bold text-lg" style={{ color: 'var(--brand-fg)' }}>{company?.company_name?.[0] || 'B'}</span>
+                                    }
                                 </div>
                                 {!sidebarCollapsed && <span className="text-lg font-bold text-foreground tracking-tight">BarManager</span>}
                             </Link>
