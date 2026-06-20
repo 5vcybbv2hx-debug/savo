@@ -600,25 +600,46 @@ export default function ShiftSwaps() {
                                                     </div>
 
                                                     <div className="flex lg:flex-col gap-2">
-                                                   <Button
-                                                       variant="outline"
-                                                       onClick={() => handleReject(request)}
-                                                       className="flex-1 lg:flex-none border-red-500/30 text-red-400 hover:bg-red-500/10"
-                                                   >
-                                                       <X className="w-4 h-4 mr-2" />
-                                                       Ablehnen
-                                                   </Button>
-                                                   {/* For non-marketplace requests with a target employee */}
-                                                   {!request.marketplace && request.target_employee_id && (
-                                                       <Button
-                                                           onClick={() => handleApprove(request)}
-                                                           className="flex-1 lg:flex-none bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
-                                                       >
-                                                           <Check className="w-4 h-4 mr-2" />
-                                                           Genehmigen
-                                                       </Button>
-                                                   )}
-                                                </div>
+                                                    <Button
+                                                      variant="outline"
+                                                      onClick={() => handleReject(request)}
+                                                      className="flex-1 lg:flex-none border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                                    >
+                                                      <X className="w-4 h-4 mr-2" />
+                                                      Ablehnen
+                                                    </Button>
+                                                    {/* Non-marketplace: Genehmigen wenn Ziel-Mitarbeiter gesetzt */}
+                                                    {!request.marketplace && request.target_employee_id && (
+                                                      <Button
+                                                          onClick={() => handleApprove(request)}
+                                                          className="flex-1 lg:flex-none bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                                                      >
+                                                          <Check className="w-4 h-4 mr-2" />
+                                                          Genehmigen
+                                                      </Button>
+                                                    )}
+                                                    {/* Manager kann Schicht selbst übernehmen */}
+                                                    {currentEmployee && (
+                                                      <Button
+                                                          variant="outline"
+                                                          onClick={() => {
+                                                              if (confirm(`Schicht selbst übernehmen? Du (${currentEmployee.name}) wirst als neuer Mitarbeiter eingetragen.`)) {
+                                                                  approveMutation.mutate({
+                                                                      requestId: request.id,
+                                                                      shiftId: request.shift_id,
+                                                                      newEmployeeId: currentEmployee.id,
+                                                                      newEmployeeName: currentEmployee.name,
+                                                                      request
+                                                                  });
+                                                              }
+                                                          }}
+                                                          className="flex-1 lg:flex-none border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                                                      >
+                                                          <User className="w-4 h-4 mr-2" />
+                                                          Selbst übernehmen
+                                                      </Button>
+                                                    )}
+                                                    </div>
                                             </div>
                                         </Card>
                                     ))}
