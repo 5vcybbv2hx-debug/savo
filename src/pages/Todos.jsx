@@ -41,7 +41,7 @@ const PRIORITY_FILTERS = [
     { value: 'dringend', label: 'Dringend', dot: 'bg-red-500' },
     { value: 'hoch',     label: 'Hoch',     dot: 'bg-orange-500' },
     { value: 'mittel',   label: 'Mittel',   dot: 'bg-blue-500' },
-    { value: 'niedrig',  label: 'Niedrig',  dot: 'bg-slate-400' },
+    { value: 'niedrig',  label: 'Niedrig',  dot: 'bg-muted-foreground' },
 ];
 
 export default function Todos() {

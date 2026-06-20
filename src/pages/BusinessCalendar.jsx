@@ -33,12 +33,12 @@ export const DAY_TYPES = [
     { id: 'eventtag',                  label: 'Eventtag',             emoji: '🎵', color: 'bg-purple-600',     textColor: 'text-purple-300',     dot: 'bg-purple-400',         short: 'Event'     },
     { id: 'lange_nacht',               label: 'Lange Nacht',          emoji: '🌙', color: 'bg-indigo-600',     textColor: 'text-indigo-300',     dot: 'bg-indigo-400',         short: 'Nacht'     },
     { id: 'inventurtag',               label: 'Inventurtag',          emoji: '📦', color: 'bg-cyan-600',       textColor: 'text-cyan-300',       dot: 'bg-cyan-400',           short: 'Invent.'   },
-    { id: 'geschlossen',               label: 'Geschlossen',          emoji: '🔒', color: 'bg-zinc-700',       textColor: 'text-muted-foreground', dot: 'bg-zinc-500',         short: 'Geschl.'   },
+    { id: 'geschlossen',               label: 'Geschlossen',          emoji: '🔒', color: 'bg-muted',         textColor: 'text-muted-foreground', dot: 'bg-muted-foreground', short: 'Geschl.'   },
     { id: 'geschlossen_mit_reinigung', label: 'Geschl. + Reinigung',  emoji: '🧹', color: 'bg-teal-700',       textColor: 'text-teal-300',       dot: 'bg-teal-400',           short: 'Reinig.'   },
     { id: 'saisonstart',               label: 'Saisonstart',          emoji: '🌿', color: 'bg-green-600',      textColor: 'text-green-300',      dot: 'bg-green-400',          short: 'Saison↑'   },
     { id: 'saisonende',                label: 'Saisonende',           emoji: '🍂', color: 'bg-yellow-700',     textColor: 'text-yellow-300',     dot: 'bg-yellow-400',         short: 'Saison↓'   },
     { id: 'betriebsferien',            label: 'Betriebsferien',       emoji: '🏖️', color: 'bg-pink-700',       textColor: 'text-pink-300',       dot: 'bg-pink-400',           short: 'Ferien'    },
-    { id: 'wartungstag',               label: 'Wartungstag',          emoji: '🔧', color: 'bg-slate-600',      textColor: 'text-foreground/70',  dot: 'bg-slate-400',          short: 'Wartung'   },
+    { id: 'wartungstag',               label: 'Wartungstag',          emoji: '🔧', color: 'bg-muted',         textColor: 'text-foreground/70',  dot: 'bg-muted-foreground',   short: 'Wartung'   },
 ];
 
 export function getDayTypeConfig(id) {
@@ -108,10 +108,10 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                 {/* Header — Datum + Schnell-Aktionen */}
                 <div className={cn('px-4 pt-4 pb-3 border-b border-border flex items-center justify-between', cfg.color)}>
                     <div>
-                        <p className="text-xs font-medium text-white/70">
+                        <p className="text-xs font-medium text-foreground/70">
                             {day ? format(day, "EEEE", { locale: de }) : ''}
                         </p>
-                        <p className="text-lg font-bold text-white">
+                        <p className="text-lg font-bold text-foreground">
                             {day ? format(day, "d. MMMM yyyy", { locale: de }) : ''}
                         </p>
                     </div>
@@ -127,13 +127,13 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                             ) : (
                                 <button
                                     onClick={() => setConfirmDelete(true)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 text-white"
+                                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-foreground/10 hover:bg-foreground/20 text-foreground"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             )
                         )}
-                        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/20 hover:bg-white/30 text-white">
+                        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-foreground/10 hover:bg-foreground/20 text-foreground">
                             <X className="w-4 h-4" />
                         </button>
                     </div>
@@ -155,7 +155,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                     )}
 
                     {!canEdit && existing && (
-                        <div className={cn('px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2', cfg.color, 'text-white')}>
+                        <div className={cn('px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2', cfg.color, 'text-foreground')}>
                             <Info className="w-4 h-4" />
                             {cfg.label}{existing.title && ` — ${existing.title}`}
                         </div>
@@ -344,7 +344,7 @@ function MonthCalendar({ currentMonth, specialDays, onDayClick, openingHours }) 
                             </span>
                             {/* Inline-Label */}
                             {shortLabel && (
-                                <span className="text-[8px] leading-tight text-white/80 px-0.5 text-center truncate w-full">
+                                <span className="text-[8px] leading-tight text-foreground/80 px-0.5 text-center truncate w-full">
                                     {shortLabel}
                                 </span>
                             )}
@@ -425,8 +425,8 @@ function UpcomingList({ specialDays, onDayClick }) {
                     <button key={d.id} onClick={() => onDayClick(date, d)}
                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-amber-500/40 transition-all text-left active:scale-[0.98]">
                         <div className={cn('w-11 h-11 rounded-xl flex flex-col items-center justify-center shrink-0', cfg.color)}>
-                            <span className="text-white font-bold text-sm leading-none">{format(date, 'd')}</span>
-                            <span className="text-white/70 text-[9px]">{format(date, 'MMM', { locale: de })}</span>
+                            <span className="text-foreground font-bold text-sm leading-none">{format(date, 'd')}</span>
+                            <span className="text-foreground/70 text-[9px]">{format(date, 'MMM', { locale: de })}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">

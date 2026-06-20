@@ -89,6 +89,7 @@ function NextShiftHero({ shifts }) {
                 <div className={cn(
                     'w-14 h-14 rounded-2xl flex flex-col items-center justify-center shrink-0',
                     isToday ? 'bg-amber-500 text-slate-900' : 'bg-secondary text-foreground'
+
                 )}>
                     <span className="text-[10px] font-semibold">{format(shiftDate, 'MMM', { locale: de })}</span>
                     <span className="text-2xl font-bold leading-none">{format(shiftDate, 'd')}</span>
@@ -109,6 +110,7 @@ function ShiftRow({ shift, highlight = false }) {
             <div className={cn(
                 'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
                 highlight ? 'bg-amber-500 text-slate-900' : 'bg-secondary text-muted-foreground'
+
             )}>
                 <Clock className="w-3.5 h-3.5" />
             </div>
@@ -342,9 +344,10 @@ function MonthTab({ shifts }) {
                                         isToday ? 'bg-amber-500' : 'bg-secondary'
                                     )}>
                                         <span className={cn('text-[10px] font-semibold', isToday ? 'text-slate-900' : 'text-muted-foreground')}>
-                                            {format(d, 'EEE', { locale: de })}
-                                        </span>
-                                        <span className={cn('text-sm font-bold', isToday ? 'text-slate-900' : 'text-foreground')}>
+                                {format(d, 'EEE', { locale: de })}
+                            </span>
+                            <span className={cn('text-sm font-bold', isToday ? 'text-slate-900' : 'text-foreground')}>
+
                                             {format(d, 'd')}
                                         </span>
                                     </div>
@@ -448,6 +451,7 @@ function TeamTab({ myEmployeeId }) {
                                             )}>
                                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0">
                                                 <span className="text-slate-900 font-bold text-[10px]">
+
                                                     {shift.employee_name?.charAt(0)?.toUpperCase() || '?'}
                                                 </span>
                                             </div>

@@ -48,8 +48,8 @@ export default function MyProfilePage() {
 
     if (!currentUser || !myEmployee) {
         return (
-            <div className="min-h-screen bg-slate-900 p-6 flex items-center justify-center">
-                <div className="text-white">Lädt...</div>
+            <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+                <div className="text-foreground">Lädt...</div>
             </div>
         );
     }
@@ -60,54 +60,54 @@ export default function MyProfilePage() {
                 <div className="flex items-center gap-4">
                     <UserCircle className="w-12 h-12 text-amber-500" />
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Mein Profil</h1>
-                        <p className="text-slate-400">Persönliche Informationen und Einstellungen</p>
+                        <h1 className="text-3xl font-bold text-foreground">Mein Profil</h1>
+                        <p className="text-muted-foreground">Persönliche Informationen und Einstellungen</p>
                     </div>
                 </div>
 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-card/50 border-border">
                     <CardHeader>
-                        <CardTitle className="text-white">Persönliche Daten</CardTitle>
+                        <CardTitle className="text-foreground">Persönliche Daten</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <div className="text-sm text-slate-400 mb-1">Name</div>
-                                <div className="text-white font-medium">{myEmployee.name}</div>
+                                <div className="text-sm text-muted-foreground mb-1">Name</div>
+                                <div className="text-foreground font-medium">{myEmployee.name}</div>
                             </div>
 
                             <div>
-                                <div className="text-sm text-slate-400 mb-1">Position</div>
+                                <div className="text-sm text-muted-foreground mb-1">Position</div>
                                 <Badge className="bg-amber-600">{myEmployee.role}</Badge>
                             </div>
 
                             {myEmployee.email && (
                                 <div>
-                                    <div className="text-sm text-slate-400 mb-1 flex items-center gap-1">
+                                    <div className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                                         <Mail className="w-3 h-3" />
                                         E-Mail
                                     </div>
-                                    <div className="text-white">{myEmployee.email}</div>
+                                    <div className="text-foreground">{myEmployee.email}</div>
                                 </div>
                             )}
 
                             {myEmployee.phone && (
                                 <div>
-                                    <div className="text-sm text-slate-400 mb-1 flex items-center gap-1">
+                                    <div className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                                         <Phone className="w-3 h-3" />
                                         Telefon
                                     </div>
-                                    <div className="text-white">{myEmployee.phone}</div>
+                                    <div className="text-foreground">{myEmployee.phone}</div>
                                 </div>
                             )}
 
                             {myEmployee.entry_date && (
                                 <div>
-                                    <div className="text-sm text-slate-400 mb-1 flex items-center gap-1">
+                                    <div className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
                                         <Calendar className="w-3 h-3" />
                                         Eintrittsdatum
                                     </div>
-                                    <div className="text-white">
+                                    <div className="text-foreground">
                                         {new Date(myEmployee.entry_date).toLocaleDateString('de-DE')}
                                     </div>
                                 </div>
@@ -115,26 +115,26 @@ export default function MyProfilePage() {
 
                             {myEmployee.contract_type && (
                                 <div>
-                                    <div className="text-sm text-slate-400 mb-1">Vertragsart</div>
-                                    <div className="text-white">{myEmployee.contract_type}</div>
+                                    <div className="text-sm text-muted-foreground mb-1">Vertragsart</div>
+                                    <div className="text-foreground">{myEmployee.contract_type}</div>
                                 </div>
                             )}
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-slate-800/50 border-slate-700">
+                <Card className="bg-card/50 border-border">
                     <CardHeader>
-                        <CardTitle className="text-white flex items-center gap-2">
+                        <CardTitle className="text-foreground flex items-center gap-2">
                             <Shield className="w-5 h-5 text-amber-500" />
                             Sicherheit
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                        <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-border">
                             <div>
-                                <div className="font-medium text-white mb-1">Terminal-PIN</div>
-                                <div className="text-sm text-slate-400">
+                                <div className="font-medium text-foreground mb-1">Terminal-PIN</div>
+                                <div className="text-sm text-muted-foreground">
                                     {myEmployee.pin 
                                         ? 'PIN ist eingerichtet - für Zeiterfassung am Terminal' 
                                         : 'Noch keine PIN erstellt'}
@@ -171,10 +171,10 @@ export default function MyProfilePage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg border border-red-800/30">
+                        <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-red-800/30">
                             <div>
-                                <div className="font-medium text-white mb-1">Alle Daten löschen</div>
-                                <div className="text-sm text-slate-400">
+                                <div className="font-medium text-foreground mb-1">Alle Daten löschen</div>
+                                <div className="text-sm text-muted-foreground">
                                     Löscht dauerhaft Ihr Mitarbeiterprofil, alle Schichten, Zeiteinträge und zugehörige Daten
                                 </div>
                             </div>
@@ -201,13 +201,13 @@ export default function MyProfilePage() {
             )}
 
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <AlertDialogContent className="bg-slate-800 border-slate-700">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="text-white flex items-center gap-2">
+                <AlertDialogContent className="bg-card border-border">
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="text-foreground flex items-center gap-2">
                             <AlertTriangle className="w-5 h-5 text-red-500" />
                             Alle Daten unwiderruflich löschen?
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="text-slate-300">
+                        <AlertDialogDescription className="text-foreground/80">
                             Diese Aktion kann nicht rückgängig gemacht werden. Es werden gelöscht:
                             <ul className="list-disc list-inside mt-2 space-y-1">
                                 <li>Ihr Mitarbeiterprofil</li>
@@ -221,7 +221,7 @@ export default function MyProfilePage() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-slate-700 text-white hover:bg-slate-600">
+                        <AlertDialogCancel className="bg-muted text-foreground hover:bg-muted/80">
                             Abbrechen
                         </AlertDialogCancel>
                         <AlertDialogAction
