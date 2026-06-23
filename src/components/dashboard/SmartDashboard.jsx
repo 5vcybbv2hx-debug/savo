@@ -495,7 +495,6 @@ function ClockWidget({ currentEmployee }) {
         queryFn: () => base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 50),
         enabled: !!currentEmployee?.id,
         refetchInterval: 60000,
-        refetchOnWindowFocus: true,
         staleTime: 30000,
     });
 

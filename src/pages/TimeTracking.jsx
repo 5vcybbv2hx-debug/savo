@@ -68,7 +68,7 @@ export default function TimeTracking() {
         },
         enabled: !isLoadingEmployee && (permissions.isManager || !!currentEmployee?.id),
         staleTime: 2 * 60 * 1000,
-        refetchOnWindowFocus: true,
+        refetchOnWindowFocus: false,
     });
 
     const { data: allEmployees = [] } = useQuery({

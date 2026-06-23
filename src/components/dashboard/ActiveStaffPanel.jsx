@@ -44,7 +44,7 @@ export default function ActiveStaffPanel() {
   const { data: clockEntries = [], isLoading } = useQuery({
     queryKey: ['clock-entries'],
     queryFn: () => base44.entities.ClockEntry.list('-clock_in', 200),
-    refetchInterval: 60000, // auto-refresh every minute
+    refetchInterval: 120000, // auto-refresh every 2 minutes
   });
 
   const { data: employees = [] } = useQuery({

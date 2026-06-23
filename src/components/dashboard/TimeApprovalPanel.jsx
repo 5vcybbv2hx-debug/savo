@@ -104,8 +104,7 @@ export default function TimeApprovalPanel() {
   const { data: allEntries = [], isLoading } = useQuery({
     queryKey: ['time-entries-all'],
     queryFn: () => base44.entities.TimeEntry.list('-date', 300),
-    refetchInterval: 60000,
-    refetchOnWindowFocus: true,
+    refetchInterval: 120000,
     staleTime: STALE.FAST,
   });
 

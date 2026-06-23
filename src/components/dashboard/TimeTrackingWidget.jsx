@@ -58,8 +58,8 @@ export default function TimeTrackingWidget({ currentEmployee }) {
             return entries.find(e => e.status === 'clocked_in' || e.status === 'on_break') || null;
         },
         enabled: !!currentEmployee?.id,
-        refetchInterval: 60000,
-        staleTime: 30000,
+        refetchInterval: 120000,
+        staleTime: 60000,
     });
 
     const last5 = recentEntries.slice(0, 5);
