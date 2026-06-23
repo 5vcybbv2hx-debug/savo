@@ -223,7 +223,7 @@ export default function Layout({ children, currentPageName }) {
                         <h1 className="text-lg font-bold text-foreground flex-1">
                             {getPageName(currentPageName)}
                         </h1>
-                        {(permissions.isManager || permissions.isAdmin) && currentUser && (
+                        {currentUser && (
                             <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} />
                         )}
                         <button
@@ -385,7 +385,7 @@ export default function Layout({ children, currentPageName }) {
 
                         {/* Footer */}
                         <div className={`border-t border-border/50 space-y-3 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
-                            {!sidebarCollapsed && permissions.isManager && currentUser && (
+                            {!sidebarCollapsed && currentUser && (
                                 <div className="flex justify-center">
                                     <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} />
                                 </div>
