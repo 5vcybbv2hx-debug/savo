@@ -6,9 +6,59 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Settings, Save, RotateCcw } from 'lucide-react';
+import { Bell, Settings, Save, RotateCcw, Smartphone, CheckCircle2, XCircle } from 'lucide-react';
 import { CATEGORY_LABELS, DEFAULT_SETTINGS } from '@/lib/notificationUtils';
 import { cn } from "@/lib/utils";
+import { toast } from 'react-hot-toast';
+
+function PushDeviceToggle() {
+  const [status, setStatus] = React.useState(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+    return Notification.permission;
+  });
+
+  const handleEnable = async () => {
+    if (!window.OneSignal) { toast.error('Push-Service nicht verfügbar'); return; }
+    try {
+      await window.OneSignal.User.PushSubscription.optIn();
+      setStatus('granted');
+      toast.success('Push-Benachrichtigungen aktiviert ✓');
+    } catch (err) {
+      toast.error('Aktivierung fehlgeschlagen');
+    }
+  };
+
+  const handleDisable = async () => {
+    if (!window.OneSignal) return;
+    try {
+      await window.OneSignal.User.PushSubscription.optOut();
+      setStatus('denied');
+      toast.success('Push-Benachrichtigungen deaktiviert');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (status === 'unsupported') return <span className="text-xs text-muted-foreground">Nicht unterstützt</span>;
+
+  if (status === 'denied') return (
+    <div className="flex items-center gap-2">
+      <XCircle className="w-4 h-4 text-destructive" />
+      <span className="text-xs text-muted-foreground">Blockiert — in Browser-Einstellungen ändern</span>
+    </div>
+  );
+
+  if (status === 'granted') return (
+    <div className="flex items-center gap-2">
+      <CheckCircle2 className="w-4 h-4 text-primary" />
+      <Button variant="outline" size="sm" onClick={handleDisable} className="min-h-[44px]">
+        Deaktivieren
+      </Button>
+    </div>
+  );
+
+  return <Button size="sm" onClick={handleEnable} className="min-h-[44px]">Aktivieren</Button>;
+}
 
 export default function NotificationSettings() {
     const queryClient = useQueryClient();
