@@ -19,7 +19,6 @@ import BackupManager from '@/components/backup/BackupManager';
 import { usePermissions } from '@/components/auth/usePermissions';
 import CalendarExport from '@/components/calendar/CalendarExport';
 import LiveSyncInstructions from '@/components/calendar/LiveSyncInstructions';
-import PushNotificationManager from '@/components/notifications/PushNotificationManager';
 import LegalStatusPanel from '@/components/legal/LegalStatusPanel';
 import { FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -514,7 +513,6 @@ export default function Settings() {
                                         <p className="text-sm text-muted-foreground">Aktiviere Push-Benachrichtigungen für Echtzeit-Meldungen auf deinem Gerät</p>
                                     </div>
                                     <div className="flex flex-col gap-2">
-                                        <PushNotificationManager userEmail={currentUser.email} />
                                         <Button size="sm" onClick={() => {
                                             localStorage.removeItem('push_prompt_seen');
                                             window.location.reload();

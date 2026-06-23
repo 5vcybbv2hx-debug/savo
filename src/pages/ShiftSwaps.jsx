@@ -13,6 +13,7 @@ import { format, isPast, parseISO, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
+import { sendPushNotification } from '@/lib/pushService';
 import ShiftSwapRequestModal from '@/components/shifts/ShiftSwapRequestModal';
 import ShiftMarketplaceModal from '@/components/shifts/ShiftMarketplaceModal';
 import DirectSwapModal from '@/components/shifts/DirectSwapModal';
@@ -79,6 +80,11 @@ export default function ShiftSwaps() {
                         related_id: id,
                         read_by: []
                     });
+                    sendPushNotification({
+                        title: data.status === 'genehmigt' ? 'Schichttausch genehmigt ✓' : 'Schichttausch abgelehnt',
+                        message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde ${data.status === 'genehmigt' ? 'genehmigt' : 'abgelehnt'}.`,
+                        external_user_id: request.requesting_employee_id
+                    }).catch(() => {});
                 }
             } catch (error) {
                 console.error('Fehler beim Erstellen der Benachrichtigung:', error);
@@ -132,6 +138,11 @@ export default function ShiftSwaps() {
                         related_id: requestId,
                         read_by: []
                     });
+                    sendPushNotification({
+                        title: 'Schichttausch genehmigt ✓',
+                        message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt. ${newEmployeeName} übernimmt deine Schicht.`,
+                        external_user_id: request.requesting_employee_id
+                    }).catch(() => {});
                 }
                 
                 if (targetEmployee) {
@@ -142,6 +153,11 @@ export default function ShiftSwaps() {
                         related_id: requestId,
                         read_by: []
                     });
+                    sendPushNotification({
+                        title: 'Schichttausch genehmigt',
+                        message: `Du übernimmst die Schicht von ${request.requesting_employee_name} am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })}.`,
+                        external_user_id: newEmployeeId
+                    }).catch(() => {});
                 }
             } catch (error) {
                 console.error('Fehler beim Erstellen der Benachrichtigung:', error);

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
+import { sendPushNotification } from '@/lib/pushService';
 
 export default function SendNotificationModal() {
     const queryClient = useQueryClient();
@@ -40,10 +41,10 @@ export default function SendNotificationModal() {
             // Sende Push wenn aktiviert
             if (sendPush) {
                 try {
-                    await base44.functions.invoke('sendPushNotification', {
+                    await sendPushNotification({
                         title,
                         message,
-                        targetRoles
+                        target_role: targetRoles?.[0] || 'all'
                     });
                 } catch (error) {
                     console.error('Push-Fehler:', error);
