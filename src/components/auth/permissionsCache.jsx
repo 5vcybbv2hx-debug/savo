@@ -31,18 +31,11 @@ export async function loadPermissions() {
         const user = await base44.auth.me();
 
         // 2. Fetch matching employee record (by email)
-        // Normalize email to handle casing/whitespace mismatches
         const normalizedEmail = (user.email || '').toLowerCase().trim();
         const employees = await base44.entities.Employee.filter({
             email: normalizedEmail,
         });
         let employee = employees.find(e => e.is_active !== false) ?? null;
-
-        // Fallback: loose match across all active employees
-        if (!employee) {
-            const all = await base44.entities.Employee.filter({ is_active: true }, 'name', 200);
-            employee = all.find(e => (e.email || '').toLowerCase().trim() === normalizedEmail) ?? null;
-        }
 
         // 3. Build context
         const ctx = {

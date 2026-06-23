@@ -112,25 +112,43 @@ export default function Layout({ children, currentPageName }) {
 
     // ── Effects ──────────────────────────────────────────────────────────────
     React.useEffect(() => {
+        // CompanyInfo is already fetched by App.jsx BrandingLoader and cached in React Query
         base44.entities.CompanyInfo.list().then(records => {
             if (records?.[0]) setCompany(records[0]);
         }).catch(() => {});
 
-        base44.auth.me().then(user => {
-            setCurrentUser(user);
-            if (user?.email) {
-                // Build personalized nav from tracked pages
+        // User is already fetched via useQuery in Dashboard; reuse if available
+        const cachedUser = queryClient.getQueryData(['user']);
+        if (cachedUser) {
+            setCurrentUser(cachedUser);
+            if (cachedUser?.email) {
                 const updateNav = () => {
                     const allNavPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages);
                     const allowed = allNavPages.map(p => p.page);
-                    const top = getTopPages(user.email, 4, allowed);
+                    const top = getTopPages(cachedUser.email, 4, allowed);
                     if (top.length >= 2) {
                         setMobileNavPages(top.map(t => allNavPages.find(p => p.page === t.page)).filter(Boolean));
                     }
                 };
                 updateNav();
             }
-        }).catch(() => {});
+        } else {
+            base44.auth.me().then(user => {
+                setCurrentUser(user);
+                queryClient.setQueryData(['user'], user);
+                if (user?.email) {
+                    const updateNav = () => {
+                        const allNavPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages);
+                        const allowed = allNavPages.map(p => p.page);
+                        const top = getTopPages(user.email, 4, allowed);
+                        if (top.length >= 2) {
+                            setMobileNavPages(top.map(t => allNavPages.find(p => p.page === t.page)).filter(Boolean));
+                        }
+                    };
+                    updateNav();
+                }
+            }).catch(() => {});
+        }
 
         const handleKeyDown = (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -140,7 +158,7 @@ export default function Layout({ children, currentPageName }) {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+    }, [queryClient]);
 
     React.useEffect(() => { loadSavedColors(); }, []);
 

@@ -45,7 +45,13 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
 
 function BrandingLoader() {
   useEffect(() => {
+    const cached = queryClientInstance.getQueryData(['company-info']);
+    if (cached?.[0]?.branding_color) {
+      applyBranding({ primaryHex: cached[0].branding_color, logoUrl: cached[0].logo_url, barName: cached[0].company_name });
+      return;
+    }
     base44.entities.CompanyInfo.list().then(records => {
+      queryClientInstance.setQueryData(['company-info'], records);
       const company = records?.[0];
       if (company?.branding_color) {
         applyBranding({

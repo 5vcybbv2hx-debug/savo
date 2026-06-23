@@ -25,7 +25,7 @@ export function useCurrentEmployee() {
             const all = await base44.entities.Employee.filter({ is_active: true }, 'name', 200);
             return all.find(e => (e.email || '').toLowerCase().trim() === normalizedEmail) || null;
         },
-        staleTime: STALE.MEDIUM,
-        retry: 2,
+        staleTime: STALE.SLOW,
+        retry: 1,
     });
 }
