@@ -39,7 +39,8 @@ export default function NotificationBell({ userEmail, userRole = 'user' }) {
     const { data: allNotifications = [] } = useQuery({
         queryKey: ['notifications'],
         queryFn: () => base44.entities.Notification.list('-created_date', 100),
-        refetchInterval: 30000
+        refetchInterval: open ? 30000 : false,
+        staleTime: 60000,
     });
 
     const { data: userSettings } = useQuery({
