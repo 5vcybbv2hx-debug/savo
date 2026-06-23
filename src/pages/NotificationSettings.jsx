@@ -164,6 +164,22 @@ export default function NotificationSettings() {
                 {/* Main Content */}
                 {localSettings && (
                     <div className="space-y-6">
+                        {/* Push auf diesem Gerät */}
+                        <Card className="p-5 mb-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Smartphone className="w-5 h-5 text-primary" />
+                              <div>
+                                <p className="font-semibold text-foreground">Push auf diesem Gerät</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Benachrichtigungen auch wenn die App geschlossen ist
+                                </p>
+                              </div>
+                            </div>
+                            <PushDeviceToggle />
+                          </div>
+                        </Card>
+
                         {/* Kategorien Sektion */}
                         <Card className="p-6 border-border">
                             <div className="mb-4">
