@@ -560,8 +560,8 @@ export default function MeinTag() {
     const { data: clockEntries = [] } = useQuery({
         queryKey: ['meinTag-clock'],
         queryFn: () => base44.entities.ClockEntry.list('-clock_in', 100),
-        refetchInterval: 30000,
-        staleTime: 0,
+        refetchInterval: 60000,
+        staleTime: 30000,
     });
 
     const { data: shifts = [] } = useQuery({

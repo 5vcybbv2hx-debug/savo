@@ -45,8 +45,8 @@ export default function MyTimeWidget() {
         queryKey: ['clock-entries-widget', currentEmployee?.id],
         queryFn: () => base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 20),
         enabled: !!currentEmployee?.id,
-        refetchInterval: 30000,
-        staleTime: 0,
+        refetchInterval: 60000,
+        staleTime: 30000,
     });
 
     const activeEntry = clockEntries.find(e => e.status === 'clocked_in' || e.status === 'on_break');

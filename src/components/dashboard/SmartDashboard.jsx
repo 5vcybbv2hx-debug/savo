@@ -494,9 +494,9 @@ function ClockWidget({ currentEmployee }) {
         queryKey: ['clock-entries', currentEmployee?.id],
         queryFn: () => base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 50),
         enabled: !!currentEmployee?.id,
-        refetchInterval: 30000,
+        refetchInterval: 60000,
         refetchOnWindowFocus: true,
-        staleTime: 0,
+        staleTime: 30000,
     });
 
     // Night-safe: find active entry by status, not by date

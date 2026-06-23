@@ -236,7 +236,7 @@ export default function TeamNotes({ isManager, currentUser, compact = false }) {
     const { data: notes = [] } = useQuery({
         queryKey: ['team-notes'],
         queryFn: () => base44.entities.TeamNote.list('-created_date', 100),
-        refetchInterval: 30000
+        refetchInterval: 60000
     });
 
     useEffect(() => {

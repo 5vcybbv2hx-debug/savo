@@ -26,7 +26,7 @@ export default function PendingSwapRequestsCard({ currentEmployee }) {
             50
         ),
         enabled: !!currentEmployee?.id,
-        refetchInterval: 30000,
+        refetchInterval: 60000,
     });
 
     // Nur offene/ausstehende direkte Anfragen an mich

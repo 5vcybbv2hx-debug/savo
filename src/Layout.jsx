@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { haptics } from '@/components/utils/haptics';
 import { ArrowLeft, LogOut, Search, ScanLine, Settings, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import BarcodeScanner from '@/components/restock/BarcodeScanner';
@@ -15,7 +15,7 @@ import { useTabNavigation } from '@/hooks/useTabNavigation';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useSwapInboxCount } from '@/components/shifts/ShiftSwapInboxCard';
 import { cn } from "@/lib/utils";
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
 import OfflineIndicator from '@/components/pwa/OfflineIndicator';
@@ -63,14 +63,17 @@ export default function Layout({ children, currentPageName }) {
     const swapInboxCount = useSwapInboxCount(
         permissions.employeeId ? { id: permissions.employeeId } : null
     );
-    // Badge-Counter für Mehr-Button (ungelesene Notifications)
-    const [unreadNotifCount, setUnreadNotifCount] = React.useState(0);
-    React.useEffect(() => {
-        if (!currentUser?.email) return;
-        base44.entities.Notification.filter({ recipient_email: currentUser.email, is_read: false }, '-created_date', 10)
-            .then(r => setUnreadNotifCount(r?.length || 0))
-            .catch(() => {});
-    }, [currentUser?.email]);
+    // Badge-Counter für Mehr-Button (ungelesene Notifications) — teilt Query mit NotificationBell
+    const { data: notifData = [] } = useQuery({
+        queryKey: ['notifications'],
+        queryFn: () => base44.entities.Notification.list('-created_date', 100),
+        enabled: !!currentUser?.email,
+        staleTime: 60000,
+    });
+    const unreadNotifCount = React.useMemo(() => {
+        if (!currentUser?.email) return 0;
+        return notifData.filter(n => !n.read_by?.includes(currentUser.email)).length;
+    }, [notifData, currentUser?.email]);
 
     // OneSignal: mit Employee-ID initialisieren sobald eingeloggt
     useOneSignal({
