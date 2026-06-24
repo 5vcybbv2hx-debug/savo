@@ -6,6 +6,11 @@ import { STALE } from '@/lib/queryUtils';
 import { format } from 'date-fns';
 import { Trash2, Camera, Plus, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
@@ -46,13 +51,15 @@ export default function Wastage() {
     const [entryDate, setEntryDate]           = useState(format(new Date(), 'yyyy-MM-dd'));
     const [filterMonth, setFilterMonth]       = useState(format(new Date(), 'yyyy-MM'));
     const [filterType, setFilterType]         = useState('Alle');
+    const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
     const { data: wastageItems = [] } = useQuery({
-        queryKey: ['wastage-items'],
+        queryKey: ['wastage-items', filterMonth],
         queryFn: async () => {
-            const items = await base44.entities.Wastage.list();
-            return items.sort((a, b) => (b.created_date || '').localeCompare(a.created_date || '')).slice(0, 200);
+            const items = await base44.entities.Wastage.filter({ date: filterMonth }, '-created_date', 300);
+            return items;
         },
+        staleTime: STALE.MEDIUM,
     });
 
     const { data: articles = [] } = useQuery({
@@ -139,7 +146,7 @@ export default function Wastage() {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Eintrag löschen?')) deleteMutation.mutate(id);
+        setDeleteConfirmId(id);
     };
 
     // Filtered by month only (type filter applied separately in list)
@@ -470,6 +477,26 @@ export default function Wastage() {
                     onScan={handleScan}
                 />
             </div>
+        </div>
+            {/* Delete Confirm Dialog */}
+            <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Eintrag löschen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Dieser Schwundeintrag wird dauerhaft gelöscht.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => { deleteMutation.mutate(deleteConfirmId); setDeleteConfirmId(null); }}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                            Löschen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
