@@ -87,6 +87,7 @@ import Storage from './pages/Storage';
 import StorageLocationScan from './pages/StorageLocationScan';
 import Warehouse from './pages/Warehouse';
 import Wastage from './pages/Wastage';
+import Inventory from './pages/Inventory';
 import BusinessCard from './pages/BusinessCard';
 import WeeklyTasks from './pages/WeeklyTasks';
 import WorldCupSchedule from './pages/WorldCupSchedule';
@@ -145,6 +146,7 @@ const CORE_PAGES = {
     "Storage": Storage,
     "Warehouse": Warehouse,
     "Wastage": Wastage,
+    "Inventory": Inventory,
     "BusinessCard": BusinessCard,
     "WeeklyTasks": WeeklyTasks,
     "WorldCupSchedule": WorldCupSchedule,
