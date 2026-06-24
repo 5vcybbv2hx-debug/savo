@@ -4,11 +4,11 @@
   "properties": {
     "article_id": {
       "type": "string",
-      "description": "ID des verkn\u00fcpften Artikels (prim\u00e4re Verkn\u00fcpfung)"
+      "description": "ID des verknüpften Artikels (primäre Verknüpfung)"
     },
     "barcode": {
       "type": "string",
-      "description": "Barcode des Artikels (optional, f\u00fcr R\u00fcckw\u00e4rtskompatibilit\u00e4t)"
+      "description": "Barcode des Artikels (optional, für Rückwärtskompatibilität)"
     },
     "article_name": {
       "type": "string",
@@ -20,11 +20,19 @@
     },
     "quantity": {
       "type": "number",
-      "description": "Aufgef\u00fcllte Menge"
+      "description": "Aufgefüllte Menge"
+    },
+    "area_id": {
+      "type": "string",
+      "description": "ID des Bereichs (Area Entity) — z.B. Theke Nichtraucher"
+    },
+    "area_name": {
+      "type": "string",
+      "description": "Name des Bereichs (denormalisiert für schnellen Zugriff)"
     },
     "restocked_by": {
       "type": "string",
-      "description": "Aufgef\u00fcllt von"
+      "description": "Aufgefüllt von"
     },
     "date": {
       "type": "string",
@@ -38,11 +46,8 @@
     "is_completed": {
       "type": "boolean",
       "default": false,
-      "description": "Wurde aufgef\u00fcllt"
+      "description": "Wurde aufgefüllt"
     }
   },
-  "required": [
-    "article_name",
-    "quantity"
-  ]
+  "required": ["article_name", "quantity"]
 }
