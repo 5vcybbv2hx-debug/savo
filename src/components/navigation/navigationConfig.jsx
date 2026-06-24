@@ -39,19 +39,20 @@ export const mainNavigation = [
             { name: 'Wochenaufgaben',      page: 'WeeklyTasks',     icon: ListChecks,   permission: 'canViewTodos'        },
             { name: 'Putzliste',          page: 'Cleaning',        icon: Brush,        permission: 'canViewCleaning'     },
             { name: 'Auffüllliste',       page: 'Restock',         icon: RefreshCw,    permission: 'canViewRestock'      },
-            { name: 'Einkaufsliste',      page: 'Shopping',        icon: ShoppingCart, permission: 'canViewShopping'     },
             { name: 'Events',             page: 'Events',          icon: Star,         permission: 'canViewEvents'       },
         ]
     },
     {
-        id: 'lager',
-        name: 'Lager',
+        id: 'waren',
+        name: 'Waren & Lager',
         icon: Package,
         pages: [
-            { name: 'Bestand',      page: 'Warehouse', icon: Package,       permission: 'canViewWarehouse' },
-            { name: 'Schwund',      page: 'Wastage',   icon: Trash2,        permission: 'canViewWastage'   },
-            { name: 'Lieferanten',  page: 'Suppliers', icon: Package,       permission: 'canViewSuppliers' },
-            { name: 'Lagerplätze',  page: 'Storage',   icon: Package,       permission: 'canViewWarehouse' },
+            { name: 'Artikeldatenbank', page: 'Articles',  icon: Package,      permission: 'canViewWarehouse' },
+            { name: 'Auffüllliste',     page: 'Restock',   icon: RefreshCw,    permission: 'canViewRestock'   },
+            { name: 'Lagerplätze',      page: 'Storage',   icon: Layers,       permission: 'canViewWarehouse' },
+            { name: 'Lieferanten',      page: 'Suppliers', icon: Building2,    permission: 'canViewSuppliers' },
+            { name: 'Schwund',          page: 'Wastage',   icon: Trash2,       permission: 'canViewWastage'   },
+            { name: 'Bestellungen',     page: 'Shopping',   icon: ShoppingCart, permission: 'canViewShopping'  },
         ]
     },
     {
