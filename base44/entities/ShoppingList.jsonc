@@ -12,34 +12,46 @@
     },
     "category": {
       "type": "string",
-      "description": "Lieferant/Gro\u00dfh\u00e4ndler"
+      "description": "Lieferant/Großhändler"
     },
     "quantity": {
       "type": "number",
-      "description": "Menge"
+      "description": "Bestellte Menge"
+    },
+    "delivered_quantity": {
+      "type": "number",
+      "description": "Tatsächlich gelieferte Menge (beim Wareneingang eingetragen)"
     },
     "unit": {
       "type": "string",
-      "description": "Einheit (z.B. St\u00fcck, Liter, kg)"
+      "description": "Einheit (z.B. Stück, Liter, kg)"
     },
     "status": {
       "type": "string",
-      "enum": [
-        "offen",
-        "bestellt",
-        "erhalten"
-      ],
+      "enum": ["offen", "bestellt", "erhalten", "abgeschlossen"],
       "default": "offen",
-      "description": "Status"
+      "description": "Status: offen → bestellt → erhalten → abgeschlossen"
+    },
+    "ordered_at": {
+      "type": "string",
+      "description": "Zeitpunkt der Bestellaufgabe (ISO)"
+    },
+    "received_at": {
+      "type": "string",
+      "description": "Zeitpunkt des Wareneingangs (ISO)"
+    },
+    "delivery_note": {
+      "type": "string",
+      "description": "Notiz bei Wareneingang (Differenz, Schäden etc.)"
     },
     "notes": {
       "type": "string",
-      "description": "Notizen"
+      "description": "Allgemeine Notizen"
+    },
+    "order_batch_id": {
+      "type": "string",
+      "description": "Gruppen-ID für zusammengehörige Bestellungen (gleicher Lieferant, gleicher Tag)"
     }
   },
-  "required": [
-    "item_name",
-    "category",
-    "quantity"
-  ]
+  "required": ["item_name", "category", "quantity"]
 }
