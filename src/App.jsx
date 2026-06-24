@@ -170,7 +170,6 @@ const AuthenticatedApp = () => {
 
       {/* Redirect /Shifts → /Calendar (Calendar ist jetzt der vollständige Schichtplan) */}
       <Route path="/Shifts" element={<Navigate to="/Calendar" replace />} />
-      <Route path="/Inventory" element={<Navigate to="/Articles" replace />} />
 
 
       {/* Redirect old SeatingChart route to GuestHub */}
