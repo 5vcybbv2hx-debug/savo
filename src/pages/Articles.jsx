@@ -1,10 +1,9 @@
 /**
- * Articles — Artikelverwaltung + integrierter Inventur-Modus
- * - Keine eigene Inventory.jsx mehr nötig
+ * Articles — Artikeldatenbank
  * - Artikel deaktivieren statt löschen
  * - Edit via ArticleModal (kein Seitenwechsel)
  * - Kategorie-Chips horizontal scrollbar
- * - Inventur-Modus per Chip oben
+ * - Niedrigbestand-Alert
  */
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
@@ -12,8 +11,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import {
     Plus, Search, Camera, Package, AlertTriangle,
-    ClipboardCheck, Save, RotateCcw, MoreVertical,
-    EyeOff, Eye, ChevronDown, Minus, Check
+    MoreVertical,
+    EyeOff, Eye, ChevronDown
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,13 +40,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
-// ── Modus ─────────────────────────────────────────────────────────────────────
-const MODES = [
-    { key: 'artikel',  label: '📦 Artikel'  },
-    { key: 'inventur', label: '📋 Inventur' },
-];
-
-// ── Artikel-Zeile (Artikel-Modus) ─────────────────────────────────────────────
+// ── Artikel-Zeile ─────────────────────────────────────────────────────────────
 function ArticleRow({ article, isLowStock, onEdit, onToggleActive, isManager }) {
     const stock    = article.current_stock ?? 0;
     const minStock = article.min_stock ?? 0;
@@ -131,69 +124,6 @@ function ArticleRow({ article, isLowStock, onEdit, onToggleActive, isManager }) 
     );
 }
 
-// ── Inventur-Zeile ────────────────────────────────────────────────────────────
-function InventoryRow({ article, count, onChange }) {
-    const stock   = article.current_stock ?? 0;
-    const counted = count ?? null;
-    const diff    = counted !== null ? counted - stock : null;
-
-    return (
-        <div className={cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all',
-            counted !== null
-                ? 'bg-card border-amber-500/30'
-                : 'bg-card border-border/40'
-        )}>
-            {/* Bild */}
-            <div className="w-9 h-9 rounded-lg overflow-hidden bg-secondary/50 shrink-0">
-                {article.image_url ? (
-                    <LazyImage src={article.image_url} alt={article.name}
-                        className="w-full h-full object-cover" />
-                ) : (
-                    <Package className="w-4 h-4 text-muted-foreground/40 m-auto" />
-                )}
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{article.name}</p>
-                <p className="text-xs text-muted-foreground">
-                    System: {stock}
-                    {counted !== null && diff !== 0 && (
-                        <span className={diff > 0 ? 'text-green-400' : 'text-red-400'}>
-                            {' '}({diff > 0 ? '+' : ''}{diff})
-                        </span>
-                    )}
-                    {counted !== null && diff === 0 && (
-                        <span className="text-green-400"> ✓</span>
-                    )}
-                </p>
-            </div>
-
-            {/* Zähler */}
-            <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                    onClick={() => onChange(article.id, Math.max(0, (count ?? stock) - 1))}
-                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all active:scale-95">
-                    <Minus className="w-3.5 h-3.5" />
-                </button>
-                <input
-                    type="number"
-                    value={counted ?? ''}
-                    onChange={e => onChange(article.id, e.target.value === '' ? undefined : parseFloat(e.target.value))}
-                    placeholder={String(stock)}
-                    className="w-14 h-8 text-center text-sm font-semibold rounded-lg border border-border bg-background text-foreground focus:border-amber-500 focus:outline-none"
-                />
-                <button
-                    onClick={() => onChange(article.id, (count ?? stock) + 1)}
-                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all active:scale-95">
-                    <Plus className="w-3.5 h-3.5" />
-                </button>
-            </div>
-        </div>
-    );
-}
-
 // ── Haupt-Komponente ──────────────────────────────────────────────────────────
 export default function Articles() {
     const queryClient = useQueryClient();
@@ -206,7 +136,6 @@ export default function Articles() {
     }, []);
 
     // ── State ─────────────────────────────────────────────────────────────────
-    const [mode,            setMode]           = useState('artikel');
     const [searchTerm,      setSearchTerm]     = useState('');
     const [filterCategory,  setFilterCategory] = useState('all');
     const [showInactive,    setShowInactive]   = useState(false);
@@ -214,10 +143,6 @@ export default function Articles() {
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [scannerOpen,     setScannerOpen]    = useState(false);
     const [deactivateConfirm, setDeactivateConfirm] = useState(null);
-
-    // Inventur-State
-    const [counts,    setCounts]   = useState({});
-    const [saveInvConfirm, setSaveInvConfirm] = useState(false);
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: articles = [] } = useQuery({
@@ -229,12 +154,6 @@ export default function Articles() {
     const { data: categories = [] } = useQuery({
         queryKey: ['article-categories'],
         queryFn: () => base44.entities.ArticleCategory.list('order'),
-        staleTime: STALE.SLOW,
-    });
-
-    const { data: currentUser } = useQuery({
-        queryKey: ['user'],
-        queryFn: () => base44.auth.me(),
         staleTime: STALE.SLOW,
     });
 
@@ -279,38 +198,6 @@ export default function Articles() {
         },
     });
 
-    const saveInventoryMutation = useMutation({
-        mutationFn: async ({ counts, articles, user }) => {
-            const countsData = Object.entries(counts)
-                .filter(([, v]) => v !== undefined)
-                .map(([id, counted]) => {
-                    const a = articles.find(x => x.id === id);
-                    const sys = a?.current_stock || 0;
-                    return {
-                        article_id:    id,
-                        article_name:  a?.name,
-                        system_stock:  sys,
-                        counted_stock: counted,
-                        difference:    counted - sys,
-                    };
-                });
-            const totalDiff = countsData.reduce((s, c) => s + Math.abs(c.difference), 0);
-            return base44.entities.InventorySession.create({
-                date:             new Date().toISOString(),
-                counted_by:       user?.full_name || user?.email || 'Unbekannt',
-                counts:           countsData,
-                total_items:      countsData.length,
-                total_difference: totalDiff,
-            });
-        },
-        onSuccess: () => {
-            setCounts({});
-            toast.success('Inventur gespeichert');
-            setMode('artikel');
-        },
-        onError: err => toast.error('Fehler: ' + err.message),
-    });
-
     // ── Handlers ──────────────────────────────────────────────────────────────
     const handleAdd = () => { setSelectedArticle(null); setModalOpen(true); };
     const handleEdit = (article) => { setSelectedArticle(article); setModalOpen(true); };
@@ -349,19 +236,6 @@ export default function Articles() {
         setScannerOpen(false);
     };
 
-    const handleCountChange = (id, val) => {
-        setCounts(prev => {
-            if (val === undefined) {
-                const next = { ...prev };
-                delete next[id];
-                return next;
-            }
-            return { ...prev, [id]: parseFloat(val) || 0 };
-        });
-    };
-
-    const countedCount = Object.keys(counts).length;
-
     // ── Derived ───────────────────────────────────────────────────────────────
     const activeArticles = useMemo(() =>
         articles.filter(a => showInactive || a.is_active !== false),
@@ -379,15 +253,16 @@ export default function Articles() {
             const matchSearch = !q ||
                 a.name?.toLowerCase().includes(q) ||
                 a.barcode?.includes(q);
-            const matchCat = filterCategory === 'all' || a.category === filterCategory;
-            return matchSearch && matchCat;
+            const matchCat = filterCategory === 'all' || filterCategory === '__low_stock__' || a.category === filterCategory;
+            const matchLowStock = filterCategory !== '__low_stock__' || (a.min_stock > 0 && (a.current_stock ?? 0) < a.min_stock);
+            return matchSearch && matchCat && matchLowStock;
         });
     }, [activeArticles, searchTerm, filterCategory]);
 
     const groupedArticles = useMemo(() => {
         const catNames = categories.map(c => c.name);
         const groups = categories
-            .filter(cat => filterCategory === 'all' || cat.name === filterCategory)
+            .filter(cat => filterCategory === 'all' || filterCategory === '__low_stock__' || cat.name === filterCategory)
             .map(cat => ({
                 cat,
                 items: filteredArticles.filter(a => a.category === cat.name),
@@ -418,13 +293,10 @@ export default function Articles() {
                     <div>
                         <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                             <Package className="w-5 h-5 text-amber-500" />
-                            Artikel
+                            Artikeldatenbank
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            {articles.filter(a => a.is_active !== false).length} aktiv
-                            {lowStockArticles.length > 0 && (
-                                <span className="text-orange-400"> · {lowStockArticles.length} Nachbestellen</span>
-                            )}
+                            Alle Artikel mit Preisen, Lieferanten und Beständen
                         </p>
                     </div>
 
@@ -488,40 +360,6 @@ export default function Articles() {
                     </div>
                 </div>
 
-                {/* ── Modus-Chips ───────────────────────────────────────── */}
-                <div className="flex gap-1.5">
-                    {MODES.map(m => (
-                        <button key={m.key} onClick={() => setMode(m.key)}
-                            className={cn(
-                                'px-4 py-1.5 rounded-full text-sm font-semibold border transition-all',
-                                mode === m.key
-                                    ? 'bg-amber-500 border-amber-500 text-white'
-                                    : 'border-border text-muted-foreground hover:text-foreground bg-card'
-                            )}>
-                            {m.label}
-                        </button>
-                    ))}
-                    {/* Inventur: Fortschritt + Speichern */}
-                    {mode === 'inventur' && countedCount > 0 && (
-                        <div className="flex items-center gap-2 ml-auto">
-                            <span className="text-xs text-muted-foreground">
-                                {countedCount} / {filteredArticles.length} gezählt
-                            </span>
-                            <Button size="sm" variant="outline"
-                                onClick={() => { setCounts({}); }}
-                                className="h-7 px-2 text-xs text-muted-foreground">
-                                <RotateCcw className="w-3 h-3" />
-                            </Button>
-                            <Button size="sm"
-                                onClick={() => setSaveInvConfirm(true)}
-                                className="h-7 px-3 text-xs bg-green-600 hover:bg-green-700 text-white">
-                                <Save className="w-3 h-3 mr-1" />
-                                Speichern
-                            </Button>
-                        </div>
-                    )}
-                </div>
-
                 {/* ── Suche ─────────────────────────────────────────────── */}
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -548,35 +386,23 @@ export default function Articles() {
                     ))}
                 </div>
 
-                {/* ── Low-Stock Banner ──────────────────────────────────── */}
-                {lowStockArticles.length > 0 && mode === 'artikel' && (
+                {/* ── Low-Stock Alert ────────────────────────────────────── */}
+                {lowStockArticles.length > 0 && (
                     <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-orange-500/25 bg-orange-500/8">
                         <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0" />
                         <p className="text-xs text-orange-400 font-medium">
-                            {lowStockArticles.length} Artikel unter Mindestbestand:
-                            {' '}{lowStockArticles.slice(0, 3).map(a => a.name).join(', ')}
-                            {lowStockArticles.length > 3 && ` +${lowStockArticles.length - 3} weitere`}
+                            {lowStockArticles.length} Artikel unter Mindestbestand
                         </p>
+                        <button
+                            onClick={() => setFilterCategory('__low_stock__')}
+                            className="ml-auto text-xs text-destructive font-semibold hover:underline"
+                        >
+                            Anzeigen
+                        </button>
                     </div>
                 )}
 
-                {/* ── Inventur: Fortschrittsbalken ──────────────────────── */}
-                {mode === 'inventur' && filteredArticles.length > 0 && (
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] text-muted-foreground">
-                            <span>Fortschritt</span>
-                            <span>{Math.round((countedCount / filteredArticles.length) * 100)}%</span>
-                        </div>
-                        <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-amber-500 rounded-full transition-all duration-300"
-                                style={{ width: `${(countedCount / filteredArticles.length) * 100}%` }}
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* ── Artikel-Liste / Inventur-Liste ────────────────────── */}
+                {/* ── Artikel-Liste ─────────────────────────────────────── */}
                 {groupedArticles.length === 0 ? (
                     <div className="text-center py-16 text-muted-foreground">
                         <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
@@ -596,23 +422,14 @@ export default function Articles() {
 
                         {/* Artikel */}
                         {items.map(article => (
-                            mode === 'inventur' ? (
-                                <InventoryRow
-                                    key={article.id}
-                                    article={article}
-                                    count={counts[article.id]}
-                                    onChange={handleCountChange}
-                                />
-                            ) : (
-                                <ArticleRow
-                                    key={article.id}
-                                    article={article}
-                                    isLowStock={lowStockIds.has(article.id)}
-                                    onEdit={handleEdit}
-                                    onToggleActive={handleToggleActive}
-                                    isManager={permissions.isManager}
-                                />
-                            )
+                            <ArticleRow
+                                key={article.id}
+                                article={article}
+                                isLowStock={lowStockIds.has(article.id)}
+                                onEdit={handleEdit}
+                                onToggleActive={handleToggleActive}
+                                isManager={permissions.isManager}
+                            />
                         ))}
                     </div>
                 ))}
@@ -652,29 +469,6 @@ export default function Articles() {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Inventur speichern */}
-            <AlertDialog open={saveInvConfirm} onOpenChange={setSaveInvConfirm}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Inventur speichern?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {countedCount} Artikel werden als InventurSession gespeichert.
-                            Die Zähldaten werden danach zurückgesetzt.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => {
-                                setSaveInvConfirm(false);
-                                saveInventoryMutation.mutate({ counts, articles, user: currentUser });
-                            }}
-                            className="bg-green-600 hover:bg-green-700 text-white">
-                            Speichern
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 }
