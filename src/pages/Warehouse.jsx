@@ -73,6 +73,15 @@ export default function Warehouse() {
         enabled: permissions.canViewShopping,
     });
 
+    // Offene Einkaufsliste
+    const { data: quickListItems = [] } = useQuery({
+        queryKey: ['quick-list-open'],
+        queryFn: () => base44.entities.QuickListItem.filter({ is_completed: false }, '-created_date', 100),
+        staleTime: STALE.SHORT,
+        enabled: permissions.canViewShopping,
+    });
+    const openQuickListCount = quickListItems.length;
+
     // Offene Auffüll-Items heute
     const today = new Date().toISOString().slice(0, 10);
     const { data: restockItems = [] } = useQuery({
@@ -98,6 +107,7 @@ export default function Warehouse() {
 
     const openOrdersCount = orders.length;
     const openRestockCount = restockItems.filter(i => !i.is_completed).length;
+
 
     return (
         <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8">
@@ -143,6 +153,16 @@ export default function Warehouse() {
                         description="Lieferanten-Bestellungen mit Live-Kosten"
                         page="Shopping"
                         badge={openOrdersCount || undefined}
+                        badgeVariant="default"
+                    />
+                )}
+                {permissions.canViewShopping && (
+                    <NavCard
+                        icon={ShoppingCart}
+                        label="Einkaufsliste"
+                        description="Schnelle Liste für alle Mitarbeiter"
+                        page="QuickList"
+                        badge={openQuickListCount || undefined}
                         badgeVariant="default"
                     />
                 )}
