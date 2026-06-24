@@ -366,7 +366,9 @@ export default function Shopping() {
 
     const orderSummary = useMemo(() => {
         const openOrderItems = items.filter(i => i.status === 'offen');
-        let totalCost = 0;
+        let totalNet = 0;
+        let totalVat7 = 0;
+        let totalVat19 = 0;
         let itemsWithPrice = 0;
         let itemsWithoutPrice = 0;
 
@@ -374,14 +376,20 @@ export default function Shopping() {
             const article = articles.find(a => a.name === item.item_name);
             const price = article?.purchase_price || article?.supplier_details?.[0]?.purchase_price;
             if (price) {
-                totalCost += price * (parseFloat(item.quantity) || 1);
+                const qty = parseFloat(item.quantity) || 1;
+                const lineNet = price * qty;
+                const taxRate = article?.tax_rate ?? 19;
+                totalNet += lineNet;
+                if (taxRate === 7) totalVat7 += lineNet * 0.07;
+                else if (taxRate === 19) totalVat19 += lineNet * 0.19;
                 itemsWithPrice++;
             } else {
                 itemsWithoutPrice++;
             }
         });
 
-        return { totalCost, itemsWithPrice, itemsWithoutPrice, openCount: openOrderItems.length };
+        const totalVat = totalVat7 + totalVat19;
+        return { totalNet, totalVat, totalVat7, totalVat19, totalGross: totalNet + totalVat, itemsWithPrice, itemsWithoutPrice, openCount: openOrderItems.length };
     }, [items, articles]);
 
     const getUnitPrice = (item) => {
@@ -446,13 +454,18 @@ export default function Shopping() {
                             <p className="text-xs text-muted-foreground">Geschätzte Bestellsumme</p>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-2xl font-bold text-foreground">
-                                    {orderSummary.totalCost.toFixed(2)} €
+                                    {orderSummary.totalGross.toFixed(2)} €
                                 </span>
                                 {orderSummary.itemsWithoutPrice > 0 && (
                                     <span className="text-xs text-amber-400">
                                         + {orderSummary.itemsWithoutPrice} ohne Preis
                                     </span>
                                 )}
+                            </div>
+                            <div className="flex gap-3 mt-1 text-[11px] text-muted-foreground">
+                                <span>Netto: {orderSummary.totalNet.toFixed(2)} €</span>
+                                {orderSummary.totalVat7 > 0 && <span>7%: +{orderSummary.totalVat7.toFixed(2)} €</span>}
+                                {orderSummary.totalVat19 > 0 && <span>19%: +{orderSummary.totalVat19.toFixed(2)} €</span>}
                             </div>
                         </div>
                         <div className="text-right">
