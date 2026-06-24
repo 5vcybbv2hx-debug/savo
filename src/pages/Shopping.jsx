@@ -903,7 +903,7 @@ export default function Shopping() {
                             <SmartCombobox
                                 value={formData.item_name}
                                 onChange={v => setFormData(p => ({ ...p, item_name: v }))}
-                                options={articles.map(a => ({ value: a.name, label: a.name }))}
+                                options={articles.map(a => a.name)}
                                 placeholder="Artikel suchen oder eingeben..."
                                 className="mt-1"
                             />
