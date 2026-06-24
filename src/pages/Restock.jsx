@@ -6,7 +6,7 @@ import { LoadingState, EmptyState } from '@/components/ui/StateDisplay';
 import { useErrorHandler } from '@/components/error/ErrorHandler';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
-import { Scan, Camera, Check, Trash2, CheckCheck, Plus, Pencil, AlertCircle, X } from 'lucide-react';
+import { Scan, Camera, Check, Trash2, CheckCheck, Plus, Pencil, AlertCircle, X, ShoppingCart } from 'lucide-react';
 import QuantityInputModal from '../components/restock/QuantityInputModal';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,6 +94,9 @@ export default function Restock() {
     // Confirm dialog
     const [confirmDialog, setConfirmDialog] = useState(null); // { title, description, onConfirm }
 
+    // Order nudge — zeigt Vorschlag zum Bestellen nach Erledigung
+    const [orderNudge, setOrderNudge] = useState({}); // { [itemId]: true/false }
+
     // ── Queries ──────────────────────────────────────────────────────────────
     const { data: restockItems = [] } = useQuery({
         queryKey: ['restock-items'],
@@ -105,6 +108,12 @@ export default function Restock() {
         queryKey: ['articles'],
         queryFn: () => base44.entities.Article.list('name', 500),
         staleTime: STALE.SLOW,
+    });
+
+    const { data: shoppingItems = [] } = useQuery({
+        queryKey: ['shopping-list-restock'],
+        queryFn: () => base44.entities.ShoppingList.filter({ status: 'offen' }),
+        staleTime: 60 * 1000,
     });
 
     const { handleError } = useErrorHandler();
@@ -230,7 +239,37 @@ export default function Restock() {
     };
 
     const toggleComplete = (item) => {
-        updateMutation.mutate({ id: item.id, data: { ...item, is_completed: !item.is_completed } });
+        const nowCompleted = !item.is_completed;
+        updateMutation.mutate({ id: item.id, data: { ...item, is_completed: nowCompleted } });
+
+        // Nudge anzeigen wenn gerade als erledigt markiert
+        if (nowCompleted) {
+            const alreadyInOrder = shoppingItems.some(
+                s => s.item_name === item.article_name && s.status === 'offen'
+            );
+            if (!alreadyInOrder) {
+                setOrderNudge(prev => ({ ...prev, [item.id]: true }));
+                setTimeout(() => setOrderNudge(prev => ({ ...prev, [item.id]: false })), 8000);
+            }
+        } else {
+            setOrderNudge(prev => ({ ...prev, [item.id]: false }));
+        }
+    };
+
+    const addToOrder = async (item) => {
+        const article = articles.find(a => a.id === item.article_id);
+        await base44.entities.ShoppingList.create({
+            item_name:  item.article_name,
+            category:   article?.suppliers?.[0] || article?.supplier_details?.[0]?.supplier_name || '',
+            quantity:   item.quantity,
+            unit:       article?.content_unit || 'Stück',
+            status:     'offen',
+            notes:      `Aus Auffüllliste vom ${format(new Date(), 'dd.MM.yyyy')}`,
+        });
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+        queryClient.invalidateQueries({ queryKey: ['shopping-list-restock'] });
+        setOrderNudge(prev => ({ ...prev, [item.id]: false }));
+        showToast(`${item.article_name} zur Bestellung hinzugefügt`, 'success');
     };
 
     const handleDelete = (id) => {
@@ -521,6 +560,30 @@ export default function Restock() {
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
+
+                                                {/* Order Nudge */}
+                                                {orderNudge[item.id] && (
+                                                    <div className="flex items-center gap-3 px-4 py-3 border-t border-amber-500/30 bg-amber-500/10 animate-in slide-in-from-top-2 duration-200">
+                                                        <ShoppingCart className="w-4 h-4 text-amber-500 shrink-0" />
+                                                        <p className="text-xs text-amber-200 flex-1">
+                                                            In Bestellliste aufnehmen?
+                                                        </p>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => addToOrder(item)}
+                                                            className="h-8 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold text-xs"
+                                                        >
+                                                            <Plus className="w-3 h-3 mr-1" />
+                                                            Hinzufügen
+                                                        </Button>
+                                                        <button
+                                                            onClick={() => setOrderNudge(prev => ({ ...prev, [item.id]: false }))}
+                                                            className="text-amber-400/60 hover:text-amber-300"
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </Card>
                                         ))}
                                     </div>
