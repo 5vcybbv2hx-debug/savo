@@ -60,7 +60,7 @@ const STATUS_CFG = {
 };
 
 // ── Zeilen-Komponente ─────────────────────────────────────────────────────────
-function ShoppingRow({ item, suppliers, onStatusChange, onEdit, onDelete }) {
+function ShoppingRow({ item, suppliers, onStatusChange, onEdit, onDelete, unitPrice }) {
     const supplierIdx = suppliers.findIndex(s => s.name === item.category);
     const statusCfg   = STATUS_CFG[item.status] || STATUS_CFG.offen;
     const nextStatus  = STATUS_NEXT[item.status];
@@ -103,6 +103,12 @@ function ShoppingRow({ item, suppliers, onStatusChange, onEdit, onDelete }) {
                         <Badge variant="outline"
                             className={cn('text-[10px] px-1.5 py-0 h-4 border', getSupplierColor(supplierIdx))}>
                             {item.category}
+                        </Badge>
+                    )}
+                    {unitPrice && (
+                        <Badge variant="outline"
+                            className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400">
+                            {(unitPrice * (parseFloat(item.quantity) || 1)).toFixed(2)} €
                         </Badge>
                     )}
                     {item.notes && (
@@ -175,6 +181,7 @@ export default function Shopping() {
     const [deleteConfirm,     setDeleteConfirm]      = useState(null);
     const [deleteAllConfirm,  setDeleteAllConfirm]   = useState(false);
     const [receivedCollapsed, setReceivedCollapsed]  = useState(false);
+    const [activeTab, setActiveTab] = useState('offen');
     const [formData, setFormData] = useState({
         item_name: '', category: '', quantity: '', unit: '', status: 'offen', notes: ''
     });
@@ -348,13 +355,42 @@ export default function Shopping() {
         }), [articles, items]
     );
 
-    const filteredItems = supplierFilter === 'alle'
-        ? items
-        : items.filter(i => i.category === supplierFilter);
+    const filteredItems = items.filter(i => 
+        (supplierFilter === 'alle' || i.category === supplierFilter) &&
+        i.status === activeTab
+    );
 
     const openItems     = filteredItems.filter(i => i.status === 'offen');
     const orderedItems  = [];
     const receivedItems = filteredItems.filter(i => i.status === 'erhalten');
+
+    const orderSummary = useMemo(() => {
+        const openOrderItems = items.filter(i => i.status === 'offen');
+        let totalCost = 0;
+        let itemsWithPrice = 0;
+        let itemsWithoutPrice = 0;
+
+        openOrderItems.forEach(item => {
+            const article = articles.find(a => a.name === item.item_name);
+            const price = article?.purchase_price || article?.supplier_details?.[0]?.purchase_price;
+            if (price) {
+                totalCost += price * (parseFloat(item.quantity) || 1);
+                itemsWithPrice++;
+            } else {
+                itemsWithoutPrice++;
+            }
+        });
+
+        return { totalCost, itemsWithPrice, itemsWithoutPrice, openCount: openOrderItems.length };
+    }, [items, articles]);
+
+    const getUnitPrice = (item) => {
+        const article = articles.find(a => a.name === item.item_name);
+        return article?.purchase_price || article?.supplier_details?.[0]?.purchase_price || null;
+    };
+
+    const totalOpen     = items.filter(i => i.status === 'offen').length;
+    const totalReceived = items.filter(i => i.status === 'erhalten').length;
 
     if (!permissions.canViewShopping)
         return <PermissionDenied message="Du hast keine Berechtigung, die Einkaufsliste zu sehen." />;
@@ -371,7 +407,7 @@ export default function Shopping() {
                             Einkaufsliste
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            {openItems.length} offen · {receivedItems.length} erhalten
+                            {totalOpen} offen · {totalReceived} erhalten
                         </p>
                     </div>
 
@@ -403,8 +439,57 @@ export default function Shopping() {
                     )}
                 </div>
 
+                {/* ── Live-Kostenkalkulation Banner ────────────────────── */}
+                {orderSummary.openCount > 0 && (
+                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-amber-500/25 bg-amber-500/8">
+                        <div>
+                            <p className="text-xs text-muted-foreground">Geschätzte Bestellsumme</p>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-bold text-foreground">
+                                    {orderSummary.totalCost.toFixed(2)} €
+                                </span>
+                                {orderSummary.itemsWithoutPrice > 0 && (
+                                    <span className="text-xs text-amber-400">
+                                        + {orderSummary.itemsWithoutPrice} ohne Preis
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-muted-foreground">{orderSummary.openCount} Positionen</p>
+                            <p className="text-xs text-muted-foreground">{orderSummary.itemsWithPrice} mit Preis</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Tab-Navigation ───────────────────────────────────── */}
+                <div className="flex gap-2">
+                    {[
+                        { id: 'offen',    label: 'Aktuelle Bestellung' },
+                        { id: 'erhalten', label: 'Archiv' },
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={cn(
+                                'flex-1 py-2 rounded-full text-xs font-semibold border transition-all flex items-center justify-center gap-1.5',
+                                activeTab === tab.id
+                                    ? 'bg-primary border-primary text-primary-foreground'
+                                    : 'border-border text-muted-foreground bg-card hover:text-foreground'
+                            )}
+                        >
+                            {tab.label}
+                            {tab.id === 'offen' && orderSummary.openCount > 0 && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-primary-foreground/20 text-[10px]">
+                                    {orderSummary.openCount}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
                 {/* ── EAN / Schnelleingabe ──────────────────────────────── */}
-                {permissions.canEditShopping && (
+                {permissions.canEditShopping && activeTab === 'offen' && (
                     <form onSubmit={handleEanSubmit} className="flex gap-2">
                         <SmartCombobox
                             value={eanInput}
@@ -440,7 +525,7 @@ export default function Shopping() {
                 )}
 
                 {/* ── Low-Stock Vorschläge ──────────────────────────────── */}
-                {lowStockSuggestions.length > 0 && supplierFilter === 'alle' && (
+                {lowStockSuggestions.length > 0 && supplierFilter === 'alle' && activeTab === 'offen' && (
                     <div className="rounded-xl border border-orange-500/25 bg-orange-500/8 p-3 space-y-2">
                         <div className="flex items-center gap-2">
                             <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0" />
@@ -490,6 +575,7 @@ export default function Shopping() {
                                 onStatusChange={handleStatusChange}
                                 onEdit={openModal}
                                 onDelete={setDeleteConfirm}
+                                unitPrice={getUnitPrice(item)}
                             />
                         ))}
                     </div>
@@ -519,6 +605,7 @@ export default function Shopping() {
                                 onStatusChange={handleStatusChange}
                                 onEdit={openModal}
                                 onDelete={setDeleteConfirm}
+                                unitPrice={getUnitPrice(item)}
                             />
                         ))}
                     </div>
