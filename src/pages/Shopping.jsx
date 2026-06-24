@@ -54,11 +54,10 @@ const STATUS_CFG = {
 };
 
 // Tabs mit Icons
-const TABS = [
-    { id: 'offen',         label: 'Offen',     icon: Package },
-    { id: 'bestellt',      label: 'Bestellt',  icon: Send },
-    { id: 'erhalten',      label: 'Wareneingang', icon: Truck },
-    { id: 'abgeschlossen', label: 'Archiv',    icon: CheckCircle2 },
+const ORDER_TABS = [
+    { id: 'bestellt',      label: 'Bestellt',     icon: Send },
+    { id: 'erhalten',      label: 'Wareneingang',  icon: Truck },
+    { id: 'abgeschlossen', label: 'Archiv',       icon: CheckCircle2 },
 ];
 
 function timeAgo(isoStr) {
@@ -326,6 +325,7 @@ export default function Shopping() {
     const [closeOrderConfirm,    setCloseOrderConfirm]    = useState(false);
     const [markBestelltConfirm,  setMarkBestelltConfirm]  = useState(null); // Array von Items
     const [activeTab,            setActiveTab]            = useState('offen');
+    const [viewMode,             setViewMode]             = useState('einkaufsliste');
     const [formData, setFormData] = useState({
         item_name: '', category: '', quantity: '', unit: '', status: 'offen', notes: ''
     });
@@ -434,7 +434,7 @@ export default function Shopping() {
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         toast.success(`${itemsToMark.length} Artikel als bestellt markiert`);
         setMarkBestelltConfirm(null);
-        if (activeTab === 'offen') setActiveTab('bestellt');
+        if (activeTab === 'offen') { setActiveTab('bestellt'); setViewMode('bestellungen'); }
     };
 
     // Wareneingang quittieren
@@ -721,33 +721,71 @@ export default function Shopping() {
                     </div>
                 )}
 
-                {/* ── Tab-Navigation ────────────────────────────────────── */}
-                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
-                    {TABS.map(tab => {
-                        const count = counts[tab.id];
-                        return (
-                            <button key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={cn(
-                                    'flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-xs font-semibold border transition-all',
-                                    activeTab === tab.id
-                                        ? 'bg-primary border-primary text-primary-foreground'
-                                        : 'border-border text-muted-foreground hover:text-foreground bg-card'
-                                )}>
-                                <tab.icon className="w-3.5 h-3.5" />
-                                {tab.label}
-                                {count > 0 && (
-                                    <span className={cn(
-                                        'text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center',
-                                        activeTab === tab.id ? 'bg-primary-foreground/20' : 'bg-muted text-muted-foreground'
-                                    )}>
-                                        {count}
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
+                {/* ── Haupt-Ansicht: Einkaufsliste vs Bestellungen ──────── */}
+                <div className="flex gap-1 p-1 rounded-xl bg-muted/50">
+                    <button
+                        onClick={() => { setViewMode('einkaufsliste'); setActiveTab('offen'); }}
+                        className={cn(
+                            'flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                            viewMode === 'einkaufsliste'
+                                ? 'bg-card text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                        )}>
+                        <Package className="w-4 h-4" />
+                        Einkaufsliste
+                        {counts.offen > 0 && (
+                            <span className="text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center bg-primary text-primary-foreground">
+                                {counts.offen}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('bestellungen'); if (activeTab === 'offen') setActiveTab('bestellt'); }}
+                        className={cn(
+                            'flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                            viewMode === 'bestellungen'
+                                ? 'bg-card text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                        )}>
+                        <Send className="w-4 h-4" />
+                        Bestellungen
+                        {(counts.bestellt + counts.erhalten) > 0 && (
+                            <span className="text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center bg-primary text-primary-foreground">
+                                {counts.bestellt + counts.erhalten}
+                            </span>
+                        )}
+                    </button>
                 </div>
+
+                {/* ── Sub-Tabs: nur in Bestellungen ──────────────────────── */}
+                {viewMode === 'bestellungen' && (
+                    <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+                        {ORDER_TABS.map(tab => {
+                            const count = counts[tab.id];
+                            return (
+                                <button key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={cn(
+                                        'flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-xs font-semibold border transition-all',
+                                        activeTab === tab.id
+                                            ? 'bg-primary border-primary text-primary-foreground'
+                                            : 'border-border text-muted-foreground hover:text-foreground bg-card'
+                                    )}>
+                                    <tab.icon className="w-3.5 h-3.5" />
+                                    {tab.label}
+                                    {count > 0 && (
+                                        <span className={cn(
+                                            'text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center',
+                                            activeTab === tab.id ? 'bg-primary-foreground/20' : 'bg-muted text-muted-foreground'
+                                        )}>
+                                            {count}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* ── Lieferanten-Filter ────────────────────────────────── */}
                 {activeSuppliers.length > 1 && (
