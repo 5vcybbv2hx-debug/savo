@@ -76,6 +76,12 @@
       "type": "number",
       "description": "Einkaufspreis pro Einheit (Hauptlieferant)"
     },
+    "tax_rate": {
+      "type": "number",
+      "enum": [0, 7, 19],
+      "default": 19,
+      "description": "MwSt-Satz in % (0, 7 oder 19)"
+    },
     "price_per_liter": {
       "type": "number",
       "description": "Umgerechneter Preis pro Liter/kg (automatisch berechnet)"
