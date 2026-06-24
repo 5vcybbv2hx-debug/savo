@@ -477,7 +477,7 @@ export default function Wastage() {
                     onScan={handleScan}
                 />
             </div>
-        </div>
+
             {/* Delete Confirm Dialog */}
             <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
                 <AlertDialogContent>

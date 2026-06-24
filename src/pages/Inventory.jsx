@@ -466,7 +466,7 @@ export default function Inventory() {
                     }}
                 />
             </div>
-        </div>
+
             {/* Inventur speichern Dialog */}
             <AlertDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
                 <AlertDialogContent>
