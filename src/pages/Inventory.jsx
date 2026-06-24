@@ -4,6 +4,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
 import { ClipboardCheck, Camera, Save, RotateCcw, Search, AlertTriangle, Cloud, CloudOff, Plus, Minus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +30,8 @@ export default function Inventory() {
     const [counts, setCounts] = useState({});
     const [activeArticle, setActiveArticle] = useState(null);
     const [scanMode, setScanMode] = useState(false);
+    const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+    const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [lastScanned, setLastScanned] = useState(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -162,10 +169,13 @@ export default function Inventory() {
     };
 
     const handleReset = () => {
-        if (confirm('Alle Zählungen zurücksetzen?')) {
-            setCounts({});
-            setActiveArticle(null);
-        }
+        setResetDialogOpen(true);
+    };
+
+    const handleResetConfirmed = () => {
+        setResetDialogOpen(false);
+        setCounts({});
+        setActiveArticle(null);
     };
 
     const filteredArticles = articles.filter(a => {
@@ -454,6 +464,42 @@ export default function Inventory() {
                     }}
                 />
             </div>
+        </div>
+            {/* Inventur speichern Dialog */}
+            <AlertDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Inventur speichern?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {Object.keys(counts).length} Artikel werden als Inventursitzung gespeichert. Die Zählungen werden danach zurückgesetzt.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSaveConfirmed}>Speichern</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Zählungen zurücksetzen Dialog */}
+            <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Alle Zählungen zurücksetzen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Alle eingegebenen Zählwerte werden gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleResetConfirmed}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                            Zurücksetzen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
