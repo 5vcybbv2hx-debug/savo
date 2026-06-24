@@ -79,7 +79,7 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
     const emptyForm = {
         barcode: '', name: '', manufacturer: '', category: '',
         suppliers: [], supplier_details: [],
-        purchase_price: '', current_stock: '', min_stock: '',
+        purchase_price: '', tax_rate: 19, current_stock: '', min_stock: '',
         shelf_id: '', storage_location: '',
         image_url: '',
         allergens: '', allergens_list: [], additives: [],
@@ -104,6 +104,7 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                 content_amount:   article.content_amount || '',
                 content_unit:     article.content_unit || '',
                 purchase_price:   article.purchase_price || '',
+                tax_rate:         article.tax_rate ?? 19,
                 current_stock:    article.current_stock ?? '',
                 min_stock:        article.min_stock ?? '',
                 shelf_id:         article.shelf_id || '',
@@ -347,6 +348,21 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                                         className="h-9 mt-1" />
                                 </div>
                             )}
+
+                            {/* MwSt-Satz */}
+                            <div>
+                                <Label className="text-xs text-muted-foreground">MwSt-Satz</Label>
+                                <Select value={String(formData.tax_rate ?? 19)} onValueChange={v => set('tax_rate', Number(v))}>
+                                    <SelectTrigger className="h-9 mt-1">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="19">19% (Standard)</SelectItem>
+                                        <SelectItem value="7">7% (Lebensmittel)</SelectItem>
+                                        <SelectItem value="0">0% (steuerfrei)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
                             {/* Inhalt + Einheit */}
                             <div className="grid grid-cols-3 gap-2">
