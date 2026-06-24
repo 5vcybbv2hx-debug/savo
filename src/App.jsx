@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 import { useEffect } from 'react';
 import { applyBranding } from '@/lib/branding';
 import { base44 } from '@/api/base44Client';
@@ -273,6 +274,7 @@ function App() {
           </Routes>
         </Router>
         <Toaster />
+        <SonnerToaster />
       </QueryClientProvider>
     </AuthProvider>
   )

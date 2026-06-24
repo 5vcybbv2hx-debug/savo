@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import {
-    Package, RefreshCw, ShoppingCart, Layers,
+    Package, RefreshCw, ShoppingCart, ShoppingBasket, Layers,
     Building2, TrendingDown, ClipboardCheck, AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -73,17 +73,18 @@ export default function Warehouse() {
         enabled: permissions.canViewShopping,
     });
 
+    // Offene Auffüll-Items heute
+    const today = new Date().toISOString().slice(0, 10);
+
     // Offene Einkaufsliste
     const { data: quickListItems = [] } = useQuery({
         queryKey: ['quick-list-open'],
-        queryFn: () => base44.entities.QuickListItem.filter({ is_completed: false }, '-created_date', 100),
-        staleTime: STALE.SHORT,
+        queryFn: () => base44.entities.QuickListItem.filter({ date: today, is_completed: false }, '-created_date', 100),
+        staleTime: STALE.FAST,
         enabled: permissions.canViewShopping,
     });
     const openQuickListCount = quickListItems.length;
 
-    // Offene Auffüll-Items heute
-    const today = new Date().toISOString().slice(0, 10);
     const { data: restockItems = [] } = useQuery({
         queryKey: ['restock-open'],
         queryFn: () => base44.entities.RestockItem.filter({ date: today }, '-created_date', 100),
@@ -158,7 +159,7 @@ export default function Warehouse() {
                 )}
                 {permissions.canViewShopping && (
                     <NavCard
-                        icon={ShoppingCart}
+                        icon={ShoppingBasket}
                         label="Einkaufsliste"
                         description="Schnelle Liste für alle Mitarbeiter"
                         page="QuickList"

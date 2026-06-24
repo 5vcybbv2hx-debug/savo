@@ -1,14 +1,13 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
-import { LoadingState } from '@/components/ui/StateDisplay';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
-import { Check, Trash2, CheckCheck, Plus, ClipboardList } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { toast } from 'sonner';
+import { ChevronDown, ChevronRight, Trash2, ClipboardList } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
     AlertDialog,
     AlertDialogContent,
@@ -18,30 +17,30 @@ import {
     AlertDialogDescription,
     AlertDialogAction,
     AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import AddItemModal from '@/components/quicklist/AddItemModal';
+} from '@/components/ui/alert-dialog';
+import QuickInput from '@/components/quicklist/QuickInput';
+import QuickListRow from '@/components/quicklist/QuickListRow';
 
 export default function QuickList() {
     const queryClient = useQueryClient();
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const dateDisplay = new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
 
-    // ── Offline sync ──────────────────────────────────────────────────────────
+    const [showCompleted, setShowCompleted] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+
+    // ── Offline sync ──────────────────────────────────────────────────
     useEffect(() => {
         const handleOnline = () => syncMutations(base44).catch(console.error);
         window.addEventListener('online', handleOnline);
         return () => window.removeEventListener('online', handleOnline);
     }, []);
 
-    // ── State ──────────────────────────────────────────────────────────────────
-    const [addModalOpen, setAddModalOpen] = useState(false);
-    const [deleteCompletedOpen, setDeleteCompletedOpen] = useState(false);
-    const [recentIds, setRecentIds] = useState([]);
-    const recentTimers = useRef({});
-
-    // ── Queries ────────────────────────────────────────────────────────────────
+    // ── Queries ────────────────────────────────────────────────────────
     const { data: items = [], isLoading } = useQuery({
-        queryKey: ['quick-list'],
-        queryFn: () => base44.entities.QuickListItem.list('-created_date', 200),
-        staleTime: STALE.MEDIUM,
+        queryKey: ['quicklist-items', today],
+        queryFn: () => base44.entities.QuickListItem.filter({ date: today }, '-created_date', 200),
+        staleTime: 30 * 1000,
     });
 
     const { data: articles = [] } = useQuery({
@@ -50,44 +49,43 @@ export default function QuickList() {
         staleTime: STALE.SLOW,
     });
 
-    // ── Recent highlight ───────────────────────────────────────────────────────
-    const markRecent = (id) => {
-        setRecentIds(prev => [...prev.filter(x => x !== id), id]);
-        if (recentTimers.current[id]) clearTimeout(recentTimers.current[id]);
-        recentTimers.current[id] = setTimeout(() => {
-            setRecentIds(prev => prev.filter(x => x !== id));
-        }, 8000);
-    };
-
-    // ── Mutations ──────────────────────────────────────────────────────────────
+    // ── Mutations (offline-aware) ─────────────────────────────────────
     const createMutation = useMutation({
         mutationFn: async (data) => {
             if (!navigator.onLine) {
                 await queueMutation({ entityName: 'QuickListItem', type: 'create', data });
-                const fakeId = `offline-${Date.now()}`;
-                queryClient.setQueryData(['quick-list'], (old) => [{ ...data, id: fakeId, _offline: true }, ...(old || [])]);
-                return { id: fakeId, ...data, _offline: true };
+                return { ...data, id: `offline-${Date.now()}`, _offline: true };
             }
             return base44.entities.QuickListItem.create(data);
         },
         onSuccess: (newItem) => {
-            if (!newItem?._offline) queryClient.invalidateQueries({ queryKey: ['quick-list'] });
-            if (newItem?.id) markRecent(newItem.id);
+            if (newItem?._offline) {
+                queryClient.setQueryData(['quicklist-items', today], (old = []) => [newItem, ...old]);
+                toast.success('Offline hinzugefügt ⚡');
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['quicklist-items'] });
+                toast.success('Hinzugefügt');
+            }
         },
+        onError: () => toast.error('Fehler beim Hinzufügen'),
     });
 
     const updateMutation = useMutation({
         mutationFn: async ({ id, data }) => {
             if (!navigator.onLine) {
                 await queueMutation({ entityName: 'QuickListItem', type: 'update', id, data });
-                queryClient.setQueryData(['quick-list'], (old) => old?.map(item => item.id === id ? { ...item, ...data } : item) || old);
-                return { queued: true, id };
+                return { queued: true, id, data };
             }
             return base44.entities.QuickListItem.update(id, data);
         },
-        onSuccess: (result, variables) => {
-            if (!result?.queued) queryClient.invalidateQueries({ queryKey: ['quick-list'] });
-            markRecent(result?.id || variables.id);
+        onSuccess: (result) => {
+            if (result?.queued) {
+                queryClient.setQueryData(['quicklist-items', today], (old = []) =>
+                    old.map(item => item.id === result.id ? { ...item, ...result.data } : item)
+                );
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['quicklist-items'] });
+            }
         },
     });
 
@@ -95,217 +93,188 @@ export default function QuickList() {
         mutationFn: async (id) => {
             if (!navigator.onLine) {
                 await queueMutation({ entityName: 'QuickListItem', type: 'delete', id });
-                queryClient.setQueryData(['quick-list'], (old) => old?.filter(item => item.id !== id) || old);
-                return { queued: true };
+                return { queued: true, id };
             }
             return base44.entities.QuickListItem.delete(id);
         },
         onSuccess: (result) => {
-            if (!result?.queued) queryClient.invalidateQueries({ queryKey: ['quick-list'] });
+            if (result?.queued) {
+                queryClient.setQueryData(['quicklist-items', today], (old = []) =>
+                    old.filter(item => item.id !== result.id)
+                );
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['quicklist-items'] });
+            }
         },
     });
 
-    // ── Handlers ───────────────────────────────────────────────────────────────
+    // ── Derived ────────────────────────────────────────────────────────
+    const openItems = useMemo(() => items.filter(i => !i.is_completed), [items]);
+    const completedItems = useMemo(() => items.filter(i => i.is_completed), [items]);
+    const total = items.length;
+    const completedCount = completedItems.length;
+    const progressPct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+
+    const grouped = useMemo(() => {
+        return openItems.reduce((acc, item) => {
+            const cat = item.category || 'Sonstiges';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(item);
+            return acc;
+        }, {});
+    }, [openItems]);
+
+    const sortedCategories = useMemo(() =>
+        Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)),
+    [grouped]);
+
+    // ── Handlers ──────────────────────────────────────────────────────
     const handleAdd = async (data) => {
         const user = await base44.auth.me();
         createMutation.mutate({
             ...data,
-            added_by_name: user?.full_name || user?.email || 'Unbekannt',
+            added_by_name: user?.full_name || 'Unbekannt',
+            date: today,
+            is_completed: false,
         });
-        setAddModalOpen(false);
     };
 
-    const toggleComplete = (item) => {
+    const handleToggle = (item) => {
         updateMutation.mutate({ id: item.id, data: { is_completed: !item.is_completed } });
+    };
+
+    const handleUpdate = (id, data) => {
+        updateMutation.mutate({ id, data });
     };
 
     const handleDelete = (id) => {
         deleteMutation.mutate(id);
     };
 
-    const handleDeleteCompleted = async () => {
-        const completed = items.filter(i => i.is_completed);
-        for (const item of completed) {
-            await deleteMutation.mutateAsync(item.id);
+    const handleDeleteCompleted = () => {
+        for (const item of completedItems) {
+            deleteMutation.mutate(item.id);
         }
+        setDeleteOpen(false);
+        toast.success(`${completedItems.length} Einträge gelöscht`);
     };
 
-    // ── Sorted / grouped items ──────────────────────────────────────────────────
-    const sortedItems = useMemo(() => {
-        return [...items].sort((a, b) => {
-            if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
-            const aRecent = recentIds.indexOf(a.id);
-            const bRecent = recentIds.indexOf(b.id);
-            if (aRecent !== -1 || bRecent !== -1) {
-                if (aRecent === -1) return 1;
-                if (bRecent === -1) return -1;
-                return bRecent - aRecent;
-            }
-            return 0;
-        });
-    }, [items, recentIds]);
-
-    const groupedItems = useMemo(() => {
-        return sortedItems.reduce((groups, item) => {
-            const cat = item.category || 'Sonstiges';
-            if (!groups[cat]) groups[cat] = [];
-            groups[cat].push(item);
-            return groups;
-        }, {});
-    }, [sortedItems]);
-
-    const openCount = items.filter(i => !i.is_completed).length;
-    const completedCount = items.filter(i => i.is_completed).length;
-
-    // ── Loading ─────────────────────────────────────────────────────────────────
+    // ── Loading ───────────────────────────────────────────────────────
     if (isLoading) return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-            <LoadingState />
+        <div className="flex items-center justify-center min-h-[40vh]">
+            <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="max-w-2xl mx-auto px-4 py-6">
-                {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-foreground tracking-tight">Einkaufsliste</h1>
-                    <p className="text-muted-foreground text-sm mt-1">
-                        {openCount} offen{completedCount > 0 && ` · ${completedCount} erledigt`}
+        <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                    <h1 className="text-xl font-bold text-foreground">Einkaufsliste</h1>
+                    <p className="text-muted-foreground text-xs mt-0.5">
+                        Heute, {dateDisplay} — {openItems.length} offen
                     </p>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 mb-6">
-                    <Button
-                        onClick={() => setAddModalOpen(true)}
-                        className="flex-1 h-12"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Hinzufügen
+                {completedCount > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)} className="shrink-0">
+                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Erledigt löschen
                     </Button>
-                    {completedCount > 0 && (
-                        <Button
-                            variant="outline"
-                            onClick={() => setDeleteCompletedOpen(true)}
-                            className="h-12"
-                        >
-                            <CheckCheck className="w-4 h-4 mr-2" />
-                            Erledigte löschen
-                        </Button>
-                    )}
-                </div>
-
-                {/* List */}
-                {items.length === 0 ? (
-                    <Card className="p-10 text-center border-border/40">
-                        <ClipboardList className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
-                        <p className="text-muted-foreground font-medium">Liste ist leer</p>
-                        <p className="text-xs text-muted-foreground/60 mt-1">
-                            Füge Artikel hinzu, die besorgt werden müssen
-                        </p>
-                    </Card>
-                ) : (
-                    <div className="space-y-5">
-                        {Object.entries(groupedItems).map(([category, catItems]) => (
-                            <div key={category}>
-                                {/* Kategorie-Trennlinie */}
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="h-px bg-border/40 flex-1" />
-                                    <span className="text-xs font-semibold text-primary uppercase tracking-wider px-1">
-                                        {category}
-                                    </span>
-                                    <div className="h-px bg-border/40 flex-1" />
-                                </div>
-
-                                <div className="space-y-2">
-                                    {catItems.map(item => (
-                                        <Card
-                                            key={item.id}
-                                            className={cn(
-                                                "border-border transition-all",
-                                                item.is_completed && "opacity-50",
-                                                item._offline && "border-yellow-500/40"
-                                            )}
-                                        >
-                                            <div className="flex items-center gap-3 p-4">
-                                                {/* Checkbox */}
-                                                <button
-                                                    onClick={() => toggleComplete(item)}
-                                                    className={cn(
-                                                        "w-7 h-7 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all active:scale-90",
-                                                        item.is_completed
-                                                            ? "bg-green-600 border-green-600"
-                                                            : "border-border/70 hover:border-green-500"
-                                                    )}
-                                                >
-                                                    {item.is_completed && <Check className="w-4 h-4 text-white" />}
-                                                </button>
-
-                                                {/* Bild */}
-                                                {item.article_image_url && (
-                                                    <img
-                                                        src={item.article_image_url}
-                                                        alt={item.item_name}
-                                                        className="w-11 h-11 rounded-lg object-cover border border-border/40 shrink-0"
-                                                        loading="lazy"
-                                                    />
-                                                )}
-
-                                                {/* Info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <p className={cn(
-                                                        "font-medium text-sm truncate",
-                                                        item.is_completed
-                                                            ? "text-muted-foreground line-through"
-                                                            : "text-foreground"
-                                                    )}>
-                                                        {item.item_name}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                                        <span className="font-semibold">
-                                                            {item.quantity} {item.unit}
-                                                        </span>
-                                                        <span>·</span>
-                                                        <span>{item.added_by_name}</span>
-                                                        {item._offline && (
-                                                            <span className="text-yellow-500">⚡ offline</span>
-                                                        )}
-                                                    </div>
-                                                    {item.notes && !item.is_completed && (
-                                                        <p className="text-xs text-muted-foreground mt-1 italic">
-                                                            {item.notes}
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                {/* Delete */}
-                                                <button
-                                                    onClick={() => handleDelete(item.id)}
-                                                    className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-400 hover:bg-red-900/20 active:scale-90 transition-all shrink-0"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </Card>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
                 )}
             </div>
 
-            {/* Add Item Modal */}
-            <AddItemModal
-                open={addModalOpen}
-                onClose={() => setAddModalOpen(false)}
-                onConfirm={handleAdd}
-                articles={articles}
-            />
+            {/* Progress */}
+            {total > 0 && (
+                <div className="mb-4">
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-primary transition-all duration-300"
+                            style={{ width: `${progressPct}%` }}
+                        />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {completedCount} von {total} erledigt
+                    </p>
+                </div>
+            )}
 
-            {/* Delete Completed Confirmation */}
-            <AlertDialog open={deleteCompletedOpen} onOpenChange={setDeleteCompletedOpen}>
+            {/* Quick Input (sticky) */}
+            <QuickInput articles={articles} onAdd={handleAdd} isAdding={createMutation.isPending} />
+
+            {/* Open items grouped by category */}
+            <div className="space-y-4 mt-3">
+                {sortedCategories.map(([category, catItems]) => (
+                    <div key={category}>
+                        <div className="flex items-center gap-2 mb-2 px-1">
+                            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                                {category}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">({catItems.length})</span>
+                            <div className="h-px bg-border/40 flex-1" />
+                        </div>
+                        <div className="space-y-2">
+                            {catItems.map(item => (
+                                <QuickListRow
+                                    key={item.id}
+                                    item={item}
+                                    onToggle={handleToggle}
+                                    onUpdate={handleUpdate}
+                                    onDelete={handleDelete}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                ))}
+
+                {openItems.length === 0 && (
+                    <Card className="p-8 text-center border-border/40">
+                        <ClipboardList className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
+                        <p className="text-sm text-muted-foreground">
+                            {total === 0 ? 'Liste ist leer — Artikel oben hinzufügen' : 'Alles erledigt! 🎉'}
+                        </p>
+                    </Card>
+                )}
+            </div>
+
+            {/* Completed section (collapsible) */}
+            {completedCount > 0 && (
+                <div className="mt-6">
+                    <button
+                        onClick={() => setShowCompleted(!showCompleted)}
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full min-h-[44px]"
+                    >
+                        {showCompleted
+                            ? <ChevronDown className="w-4 h-4" />
+                            : <ChevronRight className="w-4 h-4" />
+                        }
+                        <span className="font-medium">Erledigt ({completedCount})</span>
+                    </button>
+                    {showCompleted && (
+                        <div className="space-y-2 mt-2">
+                            {completedItems.map(item => (
+                                <QuickListRow
+                                    key={item.id}
+                                    item={item}
+                                    onToggle={handleToggle}
+                                    onUpdate={handleUpdate}
+                                    onDelete={handleDelete}
+                                />
+                            ))}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDeleteOpen(true)}
+                                className="w-full mt-2 text-destructive hover:text-destructive"
+                            >
+                                <Trash2 className="w-3.5 h-3.5 mr-1" /> Alle erledigten löschen
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Delete confirmation */}
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
@@ -319,7 +288,7 @@ export default function QuickList() {
                         <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDeleteCompleted}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                             Löschen
                         </AlertDialogAction>
