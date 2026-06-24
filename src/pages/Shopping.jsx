@@ -5,7 +5,8 @@ import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import {
     Plus, ShoppingCart, Trash2, Check, Package, Camera,
     Search, AlertTriangle, MoreVertical, ChevronRight,
-    ChevronDown, ScanLine
+    ChevronDown, ScanLine, Send, Truck, CheckCircle2,
+    XCircle, ArrowRight, ClipboardCheck, RotateCcw
 } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
@@ -14,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -33,7 +34,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 
-// ── Hilfsfunktionen ───────────────────────────────────────────────────────────
+// ── Farben & Status-Config ────────────────────────────────────────────────────
 const SUPPLIER_COLORS = [
     'bg-blue-500/15 text-blue-400 border-blue-500/25',
     'bg-orange-500/15 text-orange-400 border-orange-500/25',
@@ -45,122 +46,264 @@ const SUPPLIER_COLORS = [
 ];
 const getSupplierColor = (idx) => SUPPLIER_COLORS[idx >= 0 ? idx % SUPPLIER_COLORS.length : 0];
 
-function timeAgo(isoStr) {
-    if (!isoStr) return '';
-    try {
-        return format(new Date(isoStr), 'dd.MM. HH:mm', { locale: de });
-    } catch { return ''; }
-}
-
-// Status-Kette: offen → erhalten
-const STATUS_NEXT = { offen: 'erhalten' };
 const STATUS_CFG = {
-    offen:    { label: 'Offen',     bg: 'bg-slate-500/15 text-slate-300 border-slate-500/25' },
-    erhalten: { label: 'Erhalten',  bg: 'bg-green-500/15 text-green-400 border-green-500/25' },
+    offen:         { label: 'Offen',      icon: Package,      color: 'bg-muted text-muted-foreground border-border' },
+    bestellt:      { label: 'Bestellt',   icon: Send,         color: 'bg-blue-500/15 text-blue-400 border-blue-500/25' },
+    erhalten:      { label: 'Erhalten',   icon: Truck,        color: 'bg-amber-500/15 text-amber-400 border-amber-500/25' },
+    abgeschlossen: { label: 'Abgeschl.',  icon: CheckCircle2, color: 'bg-green-500/15 text-green-400 border-green-500/25' },
 };
 
-// ── Zeilen-Komponente ─────────────────────────────────────────────────────────
-function ShoppingRow({ item, suppliers, onStatusChange, onEdit, onDelete, unitPrice }) {
+// Tabs mit Icons
+const TABS = [
+    { id: 'offen',         label: 'Offen',     icon: Package },
+    { id: 'bestellt',      label: 'Bestellt',  icon: Send },
+    { id: 'erhalten',      label: 'Wareneingang', icon: Truck },
+    { id: 'abgeschlossen', label: 'Archiv',    icon: CheckCircle2 },
+];
+
+function timeAgo(isoStr) {
+    if (!isoStr) return '';
+    try { return format(new Date(isoStr), 'dd.MM. HH:mm', { locale: de }); }
+    catch { return ''; }
+}
+
+// ── ShoppingRow ───────────────────────────────────────────────────────────────
+function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpenWareneingang, unitPrice, activeTab }) {
     const supplierIdx = suppliers.findIndex(s => s.name === item.category);
-    const statusCfg   = STATUS_CFG[item.status] || STATUS_CFG.offen;
-    const nextStatus  = STATUS_NEXT[item.status];
-    const isReceived  = item.status === 'erhalten';
+    const isDone = item.status === 'abgeschlossen';
+    const hasDiff = item.delivered_quantity != null && item.delivered_quantity !== item.quantity;
+    const isShort = hasDiff && item.delivered_quantity < item.quantity;
+    const isOver  = hasDiff && item.delivered_quantity > item.quantity;
 
     return (
         <div className={cn(
             'flex items-center gap-3 px-3 py-3 rounded-xl border transition-all',
-            isReceived
-                ? 'bg-green-500/5 border-green-500/15 opacity-60'
-                : 'bg-card border-border/50 hover:border-border'
+            isDone
+                ? 'bg-green-500/5 border-green-500/15 opacity-50'
+                : item.status === 'erhalten'
+                    ? 'bg-amber-500/5 border-amber-500/20'
+                    : item.status === 'bestellt'
+                        ? 'bg-blue-500/5 border-blue-500/15'
+                        : 'bg-card border-border/50 hover:border-border'
         )}>
-            {/* Status-Toggle */}
-            <button
-                onClick={() => nextStatus && onStatusChange(item, nextStatus)}
-                disabled={!nextStatus}
-                title={nextStatus ? `Als "${STATUS_CFG[nextStatus]?.label}" markieren` : 'Abgeschlossen'}
-                className={cn(
-                    'w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
-                    item.status === 'erhalten'
-                        ? 'border-green-500 bg-green-500'
-                        : 'border-border hover:border-amber-500 active:scale-90'
-                )}>
-                {item.status === 'erhalten' && <Check className="w-3.5 h-3.5 text-white" />}
-            </button>
+            {/* Status-Indikator */}
+            <div className={cn(
+                'w-2 h-2 rounded-full shrink-0',
+                item.status === 'abgeschlossen' ? 'bg-green-500' :
+                item.status === 'erhalten'      ? 'bg-amber-500' :
+                item.status === 'bestellt'      ? 'bg-blue-500' : 'bg-border'
+            )} />
 
-            {/* Name + Meta */}
+            {/* Info */}
             <div className="flex-1 min-w-0">
                 <p className={cn(
                     'text-sm font-semibold truncate',
-                    isReceived ? 'text-muted-foreground line-through' : 'text-foreground'
+                    isDone ? 'text-muted-foreground line-through' : 'text-foreground'
                 )}>
                     {item.item_name}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="text-xs text-muted-foreground font-medium">
-                        {item.quantity}{item.unit ? ` ${item.unit}` : ''}
-                    </span>
+                    {/* Menge: bestellt vs geliefert */}
+                    {item.status === 'erhalten' || item.status === 'abgeschlossen' ? (
+                        <span className="text-xs font-medium">
+                            <span className={cn(
+                                isShort ? 'text-destructive' : isOver ? 'text-blue-400' : 'text-green-400'
+                            )}>
+                                {item.delivered_quantity ?? '?'}{item.unit ? ` ${item.unit}` : ''}
+                            </span>
+                            <span className="text-muted-foreground"> / {item.quantity}{item.unit ? ` ${item.unit}` : ''} bestellt</span>
+                            {isShort && <span className="text-destructive ml-1">▼ {(item.quantity - item.delivered_quantity).toFixed(1)} fehlt</span>}
+                            {isOver  && <span className="text-blue-400 ml-1">▲ {(item.delivered_quantity - item.quantity).toFixed(1)} extra</span>}
+                        </span>
+                    ) : (
+                        <span className="text-xs text-muted-foreground font-medium">
+                            {item.quantity}{item.unit ? ` ${item.unit}` : ''}
+                        </span>
+                    )}
+
                     {item.category && (
                         <Badge variant="outline"
                             className={cn('text-[10px] px-1.5 py-0 h-4 border', getSupplierColor(supplierIdx))}>
                             {item.category}
                         </Badge>
                     )}
-                    {unitPrice && (
+                    {unitPrice && item.status === 'offen' && (
                         <Badge variant="outline"
                             className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400">
                             {(unitPrice * (parseFloat(item.quantity) || 1)).toFixed(2)} €
                         </Badge>
                     )}
-                    {item.notes && (
-                        <span className="text-[10px] text-muted-foreground italic truncate max-w-[120px]">
-                            {item.notes}
+                    {item.delivery_note && (
+                        <span className="text-[10px] text-amber-400 italic truncate max-w-[140px]">
+                            ⚠ {item.delivery_note}
                         </span>
                     )}
-                    {isReceived && item.updated_date && (
-                        <span className="text-[10px] text-green-400">
-                            ✓ {timeAgo(item.updated_date)}
+                    {item.ordered_at && item.status !== 'offen' && (
+                        <span className="text-[10px] text-muted-foreground">
+                            Best. {timeAgo(item.ordered_at)}
                         </span>
                     )}
                 </div>
             </div>
 
-            {/* Aktionen */}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon"
-                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
-                        <MoreVertical className="w-4 h-4" />
+            {/* Aktions-Button je nach Status */}
+            <div className="flex items-center gap-1 shrink-0">
+                {activeTab === 'bestellt' && (
+                    <Button size="sm" variant="outline"
+                        onClick={() => onOpenWareneingang(item)}
+                        className="h-8 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10 px-2.5">
+                        <Truck className="w-3.5 h-3.5 mr-1" />
+                        Eingang
                     </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
-                    {nextStatus && (
-                        <DropdownMenuItem onClick={() => onStatusChange(item, nextStatus)}>
-                            <ChevronRight className="w-4 h-4 mr-2 text-muted-foreground" />
-                            Als {STATUS_CFG[nextStatus]?.label} markieren
+                )}
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <MoreVertical className="w-4 h-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                        {item.status === 'offen' && (
+                            <DropdownMenuItem onClick={() => onMarkBestellt([item])}>
+                                <Send className="w-4 h-4 mr-2 text-blue-400" />
+                                Als bestellt markieren
+                            </DropdownMenuItem>
+                        )}
+                        {item.status === 'bestellt' && (
+                            <DropdownMenuItem onClick={() => onOpenWareneingang(item)}>
+                                <Truck className="w-4 h-4 mr-2 text-amber-400" />
+                                Wareneingang quittieren
+                            </DropdownMenuItem>
+                        )}
+                        {item.status === 'erhalten' && (
+                            <DropdownMenuItem onClick={() => onOpenWareneingang(item)}>
+                                <RotateCcw className="w-4 h-4 mr-2 text-muted-foreground" />
+                                Wareneingang korrigieren
+                            </DropdownMenuItem>
+                        )}
+                        {(item.status === 'offen' || item.status === 'bestellt') && (
+                            <DropdownMenuItem onClick={() => onEdit(item)}>
+                                Bearbeiten
+                            </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onClick={() => onDelete(item.id)}
+                            className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Löschen
                         </DropdownMenuItem>
-                    )}
-                    {item.status !== 'offen' && (
-                        <DropdownMenuItem onClick={() => onStatusChange(item, 'offen')}>
-                            Zurück auf Offen
-                        </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onEdit(item)}>
-                        Bearbeiten
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onClick={() => onDelete(item.id)}
-                        className="text-red-400 focus:text-red-400 focus:bg-red-500/10">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Löschen
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
     );
 }
 
-// ── Haupt-Seite ───────────────────────────────────────────────────────────────
+// ── Wareneingang Dialog ───────────────────────────────────────────────────────
+function WareneingangDialog({ item, open, onClose, onConfirm }) {
+    const [deliveredQty, setDeliveredQty] = useState('');
+    const [note, setNote] = useState('');
+
+    useEffect(() => {
+        if (item && open) {
+            setDeliveredQty(String(item.quantity ?? ''));
+            setNote(item.delivery_note || '');
+        }
+    }, [item, open]);
+
+    if (!item) return null;
+
+    const delivered = parseFloat(deliveredQty) || 0;
+    const ordered   = parseFloat(item.quantity) || 0;
+    const diff      = delivered - ordered;
+    const isShort   = diff < 0;
+    const isOver    = diff > 0;
+    const isExact   = diff === 0;
+
+    return (
+        <Dialog open={open} onOpenChange={onClose}>
+            <DialogContent className="max-w-sm">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Truck className="w-5 h-5 text-amber-500" />
+                        Wareneingang quittieren
+                    </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4 py-2">
+                    {/* Artikel-Info */}
+                    <div className="rounded-lg bg-muted/50 px-3 py-2.5">
+                        <p className="font-semibold text-sm text-foreground">{item.item_name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            Bestellt: <span className="font-medium text-foreground">{item.quantity} {item.unit || 'Stück'}</span>
+                            {item.category && <> · Lieferant: <span className="font-medium text-foreground">{item.category}</span></>}
+                        </p>
+                    </div>
+
+                    {/* Gelieferte Menge */}
+                    <div>
+                        <Label className="text-sm font-medium">Gelieferte Menge</Label>
+                        <div className="flex items-center gap-2 mt-1.5">
+                            <Input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                value={deliveredQty}
+                                onChange={e => setDeliveredQty(e.target.value)}
+                                className="h-11 text-lg font-bold text-center"
+                                autoFocus
+                            />
+                            <span className="text-sm text-muted-foreground shrink-0">{item.unit || 'Stück'}</span>
+                        </div>
+                    </div>
+
+                    {/* Differenz-Anzeige */}
+                    {deliveredQty !== '' && (
+                        <div className={cn(
+                            'rounded-lg px-3 py-2.5 text-sm font-medium flex items-center gap-2',
+                            isExact ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                            isShort ? 'bg-destructive/10 text-destructive border border-destructive/20' :
+                                      'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                        )}>
+                            {isExact && <><Check className="w-4 h-4" /> Vollständig geliefert</>}
+                            {isShort && <><XCircle className="w-4 h-4" /> {Math.abs(diff).toFixed(1)} {item.unit || 'Stück'} fehlt</>}
+                            {isOver  && <><AlertTriangle className="w-4 h-4" /> {diff.toFixed(1)} {item.unit || 'Stück'} extra</>}
+                        </div>
+                    )}
+
+                    {/* Notiz */}
+                    <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Notiz (optional)</Label>
+                        <Textarea
+                            value={note}
+                            onChange={e => setNote(e.target.value)}
+                            placeholder="z.B. Flasche beschädigt, Rest kommt nächste Woche..."
+                            className="mt-1.5 resize-none h-16 text-sm"
+                        />
+                    </div>
+                </div>
+
+                <DialogFooter className="gap-2">
+                    <Button variant="outline" onClick={onClose} className="flex-1">
+                        Abbrechen
+                    </Button>
+                    <Button
+                        onClick={() => onConfirm({ deliveredQty: delivered, note })}
+                        disabled={deliveredQty === ''}
+                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white">
+                        <Check className="w-4 h-4 mr-1.5" />
+                        Quittieren
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+// ── Hauptseite ────────────────────────────────────────────────────────────────
 export default function Shopping() {
     const permissions  = usePermissions();
     const queryClient  = useQueryClient();
@@ -172,16 +315,17 @@ export default function Shopping() {
     }, []);
 
     // ── State ─────────────────────────────────────────────────────────────────
-    const [modalOpen,         setModalOpen]         = useState(false);
-    const [selectedItem,      setSelectedItem]       = useState(null);
-    const [supplierFilter,    setSupplierFilter]     = useState('alle');
-    const [kanbanOpen,        setKanbanOpen]         = useState(false);
-    const [articlePickerOpen, setArticlePickerOpen]  = useState(false);
-    const [eanInput,          setEanInput]           = useState('');
-    const [deleteConfirm,     setDeleteConfirm]      = useState(null);
-    const [deleteAllConfirm,  setDeleteAllConfirm]   = useState(false);
-    const [receivedCollapsed, setReceivedCollapsed]  = useState(false);
-    const [activeTab, setActiveTab] = useState('offen');
+    const [modalOpen,            setModalOpen]            = useState(false);
+    const [selectedItem,         setSelectedItem]         = useState(null);
+    const [supplierFilter,       setSupplierFilter]       = useState('alle');
+    const [kanbanOpen,           setKanbanOpen]           = useState(false);
+    const [articlePickerOpen,    setArticlePickerOpen]    = useState(false);
+    const [eanInput,             setEanInput]             = useState('');
+    const [deleteConfirm,        setDeleteConfirm]        = useState(null);
+    const [wareneingangItem,     setWareneingangItem]     = useState(null);
+    const [closeOrderConfirm,    setCloseOrderConfirm]    = useState(false);
+    const [markBestelltConfirm,  setMarkBestelltConfirm]  = useState(null); // Array von Items
+    const [activeTab,            setActiveTab]            = useState('offen');
     const [formData, setFormData] = useState({
         item_name: '', category: '', quantity: '', unit: '', status: 'offen', notes: ''
     });
@@ -189,7 +333,7 @@ export default function Shopping() {
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: items = [] } = useQuery({
         queryKey: ['shopping-list'],
-        queryFn: () => base44.entities.ShoppingList.list('-created_date', 200),
+        queryFn: () => base44.entities.ShoppingList.list('-created_date', 300),
         staleTime: 2 * 60 * 1000,
     });
 
@@ -278,21 +422,67 @@ export default function Shopping() {
         else              createMutation.mutate(data);
     };
 
-    const handleStatusChange = (item, newStatus) =>
-        updateMutation.mutate({ id: item.id, data: { ...item, status: newStatus } });
-
-    const handleDeleteConfirmed = () => {
-        if (!deleteConfirm) return;
-        deleteMutation.mutate(deleteConfirm);
-        setDeleteConfirm(null);
-    };
-
-    const handleDeleteAllReceived = async () => {
-        for (const item of receivedItems) {
-            try { await deleteMutation.mutateAsync(item.id); } catch { /* ignore */ }
+    // Artikel als "bestellt" markieren (einzeln oder alle offenen)
+    const handleMarkBestellt = async (itemsToMark) => {
+        const now = new Date().toISOString();
+        for (const item of itemsToMark) {
+            await updateMutation.mutateAsync({
+                id: item.id,
+                data: { ...item, status: 'bestellt', ordered_at: now }
+            });
         }
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
-        setDeleteAllConfirm(false);
+        toast.success(`${itemsToMark.length} Artikel als bestellt markiert`);
+        setMarkBestelltConfirm(null);
+        if (activeTab === 'offen') setActiveTab('bestellt');
+    };
+
+    // Wareneingang quittieren
+    const handleWareneingangConfirm = async ({ deliveredQty, note }) => {
+        const item = wareneingangItem;
+        const now  = new Date().toISOString();
+        await updateMutation.mutateAsync({
+            id: item.id,
+            data: {
+                ...item,
+                status: 'erhalten',
+                delivered_quantity: deliveredQty,
+                received_at: now,
+                delivery_note: note || null,
+            }
+        });
+
+        // Lagerbestand automatisch erhöhen wenn Artikel verknüpft
+        if (item.article_id && deliveredQty > 0) {
+            const article = articles.find(a => a.id === item.article_id || a.name === item.item_name);
+            if (article) {
+                const newStock = (parseFloat(article.current_stock) || 0) + deliveredQty;
+                await base44.entities.Article.update(article.id, { current_stock: newStock });
+                queryClient.invalidateQueries({ queryKey: ['articles'] });
+                toast.success(`Lagerbestand ${article.name}: +${deliveredQty} → ${newStock}`);
+            }
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+        setWareneingangItem(null);
+        toast.success('Wareneingang quittiert');
+        setActiveTab('erhalten');
+    };
+
+    // Bestellung abschließen (alle "erhalten" Items)
+    const handleCloseOrder = async () => {
+        const receivedAll = items.filter(i => i.status === 'erhalten' &&
+            (supplierFilter === 'alle' || i.category === supplierFilter));
+        for (const item of receivedAll) {
+            await updateMutation.mutateAsync({
+                id: item.id,
+                data: { ...item, status: 'abgeschlossen' }
+            });
+        }
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+        setCloseOrderConfirm(false);
+        toast.success(`Bestellung abgeschlossen — ${receivedAll.length} Artikel archiviert`);
+        setActiveTab('abgeschlossen');
     };
 
     const handleArticleAdd = (itemData) => {
@@ -325,16 +515,16 @@ export default function Shopping() {
         if (existing) {
             await updateMutation.mutateAsync({
                 id: existing.id,
-                data: { ...existing, quantity: parseFloat(existing.quantity || 0) + parseFloat(article.quantity || 1) }
+                data: { ...existing, quantity: parseFloat(existing.quantity || 0) + 1 }
             });
         } else {
             await createMutation.mutateAsync({
-                item_name: article.name,
-                category:  article.suppliers?.[0] || suppliers[0]?.name || '',
-                quantity:  parseFloat(article.quantity || 1),
-                unit:      article.unit || '',
-                status:    'offen',
-                notes:     '',
+                item_name:  article.name,
+                article_id: article.id,
+                category:   article.suppliers?.[0] || suppliers[0]?.name || '',
+                quantity:   1,
+                unit:       article.content_unit || '',
+                status:     'offen',
             });
         }
         setEanInput('');
@@ -348,29 +538,24 @@ export default function Shopping() {
             if (a.min_stock == null || a.current_stock == null) return false;
             if (a.current_stock > a.min_stock) return false;
             return !items.some(i =>
-                i.status === 'offen' && (
+                (i.status === 'offen' || i.status === 'bestellt') && (
                     (a.id && i.article_id === a.id) || i.item_name === a.name
                 )
             );
         }), [articles, items]
     );
 
-    const filteredItems = items.filter(i => 
-        (supplierFilter === 'alle' || i.category === supplierFilter) &&
-        i.status === activeTab
+    const filteredItems = useMemo(() =>
+        items.filter(i =>
+            (supplierFilter === 'alle' || i.category === supplierFilter) &&
+            i.status === activeTab
+        ), [items, supplierFilter, activeTab]
     );
-
-    const openItems     = filteredItems.filter(i => i.status === 'offen');
-    const orderedItems  = [];
-    const receivedItems = filteredItems.filter(i => i.status === 'erhalten');
 
     const orderSummary = useMemo(() => {
         const openOrderItems = items.filter(i => i.status === 'offen');
-        let totalNet = 0;
-        let totalVat7 = 0;
-        let totalVat19 = 0;
-        let itemsWithPrice = 0;
-        let itemsWithoutPrice = 0;
+        let totalNet = 0, totalVat7 = 0, totalVat19 = 0;
+        let itemsWithPrice = 0, itemsWithoutPrice = 0;
 
         openOrderItems.forEach(item => {
             const article = articles.find(a => a.name === item.item_name);
@@ -397,11 +582,22 @@ export default function Shopping() {
         return article?.purchase_price || article?.supplier_details?.[0]?.purchase_price || null;
     };
 
-    const totalOpen     = items.filter(i => i.status === 'offen').length;
-    const totalReceived = items.filter(i => i.status === 'erhalten').length;
+    // Tab-Counts
+    const counts = useMemo(() => ({
+        offen:         items.filter(i => i.status === 'offen').length,
+        bestellt:      items.filter(i => i.status === 'bestellt').length,
+        erhalten:      items.filter(i => i.status === 'erhalten').length,
+        abgeschlossen: items.filter(i => i.status === 'abgeschlossen').length,
+    }), [items]);
+
+    // Aktive Lieferanten für Filter
+    const activeSuppliers = useMemo(() => {
+        const names = new Set(items.filter(i => i.status === activeTab).map(i => i.category).filter(Boolean));
+        return suppliers.filter(s => names.has(s.name));
+    }, [items, suppliers, activeTab]);
 
     if (!permissions.canViewShopping)
-        return <PermissionDenied message="Du hast keine Berechtigung, die Einkaufsliste zu sehen." />;
+        return <PermissionDenied message="Du hast keine Berechtigung, die Bestellungen zu sehen." />;
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
@@ -411,19 +607,18 @@ export default function Shopping() {
                 <div className="flex items-center justify-between gap-3">
                     <div>
                         <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                            <ShoppingCart className="w-5 h-5 text-amber-500" />
-                            Einkaufsliste
+                            <ShoppingCart className="w-5 h-5 text-primary" />
+                            Bestellungen
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            {totalOpen} offen · {totalReceived} erhalten
+                            {counts.offen} offen · {counts.bestellt} bestellt · {counts.erhalten} im Eingang
                         </p>
                     </div>
 
                     {permissions.canEditShopping && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button size="sm"
-                                    className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                                <Button size="sm" className="h-9 gap-1.5">
                                     <Plus className="w-4 h-4" />
                                     Hinzufügen
                                 </Button>
@@ -447,9 +642,9 @@ export default function Shopping() {
                     )}
                 </div>
 
-                {/* ── Live-Kostenkalkulation Banner ────────────────────── */}
-                {orderSummary.openCount > 0 && (
-                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-amber-500/25 bg-amber-500/8">
+                {/* ── Kostenkalkulation Banner (nur Tab Offen) ──────────── */}
+                {activeTab === 'offen' && orderSummary.openCount > 0 && (
+                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-primary/25 bg-primary/5">
                         <div>
                             <p className="text-xs text-muted-foreground">Geschätzte Bestellsumme</p>
                             <div className="flex items-baseline gap-2">
@@ -468,304 +663,301 @@ export default function Shopping() {
                                 {orderSummary.totalVat19 > 0 && <span>19%: +{orderSummary.totalVat19.toFixed(2)} €</span>}
                             </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-xs text-muted-foreground">{orderSummary.openCount} Positionen</p>
-                            <p className="text-xs text-muted-foreground">{orderSummary.itemsWithPrice} mit Preis</p>
-                        </div>
+                        {/* Alle bestellen Button */}
+                        {permissions.canEditShopping && (
+                            <Button
+                                onClick={() => setMarkBestelltConfirm(items.filter(i => i.status === 'offen'))}
+                                className="h-10 shrink-0 gap-1.5 bg-primary hover:bg-primary/90">
+                                <Send className="w-4 h-4" />
+                                Bestellt!
+                            </Button>
+                        )}
                     </div>
                 )}
 
-                {/* ── Tab-Navigation ───────────────────────────────────── */}
-                <div className="flex gap-2">
-                    {[
-                        { id: 'offen',    label: 'Aktuelle Bestellung' },
-                        { id: 'erhalten', label: 'Archiv' },
-                    ].map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={cn(
-                                'flex-1 py-2 rounded-full text-xs font-semibold border transition-all flex items-center justify-center gap-1.5',
-                                activeTab === tab.id
-                                    ? 'bg-primary border-primary text-primary-foreground'
-                                    : 'border-border text-muted-foreground bg-card hover:text-foreground'
-                            )}
-                        >
-                            {tab.label}
-                            {tab.id === 'offen' && orderSummary.openCount > 0 && (
-                                <span className="px-1.5 py-0.5 rounded-full bg-primary-foreground/20 text-[10px]">
-                                    {orderSummary.openCount}
-                                </span>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                {/* ── EAN / Schnelleingabe ──────────────────────────────── */}
-                {permissions.canEditShopping && activeTab === 'offen' && (
-                    <form onSubmit={handleEanSubmit} className="flex gap-2">
-                        <SmartCombobox
-                            value={eanInput}
-                            onChange={setEanInput}
-                            options={articles.map(a => a.name)}
-                            placeholder="EAN oder Artikelname schnell hinzufügen…"
-                            allowCreate={false}
-                            className="flex-1"
-                        />
-                        <Button type="submit"
-                            className="h-11 shrink-0 bg-amber-600 hover:bg-amber-700 text-white px-4">
-                            <Plus className="w-4 h-4" />
-                        </Button>
-                    </form>
-                )}
-
-                {/* ── Lieferanten-Filter (horizontale Chips) ────────────── */}
-                {suppliers.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
-                        {[{ name: 'alle' }, ...suppliers].map((s, i) => (
-                            <button key={s.name}
-                                onClick={() => setSupplierFilter(s.name)}
-                                className={cn(
-                                    'shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
-                                    supplierFilter === s.name
-                                        ? 'bg-amber-500 border-amber-500 text-white'
-                                        : 'border-border text-muted-foreground hover:text-foreground bg-card'
-                                )}>
-                                {s.name === 'alle' ? 'Alle' : s.name}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* ── Low-Stock Vorschläge ──────────────────────────────── */}
-                {lowStockSuggestions.length > 0 && supplierFilter === 'alle' && activeTab === 'offen' && (
-                    <div className="rounded-xl border border-orange-500/25 bg-orange-500/8 p-3 space-y-2">
-                        <div className="flex items-center gap-2">
-                            <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                            <p className="text-xs font-bold text-orange-400 uppercase tracking-wide">
-                                Nachbestellen ({lowStockSuggestions.length})
+                {/* ── Wareneingang abschließen Banner ───────────────────── */}
+                {activeTab === 'erhalten' && filteredItems.length > 0 && permissions.canEditShopping && (
+                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-green-500/25 bg-green-500/5">
+                        <div>
+                            <p className="text-sm font-semibold text-foreground">
+                                {filteredItems.length} Artikel quittiert
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Alles vollständig? Bestellung jetzt abschließen.
                             </p>
                         </div>
-                        <div className="space-y-1.5">
-                            {lowStockSuggestions.map(article => (
-                                <div key={article.id}
-                                    className="flex items-center gap-2.5 py-1">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-foreground truncate">{article.name}</p>
-                                        <p className="text-[10px] text-orange-400">
-                                            Bestand {article.current_stock} / Min. {article.min_stock} {article.content_unit || ''}
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => handleArticleAdd({
-                                            article_id: article.id,
-                                            item_name:  article.name,
-                                            category:   article.supplier_details?.find(s => s.is_primary)?.supplier_name || article.suppliers?.[0] || suppliers[0]?.name || '',
-                                            quantity:   Math.max(1, (article.min_stock || 1) - (article.current_stock || 0)),
-                                            unit:       article.content_unit || 'Stück',
-                                            status:     'offen',
-                                            notes:      'Mindestbestand unterschritten',
-                                        })}
-                                        className="shrink-0 h-7 px-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold transition-colors">
-                                        + Übernehmen
-                                    </button>
-                                </div>
+                        <Button
+                            onClick={() => setCloseOrderConfirm(true)}
+                            className="h-10 shrink-0 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+                            <ClipboardCheck className="w-4 h-4" />
+                            Abschließen
+                        </Button>
+                    </div>
+                )}
+
+                {/* ── Niedrigbestand-Hinweise ───────────────────────────── */}
+                {lowStockSuggestions.length > 0 && activeTab === 'offen' && (
+                    <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                            <p className="text-sm font-semibold text-foreground">
+                                {lowStockSuggestions.length} Artikel unter Mindestbestand
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                            {lowStockSuggestions.slice(0, 8).map(a => (
+                                <button key={a.id}
+                                    onClick={() => handleArticleAdd({
+                                        item_name: a.name, article_id: a.id,
+                                        category: a.suppliers?.[0] || suppliers[0]?.name || '',
+                                        quantity: Math.max(1, (a.min_stock || 1) - (a.current_stock || 0)),
+                                        unit: a.content_unit || '', status: 'offen',
+                                    })}
+                                    className="text-xs px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 hover:bg-amber-500/25 transition-colors">
+                                    + {a.name}
+                                </button>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* ── Offen ────────────────────────────────────────────── */}
-                {openItems.length > 0 && (
-                    <div className="space-y-2">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-0.5">
-                            Offen ({openItems.length})
-                        </p>
-                        {openItems.map(item => (
-                            <ShoppingRow key={item.id}
-                                item={item}
-                                suppliers={suppliers}
-                                onStatusChange={handleStatusChange}
-                                onEdit={openModal}
-                                onDelete={setDeleteConfirm}
-                                unitPrice={getUnitPrice(item)}
-                            />
+                {/* ── Tab-Navigation ────────────────────────────────────── */}
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+                    {TABS.map(tab => {
+                        const count = counts[tab.id];
+                        return (
+                            <button key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={cn(
+                                    'flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-xs font-semibold border transition-all',
+                                    activeTab === tab.id
+                                        ? 'bg-primary border-primary text-primary-foreground'
+                                        : 'border-border text-muted-foreground hover:text-foreground bg-card'
+                                )}>
+                                <tab.icon className="w-3.5 h-3.5" />
+                                {tab.label}
+                                {count > 0 && (
+                                    <span className={cn(
+                                        'text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center',
+                                        activeTab === tab.id ? 'bg-primary-foreground/20' : 'bg-muted text-muted-foreground'
+                                    )}>
+                                        {count}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* ── Lieferanten-Filter ────────────────────────────────── */}
+                {activeSuppliers.length > 1 && (
+                    <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+                        {['alle', ...activeSuppliers.map(s => s.name)].map((name, idx) => (
+                            <button key={name}
+                                onClick={() => setSupplierFilter(name)}
+                                className={cn(
+                                    'shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+                                    supplierFilter === name
+                                        ? 'bg-card border-foreground text-foreground'
+                                        : 'border-border text-muted-foreground hover:text-foreground bg-transparent'
+                                )}>
+                                {name === 'alle' ? 'Alle Lieferanten' : name}
+                            </button>
                         ))}
                     </div>
                 )}
 
-{/* ── Erhalten (einklappbar) ────────────────────────────── */}
-                {receivedItems.length > 0 && (
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between px-0.5">
-                            <button
-                                onClick={() => setReceivedCollapsed(c => !c)}
-                                className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-                                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', receivedCollapsed && '-rotate-90')} />
-                                Erhalten ({receivedItems.length})
-                            </button>
-                            <button
-                                onClick={() => setDeleteAllConfirm(true)}
-                                className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors">
-                                <Trash2 className="w-3 h-3" />
-                                Alle löschen
-                            </button>
+                {/* ── EAN / Schnellsuche (nur Tab Offen) ───────────────── */}
+                {activeTab === 'offen' && permissions.canEditShopping && (
+                    <form onSubmit={handleEanSubmit} className="flex gap-2">
+                        <Input
+                            value={eanInput}
+                            onChange={e => setEanInput(e.target.value)}
+                            placeholder="Barcode oder Artikelname scannen..."
+                            className="h-10 text-sm flex-1"
+                        />
+                        <Button type="submit" variant="outline" size="icon" className="h-10 w-10 shrink-0">
+                            <Search className="w-4 h-4" />
+                        </Button>
+                    </form>
+                )}
+
+                {/* ── Item-Liste ────────────────────────────────────────── */}
+                <div className="space-y-2">
+                    {filteredItems.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground">
+                            <Package className="w-10 h-10 mx-auto mb-3 opacity-20" />
+                            <p className="text-sm font-medium">
+                                {activeTab === 'offen' ? 'Bestellliste ist leer' :
+                                 activeTab === 'bestellt' ? 'Keine offenen Bestellungen' :
+                                 activeTab === 'erhalten' ? 'Kein Wareneingang ausstehend' :
+                                 'Noch keine abgeschlossenen Bestellungen'}
+                            </p>
+                            {activeTab === 'offen' && (
+                                <p className="text-xs mt-1 opacity-60">Artikel über "+ Hinzufügen" ergänzen</p>
+                            )}
                         </div>
-                        {!receivedCollapsed && receivedItems.map(item => (
-                            <ShoppingRow key={item.id}
+                    ) : (
+                        filteredItems.map(item => (
+                            <ShoppingRow
+                                key={item.id}
                                 item={item}
                                 suppliers={suppliers}
-                                onStatusChange={handleStatusChange}
-                                onEdit={openModal}
-                                onDelete={setDeleteConfirm}
+                                activeTab={activeTab}
                                 unitPrice={getUnitPrice(item)}
+                                onEdit={openModal}
+                                onDelete={(id) => setDeleteConfirm(id)}
+                                onMarkBestellt={(items) => setMarkBestelltConfirm(items)}
+                                onOpenWareneingang={(item) => setWareneingangItem(item)}
                             />
-                        ))}
-                    </div>
-                )}
+                        ))
+                    )}
+                </div>
 
-                {/* Empty state */}
-                {filteredItems.length === 0 && lowStockSuggestions.length === 0 && (
-                    <div className="text-center py-16 text-muted-foreground">
-                        <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                        <p className="font-semibold text-foreground">Liste ist leer</p>
-                        <p className="text-sm mt-1">Füge Artikel über das + Menü hinzu</p>
-                    </div>
-                )}
-
-                {/* ── Modals & Dialogs ──────────────────────────────────── */}
-                <KanbanScanModal
-                    open={kanbanOpen}
-                    onClose={() => setKanbanOpen(false)}
-                    articles={articles}
-                    suppliers={suppliers}
-                    items={items}
-                    onAdd={handleArticleAdd}
-                />
-
-                <ArticlePickerSheet
-                    open={articlePickerOpen}
-                    onClose={() => setArticlePickerOpen(false)}
-                    articles={articles}
-                    suppliers={suppliers}
-                    onAdd={handleArticleAdd}
-                />
-
-                {/* Bearbeiten-Modal */}
-                <Dialog open={modalOpen} onOpenChange={closeModal}>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>{selectedItem ? 'Artikel bearbeiten' : 'Artikel hinzufügen'}</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-                            <div className="space-y-1.5">
-                                <Label>Artikelname *</Label>
-                                <SmartCombobox
-                                    value={formData.item_name}
-                                    onChange={(val) => {
-                                        const article = articles.find(a => a.name === val);
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            item_name: val,
-                                            category:  article?.suppliers?.[0] || prev.category,
-                                            quantity:  article?.quantity || prev.quantity,
-                                            unit:      article?.unit || prev.unit,
-                                        }));
-                                    }}
-                                    options={articles.map(a => a.name)}
-                                    placeholder="Artikel suchen…"
-                                    allowCreate={true}
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Lieferant *</Label>
-                                <Select value={formData.category}
-                                    onValueChange={v => setFormData({ ...formData, category: v })}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {suppliers.map(s => (
-                                            <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label>Menge *</Label>
-                                    <Input type="number" step="0.01"
-                                        value={formData.quantity}
-                                        onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-                                        placeholder="1" required />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Einheit</Label>
-                                    <Input value={formData.unit}
-                                        onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                                        placeholder="Stk, kg, L…" />
-                                </div>
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Notiz</Label>
-                                <Textarea value={formData.notes}
-                                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                    placeholder="Optional…"
-                                    rows={2} className="resize-none" />
-                            </div>
-                            <div className="flex gap-2 pt-1">
-                                <Button type="button" variant="outline"
-                                    onClick={closeModal} className="flex-1 h-10">
-                                    Abbrechen
-                                </Button>
-                                <Button type="submit"
-                                    disabled={createMutation.isPending || updateMutation.isPending}
-                                    className="flex-1 h-10 bg-amber-600 hover:bg-amber-700 text-white">
-                                    {createMutation.isPending || updateMutation.isPending ? 'Speichern…' : 'Speichern'}
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Löschen-Bestätigung */}
-                <AlertDialog open={!!deleteConfirm} onOpenChange={o => !o && setDeleteConfirm(null)}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Artikel löschen?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Diese Aktion kann nicht rückgängig gemacht werden.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={handleDeleteConfirmed}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                Löschen
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-                {/* Alle Erhalten löschen */}
-                <AlertDialog open={deleteAllConfirm} onOpenChange={setDeleteAllConfirm}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>{receivedItems.length} Artikel löschen?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Alle erhaltenen Artikel werden unwiderruflich gelöscht.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={handleDeleteAllReceived}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                Alle löschen
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
             </div>
+
+            {/* ── Wareneingang Dialog ───────────────────────────────────── */}
+            <WareneingangDialog
+                item={wareneingangItem}
+                open={!!wareneingangItem}
+                onClose={() => setWareneingangItem(null)}
+                onConfirm={handleWareneingangConfirm}
+            />
+
+            {/* ── Bestellung abgeben Confirm ────────────────────────────── */}
+            <AlertDialog open={!!markBestelltConfirm} onOpenChange={(o) => !o && setMarkBestelltConfirm(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Send className="w-5 h-5 text-blue-400" />
+                            Bestellung aufgeben?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {markBestelltConfirm?.length} Artikel werden als "bestellt" markiert.
+                            Du hast die Bestellung beim Lieferanten aufgegeben?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleMarkBestellt(markBestelltConfirm)}>
+                            Ja, Bestellung aufgegeben
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Bestellung abschließen Confirm ────────────────────────── */}
+            <AlertDialog open={closeOrderConfirm} onOpenChange={setCloseOrderConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <ClipboardCheck className="w-5 h-5 text-green-400" />
+                            Bestellung abschließen?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Alle quittieren Artikel werden ins Archiv verschoben. Lagerbestände wurden bereits beim Quittieren aktualisiert.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Noch nicht</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleCloseOrder}
+                            className="bg-green-600 hover:bg-green-700 text-white">
+                            Abschließen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Löschen Confirm ───────────────────────────────────────── */}
+            <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Artikel löschen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Dieser Eintrag wird dauerhaft aus der Bestellliste entfernt.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => { deleteMutation.mutate(deleteConfirm); setDeleteConfirm(null); }}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                            Löschen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Artikel hinzufügen Modal ──────────────────────────────── */}
+            <Dialog open={modalOpen} onOpenChange={closeModal}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {selectedItem ? 'Artikel bearbeiten' : 'Artikel hinzufügen'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-3 pt-1">
+                        <div>
+                            <Label className="text-xs text-muted-foreground">Artikelname *</Label>
+                            <SmartCombobox
+                                value={formData.item_name}
+                                onChange={v => setFormData(p => ({ ...p, item_name: v }))}
+                                options={articles.map(a => ({ value: a.name, label: a.name }))}
+                                placeholder="Artikel suchen oder eingeben..."
+                                className="mt-1"
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-xs text-muted-foreground">Lieferant *</Label>
+                            <Select value={formData.category} onValueChange={v => setFormData(p => ({ ...p, category: v }))}>
+                                <SelectTrigger className="h-9 mt-1">
+                                    <SelectValue placeholder="Lieferant wählen" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {suppliers.map(s => (
+                                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <Label className="text-xs text-muted-foreground">Menge *</Label>
+                                <Input type="number" step="0.5" min="0"
+                                    value={formData.quantity}
+                                    onChange={e => setFormData(p => ({ ...p, quantity: e.target.value }))}
+                                    className="h-9 mt-1" required />
+                            </div>
+                            <div>
+                                <Label className="text-xs text-muted-foreground">Einheit</Label>
+                                <Input value={formData.unit}
+                                    onChange={e => setFormData(p => ({ ...p, unit: e.target.value }))}
+                                    placeholder="Stück, Kiste..."
+                                    className="h-9 mt-1" />
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="text-xs text-muted-foreground">Notiz</Label>
+                            <Textarea value={formData.notes}
+                                onChange={e => setFormData(p => ({ ...p, notes: e.target.value }))}
+                                className="mt-1 h-16 resize-none text-sm" />
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                            <Button type="button" variant="outline" onClick={closeModal} className="flex-1 h-10">
+                                Abbrechen
+                            </Button>
+                            <Button type="submit" className="flex-1 h-10">
+                                {selectedItem ? 'Speichern' : 'Hinzufügen'}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Picker & Scanner ──────────────────────────────────────── */}
+            <KanbanScanModal open={kanbanOpen} onClose={() => setKanbanOpen(false)} onAdd={handleArticleAdd} articles={articles} suppliers={suppliers} />
+            <ArticlePickerSheet open={articlePickerOpen} onClose={() => setArticlePickerOpen(false)} onAdd={handleArticleAdd} articles={articles} suppliers={suppliers} />
         </div>
     );
 }
