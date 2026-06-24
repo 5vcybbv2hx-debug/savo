@@ -68,7 +68,13 @@ export default function Warehouse() {
     // Offene Bestellungen
     const { data: orders = [] } = useQuery({
         queryKey: ['shopping-open'],
-        queryFn: () => base44.entities.ShoppingList.filter({ status: 'offen' }, '-created_date', 200),
+        queryFn: async () => {
+            const [offen, bestellt] = await Promise.all([
+                base44.entities.ShoppingList.filter({ status: 'offen' }),
+                base44.entities.ShoppingList.filter({ status: 'bestellt' }),
+            ]);
+            return [...offen, ...bestellt];
+        },
         staleTime: STALE.MEDIUM,
         enabled: permissions.canViewShopping,
     });
@@ -141,7 +147,7 @@ export default function Warehouse() {
                     <NavCard
                         icon={RefreshCw}
                         label="Auffüllen"
-                        description="Keller → Theke, tägliche Liste"
+                        description="Keller → Theke · nach Bereichen (NR / Raucher)"
                         page="Restock"
                         badge={openRestockCount || undefined}
                         badgeVariant="warning"
@@ -151,7 +157,7 @@ export default function Warehouse() {
                     <NavCard
                         icon={ShoppingCart}
                         label="Bestellungen"
-                        description="Lieferanten-Bestellungen mit Live-Kosten"
+                        description="Lieferantenbestellungen · Wareneingang · Archiv"
                         page="Shopping"
                         badge={openOrdersCount || undefined}
                         badgeVariant="default"
@@ -161,7 +167,7 @@ export default function Warehouse() {
                     <NavCard
                         icon={ShoppingBasket}
                         label="Einkaufsliste"
-                        description="Schnelle Liste für alle Mitarbeiter"
+                        description="Spontane Besorgungen · tagesaktuelle Teamliste"
                         page="QuickList"
                         badge={openQuickListCount || undefined}
                         badgeVariant="default"
@@ -171,7 +177,7 @@ export default function Warehouse() {
                     <NavCard
                         icon={TrendingDown}
                         label="Schwund"
-                        description="Bruch, Verderb, Nachtwächter erfassen"
+                        description="Bruch, Verderb, Verlust protokollieren"
                         page="Wastage"
                     />
                 )}
@@ -184,7 +190,7 @@ export default function Warehouse() {
                     <NavCard
                         icon={Package}
                         label="Artikeldatenbank"
-                        description="Bestände, Mindestmengen, Preise, Inventur"
+                        description="Artikel, Bestände, Mindestmengen, Einkaufspreise"
                         page="Articles"
                         badge={lowStockCount || undefined}
                         badgeVariant="warning"
@@ -202,7 +208,7 @@ export default function Warehouse() {
                     <NavCard
                         icon={Layers}
                         label="Lagerplätze"
-                        description="Bereiche, Möbel, Fächer, QR-Labels"
+                        description="Theken & Lager · Fächer · QR-Etiketten drucken"
                         page="Storage"
                     />
                 )}
@@ -210,7 +216,7 @@ export default function Warehouse() {
                     <NavCard
                         icon={ClipboardCheck}
                         label="Inventur"
-                        description="Periodische Bestandsaufnahme"
+                        description="Monatliche Zählung · Bestandskontrolle"
                         page="Inventory"
                     />
                 )}
