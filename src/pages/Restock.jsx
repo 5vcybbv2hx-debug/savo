@@ -272,6 +272,43 @@ export default function Restock() {
         showToast(`${item.article_name} zur Bestellung hinzugefügt`, 'success');
     };
 
+    // Alle erledigten Artikel auf einmal zur Bestellliste hinzufügen
+    const addAllCompletedToOrder = async () => {
+        const completed = todayItems.filter(i => i.is_completed);
+        let added = 0;
+        let skipped = 0;
+
+        for (const item of completed) {
+            const alreadyInOrder = shoppingItems.some(
+                s => s.item_name === item.article_name && (s.status === 'offen' || s.status === 'bestellt')
+            );
+            if (alreadyInOrder) { skipped++; continue; }
+
+            const article = articles.find(a => a.id === item.article_id);
+            await base44.entities.ShoppingList.create({
+                item_name:  item.article_name,
+                article_id: item.article_id || null,
+                category:   article?.suppliers?.[0] || article?.supplier_details?.[0]?.supplier_name || '',
+                quantity:   item.quantity,
+                unit:       article?.content_unit || 'Stück',
+                status:     'offen',
+                notes:      `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')}`,
+            });
+            added++;
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+        queryClient.invalidateQueries({ queryKey: ['shopping-list-restock'] });
+
+        if (added > 0 && skipped > 0) {
+            showToast(`${added} hinzugefügt · ${skipped} bereits in Bestellung`, 'info');
+        } else if (added > 0) {
+            showToast(`${added} Artikel zur Bestellliste hinzugefügt ✓`, 'success');
+        } else {
+            showToast('Alle Artikel bereits in der Bestellung', 'info');
+        }
+    };
+
     const handleDelete = (id) => {
         setConfirmDialog({
             title: 'Eintrag löschen?',
@@ -467,15 +504,25 @@ export default function Restock() {
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-base font-semibold text-foreground">Heutige Auffülliste</h2>
                         {todayItems.filter(i => i.is_completed).length > 0 && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleDeleteCompleted}
-                                className="h-9 border-border/60 text-muted-foreground hover:text-foreground"
-                            >
-                                <CheckCheck className="w-4 h-4 mr-1.5" />
-                                Erledigte löschen
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    size="sm"
+                                    onClick={addAllCompletedToOrder}
+                                    className="h-9 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground"
+                                >
+                                    <ShoppingCart className="w-4 h-4" />
+                                    Alle bestellen
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDeleteCompleted}
+                                    className="h-9 border-border/60 text-muted-foreground hover:text-foreground"
+                                >
+                                    <CheckCheck className="w-4 h-4 mr-1.5" />
+                                    Löschen
+                                </Button>
+                            </div>
                         )}
                     </div>
 
