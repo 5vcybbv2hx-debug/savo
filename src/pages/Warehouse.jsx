@@ -1,110 +1,198 @@
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, ShoppingCart, Scan, TrendingDown, ClipboardCheck } from 'lucide-react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
-import { useErrorHandler } from '@/components/error/ErrorHandler';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { STALE } from '@/lib/queryUtils';
+import {
+    Package, RefreshCw, ShoppingCart, Layers,
+    Building2, TrendingDown, ClipboardCheck, AlertTriangle
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-// Import existing page components
-import ArticlesPage from './Articles';
-import ShoppingPage from './Shopping';
-import RestockPage from './Restock';
-import WastagePage from './Wastage';
-import InventoryPage from './Inventory';
+function StatBadge({ count, variant = 'default' }) {
+    if (!count) return null;
+    return (
+        <span className={cn(
+            'ml-auto text-xs font-bold px-2 py-0.5 rounded-full',
+            variant === 'warning' ? 'bg-orange-500/20 text-orange-400' :
+            variant === 'danger'  ? 'bg-destructive/20 text-destructive' :
+                                    'bg-primary/20 text-primary'
+        )}>
+            {count}
+        </span>
+    );
+}
 
-export default function WarehousePage() {
+function NavCard({ icon: Icon, label, description, page, badge, badgeVariant, disabled, onClick }) {
+    const navigate = useNavigate();
+    return (
+        <button
+            onClick={onClick || (() => navigate(createPageUrl(page)))}
+            disabled={disabled}
+            className={cn(
+                'flex items-center gap-4 w-full p-4 rounded-xl border text-left transition-all active:scale-[0.98]',
+                disabled
+                    ? 'opacity-40 cursor-not-allowed bg-card border-border/30'
+                    : 'bg-card border-border/50 hover:border-border hover:bg-accent/20 cursor-pointer'
+            )}
+        >
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">{label}</p>
+                {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+            </div>
+            {badge !== undefined && (
+                <StatBadge count={badge} variant={badgeVariant} />
+            )}
+        </button>
+    );
+}
+
+export default function Warehouse() {
     const permissions = usePermissions();
-    const [activeTab, setActiveTab] = useState('articles');
+    const navigate = useNavigate();
 
-    if (!permissions.canViewShopping) {
-        return <PermissionDenied message="Du hast keine Berechtigung für die Lagerverwaltung." />;
+    // Niedrigbestand-Counter
+    const { data: articles = [] } = useQuery({
+        queryKey: ['articles-warehouse'],
+        queryFn: () => base44.entities.Article.filter({ is_active: true }, 'name', 500),
+        staleTime: STALE.LONG,
+        enabled: permissions.canViewWarehouse,
+    });
+
+    // Offene Bestellungen
+    const { data: orders = [] } = useQuery({
+        queryKey: ['shopping-open'],
+        queryFn: () => base44.entities.ShoppingList.filter({ status: 'offen' }, '-created_date', 200),
+        staleTime: STALE.MEDIUM,
+        enabled: permissions.canViewShopping,
+    });
+
+    // Offene Auffüll-Items heute
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: restockItems = [] } = useQuery({
+        queryKey: ['restock-open'],
+        queryFn: () => base44.entities.RestockItem.filter({ date: today }, '-created_date', 100),
+        staleTime: STALE.SHORT,
+        enabled: permissions.canViewRestock,
+    });
+
+    if (permissions.isLoading) return (
+        <div className="flex items-center justify-center min-h-[40vh]">
+            <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+    );
+
+    if (!permissions.canViewWarehouse && !permissions.canViewShopping && !permissions.canViewRestock) {
+        return <PermissionDenied />;
     }
 
+    const lowStockCount = articles.filter(a =>
+        a.min_stock > 0 && (a.current_stock ?? 0) < a.min_stock
+    ).length;
+
+    const openOrdersCount = orders.length;
+    const openRestockCount = restockItems.filter(i => !i.is_completed).length;
+
     return (
-        <div className="min-h-screen bg-background animate-page-enter">
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-                {/* Header */}
-                <div className="mb-4 sm:mb-6">
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">Bestand</h1>
-                    <p className="text-muted-foreground text-xs sm:text-sm mt-1">Artikel, Einkauf, Auffüllen und Inventur</p>
+        <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8">
+            {/* Header */}
+            <div className="mb-6">
+                <h1 className="text-xl font-bold text-foreground">Waren & Lager</h1>
+                <p className="text-muted-foreground text-xs mt-0.5">Artikel, Bestellungen, Lagerplätze</p>
+            </div>
+
+            {/* Niedrigbestand-Alert */}
+            {lowStockCount > 0 && (
+                <div className="flex items-center gap-3 p-3 mb-5 rounded-xl border border-orange-500/30 bg-orange-500/5">
+                    <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
+                    <p className="text-sm text-orange-400 font-medium">
+                        {lowStockCount} {lowStockCount === 1 ? 'Artikel' : 'Artikel'} unter Mindestbestand
+                    </p>
+                    <button
+                        onClick={() => navigate(createPageUrl('Articles'))}
+                        className="ml-auto text-xs text-orange-400 underline underline-offset-2"
+                    >
+                        Ansehen
+                    </button>
                 </div>
+            )}
 
-                {/* Tabs */}
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-                    {(() => {
-                        const tabCount = [
-                            permissions.isManager,
-                            true,
-                            true,
-                            permissions.canViewWastage,
-                            permissions.canViewInventory
-                        ].filter(Boolean).length;
-                        const gridClass = `grid-cols-${tabCount}`;
-                        return (
-                    <TabsList className={`grid w-full ${gridClass} bg-card border border-border h-auto p-1`}>
-                        {permissions.isManager && (
-                            <TabsTrigger value="articles" className="data-[state=active]:bg-amber-600 py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
-                                <Package className="w-5 h-5 sm:w-4 sm:h-4" />
-                                <span className="hidden sm:inline">Artikel</span>
-                                <span className="sm:hidden">Artikel</span>
-                            </TabsTrigger>
-                        )}
-                        <TabsTrigger value="shopping" className="data-[state=active]:bg-amber-600 py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
-                            <ShoppingCart className="w-5 h-5 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline">Einkauf</span>
-                            <span className="sm:hidden">Kauf</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="restock" className="data-[state=active]:bg-amber-600 py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
-                            <Scan className="w-5 h-5 sm:w-4 sm:h-4" />
-                            <span>Auffüllen</span>
-                        </TabsTrigger>
-                        {permissions.canViewWastage && (
-                            <TabsTrigger value="wastage" className="data-[state=active]:bg-amber-600 py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
-                                <TrendingDown className="w-5 h-5 sm:w-4 sm:h-4" />
-                                <span>Schwund</span>
-                            </TabsTrigger>
-                        )}
-                        {permissions.canViewInventory && (
-                            <TabsTrigger value="inventory" className="data-[state=active]:bg-amber-600 py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
-                                <ClipboardCheck className="w-5 h-5 sm:w-4 sm:h-4" />
-                                <span>Inventur</span>
-                            </TabsTrigger>
-                        )}
-                    </TabsList>
-                        );
-                    })()}
+            {/* Tagesgeschäft */}
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Tagesgeschäft</p>
+            <div className="space-y-2 mb-6">
+                {permissions.canViewRestock && (
+                    <NavCard
+                        icon={RefreshCw}
+                        label="Auffüllen"
+                        description="Keller → Theke, tägliche Liste"
+                        page="Restock"
+                        badge={openRestockCount || undefined}
+                        badgeVariant="warning"
+                    />
+                )}
+                {permissions.canViewShopping && (
+                    <NavCard
+                        icon={ShoppingCart}
+                        label="Bestellungen"
+                        description="Lieferanten-Bestellungen mit Live-Kosten"
+                        page="Shopping"
+                        badge={openOrdersCount || undefined}
+                        badgeVariant="default"
+                    />
+                )}
+                {permissions.canViewWastage && (
+                    <NavCard
+                        icon={TrendingDown}
+                        label="Schwund"
+                        description="Bruch, Verderb, Nachtwächter erfassen"
+                        page="Wastage"
+                    />
+                )}
+            </div>
 
-                    {permissions.isManager && activeTab === 'articles' && (
-                        <TabsContent value="articles" className="space-y-0">
-                            <ArticlesPage />
-                        </TabsContent>
-                    )}
-
-                    {activeTab === 'shopping' && (
-                        <TabsContent value="shopping" className="space-y-0">
-                            <ShoppingPage />
-                        </TabsContent>
-                    )}
-
-                    {activeTab === 'restock' && (
-                        <TabsContent value="restock" className="space-y-0">
-                            <RestockPage />
-                        </TabsContent>
-                    )}
-
-                    {permissions.canViewWastage && activeTab === 'wastage' && (
-                        <TabsContent value="wastage" className="space-y-0">
-                            <WastagePage />
-                        </TabsContent>
-                    )}
-
-                    {permissions.canViewInventory && activeTab === 'inventory' && (
-                        <TabsContent value="inventory" className="space-y-0">
-                            <InventoryPage />
-                        </TabsContent>
-                    )}
-                </Tabs>
+            {/* Stammdaten */}
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Stammdaten</p>
+            <div className="space-y-2 mb-6">
+                {permissions.canViewWarehouse && (
+                    <NavCard
+                        icon={Package}
+                        label="Artikeldatenbank"
+                        description="Bestände, Mindestmengen, Preise, Inventur"
+                        page="Articles"
+                        badge={lowStockCount || undefined}
+                        badgeVariant="warning"
+                    />
+                )}
+                {permissions.canViewSuppliers && (
+                    <NavCard
+                        icon={Building2}
+                        label="Lieferanten"
+                        description="Kontakte, Konditionen, Bestellkontakte"
+                        page="Suppliers"
+                    />
+                )}
+                {permissions.canViewWarehouse && (
+                    <NavCard
+                        icon={Layers}
+                        label="Lagerplätze"
+                        description="Bereiche, Möbel, Fächer, QR-Labels"
+                        page="Storage"
+                    />
+                )}
+                {permissions.canViewInventory && (
+                    <NavCard
+                        icon={ClipboardCheck}
+                        label="Inventur"
+                        description="Periodische Bestandsaufnahme"
+                        page="Inventory"
+                    />
+                )}
             </div>
         </div>
     );
