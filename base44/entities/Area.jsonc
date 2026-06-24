@@ -4,11 +4,25 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Name des Bereichs (z.B. Lagerraum, Keller, K\u00fchlraum)"
+      "description": "Name des Bereichs (z.B. Theke Nichtraucher, Theke Raucher, Keller)"
     },
     "description": {
       "type": "string",
       "description": "Beschreibung"
+    },
+    "area_type": {
+      "type": "string",
+      "enum": ["theke", "lager", "sonstiges"],
+      "default": "theke",
+      "description": "Typ: theke = Auffüll-Bereich, lager = Lagerraum, sonstiges"
+    },
+    "color": {
+      "type": "string",
+      "description": "Tailwind-Farbklasse für UI (z.B. blue, green, amber)"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Lucide-Icon Name (z.B. Beer, Coffee, Package)"
     },
     "is_active": {
       "type": "boolean",
@@ -17,10 +31,9 @@
     },
     "sort_order": {
       "type": "number",
-      "description": "Sortierreihenfolge"
+      "description": "Sortierreihenfolge",
+      "default": 0
     }
   },
-  "required": [
-    "name"
-  ]
+  "required": ["name"]
 }
