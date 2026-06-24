@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, Trash2, ClipboardList } from 'lucide-react';
+import { ChevronDown, ChevronRight, Trash2, ClipboardList, ShoppingCart, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -23,6 +25,7 @@ import QuickListRow from '@/components/quicklist/QuickListRow';
 
 export default function QuickList() {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const today = format(new Date(), 'yyyy-MM-dd');
     const dateDisplay = new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
 
@@ -159,6 +162,45 @@ export default function QuickList() {
         toast.success(`${completedItems.length} Einträge gelöscht`);
     };
 
+    // ── Zur Bestellung: alle offenen Items → ShoppingList ───────────
+    const { data: suppliers = [] } = useQuery({
+        queryKey: ['suppliers'],
+        queryFn: () => base44.entities.Supplier.filter({ is_active: true }, 'order'),
+        staleTime: STALE.SLOW,
+    });
+
+    const handleAddAllToOrder = async () => {
+        if (openItems.length === 0) return;
+        // Existierende offene Bestellungen laden
+        const existing = await base44.entities.ShoppingList.filter({ status: 'offen' });
+        let added = 0, skipped = 0;
+
+        for (const item of openItems) {
+            const alreadyOrdered = existing.some(
+                e => e.item_name === item.item_name
+            );
+            if (alreadyOrdered) { skipped++; continue; }
+
+            const article = articles.find(a => a.id === item.article_id || a.name === item.item_name);
+            await base44.entities.ShoppingList.create({
+                item_name:  item.item_name,
+                article_id: item.article_id || null,
+                category:   article?.suppliers?.[0] || suppliers[0]?.name || '',
+                quantity:   item.quantity || 1,
+                unit:       item.unit || 'Stück',
+                status:     'offen',
+                notes:      `Einkaufsliste ${format(new Date(), 'dd.MM.yyyy')}`,
+            });
+            added++;
+        }
+
+        if (added > 0) {
+            toast.success(`${added} Artikel zur Bestellliste hinzugefügt${skipped > 0 ? ` · ${skipped} übersprungen` : ''}`);
+        } else {
+            toast.info('Alle Artikel bereits in der Bestellliste');
+        }
+    };
+
     // ── Loading ───────────────────────────────────────────────────────
     if (isLoading) return (
         <div className="flex items-center justify-center min-h-[40vh]">
@@ -176,11 +218,19 @@ export default function QuickList() {
                         Heute, {dateDisplay} — {openItems.length} offen
                     </p>
                 </div>
-                {completedCount > 0 && (
-                    <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)} className="shrink-0">
-                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Erledigt löschen
-                    </Button>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                    {openItems.length > 0 && (
+                        <Button size="sm" onClick={handleAddAllToOrder} className="h-8 gap-1.5 text-xs">
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            Bestellen
+                        </Button>
+                    )}
+                    {completedCount > 0 && (
+                        <Button variant="outline" size="sm" onClick={() => setDeleteOpen(true)} className="h-8">
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Progress */}
