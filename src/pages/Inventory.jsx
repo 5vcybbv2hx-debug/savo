@@ -162,10 +162,12 @@ export default function Inventory() {
             toast.warning('Keine Zählungen vorhanden');
             return;
         }
+        setSaveDialogOpen(true);
+    };
 
-        if (confirm(`Inventur mit ${Object.keys(counts).length} Artikeln speichern?`)) {
-            saveMutation.mutate({ counts, articles, user: currentUser });
-        }
+    const handleSaveConfirmed = () => {
+        setSaveDialogOpen(false);
+        saveMutation.mutate({ counts, articles, user: currentUser });
     };
 
     const handleReset = () => {
