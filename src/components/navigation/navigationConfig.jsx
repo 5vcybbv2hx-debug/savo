@@ -41,6 +41,7 @@ export const mainNavigation = [
             { name: 'Übersicht',        page: 'Warehouse', icon: Package,      permission: 'canViewWarehouse' },
             { name: 'Auffüllen',        page: 'Restock',   icon: RefreshCw,    permission: 'canViewRestock'   },
             { name: 'Bestellungen',     page: 'Shopping',  icon: ShoppingCart, permission: 'canViewShopping'  },
+            { name: 'Einkaufsliste',    page: 'QuickList', icon: ShoppingCart, permission: 'canViewShopping'  },
             { name: 'Artikeldatenbank', page: 'Articles',  icon: Package,      permission: 'canViewWarehouse' },
             { name: 'Lagerplätze',      page: 'Storage',   icon: Layers,       permission: 'canViewWarehouse' },
             { name: 'Lieferanten',      page: 'Suppliers', icon: Building2,    permission: 'canViewSuppliers' },

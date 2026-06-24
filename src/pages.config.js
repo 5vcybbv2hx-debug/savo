@@ -70,6 +70,7 @@ import Onboarding from './pages/Onboarding';
 import PermissionsNew from './pages/PermissionsNew';
 import PriceCalculator from './pages/PriceCalculator';
 import PublicDrinkMenu from './pages/PublicDrinkMenu';
+import QuickList from './pages/QuickList';
 import Recipes from './pages/Recipes';
 import Restock from './pages/Restock';
 import GuestHub from './pages/GuestHub';
@@ -130,6 +131,7 @@ const CORE_PAGES = {
     "Onboarding": Onboarding,
     "Permissions": PermissionsNew,
     "PriceCalculator": PriceCalculator,
+    "QuickList": QuickList,
     "Recipes": Recipes,
     "Restock": Restock,
     "GuestHub": GuestHub,

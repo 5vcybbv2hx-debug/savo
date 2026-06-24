@@ -1,0 +1,53 @@
+{
+  "name": "QuickListItem",
+  "type": "object",
+  "properties": {
+    "item_name": {
+      "type": "string",
+      "description": "Artikelname"
+    },
+    "article_id": {
+      "type": "string",
+      "description": "Verkn\u00fcpfung zur Artikeldatenbank"
+    },
+    "article_image_url": {
+      "type": "string",
+      "description": "Gecachtes Bild"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Menge"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Einheit"
+    },
+    "category": {
+      "type": "string",
+      "description": "Kategorie (z.B. Bar, K\u00fcche, Reinigung)"
+    },
+    "is_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Abgehakt?"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen"
+    },
+    "added_by_name": {
+      "type": "string",
+      "description": "Wer hat es hinzugef\u00fcgt"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Erstellungsdatum"
+    }
+  },
+  "required": [
+    "item_name",
+    "quantity",
+    "added_by_name"
+  ]
+}
