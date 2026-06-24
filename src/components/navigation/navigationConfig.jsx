@@ -1,7 +1,7 @@
 import {
     Home, Utensils, Package, Wine, Users,
     Calendar, Clock, Shield, BookOpen, TrendingUp,
-    CheckSquare, MapPin, ShoppingCart, ShoppingBasket, RefreshCw,
+    CheckSquare, MapPin, ShoppingCart, ShoppingBasket, RefreshCw, ClipboardCheck,
     Settings, FileText, BarChart2, Trash2,
     ArrowLeftRight, Star, Brush, FolderOpen, Wrench,
     Palmtree, ListChecks, Video, QrCode, Layers, Zap,
@@ -43,7 +43,8 @@ export const mainNavigation = [
             { name: 'Bestellungen',     page: 'Shopping',  icon: ShoppingCart, permission: 'canViewShopping'  },
             { name: 'Einkaufsliste',    page: 'QuickList', icon: ShoppingBasket, permission: 'canViewShopping'  },
             { name: 'Artikeldatenbank', page: 'Articles',  icon: Package,      permission: 'canViewWarehouse' },
-            { name: 'Lagerplätze',      page: 'Storage',   icon: Layers,       permission: 'canViewWarehouse' },
+            { name: 'Lagerplätze',      page: 'Storage',   icon: Layers,         permission: 'canViewWarehouse' },
+            { name: 'Inventur',          page: 'Inventory', icon: ClipboardCheck, permission: 'canViewInventory'  },
             { name: 'Lieferanten',      page: 'Suppliers', icon: Building2,    permission: 'canViewSuppliers' },
             { name: 'Schwund',          page: 'Wastage',   icon: Trash2,       permission: 'canViewWastage'   },
         ]
