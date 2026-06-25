@@ -1,18 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getTopPages } from '@/hooks/usePageTracking';
-import { mainNavigation, additionalPages } from './navigationConfig';
+import { additionalPages } from './navigationConfig';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
 import { createPageUrl } from '@/utils';
 
-const ALL_NAV_PAGES = mainNavigation.flatMap(a => a.pages).concat(additionalPages);
+// Nur Unterseiten — Hub-Einträge sind über die Sidebar direkt erreichbar
+const ALL_NAV_PAGES = additionalPages;
 
 export default function DesktopQuickBar() {
     const [quickPages, setQuickPages] = useState([]);
+    const [sidebarWidth, setSidebarWidth] = useState('4rem'); // collapsed default
     const permissions = usePermissions();
     const location = useLocation();
+
+    // Sidebar-Breite aus localStorage lesen (sync mit Layout.jsx)
+    useEffect(() => {
+        const collapsed = localStorage.getItem('sidebar_collapsed');
+        setSidebarWidth(collapsed === 'false' ? '18rem' : '4rem');
+
+        // Storage-Event lauschen falls Sidebar getoggelt wird
+        const handler = () => {
+            const c = localStorage.getItem('sidebar_collapsed');
+            setSidebarWidth(c === 'false' ? '18rem' : '4rem');
+        };
+        window.addEventListener('storage', handler);
+        // Auch custom event für same-tab toggle
+        window.addEventListener('sidebar-toggle', handler);
+        return () => {
+            window.removeEventListener('storage', handler);
+            window.removeEventListener('sidebar-toggle', handler);
+        };
+    }, []);
 
     useEffect(() => {
         base44.auth.me().then(user => {
@@ -27,12 +48,15 @@ export default function DesktopQuickBar() {
                 );
             }
         }).catch(() => {});
-    }, [location.pathname]); // re-check after each navigation
+    }, [location.pathname]);
 
     if (quickPages.length < 3) return null;
 
     return (
-        <div className="hidden md:flex fixed bottom-0 left-72 right-0 z-40 items-center justify-center gap-1 px-6 py-2 bg-card/90 border-t border-border/50 backdrop-blur-xl">
+        <div
+            className="hidden md:flex fixed bottom-0 right-0 z-40 items-center justify-center gap-1 px-6 py-2 bg-card/90 border-t border-border/50 backdrop-blur-xl transition-all duration-300"
+            style={{ left: sidebarWidth }}
+        >
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest mr-3 shrink-0">Schnellzugriff</span>
             {quickPages.map(item => {
                 const isActive = location.pathname === `/${item.page}` || location.pathname === '/';
