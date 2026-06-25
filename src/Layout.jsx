@@ -265,7 +265,7 @@ export default function Layout({ children, currentPageName }) {
                 <OfflineSyncManager />
 
                 {/* Fixed Top Header */}
-                <header className="fixed top-0 left-0 right-0 z-40 bg-card/95 border-b border-border/50 backdrop-blur-xl pt-safe md:pl-16">
+                <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-card/95 border-b border-border/50 backdrop-blur-xl pt-safe">
                     <div className="flex items-center gap-3 px-3 py-3">
 
                         {/* Mobile: Zurück-Button */}
@@ -321,7 +321,7 @@ export default function Layout({ children, currentPageName }) {
                 />
 
                 {/* Desktop Sidebar */}
-                <aside className={`hidden transition-all duration-300 ${!sidebarCollapsed ? 'md:flex md:flex-col md:fixed md:inset-y-0 md:w-72 md:ml-16' : ''}`}>
+                <aside className={`hidden md:flex md:flex-col md:fixed md:inset-y-0 transition-all duration-300 ${sidebarCollapsed ? 'md:w-16' : 'md:w-72'}`}>
                     <div className="flex flex-col flex-grow bg-card border-r border-border/50 pt-8 overflow-y-auto backdrop-blur-xl">
                         {/* Logo + Collapse-Toggle */}
                         <div className="flex items-center justify-between px-3 mb-6">
@@ -469,8 +469,8 @@ export default function Layout({ children, currentPageName }) {
                 </aside>
 
                 {/* Mobile Bottom Navigation — Stack-aware + Optimistic */}
-                <nav className="fixed bottom-0 left-0 right-0 z-[45] md:bottom-auto md:top-0 md:left-0 md:right-auto md:h-screen md:w-16 bg-card/95 border-t md:border-t-0 md:border-r border-border/50 pb-safe md:pb-0 shadow-2xl backdrop-blur-xl">
-                    <div className="flex items-stretch justify-around px-1 pt-1.5 pb-1 md:flex-col md:items-center md:justify-start md:pt-20 md:pb-4 md:px-0 md:gap-1 md:h-full">
+                <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 border-t border-border/50 pb-safe shadow-2xl backdrop-blur-xl">
+                    <div className="flex items-stretch justify-around px-1 pt-1.5 pb-1">
                         {currentNavItems.map(item => {
                             if (!permissions[item.permission]) return null;
                             const active = isTabActive(item.page);
@@ -485,13 +485,13 @@ export default function Layout({ children, currentPageName }) {
                                     aria-label={item.name}
                                     aria-current={active ? 'page' : undefined}
                                     className={cn(
-                                        'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 md:flex-none md:w-full md:px-2 md:py-3 md:rounded-xl rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
+                                        'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
                                         active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                                     )}
                                 >
                                     {/* Active indicator pill */}
                                     {active && (
-                                        <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] md:top-1/2 md:left-0 md:-translate-y-1/2 md:translate-x-0 md:w-[3px] md:h-8 rounded-full bg-primary" />
+                                        <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-full bg-primary" />
                                     )}
                                     <div className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-150">
                                         <item.icon className={cn(
@@ -506,7 +506,7 @@ export default function Layout({ children, currentPageName }) {
                                         )}
                                     </div>
                                     <span className={cn(
-                                        'text-[10px] leading-none tracking-tight truncate max-w-full px-1 transition-all duration-150 md:hidden',
+                                        'text-[10px] leading-none tracking-tight truncate max-w-full px-1 transition-all duration-150',
                                         active ? 'font-semibold' : 'font-medium'
                                     )}>
                                         {item.name}
@@ -520,7 +520,7 @@ export default function Layout({ children, currentPageName }) {
                             onClick={() => { haptics.selection(); setSettingsOpen(true); }}
                             aria-label="Mehr"
                             className={cn(
-                                'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 md:flex-none md:w-full md:px-2 md:py-3 md:rounded-xl rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
+                                'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
                                 settingsOpen ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                             )}
                         >
@@ -532,7 +532,7 @@ export default function Layout({ children, currentPageName }) {
                                     </span>
                                 )}
                             </div>
-                            <span className="text-[10px] leading-none tracking-tight font-medium md:hidden">Mehr</span>
+                            <span className="text-[10px] leading-none tracking-tight font-medium">Mehr</span>
                         </button>
                     </div>
                 </nav>
@@ -689,7 +689,7 @@ export default function Layout({ children, currentPageName }) {
                 <DesktopQuickBar />
 
                 {/* Main Content */}
-                <main className={`transition-all duration-300 md:pl-16 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6`}>
+                <main className={`transition-all duration-300 ${sidebarCollapsed ? 'md:pl-16' : 'md:pl-72'} pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-12`}>
                     <PullToRefresh onRefresh={handleRefresh}>
                         <AnimatePresence mode="wait">
                             <motion.div
@@ -698,7 +698,7 @@ export default function Layout({ children, currentPageName }) {
                                 animate={{ opacity: 1, y: 0, x: 0 }}
                                 exit={{ opacity: 0, y: isRootPage ? -4 : 0, x: isRootPage ? 0 : -16 }}
                                 transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
-                                className="pt-[calc(4rem+env(safe-area-inset-top))] md:pt-4"
+                                className="pt-[calc(4rem+env(safe-area-inset-top))] md:pt-0"
                             >
                                 {children}
                             </motion.div>
