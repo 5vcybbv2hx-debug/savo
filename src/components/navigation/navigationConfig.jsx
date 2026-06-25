@@ -8,11 +8,6 @@ import {
     Receipt, TrendingDown, Download, Euro, Building2, AlertTriangle, Trophy
 } from 'lucide-react';
 
-/**
- * Haupt-Navigation — Hub-First.
- * Jede Sektion hat genau EINEN Eintrag (den Hub).
- * Unterseiten sind über den Hub erreichbar.
- */
 export const mainNavigation = [
     {
         id: 'dashboard',
@@ -43,9 +38,7 @@ export const mainNavigation = [
         name: 'Karte & Rezepte',
         icon: Wine,
         pages: [
-            { name: 'Getränkekarte', page: 'DrinkMenu',       icon: Wine,       permission: 'canViewDrinkMenu'       },
-            { name: 'Rezepte',       page: 'Recipes',         icon: BookOpen,   permission: 'canViewRecipes'         },
-            { name: 'Preisrechner',  page: 'PriceCalculator', icon: TrendingUp, permission: 'canViewPriceCalculator' },
+            { name: 'Karte & Rezepte', page: 'KarteHub', icon: Wine, permission: 'canViewDrinkMenu' },
         ]
     },
     {
@@ -64,20 +57,24 @@ export const mainNavigation = [
             { name: 'Team', page: 'TeamHub', icon: Users, permission: 'canViewShifts' },
         ]
     },
+    {
+        id: 'einstellungen',
+        name: 'Einstellungen',
+        icon: Settings,
+        pages: [
+            { name: 'Einstellungen', page: 'Settings', icon: Settings, permission: 'canViewSettings' },
+        ]
+    },
 ];
 
-/**
- * Alle Unterseiten — erscheinen im Mehr-Drawer und in der Suche.
- * Nicht mehr in der Sidebar-Hauptliste.
- */
 export const additionalPages = [
-    // Betrieb Unterseiten
+    // Betrieb
     { name: 'Gäste & Tische',  page: 'GuestHub',     icon: MapPin,         permission: 'canViewReservations'        },
     { name: 'Aufgaben',        page: 'Todos',         icon: CheckSquare,    permission: 'canViewTodos'               },
     { name: 'Wochenaufgaben',  page: 'WeeklyTasks',   icon: ListChecks,     permission: 'canViewTodos'               },
     { name: 'Putzliste',       page: 'Cleaning',      icon: Brush,          permission: 'canViewCleaning'            },
     { name: 'Events',          page: 'Events',        icon: Star,           permission: 'canViewEvents'              },
-    // Waren Unterseiten
+    // Waren
     { name: 'Auffüllen',        page: 'Restock',      icon: RefreshCw,      permission: 'canViewRestock'             },
     { name: 'Bestellungen',     page: 'Shopping',     icon: ShoppingCart,   permission: 'canViewShopping'            },
     { name: 'Einkaufsliste',    page: 'QuickList',    icon: ShoppingBasket, permission: 'canViewShopping'            },
@@ -86,7 +83,11 @@ export const additionalPages = [
     { name: 'Inventur',         page: 'Inventory',    icon: ClipboardCheck, permission: 'canViewInventory'           },
     { name: 'Lieferanten',      page: 'Suppliers',    icon: Building2,      permission: 'canViewSuppliers'           },
     { name: 'Schwund',          page: 'Wastage',      icon: Trash2,         permission: 'canViewWastage'             },
-    // Team Unterseiten
+    // Karte
+    { name: 'Getränkekarte',   page: 'DrinkMenu',       icon: Wine,       permission: 'canViewDrinkMenu'       },
+    { name: 'Rezepte',         page: 'Recipes',         icon: BookOpen,   permission: 'canViewRecipes'         },
+    { name: 'Preisrechner',    page: 'PriceCalculator', icon: TrendingUp, permission: 'canViewPriceCalculator' },
+    // Team
     { name: 'Mitarbeiter',     page: 'Employees',         icon: Users,          permission: 'canViewEmployees'           },
     { name: 'Schichtplan',     page: 'Calendar',          icon: Calendar,       permission: 'canViewShifts'              },
     { name: 'Teamkalender',    page: 'TeamCalendar',      icon: Calendar,       permission: 'canViewTeamCalendar'        },
@@ -97,7 +98,7 @@ export const additionalPages = [
     { name: 'Berechtigungen',  page: 'Permissions',       icon: Shield,         permission: 'canEditEmployeePermissions' },
     { name: 'Teamsitzung',     page: 'TeamMeeting',       icon: Video,          permission: 'canViewTeamMeeting'         },
     { name: 'WM-Spielplan',    page: 'WorldCupSchedule',  icon: Trophy,         permission: 'canViewTeamMeeting'         },
-    // Buchhaltung Unterseiten
+    // Buchhaltung
     { name: 'Kassenbuch',        page: 'AccountingCashbook',    icon: BookOpen,     permission: 'canViewAccountingCashbook'  },
     { name: 'Belege',            page: 'AccountingReceipts',    icon: Receipt,      permission: 'canViewAccountingReceipts'  },
     { name: 'Kreditoren',        page: 'AccountingCreditors',   icon: TrendingDown, permission: 'canViewAccountingCreditors' },
@@ -109,7 +110,6 @@ export const additionalPages = [
     { name: 'Stationsplan',      page: 'Stationsplan',     icon: MapPin,        permission: 'canViewShifts'    },
     { name: 'Dokumente',         page: 'Documents',        icon: FolderOpen,    permission: 'canViewSettings'  },
     { name: 'Wartung',           page: 'Maintenance',      icon: Wrench,        permission: 'canViewSettings'  },
-    { name: 'Einstellungen',     page: 'Settings',         icon: Settings,      permission: 'canViewSettings'  },
     { name: 'Einarbeitung',      page: 'Onboarding',       icon: Users,         permission: 'canViewOnboarding'},
     { name: 'Visitenkarte',      page: 'BusinessCard',     icon: QrCode,        permission: 'canViewMeinTag'   },
     { name: 'Modulcenter',       page: 'ModuleCenter',     icon: Layers,        permission: 'canViewSettings'  },
@@ -117,7 +117,4 @@ export const additionalPages = [
     { name: 'Datenqualität',     page: 'DataQuality',      icon: AlertTriangle, permission: 'isManager'        },
 ];
 
-/**
- * Flat list aller Seiten — für GlobalSearch und Page-Title-Lookup.
- */
 export const allPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages);
