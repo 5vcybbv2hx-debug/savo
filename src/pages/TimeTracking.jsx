@@ -155,6 +155,7 @@ export default function TimeTracking() {
     const approveMutation = useMutation({
         mutationFn: async (entryIds) => {
             const user = queryClient.getQueryData(['user']) || await base44.auth.me();
+            if (!user?.full_name) throw new Error('Benutzer nicht gefunden');
             return Promise.all(entryIds.map(async (id) => {
                 const entry = timeEntries.find(e => e.id === id);
                 await base44.entities.TimeEntry.update(id, {
@@ -163,17 +164,21 @@ export default function TimeTracking() {
                     manager_approved_at: new Date().toISOString(),
                 });
                 if (entry) {
-                    await createNotification({
-                        type: 'general',
-                        title: 'Zeiterfassung genehmigt',
-                        message: `Deine Zeiterfassung vom ${format(new Date(entry.date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt (${entry.total_hours}h).`,
-                        relatedId: entry.id,
-                        targetRoles: [],
-                    });
+                    try {
+                        await createNotification({
+                            type: 'general',
+                            category: 'system',
+                            title: 'Zeiterfassung genehmigt',
+                            message: `Deine Zeiterfassung vom ${format(new Date(entry.date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt (${entry.total_hours}h).`,
+                            relatedId: entry.id,
+                            targetRoles: [],
+                        });
+                    } catch (_) { /* Benachrichtigung nicht blockierend */ }
                 }
             }));
         },
-        onSuccess: () => invalidateTimeEntries(),
+        onSuccess: () => { invalidateTimeEntries(); toast.success('Zeiterfassung genehmigt'); },
+        onError: (err) => toast.error('Genehmigung fehlgeschlagen: ' + (err.message || err)),
     });
 
     const confirmEntryMutation = useMutation({
