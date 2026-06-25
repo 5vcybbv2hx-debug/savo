@@ -313,6 +313,8 @@ export default function Shopping() {
     const [kanbanOpen,           setKanbanOpen]           = useState(false);
     const [articlePickerOpen,    setArticlePickerOpen]    = useState(false);
     const [eanInput,             setEanInput]             = useState('');
+    const [searchSuggestions,    setSearchSuggestions]    = useState([]);
+    const [showSuggestions,      setShowSuggestions]      = useState(false);
     const [deleteConfirm,        setDeleteConfirm]        = useState(null);
     const [wareneingangItem,     setWareneingangItem]     = useState(null);
     const [closeOrderConfirm,    setCloseOrderConfirm]    = useState(false);
@@ -426,7 +428,7 @@ export default function Shopping() {
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         toast.success(`${itemsToMark.length} Artikel als bestellt markiert`);
         setMarkBestelltConfirm(null);
-        if (activeTab === 'offen') { setActiveTab('bestellt'); setViewMode('bestellungen'); }
+        if (activeTab === 'offen') setActiveTab('bestellt');
     };
 
     // Wareneingang quittieren
@@ -520,6 +522,52 @@ export default function Shopping() {
             });
         }
         setEanInput('');
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+    };
+
+    // Live-Suche: Vorschläge beim Tippen
+    const handleEanChange = (value) => {
+        setEanInput(value);
+        if (value.trim().length < 2) {
+            setSearchSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+        const q = value.trim().toLowerCase();
+        const matches = articles.filter(a =>
+            a.is_active !== false && (
+                a.name?.toLowerCase().includes(q) ||
+                a.barcode?.includes(value.trim()) ||
+                a.category?.toLowerCase().includes(q)
+            )
+        ).slice(0, 6);
+        setSearchSuggestions(matches);
+        setShowSuggestions(matches.length > 0);
+    };
+
+    const handleSuggestionSelect = async (article) => {
+        setShowSuggestions(false);
+        setEanInput('');
+        const existing = items.find(i => i.item_name === article.name && i.status === 'offen');
+        if (existing) {
+            await updateMutation.mutateAsync({
+                id: existing.id,
+                data: { ...existing, quantity: parseFloat(existing.quantity || 0) + 1 }
+            });
+            toast.success(`${article.name} — Menge erhöht`);
+        } else {
+            await createMutation.mutateAsync({
+                item_name:  article.name,
+                article_id: article.id,
+                category:   article.supplier_details?.find(s => s.is_primary)?.supplier_name
+                            || article.suppliers?.[0]
+                            || suppliers[0]?.name || '',
+                quantity:   1,
+                unit:       article.content_unit || '',
+                status:     'offen',
+            });
+            toast.success(`${article.name} hinzugefügt`);
+        }
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
     };
 
@@ -766,17 +814,57 @@ export default function Shopping() {
 
                 {/* ── EAN / Schnellsuche (nur Tab Offen) ───────────────── */}
                 {activeTab === 'offen' && permissions.canEditShopping && (
-                    <form onSubmit={handleEanSubmit} className="flex gap-2">
-                        <Input
-                            value={eanInput}
-                            onChange={e => setEanInput(e.target.value)}
-                            placeholder="Barcode oder Artikelname scannen..."
-                            className="h-10 text-sm flex-1"
-                        />
-                        <Button type="submit" variant="outline" size="icon" className="h-10 w-10 shrink-0">
-                            <Search className="w-4 h-4" />
-                        </Button>
-                    </form>
+                    <div className="relative">
+                        <form onSubmit={handleEanSubmit} className="flex gap-2">
+                            <Input
+                                value={eanInput}
+                                onChange={e => handleEanChange(e.target.value)}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                                onFocus={() => searchSuggestions.length > 0 && setShowSuggestions(true)}
+                                placeholder="Barcode oder Artikelname eingeben..."
+                                className="h-10 text-sm flex-1"
+                                autoComplete="off"
+                            />
+                            <Button type="submit" variant="outline" size="icon" className="h-10 w-10 shrink-0">
+                                <Search className="w-4 h-4" />
+                            </Button>
+                        </form>
+
+                        {/* Live-Vorschläge Dropdown */}
+                        {showSuggestions && searchSuggestions.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl border border-border bg-popover shadow-xl overflow-hidden">
+                                {searchSuggestions.map(article => {
+                                    const alreadyInList = items.some(i => i.item_name === article.name && i.status === 'offen');
+                                    return (
+                                        <button
+                                            key={article.id}
+                                            type="button"
+                                            onMouseDown={() => handleSuggestionSelect(article)}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent transition-colors border-b border-border/40 last:border-0"
+                                        >
+                                            {article.image_url
+                                                ? <img src={article.image_url} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                                                : <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                                    <Package className="w-4 h-4 text-muted-foreground/40" />
+                                                  </div>
+                                            }
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-foreground truncate">{article.name}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {article.category || 'Sonstiges'}
+                                                    {article.barcode ? ` · ${article.barcode}` : ''}
+                                                </p>
+                                            </div>
+                                            {alreadyInList
+                                                ? <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/15 text-primary font-medium shrink-0">In Liste</span>
+                                                : <Plus className="w-4 h-4 text-muted-foreground shrink-0" />
+                                            }
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* ── Item-Liste ────────────────────────────────────────── */}
