@@ -35,7 +35,7 @@ export default function Layout({ children, currentPageName }) {
     // ── State ────────────────────────────────────────────────────────────────
     const [searchOpen, setSearchOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-        try { return localStorage.getItem('sidebar_collapsed') === 'true'; } catch { return false; }
+        try { const stored = localStorage.getItem('sidebar_collapsed'); return stored !== null ? stored === 'true' : true; } catch { return true; }
     });
     const toggleSidebar = () => {
         setSidebarCollapsed(prev => {
@@ -265,12 +265,21 @@ export default function Layout({ children, currentPageName }) {
                 <OfflineSyncManager />
 
                 {/* Fixed Top Header */}
-                <header className="md:hidden fixed top-0 left-0 right-0 z-40 bg-card/95 border-b border-border/50 backdrop-blur-xl pt-safe">
+                <header className="fixed top-0 left-0 right-0 z-40 bg-card/95 border-b border-border/50 backdrop-blur-xl pt-safe">
                     <div className="flex items-center gap-3 px-3 py-3">
+                        {/* Desktop: Sidebar Toggle */}
+                        <button
+                            onClick={toggleSidebar}
+                            className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-all"
+                            title={sidebarCollapsed ? 'Sidebar ausklappen' : 'Sidebar einklappen'}
+                        >
+                            {sidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+                        </button>
+                        {/* Mobile: Zurück-Button */}
                         {!isRootPage && (
                             <button
                                 onClick={() => navigate(-1)}
-                                className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-accent/50 active:bg-accent text-muted-foreground hover:text-foreground transition-all"
+                                className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-accent/50 active:bg-accent text-muted-foreground hover:text-foreground transition-all"
                                 title="Zurück"
                             >
                                 <ArrowLeft className="w-5 h-5" />
@@ -467,8 +476,8 @@ export default function Layout({ children, currentPageName }) {
                 </aside>
 
                 {/* Mobile Bottom Navigation — Stack-aware + Optimistic */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 border-t border-border/50 pb-safe shadow-2xl backdrop-blur-xl">
-                    <div className="flex items-stretch justify-around px-1 pt-1.5 pb-1">
+                <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 border-t border-border/50 pb-safe shadow-2xl backdrop-blur-xl">
+                    <div className="flex items-stretch justify-around px-1 pt-1.5 pb-1 max-w-screen-md mx-auto md:max-w-none md:justify-start md:gap-1 md:px-4">
                         {currentNavItems.map(item => {
                             if (!permissions[item.permission]) return null;
                             const active = isTabActive(item.page);
@@ -483,7 +492,7 @@ export default function Layout({ children, currentPageName }) {
                                     aria-label={item.name}
                                     aria-current={active ? 'page' : undefined}
                                     className={cn(
-                                        'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
+                                        'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 md:flex-none md:min-w-[72px] rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
                                         active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                                     )}
                                 >
@@ -518,7 +527,7 @@ export default function Layout({ children, currentPageName }) {
                             onClick={() => { haptics.selection(); setSettingsOpen(true); }}
                             aria-label="Mehr"
                             className={cn(
-                                'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
+                                'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 md:flex-none md:min-w-[72px] rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
                                 settingsOpen ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                             )}
                         >
@@ -687,7 +696,7 @@ export default function Layout({ children, currentPageName }) {
                 <DesktopQuickBar />
 
                 {/* Main Content */}
-                <main className="md:pl-72 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-12">
+                <main className={`transition-all duration-300 ${sidebarCollapsed ? 'md:pl-16' : 'md:pl-72'} pb-[calc(5rem+env(safe-area-inset-bottom))]`}>
                     <PullToRefresh onRefresh={handleRefresh}>
                         <AnimatePresence mode="wait">
                             <motion.div
@@ -696,7 +705,7 @@ export default function Layout({ children, currentPageName }) {
                                 animate={{ opacity: 1, y: 0, x: 0 }}
                                 exit={{ opacity: 0, y: isRootPage ? -4 : 0, x: isRootPage ? 0 : -16 }}
                                 transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
-                                className="pt-[calc(4rem+env(safe-area-inset-top))] md:pt-0"
+                                className="pt-[calc(4rem+env(safe-area-inset-top))]"
                             >
                                 {children}
                             </motion.div>
