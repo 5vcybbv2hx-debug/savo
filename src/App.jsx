@@ -25,6 +25,9 @@ import AccountingDebitors from './pages/AccountingDebitors';
 import AccountingExport from './pages/AccountingExport';
 import AccountingFixedCosts from './pages/AccountingFixedCosts';
 import AccountingLiabilities from './pages/AccountingLiabilities';
+import TeamHub from './pages/TeamHub';
+import AccountingHub from './pages/AccountingHub';
+import BetriebHub from './pages/BetriebHub';
 import AccountingBank from './pages/AccountingBank';
 import BusinessCard from './pages/BusinessCard';
 import AdminTimeEditor from './pages/AdminTimeEditor';
@@ -243,6 +246,9 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingBank" element={<LayoutWrapper currentPageName="AccountingBank"><RoleGuard permission="canViewAccounting"><AccountingBank /></RoleGuard></LayoutWrapper>} />
 
       {/* Catch-all */}
+      <Route path="/TeamHub" element={<LayoutWrapper currentPageName="TeamHub"><RoleGuard permission="canViewShifts"><TeamHub /></RoleGuard></LayoutWrapper>} />
+      <Route path="/AccountingHub" element={<LayoutWrapper currentPageName="AccountingHub"><RoleGuard permission="canViewAccounting"><AccountingHub /></RoleGuard></LayoutWrapper>} />
+      <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
 
