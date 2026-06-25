@@ -75,6 +75,7 @@ export default function TimeTracking() {
         queryKey: ['employees'],
         queryFn: () => base44.entities.Employee.filter({ is_active: true }),
         staleTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
     });
 
     const { data: clockEntries = [] } = useQuery({
@@ -82,33 +83,15 @@ export default function TimeTracking() {
         queryFn: async () => {
             const start = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
             const end   = format(endOfMonth(selectedMonth),   'yyyy-MM-dd');
-            if (permissions.isManager) {
-                const [activeIn, activePause, monthly] = await Promise.all([
-                    base44.entities.ClockEntry.filter({ status: 'clocked_in' }, '-clock_in', 50),
-                    base44.entities.ClockEntry.filter({ status: 'on_break' },   '-clock_in', 50),
-                    base44.entities.ClockEntry.list('-clock_in', 500),
-                ]);
-                const active = [...activeIn, ...activePause];
-                const monthlyFiltered = monthly.filter(e => {
-                    if (!e.clock_in) return false;
-                    const d = format(new Date(e.clock_in), 'yyyy-MM-dd');
-                    return d >= start && d <= end;
-                });
-                const seen = new Set(monthlyFiltered.map(e => e.id));
-                const extras = active.filter(e => !seen.has(e.id));
-                return [...extras, ...monthlyFiltered];
-            }
-            const [activeIn, activePause, monthly] = await Promise.all([
-                base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id, status: 'clocked_in' }, '-clock_in', 5),
-                base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id, status: 'on_break' },   '-clock_in', 5),
-                base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 300),
-            ]);
-            const active = [...activeIn, ...activePause];
-            const monthlyFiltered = monthly.filter(e => {
+            const all = permissions.isManager
+                ? await base44.entities.ClockEntry.list('-clock_in', 500)
+                : await base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 300);
+            const monthlyFiltered = all.filter(e => {
                 if (!e.clock_in) return false;
                 const d = format(new Date(e.clock_in), 'yyyy-MM-dd');
                 return d >= start && d <= end;
             });
+            const active = all.filter(e => e.status === 'clocked_in' || e.status === 'on_break');
             const seen = new Set(monthlyFiltered.map(e => e.id));
             const extras = active.filter(e => !seen.has(e.id));
             return [...extras, ...monthlyFiltered];
