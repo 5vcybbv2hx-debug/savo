@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Clock, ArrowRight, CheckSquare, Sparkles, CalendarCheck,
+    Clock, ArrowRight, CheckSquare, Check, Sparkles, CalendarCheck,
     Users, Calendar, LogIn, LogOut, Wrench, TrendingDown,
     ShoppingCart, FileText, Package, RefreshCw, AlertTriangle,
     ChevronRight, Timer, ShoppingBasket
@@ -205,6 +205,82 @@ function SectionHeader({ label, to, linkLabel = 'Alle' }) {
 
 // ── Tab: HEUTE ────────────────────────────────────────────────────────────────
 
+
+function TodoWidget({ todos }) {
+    const queryClient = useQueryClient();
+    const [completing, setCompleting] = React.useState(new Set());
+
+    const completeMutation = useMutation({
+        mutationFn: ({ id }) => base44.entities.Todo.update(id, { status: 'done' }),
+        onMutate: async ({ id }) => {
+            setCompleting(prev => new Set([...prev, id]));
+            // Optimistisch aus der Liste entfernen
+            await queryClient.cancelQueries({ queryKey: ['todos'] });
+            const prev = queryClient.getQueryData(['todos']);
+            queryClient.setQueryData(['todos'], old =>
+                old?.map(t => t.id === id ? { ...t, status: 'done' } : t) || old
+            );
+            return { prev };
+        },
+        onError: (_, __, ctx) => {
+            if (ctx?.prev) queryClient.setQueryData(['todos'], ctx.prev);
+        },
+        onSettled: (_, __, { id }) => {
+            setCompleting(prev => { const n = new Set(prev); n.delete(id); return n; });
+            queryClient.invalidateQueries({ queryKey: ['todos'] });
+        },
+    });
+
+    const visible = todos.slice(0, 5);
+
+    return (
+        <div>
+            <SectionHeader label={`Meine Aufgaben (${todos.length})`} to="Todos" />
+            <div className="space-y-2">
+                {visible.map(t => {
+                    const done = completing.has(t.id);
+                    return (
+                        <Card key={t.id} className={`border-border transition-all duration-300 ${done ? 'opacity-40 scale-[0.98]' : 'bg-card hover:bg-accent/20'}`}>
+                            <CardContent className="p-3 flex items-center gap-3">
+                                {/* Checkbox */}
+                                <button
+                                    onClick={() => !done && completeMutation.mutate({ id: t.id })}
+                                    disabled={done}
+                                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                                        done
+                                            ? 'bg-primary border-primary'
+                                            : 'border-border hover:border-primary hover:bg-primary/10'
+                                    }`}
+                                    title="Als erledigt markieren"
+                                >
+                                    {done && <Check className="w-3 h-3 text-primary-foreground" />}
+                                </button>
+                                {/* Titel */}
+                                <p className={`text-sm flex-1 truncate ${done ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                                    {t.title}
+                                </p>
+                                {/* Badge */}
+                                {t.priority === 'dringend' && !done && (
+                                    <Badge className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] shrink-0">Dringend</Badge>
+                                )}
+                                {/* Zur Todo-Seite */}
+                                <Link to={createPageUrl('Todos')} onClick={e => e.stopPropagation()} className="text-muted-foreground hover:text-foreground shrink-0">
+                                    <ChevronRight className="w-4 h-4" />
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+                {todos.length > 5 && (
+                    <Link to={createPageUrl('Todos')} className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground">
+                        +{todos.length - 5} weitere <ChevronRight className="w-3 h-3" />
+                    </Link>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function TodayTab({ currentUser, currentEmployee, permissions, employees, todayEvents, todayReservations, todayShifts, myTodos, isManager, lowStockCount, openOrdersCount, openQuickListCount, openRestockCount }) {
 
     const myShift = todayShifts.find(s => s.employee_id === currentEmployee?.id);
@@ -262,29 +338,7 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
 
             {/* Meine Aufgaben */}
             {myTodos.length > 0 && (
-                <div>
-                    <SectionHeader label={`Meine Aufgaben (${myTodos.length})`} to="Todos" />
-                    <div className="space-y-2">
-                        {myTodos.slice(0, 3).map(t => (
-                            <Link key={t.id} to={createPageUrl('Todos')}>
-                                <Card className="bg-card border-border hover:bg-accent/30 transition-colors">
-                                    <CardContent className="p-3 flex items-center gap-3">
-                                        <CheckSquare className="w-4 h-4 text-muted-foreground shrink-0" />
-                                        <p className="text-sm text-foreground truncate flex-1">{t.title}</p>
-                                        {t.priority === 'dringend' && (
-                                            <Badge className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] shrink-0">Dringend</Badge>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))}
-                        {myTodos.length > 3 && (
-                            <Link to={createPageUrl('Todos')} className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground">
-                                +{myTodos.length - 3} weitere <ChevronRight className="w-3 h-3" />
-                            </Link>
-                        )}
-                    </div>
-                </div>
+                <TodoWidget todos={myTodos} />
             )}
 
             {/* Schnellzugriff Waren & Lager — nur für Manager/Berechtigung */}
