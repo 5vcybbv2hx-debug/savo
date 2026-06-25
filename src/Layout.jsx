@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { haptics } from '@/components/utils/haptics';
-import { ArrowLeft, LogOut, Search, ScanLine, Settings, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ArrowLeft, LogOut, Search, ScanLine, Settings, PanelLeftClose, PanelLeftOpen, Pin, PinOff } from 'lucide-react';
 import BarcodeScanner from '@/components/restock/BarcodeScanner';
 import { mainNavigation, additionalPages, allPages } from '@/components/navigation/navigationConfig';
 import { useActiveNavigation } from '@/components/navigation/useActiveNavigation';
@@ -51,6 +51,31 @@ export default function Layout({ children, currentPageName }) {
     const [mobileNavPages, setMobileNavPages] = React.useState([]);
     // Optimistic active tab — sofortiges Highlighting beim Tap (vor URL-Wechsel)
     const [optimisticTab, setOptimisticTab] = React.useState(null);
+
+    // ── Pinned Nav (user-customizable bottom tabs) ────────────────────────────
+    const PINNED_KEY = 'bm_pinned_nav';
+    const MAX_PINS = 4;
+    const [pinnedPages, setPinnedPages] = React.useState(() => {
+        try { return JSON.parse(localStorage.getItem(PINNED_KEY) || 'null'); } catch { return null; }
+    });
+    const isPinned = (page) => !!pinnedPages && pinnedPages.includes(page);
+    const canPin = !!pinnedPages ? pinnedPages.length < MAX_PINS : false;
+    const togglePin = (page) => {
+        setPinnedPages(prev => {
+            const current = prev || [];
+            let next;
+            if (current.includes(page)) {
+                next = current.filter(p => p !== page);
+                // Wenn alle entfernt → null (zurück zu Auto)
+                if (next.length === 0) next = null;
+            } else {
+                if (current.length >= MAX_PINS) return prev; // voll
+                next = [...current, page];
+            }
+            try { localStorage.setItem(PINNED_KEY, JSON.stringify(next)); } catch {}
+            return next;
+        });
+    };
 
     // ── Hooks (all hooks before any early returns) ────────────────────────────
     const { isPageActive } = useActiveNavigation();
@@ -211,9 +236,14 @@ export default function Layout({ children, currentPageName }) {
     };
 
     const defaultPages = getRoleDefaultTabs();
-    const currentNavItems = mobileNavPages.length >= 2
-        ? mobileNavPages
-        : defaultPages.map(p => allNavPages.find(i => i.page === p)).filter(Boolean);
+    // Priorität: 1. Manuell gepinnt  2. Automatisch (meistbesucht)  3. Rolle-Default
+    const currentNavItems = (() => {
+        if (pinnedPages && pinnedPages.length > 0) {
+            return pinnedPages.map(p => allNavPages.find(i => i.page === p)).filter(Boolean);
+        }
+        if (mobileNavPages.length >= 2) return mobileNavPages;
+        return defaultPages.map(p => allNavPages.find(i => i.page === p)).filter(Boolean);
+    })();
 
     const { navigateToTab, getActiveTab } = useTabNavigation(currentNavItems);
 
@@ -509,7 +539,32 @@ export default function Layout({ children, currentPageName }) {
                 <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
                     <DrawerContent className="bg-card border-border max-h-[85vh]">
                         <DrawerHeader className="border-b border-border pb-3">
-                            <DrawerTitle className="text-foreground text-base">Alle Bereiche</DrawerTitle>
+                            <div className="flex items-center justify-between">
+                                <DrawerTitle className="text-foreground text-base">Alle Bereiche</DrawerTitle>
+                                {pinnedPages && pinnedPages.length > 0 && (
+                                    <button
+                                        onClick={() => {
+                                            setPinnedPages(null);
+                                            try { localStorage.removeItem(PINNED_KEY); } catch {}
+                                        }}
+                                        className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-destructive/10"
+                                    >
+                                        <PinOff className="w-3 h-3" />
+                                        Pins zurücksetzen
+                                    </button>
+                                )}
+                            </div>
+                            {pinnedPages && pinnedPages.length > 0 ? (
+                                <p className="text-[11px] text-primary mt-1 flex items-center gap-1">
+                                    <Pin className="w-3 h-3" />
+                                    {pinnedPages.length}/{MAX_PINS} Tabs angepinnt — Tippe <Pin className="w-3 h-3 inline" /> zum An-/Abheften
+                                </p>
+                            ) : (
+                                <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                                    <Pin className="w-3 h-3" />
+                                    Tippe <Pin className="w-3 h-3 inline" /> neben einer Seite um sie in der Nav anzuheften
+                                </p>
+                            )}
                         </DrawerHeader>
                         <div className="overflow-y-auto">
                             {/* Alle Hauptbereiche */}
@@ -520,22 +575,43 @@ export default function Layout({ children, currentPageName }) {
                                     <div key={section.id} className="px-4 pt-4">
                                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1">{section.name}</p>
                                         <div className="grid grid-cols-3 gap-2 mb-2">
-                                            {visibleItems.map((item) => (
-                                                <Link
-                                                    key={item.page}
-                                                    to={createPageUrl(item.page)}
-                                                    onClick={() => { haptics.selection(); setSettingsOpen(false); }}
-                                                    className={cn(
-                                                        'flex flex-col items-center gap-1.5 p-3 rounded-xl active:scale-95 transition-all text-center',
-                                                        isPageActive(item.page)
-                                                            ? 'bg-amber-500/20 border border-amber-500/40'
-                                                            : 'bg-secondary/40 hover:bg-secondary'
-                                                    )}
-                                                >
-                                                    <item.icon className={cn('w-5 h-5', isPageActive(item.page) ? 'text-amber-400' : 'text-foreground')} />
-                                                    <span className={cn('text-[10px] font-medium leading-tight', isPageActive(item.page) ? 'text-amber-400 font-bold' : 'text-foreground')}>{item.name}</span>
-                                                </Link>
-                                            ))}
+                                            {visibleItems.map((item) => {
+                                                const pinned = isPinned(item.page);
+                                                const active = isPageActive(item.page);
+                                                return (
+                                                    <div key={item.page} className="relative">
+                                                        <Link
+                                                            to={createPageUrl(item.page)}
+                                                            onClick={() => { haptics.selection(); setSettingsOpen(false); }}
+                                                            className={cn(
+                                                                'flex flex-col items-center gap-1.5 p-3 pt-4 rounded-xl active:scale-95 transition-all text-center w-full',
+                                                                pinned
+                                                                    ? 'bg-primary/10 border border-primary/30'
+                                                                    : active
+                                                                        ? 'bg-amber-500/20 border border-amber-500/40'
+                                                                        : 'bg-secondary/40 hover:bg-secondary'
+                                                            )}
+                                                        >
+                                                            <item.icon className={cn('w-5 h-5', pinned ? 'text-primary' : active ? 'text-amber-400' : 'text-foreground')} />
+                                                            <span className={cn('text-[10px] font-medium leading-tight', pinned ? 'text-primary font-semibold' : active ? 'text-amber-400 font-bold' : 'text-foreground')}>{item.name}</span>
+                                                        </Link>
+                                                        <button
+                                                            onClick={(e) => { e.preventDefault(); haptics.selection(); togglePin(item.page); }}
+                                                            title={pinned ? 'Aus Nav entfernen' : canPin ? 'In Nav anheften' : 'Nav voll (max. 4)'}
+                                                            className={cn(
+                                                                'absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-all shadow-sm border',
+                                                                pinned
+                                                                    ? 'bg-primary text-primary-foreground border-primary'
+                                                                    : canPin
+                                                                        ? 'bg-card text-muted-foreground border-border hover:bg-primary/10 hover:text-primary hover:border-primary/50'
+                                                                        : 'bg-card text-muted-foreground/30 border-border/30 cursor-not-allowed'
+                                                            )}
+                                                        >
+                                                            <Pin className="w-2.5 h-2.5" />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 );
@@ -546,22 +622,43 @@ export default function Layout({ children, currentPageName }) {
                                 <div className="px-4 pt-4">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1">Einstellungen</p>
                                     <div className="grid grid-cols-3 gap-2 mb-2">
-                                        {additionalPages.filter(p => permissions[p.permission]).map((item) => (
-                                            <Link
-                                                key={item.page}
-                                                to={createPageUrl(item.page)}
-                                                onClick={() => { haptics.selection(); setSettingsOpen(false); }}
-                                                className={cn(
-                                                    'flex flex-col items-center gap-1.5 p-3 rounded-xl active:scale-95 transition-all text-center',
-                                                    isPageActive(item.page)
-                                                        ? 'bg-amber-500/20 border border-amber-500/40'
-                                                        : 'bg-secondary/40 hover:bg-secondary'
-                                                )}
-                                            >
-                                                <item.icon className={cn('w-5 h-5', isPageActive(item.page) ? 'text-amber-400' : 'text-foreground')} />
-                                                <span className={cn('text-[10px] font-medium leading-tight', isPageActive(item.page) ? 'text-amber-400 font-bold' : 'text-foreground')}>{item.name}</span>
-                                            </Link>
-                                        ))}
+                                        {additionalPages.filter(p => permissions[p.permission]).map((item) => {
+                                            const pinned = isPinned(item.page);
+                                            const active = isPageActive(item.page);
+                                            return (
+                                                <div key={item.page} className="relative">
+                                                    <Link
+                                                        to={createPageUrl(item.page)}
+                                                        onClick={() => { haptics.selection(); setSettingsOpen(false); }}
+                                                        className={cn(
+                                                            'flex flex-col items-center gap-1.5 p-3 pt-4 rounded-xl active:scale-95 transition-all text-center w-full',
+                                                            pinned
+                                                                ? 'bg-primary/10 border border-primary/30'
+                                                                : active
+                                                                    ? 'bg-amber-500/20 border border-amber-500/40'
+                                                                    : 'bg-secondary/40 hover:bg-secondary'
+                                                        )}
+                                                    >
+                                                        <item.icon className={cn('w-5 h-5', pinned ? 'text-primary' : active ? 'text-amber-400' : 'text-foreground')} />
+                                                        <span className={cn('text-[10px] font-medium leading-tight', pinned ? 'text-primary font-semibold' : active ? 'text-amber-400 font-bold' : 'text-foreground')}>{item.name}</span>
+                                                    </Link>
+                                                    <button
+                                                        onClick={(e) => { e.preventDefault(); haptics.selection(); togglePin(item.page); }}
+                                                        title={pinned ? 'Aus Nav entfernen' : canPin ? 'In Nav anheften' : 'Nav voll (max. 4)'}
+                                                        className={cn(
+                                                            'absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-all shadow-sm border',
+                                                            pinned
+                                                                ? 'bg-primary text-primary-foreground border-primary'
+                                                                : canPin
+                                                                    ? 'bg-card text-muted-foreground border-border hover:bg-primary/10 hover:text-primary hover:border-primary/50'
+                                                                    : 'bg-card text-muted-foreground/30 border-border/30 cursor-not-allowed'
+                                                        )}
+                                                    >
+                                                        <Pin className="w-2.5 h-2.5" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
