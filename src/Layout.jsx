@@ -371,7 +371,7 @@ export default function Layout({ children, currentPageName }) {
 
                                 return (
                                     <div key={section.id}>
-                                        {!sidebarCollapsed && (
+                                        {!sidebarCollapsed && visibleItems.length > 1 && (
                                             <h3 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
                                                 {section.name}
                                             </h3>
@@ -406,39 +406,7 @@ export default function Layout({ children, currentPageName }) {
                                 );
                             })}
                             
-                            {/* Additional Pages */}
-                            {additionalPages.some(p => permissions[p.permission]) && (
-                                <div>
-                                    <h3 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
-                                        Weitere
-                                    </h3>
-                                    <div className="space-y-1">
-                                        {additionalPages.map((item) => {
-                                            if (!permissions[item.permission]) return null;
-                                            const isActive = isPageActive(item.page);
-                                            return (
-                                                <Link
-                                                    key={item.name}
-                                                    to={createPageUrl(item.page)}
-                                                    className={cn(
-                                                        "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all",
-                                                        isActive 
-                                                            ? "shadow-lg" 
-                                                            : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                                                    )}
-                                                    style={isActive ? {
-                                                        background: 'linear-gradient(to right, var(--brand-from), var(--brand-via))',
-                                                        color: 'var(--brand-fg)'
-                                                    } : {}}
-                                                >
-                                                    <item.icon className="w-5 h-5" />
-                                                    {item.name}
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
+                            {/* Weitere Seiten nur im Mehr-Drawer — nicht in der Sidebar */}
                         </nav>
 
                         {/* Footer */}
