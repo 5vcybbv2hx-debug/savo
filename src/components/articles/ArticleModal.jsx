@@ -179,16 +179,27 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
             const primaryPrice = primary?.purchase_price ? parseFloat(primary.purchase_price) : undefined;
             const finalPrice = primaryPrice ?? (formData.purchase_price ? parseFloat(formData.purchase_price) : undefined);
 
+            // _pack_price_input ist ein UI-Hilfswert — nicht in die DB speichern
+            const cleanSupplierDetails = formData.supplier_details.map(s => {
+                const { _pack_price_input, ...clean } = s;
+                return {
+                    ...clean,
+                    purchase_price: clean.purchase_price ? parseFloat(clean.purchase_price) : undefined,
+                    packaging_units: clean.packaging_units ? parseFloat(clean.packaging_units) : undefined,
+                };
+            });
+
             const dataToSave = {
                 ...formData,
-                suppliers:      suppliersArray.length > 0 ? suppliersArray : formData.suppliers,
-                quantity:        formData.quantity        ? parseFloat(formData.quantity)        : undefined,
-                content_amount:  formData.content_amount  ? parseFloat(formData.content_amount)  : undefined,
-                purchase_price:  finalPrice,
-                current_stock:   formData.current_stock !== '' ? parseFloat(formData.current_stock) : 0,
-                min_stock:       formData.min_stock !== ''     ? parseFloat(formData.min_stock)     : undefined,
-                packaging_units: formData.packaging_units ? parseFloat(formData.packaging_units) : undefined,
-                deposit:         formData.deposit         ? parseFloat(formData.deposit)          : undefined,
+                supplier_details: cleanSupplierDetails,
+                suppliers:        suppliersArray.length > 0 ? suppliersArray : formData.suppliers,
+                quantity:         formData.quantity        ? parseFloat(formData.quantity)        : undefined,
+                content_amount:   formData.content_amount  ? parseFloat(formData.content_amount)  : undefined,
+                purchase_price:   finalPrice,
+                current_stock:    formData.current_stock !== '' ? parseFloat(formData.current_stock) : 0,
+                min_stock:        formData.min_stock !== ''     ? parseFloat(formData.min_stock)     : undefined,
+                packaging_units:  formData.packaging_units ? parseFloat(formData.packaging_units) : undefined,
+                deposit:          formData.deposit         ? parseFloat(formData.deposit)          : undefined,
             };
 
             if (article?.id) {
