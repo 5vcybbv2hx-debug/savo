@@ -89,6 +89,7 @@ import StorageLocationScan from './pages/StorageLocationScan';
 import TeamHub from './pages/TeamHub';
 import AccountingHub from './pages/AccountingHub';
 import BetriebHub from './pages/BetriebHub';
+import KarteHub from './pages/KarteHub';
 import Warehouse from './pages/Warehouse';
 import Wastage from './pages/Wastage';
 import Inventory from './pages/Inventory';
@@ -177,6 +178,7 @@ const PUBLIC_PAGES = {
     "TeamHub": TeamHub,
     "AccountingHub": AccountingHub,
     "BetriebHub": BetriebHub,
+    "KarteHub": KarteHub,
     // PublicReservation + GuestReservationView entfernt — nur interne Reservierungen
 };
 
