@@ -40,7 +40,10 @@ export default function Layout({ children, currentPageName }) {
     const toggleSidebar = () => {
         setSidebarCollapsed(prev => {
             const next = !prev;
-            try { localStorage.setItem('sidebar_collapsed', next ? 'true' : 'false'); } catch {}
+            try {
+                localStorage.setItem('sidebar_collapsed', next ? 'true' : 'false');
+                window.dispatchEvent(new Event('sidebar-toggle'));
+            } catch {}
             return next;
         });
     };
