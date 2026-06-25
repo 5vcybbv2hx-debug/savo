@@ -194,15 +194,20 @@ export default function Layout({ children, currentPageName }) {
 
     // Role-based default bottom tabs
     const getRoleDefaultTabs = () => {
-        if (permissions.isManager || permissions.isAdmin) {
-            return ['Dashboard', 'GuestHub', 'Todos', 'TeamCalendar'];
+        if (permissions.isAdmin) {
+            // Admin: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
+            return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
+        }
+        if (permissions.isManager) {
+            // Manager: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
+            return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
         }
         if (permissions.canViewTodos) {
-            // Barkeeper: Dashboard, Schichtplan, Cleaning, Todos
-            return ['Dashboard', 'Calendar', 'Cleaning', 'Todos'];
+            // Barkeeper: Übersicht, Schichtplan, Aufgaben, Putzliste
+            return ['Dashboard', 'Calendar', 'Todos', 'Cleaning'];
         }
-        // Aushilfe: Dashboard, Schichtplan, Zeiterfassung
-        return ['Dashboard', 'Calendar', 'TimeManagement'];
+        // Aushilfe: Übersicht, Meine Schichten, Zeiterfassung, Schichttausch
+        return ['Dashboard', 'MyShifts', 'TimeManagement', 'ShiftSwaps'];
     };
 
     const defaultPages = getRoleDefaultTabs();
@@ -432,8 +437,8 @@ export default function Layout({ children, currentPageName }) {
                 </aside>
 
                 {/* Mobile Bottom Navigation — Stack-aware + Optimistic */}
-                <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 border-t border-border/50 pb-safe shadow-2xl backdrop-blur-xl">
-                    <div className="flex items-center justify-around px-1 pt-1 pb-1">
+                <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 border-t border-border/50 pb-safe shadow-2xl backdrop-blur-xl">
+                    <div className="flex items-stretch justify-around px-1 pt-1.5 pb-1">
                         {currentNavItems.map(item => {
                             if (!permissions[item.permission]) return null;
                             const active = isTabActive(item.page);
@@ -442,54 +447,63 @@ export default function Layout({ children, currentPageName }) {
                                     key={item.page}
                                     onClick={() => {
                                         haptics.selection();
-                                        // Optimistic: sofort highlighten
                                         setOptimisticTab(item.page);
-                                        // Stack-aware navigation
                                         navigateToTab(item.page);
                                     }}
+                                    aria-label={item.name}
+                                    aria-current={active ? 'page' : undefined}
                                     className={cn(
-                                        'flex flex-col items-center justify-center gap-0.5 py-2 flex-1 rounded-xl transition-colors min-h-[56px]',
-                                        active ? 'text-foreground' : 'text-muted-foreground'
+                                        'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
+                                        active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                                     )}
                                 >
-                                    <div className={cn(
-                                        'relative flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200',
-                                        active ? 'bg-primary/15' : ''
-                                    )}>
-                                        {active && (
-                                            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
-                                        )}
-                                        <item.icon className={cn('w-5 h-5 transition-all duration-200', active && 'scale-110')} />
+                                    {/* Active indicator pill */}
+                                    {active && (
+                                        <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-full bg-primary" />
+                                    )}
+                                    <div className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-150">
+                                        <item.icon className={cn(
+                                            'transition-all duration-150',
+                                            active ? 'w-[22px] h-[22px]' : 'w-5 h-5'
+                                        )} />
+                                        {/* Badge: ShiftSwap */}
                                         {item.page === 'ShiftSwaps' && swapInboxCount > 0 && (
-                                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full text-[9px] text-white flex items-center justify-center font-bold leading-none">
+                                            <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 bg-destructive rounded-full text-[9px] text-destructive-foreground flex items-center justify-center font-bold leading-none px-1">
                                                 {swapInboxCount > 9 ? '9+' : swapInboxCount}
                                             </span>
                                         )}
                                     </div>
-                                    <span className={cn('text-[10px] leading-tight font-medium', active && 'font-bold')}>
+                                    <span className={cn(
+                                        'text-[10px] leading-none tracking-tight truncate max-w-full px-1 transition-all duration-150',
+                                        active ? 'font-semibold' : 'font-medium'
+                                    )}>
                                         {item.name}
                                     </span>
                                 </button>
                             );
                         })}
 
-                        {/* Mehr */}
+                        {/* Mehr-Button */}
                         <button
                             onClick={() => { haptics.selection(); setSettingsOpen(true); }}
-                            className="flex flex-col items-center justify-center gap-0.5 py-2 flex-1 rounded-xl transition-colors min-h-[56px] text-muted-foreground"
+                            aria-label="Mehr"
+                            className={cn(
+                                'relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 rounded-xl transition-all duration-150 min-h-[52px] min-w-0 active:scale-95',
+                                settingsOpen ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                            )}
                         >
-                            <div className="relative flex items-center justify-center w-8 h-8 rounded-xl">
+                            <div className="relative flex items-center justify-center w-9 h-9 rounded-xl">
                                 <Settings className="w-5 h-5" />
                                 {unreadNotifCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full text-[9px] text-white flex items-center justify-center font-bold leading-none">
+                                    <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 bg-destructive rounded-full text-[9px] text-destructive-foreground flex items-center justify-center font-bold leading-none px-1">
                                         {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                                     </span>
                                 )}
                             </div>
-                            <span className="text-[10px] leading-tight font-medium">Mehr</span>
+                            <span className="text-[10px] leading-none tracking-tight font-medium">Mehr</span>
                         </button>
                     </div>
-                </div>
+                </nav>
 
                 {/* Mehr-Drawer — alle Bereiche geordnet */}
                 <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
