@@ -84,6 +84,8 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
         image_url: '',
         allergens: '', allergens_list: [], additives: [],
         notes: '', unit: '', quantity: '', content_amount: '', content_unit: '',
+        packaging_units: '', packaging_size: '', order_unit: '',
+        deposit: '', deposit_type: 'kein',
     };
 
     const [formData, setFormData] = useState(emptyForm);
@@ -114,6 +116,11 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                 allergens_list:   article.allergens_list || [],
                 additives:        article.additives || [],
                 notes:            article.notes || '',
+                packaging_units:  article.packaging_units || '',
+                packaging_size:   article.packaging_size || '',
+                order_unit:       article.order_unit || '',
+                deposit:          article.deposit || '',
+                deposit_type:     article.deposit_type || 'kein',
             });
         } else {
             setFormData(emptyForm);
@@ -175,11 +182,13 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
             const dataToSave = {
                 ...formData,
                 suppliers:      suppliersArray.length > 0 ? suppliersArray : formData.suppliers,
-                quantity:       formData.quantity       ? parseFloat(formData.quantity)       : undefined,
-                content_amount: formData.content_amount ? parseFloat(formData.content_amount) : undefined,
-                purchase_price: finalPrice,
-                current_stock:  formData.current_stock !== '' ? parseFloat(formData.current_stock) : 0,
-                min_stock:      formData.min_stock !== ''     ? parseFloat(formData.min_stock)      : undefined,
+                quantity:        formData.quantity        ? parseFloat(formData.quantity)        : undefined,
+                content_amount:  formData.content_amount  ? parseFloat(formData.content_amount)  : undefined,
+                purchase_price:  finalPrice,
+                current_stock:   formData.current_stock !== '' ? parseFloat(formData.current_stock) : 0,
+                min_stock:       formData.min_stock !== ''     ? parseFloat(formData.min_stock)     : undefined,
+                packaging_units: formData.packaging_units ? parseFloat(formData.packaging_units) : undefined,
+                deposit:         formData.deposit         ? parseFloat(formData.deposit)          : undefined,
             };
 
             if (article?.id) {
@@ -364,36 +373,74 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                                 </Select>
                             </div>
 
-                            {/* Inhalt + Einheit */}
-                            <div className="grid grid-cols-3 gap-2">
-                                <div>
-                                    <Label className="text-xs text-muted-foreground">Menge</Label>
-                                    <Input type="number" step="0.01"
-                                        value={formData.quantity}
-                                        onChange={e => set('quantity', e.target.value)}
-                                        placeholder="1"
-                                        className="h-9 mt-1" />
+                            {/* Inhalt & Einheit */}
+                            <div>
+                                <Label className="text-xs text-muted-foreground mb-1.5 block">Inhalt pro Einheit</Label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <Label className="text-[10px] text-muted-foreground/70">Menge (Anzahl)</Label>
+                                        <Input type="number" step="1" min="1"
+                                            value={formData.quantity}
+                                            onChange={e => set('quantity', e.target.value)}
+                                            placeholder="1"
+                                            className="h-9 mt-1 text-sm" />
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] text-muted-foreground/70">Füllmenge</Label>
+                                        <Input type="number" step="0.001"
+                                            value={formData.content_amount}
+                                            onChange={e => set('content_amount', e.target.value)}
+                                            placeholder="0.7"
+                                            className="h-9 mt-1 text-sm" />
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] text-muted-foreground/70">Einheit</Label>
+                                        <Select value={formData.content_unit} onValueChange={v => set('content_unit', v)}>
+                                            <SelectTrigger className="h-9 mt-1">
+                                                <SelectValue placeholder="—" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {['Stück', 'l', 'ml', 'kg', 'g', 'cl'].map(u => (
+                                                    <SelectItem key={u} value={u}>{u}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
+                                {formData.quantity > 1 && formData.content_amount && formData.content_unit && (
+                                    <p className="text-[10px] text-muted-foreground mt-1.5 px-1">
+                                        = {formData.quantity}× {formData.content_amount} {formData.content_unit} pro Einheit
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Pfand */}
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <Label className="text-xs text-muted-foreground">Inhalt</Label>
-                                    <Input type="number" step="0.001"
-                                        value={formData.content_amount}
-                                        onChange={e => set('content_amount', e.target.value)}
-                                        placeholder="0.7"
-                                        className="h-9 mt-1" />
-                                </div>
-                                <div>
-                                    <Label className="text-xs text-muted-foreground">Einheit</Label>
-                                    <Select value={formData.content_unit} onValueChange={v => set('content_unit', v)}>
+                                    <Label className="text-xs text-muted-foreground">Pfandtyp</Label>
+                                    <Select value={formData.deposit_type || 'kein'} onValueChange={v => set('deposit_type', v)}>
                                         <SelectTrigger className="h-9 mt-1">
-                                            <SelectValue placeholder="—" />
+                                            <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {['Stück', 'l', 'ml', 'kg', 'g'].map(u => (
-                                                <SelectItem key={u} value={u}>{u}</SelectItem>
-                                            ))}
+                                            <SelectItem value="kein">Kein Pfand</SelectItem>
+                                            <SelectItem value="einweg">Einweg (0,25 €)</SelectItem>
+                                            <SelectItem value="mehrweg_flasche">Mehrweg Flasche (0,15 €)</SelectItem>
+                                            <SelectItem value="mehrweg_kiste">Mehrweg Kiste (1,50 €)</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Pfand (€/Einheit)</Label>
+                                    <Input type="number" step="0.01"
+                                        value={formData.deposit}
+                                        onChange={e => set('deposit', e.target.value)}
+                                        placeholder={
+                                            formData.deposit_type === 'einweg'           ? '0.25' :
+                                            formData.deposit_type === 'mehrweg_flasche'  ? '0.15' :
+                                            formData.deposit_type === 'mehrweg_kiste'    ? '1.50' : '—'
+                                        }
+                                        className="h-9 mt-1 text-sm" />
                                 </div>
                             </div>
 
