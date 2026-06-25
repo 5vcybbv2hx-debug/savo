@@ -210,6 +210,34 @@ export default function Layout({ children, currentPageName }) {
 
     // Derived values
     const allPages = mainNavigation.flatMap(area => area.pages).concat(additionalPages);
+
+    // Drawer: strukturierte Bereiche mit Unterseiten (nicht Hub-Einträge)
+    const drawerSections = useMemo(() => [
+        {
+            id: 'betrieb', name: 'Betrieb',
+            pages: additionalPages.filter(p => ['GuestHub','Todos','WeeklyTasks','Cleaning','Events'].includes(p.page))
+        },
+        {
+            id: 'waren', name: 'Waren & Lager',
+            pages: additionalPages.filter(p => ['Restock','Shopping','QuickList','Articles','Storage','Inventory','Suppliers','Wastage'].includes(p.page))
+        },
+        {
+            id: 'karte', name: 'Karte & Rezepte',
+            pages: additionalPages.filter(p => ['DrinkMenu','Recipes','PriceCalculator'].includes(p.page))
+        },
+        {
+            id: 'buchhaltung', name: 'Buchhaltung',
+            pages: additionalPages.filter(p => ['AccountingDashboard','AccountingCashbook','AccountingReceipts','AccountingCreditors','AccountingExport','AccountingFixedCosts','AccountingLiabilities','DailyAnalysis'].includes(p.page))
+        },
+        {
+            id: 'team', name: 'Team',
+            pages: additionalPages.filter(p => ['Employees','Calendar','TeamCalendar','TimeManagement','Vacation','MyShifts','ShiftSwaps','Permissions','TeamMeeting','WorldCupSchedule','Stationsplan'].includes(p.page))
+        },
+        {
+            id: 'sonstiges', name: 'Einstellungen & Mehr',
+            pages: additionalPages.filter(p => ['Settings','Documents','Maintenance','Onboarding','BusinessCard','ModuleCenter','BusinessCalendar','DataQuality'].includes(p.page))
+        },
+    ], [additionalPages]);
     const getPageName = (pageName) => allPages.find(p => p.page === pageName)?.name || 'BarManager';
     const primaryPages = mainNavigation.flatMap(a => a.pages).map(p => p.page);
     const isRootPage = primaryPages.includes(currentPageName);
@@ -537,8 +565,8 @@ export default function Layout({ children, currentPageName }) {
                             )}
                         </DrawerHeader>
                         <div className="overflow-y-auto">
-                            {/* Alle Hauptbereiche */}
-                            {mainNavigation.map((section) => {
+                            {/* Drawer-Kacheln: pro Bereich die passenden Unterseiten */}
+                            {drawerSections.map((section) => {
                                 const visibleItems = section.pages.filter(item => permissions[item.permission]);
                                 if (visibleItems.length === 0) return null;
                                 return (
@@ -586,52 +614,6 @@ export default function Layout({ children, currentPageName }) {
                                     </div>
                                 );
                             })}
-
-                            {/* Zusätzliche Seiten */}
-                            {additionalPages.some(p => permissions[p.permission]) && (
-                                <div className="px-4 pt-4">
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1">Einstellungen</p>
-                                    <div className="grid grid-cols-3 gap-2 mb-2">
-                                        {additionalPages.filter(p => permissions[p.permission]).map((item) => {
-                                            const pinned = isPinned(item.page);
-                                            const active = isPageActive(item.page);
-                                            return (
-                                                <div key={item.page} className="relative">
-                                                    <Link
-                                                        to={createPageUrl(item.page)}
-                                                        onClick={() => { haptics.selection(); setSettingsOpen(false); }}
-                                                        className={cn(
-                                                            'flex flex-col items-center gap-1.5 p-3 pt-4 rounded-xl active:scale-95 transition-all text-center w-full',
-                                                            pinned
-                                                                ? 'bg-primary/10 border border-primary/30'
-                                                                : active
-                                                                    ? 'bg-amber-500/20 border border-amber-500/40'
-                                                                    : 'bg-secondary/40 hover:bg-secondary'
-                                                        )}
-                                                    >
-                                                        <item.icon className={cn('w-5 h-5', pinned ? 'text-primary' : active ? 'text-amber-400' : 'text-foreground')} />
-                                                        <span className={cn('text-[10px] font-medium leading-tight', pinned ? 'text-primary font-semibold' : active ? 'text-amber-400 font-bold' : 'text-foreground')}>{item.name}</span>
-                                                    </Link>
-                                                    <button
-                                                        onClick={(e) => { e.preventDefault(); haptics.selection(); togglePin(item.page); }}
-                                                        title={pinned ? 'Aus Nav entfernen' : canPin ? 'In Nav anheften' : 'Nav voll (max. 4)'}
-                                                        className={cn(
-                                                            'absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-all shadow-sm border',
-                                                            pinned
-                                                                ? 'bg-primary text-primary-foreground border-primary'
-                                                                : canPin
-                                                                    ? 'bg-card text-muted-foreground border-border hover:bg-primary/10 hover:text-primary hover:border-primary/50'
-                                                                    : 'bg-card text-muted-foreground/30 border-border/30 cursor-not-allowed'
-                                                        )}
-                                                    >
-                                                        <Pin className="w-2.5 h-2.5" />
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Abmelden */}
                             <div className="px-4 pt-3 pb-6 mt-2 border-t border-border">
