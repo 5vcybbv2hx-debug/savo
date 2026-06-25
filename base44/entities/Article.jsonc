@@ -8,7 +8,7 @@
     },
     "qr_code": {
       "type": "string",
-      "description": "QR-Code (optional, f\u00fcr interne Kennzeichnung)"
+      "description": "QR-Code (optional, für interne Kennzeichnung)"
     },
     "name": {
       "type": "string",
@@ -27,7 +27,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Liste der Lieferantennamen (R\u00fcckw\u00e4rtskompatibilit\u00e4t)"
+      "description": "Liste der Lieferantennamen (Rückwärtskompatibilität)"
     },
     "supplier_details": {
       "type": "array",
@@ -63,14 +63,14 @@
         "ml",
         "kg",
         "g",
-        "St\u00fcck"
+        "Stück"
       ],
-      "default": "St\u00fcck",
+      "default": "Stück",
       "description": "Einheit des Inhalts"
     },
     "content_amount": {
       "type": "number",
-      "description": "Inhaltsmenge (z.B. 0.7 f\u00fcr 0,7L Flasche)"
+      "description": "Inhaltsmenge (z.B. 0.7 für 0,7L Flasche)"
     },
     "purchase_price": {
       "type": "number",
@@ -78,7 +78,11 @@
     },
     "tax_rate": {
       "type": "number",
-      "enum": [0, 7, 19],
+      "enum": [
+        0,
+        7,
+        19
+      ],
       "default": 19,
       "description": "MwSt-Satz in % (0, 7 oder 19)"
     },
@@ -100,7 +104,7 @@
     },
     "storage_location": {
       "type": "string",
-      "description": "Lagerort (z.B. Keller, K\u00fchlraum)"
+      "description": "Lagerort (z.B. Keller, Kühlraum)"
     },
     "image_url": {
       "type": "string",
@@ -136,6 +140,33 @@
       "type": "boolean",
       "default": true,
       "description": "Aktiv"
+    },
+    "packaging_units": {
+      "type": "number",
+      "description": "Anzahl Einheiten im Gebinde (z.B. 24 für 24er Kiste)"
+    },
+    "packaging_size": {
+      "type": "string",
+      "description": "Gebinde-Typ (z.B. Kiste, Palette, Pack, Fass)"
+    },
+    "order_unit": {
+      "type": "string",
+      "description": "Bestelleinheit (z.B. Kiste, Fass, Palette, Stück)"
+    },
+    "deposit": {
+      "type": "number",
+      "description": "Pfand pro Einheit in € (z.B. 0.25 für Einwegflasche)"
+    },
+    "deposit_type": {
+      "type": "string",
+      "enum": [
+        "kein",
+        "einweg",
+        "mehrweg_flasche",
+        "mehrweg_kiste"
+      ],
+      "default": "kein",
+      "description": "Pfandtyp"
     }
   },
   "required": [
