@@ -86,6 +86,9 @@ import Todos from './pages/Todos';
 import Vacation from './pages/Vacation';
 import Storage from './pages/Storage';
 import StorageLocationScan from './pages/StorageLocationScan';
+import TeamHub from './pages/TeamHub';
+import AccountingHub from './pages/AccountingHub';
+import BetriebHub from './pages/BetriebHub';
 import Warehouse from './pages/Warehouse';
 import Wastage from './pages/Wastage';
 import Inventory from './pages/Inventory';
@@ -171,6 +174,9 @@ const SPECIAL_PAGES_WITH_LAYOUT = {
 const PUBLIC_PAGES = {
     "PublicDrinkMenu": PublicDrinkMenu,
     "StorageLocationScan": StorageLocationScan,
+    "TeamHub": TeamHub,
+    "AccountingHub": AccountingHub,
+    "BetriebHub": BetriebHub,
     // PublicReservation + GuestReservationView entfernt — nur interne Reservierungen
 };
 
