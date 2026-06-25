@@ -12,7 +12,7 @@ export function useDashboardData({ isManager, currentEmployee }) {
 
     const { data: shifts = [] } = useQuery({
         queryKey: ['shifts-dashboard', today],
-        queryFn: () => base44.entities.Shift.filter({ date_gte: subDays(new Date(), 1).toISOString().slice(0, 10) }, 'date', 500),
+        queryFn: () => base44.entities.Shift.list('date', 1000),
         staleTime: STALE.SLOW,
         gcTime: 15 * 60_000,
     });
