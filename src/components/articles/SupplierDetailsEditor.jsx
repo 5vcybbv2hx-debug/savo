@@ -42,19 +42,22 @@ export default function SupplierDetailsEditor({ value = [], onChange, availableS
 
     // Wenn der User den Preis eingibt, immer in Einzelpreis umrechnen und speichern
     const handlePriceInput = (idx, rawValue) => {
-        const mode = getPriceMode(idx);
+        const mode  = getPriceMode(idx);
         const units = parseFloat(value[idx]?.packaging_units);
 
+        // Beide Felder in EINEM update-Call setzen — verhindert Closure-Bug
         if (mode === 'pack' && !isNaN(units) && units > 0) {
-            // Gebindepreis → Einzelpreis
             const packPrice = parseFloat(rawValue);
-            const unitPrice = !isNaN(packPrice) ? (packPrice / units).toFixed(4) : rawValue;
-            update(idx, 'purchase_price', unitPrice);
-            // Hilfswert für Anzeige speichern
-            update(idx, '_pack_price_input', rawValue);
+            const unitPrice = !isNaN(packPrice) ? String((packPrice / units).toFixed(4)) : rawValue;
+            onChange(value.map((s, i) => i === idx
+                ? { ...s, purchase_price: unitPrice, _pack_price_input: rawValue }
+                : s
+            ));
         } else {
-            update(idx, 'purchase_price', rawValue);
-            update(idx, '_pack_price_input', '');
+            onChange(value.map((s, i) => i === idx
+                ? { ...s, purchase_price: rawValue, _pack_price_input: '' }
+                : s
+            ));
         }
     };
 
@@ -241,8 +244,10 @@ export default function SupplierDetailsEditor({ value = [], onChange, availableS
                                                 type="number" step="1" min="1"
                                                 value={s.packaging_units}
                                                 onChange={e => {
-                                                    update(idx, 'packaging_units', e.target.value);
-                                                    update(idx, '_pack_price_input', ''); // Reset Hilfsfeld
+                                                    onChange(value.map((s, i) => i === idx
+                                                        ? { ...s, packaging_units: e.target.value, _pack_price_input: '' }
+                                                        : s
+                                                    ));
                                                 }}
                                                 placeholder="24"
                                                 className="h-9 text-sm"
