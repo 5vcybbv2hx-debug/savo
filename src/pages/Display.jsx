@@ -1,24 +1,31 @@
 /**
- * Display — Vollbild-Slideshow für Bar-TV
- * Öffne diese Seite im Browser-Vollbild (F11)
- * Quellen: DisplaySlide (manuell) + Events + WeeklySpecials (automatisch)
+ * Display.jsx — Vollbild-Slideshow für Bar-TV
+ * v2: Countdown zentriert, Mehrtages-Events, Ort-Anzeige,
+ *     Mehrere Drink-Specials, Auto-Skip abgelaufener Slides
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { format, differenceInDays, differenceInHours, parseISO, isAfter, isBefore } from 'date-fns';
+import { format, differenceInSeconds, differenceInDays, differenceInHours, differenceInMinutes, parseISO, isAfter, isBefore } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 
-// ── Accent-Farb-Map ───────────────────────────────────────────────────────────
 const ACCENTS = {
-  amber:  { bg: '#f59e0b', glow: 'rgba(245,158,11,0.4)',  text: '#fff', soft: 'rgba(245,158,11,0.12)' },
-  blue:   { bg: '#3b82f6', glow: 'rgba(59,130,246,0.4)',  text: '#fff', soft: 'rgba(59,130,246,0.12)' },
-  green:  { bg: '#22c55e', glow: 'rgba(34,197,94,0.4)',   text: '#fff', soft: 'rgba(34,197,94,0.12)'  },
-  red:    { bg: '#ef4444', glow: 'rgba(239,68,68,0.4)',   text: '#fff', soft: 'rgba(239,68,68,0.12)'  },
-  purple: { bg: '#a855f7', glow: 'rgba(168,85,247,0.4)',  text: '#fff', soft: 'rgba(168,85,247,0.12)' },
-  pink:   { bg: '#ec4899', glow: 'rgba(236,72,153,0.4)',  text: '#fff', soft: 'rgba(236,72,153,0.12)' },
-  cyan:   { bg: '#06b6d4', glow: 'rgba(6,182,212,0.4)',   text: '#fff', soft: 'rgba(6,182,212,0.12)'  },
+  amber:   { bg: '#f59e0b', glow: 'rgba(245,158,11,0.45)',  text: '#000', soft: 'rgba(245,158,11,0.14)' },
+  orange:  { bg: '#f97316', glow: 'rgba(249,115,22,0.45)',  text: '#000', soft: 'rgba(249,115,22,0.14)' },
+  red:     { bg: '#ef4444', glow: 'rgba(239,68,68,0.45)',   text: '#fff', soft: 'rgba(239,68,68,0.14)'  },
+  rose:    { bg: '#f43f5e', glow: 'rgba(244,63,94,0.45)',   text: '#fff', soft: 'rgba(244,63,94,0.14)'  },
+  pink:    { bg: '#ec4899', glow: 'rgba(236,72,153,0.45)',  text: '#fff', soft: 'rgba(236,72,153,0.14)' },
+  fuchsia: { bg: '#d946ef', glow: 'rgba(217,70,239,0.45)',  text: '#fff', soft: 'rgba(217,70,239,0.14)' },
+  purple:  { bg: '#a855f7', glow: 'rgba(168,85,247,0.45)',  text: '#fff', soft: 'rgba(168,85,247,0.14)' },
+  violet:  { bg: '#7c3aed', glow: 'rgba(124,58,237,0.45)',  text: '#fff', soft: 'rgba(124,58,237,0.14)' },
+  indigo:  { bg: '#6366f1', glow: 'rgba(99,102,241,0.45)',  text: '#fff', soft: 'rgba(99,102,241,0.14)' },
+  blue:    { bg: '#3b82f6', glow: 'rgba(59,130,246,0.45)',  text: '#fff', soft: 'rgba(59,130,246,0.14)' },
+  sky:     { bg: '#0ea5e9', glow: 'rgba(14,165,233,0.45)',  text: '#fff', soft: 'rgba(14,165,233,0.14)' },
+  cyan:    { bg: '#06b6d4', glow: 'rgba(6,182,212,0.45)',   text: '#fff', soft: 'rgba(6,182,212,0.14)'  },
+  teal:    { bg: '#14b8a6', glow: 'rgba(20,184,166,0.45)',  text: '#fff', soft: 'rgba(20,184,166,0.14)' },
+  green:   { bg: '#22c55e', glow: 'rgba(34,197,94,0.45)',   text: '#000', soft: 'rgba(34,197,94,0.14)'  },
+  lime:    { bg: '#84cc16', glow: 'rgba(132,204,22,0.45)',  text: '#000', soft: 'rgba(132,204,22,0.14)' },
+  white:   { bg: '#f8fafc', glow: 'rgba(248,250,252,0.35)', text: '#000', soft: 'rgba(248,250,252,0.10)' },
 };
 
 // ── Uhr ───────────────────────────────────────────────────────────────────────
@@ -29,11 +36,11 @@ function Clock() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="text-right">
-      <div style={{ fontSize: '3.2rem', fontWeight: 700, lineHeight: 1, color: '#fff', letterSpacing: '-0.02em' }}>
+    <div style={{ textAlign: 'right' }}>
+      <div style={{ fontSize: '3rem', fontWeight: 700, lineHeight: 1, color: '#fff', letterSpacing: '-0.02em' }}>
         {format(time, 'HH:mm')}
       </div>
-      <div style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.55)', marginTop: 4 }}>
+      <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>
         {format(time, 'EEEE, d. MMMM', { locale: de })}
       </div>
     </div>
@@ -41,62 +48,113 @@ function Clock() {
 }
 
 // ── Progress Bar ──────────────────────────────────────────────────────────────
-function ProgressBar({ duration, color, running }) {
+function ProgressBar({ duration, color, key: _key }) {
   const [progress, setProgress] = useState(0);
   const startRef = useRef(Date.now());
-
   useEffect(() => {
     setProgress(0);
     startRef.current = Date.now();
-    if (!running) return;
-    const raf = setInterval(() => {
+    const iv = setInterval(() => {
       const elapsed = (Date.now() - startRef.current) / 1000;
       setProgress(Math.min(elapsed / duration, 1));
     }, 50);
-    return () => clearInterval(raf);
-  }, [duration, running]);
-
+    return () => clearInterval(iv);
+  }, [duration, _key]);
   return (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: 'rgba(255,255,255,0.1)' }}>
-      <div style={{
-        height: '100%',
-        width: `${progress * 100}%`,
-        background: color,
-        boxShadow: `0 0 8px ${color}`,
-        transition: 'width 0.05s linear',
-        borderRadius: '0 2px 2px 0',
-      }} />
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 5, background: 'rgba(255,255,255,0.08)' }}>
+      <div style={{ height: '100%', width: `${progress * 100}%`, background: color,
+        boxShadow: `0 0 10px ${color}`, transition: 'width 0.05s linear', borderRadius: '0 3px 3px 0' }} />
     </div>
   );
 }
 
-// ── Countdown ─────────────────────────────────────────────────────────────────
-function CountdownBadge({ dateStr, color }) {
-  if (!dateStr) return null;
-  const target = parseISO(dateStr);
-  const now = new Date();
-  const days = differenceInDays(target, now);
-  const hours = differenceInHours(target, now) % 24;
+// ── Countdown (ZENTRIERT, live) ───────────────────────────────────────────────
+function CountdownSlide({ slide, accent }) {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const iv = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(iv);
+  }, []);
 
-  if (days < 0) return null;
-  if (days === 0) return (
-    <div style={{ background: color, color: '#fff', borderRadius: 12, padding: '8px 20px', fontWeight: 800, fontSize: '1.1rem', display: 'inline-block' }}>
-      HEUTE! {hours > 0 ? `in ${hours}h` : 'jetzt'}
+  if (!slide.event_date) return null;
+  const target = parseISO(slide.event_date + (slide.event_time ? 'T' + slide.event_time : 'T00:00:00'));
+  const totalSec = differenceInSeconds(target, now);
+
+  if (totalSec < 0) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 32, textAlign: 'center' }}>
+      <div style={{ fontSize: '5rem' }}>🎉</div>
+      <div style={{ fontSize: '4rem', fontWeight: 900, color: accent.bg, textShadow: `0 0 60px ${accent.glow}` }}>ES IST SOWEIT!</div>
+      <div style={{ fontSize: '2rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>{slide.title}</div>
     </div>
   );
+
+  const days  = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins  = Math.floor((totalSec % 3600) / 60);
+  const secs  = totalSec % 60;
+
+  const units = days > 0
+    ? [{ v: days, l: 'Tage' }, { v: hours, l: 'Std.' }, { v: mins, l: 'Min.' }]
+    : [{ v: hours, l: 'Std.' }, { v: mins, l: 'Min.' }, { v: secs, l: 'Sek.' }];
+
   return (
-    <div style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${color}`, borderRadius: 12, padding: '8px 20px', display: 'inline-flex', gap: 16, alignItems: 'center' }}>
-      <span style={{ color: '#fff', fontWeight: 800, fontSize: '2rem', lineHeight: 1 }}>{days}</span>
-      <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>Tage<br/>noch</span>
-      {hours > 0 && <>
-        <span style={{ color: '#fff', fontWeight: 800, fontSize: '2rem', lineHeight: 1 }}>{hours}</span>
-        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>Std.<br/>noch</span>
-      </>}
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 40, textAlign: 'center', padding: '60px 80px' }}>
+      {/* Label */}
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', display: 'inline-block' }}>
+        <span style={{ fontSize: '0.85rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Countdown</span>
+      </div>
+
+      {/* Titel */}
+      <div style={{ fontSize: '3.8rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.02em', textShadow: '0 2px 40px rgba(0,0,0,0.5)' }}>
+        {slide.title}
+      </div>
+
+      {/* Countdown-Kacheln */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'center' }}>
+        {units.map((u, i) => (
+          <div key={i} style={{ textAlign: 'center' }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: `2px solid ${accent.bg}`,
+              borderRadius: 20,
+              padding: '24px 36px',
+              minWidth: 130,
+              boxShadow: `0 0 40px ${accent.glow}`,
+            }}>
+              <div style={{ fontSize: '5rem', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>
+                {String(u.v).padStart(2, '0')}
+              </div>
+              <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)', marginTop: 8, fontWeight: 600 }}>{u.l}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Datum / Zeit / Ort */}
+      {(slide.event_date || slide.event_time || slide.location) && (
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {slide.event_date && (
+            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 22px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
+              📅 {format(parseISO(slide.event_date), 'EEEE, d. MMMM yyyy', { locale: de })}
+            </div>
+          )}
+          {slide.event_time && (
+            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 22px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
+              🕐 {slide.event_time} Uhr
+            </div>
+          )}
+          {slide.location && (
+            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 22px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
+              📍 {slide.location}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Slide: Announcement / Default ────────────────────────────────────────────
+// ── Slide: Announcement ───────────────────────────────────────────────────────
 function SlideAnnouncement({ slide, accent }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '80px 120px', textAlign: 'center', gap: 32 }}>
@@ -109,16 +167,8 @@ function SlideAnnouncement({ slide, accent }) {
         <div style={{ fontSize: '4.5rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.03em', textShadow: '0 2px 40px rgba(0,0,0,0.5)', marginBottom: 20 }}>
           {slide.title}
         </div>
-        {slide.subtitle && (
-          <div style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.7)', fontWeight: 400, marginBottom: 24 }}>
-            {slide.subtitle}
-          </div>
-        )}
-        {slide.body_text && (
-          <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.5)', maxWidth: 700, margin: '0 auto' }}>
-            {slide.body_text}
-          </div>
-        )}
+        {slide.subtitle && <div style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.7)', marginBottom: 24 }}>{slide.subtitle}</div>}
+        {slide.body_text && <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.5)', maxWidth: 700, margin: '0 auto' }}>{slide.body_text}</div>}
       </div>
       {slide.cta_text && (
         <div style={{ background: accent.bg, color: accent.text, padding: '16px 48px', borderRadius: 16, fontWeight: 800, fontSize: '1.4rem', boxShadow: `0 0 30px ${accent.glow}` }}>
@@ -131,6 +181,11 @@ function SlideAnnouncement({ slide, accent }) {
 
 // ── Slide: Event ──────────────────────────────────────────────────────────────
 function SlideEvent({ slide, accent }) {
+  const hasEndDate = slide.event_end_date && slide.event_end_date !== slide.event_date;
+  const dateStr = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
+  const endDateStr = hasEndDate ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
+  const timeStr = [slide.event_time, slide.event_end_time].filter(Boolean).join(' – ') + (slide.event_time ? ' Uhr' : '');
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: slide.image_url ? '1fr 1fr' : '1fr', height: '100%' }}>
       {slide.image_url && (
@@ -140,32 +195,30 @@ function SlideEvent({ slide, accent }) {
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '80px 80px 80px 60px', gap: 28 }}>
-        <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 16px', display: 'inline-flex', width: 'fit-content', gap: 8, alignItems: 'center' }}>
+        <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 16px', width: 'fit-content' }}>
           <span style={{ fontSize: '0.75rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Event</span>
         </div>
         <div>
-          <div style={{ fontSize: '3.8rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 16 }}>
-            {slide.title}
-          </div>
-          {slide.subtitle && (
-            <div style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.65)' }}>{slide.subtitle}</div>
+          <div style={{ fontSize: '3.8rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: 16 }}>{slide.title}</div>
+          {slide.subtitle && <div style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.65)' }}>{slide.subtitle}</div>}
+        </div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {slide.event_date && (
+            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
+              📅 {hasEndDate ? `${dateStr} – ${endDateStr}` : dateStr}
+            </div>
+          )}
+          {slide.event_time && (
+            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
+              🕐 {timeStr}
+            </div>
+          )}
+          {slide.location && (
+            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
+              📍 {slide.location}
+            </div>
           )}
         </div>
-        {(slide.event_date || slide.event_time) && (
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-            {slide.event_date && (
-              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
-                📅 {format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de })}
-              </div>
-            )}
-            {slide.event_time && (
-              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
-                🕐 {slide.event_time} Uhr
-              </div>
-            )}
-          </div>
-        )}
-        {slide.event_date && <CountdownBadge dateStr={slide.event_date} color={accent.bg} />}
         {slide.cta_text && (
           <div style={{ background: accent.bg, color: accent.text, padding: '14px 36px', borderRadius: 14, fontWeight: 800, fontSize: '1.2rem', display: 'inline-block', width: 'fit-content', boxShadow: `0 0 25px ${accent.glow}` }}>
             {slide.cta_text}
@@ -176,240 +229,167 @@ function SlideEvent({ slide, accent }) {
   );
 }
 
-// ── Slide: Drink Special ──────────────────────────────────────────────────────
+// ── Slide: Drink Special (Mehrere Getränke) ───────────────────────────────────
 function SlideDrinkSpecial({ slide, accent }) {
+  let drinks = [];
+  if (slide.body_text) {
+    try { drinks = JSON.parse(slide.body_text); } catch {}
+  }
+  // Fallback: Altes Format (einzelnes Getränk)
+  if (!drinks.length) {
+    drinks = [{ name: slide.title, price: slide.price_info, emoji: '🍹' }];
+  }
+
+  const isGrid = drinks.length > 1;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '80px 120px', textAlign: 'center', gap: 36 }}>
-      <div style={{ fontSize: '5rem', marginBottom: -16 }}>🍹</div>
-      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 20px', display: 'inline-block' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '60px 80px', textAlign: 'center', gap: 28 }}>
+      {/* Label */}
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 20px' }}>
         <span style={{ fontSize: '0.8rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Drink Special</span>
       </div>
-      <div>
-        <div style={{ fontSize: '5rem', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.03em', textShadow: `0 0 60px ${accent.glow}`, marginBottom: 16 }}>
+
+      {/* Titel (nur wenn nicht alle Getränke einzeln angezeigt werden) */}
+      {slide.title && (
+        <div style={{ fontSize: drinks.length === 1 ? '4.5rem' : '2.8rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.03em', textShadow: `0 0 60px ${accent.glow}` }}>
           {slide.title}
         </div>
-        {slide.subtitle && (
-          <div style={{ fontSize: '1.6rem', color: 'rgba(255,255,255,0.65)' }}>{slide.subtitle}</div>
-        )}
-        {slide.body_text && (
-          <div style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.45)', marginTop: 16, maxWidth: 600, margin: '16px auto 0' }}>
-            {slide.body_text}
-          </div>
-        )}
-      </div>
-      {slide.price_info && (
-        <div style={{ background: accent.bg, color: accent.text, padding: '20px 60px', borderRadius: 20, fontWeight: 900, fontSize: '2.4rem', boxShadow: `0 0 50px ${accent.glow}`, letterSpacing: '-0.02em' }}>
-          {slide.price_info}
-        </div>
       )}
-      {slide.cta_text && !slide.price_info && (
-        <div style={{ color: accent.bg, fontWeight: 700, fontSize: '1.3rem' }}>{slide.cta_text}</div>
+
+      {/* Getränke-Kacheln */}
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+        {drinks.filter(d => d.name).map((dr, i) => (
+          <div key={i} style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: `2px solid ${accent.bg}44`,
+            borderRadius: 20,
+            padding: '28px 40px',
+            textAlign: 'center',
+            minWidth: 180,
+            flex: drinks.length > 2 ? '1 1 180px' : 'none',
+            maxWidth: drinks.length === 1 ? 400 : 280,
+            boxShadow: `inset 0 0 40px ${accent.glow}22`,
+          }}>
+            <div style={{ fontSize: drinks.length === 1 ? '4rem' : '3rem', marginBottom: 12 }}>{dr.emoji || '🍹'}</div>
+            <div style={{ fontSize: drinks.length === 1 ? '2rem' : '1.4rem', fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 12 }}>{dr.name}</div>
+            {dr.price && (
+              <div style={{
+                background: accent.bg,
+                color: accent.text,
+                padding: drinks.length === 1 ? '12px 32px' : '8px 20px',
+                borderRadius: 12,
+                fontWeight: 900,
+                fontSize: drinks.length === 1 ? '2.4rem' : '1.6rem',
+                display: 'inline-block',
+                boxShadow: `0 0 20px ${accent.glow}`,
+                letterSpacing: '-0.01em',
+              }}>{dr.price}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {slide.subtitle && (
+        <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.55)' }}>{slide.subtitle}</div>
       )}
     </div>
   );
 }
 
 // ── Slide: Image Only ─────────────────────────────────────────────────────────
-function SlideImageOnly({ slide, accent }) {
+function SlideImageOnly({ slide }) {
   return (
     <div style={{ position: 'relative', height: '100%' }}>
-      {slide.image_url && (
-        <img src={slide.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      )}
-      {(slide.title || slide.cta_text) && (
+      <img src={slide.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      {slide.title && (
         <div style={{ position: 'absolute', bottom: 60, left: 80, right: 80 }}>
-          {slide.title && (
-            <div style={{ fontSize: '3.5rem', fontWeight: 900, color: '#fff', textShadow: '0 2px 20px rgba(0,0,0,0.8)', marginBottom: 12 }}>
-              {slide.title}
-            </div>
-          )}
-          {slide.cta_text && (
-            <div style={{ background: accent.bg, color: accent.text, padding: '12px 32px', borderRadius: 12, fontWeight: 700, fontSize: '1.2rem', display: 'inline-block', boxShadow: `0 0 25px ${accent.glow}` }}>
-              {slide.cta_text}
-            </div>
-          )}
+          <div style={{ fontSize: '3rem', fontWeight: 900, color: '#fff', textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>{slide.title}</div>
         </div>
       )}
     </div>
   );
 }
 
-// ── Slide Router ──────────────────────────────────────────────────────────────
-function SlideContent({ slide, accent }) {
-  switch (slide.slide_type) {
-    case 'event':         return <SlideEvent slide={slide} accent={accent} />;
-    case 'drink_special': return <SlideDrinkSpecial slide={slide} accent={accent} />;
-    case 'image_only':    return <SlideImageOnly slide={slide} accent={accent} />;
-    default:              return <SlideAnnouncement slide={slide} accent={accent} />;
-  }
-}
-
-// ── Haupt-Komponente ──────────────────────────────────────────────────────────
+// ── Hauptkomponente ───────────────────────────────────────────────────────────
 export default function Display() {
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [animating, setAnimating]   = useState(false);
-  const [visible, setVisible]       = useState(true);
-  const timerRef = useRef(null);
+  const [idx, setIdx]     = useState(0);
+  const [visible, setVisible] = useState(true);
 
-  // Queries
-  const { data: manualSlides = [] } = useQuery({
+  const { data: slides = [] } = useQuery({
     queryKey: ['display-slides'],
-    queryFn:  () => base44.entities.DisplaySlide.filter({ is_active: true }),
-    refetchInterval: 60_000, // jede Minute neu laden
-    staleTime: 30_000,
-  });
-
-  const { data: events = [] } = useQuery({
-    queryKey: ['display-events'],
-    queryFn:  () => base44.entities.Event.list('event_date', 20),
-    refetchInterval: 300_000,
-    staleTime: 120_000,
-  });
-
-  const { data: specials = [] } = useQuery({
-    queryKey: ['display-specials'],
-    queryFn:  () => base44.entities.WeeklySpecial.filter({ is_active: true }),
-    refetchInterval: 300_000,
-    staleTime: 120_000,
-  });
-
-  const { data: companyInfo = [] } = useQuery({
-    queryKey: ['company-info'],
-    queryFn:  () => base44.entities.CompanyInfo.list(),
-    staleTime: 600_000,
-  });
-
-  const company = companyInfo[0];
-
-  // Alle Slides zusammenbauen
-  const allSlides = (() => {
-    const now = new Date();
-    const slides = [];
-
-    // 1. Manuelle Slides (gefiltert nach Zeitfenster)
-    manualSlides
-      .filter(s => {
+    queryFn: async () => {
+      const now = new Date();
+      const all = await base44.entities.DisplaySlide.list('sort_order', 100);
+      return all.filter(s => {
+        if (!s.is_active) return false;
         if (s.show_from  && isBefore(now, parseISO(s.show_from)))  return false;
         if (s.show_until && isAfter(now,  parseISO(s.show_until))) return false;
         return true;
-      })
-      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-      .forEach(s => slides.push(s));
+      });
+    },
+    refetchInterval: 30000,
+  });
 
-    // 2. Kommende Events (nur zukünftige, max 5)
-    events
-      .filter(e => e.event_date && isAfter(parseISO(e.event_date), now))
-      .slice(0, 5)
-      .forEach(e => slides.push({
-        id:           `event-${e.id}`,
-        slide_type:   'event',
-        title:        e.title || e.name,
-        subtitle:     e.description || e.subtitle || '',
-        event_date:   e.event_date,
-        event_time:   e.start_time || e.event_time || '',
-        image_url:    e.image_url || e.cover_image || '',
-        accent_color: 'blue',
-        duration_seconds: 10,
-        cta_text:     'Seid dabei!',
-      }));
-
-    // 3. Aktive Drink Specials
-    specials.slice(0, 3).forEach(s => slides.push({
-      id:           `special-${s.id}`,
-      slide_type:   'drink_special',
-      title:        s.name || s.title,
-      subtitle:     s.description || '',
-      price_info:   s.special_price ? `${s.special_price} €` : s.price_display || '',
-      accent_color: 'amber',
-      duration_seconds: 8,
-    }));
-
-    return slides;
-  })();
-
-  const currentSlide = allSlides[currentIdx] || null;
-  const accent = ACCENTS[currentSlide?.accent_color || 'amber'];
-  const duration = currentSlide?.duration_seconds || 8;
-
-  // Auto-Advance
-  const advance = useCallback(() => {
-    if (allSlides.length <= 1) return;
-    setAnimating(true);
-    setVisible(false);
-    setTimeout(() => {
-      setCurrentIdx(i => (i + 1) % allSlides.length);
-      setVisible(true);
-      setAnimating(false);
-    }, 600);
-  }, [allSlides.length]);
+  const sorted = [...slides].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
   useEffect(() => {
-    if (!currentSlide) return;
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(advance, duration * 1000);
-    return () => clearTimeout(timerRef.current);
-  }, [currentIdx, duration, advance, currentSlide]);
+    if (!sorted.length) return;
+    const current = sorted[idx % sorted.length];
+    const dur = (current?.duration_seconds || 8) * 1000;
 
-  // Keine Slides
-  if (allSlides.length === 0) {
-    return (
-      <div style={{ background: '#0a0a0a', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 24 }}>
-        {company?.logo_url && (
-          <img src={company.logo_url} alt="Logo" style={{ height: 80, objectFit: 'contain', opacity: 0.6 }} />
-        )}
-        <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '1.2rem' }}>Keine aktiven Slides</p>
-        <p style={{ color: 'rgba(255,255,255,0.15)', fontSize: '0.85rem' }}>Slides im Manager-Bereich anlegen</p>
-      </div>
-    );
-  }
+    const t = setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIdx(i => (i + 1) % sorted.length);
+        setVisible(true);
+      }, 500);
+    }, dur);
+    return () => clearTimeout(t);
+  }, [idx, sorted.length]);
+
+  if (!sorted.length) return (
+    <div style={{ background: '#0a0a0a', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 20 }}>
+      <div style={{ fontSize: '4rem' }}>📺</div>
+      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '1.5rem', fontWeight: 600 }}>Keine aktiven Slides</div>
+      <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.9rem' }}>Erstelle Slides im Display-Manager</div>
+    </div>
+  );
+
+  const slide  = sorted[idx % sorted.length];
+  const accent = ACCENTS[slide.accent_color] || ACCENTS.amber;
 
   return (
-    <div style={{ background: '#0a0a0a', minHeight: '100vh', position: 'relative', overflow: 'hidden', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ background: '#0a0a0a', height: '100vh', overflow: 'hidden', position: 'relative', fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}>
 
       {/* Hintergrund-Glow */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: `radial-gradient(ellipse 80% 60% at 50% 30%, ${accent.glow} 0%, transparent 60%)`,
-        transition: 'background 1.2s ease',
-      }} />
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 80% 60% at 50% 100%, ${accent.glow} 0%, transparent 70%)`, pointerEvents: 'none', transition: 'background 1s ease' }} />
 
-      {/* Top Bar */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '28px 48px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {company?.logo_url
-            ? <img src={company.logo_url} alt="Logo" style={{ height: 44, objectFit: 'contain' }} />
-            : <div style={{ color: '#fff', fontWeight: 900, fontSize: '1.4rem', opacity: 0.9 }}>{company?.name || ''}</div>
-          }
+      {/* Header: Logo + Uhr */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '28px 48px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)' }}>
+        <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', opacity: 0.9 }}>
+          <span style={{ color: accent.bg }}>●</span> QUI
         </div>
         <Clock />
       </div>
 
-      {/* Slide Inhalt */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.98)',
-        transition: 'opacity 0.6s ease, transform 0.6s ease',
-      }}>
-        {currentSlide && <SlideContent slide={currentSlide} accent={accent} />}
+      {/* Slide-Inhalt */}
+      <div style={{ position: 'absolute', inset: 0, opacity: visible ? 1 : 0, transition: 'opacity 0.5s ease', paddingTop: '5rem' }}>
+        {slide.slide_type === 'countdown'     && <CountdownSlide       slide={slide} accent={accent} />}
+        {slide.slide_type === 'event'         && <SlideEvent           slide={slide} accent={accent} />}
+        {slide.slide_type === 'drink_special' && <SlideDrinkSpecial    slide={slide} accent={accent} />}
+        {slide.slide_type === 'image_only'    && <SlideImageOnly       slide={slide} />}
+        {(!slide.slide_type || slide.slide_type === 'announcement') && <SlideAnnouncement slide={slide} accent={accent} />}
       </div>
 
-      {/* Bottom Bar: Dots + Progress */}
-      <div style={{ position: 'absolute', bottom: 20, left: 0, right: 0, zIndex: 10, display: 'flex', justifyContent: 'center', gap: 8 }}>
-        {allSlides.map((_, i) => (
-          <button key={i} onClick={() => { setCurrentIdx(i); setVisible(true); }}
-            style={{
-              width: i === currentIdx ? 28 : 8, height: 8, borderRadius: 4,
-              background: i === currentIdx ? accent.bg : 'rgba(255,255,255,0.2)',
-              border: 'none', cursor: 'pointer',
-              transition: 'all 0.3s ease',
-            }}
-          />
+      {/* Slide-Indikator */}
+      <div style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 10 }}>
+        {sorted.map((_, i) => (
+          <div key={i} style={{ width: i === idx % sorted.length ? 24 : 6, height: 6, borderRadius: 3, background: i === idx % sorted.length ? accent.bg : 'rgba(255,255,255,0.2)', transition: 'all 0.3s ease', boxShadow: i === idx % sorted.length ? `0 0 8px ${accent.bg}` : 'none' }} />
         ))}
       </div>
 
       {/* Progress Bar */}
-      <ProgressBar duration={duration} color={accent.bg} running={!animating} key={currentIdx} />
+      <ProgressBar key={`${idx}-${slide.id}`} duration={slide.duration_seconds || 8} color={accent.bg} />
     </div>
   );
 }
