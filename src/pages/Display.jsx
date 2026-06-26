@@ -1,6 +1,6 @@
 /**
  * Display.jsx — Vollbild-Slideshow für Bar-TV
- * v2: Countdown zentriert, Mehrtages-Events, Ort-Anzeige,
+ * v2: Countdown zentriert — build 2026-06-26T19:46:51.006934, Mehrtages-Events, Ort-Anzeige,
  *     Mehrere Drink-Specials, Auto-Skip abgelaufener Slides
  */
 import { useState, useEffect, useRef } from 'react';
