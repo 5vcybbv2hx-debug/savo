@@ -7,7 +7,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { base44 } from '@/api/base44Client';
 
 const ACCENTS = {
   amber:   { bg: '#f59e0b', glow: 'rgba(245,158,11,0.45)',  text: '#000', soft: 'rgba(245,158,11,0.14)' },
@@ -224,7 +223,9 @@ function GermanyFlag3D() {
     const SEG = 40;
     const geo = new T.PlaneGeometry(3.0, 1.9, SEG, SEG * 0.6);
     const posArr = geo.attributes.position;
-    const origY = Float32Array.from(posArr.array).filter((_, i) => i % 3 === 1);
+    // Kopie der ursprünglichen Y-Positionen (korrekte Indexierung)
+    const origY = new Float32Array(posArr.count);
+    for (let i = 0; i < posArr.count; i++) origY[i] = posArr.array[i * 3 + 1];
 
     // Vertex-Farben
     const cols = new Float32Array(posArr.count * 3);
@@ -256,8 +257,8 @@ function GermanyFlag3D() {
           const x = posArr.array[i * 3];
           const nx = (x + 1.5) / 3.0;
           const amp = nx * nx * 0.2;
-          posArr.array[i * 3 + 2] = Math.sin(nx * Math.PI * 3 - t * 2.6) * amp + Math.sin(nx * Math.PI * 5 - t * 1.9) * amp * 0.28;
-          posArr.array[i * 3 + 1] = origY[i] + Math.sin(nx * Math.PI * 2 - t * 2.1) * amp * 0.18;
+          posArr.array[i * 3 + 2] = Math.sin(nx * Math.PI * 3 - t * 1.8) * amp + Math.sin(nx * Math.PI * 5 - t * 1.3) * amp * 0.28;
+          posArr.array[i * 3 + 1] = origY[i] + Math.sin(nx * Math.PI * 2 - t * 1.5) * amp * 0.18;
         }
         posArr.needsUpdate = true;
         geo.computeVertexNormals();
@@ -267,7 +268,7 @@ function GermanyFlag3D() {
       }
     };
   });
-  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.32, pointerEvents: 'none' }} />;
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.55, pointerEvents: 'none' }} />;
 }
 
 // 🎆 FEUERWERK — 3D Partikel mit Physik
@@ -621,13 +622,13 @@ function CanvasSummer() {
       ctx.clearRect(0,0,W,H);
       const sx=W*0.85,sy=H*0.15,sr=80;
       ctx.globalAlpha=0.2;
-      for(let ray=0;ray<12;ray++){const a=(ray/12)*Math.PI*2+t*0.008,r1=sr+10,r2=sr+40+Math.sin(t*0.05+ray)*15;ctx.strokeStyle='#fde68a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*r1,sy+Math.sin(a)*r1);ctx.lineTo(sx+Math.cos(a)*r2,sy+Math.sin(a)*r2);ctx.stroke();}
+      for(let ray=0;ray<12;ray++){const a=(ray/12)*Math.PI*2+t*0.00008,r1=sr+10,r2=sr+40+Math.sin(t*0.0005+ray)*15;ctx.strokeStyle='#fde68a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*r1,sy+Math.sin(a)*r1);ctx.lineTo(sx+Math.cos(a)*r2,sy+Math.sin(a)*r2);ctx.stroke();}
       const sg=ctx.createRadialGradient(sx,sy,sr*0.1,sx,sy,sr*1.5);sg.addColorStop(0,'#fde68a');sg.addColorStop(1,'transparent');
       ctx.beginPath();ctx.arc(sx,sy,sr*1.5,0,Math.PI*2);ctx.fillStyle=sg;ctx.globalAlpha=0.28;ctx.fill();
       ctx.globalAlpha=0.4;
       for(let wave=0;wave<4;wave++){
         const yBase=H*(0.65+wave*0.1),amp=H*0.025*(4-wave),sp=1-wave*0.15;
-        ctx.beginPath();for(let x=0;x<=W;x+=3){const y=yBase+Math.sin(x/W*Math.PI*5-t*sp*1.5+wave)*amp;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+        ctx.beginPath();for(let x=0;x<=W;x+=3){const y=yBase+Math.sin(x/W*Math.PI*4-t*sp*0.012+wave)*amp+Math.sin(x/W*Math.PI*2.5-t*sp*0.007+wave*0.7)*amp*0.4;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
         ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
         const wg=ctx.createLinearGradient(0,yBase,0,H);wg.addColorStop(0,'rgba(56,189,248,0.18)');wg.addColorStop(1,'rgba(14,165,233,0.08)');ctx.fillStyle=wg;ctx.fill();
       }
@@ -787,16 +788,18 @@ export default function Display(){
   useEffect(()=>{injectKeyframes();},[]);
 
   const{data}=useQuery({
-    queryKey:['displaySlides-v6'],
+    queryKey:['displaySlides'],
     queryFn:async()=>{
-      const res=await base44.functions.invoke('getDisplaySlides');
-      return res.data;
+      const res=await fetch('/functions/getDisplaySlides');
+      if(!res.ok)throw new Error('Fehler');
+      const json=await res.json();
+      const now=new Date().toISOString();
+      return(json.slides||[]).filter(s=>{if(!s.is_active)return false;if(s.show_from&&now<s.show_from)return false;if(s.show_until&&now>s.show_until)return false;return true;}).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
     },
     refetchInterval:30000,
   });
 
-  const slides=data?.slides||[];
-  const company=data?.company;
+  const slides=data||[];
   useEffect(()=>{
     if(!slides.length)return;
     const dur=(slides[currentIdx]?.duration_seconds||8)*1000;
@@ -813,12 +816,7 @@ export default function Display(){
   return(<div style={{background:'#050508',width:'100vw',height:'100vh',overflow:'hidden',position:'relative',fontFamily:'"Inter",system-ui,sans-serif',color:'#fff'}}>
     <div style={{position:'absolute',inset:0,pointerEvents:'none',background:`radial-gradient(ellipse 80% 60% at 50% 100%,${accent.glow} 0%,transparent 70%)`,transition:'background 1s ease'}}/>
     <div style={{position:'absolute',top:0,left:0,right:0,zIndex:30,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'28px 48px',background:'linear-gradient(to bottom,rgba(0,0,0,0.7),transparent)'}}>
-      <div style={{display:'flex',alignItems:'center',gap:10,fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',opacity:0.9}}>
-        {company?.logo_url
-          ? <img src={company.logo_url} alt="Logo" style={{height:36,width:'auto',objectFit:'contain'}}/>
-          : <span style={{color:accent.bg}}>●</span>}
-        {company?.company_name||'SAVO'}
-      </div>
+      <div style={{fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',opacity:0.9}}><span style={{color:accent.bg}}>●</span> SAVO</div>
       <Clock/>
     </div>
     <div style={{position:'absolute',inset:0,opacity:isTransitioning?0:1,transition:'opacity 0.5s ease'}}>
