@@ -212,116 +212,134 @@ function DiscoBall3D() {
 
 // 🇩🇪 DEUTSCHLAND — 3D Flagge mit Wellen
 function GermanyFlag3D() {
-  const mountRef = useRef(null);
+  const canvasRef = useRef(null);
+  const rafRef    = useRef(null);
+
   useEffect(() => {
-    let renderer, animId;
-    loadThree().then(T => {
-      const el = mountRef.current; if (!el) return;
-      const W = el.offsetWidth, H = el.offsetHeight;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
 
-      renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(W, H);
-      el.appendChild(renderer.domElement);
+    const resize = () => {
+      canvas.width  = canvas.offsetWidth  * Math.min(window.devicePixelRatio, 2);
+      canvas.height = canvas.offsetHeight * Math.min(window.devicePixelRatio, 2);
+      ctx.scale(Math.min(window.devicePixelRatio, 2), Math.min(window.devicePixelRatio, 2));
+    };
+    resize();
+    window.addEventListener('resize', resize);
 
-      const scene = new T.Scene();
-      const camera = new T.PerspectiveCamera(45, W / H, 0.1, 100);
-      camera.position.set(0, 0, 4.2);
-      camera.lookAt(0, 0, 0);
+    const DPR = Math.min(window.devicePixelRatio, 2);
+    const cW = () => canvas.offsetWidth;
+    const cH = () => canvas.offsetHeight;
 
-      // Beleuchtung
-      scene.add(new T.AmbientLight(0xffffff, 0.8));
-      const sun = new T.DirectionalLight(0xffeedd, 1.6);
-      sun.position.set(5, 4, 6); scene.add(sun);
-      const fill = new T.DirectionalLight(0x8888ff, 0.4);
-      fill.position.set(-4, 2, 3); scene.add(fill);
+    // Flaggen-Geometrie
+    const POLE_X_FRAC = 0.08;   // Stab-Position (8% von links)
+    const FLAG_W_FRAC = 0.72;   // Flaggen-Breite
+    const FLAG_Y_FRAC = 0.12;   // Oberkante
+    const FLAG_H_FRAC = 0.76;   // Flaggen-Höhe
+    const SEGS = 60;             // Wellenpunkte horizontal
 
-      // Flagge als Plane-Geometrie (3 Streifen separat für klare Farbtrennung)
-      const STRIPE_H = 0.62;
-      const FLAG_W = 3.0;
-      const SEG_X = 40, SEG_Y = 8;
-      const stripeColors = [0x111111, 0xcc0000, 0xffcc00]; // Schwarz, Rot, Gold
-      const stripes = [];
+    // Wellenpunkte vorberechnen
+    let t = 0;
 
-      stripeColors.forEach((color, si) => {
-        const geo = new T.PlaneGeometry(FLAG_W, STRIPE_H, SEG_X, SEG_Y);
-        const pos = geo.attributes.position;
-        // Kopiere Ursprungs-Y Werte
-        const baseY = new Float32Array(pos.count);
-        for (let i = 0; i < pos.count; i++) baseY[i] = pos.array[i * 3 + 1];
+    function drawWave(W, H, drawStripe) {
+      const poleX = W * POLE_X_FRAC;
+      const flagW  = W * FLAG_W_FRAC;
+      const flagY  = H * FLAG_Y_FRAC;
+      const flagH  = H * FLAG_H_FRAC;
+      const stripeH = flagH / 3;
 
-        const mat = new T.MeshStandardMaterial({
-          color, side: T.DoubleSide, roughness: 0.4, metalness: 0.05,
-        });
-        const mesh = new T.Mesh(geo, mat);
-        // Streifen von oben nach unten: Schwarz oben, Rot mitte, Gold unten
-        // Schwarz: y=+STRIPE_H, Rot: y=0, Gold: y=-STRIPE_H
-        mesh.position.set(0.35, STRIPE_H - si * STRIPE_H, 0);
-        scene.add(mesh);
-        stripes.push({ mesh, pos, baseY });
+      // Für jeden der 3 Streifen (0=Schwarz oben, 1=Rot mitte, 2=Gold unten)
+      const STRIPE_COLORS = [
+        ['#1a1a1a', '#333333'],   // Schwarz
+        ['#cc0000', '#ee1111'],   // Rot
+        ['#ffcc00', '#ffdd33'],   // Gold
+      ];
+
+      STRIPE_COLORS.forEach((colors, si) => {
+        const sy0 = flagY + si * stripeH;  // Oberkante Streifen
+
+        // Wellen-Punkte für Ober- und Unterkante berechnen
+        const topPoints = [], botPoints = [];
+        for (let xi = 0; xi <= SEGS; xi++) {
+          const nx = xi / SEGS;  // 0=Stab, 1=freies Ende
+          const px = poleX + nx * flagW;
+          const amp = nx * nx * nx * flagH * 0.055;  // Amplitude wächst zum freien Ende
+          // Zwei überlagerte Wellen für natürliches Flattern
+          const wave = Math.sin(nx * Math.PI * 2.8 - t * 1.6) * amp
+                     + Math.sin(nx * Math.PI * 5.2 - t * 1.1) * amp * 0.28;
+          const waveBot = Math.sin(nx * Math.PI * 2.8 - t * 1.6 + 0.15) * amp
+                        + Math.sin(nx * Math.PI * 5.2 - t * 1.1 + 0.15) * amp * 0.28;
+          topPoints.push({ x: px, y: sy0 + wave });
+          botPoints.push({ x: px, y: sy0 + stripeH + waveBot });
+        }
+
+        // Streifen als Polygon zeichnen
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(topPoints[0].x, topPoints[0].y);
+        topPoints.forEach(p => ctx.lineTo(p.x, p.y));
+        botPoints.slice().reverse().forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+
+        // Gradient: Helligkeit variiert mit Welle (simuliert 3D-Beleuchtung)
+        const grad = ctx.createLinearGradient(poleX, 0, poleX + flagW, 0);
+        grad.addColorStop(0, colors[0] + 'ee');
+        grad.addColorStop(0.5, colors[1]);
+        grad.addColorStop(1, colors[0] + 'cc');
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Leichte Kanten
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+        ctx.restore();
       });
 
       // Fahnenstab
-      const poleMat = new T.MeshStandardMaterial({ color: 0xc0c0d0, metalness: 0.95, roughness: 0.05 });
-      const pole = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 4.2, 16), poleMat);
-      pole.position.set(-1.65, 0, 0);
-      scene.add(pole);
+      const stab = ctx.createLinearGradient(poleX - 6, 0, poleX + 6, 0);
+      stab.addColorStop(0, '#888899');
+      stab.addColorStop(0.4, '#ffffff');
+      stab.addColorStop(1, '#777788');
+      ctx.save();
+      ctx.fillStyle = stab;
+      ctx.beginPath();
+      ctx.roundRect(poleX - 5, flagY - H * 0.04, 10, flagH + H * 0.08, 3);
+      ctx.fill();
 
-      // Kugel oben
-      const knob = new T.Mesh(
-        new T.SphereGeometry(0.09, 20, 20),
-        new T.MeshStandardMaterial({ color: 0xddaa00, metalness: 1.0, roughness: 0.05 })
-      );
-      knob.position.set(-1.65, 2.2, 0);
-      scene.add(knob);
+      // Goldkugel oben
+      const kx = poleX, ky = flagY - H * 0.04;
+      const kg = ctx.createRadialGradient(kx - 4, ky - 4, 1, kx, ky, 12);
+      kg.addColorStop(0, '#ffe566');
+      kg.addColorStop(0.5, '#ddaa00');
+      kg.addColorStop(1, '#aa7700');
+      ctx.fillStyle = kg;
+      ctx.beginPath(); ctx.arc(kx, ky, 11, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
 
-      // Resize
-      const ro = new ResizeObserver(() => {
-        const w2 = el.offsetWidth, h2 = el.offsetHeight;
-        camera.aspect = w2 / h2; camera.updateProjectionMatrix();
-        renderer.setSize(w2, h2);
-      });
-      ro.observe(el); el._ro = ro;
+    function draw() {
+      const W = cW(), H = cH();
+      ctx.clearRect(0, 0, W, H);
+      drawWave(W, H);
+      t += 0.016;
+      rafRef.current = requestAnimationFrame(draw);
+    }
 
-      let t = 0;
-      function animate() {
-        animId = requestAnimationFrame(animate);
-        t += 0.016;
-
-        // Wellen-Animation für jeden Streifen identisch
-        stripes.forEach(({ pos, baseY }) => {
-          for (let i = 0; i < pos.count; i++) {
-            const x = pos.array[i * 3];
-            // nx: 0 (am Stab) → 1 (freies Ende)
-            const nx = (x + FLAG_W / 2) / FLAG_W;
-            // Amplitude steigt zum freien Ende hin stark an
-            const amp = nx * nx * nx * 0.22;
-            // Zwei überlagerte Wellen für natürliches Flattern
-            const wave = Math.sin(nx * Math.PI * 2.5 - t * 1.8) * amp
-                       + Math.sin(nx * Math.PI * 4.5 - t * 1.3) * amp * 0.3;
-            pos.array[i * 3 + 2] = wave;
-            pos.array[i * 3 + 1] = baseY[i] + Math.sin(nx * Math.PI * 1.8 - t * 1.4) * amp * 0.15;
-          }
-          pos.needsUpdate = true;
-        });
-
-        // Kamera leicht schwenken
-        camera.position.x = Math.sin(t * 0.06) * 0.3;
-        camera.position.y = Math.sin(t * 0.045) * 0.12;
-        camera.lookAt(0, 0, 0);
-
-        renderer.render(scene, camera);
-      }
-      animate();
-    }).catch(console.error);
-
+    draw();
     return () => {
-      cancelAnimationFrame(animId);
-      if (mountRef.current?._ro) mountRef.current._ro.disconnect();
-      if (renderer) { renderer.dispose(); renderer.domElement?.remove(); }
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('resize', resize);
     };
   }, []);
-  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none' }} />;
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5, pointerEvents: 'none' }}
+    />
+  );
 }
 
 // 🎆 FEUERWERK — 3D Partikel mit Physik
@@ -869,7 +887,7 @@ export default function Display(){
   return(<div style={{background:'#050508',width:'100vw',height:'100vh',overflow:'hidden',position:'relative',fontFamily:'"Inter",system-ui,sans-serif',color:'#fff'}}>
     <div style={{position:'absolute',inset:0,pointerEvents:'none',background:`radial-gradient(ellipse 80% 60% at 50% 100%,${accent.glow} 0%,transparent 70%)`,transition:'background 1s ease'}}/>
     <div style={{position:'absolute',top:0,left:0,right:0,zIndex:30,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'28px 48px',background:'linear-gradient(to bottom,rgba(0,0,0,0.7),transparent)'}}>
-      <div style={{fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',opacity:0.9}}><span style={{color:accent.bg}}>●</span> SAVO</div>
+      <div style={{width:40}} />
       <Clock/>
     </div>
     <div style={{position:'absolute',inset:0,opacity:isTransitioning?0:1,transition:'opacity 0.5s ease'}}>
