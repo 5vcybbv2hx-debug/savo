@@ -16,7 +16,7 @@ if (window.location.hostname === 'bar-shift-pro-fc3522b9.base44.app' || window.l
     });
 }
 
-// Build: 2026-06-26 (rebuild)
+// Build: 2026-06-26 (rebuild #2 — force cache clear)
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />
 )

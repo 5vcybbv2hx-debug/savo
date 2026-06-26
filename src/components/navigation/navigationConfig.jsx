@@ -1,8 +1,6 @@
 /**
- * navigationConfig.jsx — Navigationskonfiguration
- * 
- * SIDEBAR: sidebarPages direkt hier definiert (kein separater Import nötig)
- * MEHR-DRAWER: additionalPages hier pflegen
+ * navigationConfig.js — Navigationskonfiguration
+ * Sidebar-Pages sind INLINE definiert (kein externer Import).
  */
 import {
     LayoutDashboard, Users, Calendar, ShoppingCart, ClipboardList,
@@ -14,15 +12,15 @@ import {
     Banknote, BookCopy, Tv, Warehouse,
 } from 'lucide-react';
 
-// ── SIDEBAR — 7 Kern-Hubs (direkt hier, kein externer Import) ────────────────
-export const sidebarPages = [
+// ── SIDEBAR (inline — nicht aus sidebarConfig importieren) ───────────────────
+const sidebarPages = [
     { page: 'Dashboard',     name: 'Dashboard',      icon: LayoutDashboard, permission: 'canViewDashboard' },
     { page: 'TeamHub',       name: 'Team',            icon: Users,           permission: 'canViewShifts' },
-    { page: 'BetriebHub',    name: 'Betrieb',         icon: Store,           permission: 'canViewReservations' },
+    { page: 'BetriebHub',    name: 'Betrieb',         icon: Store,            permission: 'canViewReservations' },
     { page: 'Warehouse',     name: 'Waren & Lager',   icon: Warehouse,       permission: 'canViewWarehouse' },
-    { page: 'KarteHub',      name: 'Karte',           icon: Wine,            permission: 'canViewDrinkMenu' },
-    { page: 'AccountingHub', name: 'Buchhaltung',     icon: Calculator,      permission: 'canViewAccounting' },
-    { page: 'Settings',      name: 'Einstellungen',   icon: Settings,        permission: 'canViewSettings' },
+    { page: 'KarteHub',      name: 'Karte',           icon: Wine,             permission: 'canViewDrinkMenu' },
+    { page: 'AccountingHub', name: 'Buchhaltung',     icon: Calculator,       permission: 'canViewAccounting' },
+    { page: 'Settings',      name: 'Einstellungen',   icon: Settings,         permission: 'canViewSettings' },
 ];
 
 export const mainNavigation = [
@@ -94,6 +92,6 @@ export const additionalPages = [
 
 // ── KOMBINIERT ────────────────────────────────────────────────────────────────
 export const allPages = [
-    ...sidebarPages,
+    ...mainNavigation.flatMap(s => s.pages),
     ...additionalPages,
 ];
