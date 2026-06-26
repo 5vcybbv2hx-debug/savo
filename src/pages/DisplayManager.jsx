@@ -85,7 +85,7 @@ const TYPE_COLORS = {
 const EMPTY_DRINK = { name: '', price: '', emoji: '🍹' };
 const EMPTY_FORM = {
   title: '', subtitle: '', body_text: '', slide_type: 'announcement',
-  image_url: '', accent_color: 'amber', cta_text: '', event_date: '',
+  image_url: '', accent_color: 'amber', background_theme: 'auto', cta_text: '', event_date: '',
   event_end_date: '', event_time: '', event_end_time: '', location: '',
   price_info: '', is_active: true, sort_order: 1,
   show_from: '', show_until: '', duration_seconds: 8,

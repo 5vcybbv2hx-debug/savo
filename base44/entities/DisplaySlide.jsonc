@@ -2,21 +2,109 @@
   "name": "DisplaySlide",
   "type": "object",
   "properties": {
-    "title":            { "type": "string", "description": "Hauptüberschrift der Slide" },
-    "subtitle":         { "type": "string", "description": "Unterzeile / Kurzbeschreibung" },
-    "body_text":        { "type": "string", "description": "Längerer Fließtext (optional)" },
-    "slide_type":       { "type": "string", "enum": ["announcement", "event", "drink_special", "image_only", "countdown"], "description": "Slide-Typ bestimmt das Layout" },
-    "image_url":        { "type": "string", "description": "Bild-URL (optional)" },
-    "accent_color":     { "type": "string", "enum": ["amber", "blue", "green", "red", "purple", "pink", "cyan"], "description": "Akzentfarbe" },
-    "cta_text":         { "type": "string", "description": "Call-to-Action Text" },
-    "event_date":       { "type": "string", "description": "Datum für Events/Countdowns (ISO)" },
-    "event_time":       { "type": "string", "description": "Uhrzeit (z.B. '20:00')" },
-    "price_info":       { "type": "string", "description": "Preis-Info (z.B. '4,50 € / Glas')" },
-    "is_active":        { "type": "boolean", "default": true },
-    "sort_order":       { "type": "number", "default": 0 },
-    "show_from":        { "type": "string", "description": "Anzeige ab (ISO DateTime)" },
-    "show_until":       { "type": "string", "description": "Anzeige bis (ISO DateTime)" },
-    "duration_seconds": { "type": "number", "default": 8, "description": "Anzeigedauer in Sekunden" }
+    "title": {
+      "type": "string",
+      "description": "Haupt\u00fcberschrift der Slide"
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "Unterzeile / Kurzbeschreibung"
+    },
+    "body_text": {
+      "type": "string",
+      "description": "L\u00e4ngerer Flie\u00dftext (optional)"
+    },
+    "slide_type": {
+      "type": "string",
+      "enum": [
+        "announcement",
+        "event",
+        "drink_special",
+        "image_only",
+        "countdown"
+      ],
+      "description": "Slide-Typ bestimmt das Layout"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Bild-URL (optional)"
+    },
+    "accent_color": {
+      "type": "string",
+      "enum": [
+        "amber",
+        "blue",
+        "green",
+        "red",
+        "purple",
+        "pink",
+        "cyan"
+      ],
+      "description": "Akzentfarbe"
+    },
+    "background_theme": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "germany",
+        "american_football",
+        "soccer",
+        "disco",
+        "music",
+        "party",
+        "cocktail",
+        "beer",
+        "fireworks",
+        "summer",
+        "christmas",
+        "halloween",
+        "love",
+        "food",
+        "default"
+      ],
+      "default": "auto",
+      "description": "Hintergrund-Animation (auto = anhand Titel erkannt)"
+    },
+    "cta_text": {
+      "type": "string",
+      "description": "Call-to-Action Text"
+    },
+    "event_date": {
+      "type": "string",
+      "description": "Datum f\u00fcr Events/Countdowns (ISO)"
+    },
+    "event_time": {
+      "type": "string",
+      "description": "Uhrzeit (z.B. '20:00')"
+    },
+    "price_info": {
+      "type": "string",
+      "description": "Preis-Info (z.B. '4,50 \u20ac / Glas')"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    },
+    "show_from": {
+      "type": "string",
+      "description": "Anzeige ab (ISO DateTime)"
+    },
+    "show_until": {
+      "type": "string",
+      "description": "Anzeige bis (ISO DateTime)"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "default": 8,
+      "description": "Anzeigedauer in Sekunden"
+    }
   },
-  "required": ["title", "slide_type"]
+  "required": [
+    "title",
+    "slide_type"
+  ]
 }
