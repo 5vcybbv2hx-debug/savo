@@ -35,6 +35,8 @@ import AdminTimeEditor from './pages/AdminTimeEditor';
 import DataExport from './pages/DataExport';
 import MeinTag from './pages/MeinTag';
 import ModuleCenter from './pages/ModuleCenter';
+import DisplayManager from './pages/DisplayManager';
+import Display from './pages/Display';
 
 import BusinessCalendar from './pages/BusinessCalendar';
 import WorldCupSchedule from './pages/WorldCupSchedule';
@@ -251,6 +253,7 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingHub" element={<LayoutWrapper currentPageName="AccountingHub"><RoleGuard permission="canViewAccounting"><AccountingHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/KarteHub" element={<LayoutWrapper currentPageName="KarteHub"><RoleGuard permission="canViewDrinkMenu"><KarteHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
+      <Route path="/DisplayManager" element={<LayoutWrapper currentPageName="DisplayManager"><RoleGuard permission="isManager"><DisplayManager /></RoleGuard></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
 
@@ -276,6 +279,7 @@ function App() {
             <Route path="/PublicDrinkMenu" element={<PublicDrinkMenu />} />
             <Route path="/PublicWeeklySpecialDisplay" element={<PublicWeeklySpecialDisplay />} />
             <Route path="/StorageLocationScan/:id" element={<PublicPages.StorageLocationScan />} />
+            <Route path="/Display" element={<Display />} />
 
             {/* All authenticated pages */}
             <Route path="*" element={<AuthenticatedApp />} />

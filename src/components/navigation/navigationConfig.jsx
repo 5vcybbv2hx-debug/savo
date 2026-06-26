@@ -1,121 +1,105 @@
-import { Tv,
-    Home, Utensils, Package, Wine, Users,
-    Calendar, Clock, Shield, BookOpen, TrendingUp,
-    CheckSquare, MapPin, ShoppingCart, ShoppingBasket, RefreshCw, ClipboardCheck,
-    Settings, FileText, BarChart2, Trash2,
-    ArrowLeftRight, Star, Brush, FolderOpen, Wrench,
-    Palmtree, ListChecks, Video, QrCode, Layers, Zap,
-    Receipt, TrendingDown, Download, Euro, Building2, AlertTriangle, Trophy
+/**
+ * navigationConfig.js — Zentrale Navigationskonfiguration
+ *
+ * Exportiert:
+ *  - mainNavigation: Sidebar-Sektionen (primäre Navigation)
+ *  - additionalPages: Alle weiteren Seiten (im "Mehr"-Drawer)
+ *  - allPages: Kombinierte Liste aller Seiten
+ *
+ * Jedes Page-Objekt: { page, name, icon, permission }
+ */
+import {
+    LayoutDashboard, Users, Calendar, ShoppingCart, ClipboardList,
+    Sparkles, BookOpen, Package, Boxes, Store, Calculator,
+    Wine, Receipt, Euro, Settings, FileText, Wrench, HelpCircle,
+    CalendarDays, Clock, Plane, RefreshCw, Shield, Trophy,
+    MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
+    LayoutGrid, Database, CalendarClock, Truck, MessageSquare,
+    Banknote, BookCopy,
 } from 'lucide-react';
 
+// ── Sidebar-Sektionen (primäre Navigation) ───────────────────────────────────
 export const mainNavigation = [
     {
-        id: 'dashboard',
-        name: 'Dashboard',
-        icon: Home,
+        id: 'main',
+        name: 'Übersicht',
         pages: [
-            { name: 'Übersicht', page: 'Dashboard', icon: Home, permission: 'canViewDashboard' },
-        ]
+            { page: 'Dashboard', name: 'Dashboard', icon: LayoutDashboard, permission: 'canViewDashboard' },
+        ],
     },
     {
-        id: 'betrieb',
-        name: 'Betrieb',
-        icon: Utensils,
+        id: 'hubs',
+        name: 'Bereiche',
         pages: [
-            { name: 'Betrieb', page: 'BetriebHub', icon: Utensils, permission: 'canViewReservations' },
-        ]
-    },
-    {
-        id: 'waren',
-        name: 'Waren & Lager',
-        icon: Package,
-        pages: [
-            { name: 'Waren & Lager', page: 'Warehouse', icon: Package, permission: 'canViewWarehouse' },
-        ]
-    },
-    {
-        id: 'karte',
-        name: 'Karte & Rezepte',
-        icon: Wine,
-        pages: [
-            { name: 'Karte & Rezepte', page: 'KarteHub', icon: Wine, permission: 'canViewDrinkMenu' },
-        ]
-    },
-    {
-        id: 'buchhaltung',
-        name: 'Buchhaltung',
-        icon: Euro,
-        pages: [
-            { name: 'Buchhaltung', page: 'AccountingHub', icon: Euro, permission: 'canViewAccounting' },
-        ]
-    },
-    {
-        id: 'team',
-        name: 'Team',
-        icon: Users,
-        pages: [
-            { name: 'Team', page: 'TeamHub', icon: Users, permission: 'canViewShifts' },
-        ]
-    },
-    {
-        id: 'einstellungen',
-        name: 'Einstellungen',
-        icon: Settings,
-        pages: [
-            { name: 'Einstellungen', page: 'Settings', icon: Settings, permission: 'canViewSettings' },
-        ]
+            { page: 'TeamHub', name: 'Team', icon: Users, permission: 'canViewShifts' },
+            { page: 'BetriebHub', name: 'Betrieb', icon: Store, permission: 'canViewReservations' },
+            { page: 'KarteHub', name: 'Karte', icon: Wine, permission: 'canViewDrinkMenu' },
+            { page: 'AccountingHub', name: 'Buchhaltung', icon: Calculator, permission: 'canViewAccounting' },
+        ],
     },
 ];
 
+// ── Alle weiteren Seiten (im "Mehr"-Drawer) ───────────────────────────────────
 export const additionalPages = [
-  { page: 'DisplayManager', name: 'Display', icon: Tv, permission: 'isManager' },
-    // Betrieb
-    { name: 'Gäste & Tische',  page: 'GuestHub',     icon: MapPin,         permission: 'canViewReservations'        },
-    { name: 'Aufgaben',        page: 'Todos',         icon: CheckSquare,    permission: 'canViewTodos'               },
-    { name: 'Wochenaufgaben',  page: 'WeeklyTasks',   icon: ListChecks,     permission: 'canViewTodos'               },
-    { name: 'Putzliste',       page: 'Cleaning',      icon: Brush,          permission: 'canViewCleaning'            },
-    { name: 'Events',          page: 'Events',        icon: Star,           permission: 'canViewEvents'              },
-    // Waren
-    { name: 'Auffüllen',        page: 'Restock',      icon: RefreshCw,      permission: 'canViewRestock'             },
-    { name: 'Bestellungen',     page: 'Shopping',     icon: ShoppingCart,   permission: 'canViewShopping'            },
-    { name: 'Einkaufsliste',    page: 'QuickList',    icon: ShoppingBasket, permission: 'canViewShopping'            },
-    { name: 'Artikeldatenbank', page: 'Articles',     icon: Package,        permission: 'canViewWarehouse'           },
-    { name: 'Lagerplätze',      page: 'Storage',      icon: Layers,         permission: 'canViewWarehouse'           },
-    { name: 'Inventur',         page: 'Inventory',    icon: ClipboardCheck, permission: 'canViewInventory'           },
-    { name: 'Lieferanten',      page: 'Suppliers',    icon: Building2,      permission: 'canViewSuppliers'           },
-    { name: 'Schwund',          page: 'Wastage',      icon: Trash2,         permission: 'canViewWastage'             },
-    // Karte
-    { name: 'Getränkekarte',   page: 'DrinkMenu',       icon: Wine,       permission: 'canViewDrinkMenu'       },
-    { name: 'Rezepte',         page: 'Recipes',         icon: BookOpen,   permission: 'canViewRecipes'         },
-    { name: 'Preisrechner',    page: 'PriceCalculator', icon: TrendingUp, permission: 'canViewPriceCalculator' },
-    // Team
-    { name: 'Mitarbeiter',     page: 'Employees',         icon: Users,          permission: 'canViewEmployees'           },
-    { name: 'Schichtplan',     page: 'Calendar',          icon: Calendar,       permission: 'canViewShifts'              },
-    { name: 'Teamkalender',    page: 'TeamCalendar',      icon: Calendar,       permission: 'canViewTeamCalendar'        },
-    { name: 'Zeiterfassung',   page: 'TimeManagement',    icon: Clock,          permission: 'canViewOwnTimeEntries'      },
-    { name: 'Urlaub',          page: 'Vacation',          icon: Palmtree,       permission: 'canViewVacation'            },
-    { name: 'Meine Schichten', page: 'MyShifts',          icon: Clock,          permission: 'canViewShifts'              },
-    { name: 'Schichttausch',   page: 'ShiftSwaps',        icon: ArrowLeftRight, permission: 'canRequestShiftSwap'        },
-    { name: 'Berechtigungen',  page: 'Permissions',       icon: Shield,         permission: 'canEditEmployeePermissions' },
-    { name: 'Teamsitzung',     page: 'TeamMeeting',       icon: Video,          permission: 'canViewTeamMeeting'         },
-    { name: 'WM-Spielplan',    page: 'WorldCupSchedule',  icon: Trophy,         permission: 'canViewTeamMeeting'         },
-    // Buchhaltung
-    { name: 'Kassenbuch',        page: 'AccountingCashbook',    icon: BookOpen,     permission: 'canViewAccountingCashbook'  },
-    { name: 'Belege',            page: 'AccountingReceipts',    icon: Receipt,      permission: 'canViewAccountingReceipts'  },
-    { name: 'Kreditoren',        page: 'AccountingCreditors',   icon: TrendingDown, permission: 'canViewAccountingCreditors' },
-    { name: 'Export',            page: 'AccountingExport',      icon: Download,     permission: 'canExportAccounting'        },
-    { name: 'Fixkosten',         page: 'AccountingFixedCosts',  icon: RefreshCw,    permission: 'canViewAccounting'          },
-    { name: 'Verbindlichkeiten', page: 'AccountingLiabilities', icon: TrendingDown, permission: 'canViewLiabilities'         },
-    { name: 'Tagesabschluss',    page: 'DailyAnalysis',         icon: BarChart2,    permission: 'canViewAnalytics'           },
-    // Einstellungen & Sonstiges
-    { name: 'Stationsplan',      page: 'Stationsplan',     icon: MapPin,        permission: 'canViewShifts'    },
-    { name: 'Dokumente',         page: 'Documents',        icon: FolderOpen,    permission: 'canViewSettings'  },
-    { name: 'Wartung',           page: 'Maintenance',      icon: Wrench,        permission: 'canViewSettings'  },
-    { name: 'Einarbeitung',      page: 'Onboarding',       icon: Users,         permission: 'canViewOnboarding'},
-    { name: 'Visitenkarte',      page: 'BusinessCard',     icon: QrCode,        permission: 'canViewMeinTag'   },
-    { name: 'Modulcenter',       page: 'ModuleCenter',     icon: Layers,        permission: 'canViewSettings'  },
-    { name: 'Betriebskalender',  page: 'BusinessCalendar', icon: Calendar,      permission: 'canViewSettings'  },
-    { name: 'Datenqualität',     page: 'DataQuality',      icon: AlertTriangle, permission: 'isManager'        },
+    // ── Betrieb ────────────────────────────────────────────────────────────────
+    { page: 'GuestHub', name: 'Gäste & Tische', icon: Users, permission: 'canViewReservations' },
+    { page: 'Todos', name: 'Aufgaben', icon: ClipboardList, permission: 'canViewTodos' },
+    { page: 'WeeklyTasks', name: 'Wochenaufgaben', icon: ListChecks, permission: 'canViewSettings' },
+    { page: 'Cleaning', name: 'Reinigung', icon: Sparkles, permission: 'canViewCleaning' },
+    { page: 'Events', name: 'Events', icon: CalendarDays, permission: 'canViewEvents' },
+
+    // ── Waren & Lager ──────────────────────────────────────────────────────────
+    { page: 'Restock', name: 'Auffüllen', icon: Package, permission: 'canViewRestock' },
+    { page: 'Shopping', name: 'Einkauf', icon: ShoppingCart, permission: 'canViewShopping' },
+    { page: 'QuickList', name: 'Schnellliste', icon: ListChecks, permission: 'canViewShopping' },
+    { page: 'Articles', name: 'Artikel', icon: Boxes, permission: 'canViewWarehouse' },
+    { page: 'Storage', name: 'Lagerorte', icon: MapPin, permission: 'canViewWarehouse' },
+    { page: 'Inventory', name: 'Inventur', icon: ClipboardList, permission: 'canViewInventory' },
+    { page: 'Suppliers', name: 'Lieferanten', icon: Truck, permission: 'canViewSuppliers' },
+    { page: 'Wastage', name: 'Schwund', icon: Trash2, permission: 'canViewWastage' },
+
+    // ── Karte & Rezepte ────────────────────────────────────────────────────────
+    { page: 'DrinkMenu', name: 'Getränkekarte', icon: Wine, permission: 'canViewDrinkMenu' },
+    { page: 'Recipes', name: 'Rezepte', icon: BookOpen, permission: 'canViewRecipes' },
+    { page: 'PriceCalculator', name: 'Preisrechner', icon: Calculator, permission: 'canViewPriceCalculator' },
+
+    // ── Buchhaltung ────────────────────────────────────────────────────────────
+    { page: 'AccountingDashboard', name: 'Buchhaltung', icon: Calculator, permission: 'canViewAccounting' },
+    { page: 'AccountingCashbook', name: 'Kassenbuch', icon: BookCopy, permission: 'canViewAccountingCashbook' },
+    { page: 'AccountingReceipts', name: 'Belege', icon: Receipt, permission: 'canViewAccountingReceipts' },
+    { page: 'AccountingCreditors', name: 'Kreditoren', icon: CreditCard, permission: 'canViewAccountingCreditors' },
+    { page: 'AccountingExport', name: 'Export', icon: FileText, permission: 'canExportAccounting' },
+    { page: 'AccountingFixedCosts', name: 'Fixkosten', icon: Euro, permission: 'canViewAccounting' },
+    { page: 'AccountingLiabilities', name: 'Verbindlichkeiten', icon: Scale, permission: 'canViewLiabilities' },
+    { page: 'AccountingBank', name: 'Bankkonten', icon: Banknote, permission: 'canViewAccounting' },
+    { page: 'DailyAnalysis', name: 'Tagesanalyse', icon: BarChart3, permission: 'canViewAnalytics' },
+
+    // ── Team ───────────────────────────────────────────────────────────────────
+    { page: 'Employees', name: 'Mitarbeiter', icon: Users, permission: 'canViewEmployees' },
+    { page: 'Calendar', name: 'Schichtplan', icon: Calendar, permission: 'canViewShifts' },
+    { page: 'TeamCalendar', name: 'Teamkalender', icon: CalendarDays, permission: 'canViewTeamCalendar' },
+    { page: 'TimeManagement', name: 'Zeiterfassung', icon: Clock, permission: 'canViewOwnTimeEntries' },
+    { page: 'Vacation', name: 'Urlaub', icon: Plane, permission: 'canViewVacation' },
+    { page: 'MyShifts', name: 'Meine Schichten', icon: CalendarClock, permission: 'canViewShifts' },
+    { page: 'ShiftSwaps', name: 'Schichttausch', icon: RefreshCw, permission: 'canRequestShiftSwap' },
+    { page: 'Permissions', name: 'Berechtigungen', icon: Shield, permission: 'canEditEmployeePermissions' },
+    { page: 'TeamMeeting', name: 'Teamsitzung', icon: MessageSquare, permission: 'canViewTeamMeeting' },
+    { page: 'WorldCupSchedule', name: 'WM-Spielplan', icon: Trophy, permission: 'canViewTeamMeeting' },
+    { page: 'Stationsplan', name: 'Stationsplan', icon: LayoutGrid, permission: 'canViewShifts' },
+
+    // ── Einstellungen & Mehr ───────────────────────────────────────────────────
+    { page: 'Settings', name: 'Einstellungen', icon: Settings, permission: 'canViewSettings' },
+    { page: 'Documents', name: 'Dokumente', icon: FileText, permission: 'canViewSettings' },
+    { page: 'Maintenance', name: 'Wartung', icon: Wrench, permission: 'canViewSettings' },
+    { page: 'Onboarding', name: 'Onboarding', icon: HelpCircle, permission: 'canViewOnboarding' },
+    { page: 'BusinessCard', name: 'Visitenkarte', icon: CreditCard, permission: 'canViewDashboard' },
+    { page: 'ModuleCenter', name: 'Modulcenter', icon: LayoutGrid, permission: 'canViewSettings' },
+    { page: 'BusinessCalendar', name: 'Betriebskalender', icon: CalendarDays, permission: 'canViewSettings' },
+    { page: 'DataQuality', name: 'Datenqualität', icon: Database, permission: 'isManager' },
 ];
 
-export const allPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages);
+// ── Kombinierte Liste ─────────────────────────────────────────────────────────
+export const allPages = [
+    ...mainNavigation.flatMap(section => section.pages),
+    ...additionalPages,
+];

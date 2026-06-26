@@ -196,16 +196,4 @@ export const pagesConfig = {
     SpecialPagesWithLayout: SPECIAL_PAGES_WITH_LAYOUT,
     PublicPages: PUBLIC_PAGES,
     Layout: __Layout,
-
-  DisplayManager: {
-    component: React.lazy(() => import('./pages/DisplayManager')),
-    title: 'Display-Manager',
-    permissions: ['isManager'],
-  },
-  Display: {
-    component: React.lazy(() => import('./pages/Display')),
-    title: 'Display',
-    permissions: [],
-    hideNav: true,
-  },
 };
