@@ -102,40 +102,25 @@ export default function Restock() {
     const showToast = (message, type = 'error') => setToast({ message, type });
 
     // ── Queries ───────────────────────────────────────────────────────────────
+    // Tabs = alle Kühlschränke aus Furniture-Entity
     const { data: areas = [], isLoading: areasLoading } = useQuery({
-        queryKey: ['areas-theke'],
+        queryKey: ['fridges'],
         queryFn: async () => {
-            const all = await base44.entities.Area.list('sort_order');
-            // Nur Theken-Bereiche (area_type === 'theke') oder alle falls kein type gesetzt
-            return all.filter(a => a.is_active !== false && (a.area_type === 'theke' || !a.area_type));
+            const all = await base44.entities.Furniture.list('sort_order', 200);
+            return all.filter(f =>
+                f.is_active !== false &&
+                (f.type === 'Kühlschrank' || f.type === 'Tiefkühlschrank')
+            );
         },
         staleTime: STALE.SLOW,
     });
 
-    // Aktiven Bereich initialisieren sobald Areas geladen
+    // Ersten Kühlschrank vorauswählen
     useEffect(() => {
         if (areas.length > 0 && activeAreaId === null) {
             setActiveAreaId(areas[0].id);
         }
     }, [areas, activeAreaId]);
-
-    // Starter-Areas anlegen falls noch keine vorhanden
-    useEffect(() => {
-        if (!areasLoading && areas.length === 0) {
-            const seed = async () => {
-                await base44.entities.Area.create({
-                    name: 'Theke Nichtraucher', area_type: 'theke',
-                    color: 'primary', sort_order: 1, is_active: true,
-                });
-                await base44.entities.Area.create({
-                    name: 'Theke Raucher', area_type: 'theke',
-                    color: 'blue', sort_order: 2, is_active: true,
-                });
-                queryClient.invalidateQueries({ queryKey: ['areas-theke'] });
-            };
-            seed().catch(console.error);
-        }
-    }, [areasLoading, areas.length]);
 
     const { data: restockItems = [] } = useQuery({
         queryKey: ['restock-items'],
