@@ -1,8 +1,9 @@
 /**
  * DisplayManager — Slide-Verwaltung für Manager
- * Übersicht aller Slides + schnelles Anlegen/Bearbeiten/Deaktivieren
+ * v2: Mehrere Drink-Specials pro Slide, Ort-Feld, größere Farbpalette,
+ *     Vorschau-Panel, Auto-Deaktivierung bei Ablauf, doppelte Reihenfolge-Validierung
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -16,29 +17,41 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, GripVertical, Tv } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
+import { isAfter, parseISO } from 'date-fns';
 
 const SLIDE_TYPES = [
-  { value: 'announcement',  label: '📢 Ankündigung',     desc: 'Allgemeine Mitteilung' },
-  { value: 'event',         label: '🎉 Event',            desc: 'Veranstaltung mit Datum' },
-  { value: 'drink_special', label: '🍹 Drink Special',    desc: 'Getränk-Angebot mit Preis' },
-  { value: 'image_only',    label: '🖼️ Nur Bild',         desc: 'Bild im Vollformat' },
-  { value: 'countdown',     label: '⏳ Countdown',         desc: 'Countdown zu einem Event' },
+  { value: 'announcement',  label: '📢 Ankündigung',      desc: 'Allgemeine Mitteilung' },
+  { value: 'event',         label: '🎉 Event',             desc: 'Veranstaltung mit Datum & Ort' },
+  { value: 'drink_special', label: '🍹 Drink Special',     desc: 'Bis zu 4 Getränke mit Preisen' },
+  { value: 'image_only',    label: '🖼️ Nur Bild',          desc: 'Bild im Vollformat' },
+  { value: 'countdown',     label: '⏳ Countdown',          desc: 'Countdown zu einem Event' },
 ];
 
+// Erweiterte Farbpalette
 const ACCENT_COLORS = [
-  { value: 'amber',  label: '🟡 Gold'    },
-  { value: 'blue',   label: '🔵 Blau'    },
-  { value: 'green',  label: '🟢 Grün'    },
-  { value: 'red',    label: '🔴 Rot'     },
-  { value: 'purple', label: '🟣 Lila'    },
-  { value: 'pink',   label: '🩷 Pink'    },
-  { value: 'cyan',   label: '🩵 Cyan'    },
+  { value: 'amber',    label: 'Gold',      hex: '#f59e0b' },
+  { value: 'orange',   label: 'Orange',    hex: '#f97316' },
+  { value: 'red',      label: 'Rot',       hex: '#ef4444' },
+  { value: 'rose',     label: 'Rose',      hex: '#f43f5e' },
+  { value: 'pink',     label: 'Pink',      hex: '#ec4899' },
+  { value: 'fuchsia',  label: 'Fuchsia',   hex: '#d946ef' },
+  { value: 'purple',   label: 'Lila',      hex: '#a855f7' },
+  { value: 'violet',   label: 'Violett',   hex: '#7c3aed' },
+  { value: 'indigo',   label: 'Indigo',    hex: '#6366f1' },
+  { value: 'blue',     label: 'Blau',      hex: '#3b82f6' },
+  { value: 'sky',      label: 'Hellblau',  hex: '#0ea5e9' },
+  { value: 'cyan',     label: 'Cyan',      hex: '#06b6d4' },
+  { value: 'teal',     label: 'Teal',      hex: '#14b8a6' },
+  { value: 'green',    label: 'Grün',      hex: '#22c55e' },
+  { value: 'lime',     label: 'Lime',      hex: '#84cc16' },
+  { value: 'white',    label: 'Weiß',      hex: '#f8fafc' },
 ];
 
 const TYPE_COLORS = {
@@ -49,20 +62,25 @@ const TYPE_COLORS = {
   countdown:     'bg-red-500/10 text-red-400 border-red-500/30',
 };
 
+const EMPTY_DRINK = { name: '', price: '', emoji: '🍹' };
 const EMPTY_FORM = {
   title: '', subtitle: '', body_text: '', slide_type: 'announcement',
   image_url: '', accent_color: 'amber', cta_text: '', event_date: '',
-  event_time: '', price_info: '', is_active: true, sort_order: 0,
+  event_end_date: '', event_time: '', event_end_time: '', location: '',
+  price_info: '', is_active: true, sort_order: 1,
   show_from: '', show_until: '', duration_seconds: 8,
+  drinks: [{ ...EMPTY_DRINK }],
 };
 
 export default function DisplayManager() {
   const permissions = usePermissions();
   const qc = useQueryClient();
 
-  const [modal, setModal]   = useState({ open: false, data: null });
-  const [form, setForm]     = useState(EMPTY_FORM);
+  const [modal, setModal]       = useState({ open: false, data: null });
+  const [form, setForm]         = useState(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [previewOpen, setPreviewOpen]   = useState(false);
+  const [activeTab, setActiveTab]       = useState('form');
 
   const { data: slides = [], isLoading } = useQuery({
     queryKey: ['display-slides-all'],
@@ -70,10 +88,31 @@ export default function DisplayManager() {
     staleTime: STALE.SLOW,
   });
 
+  // Auto-Deaktivierung: Slide deaktivieren wenn show_until abgelaufen
+  useEffect(() => {
+    if (!slides.length) return;
+    const now = new Date();
+    slides.forEach(s => {
+      if (s.is_active && s.show_until && isAfter(now, parseISO(s.show_until))) {
+        base44.entities.DisplaySlide.update(s.id, { is_active: false }).then(() => {
+          qc.invalidateQueries({ queryKey: ['display-slides-all'] });
+        });
+      }
+    });
+  }, [slides]);
+
   const saveMut = useMutation({
-    mutationFn: d => modal.data?.id
-      ? base44.entities.DisplaySlide.update(modal.data.id, d)
-      : base44.entities.DisplaySlide.create(d),
+    mutationFn: d => {
+      // drinks-Array als JSON in body_text speichern wenn drink_special
+      const payload = { ...d };
+      if (payload.slide_type === 'drink_special' && Array.isArray(payload.drinks)) {
+        payload.body_text = JSON.stringify(payload.drinks.filter(dr => dr.name));
+      }
+      delete payload.drinks;
+      return modal.data?.id
+        ? base44.entities.DisplaySlide.update(modal.data.id, payload)
+        : base44.entities.DisplaySlide.create(payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['display-slides'] });
       qc.invalidateQueries({ queryKey: ['display-slides-all'] });
@@ -98,9 +137,32 @@ export default function DisplayManager() {
     },
   });
 
-  const openAdd  = () => { setForm(EMPTY_FORM); setModal({ open: true, data: null }); };
-  const openEdit = s  => { setForm({ ...EMPTY_FORM, ...s }); setModal({ open: true, data: s }); };
+  const openAdd = () => {
+    const maxOrder = slides.length ? Math.max(...slides.map(s => s.sort_order || 0)) + 1 : 1;
+    setForm({ ...EMPTY_FORM, sort_order: maxOrder });
+    setModal({ open: true, data: null });
+    setActiveTab('form');
+  };
+
+  const openEdit = s => {
+    let drinks = [{ ...EMPTY_DRINK }];
+    if (s.slide_type === 'drink_special' && s.body_text) {
+      try { drinks = JSON.parse(s.body_text); } catch {}
+    }
+    setForm({ ...EMPTY_FORM, ...s, drinks, event_end_date: s.event_end_date || '', event_end_time: s.event_end_time || '', location: s.location || '' });
+    setModal({ open: true, data: s });
+    setActiveTab('form');
+  };
+
   const f = (key, val) => setForm(p => ({ ...p, [key]: val }));
+
+  // Validierung doppelte Reihenfolge
+  const orderConflict = slides.some(s => {
+    if (modal.data?.id && s.id === modal.data.id) return false;
+    return Number(s.sort_order) === Number(form.sort_order);
+  });
+
+  const accentHex = ACCENT_COLORS.find(c => c.value === form.accent_color)?.hex || '#f59e0b';
 
   if (!permissions.isManager) return <PermissionDenied />;
 
@@ -117,14 +179,14 @@ export default function DisplayManager() {
             Display-Manager
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {activeCount} aktive Slides · {inactiveCount} inaktiv
+            {activeCount} aktive · {inactiveCount} inaktiv
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild className="h-9 text-xs">
             <a href={createPageUrl('Display')} target="_blank" rel="noopener noreferrer">
               <Monitor className="w-3.5 h-3.5 mr-1.5" />
-              Vorschau
+              Vollbild
               <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
             </a>
           </Button>
@@ -138,12 +200,9 @@ export default function DisplayManager() {
       {/* Info-Banner */}
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 mb-5 flex items-start gap-3">
         <Monitor className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-        <div>
-          <p className="text-xs font-semibold text-foreground">TV einrichten</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Öffne auf dem Bar-PC den Link <span className="font-mono text-primary">/Display</span> und drücke F11 für Vollbild. Die Slideshow läuft dann automatisch.
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Öffne auf dem Bar-PC <span className="font-mono text-primary">/Display</span> und drücke <kbd className="px-1 py-0.5 rounded bg-muted text-[10px]">F11</kbd> für Vollbild.
+        </p>
       </div>
 
       {/* Slide-Liste */}
@@ -157,10 +216,11 @@ export default function DisplayManager() {
         </div>
       ) : (
         <div className="space-y-2">
-          {slides.map(s => (
+          {[...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).map(s => (
             <Card key={s.id} className={cn('border-border/60 transition-opacity', !s.is_active && 'opacity-50')}>
               <CardContent className="p-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 text-base">
+                <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-base"
+                  style={{ background: (ACCENT_COLORS.find(c => c.value === s.accent_color)?.hex || '#f59e0b') + '22' }}>
                   {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.split(' ')[0] || '📢'}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -169,21 +229,16 @@ export default function DisplayManager() {
                     <Badge className={cn('text-[10px] h-4 px-1.5 border', TYPE_COLORS[s.slide_type])}>
                       {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.replace(/^.+? /, '') || s.slide_type}
                     </Badge>
+                    <span className="text-[10px] text-muted-foreground">#{s.sort_order}</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                    {s.subtitle || s.cta_text || s.price_info || `${s.duration_seconds || 8}s`}
+                    {s.subtitle || s.location || s.price_info || `${s.duration_seconds || 8}s`}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => toggleMut.mutate({ id: s.id, is_active: !s.is_active })}
-                    title={s.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                    className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                  >
-                    {s.is_active
-                      ? <Eye className="w-4 h-4 text-primary" />
-                      : <EyeOff className="w-4 h-4 text-muted-foreground" />
-                    }
+                  <button onClick={() => toggleMut.mutate({ id: s.id, is_active: !s.is_active })}
+                    className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                    {s.is_active ? <Eye className="w-4 h-4 text-primary" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                   </button>
                   <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(s)}>
                     <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
@@ -198,135 +253,214 @@ export default function DisplayManager() {
         </div>
       )}
 
-      {/* ── Slide Modal ──────────────────────────────────────────────────────────── */}
+      {/* ── Slide Modal ────────────────────────────────────────────────────────── */}
       <Dialog open={modal.open} onOpenChange={open => !open && setModal({ open: false, data: null })}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{modal.data ? 'Slide bearbeiten' : 'Neue Slide'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
 
-            {/* Typ */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Slide-Typ *</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {SLIDE_TYPES.map(t => (
-                  <button key={t.value} onClick={() => f('slide_type', t.value)}
-                    className={cn('text-left p-2.5 rounded-xl border text-xs transition-all',
-                      form.slide_type === t.value
-                        ? 'border-primary bg-primary/10 text-foreground'
-                        : 'border-border bg-card text-muted-foreground hover:border-border/80'
-                    )}>
-                    <div className="font-semibold">{t.label}</div>
-                    <div className="opacity-60 mt-0.5">{t.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full grid grid-cols-2 mb-4">
+              <TabsTrigger value="form">Inhalt</TabsTrigger>
+              <TabsTrigger value="preview">Vorschau</TabsTrigger>
+            </TabsList>
 
-            {/* Titel + Untertitel */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* ── FORM TAB ── */}
+            <TabsContent value="form" className="space-y-4">
+
+              {/* Typ */}
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Titel *</Label>
-                <Input className="h-9" placeholder="Großer Titel" value={form.title} onChange={e => f('title', e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Untertitel</Label>
-                <Input className="h-9" placeholder="Unterzeile" value={form.subtitle} onChange={e => f('subtitle', e.target.value)} />
-              </div>
-            </div>
-
-            {/* Body Text */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Fließtext (optional)</Label>
-              <Textarea className="text-sm resize-none" rows={2} placeholder="Längerer Beschreibungstext…" value={form.body_text} onChange={e => f('body_text', e.target.value)} />
-            </div>
-
-            {/* CTA + Preis */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Button-Text</Label>
-                <Input className="h-9" placeholder="z.B. Heute ab 20 Uhr" value={form.cta_text} onChange={e => f('cta_text', e.target.value)} />
-              </div>
-              {(form.slide_type === 'drink_special') && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Preis</Label>
-                  <Input className="h-9" placeholder="z.B. 4,50 € / Glas" value={form.price_info} onChange={e => f('price_info', e.target.value)} />
+                <Label className="text-xs font-medium">Slide-Typ</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {SLIDE_TYPES.map(t => (
+                    <button key={t.value} onClick={() => f('slide_type', t.value)}
+                      className={cn('flex items-center gap-2 rounded-lg border p-2.5 text-left transition-colors text-xs',
+                        form.slide_type === t.value
+                          ? 'border-primary bg-primary/10 text-foreground'
+                          : 'border-border/60 hover:border-border text-muted-foreground')}>
+                      <span className="text-base">{t.label.split(' ')[0]}</span>
+                      <div>
+                        <div className="font-medium text-foreground">{t.label.replace(/^.+? /, '')}</div>
+                        <div className="text-[10px] text-muted-foreground">{t.desc}</div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Event-Felder */}
-            {(form.slide_type === 'event' || form.slide_type === 'countdown') && (
+              {/* Titel + Untertitel */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Datum</Label>
-                  <Input className="h-9" type="date" value={form.event_date} onChange={e => f('event_date', e.target.value)} />
+                  <Label className="text-xs">Titel *</Label>
+                  <Input value={form.title} onChange={e => f('title', e.target.value)} placeholder="Slide-Titel" className="h-9 text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Uhrzeit</Label>
-                  <Input className="h-9" placeholder="20:00" value={form.event_time} onChange={e => f('event_time', e.target.value)} />
+                  <Label className="text-xs">Untertitel</Label>
+                  <Input value={form.subtitle} onChange={e => f('subtitle', e.target.value)} placeholder="Optional" className="h-9 text-sm" />
                 </div>
               </div>
-            )}
 
-            {/* Bild */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Bild-URL (optional)</Label>
-              <Input className="h-9" placeholder="https://…" value={form.image_url} onChange={e => f('image_url', e.target.value)} />
-              {form.image_url && (
-                <div className="h-20 rounded-lg overflow-hidden border border-border/50">
-                  <img src={form.image_url} alt="" className="w-full h-full object-cover" onError={e => e.target.style.display='none'} />
+              {/* Event-spezifisch */}
+              {(form.slide_type === 'event' || form.slide_type === 'countdown') && (
+                <div className="space-y-3 rounded-xl border border-border/60 p-3 bg-muted/30">
+                  <p className="text-xs font-semibold text-foreground">Event-Details</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Startdatum</Label>
+                      <Input type="date" value={form.event_date} onChange={e => f('event_date', e.target.value)} className="h-9 text-sm" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Enddatum (optional)</Label>
+                      <Input type="date" value={form.event_end_date} onChange={e => f('event_end_date', e.target.value)} className="h-9 text-sm" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Startzeit</Label>
+                      <Input type="time" value={form.event_time} onChange={e => f('event_time', e.target.value)} className="h-9 text-sm" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Endzeit (optional)</Label>
+                      <Input type="time" value={form.event_end_time} onChange={e => f('event_end_time', e.target.value)} className="h-9 text-sm" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">📍 Ort / Location</Label>
+                    <Input value={form.location} onChange={e => f('location', e.target.value)} placeholder="z.B. QUI Bar, Terrasse, Hauptsaal…" className="h-9 text-sm" />
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* Farbe + Dauer + Reihenfolge */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Akzentfarbe</Label>
-                <Select value={form.accent_color} onValueChange={v => f('accent_color', v)}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {ACCENT_COLORS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Dauer (Sek.)</Label>
-                <Input className="h-9" type="number" min="3" max="30" value={form.duration_seconds} onChange={e => f('duration_seconds', parseInt(e.target.value))} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Reihenfolge</Label>
-                <Input className="h-9" type="number" min="0" value={form.sort_order} onChange={e => f('sort_order', parseInt(e.target.value))} />
-              </div>
-            </div>
+              {/* Drink-Special: Mehrere Getränke */}
+              {form.slide_type === 'drink_special' && (
+                <div className="space-y-3 rounded-xl border border-border/60 p-3 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-foreground">Getränke (max. 4)</p>
+                    {form.drinks.length < 4 && (
+                      <Button size="sm" variant="outline" className="h-7 text-xs"
+                        onClick={() => f('drinks', [...form.drinks, { ...EMPTY_DRINK }])}>
+                        <Plus className="w-3 h-3 mr-1" /> Getränk hinzufügen
+                      </Button>
+                    )}
+                  </div>
+                  {form.drinks.map((dr, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <Input value={dr.emoji} onChange={e => {
+                        const d = [...form.drinks]; d[i] = { ...d[i], emoji: e.target.value }; f('drinks', d);
+                      }} className="h-9 w-14 text-center text-lg p-1" placeholder="🍹" />
+                      <Input value={dr.name} onChange={e => {
+                        const d = [...form.drinks]; d[i] = { ...d[i], name: e.target.value }; f('drinks', d);
+                      }} className="h-9 text-sm flex-1" placeholder="Getränk-Name" />
+                      <Input value={dr.price} onChange={e => {
+                        const d = [...form.drinks]; d[i] = { ...d[i], price: e.target.value }; f('drinks', d);
+                      }} className="h-9 text-sm w-24" placeholder="z.B. 6,50€" />
+                      {form.drinks.length > 1 && (
+                        <Button size="icon" variant="ghost" className="h-9 w-9 shrink-0"
+                          onClick={() => f('drinks', form.drinks.filter((_, j) => j !== i))}>
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
-            {/* Zeitfenster */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Anzeigen ab</Label>
-                <Input className="h-9" type="datetime-local" value={form.show_from} onChange={e => f('show_from', e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Anzeigen bis</Label>
-                <Input className="h-9" type="datetime-local" value={form.show_until} onChange={e => f('show_until', e.target.value)} />
-              </div>
-            </div>
+              {/* Bild URL */}
+              {form.slide_type !== 'drink_special' && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Bild-URL (optional)</Label>
+                  <Input value={form.image_url} onChange={e => f('image_url', e.target.value)} placeholder="https://..." className="h-9 text-sm" />
+                </div>
+              )}
 
-            {/* Aktiv */}
-            <div className="flex items-center gap-3 pt-1">
-              <Switch checked={form.is_active} onCheckedChange={v => f('is_active', v)} />
-              <Label className="text-sm text-foreground cursor-pointer">Slide aktiv (wird angezeigt)</Label>
-            </div>
-          </div>
+              {/* Body text — nur bei announcement */}
+              {form.slide_type === 'announcement' && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Beschreibung</Label>
+                  <Textarea value={form.body_text} onChange={e => f('body_text', e.target.value)} placeholder="Weitere Details…" rows={3} className="text-sm resize-none" />
+                </div>
+              )}
 
-          <DialogFooter className="gap-2">
+              {/* CTA */}
+              {form.slide_type !== 'drink_special' && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Call-to-Action Text</Label>
+                  <Input value={form.cta_text} onChange={e => f('cta_text', e.target.value)} placeholder="z.B. Jetzt reservieren!" className="h-9 text-sm" />
+                </div>
+              )}
+
+              {/* Farbe */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Akzentfarbe</Label>
+                <div className="flex flex-wrap gap-2">
+                  {ACCENT_COLORS.map(c => (
+                    <button key={c.value} onClick={() => f('accent_color', c.value)}
+                      title={c.label}
+                      className={cn('w-8 h-8 rounded-full border-2 transition-transform hover:scale-110',
+                        form.accent_color === c.value ? 'border-foreground scale-110' : 'border-transparent')}
+                      style={{ background: c.hex }} />
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Gewählt: <span style={{ color: accentHex }} className="font-semibold">
+                    {ACCENT_COLORS.find(c => c.value === form.accent_color)?.label}
+                  </span>
+                </p>
+              </div>
+
+              {/* Anzeigedauer + Reihenfolge */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Anzeigedauer (Sekunden)</Label>
+                  <Input type="number" min={3} max={60} value={form.duration_seconds}
+                    onChange={e => f('duration_seconds', Number(e.target.value))} className="h-9 text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Reihenfolge</Label>
+                  <Input type="number" min={1} value={form.sort_order}
+                    onChange={e => f('sort_order', Number(e.target.value))} className={cn('h-9 text-sm', orderConflict && 'border-destructive')} />
+                  {orderConflict && (
+                    <p className="text-[10px] text-destructive flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> Diese Reihenfolge ist bereits vergeben
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Zeitplanung */}
+              <div className="space-y-2 rounded-xl border border-border/60 p-3 bg-muted/30">
+                <p className="text-xs font-semibold text-foreground">Zeitplanung (optional)</p>
+                <p className="text-[10px] text-muted-foreground">Slide wird nach Ablauf von "Anzeigen bis" automatisch deaktiviert.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Anzeigen ab</Label>
+                    <Input type="datetime-local" value={form.show_from} onChange={e => f('show_from', e.target.value)} className="h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Anzeigen bis (auto-deaktiviert)</Label>
+                    <Input type="datetime-local" value={form.show_until} onChange={e => f('show_until', e.target.value)} className="h-9 text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Aktiv */}
+              <div className="flex items-center justify-between rounded-xl border border-border/60 p-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Aktiv</p>
+                  <p className="text-xs text-muted-foreground">Slide wird in der Slideshow angezeigt</p>
+                </div>
+                <Switch checked={form.is_active} onCheckedChange={v => f('is_active', v)} />
+              </div>
+            </TabsContent>
+
+            {/* ── VORSCHAU TAB ── */}
+            <TabsContent value="preview">
+              <SlidePreview form={form} />
+            </TabsContent>
+          </Tabs>
+
+          <DialogFooter className="mt-2">
             <Button variant="outline" onClick={() => setModal({ open: false, data: null })}>Abbrechen</Button>
-            <Button onClick={() => {
-              if (!form.title.trim()) { toast.error('Titel erforderlich'); return; }
-              saveMut.mutate(form);
-            }} disabled={saveMut.isPending}>
+            <Button onClick={() => saveMut.mutate(form)} disabled={saveMut.isPending || !form.title || orderConflict}>
               {saveMut.isPending ? 'Speichern…' : 'Speichern'}
             </Button>
           </DialogFooter>
@@ -342,11 +476,85 @@ export default function DisplayManager() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteMut.mutate(deleteTarget?.id)}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Löschen</AlertDialogAction>
+            <AlertDialogAction onClick={() => deleteMut.mutate(deleteTarget?.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Löschen
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+// ── Mini-Vorschau im Manager ──────────────────────────────────────────────────
+function SlidePreview({ form }) {
+  const accentHex = ACCENT_COLORS.find(c => c.value === form.accent_color)?.hex || '#f59e0b';
+  const glow = accentHex + '66';
+  const soft = accentHex + '22';
+
+  const drinks = form.slide_type === 'drink_special'
+    ? (Array.isArray(form.drinks) ? form.drinks.filter(d => d.name) : [])
+    : [];
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-border/60" style={{ aspectRatio: '16/9', background: '#0a0a0a', position: 'relative' }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '5%', textAlign: 'center', gap: '4%' }}>
+
+        {/* Typ-Badge */}
+        <div style={{ background: soft, border: `1px solid ${accentHex}`, borderRadius: 6, padding: '3px 12px', fontSize: '0.6rem', color: accentHex, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          {SLIDE_TYPES.find(t => t.value === form.slide_type)?.label || 'Slide'}
+        </div>
+
+        {/* Titel */}
+        <div style={{ fontSize: 'clamp(1rem, 4vw, 2rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+          {form.title || 'Titel'}
+        </div>
+
+        {/* Untertitel */}
+        {form.subtitle && (
+          <div style={{ fontSize: 'clamp(0.6rem, 2vw, 0.9rem)', color: 'rgba(255,255,255,0.6)' }}>{form.subtitle}</div>
+        )}
+
+        {/* Drink-Specials Vorschau */}
+        {drinks.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {drinks.map((dr, i) => (
+              <div key={i} style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${accentHex}44`, borderRadius: 8, padding: '6px 12px', textAlign: 'center', minWidth: 60 }}>
+                <div style={{ fontSize: '1.2rem' }}>{dr.emoji}</div>
+                <div style={{ fontSize: '0.55rem', color: '#fff', fontWeight: 600 }}>{dr.name}</div>
+                {dr.price && <div style={{ fontSize: '0.6rem', color: accentHex, fontWeight: 800 }}>{dr.price}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Event Datum/Zeit/Ort */}
+        {form.slide_type === 'event' && (form.event_date || form.location) && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {form.event_date && <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 6, padding: '4px 10px', color: '#fff', fontSize: '0.6rem', fontWeight: 600 }}>📅 {form.event_date}</div>}
+            {form.event_time && <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 6, padding: '4px 10px', color: '#fff', fontSize: '0.6rem', fontWeight: 600 }}>🕐 {form.event_time}</div>}
+            {form.location && <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 6, padding: '4px 10px', color: '#fff', fontSize: '0.6rem', fontWeight: 600 }}>📍 {form.location}</div>}
+          </div>
+        )}
+
+        {/* CTA */}
+        {form.cta_text && (
+          <div style={{ background: accentHex, color: '#fff', padding: '6px 20px', borderRadius: 8, fontWeight: 800, fontSize: '0.65rem', boxShadow: `0 0 16px ${glow}` }}>
+            {form.cta_text}
+          </div>
+        )}
+
+        {/* Countdown Vorschau */}
+        {form.slide_type === 'countdown' && (
+          <div style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${accentHex}`, borderRadius: 10, padding: '8px 24px', display: 'inline-flex', gap: 12, alignItems: 'center' }}>
+            <span style={{ color: '#fff', fontWeight: 900, fontSize: '1.4rem', lineHeight: 1 }}>??</span>
+            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.55rem' }}>Tage<br/>noch</span>
+          </div>
+        )}
+
+        {/* Farbindikator unten */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: accentHex, boxShadow: `0 0 8px ${glow}` }} />
+      </div>
     </div>
   );
 }
