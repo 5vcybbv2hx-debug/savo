@@ -240,7 +240,7 @@ function GermanyFlag3D() {
     }
     geo.setAttribute('color', new T.BufferAttribute(cols, 3));
 
-    const mat = new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide });
+    const mat = new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide, transparent: true, opacity: 0.92 });
     const flag = new T.Mesh(geo, mat);
     flag.position.x = 0.3; scene.add(flag);
 
@@ -256,9 +256,9 @@ function GermanyFlag3D() {
         for (let i = 0; i < posArr.count; i++) {
           const x = posArr.array[i * 3];
           const nx = (x + 1.5) / 3.0;
-          const amp = nx * nx * 0.2;
-          posArr.array[i * 3 + 2] = Math.sin(nx * Math.PI * 3 - t * 1.8) * amp + Math.sin(nx * Math.PI * 5 - t * 1.3) * amp * 0.28;
-          posArr.array[i * 3 + 1] = origY[i] + Math.sin(nx * Math.PI * 2 - t * 1.5) * amp * 0.18;
+          const amp = nx * nx * 0.35;
+          posArr.array[i * 3 + 2] = Math.sin(nx * Math.PI * 3 - t * 2.2) * amp + Math.sin(nx * Math.PI * 5 - t * 1.6) * amp * 0.3;
+          posArr.array[i * 3 + 1] = origY[i] + Math.sin(nx * Math.PI * 2 - t * 1.8) * amp * 0.25;
         }
         posArr.needsUpdate = true;
         geo.computeVertexNormals();
@@ -268,7 +268,7 @@ function GermanyFlag3D() {
       }
     };
   });
-  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.55, pointerEvents: 'none' }} />;
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.72, pointerEvents: 'none' }} />;
 }
 
 // 🎆 FEUERWERK — 3D Partikel mit Physik
@@ -628,7 +628,7 @@ function CanvasSummer() {
       ctx.globalAlpha=0.4;
       for(let wave=0;wave<4;wave++){
         const yBase=H*(0.65+wave*0.1),amp=H*0.025*(4-wave),sp=1-wave*0.15;
-        ctx.beginPath();for(let x=0;x<=W;x+=3){const y=yBase+Math.sin(x/W*Math.PI*4-t*sp*0.012+wave)*amp+Math.sin(x/W*Math.PI*2.5-t*sp*0.007+wave*0.7)*amp*0.4;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+        ctx.beginPath();for(let x=0;x<=W;x+=3){const y=yBase+Math.sin(x/W*Math.PI*4-t*sp*0.003+wave)*amp+Math.sin(x/W*Math.PI*2.5-t*sp*0.0015+wave*0.7)*amp*0.4;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
         ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
         const wg=ctx.createLinearGradient(0,yBase,0,H);wg.addColorStop(0,'rgba(56,189,248,0.18)');wg.addColorStop(1,'rgba(14,165,233,0.08)');ctx.fillStyle=wg;ctx.fill();
       }
