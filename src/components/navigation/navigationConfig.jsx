@@ -1,4 +1,4 @@
-import {
+import { Tv,
     Home, Utensils, Package, Wine, Users,
     Calendar, Clock, Shield, BookOpen, TrendingUp,
     CheckSquare, MapPin, ShoppingCart, ShoppingBasket, RefreshCw, ClipboardCheck,
@@ -68,6 +68,7 @@ export const mainNavigation = [
 ];
 
 export const additionalPages = [
+  { page: 'DisplayManager', name: 'Display', icon: Tv, permission: 'isManager' },
     // Betrieb
     { name: 'Gäste & Tische',  page: 'GuestHub',     icon: MapPin,         permission: 'canViewReservations'        },
     { name: 'Aufgaben',        page: 'Todos',         icon: CheckSquare,    permission: 'canViewTodos'               },
