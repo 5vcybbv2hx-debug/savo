@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAVO Display</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #0a0a0a; overflow: hidden; font-family: "Inter", system-ui, sans-serif; color: #fff; }
+    #app { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+
+    .slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 80px 120px; gap: 32px; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
+    .slide.active { opacity: 1; pointer-events: auto; }
+
+    .glow-bg { position: absolute; inset: 0; pointer-events: none; transition: background 1s; }
+    .header { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 28px 48px; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); }
+    .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; opacity: 0.9; }
+    .clock-wrap { text-align: right; }
+    .clock-time { font-size: 3rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+    .clock-date { font-size: 0.9rem; color: rgba(255,255,255,0.5); margin-top: 3px; }
+
+    .type-badge { border-radius: 8px; padding: 6px 20px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: inline-block; margin-bottom: 8px; }
+    .slide-title { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 900; line-height: 1.05; letter-spacing: -0.03em; text-shadow: 0 2px 40px rgba(0,0,0,0.5); }
+    .slide-subtitle { font-size: clamp(1.1rem, 2.5vw, 1.8rem); color: rgba(255,255,255,0.65); margin-top: 8px; }
+    .slide-body { font-size: clamp(0.9rem, 1.5vw, 1.2rem); color: rgba(255,255,255,0.45); max-width: 700px; margin-top: 8px; }
+    .cta-btn { padding: 16px 48px; border-radius: 16px; font-weight: 800; font-size: 1.4rem; display: inline-block; margin-top: 8px; }
+
+    .meta-pills { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+    .meta-pill { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 20px; font-weight: 600; font-size: 1rem; }
+
+    .drinks-grid { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; width: 100%; margin-top: 8px; }
+    .drink-card { background: rgba(255,255,255,0.06); border-radius: 20px; padding: 28px 40px; text-align: center; min-width: 180px; flex: 1 1 180px; max-width: 280px; }
+    .drink-emoji { font-size: 2.8rem; margin-bottom: 10px; }
+    .drink-name { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; }
+    .drink-price { display: inline-block; padding: 8px 20px; border-radius: 12px; font-weight: 900; font-size: 1.5rem; }
+
+    .countdown-tiles { display: flex; gap: 24px; justify-content: center; align-items: center; margin-top: 8px; }
+    .countdown-tile { text-align: center; border-radius: 20px; padding: 24px 36px; min-width: 130px; }
+    .countdown-num { font-size: 5rem; font-weight: 900; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+    .countdown-label { font-size: 1rem; color: rgba(255,255,255,0.5); margin-top: 8px; font-weight: 600; }
+
+    .progress-bar { position: absolute; bottom: 0; left: 0; height: 5px; background: #fff; transition: width 0.05s linear; border-radius: 0 3px 3px 0; }
+    .progress-track { position: absolute; bottom: 0; left: 0; right: 0; height: 5px; background: rgba(255,255,255,0.08); }
+
+    .dots { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 10; }
+    .dot { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.2); transition: all 0.3s; }
+
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; }
+    .empty-icon { font-size: 4rem; opacity: 0.3; }
+    .empty-text { color: rgba(255,255,255,0.4); font-size: 1.5rem; font-weight: 600; }
+    .empty-sub { color: rgba(255,255,255,0.2); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="glow-bg" id="glow"></div>
+  <div class="header">
+    <div class="logo" id="logo">● SAVO</div>
+    <div class="clock-wrap">
+      <div class="clock-time" id="clock-time">00:00</div>
+      <div class="clock-date" id="clock-date"></div>
+    </div>
+  </div>
+  <div id="slides-container"></div>
+  <div class="progress-track">
+    <div class="progress-bar" id="progress" style="width:0%"></div>
+  </div>
+  <div class="dots" id="dots"></div>
+</div>
+
+<script>
+const ACCENTS = {
+  amber:   '#f59e0b', orange: '#f97316', red: '#ef4444', rose: '#f43f5e',
+  pink:    '#ec4899', fuchsia: '#d946ef', purple: '#a855f7', violet: '#7c3aed',
+  indigo:  '#6366f1', blue: '#3b82f6',   sky: '#0ea5e9',   cyan: '#06b6d4',
+  teal:    '#14b8a6', green: '#22c55e',  lime: '#84cc16',  white: '#f8fafc',
+};
+const DAYS_DE = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+let slides = [];
+let currentIdx = 0;
+let progressStart = null;
+let progressRaf = null;
+
+// Uhr
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock-time').textContent = h + ':' + m;
+  document.getElementById('clock-date').textContent =
+    DAYS_DE[now.getDay()] + ', ' + now.getDate() + '. ' + MONTHS_DE[now.getMonth()];
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Slides laden
+async function loadSlides() {
+  try {
+    const r = await fetch('/functions/getDisplaySlides');
+    const data = await r.json();
+    slides = (data.slides || []).sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
+    renderAll();
+    if (slides.length > 0) showSlide(0);
+  } catch(e) {
+    showEmpty('Verbindungsfehler: ' + e.message);
+  }
+}
+
+function showEmpty(msg) {
+  document.getElementById('slides-container').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">📺</div>
+      <div class="empty-text">Keine aktiven Slides</div>
+      <div class="empty-sub">${msg || 'Erstelle Slides im Display-Manager'}</div>
+    </div>`;
+}
+
+function renderAll() {
+  if (!slides.length) { showEmpty(''); return; }
+  const container = document.getElementById('slides-container');
+  container.innerHTML = '';
+  slides.forEach((s, i) => {
+    const el = buildSlide(s, i);
+    container.appendChild(el);
+  });
+  renderDots();
+}
+
+function buildSlide(s, i) {
+  const color = ACCENTS[s.accent_color] || '#f59e0b';
+  const soft = color + '22';
+  const el = document.createElement('div');
+  el.className = 'slide';
+  el.id = 'slide-' + i;
+
+  if (s.slide_type === 'drink_special') {
+    let drinks = [];
+    try { drinks = JSON.parse(s.body_text || '[]'); } catch {}
+    if (!drinks.length && s.title) drinks = [{ name: s.title, price: s.price_info, emoji: '🍹' }];
+    drinks = drinks.filter(d => d.name);
+
+    el.innerHTML = `
+      <div class="type-badge" style="background:${soft};border:1px solid ${color};color:${color}">DRINK SPECIAL</div>
+      ${s.title && drinks.length > 1 ? `<div class="slide-title">${s.title}</div>` : ''}
+      <div class="drinks-grid">
+        ${drinks.map(d => `
+          <div class="drink-card" style="border:2px solid ${color}44">
+            <div class="drink-emoji">${d.emoji||'🍹'}</div>
+            <div class="drink-name">${d.name}</div>
+            ${d.price ? `<div class="drink-price" style="background:${color};color:#000">${d.price}</div>` : ''}
+          </div>`).join('')}
+      </div>
+      ${s.subtitle ? `<div class="slide-subtitle">${s.subtitle}</div>` : ''}
+    `;
+
+  } else if (s.slide_type === 'event') {
+    const dateStr = s.event_date ? formatDate(s.event_date) : '';
+    const endDateStr = s.event_end_date && s.event_end_date !== s.event_date ? ' – ' + formatDateShort(s.event_end_date) : '';
+    const timeStr = [s.event_time, s.event_end_time].filter(Boolean).join(' – ') + (s.event_time ? ' Uhr' : '');
+    el.innerHTML = `
+      <div class="type-badge" style="background:${soft};border:1px solid ${color};color:${color}">EVENT</div>
+      <div class="slide-title">${s.title}</div>
+      ${s.subtitle ? `<div class="slide-subtitle">${s.subtitle}</div>` : ''}
+      <div class="meta-pills">
+        ${dateStr ? `<div class="meta-pill">📅 ${dateStr}${endDateStr}</div>` : ''}
+        ${timeStr ? `<div class="meta-pill">🕐 ${timeStr}</div>` : ''}
+        ${s.location ? `<div class="meta-pill">📍 ${s.location}</div>` : ''}
+      </div>
+      ${s.cta_text ? `<div class="cta-btn" style="background:${color};color:#000;box-shadow:0 0 30px ${color}88">${s.cta_text}</div>` : ''}
+    `;
+
+  } else if (s.slide_type === 'countdown') {
+    el.innerHTML = `
+      <div class="type-badge" style="background:${soft};border:1px solid ${color};color:${color}">COUNTDOWN</div>
+      <div class="slide-title">${s.title}</div>
+      <div class="countdown-tiles" id="countdown-tiles-${i}"></div>
+      <div class="meta-pills">
+        ${s.event_date ? `<div class="meta-pill">📅 ${formatDate(s.event_date)}</div>` : ''}
+        ${s.event_time ? `<div class="meta-pill">🕐 ${s.event_time} Uhr</div>` : ''}
+        ${s.location   ? `<div class="meta-pill">📍 ${s.location}</div>` : ''}
+      </div>
+    `;
+    // Live countdown updaten
+    startCountdown(s, i, color);
+
+  } else {
+    // announcement / default
+    el.innerHTML = `
+      <div class="slide-title">${s.title}</div>
+      ${s.subtitle ? `<div class="slide-subtitle">${s.subtitle}</div>` : ''}
+      ${s.body_text ? `<div class="slide-body">${s.body_text}</div>` : ''}
+      ${s.cta_text  ? `<div class="cta-btn" style="background:${color};color:#000;box-shadow:0 0 30px ${color}88">${s.cta_text}</div>` : ''}
+    `;
+  }
+  return el;
+}
+
+function startCountdown(s, idx, color) {
+  const targetDate = s.event_date + (s.event_time ? 'T' + s.event_time + ':00' : 'T00:00:00');
+  function tick() {
+    const el = document.getElementById('countdown-tiles-' + idx);
+    if (!el) return;
+    const target = new Date(targetDate);
+    const now = new Date();
+    const total = Math.floor((target - now) / 1000);
+    if (total < 0) {
+      el.innerHTML = `<div style="color:${color};font-size:3rem;font-weight:900;">🎉 ES IST SOWEIT!</div>`;
+      return;
+    }
+    const days  = Math.floor(total / 86400);
+    const hours = Math.floor((total % 86400) / 3600);
+    const mins  = Math.floor((total % 3600) / 60);
+    const secs  = total % 60;
+    const units = days > 0
+      ? [{v:days,l:'Tage'},{v:hours,l:'Std.'},{v:mins,l:'Min.'}]
+      : [{v:hours,l:'Std.'},{v:mins,l:'Min.'},{v:secs,l:'Sek.'}];
+    el.innerHTML = units.map(u => `
+      <div class="countdown-tile" style="background:rgba(255,255,255,0.06);border:2px solid ${color};box-shadow:0 0 40px ${color}66">
+        <div class="countdown-num">${String(u.v).padStart(2,'0')}</div>
+        <div class="countdown-label">${u.l}</div>
+      </div>`).join('');
+    setTimeout(tick, 1000);
+  }
+  tick();
+}
+
+function renderDots() {
+  const dots = document.getElementById('dots');
+  dots.innerHTML = slides.map((_, i) =>
+    `<div class="dot" id="dot-${i}" style="width:6px"></div>`
+  ).join('');
+}
+
+function showSlide(idx) {
+  slides.forEach((_, i) => {
+    const el = document.getElementById('slide-' + i);
+    if (el) el.classList.toggle('active', i === idx);
+    const dot = document.getElementById('dot-' + i);
+    if (dot) {
+      dot.style.width = i === idx ? '24px' : '6px';
+      dot.style.background = i === idx ? (ACCENTS[slides[i].accent_color] || '#fff') : 'rgba(255,255,255,0.2)';
+    }
+  });
+
+  const s = slides[idx];
+  const color = ACCENTS[s.accent_color] || '#f59e0b';
+  document.getElementById('glow').style.background = `radial-gradient(ellipse 80% 60% at 50% 100%, ${color}44 0%, transparent 70%)`;
+  document.getElementById('logo').innerHTML = `<span style="color:${color}">●</span> SAVO`;
+  document.getElementById('progress').style.background = color;
+  document.getElementById('progress').style.boxShadow = `0 0 10px ${color}`;
+
+  // Progress
+  if (progressRaf) cancelAnimationFrame(progressRaf);
+  const dur = (s.duration_seconds || 8) * 1000;
+  progressStart = Date.now();
+  document.getElementById('progress').style.width = '0%';
+  function animProgress() {
+    const elapsed = Date.now() - progressStart;
+    const pct = Math.min(elapsed / dur * 100, 100);
+    document.getElementById('progress').style.width = pct + '%';
+    if (pct < 100) progressRaf = requestAnimationFrame(animProgress);
+  }
+  progressRaf = requestAnimationFrame(animProgress);
+
+  // Auto-Advance
+  clearTimeout(window._slideTimer);
+  window._slideTimer = setTimeout(() => {
+    const next = (idx + 1) % slides.length;
+    currentIdx = next;
+    showSlide(next);
+  }, dur);
+}
+
+function formatDate(str) {
+  const d = new Date(str + 'T00:00:00');
+  return DAYS_DE[d.getDay()] + ', ' + d.getDate() + '. ' + MONTHS_DE[d.getMonth()];
+}
+function formatDateShort(str) {
+  const d = new Date(str + 'T00:00:00');
+  return d.getDate() + '. ' + MONTHS_DE[d.getMonth()];
+}
+
+// Alle 30 Sek. neu laden
+setInterval(loadSlides, 30000);
+loadSlides();
+</script>
+</body>
+</html>
