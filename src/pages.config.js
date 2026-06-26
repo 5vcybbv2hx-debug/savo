@@ -3,48 +3,7 @@
  * 
  * This file is AUTO-GENERATED. Do not add imports or modify PAGES manually.
  * Pages are auto-registered when you create files in the ./pages/ folder.
- * 
  * THE ONLY EDITABLE VALUE: mainPage
- * This controls which page is the landing page (shown when users visit the app).
- * 
- * Example file structure:
- * 
- *    *   import Dashboard from './pages/Dashboard';
- *   import Settings from './pages/Settings';
- *   
- *   export const PAGES = {
- *       "HomePage": HomePage,
- *       "Dashboard": Dashboard,
- *       "Settings": Settings,
- *   }
- *   
- *   export const pagesConfig = {
- *       mainPage: "HomePage",
- *       Pages: PAGES,
- *   };
- * 
- * Example with Layout (wraps all pages):
- *
- *   import Home from './pages/Home';
- *   import Settings from './pages/Settings';
- *   import __Layout from './Layout.jsx';
- *
- *   export const PAGES = {
- *       "Home": Home,
- *       "Settings": Settings,
- *   }
- *
- *   export const pagesConfig = {
- *       mainPage: "Home",
- *       Pages: PAGES,
- *       Layout: __Layout,
- *   };
- *
- * To change the main page from HomePage to Dashboard, use find_replace:
- *   Old: mainPage: "HomePage",
- *   New: mainPage: "Dashboard",
- *
- * The mainPage value must match a key in the PAGES object exactly.
  */
 // Core pages (auto-generated alphabetically)
 import ArticleEdit from './pages/ArticleEdit';
@@ -99,9 +58,7 @@ import WorldCupSchedule from './pages/WorldCupSchedule';
 
 // Special pages (manual imports — non-standard routing)
 import CleaningChecklist from './pages/CleaningChecklist';
-// EmployeeHome removed — Dashboard is now the central entry point
 import EmployeeProfile from './pages/EmployeeProfile';
-
 import Stationsplan from './pages/Stationsplan';
 import DataProtection from './pages/DataProtection';
 import Impressum from './pages/Impressum';
@@ -109,7 +66,6 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import AGB from './pages/AGB';
 
 import __Layout from './Layout.jsx';
-
 
 // Page categories for layout and navigation
 const CORE_PAGES = {
@@ -156,14 +112,17 @@ const CORE_PAGES = {
     "BusinessCard": BusinessCard,
     "WeeklyTasks": WeeklyTasks,
     "WorldCupSchedule": WorldCupSchedule,
+    // Hub-Seiten — mit Layout (Sidebar + Navigation)
+    "TeamHub": TeamHub,
+    "AccountingHub": AccountingHub,
+    "BetriebHub": BetriebHub,
+    "KarteHub": KarteHub,
 };
 
 // Special pages: with Layout wrapper
 const SPECIAL_PAGES_WITH_LAYOUT = {
     "CleaningChecklist": CleaningChecklist,
-
     "EmployeeProfile": EmployeeProfile,
-
     "Stationsplan": Stationsplan,
     "DataProtection": DataProtection,
     "Impressum": Impressum,
@@ -171,15 +130,10 @@ const SPECIAL_PAGES_WITH_LAYOUT = {
     "AGB": AGB,
 };
 
-// Public pages: NO layout wrapper (guest/public access)
+// Public pages: NO layout wrapper (echte öffentliche Seiten ohne Auth/Sidebar)
 const PUBLIC_PAGES = {
     "PublicDrinkMenu": PublicDrinkMenu,
     "StorageLocationScan": StorageLocationScan,
-    "TeamHub": TeamHub,
-    "AccountingHub": AccountingHub,
-    "BetriebHub": BetriebHub,
-    "KarteHub": KarteHub,
-    // PublicReservation + GuestReservationView entfernt — nur interne Reservierungen
 };
 
 // Combined pages object (all accessible pages)
