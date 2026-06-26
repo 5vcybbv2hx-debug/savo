@@ -1,6 +1,5 @@
 /**
- * StructureTab — Bereiche & Möbel verwalten
- * AlertDialog statt confirm(), Schutz vor versehentlichem Löschen
+ * StructureTab — Bereich → Möbel → Fächer (vollständige 3-Ebenen-Hierarchie)
  */
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Layers, ChevronRight, ChevronDown, Loader2, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, Layers, ChevronRight, ChevronDown, Loader2, Package, Grid3x3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -30,35 +29,77 @@ const FURNITURE_ICONS = {
   'Sonstiges':        '📌',
 };
 
+// ── Inline Fach-Zeile ─────────────────────────────────────────────────────────
+function SlotRow({ slot, canEdit, onEdit, onDelete }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/20 last:border-0 hover:bg-secondary/10 transition-colors group">
+      <div className="w-5 h-5 rounded bg-muted flex items-center justify-center shrink-0">
+        <Grid3x3 className="w-2.5 h-2.5 text-muted-foreground" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-foreground truncate">{slot.name}</p>
+        {slot.short_code && (
+          <p className="text-[10px] font-mono text-muted-foreground">{slot.short_code}</p>
+        )}
+      </div>
+      {slot.capacity && (
+        <Badge variant="outline" className="text-[10px] h-4 px-1 text-muted-foreground border-border/50">
+          {slot.capacity} Pl.
+        </Badge>
+      )}
+      {canEdit && (
+        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground"
+            onClick={() => onEdit(slot)}>
+            <Pencil className="w-3 h-3" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10"
+            onClick={() => onDelete(slot)}>
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StructureTab({ permissions }) {
   const qc = useQueryClient();
   const canEdit = permissions.isManager;
 
-  const [expandedAreas, setExpandedAreas] = useState({});
+  const [expandedAreas, setExpandedAreas]   = useState({});
+  const [expandedFurs,  setExpandedFurs]    = useState({});
+
+  // Modals
   const [areaModal,  setAreaModal]  = useState({ open: false, data: null });
   const [furModal,   setFurModal]   = useState({ open: false, data: null, areaId: '' });
+  const [slotModal,  setSlotModal]  = useState({ open: false, data: null, furnitureId: '', areaId: '' });
   const [areaForm,   setAreaForm]   = useState({ name: '', description: '' });
   const [furForm,    setFurForm]    = useState({ name: '', type: '', area_id: '', notes: '' });
+  const [slotForm,   setSlotForm]   = useState({ name: '', capacity: '', notes: '' });
 
-  // Löschen-Bestätigung State
+  // Löschen
   const [deleteAreaTarget, setDeleteAreaTarget] = useState(null);
   const [deleteFurTarget,  setDeleteFurTarget]  = useState(null);
+  const [deleteSlotTarget, setDeleteSlotTarget] = useState(null);
 
-  // ── Queries ──────────────────────────────────────────────────────────────────
+  // ── Queries ───────────────────────────────────────────────────────────────────
   const { data: areas = [],     isLoading: aL } = useQuery({ queryKey: ['st-areas'],     queryFn: () => base44.entities.Area.list('name', 100),         staleTime: STALE.SLOW });
   const { data: furniture = [], isLoading: fL } = useQuery({ queryKey: ['st-furniture'], queryFn: () => base44.entities.Furniture.list('name', 200),     staleTime: STALE.SLOW });
   const { data: slots = [] }                    = useQuery({ queryKey: ['slots'],         queryFn: () => base44.entities.StorageSlot.list('name', 1000),  staleTime: STALE.MEDIUM });
 
   const isLoading = aL || fL;
 
-  // Slot-Counts pro Möbel
-  const slotCountByFurniture = useMemo(() => {
+  // Lookups
+  const slotsByFurniture = useMemo(() => {
     const map = {};
-    slots.forEach(s => { map[s.furniture_id] = (map[s.furniture_id] || 0) + 1; });
+    slots.forEach(s => {
+      if (!map[s.furniture_id]) map[s.furniture_id] = [];
+      map[s.furniture_id].push(s);
+    });
     return map;
   }, [slots]);
 
-  // Slot-Counts pro Bereich
   const slotCountByArea = useMemo(() => {
     const map = {};
     slots.forEach(s => { map[s.area_id] = (map[s.area_id] || 0) + 1; });
@@ -66,71 +107,66 @@ export default function StructureTab({ permissions }) {
   }, [slots]);
 
   const toggleArea = id => setExpandedAreas(e => ({ ...e, [id]: !e[id] }));
+  const toggleFur  = id => setExpandedFurs(e  => ({ ...e, [id]: !e[id] }));
 
-  // ── Area CRUD ────────────────────────────────────────────────────────────────
+  // ── Area CRUD ─────────────────────────────────────────────────────────────────
   const saveAreaMut = useMutation({
     mutationFn: d => areaModal.data?.id
       ? base44.entities.Area.update(areaModal.data.id, d)
       : base44.entities.Area.create(d),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['st-areas'] });
-      setAreaModal({ open: false, data: null });
-      toast.success('Bereich gespeichert');
-    },
-    onError: e => toast.error('Fehler: ' + (e?.message || 'Unbekannt')),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-areas'] }); setAreaModal({ open: false, data: null }); toast.success('Bereich gespeichert'); },
+    onError:   e => toast.error('Fehler: ' + (e?.message || 'Unbekannt')),
   });
-
   const deleteAreaMut = useMutation({
     mutationFn: id => base44.entities.Area.delete(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['st-areas'] });
-      toast.success('Bereich gelöscht');
-      setDeleteAreaTarget(null);
-    },
-    onError: () => {
-      toast.error('Löschen fehlgeschlagen — zuerst alle Möbel in diesem Bereich entfernen');
-      setDeleteAreaTarget(null);
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-areas'] }); toast.success('Bereich gelöscht'); setDeleteAreaTarget(null); },
+    onError:   () => { toast.error('Erst alle Möbel in diesem Bereich entfernen'); setDeleteAreaTarget(null); },
   });
 
-  // ── Furniture CRUD ───────────────────────────────────────────────────────────
+  // ── Furniture CRUD ────────────────────────────────────────────────────────────
   const saveFurMut = useMutation({
     mutationFn: d => furModal.data?.id
       ? base44.entities.Furniture.update(furModal.data.id, d)
       : base44.entities.Furniture.create(d),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['st-furniture'] });
-      setFurModal({ open: false, data: null, areaId: '' });
-      toast.success('Möbel gespeichert');
-    },
-    onError: e => toast.error('Fehler: ' + (e?.message || 'Unbekannt')),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-furniture'] }); setFurModal({ open: false, data: null, areaId: '' }); toast.success('Möbel gespeichert'); },
+    onError:   e => toast.error('Fehler: ' + (e?.message || 'Unbekannt')),
   });
-
   const deleteFurMut = useMutation({
     mutationFn: id => base44.entities.Furniture.delete(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['st-furniture'] });
-      toast.success('Möbel gelöscht');
-      setDeleteFurTarget(null);
-    },
-    onError: () => {
-      toast.error('Löschen fehlgeschlagen — zuerst alle Fächer in diesem Möbel entfernen');
-      setDeleteFurTarget(null);
-    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-furniture'] }); toast.success('Möbel gelöscht'); setDeleteFurTarget(null); },
+    onError:   () => { toast.error('Erst alle Fächer in diesem Möbel entfernen'); setDeleteFurTarget(null); },
   });
 
-  // ── Modal Helpers ────────────────────────────────────────────────────────────
+  // ── Slot CRUD ─────────────────────────────────────────────────────────────────
+  const saveSlotMut = useMutation({
+    mutationFn: d => slotModal.data?.id
+      ? base44.entities.StorageSlot.update(slotModal.data.id, d)
+      : base44.entities.StorageSlot.create(d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['slots'] }); setSlotModal({ open: false, data: null, furnitureId: '', areaId: '' }); toast.success('Fach gespeichert'); },
+    onError:   e => toast.error('Fehler: ' + (e?.message || 'Unbekannt')),
+  });
+  const deleteSlotMut = useMutation({
+    mutationFn: id => base44.entities.StorageSlot.delete(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['slots'] }); toast.success('Fach gelöscht'); setDeleteSlotTarget(null); },
+    onError:   () => { toast.error('Löschen fehlgeschlagen'); setDeleteSlotTarget(null); },
+  });
+
+  // ── Modal Opener ──────────────────────────────────────────────────────────────
   const openAddArea  = () => { setAreaForm({ name: '', description: '' }); setAreaModal({ open: true, data: null }); };
   const openEditArea = a  => { setAreaForm({ name: a.name, description: a.description || '' }); setAreaModal({ open: true, data: a }); };
   const openAddFur   = areaId => { setFurForm({ name: '', type: '', area_id: areaId, notes: '' }); setFurModal({ open: true, data: null, areaId }); };
   const openEditFur  = f  => { setFurForm({ name: f.name, type: f.type, area_id: f.area_id, notes: f.notes || '' }); setFurModal({ open: true, data: f, areaId: f.area_id }); };
+  const openAddSlot  = (furnitureId, areaId) => { setSlotForm({ name: '', capacity: '', notes: '' }); setSlotModal({ open: true, data: null, furnitureId, areaId }); };
+  const openEditSlot = s  => { setSlotForm({ name: s.name, capacity: s.capacity || '', notes: s.notes || '' }); setSlotModal({ open: true, data: s, furnitureId: s.furniture_id, areaId: s.area_id }); };
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs text-muted-foreground">{areas.length} Bereiche · {furniture.length} Möbel</p>
+        <p className="text-xs text-muted-foreground">
+          {areas.length} Bereiche · {furniture.length} Möbel · {slots.length} Fächer
+        </p>
         {canEdit && (
           <Button size="sm" onClick={openAddArea}
             className="bg-amber-600 hover:bg-amber-700 text-white h-8 text-xs">
@@ -159,11 +195,10 @@ export default function StructureTab({ permissions }) {
             const areaFurniture = furniture.filter(f => f.area_id === area.id);
             const totalSlots    = slotCountByArea[area.id] || 0;
             const isExpanded    = !!expandedAreas[area.id];
-            const furCount      = furniture.filter(f => f.area_id === area.id).length;
 
             return (
               <Card key={area.id} className="overflow-hidden border-border/60">
-                {/* Bereich-Header */}
+                {/* ── Bereich Header ── */}
                 <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-secondary/30 transition-colors"
                   onClick={() => toggleArea(area.id)}>
                   <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
@@ -172,7 +207,7 @@ export default function StructureTab({ permissions }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-foreground">{area.name}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {furCount} Möbel · {totalSlots} Fächer
+                      {areaFurniture.length} Möbel · {totalSlots} Fächer
                     </p>
                   </div>
                   <div className="flex items-center gap-0.5">
@@ -190,44 +225,83 @@ export default function StructureTab({ permissions }) {
                     )}
                     {isExpanded
                       ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                      : <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    }
+                      : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   </div>
                 </div>
 
-                {/* Möbel-Liste */}
+                {/* ── Möbel-Liste ── */}
                 {isExpanded && (
                   <div className="border-t border-border/50">
                     {areaFurniture.length === 0 && (
                       <p className="px-4 py-3 text-xs text-muted-foreground/50">Noch keine Möbel in diesem Bereich</p>
                     )}
+
                     {areaFurniture.map(f => {
-                      const slotCount = slotCountByFurniture[f.id] || 0;
+                      const furSlots   = slotsByFurniture[f.id] || [];
+                      const isFurOpen  = !!expandedFurs[f.id];
+
                       return (
-                        <div key={f.id}
-                          className="flex items-center gap-3 px-3 py-2.5 border-b border-border/30 last:border-0 hover:bg-secondary/20 transition-colors">
-                          <span className="text-base w-6 text-center">{FURNITURE_ICONS[f.type] || '📦'}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground">{f.name}</p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {f.type} · {slotCount} Fach{slotCount !== 1 ? 'er' : ''}
-                            </p>
+                        <div key={f.id} className="border-b border-border/30 last:border-0">
+                          {/* Möbel-Header */}
+                          <div
+                            className="flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/20 transition-colors cursor-pointer"
+                            onClick={() => toggleFur(f.id)}
+                          >
+                            <span className="text-base w-6 text-center shrink-0">{FURNITURE_ICONS[f.type] || '📦'}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground">{f.name}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {f.type} · {furSlots.length} Fach{furSlots.length !== 1 ? 'er' : ''}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              {canEdit && (
+                                <>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground"
+                                    onClick={e => { e.stopPropagation(); openEditFur(f); }}>
+                                    <Pencil className="w-3 h-3" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                    onClick={e => { e.stopPropagation(); setDeleteFurTarget(f); }}>
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </>
+                              )}
+                              {isFurOpen
+                                ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                                : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+                            </div>
                           </div>
-                          {canEdit && (
-                            <div className="flex gap-0.5">
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground"
-                                onClick={() => openEditFur(f)}>
-                                <Pencil className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                onClick={() => setDeleteFurTarget(f)}>
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+
+                          {/* ── Fächer ── */}
+                          {isFurOpen && (
+                            <div className="bg-muted/20 border-t border-border/20">
+                              {furSlots.length === 0 && (
+                                <p className="px-6 py-2 text-[11px] text-muted-foreground/50">Noch keine Fächer</p>
+                              )}
+                              {furSlots.map(slot => (
+                                <SlotRow
+                                  key={slot.id}
+                                  slot={slot}
+                                  canEdit={canEdit}
+                                  onEdit={openEditSlot}
+                                  onDelete={setDeleteSlotTarget}
+                                />
+                              ))}
+                              {canEdit && (
+                                <button
+                                  onClick={() => openAddSlot(f.id, area.id)}
+                                  className="w-full flex items-center gap-2 px-6 py-2 text-[11px] text-primary hover:bg-primary/5 transition-colors font-semibold"
+                                >
+                                  <Plus className="w-3 h-3" /> Fach hinzufügen
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
                       );
                     })}
+
                     {canEdit && (
                       <button onClick={() => openAddFur(area.id)}
                         className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-amber-500 hover:bg-amber-500/5 transition-colors font-semibold">
@@ -242,12 +316,10 @@ export default function StructureTab({ permissions }) {
         </div>
       )}
 
-      {/* ── Bereich Modal ─────────────────────────────────────────────────────── */}
+      {/* ── Bereich Modal ───────────────────────────────────────────────────────── */}
       <Dialog open={areaModal.open} onOpenChange={open => !open && setAreaModal({ open: false, data: null })}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{areaModal.data ? 'Bereich bearbeiten' : 'Neuer Bereich'}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{areaModal.data ? 'Bereich bearbeiten' : 'Neuer Bereich'}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Name *</Label>
@@ -272,12 +344,10 @@ export default function StructureTab({ permissions }) {
         </DialogContent>
       </Dialog>
 
-      {/* ── Möbel Modal ───────────────────────────────────────────────────────── */}
+      {/* ── Möbel Modal ─────────────────────────────────────────────────────────── */}
       <Dialog open={furModal.open} onOpenChange={open => !open && setFurModal({ open: false, data: null, areaId: '' })}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{furModal.data ? 'Möbel bearbeiten' : 'Neues Möbel'}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{furModal.data ? 'Möbel bearbeiten' : 'Neues Möbel'}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Typ *</Label>
@@ -323,56 +393,87 @@ export default function StructureTab({ permissions }) {
         </DialogContent>
       </Dialog>
 
-      {/* ── Bereich löschen ──────────────────────────────────────────────────── */}
-      <AlertDialog open={!!deleteAreaTarget} onOpenChange={o => !o && setDeleteAreaTarget(null)}>
+      {/* ── Fach Modal ──────────────────────────────────────────────────────────── */}
+      <Dialog open={slotModal.open} onOpenChange={open => !open && setSlotModal({ open: false, data: null, furnitureId: '', areaId: '' })}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>{slotModal.data ? 'Fach bearbeiten' : 'Neues Fach'}</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Name *</Label>
+              <Input className="h-9" placeholder="z.B. Fach 1, Reihe A, Tür Links…"
+                value={slotForm.name} onChange={e => setSlotForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Kapazität (optional)</Label>
+              <Input className="h-9" type="number" min="1" placeholder="z.B. 24"
+                value={slotForm.capacity} onChange={e => setSlotForm(f => ({ ...f, capacity: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Notizen (optional)</Label>
+              <Input className="h-9" placeholder="z.B. Nur Weißwein"
+                value={slotForm.notes} onChange={e => setSlotForm(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setSlotModal({ open: false, data: null, furnitureId: '', areaId: '' })}>Abbrechen</Button>
+            <Button onClick={() => {
+              if (!slotForm.name.trim()) { toast.error('Name erforderlich'); return; }
+              const fur = furniture.find(f => f.id === slotModal.furnitureId);
+              saveSlotMut.mutate({
+                name:         slotForm.name.trim(),
+                furniture_id: slotModal.furnitureId,
+                area_id:      slotModal.areaId,
+                area_name:    fur?.area_name || '',
+                capacity:     slotForm.capacity ? parseInt(slotForm.capacity) : null,
+                notes:        slotForm.notes,
+                is_active:    true,
+              });
+            }} disabled={saveSlotMut.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {saveSlotMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Confirms ──────────────────────────────────────────────────────── */}
+      <AlertDialog open={!!deleteAreaTarget} onOpenChange={open => !open && setDeleteAreaTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Bereich löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              „{deleteAreaTarget?.name}" wird unwiderruflich gelöscht.
-              {furniture.filter(f => f.area_id === deleteAreaTarget?.id).length > 0 && (
-                <span className="block mt-2 text-amber-400 font-medium">
-                  ⚠ Dieser Bereich hat noch {furniture.filter(f => f.area_id === deleteAreaTarget?.id).length} Möbel —
-                  bitte zuerst die Möbel entfernen oder verschieben.
-                </span>
-              )}
-            </AlertDialogDescription>
+            <AlertDialogDescription>„{deleteAreaTarget?.name}" wird dauerhaft gelöscht. Erst alle Möbel entfernen.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteAreaMut.mutate(deleteAreaTarget.id)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={furniture.filter(f => f.area_id === deleteAreaTarget?.id).length > 0}>
-              Löschen
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => deleteAreaMut.mutate(deleteAreaTarget?.id)}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Löschen</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── Möbel löschen ────────────────────────────────────────────────────── */}
-      <AlertDialog open={!!deleteFurTarget} onOpenChange={o => !o && setDeleteFurTarget(null)}>
+      <AlertDialog open={!!deleteFurTarget} onOpenChange={open => !open && setDeleteFurTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Möbel löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              „{deleteFurTarget?.name}" wird unwiderruflich gelöscht.
-              {(slotCountByFurniture[deleteFurTarget?.id] || 0) > 0 && (
-                <span className="block mt-2 text-amber-400 font-medium">
-                  ⚠ Dieses Möbel hat noch {slotCountByFurniture[deleteFurTarget?.id]} Fach/Fächer —
-                  bitte zuerst die Fächer entfernen.
-                </span>
-              )}
-            </AlertDialogDescription>
+            <AlertDialogDescription>„{deleteFurTarget?.name}" wird dauerhaft gelöscht. Erst alle Fächer entfernen.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteFurMut.mutate(deleteFurTarget.id)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={(slotCountByFurniture[deleteFurTarget?.id] || 0) > 0}>
-              Löschen
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => deleteFurMut.mutate(deleteFurTarget?.id)}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Löschen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteSlotTarget} onOpenChange={open => !open && setDeleteSlotTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fach löschen?</AlertDialogTitle>
+            <AlertDialogDescription>„{deleteSlotTarget?.name}" wird dauerhaft gelöscht.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteSlotMut.mutate(deleteSlotTarget?.id)}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Löschen</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
