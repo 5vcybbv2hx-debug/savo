@@ -15,7 +15,7 @@ import {
     CalendarDays, Clock, Plane, RefreshCw, Shield, Trophy,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare,
-    Banknote, BookCopy,
+    Banknote, BookCopy, Tv,
 } from 'lucide-react';
 
 // ── Sidebar-Sektionen (primäre Navigation) ───────────────────────────────────
@@ -47,6 +47,7 @@ export const additionalPages = [
     { page: 'WeeklyTasks', name: 'Wochenaufgaben', icon: ListChecks, permission: 'canViewSettings' },
     { page: 'Cleaning', name: 'Reinigung', icon: Sparkles, permission: 'canViewCleaning' },
     { page: 'Events', name: 'Events', icon: CalendarDays, permission: 'canViewEvents' },
+    { page: 'DisplayManager', name: 'TV-Display', icon: Tv, permission: 'isManager' },
 
     // ── Waren & Lager ──────────────────────────────────────────────────────────
     { page: 'Restock', name: 'Auffüllen', icon: Package, permission: 'canViewRestock' },
