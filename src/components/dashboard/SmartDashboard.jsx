@@ -55,8 +55,8 @@ function ClockCard({ currentEmployee }) {
         queryKey: ['clock-entries', currentEmployee?.id],
         queryFn: () => base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 10),
         enabled: !!currentEmployee?.id,
-        refetchInterval: 30000,
-        staleTime: 20000,
+        refetchInterval: 60000,
+        staleTime: 45000,
     });
 
     const active = clockEntries.find(e => isActiveEntry(e));

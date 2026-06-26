@@ -135,15 +135,28 @@ export default function Layout({ children, currentPageName }) {
     };
 
     const handleRefresh = async () => {
-        await queryClient.invalidateQueries();
+        // Only refetch queries that are currently active (mounted on screen).
+        // invalidateQueries() with no args marks ALL queries stale and refetches
+        // every active one simultaneously — 20+ parallel API calls can exceed
+        // the platform rate limit. refetchQueries({ type: 'active' }) limits
+        // the burst to just what's visible, and skips near-static data
+        // (employees, articles) that hasn't changed.
+        await queryClient.refetchQueries({ type: 'active' });
     };
 
     // ── Effects ──────────────────────────────────────────────────────────────
     React.useEffect(() => {
-        // CompanyInfo is already fetched by App.jsx BrandingLoader and cached in React Query
-        base44.entities.CompanyInfo.list().then(records => {
-            if (records?.[0]) setCompany(records[0]);
-        }).catch(() => {});
+        // CompanyInfo is already fetched by App.jsx BrandingLoader and cached in
+        // React Query under ['company-info']. Reuse the cache instead of making
+        // a duplicate API call on every Layout mount.
+        const cachedCompany = queryClient.getQueryData(['company-info']);
+        if (cachedCompany?.[0]) {
+            setCompany(cachedCompany[0]);
+        } else {
+            base44.entities.CompanyInfo.list().then(records => {
+                if (records?.[0]) setCompany(records[0]);
+            }).catch(() => {});
+        }
 
         // User is already fetched via useQuery in Dashboard; reuse if available
         const cachedUser = queryClient.getQueryData(['user']);

@@ -3,6 +3,13 @@ import { STALE, GC } from './queryUtils';
 import { toast } from 'sonner';
 import { normalizeError } from './errorHandler';
 
+function isRateLimitError(error) {
+	if (!error) return false;
+	const msg = (error.message || '').toLowerCase();
+	const status = error.status || error.response?.status;
+	return status === 429 || msg.includes('rate limit') || msg.includes('too many requests');
+}
+
 export const queryClientInstance = new QueryClient({
 	defaultOptions: {
 		queries: {
@@ -12,8 +19,13 @@ export const queryClientInstance = new QueryClient({
 			staleTime: STALE.SLOW,
 			// Keep unused data in memory for 15 min before GC
 			gcTime: GC.DEFAULT,
-			// Only retry once on error — avoids hammering the API on auth issues
-			retry: 1,
+			// Only retry once on error — avoids hammering the API on auth issues.
+			// But NEVER retry rate-limit errors: retrying immediately makes the
+			// rate limit worse and cascades into more failures.
+			retry: (failureCount, error) => {
+				if (isRateLimitError(error)) return false;
+				return failureCount < 1;
+			},
 			retryDelay: 3000,
 		},
 		mutations: {

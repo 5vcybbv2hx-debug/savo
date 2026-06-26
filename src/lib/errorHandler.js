@@ -138,6 +138,19 @@ export function normalizeError(error) {
     };
   }
 
+  // Handle Base44 SDK errors (e.g. "Base44Error: Rate limit exceeded")
+  // These may not carry an HTTP status but the message identifies the error.
+  const lowerMsg = (error.message || '').toLowerCase();
+  if (lowerMsg.includes('rate limit')) {
+    return {
+      type: 'rate_limit',
+      message: error.message || 'Rate limit exceeded',
+      userMessage: 'Zu viele Anfragen – bitte warte einen Moment und versuche es erneut',
+      technical: false,
+      retriable: false
+    };
+  }
+
   // Handle structured errors (e.g., from validation)
   if (error.code) {
     return {
