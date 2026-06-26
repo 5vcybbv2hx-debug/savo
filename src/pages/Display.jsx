@@ -321,8 +321,8 @@ function CanvasAmericanFootball({ opacity = 0.3 }) {
   return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}} />;
 }
 
-// 🪩 Disco — Premium Spiegelkugel mit Raytracing + Boden/Wand-Lichtspots
-function CanvasDisco({ accentColor, opacity=0.9 }) {
+// 🪩 Disco — Hyperreale Spiegelkugel
+function CanvasDisco({ accentColor }) {
   const canvasRef = useRef(null);
   const rafRef    = useRef(null);
 
@@ -338,49 +338,112 @@ function CanvasDisco({ accentColor, opacity=0.9 }) {
     resize();
     window.addEventListener('resize', resize);
 
+    // ── Konstanten ──────────────────────────────────────────────────────────
     const W = () => canvas.width;
     const H = () => canvas.height;
 
-    // ── Spiegelkugel-Parameter ────────────────────────────────────────────
-    const BALL_R  = 68;                         // Kugelradius px
-    const BALL_Y_FRAC = 0.15;                   // Höhe (Anteil Bildschirm)
-    // Tile-Grid auf der Kugeloberfläche (sphärische Koordinaten)
-    const LAT_STEPS = 18;
-    const LON_STEPS = 24;
-    const RAINBOW = [
-      '#ff3366','#ff6633','#ffcc00','#33ff66',
-      '#00ccff','#9933ff','#ff33cc','#ffffff',
-    ];
+    // Kugel
+    const BALL_R    = 72;                    // Radius px
+    const BALL_YF   = 0.17;                  // Vertikale Position (Bildschirm-Anteil)
 
-    // Vorberechnete Tile-Positionen (sphärisch → kartesisch)
-    const tileDefs = [];
-    for (let lat = 0; lat < LAT_STEPS; lat++) {
-      const phi   = (lat / LAT_STEPS) * Math.PI;          // 0..PI
-      const cphi  = Math.cos(phi), sphi = Math.sin(phi);
-      const tileH = BALL_R * Math.PI / LAT_STEPS;
-      for (let lon = 0; lon < LON_STEPS; lon++) {
-        const theta  = (lon / LON_STEPS) * Math.PI * 2;  // 0..2PI
-        const ctheta = Math.cos(theta), stheta = Math.sin(theta);
-        // Normalen-Vektor des Tiles
-        const nx = sphi * ctheta, ny = sphi * stheta, nz = cphi;
-        // Tile-Fläche (Breite variiert je nach Breitengrad)
-        const tileW = BALL_R * 2 * Math.PI / LON_STEPS * sphi;
-        tileDefs.push({ lat, lon, nx, ny, nz, phi, theta, tileW: Math.max(tileW, 1), tileH });
+    // Tile-Grid (sphärische Koordinaten)
+    const LAT  = 22;    // Breitengrade
+    const LON  = 30;    // Längengrade
+    const TILE_GAP = 0.12;  // Lücke zwischen Tiles (0=keine, 1=alles Lücke)
+
+    // Lichtquellen — starke, farbige Spots von verschiedenen Richtungen
+    const LIGHT_COLORS = [
+      '#ff2255', '#ff9900', '#00ddff', '#aa00ff', '#00ff88', '#ff44bb'
+    ];
+    const LIGHTS = LIGHT_COLORS.map((color, i) => {
+      const angle = (i / LIGHT_COLORS.length) * Math.PI * 2;
+      return {
+        // 3D-Position der Lichtquelle (auf einer Kugel um den Mittelpunkt)
+        az: angle,          // Azimut
+        el: 0.3 + (i % 2) * 0.4,  // Elevation (0=Horizont, PI/2=oben)
+        color,
+        speed: 0.004 + i * 0.0015,
+      };
+    });
+
+    // Tile-Definitionen (einmalig berechnen)
+    const tiles = [];
+    for (let li = 0; li < LAT; li++) {
+      // phi: 0 (oben) → PI (unten)
+      const phi0 = (li / LAT) * Math.PI;
+      const phi1 = ((li + 1) / LAT) * Math.PI;
+      const phiM = (phi0 + phi1) / 2;
+
+      const sinPhi = Math.sin(phiM);
+      const cosPhi = Math.cos(phiM);
+
+      // Breite eines Tiles in Längengrad
+      const lonStep = (Math.PI * 2) / LON;
+
+      for (let lo = 0; lo < LON; lo++) {
+        const theta0 = (lo / LON) * Math.PI * 2;
+        const theta1 = theta0 + lonStep;
+        const thetaM = (theta0 + theta1) / 2;
+
+        const sinTheta = Math.sin(thetaM);
+        const cosTheta = Math.cos(thetaM);
+
+        // Normalen-Vektor des Tiles (zeigt nach außen)
+        const nx = sinPhi * cosTheta;
+        const ny = cosPhi;                   // Y ist oben
+        const nz = sinPhi * sinTheta;
+
+        // Tile-Größe in Bogenmaß → px (am Äquator maximal, an den Polen minimal)
+        const tileW = BALL_R * lonStep * sinPhi * (1 - TILE_GAP);
+        const tileH = BALL_R * (phi1 - phi0) * (1 - TILE_GAP);
+
+        tiles.push({ nx, ny, nz, phiM, thetaM, tileW: Math.max(tileW, 0.5), tileH: Math.max(tileH, 0.5) });
       }
     }
 
-    // Lichtquellen — rotieren unterschiedlich schnell
-    const LIGHTS = Array.from({ length: 5 }, (_, i) => ({
-      angle:  (i / 5) * Math.PI * 2,
-      speed:  0.007 + i * 0.003,
-      radius: 0.55 + i * 0.08,          // Abstand vom Zentrum (Einheitskugel)
-      color:  RAINBOW[i % RAINBOW.length],
-    }));
+    // ── Hilfsfunktionen ──────────────────────────────────────────────────────
 
-    // Boden-Spots (Reflexe auf dem Boden)
-    const FLOOR_SPOTS = Array.from({ length: 20 }, (_, i) => ({
-      x: 0, y: 0, r: 0, color: '#fff', alpha: 0,
-    }));
+    // Sphärische → kartesische Koordinaten für einen Punkt auf Einheitskugel
+    function spherePos(az, el) {
+      return {
+        x: Math.cos(el) * Math.cos(az),
+        y: Math.sin(el),
+        z: Math.cos(el) * Math.sin(az),
+      };
+    }
+
+    // Reflektiere Vektor v an Normaler n (alles normiert)
+    function reflect(vx, vy, vz, nx, ny, nz) {
+      const dot2 = 2 * (vx * nx + vy * ny + vz * nz);
+      return { x: vx - dot2 * nx, y: vy - dot2 * ny, z: vz - dot2 * nz };
+    }
+
+    // Hex → RGB
+    function hexRGB(hex) {
+      return [
+        parseInt(hex.slice(1, 3), 16),
+        parseInt(hex.slice(3, 5), 16),
+        parseInt(hex.slice(5, 7), 16),
+      ];
+    }
+
+    // Zeichne abgerundetes Rechteck
+    function fillRoundRect(x, y, w, h, r) {
+      if (w < 1 || h < 1) { ctx.fillRect(x, y, w, h); return; }
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.lineTo(x + w - rr, y); ctx.arcTo(x + w, y, x + w, y + rr, rr);
+      ctx.lineTo(x + w, y + h - rr); ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+      ctx.lineTo(x + rr, y + h); ctx.arcTo(x, y + h, x, y + h - rr, rr);
+      ctx.lineTo(x, y + rr); ctx.arcTo(x, y, x + rr, y, rr);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // ── Wandernde Lichtflecken-Sammlung ──────────────────────────────────────
+    // Wir speichern wo jeder reflektierte Strahl den Raum trifft
+    // und zeichnen das nach der Kugel
+    const reflectedSpots = [];
 
     let t = 0;
 
@@ -389,199 +452,274 @@ function CanvasDisco({ accentColor, opacity=0.9 }) {
       ctx.clearRect(0, 0, w, h);
 
       const BX = w / 2;
-      const BY = h * BALL_Y_FRAC + BALL_R;
+      const BY = h * BALL_YF + BALL_R;
 
-      // ── Aktualisiere Lichter ────────────────────────────────────────────
-      LIGHTS.forEach(l => { l.angle += l.speed; });
+      // Kugel-Rotation — stetige Y-Achsen-Rotation
+      const rotY = t * 0.18;   // Rotationsgeschwindigkeit
 
-      // ── Aufhängung ──────────────────────────────────────────────────────
+      // ── Raum-Rendering (Decke, Wände, Boden — subtle) ────────────────────
+      // Boden
+      const floorGrad = ctx.createLinearGradient(0, h * 0.7, 0, h);
+      floorGrad.addColorStop(0, 'rgba(20,10,40,0)');
+      floorGrad.addColorStop(1, 'rgba(30,15,60,0.4)');
+      ctx.fillStyle = floorGrad;
+      ctx.fillRect(0, h * 0.7, w, h * 0.3);
+
+      // ── Lichtquellen aktualisieren ────────────────────────────────────────
+      LIGHTS.forEach(l => { l.az += l.speed; });
+
+      // ── Wandernde Reflexionen zuerst rendern (hinter der Kugel) ──────────
+      reflectedSpots.length = 0;
+
+      // Für jeden Tile + jedes Licht berechnen wir den reflektierten Strahl
+      // Das machen wir lightweight: nur für sichtbare Tiles
+      const rotSin = Math.sin(rotY);
+      const rotCos = Math.cos(rotY);
+
+      // Kamera-Richtung: von vorne (+z in Weltkoordinaten)
+      const CAM = { x: 0, y: 0, z: 1 };
+
+      tiles.forEach(tile => {
+        // Tile-Normal rotieren (Y-Achse)
+        const rnx = tile.nx * rotCos - tile.nz * rotSin;
+        const rny = tile.ny;
+        const rnz = tile.nx * rotSin + tile.nz * rotCos;
+
+        // Nur sichtbare Tiles (zur Kamera zeigend)
+        if (rnz < 0.05) return;
+
+        // Tile-Position auf der Kugeloberfläche
+        const tx = BX + rnx * BALL_R;
+        const ty = BY - rny * BALL_R;
+
+        // Für jedes Licht: berechne reflektierten Strahl
+        LIGHTS.forEach(light => {
+          const lp = spherePos(light.az, light.el);
+          // Richtungsvektor vom Tile zur Lichtquelle (normiert)
+          // Licht ist weit weg → Richtung = Lichtposition (normiert)
+          const ldot = rnx * lp.x + rny * lp.y + rnz * lp.z;
+          if (ldot < 0.01) return;  // Licht beleuchtet Tile nicht
+
+          // Reflexionsvektor (Licht → Tile → Auge)
+          // Einfall: Vektor vom Licht zum Tile = -lp (normiert)
+          const refl = reflect(-lp.x, -lp.y, -lp.z, rnx, rny, rnz);
+
+          // Intensität — sehr scharf (nur wenn Reflexion fast zur Kamera zeigt)
+          const camDot = refl.x * CAM.x + refl.y * CAM.y + refl.z * CAM.z;
+
+          // Wenn der reflektierte Strahl zur Kamera zeigt → Tile leuchtet hell
+          const tileAlpha = Math.pow(Math.max(0, camDot), 12) * 2.5;
+
+          // Wo trifft der Reflexionsstrahl den Raum?
+          // Boden (y = h), Decke (y = 0), Wände (x = 0, x = w)
+          if (refl.y !== 0) {
+            // Boden-Treffer
+            if (refl.y < 0) {  // Strahl geht nach unten
+              const dist = (h - BY) / (-refl.y * BALL_R * 2);
+              const sx = BX + refl.x * dist * h;
+              const sy = h - 10;
+              if (sx > -100 && sx < w + 100) {
+                reflectedSpots.push({ x: sx, y: sy, color: light.color, type: 'floor', intensity: ldot * 0.8 });
+              }
+            }
+            // Decken-Treffer
+            if (refl.y > 0) {
+              const dist = BY / (refl.y * BALL_R * 2);
+              const sx = BX + refl.x * dist * h;
+              const sy = 15;
+              if (sx > -50 && sx < w + 50) {
+                reflectedSpots.push({ x: sx, y: sy, color: light.color, type: 'ceiling', intensity: ldot * 0.6 });
+              }
+            }
+          }
+          // Wand-Treffer
+          if (Math.abs(refl.x) > 0.05) {
+            const wallX = refl.x > 0 ? w - 8 : 8;
+            const wy = BY - refl.y / Math.abs(refl.x) * w * 0.4;
+            if (wy > 0 && wy < h) {
+              reflectedSpots.push({ x: wallX, y: wy, color: light.color, type: 'wall', intensity: ldot * 0.5 });
+            }
+          }
+
+          // Tile-Eigenleuchten (für die Kugel selbst)
+          tile._alpha  = Math.max(tile._alpha || 0, tileAlpha);
+          tile._color  = tileAlpha > (tile._alpha || 0) ? light.color : (tile._color || '#fff');
+          tile._ldot   = ldot;
+        });
+      });
+
+      // ── Boden/Decken/Wand-Spots zeichnen ─────────────────────────────────
+      reflectedSpots.forEach(spot => {
+        const [r, g, b] = hexRGB(spot.color);
+        const spotR = spot.type === 'floor' ? 22 : spot.type === 'ceiling' ? 18 : 16;
+
+        const sg = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, spotR * (spot.type === 'floor' ? 2.5 : 2));
+        sg.addColorStop(0,   `rgba(255,255,255,${(spot.intensity * 0.95).toFixed(2)})`);
+        sg.addColorStop(0.15, `rgba(${r},${g},${b},${(spot.intensity * 0.7).toFixed(2)})`);
+        sg.addColorStop(0.5,  `rgba(${r},${g},${b},${(spot.intensity * 0.2).toFixed(2)})`);
+        sg.addColorStop(1,    'transparent');
+
+        ctx.beginPath();
+        if (spot.type === 'floor') {
+          ctx.ellipse(spot.x, spot.y, spotR * 2.5, spotR * 0.7, 0, 0, Math.PI * 2);
+        } else if (spot.type === 'ceiling') {
+          ctx.ellipse(spot.x, spot.y, spotR * 2, spotR * 0.6, 0, 0, Math.PI * 2);
+        } else {
+          ctx.ellipse(spot.x, spot.y, spotR * 0.6, spotR * 2, 0, 0, Math.PI * 2);
+        }
+        ctx.fillStyle = sg;
+        ctx.fill();
+      });
+
+      // ── Aufhängung ────────────────────────────────────────────────────────
       const chainGrad = ctx.createLinearGradient(BX - 3, 0, BX + 3, 0);
-      chainGrad.addColorStop(0, 'rgba(180,180,180,0.6)');
-      chainGrad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
-      chainGrad.addColorStop(1, 'rgba(140,140,140,0.6)');
+      chainGrad.addColorStop(0, 'rgba(160,160,160,0.5)');
+      chainGrad.addColorStop(0.5, 'rgba(255,255,255,0.85)');
+      chainGrad.addColorStop(1, 'rgba(120,120,120,0.5)');
       ctx.fillStyle = chainGrad;
-      ctx.fillRect(BX - 1.5, 0, 3, BY - BALL_R - 2);
+      ctx.fillRect(BX - 1.5, 0, 3, BY - BALL_R);
 
-      // Aufhänge-Öse
-      const oseGrad = ctx.createRadialGradient(BX, BY - BALL_R - 4, 1, BX, BY - BALL_R - 4, 7);
-      oseGrad.addColorStop(0, '#eee'); oseGrad.addColorStop(1, '#666');
-      ctx.beginPath(); ctx.arc(BX, BY - BALL_R - 4, 7, 0, Math.PI * 2);
-      ctx.fillStyle = oseGrad; ctx.fill();
-
-      // ── Kugel-Basis (dunkel, damit Tiles leuchten) ──────────────────────
-      const baseGrad = ctx.createRadialGradient(BX - BALL_R * 0.25, BY - BALL_R * 0.25, BALL_R * 0.05, BX, BY, BALL_R);
-      baseGrad.addColorStop(0, '#3a3a3a');
-      baseGrad.addColorStop(0.6, '#1a1a1a');
-      baseGrad.addColorStop(1, '#050505');
+      // ── Kugel-Basis (dunkel) ──────────────────────────────────────────────
       ctx.save();
       ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2);
-      ctx.fillStyle = baseGrad; ctx.fill();
+      ctx.clip();
+      const baseGrad = ctx.createRadialGradient(BX, BY, 0, BX, BY, BALL_R);
+      baseGrad.addColorStop(0, '#1a1a22');
+      baseGrad.addColorStop(1, '#06060a');
+      ctx.fillStyle = baseGrad; ctx.fillRect(BX - BALL_R, BY - BALL_R, BALL_R * 2, BALL_R * 2);
       ctx.restore();
 
-      // ── Tiles zeichnen ──────────────────────────────────────────────────
-      // Rotationswinkel der Kugel (langsam drehen)
-      const rotY = t * 0.25;
+      // ── Tiles zeichnen ────────────────────────────────────────────────────
+      // Clip auf Kreis
+      ctx.save();
+      ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2); ctx.clip();
 
-      tileDefs.forEach(tile => {
-        // Tile-Normal nach Rotation um Y-Achse
-        const cosR = Math.cos(rotY), sinR = Math.sin(rotY);
-        const rnx = tile.nx * cosR - tile.ny * sinR;
-        const rny = tile.nx * sinR + tile.ny * cosR;
-        const rnz = tile.nz;
+      // Tiles sortieren: weiter hinten zuerst (Painter's algorithm)
+      const visibleTiles = tiles
+        .map(tile => {
+          const rnx = tile.nx * rotCos - tile.nz * rotSin;
+          const rny = tile.ny;
+          const rnz = tile.nx * rotSin + tile.nz * rotCos;
+          return { tile, rnx, rny, rnz };
+        })
+        .filter(({ rnz }) => rnz > -0.15)
+        .sort((a, b) => a.rnz - b.rnz);
 
-        // Nur sichtbare Vorderseite (z > 0 in Kamera-Richtung)
-        // Kamera ist in +z, also rnz > 0 zeigt zur Kamera
-        // Wir sehen auch leicht seitliche Tiles
-        if (rnz < -0.1) return;
+      visibleTiles.forEach(({ tile, rnx, rny, rnz }) => {
+        const tx = BX + rnx * BALL_R;
+        const ty = BY - rny * BALL_R;
 
-        // Mittelpunkt des Tiles auf der Kugeloberfläche (Projektion auf Kreis)
-        const tileScreenX = BX + rnx * BALL_R;
-        const tileScreenY = BY - rnz * BALL_R + rny * BALL_R * 0.25;  // leichte Perspektive
+        // Perspektivische Skalierung
+        const perspective = 0.5 + rnz * 0.5;
+        const tw = tile.tileW * perspective;
+        const th = tile.tileH * perspective;
 
-        // Tile-Clip: nur innerhalb des Kreises
-        const distFromCenter = Math.sqrt((tileScreenX - BX) ** 2 + (tileScreenY - BY) ** 2);
-        if (distFromCenter > BALL_R * 1.02) return;
-
-        // Reflexions-Farbe bestimmen:
-        // Welches Licht trifft dieses Tile am stärksten?
-        let bestIntensity = 0;
-        let bestColor = '#ffffff';
-        let totalR = 0, totalG = 0, totalB = 0, totalA = 0;
+        // Licht-Beiträge für dieses Tile
+        let totalR = 0, totalG = 0, totalB = 0, totalIntensity = 0;
+        let hasHighlight = false;
 
         LIGHTS.forEach(light => {
-          // Lichtposition (auf Einheitskugel, rotierend)
-          const lx = Math.cos(light.angle) * light.radius;
-          const ly = Math.sin(light.angle * 0.7 + t * 0.1) * 0.4;
-          const lz = Math.sin(light.angle) * light.radius;
-          // Dot-Product Normal · Licht
-          const dot = Math.max(0, rnx * lx + rny * ly + rnz * lz);
-          const intensity = Math.pow(dot, 6) * 1.4;  // scharfe Highlights
-          if (intensity > 0.01) {
-            const c = parseInt(light.color.slice(1), 16);
-            const r = (c >> 16) & 0xff, g = (c >> 8) & 0xff, b = c & 0xff;
-            totalR += r * intensity; totalG += g * intensity; totalB += b * intensity;
-            totalA += intensity;
-            if (intensity > bestIntensity) { bestIntensity = intensity; bestColor = light.color; }
+          const lp = spherePos(light.az, light.el);
+          const ldot = rnx * lp.x + rny * lp.y + rnz * lp.z;
+          if (ldot < 0.02) return;
+
+          // Reflexion zur Kamera
+          const refl = reflect(-lp.x, -lp.y, -lp.z, rnx, rny, rnz);
+          const camDot = refl.z;  // Kamera ist in +z
+          const highlight = Math.pow(Math.max(0, camDot), 8);
+
+          // Ambientes Licht vom Tile (diffus, schwächer)
+          const diffuse = ldot * 0.15;
+          const total = highlight + diffuse;
+
+          if (total > 0.005) {
+            const [r, g, b] = hexRGB(light.color);
+            totalR += r * total;
+            totalG += g * total;
+            totalB += b * total;
+            totalIntensity += total;
+            if (highlight > 0.4) hasHighlight = true;
           }
         });
 
-        if (totalA < 0.008) {
-          // Dunkles Tile — kleine graue Spiegelkachel
-          const dimLight = 30 + rnz * 40;
-          ctx.fillStyle = `rgb(${dimLight},${dimLight},${dimLight + 5})`;
-        } else {
-          const a = Math.min(totalA, 1);
-          const cr = Math.min(255, Math.round(totalR / totalA));
-          const cg = Math.min(255, Math.round(totalG / totalA));
-          const cb = Math.min(255, Math.round(totalB / totalA));
-          ctx.fillStyle = `rgba(${cr},${cg},${cb},${a.toFixed(2)})`;
+        // Basis-Tile-Farbe (metallisches Grau)
+        const baseLight = 35 + rnz * 45;
+        let r = baseLight, g = baseLight, b = baseLight + 8;
+
+        if (totalIntensity > 0) {
+          const scale = Math.min(1 / totalIntensity, 2);
+          r = Math.min(255, r + totalR * scale);
+          g = Math.min(255, g + totalG * scale);
+          b = Math.min(255, b + totalB * scale);
         }
 
-        // Tile als kleines abgerundetes Rechteck
-        const tw = Math.max(tile.tileW * 0.82, 1.5);
-        const th = Math.max(tile.tileH * 0.82, 1.5);
+        const alpha = 0.75 + rnz * 0.25;
+        ctx.fillStyle = `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(2)})`;
+
+        // Tile als kleines Rechteck mit leichter Rotation
         ctx.save();
-        ctx.translate(tileScreenX, tileScreenY);
-        // Leichte Perspektiv-Rotation
-        ctx.rotate(tile.theta + rotY);
-        // Tile zeichnen
-        if (tw > 2 && th > 2) {
-          ctx.beginPath();
-          ctx.roundRect(-tw / 2, -th / 2, tw, th, 1.2);
-          ctx.fill();
-          // Glanz auf hellen Tiles
-          if (totalA > 0.3) {
-            ctx.beginPath();
-            ctx.roundRect(-tw / 2, -th / 2, tw * 0.4, th * 0.35, 0.6);
-            ctx.fillStyle = `rgba(255,255,255,${(totalA * 0.35).toFixed(2)})`;
-            ctx.fill();
-          }
-        } else {
-          ctx.fillRect(-tw / 2, -th / 2, tw, th);
+        ctx.translate(tx, ty);
+        ctx.rotate(tile.thetaM + rotY);
+        fillRoundRect(-tw / 2, -th / 2, tw, th, 1.5);
+
+        // Glanzpunkt auf hellen Tiles
+        if (hasHighlight && tw > 3 && th > 3) {
+          const hg = ctx.createRadialGradient(-tw * 0.2, -th * 0.2, 0, 0, 0, tw * 0.6);
+          hg.addColorStop(0, 'rgba(255,255,255,0.9)');
+          hg.addColorStop(0.3, 'rgba(255,255,255,0.3)');
+          hg.addColorStop(1, 'transparent');
+          ctx.fillStyle = hg;
+          fillRoundRect(-tw / 2, -th / 2, tw, th, 1.5);
         }
         ctx.restore();
       });
 
-      // ── Kugel-Silhouette & Clip ─────────────────────────────────────────
-      // Rand-Abdunkelung (gibt der Kugel Volumen)
-      const rimGrad = ctx.createRadialGradient(BX, BY, BALL_R * 0.7, BX, BY, BALL_R);
+      ctx.restore(); // Clip aufheben
+
+      // ── Kugel-Rim-Abdunkelung ─────────────────────────────────────────────
+      const rimGrad = ctx.createRadialGradient(BX, BY, BALL_R * 0.65, BX, BY, BALL_R);
       rimGrad.addColorStop(0, 'transparent');
-      rimGrad.addColorStop(1, 'rgba(0,0,0,0.65)');
-      ctx.save();
+      rimGrad.addColorStop(1, 'rgba(0,0,0,0.75)');
       ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2);
       ctx.fillStyle = rimGrad; ctx.fill();
-      ctx.restore();
 
-      // Haupt-Glanzpunkt (weich, oben links)
+      // ── Haupt-Glanzpunkt (oben links, weich) ─────────────────────────────
+      ctx.save();
+      ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2); ctx.clip();
       const specGrad = ctx.createRadialGradient(
-        BX - BALL_R * 0.32, BY - BALL_R * 0.32, 1,
-        BX - BALL_R * 0.2,  BY - BALL_R * 0.2,  BALL_R * 0.55
+        BX - BALL_R * 0.38, BY - BALL_R * 0.38, 1,
+        BX - BALL_R * 0.2,  BY - BALL_R * 0.15, BALL_R * 0.62
       );
-      specGrad.addColorStop(0, 'rgba(255,255,255,0.5)');
-      specGrad.addColorStop(0.4, 'rgba(255,255,255,0.12)');
-      specGrad.addColorStop(1, 'transparent');
-      ctx.save();
-      ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.fillStyle = specGrad; ctx.fillRect(BX - BALL_R, BY - BALL_R, BALL_R * 2, BALL_R * 2);
+      specGrad.addColorStop(0,   'rgba(255,255,255,0.55)');
+      specGrad.addColorStop(0.25,'rgba(255,255,255,0.18)');
+      specGrad.addColorStop(1,   'transparent');
+      ctx.fillStyle = specGrad;
+      ctx.fillRect(BX - BALL_R, BY - BALL_R, BALL_R * 2, BALL_R * 2);
       ctx.restore();
 
-      // ── Boden- & Wand-Lichtspots ────────────────────────────────────────
-      LIGHTS.forEach((light, li) => {
-        const lx = Math.cos(light.angle) * light.radius;
-        const lz = Math.sin(light.angle) * light.radius;
-
-        // Jeder Lichtstrahl trifft Boden an einer anderen Stelle
-        const spotX = BX + lx * w * 0.42;
-        const spotY = h * 0.88 + Math.sin(light.angle * 0.6 + t * 0.05) * h * 0.04;
-        const spotR = 40 + Math.abs(lz) * 60;
-
-        const sg = ctx.createRadialGradient(spotX, spotY, 0, spotX, spotY, spotR * 1.6);
-        const hex = light.color;
-        const r2 = parseInt(hex.slice(1, 3), 16);
-        const g2 = parseInt(hex.slice(3, 5), 16);
-        const b2 = parseInt(hex.slice(5, 7), 16);
-        sg.addColorStop(0,   `rgba(${r2},${g2},${b2},0.45)`);
-        sg.addColorStop(0.4, `rgba(${r2},${g2},${b2},0.15)`);
-        sg.addColorStop(1,   'transparent');
-
-        ctx.beginPath(); ctx.ellipse(spotX, spotY, spotR * 1.6, spotR * 0.5, 0, 0, Math.PI * 2);
-        ctx.fillStyle = sg; ctx.fill();
-
-        // Wand-Spot (links/rechts)
-        const wx = lx > 0 ? w * 0.92 : w * 0.08;
-        const wy = h * 0.4 + lz * h * 0.25;
-        const wg = ctx.createRadialGradient(wx, wy, 0, wx, wy, 80);
-        wg.addColorStop(0,   `rgba(${r2},${g2},${b2},0.3)`);
-        wg.addColorStop(0.5, `rgba(${r2},${g2},${b2},0.08)`);
-        wg.addColorStop(1,   'transparent');
-        ctx.beginPath(); ctx.ellipse(wx, wy, 80, 100, 0, 0, Math.PI * 2);
-        ctx.fillStyle = wg; ctx.fill();
-      });
-
-      // ── Lichtstrahl vom Projektor ────────────────────────────────────────
-      // Spotlicht-Kegel von oben auf die Kugel
-      const beamGrad = ctx.createLinearGradient(BX, 0, BX, BY - BALL_R);
-      beamGrad.addColorStop(0, 'rgba(255,255,255,0.0)');
-      beamGrad.addColorStop(0.6, 'rgba(255,255,255,0.03)');
-      beamGrad.addColorStop(1, 'rgba(255,255,255,0.08)');
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(BX - 6, 0); ctx.lineTo(BX + 6, 0);
-      ctx.lineTo(BX + BALL_R * 0.3, BY - BALL_R); ctx.lineTo(BX - BALL_R * 0.3, BY - BALL_R);
-      ctx.closePath();
-      ctx.fillStyle = beamGrad; ctx.fill();
-      ctx.restore();
-
-      // ── Kugel-Glow (Aura) ───────────────────────────────────────────────
-      const aura = ctx.createRadialGradient(BX, BY, BALL_R * 0.8, BX, BY, BALL_R * 1.6);
-      aura.addColorStop(0, 'rgba(200,150,255,0.12)');
-      aura.addColorStop(0.5, 'rgba(100,100,255,0.05)');
+      // ── Aura-Glow ─────────────────────────────────────────────────────────
+      const aura = ctx.createRadialGradient(BX, BY, BALL_R * 0.9, BX, BY, BALL_R * 1.7);
+      aura.addColorStop(0, 'rgba(160,80,255,0.18)');
+      aura.addColorStop(0.5,'rgba(80,40,180,0.06)');
       aura.addColorStop(1, 'transparent');
-      ctx.beginPath(); ctx.arc(BX, BY, BALL_R * 1.6, 0, Math.PI * 2);
+      ctx.beginPath(); ctx.arc(BX, BY, BALL_R * 1.7, 0, Math.PI * 2);
       ctx.fillStyle = aura; ctx.fill();
 
-      t += 0.014;
+      // ── Licht-Kegel von oben ──────────────────────────────────────────────
+      const coneGrad = ctx.createLinearGradient(BX, 0, BX, BY - BALL_R);
+      coneGrad.addColorStop(0, 'rgba(255,255,255,0.0)');
+      coneGrad.addColorStop(0.7,'rgba(255,255,255,0.03)');
+      coneGrad.addColorStop(1, 'rgba(255,255,255,0.1)');
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(BX - 4, 0); ctx.lineTo(BX + 4, 0);
+      ctx.lineTo(BX + BALL_R * 0.35, BY - BALL_R);
+      ctx.lineTo(BX - BALL_R * 0.35, BY - BALL_R);
+      ctx.closePath();
+      ctx.fillStyle = coneGrad; ctx.fill();
+      ctx.restore();
+
+      t += 0.016;
       rafRef.current = requestAnimationFrame(draw);
     }
 
@@ -595,7 +733,7 @@ function CanvasDisco({ accentColor, opacity=0.9 }) {
   return (
     <canvas
       ref={canvasRef}
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity, pointerEvents: 'none' }}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.92, pointerEvents: 'none' }}
     />
   );
 }
