@@ -1,7 +1,7 @@
 /**
  * navigationConfig.jsx — Navigationskonfiguration
  * 
- * SIDEBAR: Wird aus sidebarConfig.js geladen (Builder-sicher)
+ * SIDEBAR: sidebarPages direkt hier definiert (kein separater Import nötig)
  * MEHR-DRAWER: additionalPages hier pflegen
  */
 import {
@@ -13,9 +13,18 @@ import {
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare,
     Banknote, BookCopy, Tv, Warehouse,
 } from 'lucide-react';
-import { sidebarPages } from './sidebarConfig';
 
-// ── SIDEBAR — aus sidebarConfig.js (wird nicht vom Builder überschrieben) ─────
+// ── SIDEBAR — 7 Kern-Hubs (direkt hier, kein externer Import) ────────────────
+export const sidebarPages = [
+    { page: 'Dashboard',     name: 'Dashboard',      icon: LayoutDashboard, permission: 'canViewDashboard' },
+    { page: 'TeamHub',       name: 'Team',            icon: Users,           permission: 'canViewShifts' },
+    { page: 'BetriebHub',    name: 'Betrieb',         icon: Store,           permission: 'canViewReservations' },
+    { page: 'Warehouse',     name: 'Waren & Lager',   icon: Warehouse,       permission: 'canViewWarehouse' },
+    { page: 'KarteHub',      name: 'Karte',           icon: Wine,            permission: 'canViewDrinkMenu' },
+    { page: 'AccountingHub', name: 'Buchhaltung',     icon: Calculator,      permission: 'canViewAccounting' },
+    { page: 'Settings',      name: 'Einstellungen',   icon: Settings,        permission: 'canViewSettings' },
+];
+
 export const mainNavigation = [
     {
         id: 'main',
@@ -85,6 +94,6 @@ export const additionalPages = [
 
 // ── KOMBINIERT ────────────────────────────────────────────────────────────────
 export const allPages = [
-    ...mainNavigation.flatMap(s => s.pages),
+    ...sidebarPages,
     ...additionalPages,
 ];
