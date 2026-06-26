@@ -1,15 +1,13 @@
 /**
  * Display.jsx — Vollbild-Slideshow für Bar-TV
- * v5: Premium Canvas-Animationen — Flaggen-Physik, Feuerwerk-Partikel, Disco-Spiegelkugel,
- *     Bier-Schaum, Snow-Drift, Music-Equalizer, Football-Spiralball
+ * v6: Full 3D via Three.js — Disco Mirror Ball, German Flag Shader, 3D Fireworks,
+ *     3D Soccer/Football, 3D Hearts, 3D Confetti, 3D Snow
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { base44 } from '@/api/base44Client';
 
-// ── Farb-Palette ──────────────────────────────────────────────────────────────
 const ACCENTS = {
   amber:   { bg: '#f59e0b', glow: 'rgba(245,158,11,0.45)',  text: '#000', soft: 'rgba(245,158,11,0.14)' },
   orange:  { bg: '#f97316', glow: 'rgba(249,115,22,0.45)',  text: '#000', soft: 'rgba(249,115,22,0.14)' },
@@ -29,7 +27,6 @@ const ACCENTS = {
   white:   { bg: '#f8fafc', glow: 'rgba(248,250,252,0.35)', text: '#000', soft: 'rgba(248,250,252,0.10)' },
 };
 
-// ── CSS Keyframes ─────────────────────────────────────────────────────────────
 const KEYFRAMES = `
   @keyframes floatUp    { 0%,100%{transform:translateY(0)}   50%{transform:translateY(-14px)} }
   @keyframes floatDown  { 0%,100%{transform:translateY(0)}   50%{transform:translateY(10px)}  }
@@ -46,1448 +43,765 @@ const KEYFRAMES = `
 `;
 function injectKeyframes() {
   if (document.getElementById('savo-kf')) return;
-  const s = document.createElement('style');
-  s.id = 'savo-kf'; s.textContent = KEYFRAMES;
+  const s = document.createElement('style'); s.id = 'savo-kf'; s.textContent = KEYFRAMES;
   document.head.appendChild(s);
 }
 
-// ── Titel-Analyzer ────────────────────────────────────────────────────────────
+// ── Three.js CDN Loader ───────────────────────────────────────────────────────
+let _THREE = null;
+function loadThree() {
+  return new Promise((resolve, reject) => {
+    if (_THREE) { resolve(_THREE); return; }
+    if (window.THREE) { _THREE = window.THREE; resolve(_THREE); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.onload = () => { _THREE = window.THREE; resolve(_THREE); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// ── Titel → Theme ─────────────────────────────────────────────────────────────
 function detectTheme(title = '', subtitle = '') {
   const txt = (title + ' ' + subtitle).toLowerCase();
-  if (/deutsch|germany|german|dfb|schwarz.?rot.?gold|bundesadler/.test(txt)) return 'germany';
-  if (/american.?football|nfl|touchdown|superbowl|quarterback/.test(txt)) return 'american_football';
-  if (/fußball|fussball|soccer|tor |bundesliga|champions|euro |wm |em |kick/.test(txt)) return 'soccer';
-  if (/party|disco|club|dance|dj |rave|techno|house/.test(txt)) return 'disco';
-  if (/live.?music|konzert|concert|band |rock |jazz|acoustic|singer/.test(txt)) return 'music';
-  if (/bier|beer|pils|weizen|craft|brau/.test(txt)) return 'beer';
-  if (/cocktail|drink|aperol|spritz|mojito|gin |vodka|rum |sex.?on|frozen/.test(txt)) return 'cocktail';
-  if (/sommer|summer|beach|strand|ibiza|tropical/.test(txt)) return 'summer';
-  if (/silvester|neujahr|new.?year|feuerwerk/.test(txt)) return 'fireworks';
-  if (/halloween|horror|scary|zombie|geist|ghost/.test(txt)) return 'halloween';
-  if (/weihnacht|christmas|xmas|advent|santa/.test(txt)) return 'christmas';
-  if (/valentine|liebe|love|herz|heart/.test(txt)) return 'love';
-  if (/single|ladies|girls night|girlsnight|women/.test(txt)) return 'party';
-  if (/pizza|burger|food|essen|brunch|bbq|grill/.test(txt)) return 'food';
+  if (/deutsch|germany|german|dfb|schwarz.?rot.?gold/.test(txt)) return 'germany';
+  if (/american.?football|nfl|touchdown|superbowl/.test(txt))    return 'american_football';
+  if (/fußball|fussball|soccer|bundesliga|champions|euro |wm |em /.test(txt)) return 'soccer';
+  if (/party|disco|club|dance|dj |rave|techno|house/.test(txt))  return 'disco';
+  if (/live.?music|konzert|concert|band |rock |jazz/.test(txt))  return 'music';
+  if (/bier|beer|pils|weizen|craft|brau/.test(txt))              return 'beer';
+  if (/cocktail|drink|aperol|spritz|mojito|gin |vodka/.test(txt))return 'cocktail';
+  if (/sommer|summer|beach|strand|ibiza/.test(txt))              return 'summer';
+  if (/silvester|neujahr|new.?year|feuerwerk/.test(txt))         return 'fireworks';
+  if (/halloween|horror|scary|zombie|geist/.test(txt))           return 'halloween';
+  if (/weihnacht|christmas|xmas|advent/.test(txt))               return 'christmas';
+  if (/valentine|liebe|love|herz|heart/.test(txt))               return 'love';
+  if (/single|ladies|girls.?night|women/.test(txt))              return 'party';
+  if (/pizza|burger|food|essen|brunch/.test(txt))                return 'food';
   return 'default';
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// CANVAS ANIMATIONEN
-// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// 3D Szenen — Three.js
+// ═══════════════════════════════════════════════════════════════════════════════
 
-// 🇩🇪 Deutschland — Flagge mit echter Wellen-Physik auf Canvas
-function CanvasGermanyFlag({ opacity = 0.22 }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
+function useThreeScene(buildScene) {
+  const mountRef = useRef(null);
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let t = 0;
-    const W = canvas.width = canvas.offsetWidth;
-    const H = canvas.height = canvas.offsetHeight;
-    const FW = W * 0.62, FH = H * 0.32;
-    const FX = W * 0.19, FY = H * 0.34;
-    const COLS = 80, ROWS = 3;
-    const colors = ['#111111', '#CC0000', '#FFCE00'];
-    const segW = FW / COLS;
-    const segH = FH / ROWS;
+    let renderer, animId;
+    loadThree().then(T => {
+      const el = mountRef.current; if (!el) return;
+      renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(el.offsetWidth, el.offsetHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = T.PCFSoftShadowMap;
+      renderer.toneMapping = T.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.3;
+      el.appendChild(renderer.domElement);
 
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
-      // Fahnenmast
-      const grad = ctx.createLinearGradient(FX - 12, 0, FX, 0);
-      grad.addColorStop(0, '#888'); grad.addColorStop(0.5, '#eee'); grad.addColorStop(1, '#666');
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.roundRect(FX - 10, FY - 30, 10, FH + 60, 4); ctx.fill();
-      // Fahnenstab oben
-      ctx.fillStyle = '#aaa'; ctx.beginPath();
-      ctx.arc(FX - 5, FY - 30, 10, 0, Math.PI * 2); ctx.fill();
+      const { scene, camera, onFrame, onResize } = buildScene(T, el.offsetWidth, el.offsetHeight);
 
-      // Flagge: Spalte für Spalte mit Sinus-Welle
-      for (let c = 0; c < COLS; c++) {
-        const progress = c / COLS;
-        const amplitude = 18 * progress * progress;
-        const wave1 = Math.sin(progress * Math.PI * 2.5 - t * 2.2) * amplitude;
-        const wave2 = Math.sin(progress * Math.PI * 1.8 - t * 1.6) * amplitude * 0.4;
-        const xBase = FX + c * segW;
-        for (let row = 0; row < ROWS; row++) {
-          const yBase = FY + row * segH;
-          const yOff1 = Math.sin(progress * Math.PI * 2 - t * 2) * amplitude * 0.3;
-          // Schatten (Tiefe durch Welle)
-          const light = 1 - Math.abs(Math.sin(progress * Math.PI * 2.5 - t * 2.2)) * 0.35;
-          ctx.fillStyle = shadeColor(colors[row], light);
-          ctx.beginPath();
-          ctx.moveTo(xBase, yBase + wave1 + wave2 + yOff1 * row);
-          ctx.lineTo(xBase + segW + 0.5, yBase + (c + 1 < COLS ? (Math.sin((c+1)/COLS * Math.PI * 2.5 - t * 2.2) * ((c+1)/COLS)**2 * 18) : wave1) + wave2 + yOff1 * row);
-          ctx.lineTo(xBase + segW + 0.5, yBase + segH + wave1 + wave2 + yOff1 * (row + 1));
-          ctx.lineTo(xBase, yBase + segH + wave1 + wave2 + yOff1 * (row + 1));
-          ctx.closePath(); ctx.fill();
-        }
-      }
-      // Flaggen-Rand-Glow
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(FX, FY, FW, FH);
-
-      t += 0.016;
-      rafRef.current = requestAnimationFrame(draw);
-    }
-    draw();
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-
-  return <canvas ref={canvasRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', opacity, pointerEvents:'none' }} />;
-}
-
-function shadeColor(hex, factor) {
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  return `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
-}
-
-// ⚽ Soccer — grüner Rasen + rollende Bälle
-function CanvasSoccer({ opacity = 0.3 }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-    const W = canvas.width, H = canvas.height;
-
-    const balls = Array.from({length: 3}, (_, i) => ({
-      x: -80 - i * 350, y: H * (0.25 + i * 0.25),
-      vx: 1.2 + i * 0.4, r: 32 + i * 8, angle: 0,
-      va: (1.2 + i * 0.3) * 0.04,
-    }));
-
-    function drawBall(x, y, r, angle) {
-      ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-      // Ball Basis
-      const g = ctx.createRadialGradient(-r*0.3,-r*0.3,r*0.1,0,0,r);
-      g.addColorStop(0,'#fff'); g.addColorStop(0.4,'#ddd'); g.addColorStop(1,'#999');
-      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
-      // Pentagons
-      ctx.fillStyle = '#222';
-      for (let p = 0; p < 5; p++) {
-        const a = (p/5)*Math.PI*2 - Math.PI/2;
-        const px = Math.cos(a)*r*0.55, py = Math.sin(a)*r*0.55;
-        ctx.beginPath();
-        for (let v = 0; v < 5; v++) {
-          const va = (v/5)*Math.PI*2 - Math.PI/2;
-          const vx2 = px + Math.cos(va)*r*0.22, vy2 = py + Math.sin(va)*r*0.22;
-          v === 0 ? ctx.moveTo(vx2,vy2) : ctx.lineTo(vx2,vy2);
-        }
-        ctx.closePath(); ctx.fill();
-      }
-      // Center pentagon
-      ctx.beginPath();
-      for (let v = 0; v < 5; v++) {
-        const va = (v/5)*Math.PI*2 - Math.PI/2;
-        v===0 ? ctx.moveTo(Math.cos(va)*r*0.25,Math.sin(va)*r*0.25)
-              : ctx.lineTo(Math.cos(va)*r*0.25,Math.sin(va)*r*0.25);
-      }
-      ctx.closePath(); ctx.fill();
-      // Glanz
-      ctx.beginPath(); ctx.arc(-r*0.28,-r*0.28,r*0.2,0,Math.PI*2);
-      ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.fill();
-      ctx.restore();
-    }
-
-    function draw() {
-      ctx.clearRect(0,0,W,H);
-      // Rasen-Linien
-      ctx.strokeStyle = 'rgba(34,197,94,0.12)'; ctx.lineWidth = 1;
-      for (let i = 0; i < 8; i++) {
-        const y = H * (i/8);
-        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-      }
-      // Mittellinie
-      ctx.strokeStyle = 'rgba(34,197,94,0.18)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
-      ctx.beginPath(); ctx.arc(W/2, H/2, H*0.2, 0, Math.PI*2); ctx.stroke();
-
-      balls.forEach(b => {
-        b.x += b.vx; b.angle += b.va;
-        if (b.x > W + 100) b.x = -100;
-        ctx.globalAlpha = 0.28;
-        // Schatten
-        ctx.beginPath(); ctx.ellipse(b.x, b.y + b.r*0.8, b.r*0.9, b.r*0.25, 0, 0, Math.PI*2);
-        ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fill();
-        ctx.globalAlpha = opacity;
-        drawBall(b.x, b.y, b.r, b.angle);
+      const ro = new ResizeObserver(() => {
+        const w = el.offsetWidth, h = el.offsetHeight;
+        camera.aspect = w / h; camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        if (onResize) onResize(w, h);
       });
-      ctx.globalAlpha = 1;
-      rafRef.current = requestAnimationFrame(draw);
-    }
-    draw();
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}} />;
-}
+      ro.observe(el); el._ro = ro;
 
-// 🏈 American Football — Spiralball mit Yard-Lines
-function CanvasAmericanFootball({ opacity = 0.3 }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-    const W = canvas.width, H = canvas.height;
-    let t = 0;
-    // Mehrere Bälle mit unterschiedlichen Wurfbahnen
-    const balls = [
-      { startX: -60, startY: H*0.55, endX: W+60, endY: H*0.2, dur: 180, phase: 0 },
-      { startX: W+60, startY: H*0.3, endX: -60, endY: H*0.7, dur: 220, phase: 80 },
-      { startX: -60, startY: H*0.75, endX: W+60, endY: H*0.4, dur: 260, phase: 140 },
-    ];
-
-    function drawFootball(x, y, angle, scale=1) {
-      ctx.save(); ctx.translate(x,y); ctx.rotate(angle); ctx.scale(scale,scale);
-      const rx=36, ry=20;
-      // Ball Körper
-      const g = ctx.createRadialGradient(-rx*0.2,-ry*0.3,2,0,0,rx*0.9);
-      g.addColorStop(0,'#d4781a'); g.addColorStop(0.5,'#a0520a'); g.addColorStop(1,'#6b3106');
-      ctx.beginPath(); ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);
-      ctx.fillStyle=g; ctx.fill();
-      // Nähte
-      ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.moveTo(-rx+4,0); ctx.lineTo(rx-4,0); ctx.stroke();
-      for (let i=-2;i<=2;i++) {
-        ctx.beginPath();
-        ctx.moveTo(i*7, -ry*0.55);
-        ctx.bezierCurveTo(i*7-4, -ry*0.2, i*7+4, ry*0.2, i*7, ry*0.55);
-        ctx.stroke();
+      let t = 0;
+      function loop() {
+        animId = requestAnimationFrame(loop);
+        t += 0.016;
+        onFrame(t);
+        renderer.render(scene, camera);
       }
-      // Glanz
-      ctx.beginPath(); ctx.ellipse(-rx*0.25,-ry*0.3,rx*0.18,ry*0.12,0,0,Math.PI*2);
-      ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.fill();
-      ctx.restore();
-    }
+      loop();
+    }).catch(console.error);
 
-    function draw() {
-      ctx.clearRect(0,0,W,H);
-      // Yard-Lines (Kunstrasen-Feeling)
-      ctx.fillStyle = 'rgba(34,100,34,0.06)';
-      ctx.fillRect(0,0,W,H);
-      for (let i=0;i<=10;i++) {
-        const x = (i/10)*W;
-        ctx.strokeStyle = i===5 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)';
-        ctx.lineWidth = i===5 ? 2 : 1;
-        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
-        if (i>0&&i<10) {
-          ctx.fillStyle='rgba(255,255,255,0.07)';
-          ctx.font='bold 18px sans-serif'; ctx.textAlign='center';
-          ctx.fillText(`${i*10}`, x, H*0.12);
-        }
-      }
-      // Balls
-      balls.forEach(b => {
-        const frame = (t + b.phase) % b.dur;
-        const progress = frame / b.dur;
-        const eased = progress < 0.5 ? 2*progress*progress : 1-2*(1-progress)*(1-progress);
-        const x = b.startX + (b.endX-b.startX)*eased;
-        const arc = Math.sin(progress*Math.PI)*H*0.18;
-        const y = b.startY + (b.endY-b.startY)*eased - arc;
-        const dx = b.endX - b.startX;
-        const angle = Math.atan2((b.endY-b.startY)*eased - arc - ((b.startY+(b.endY-b.startY)*(eased-0.01))-arc*0.98), dx*0.01) * 0.6;
-        const alpha = Math.sin(progress*Math.PI);
-        ctx.globalAlpha = alpha * opacity;
-        // Schatten
-        ctx.beginPath(); ctx.ellipse(x,y+22,30,8,0,0,Math.PI*2);
-        ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fill();
-        drawFootball(x, y, angle, 1);
-        // Spiral-Trail
-        ctx.globalAlpha = alpha * 0.08;
-        for (let trail=1;trail<=6;trail++) {
-          const tp = Math.max(0, progress - trail*0.015);
-          const te = tp < 0.5 ? 2*tp*tp : 1-2*(1-tp)*(1-tp);
-          const tx2 = b.startX + (b.endX-b.startX)*te;
-          const ty2 = b.startY + (b.endY-b.startY)*te - Math.sin(tp*Math.PI)*H*0.18;
-          ctx.beginPath(); ctx.arc(tx2,ty2,4-trail*0.4,0,Math.PI*2);
-          ctx.fillStyle='#d4781a'; ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-      });
-      t++;
-      rafRef.current = requestAnimationFrame(draw);
-    }
-    draw();
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}} />;
-}
-
-// 🪩 Disco — Hyperreale Spiegelkugel
-function CanvasDisco({ accentColor }) {
-  const canvasRef = useRef(null);
-  const rafRef    = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    const resize = () => {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+    return () => {
+      cancelAnimationFrame(animId);
+      if (mountRef.current?._ro) mountRef.current._ro.disconnect();
+      if (renderer) { renderer.dispose(); renderer.domElement?.remove(); }
     };
-    resize();
-    window.addEventListener('resize', resize);
+  }, []);
+  return mountRef;
+}
 
-    // ── Konstanten ──────────────────────────────────────────────────────────
-    const W = () => canvas.width;
-    const H = () => canvas.height;
+// 🪩 DISCO — Spiegelkugel mit echten 3D Tiles + Lichtspots
+function DiscoBall3D() {
+  const mountRef = useThreeScene((T, W, H) => {
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(60, W / H, 0.1, 100);
+    camera.position.set(0, 0.8, 5); camera.lookAt(0, 0.8, 0);
 
-    // Kugel
-    const BALL_R    = 72;                    // Radius px
-    const BALL_YF   = 0.17;                  // Vertikale Position (Bildschirm-Anteil)
+    // Raum
+    const roomMat = new T.MeshStandardMaterial({ color: 0x060610, roughness: 0.98, metalness: 0, side: T.BackSide });
+    scene.add(Object.assign(new T.Mesh(new T.BoxGeometry(14, 9, 14), roomMat), { position: new T.Vector3(0, 1, 0) }));
+    const floorMat = new T.MeshStandardMaterial({ color: 0x0a0a18, roughness: 0.25, metalness: 0.5 });
+    const floor = new T.Mesh(new T.PlaneGeometry(14, 14), floorMat);
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -3.5; floor.receiveShadow = true; scene.add(floor);
 
-    // Tile-Grid (sphärische Koordinaten)
-    const LAT  = 22;    // Breitengrade
-    const LON  = 30;    // Längengrade
-    const TILE_GAP = 0.12;  // Lücke zwischen Tiles (0=keine, 1=alles Lücke)
+    // Aufhängung
+    const wireMat = new T.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.95, roughness: 0.05 });
+    scene.add(Object.assign(new T.Mesh(new T.CylinderGeometry(0.01, 0.01, 2.8, 8), wireMat), { position: new T.Vector3(0, 3.2, 0) }));
 
-    // Lichtquellen — starke, farbige Spots von verschiedenen Richtungen
-    const LIGHT_COLORS = [
-      '#ff2255', '#ff9900', '#00ddff', '#aa00ff', '#00ff88', '#ff44bb'
-    ];
-    const LIGHTS = LIGHT_COLORS.map((color, i) => {
-      const angle = (i / LIGHT_COLORS.length) * Math.PI * 2;
-      return {
-        // 3D-Position der Lichtquelle (auf einer Kugel um den Mittelpunkt)
-        az: angle,          // Azimut
-        el: 0.3 + (i % 2) * 0.4,  // Elevation (0=Horizont, PI/2=oben)
-        color,
-        speed: 0.004 + i * 0.0015,
-      };
+    // Kugel-Gruppe
+    const ballGroup = new T.Group(); ballGroup.position.set(0, 2.5, 0); scene.add(ballGroup);
+
+    // Kugel-Basis
+    const ballMat = new T.MeshStandardMaterial({ color: 0x666677, metalness: 1.0, roughness: 0.04 });
+    ballGroup.add(new T.Mesh(new T.SphereGeometry(0.8, 64, 64), ballMat));
+
+    // Mirror Tiles
+    const tileMat = new T.MeshStandardMaterial({ color: 0xddddf0, metalness: 1.0, roughness: 0.0 });
+    const LAT = 22, LON = 28;
+    for (let li = 0; li < LAT; li++) {
+      const phiM = ((li + 0.5) / LAT) * Math.PI;
+      const sinP = Math.sin(phiM), cosP = Math.cos(phiM);
+      for (let lo = 0; lo < LON; lo++) {
+        const thetaM = (lo / LON) * Math.PI * 2;
+        const r = 0.805;
+        const px = r * sinP * Math.cos(thetaM);
+        const py = r * cosP;
+        const pz = r * sinP * Math.sin(thetaM);
+        const tw = 0.07 * sinP + 0.012, th = 0.055;
+        const tile = new T.Mesh(new T.PlaneGeometry(tw * 0.84, th * 0.84), tileMat.clone());
+        tile.position.set(px, py, pz);
+        tile.lookAt(px * 2, py * 2, pz * 2);
+        tile.rotateZ((Math.random() - 0.5) * 0.25);
+        ballGroup.add(tile);
+      }
+    }
+
+    // Ambient
+    scene.add(new T.AmbientLight(0x111128, 0.4));
+
+    // Top-Spot
+    const topSpot = new T.SpotLight(0xffffff, 4, 10, Math.PI / 14, 0.4, 1.5);
+    topSpot.position.set(0, 5.5, 0); topSpot.target = ballGroup;
+    topSpot.castShadow = true; scene.add(topSpot); scene.add(topSpot.target);
+
+    // Farbige Lichter
+    const LCOLS = [0xff2255, 0xff9900, 0x00ccff, 0xaa00ff, 0x00ff88, 0xff44bb, 0xffff00, 0x00ffee];
+    const lights = LCOLS.map((c, i) => {
+      const l = new T.PointLight(c, 4.5, 14, 2);
+      l.castShadow = true; l.shadow.mapSize.set(256, 256);
+      scene.add(l);
+      return { light: l, angle: (i / LCOLS.length) * Math.PI * 2, el: 0.2 + (i % 3) * 0.22, speed: 0.007 + i * 0.002 };
     });
 
-    // Tile-Definitionen (einmalig berechnen)
-    const tiles = [];
-    for (let li = 0; li < LAT; li++) {
-      // phi: 0 (oben) → PI (unten)
-      const phi0 = (li / LAT) * Math.PI;
-      const phi1 = ((li + 1) / LAT) * Math.PI;
-      const phiM = (phi0 + phi1) / 2;
-
-      const sinPhi = Math.sin(phiM);
-      const cosPhi = Math.cos(phiM);
-
-      // Breite eines Tiles in Längengrad
-      const lonStep = (Math.PI * 2) / LON;
-
-      for (let lo = 0; lo < LON; lo++) {
-        const theta0 = (lo / LON) * Math.PI * 2;
-        const theta1 = theta0 + lonStep;
-        const thetaM = (theta0 + theta1) / 2;
-
-        const sinTheta = Math.sin(thetaM);
-        const cosTheta = Math.cos(thetaM);
-
-        // Normalen-Vektor des Tiles (zeigt nach außen)
-        const nx = sinPhi * cosTheta;
-        const ny = cosPhi;                   // Y ist oben
-        const nz = sinPhi * sinTheta;
-
-        // Tile-Größe in Bogenmaß → px (am Äquator maximal, an den Polen minimal)
-        const tileW = BALL_R * lonStep * sinPhi * (1 - TILE_GAP);
-        const tileH = BALL_R * (phi1 - phi0) * (1 - TILE_GAP);
-
-        tiles.push({ nx, ny, nz, phiM, thetaM, tileW: Math.max(tileW, 0.5), tileH: Math.max(tileH, 0.5) });
+    return {
+      scene, camera,
+      onFrame(t) {
+        ballGroup.rotation.y = t * 0.2;
+        lights.forEach(l => {
+          l.angle += l.speed;
+          const el = l.el + Math.sin(t * 0.25 + l.angle) * 0.18;
+          l.light.position.set(Math.cos(l.angle) * 4, 2 + Math.sin(el) * 2, Math.sin(l.angle) * 4);
+          l.light.intensity = 4.0 + Math.sin(t * 2.2 + l.angle) * 1.5;
+        });
+        camera.position.x = Math.sin(t * 0.04) * 0.4;
+        camera.lookAt(0, 0.8, 0);
       }
-    }
-
-    // ── Hilfsfunktionen ──────────────────────────────────────────────────────
-
-    // Sphärische → kartesische Koordinaten für einen Punkt auf Einheitskugel
-    function spherePos(az, el) {
-      return {
-        x: Math.cos(el) * Math.cos(az),
-        y: Math.sin(el),
-        z: Math.cos(el) * Math.sin(az),
-      };
-    }
-
-    // Reflektiere Vektor v an Normaler n (alles normiert)
-    function reflect(vx, vy, vz, nx, ny, nz) {
-      const dot2 = 2 * (vx * nx + vy * ny + vz * nz);
-      return { x: vx - dot2 * nx, y: vy - dot2 * ny, z: vz - dot2 * nz };
-    }
-
-    // Hex → RGB
-    function hexRGB(hex) {
-      return [
-        parseInt(hex.slice(1, 3), 16),
-        parseInt(hex.slice(3, 5), 16),
-        parseInt(hex.slice(5, 7), 16),
-      ];
-    }
-
-    // Zeichne abgerundetes Rechteck
-    function fillRoundRect(x, y, w, h, r) {
-      if (w < 1 || h < 1) { ctx.fillRect(x, y, w, h); return; }
-      const rr = Math.min(r, w / 2, h / 2);
-      ctx.beginPath();
-      ctx.moveTo(x + rr, y);
-      ctx.lineTo(x + w - rr, y); ctx.arcTo(x + w, y, x + w, y + rr, rr);
-      ctx.lineTo(x + w, y + h - rr); ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
-      ctx.lineTo(x + rr, y + h); ctx.arcTo(x, y + h, x, y + h - rr, rr);
-      ctx.lineTo(x, y + rr); ctx.arcTo(x, y, x + rr, y, rr);
-      ctx.closePath(); ctx.fill();
-    }
-
-    // ── Wandernde Lichtflecken-Sammlung ──────────────────────────────────────
-    // Wir speichern wo jeder reflektierte Strahl den Raum trifft
-    // und zeichnen das nach der Kugel
-    const reflectedSpots = [];
-
-    let t = 0;
-
-    function draw() {
-      const w = W(), h = H();
-      ctx.clearRect(0, 0, w, h);
-
-      const BX = w / 2;
-      const BY = h * BALL_YF + BALL_R;
-
-      // Kugel-Rotation — stetige Y-Achsen-Rotation
-      const rotY = t * 0.18;   // Rotationsgeschwindigkeit
-
-      // ── Raum-Rendering (Decke, Wände, Boden — subtle) ────────────────────
-      // Boden
-      const floorGrad = ctx.createLinearGradient(0, h * 0.7, 0, h);
-      floorGrad.addColorStop(0, 'rgba(20,10,40,0)');
-      floorGrad.addColorStop(1, 'rgba(30,15,60,0.4)');
-      ctx.fillStyle = floorGrad;
-      ctx.fillRect(0, h * 0.7, w, h * 0.3);
-
-      // ── Lichtquellen aktualisieren ────────────────────────────────────────
-      LIGHTS.forEach(l => { l.az += l.speed; });
-
-      // ── Wandernde Reflexionen zuerst rendern (hinter der Kugel) ──────────
-      reflectedSpots.length = 0;
-
-      // Für jeden Tile + jedes Licht berechnen wir den reflektierten Strahl
-      // Das machen wir lightweight: nur für sichtbare Tiles
-      const rotSin = Math.sin(rotY);
-      const rotCos = Math.cos(rotY);
-
-      // Kamera-Richtung: von vorne (+z in Weltkoordinaten)
-      const CAM = { x: 0, y: 0, z: 1 };
-
-      tiles.forEach(tile => {
-        // Tile-Normal rotieren (Y-Achse)
-        const rnx = tile.nx * rotCos - tile.nz * rotSin;
-        const rny = tile.ny;
-        const rnz = tile.nx * rotSin + tile.nz * rotCos;
-
-        // Nur sichtbare Tiles (zur Kamera zeigend)
-        if (rnz < 0.05) return;
-
-        // Tile-Position auf der Kugeloberfläche
-        const tx = BX + rnx * BALL_R;
-        const ty = BY - rny * BALL_R;
-
-        // Für jedes Licht: berechne reflektierten Strahl
-        LIGHTS.forEach(light => {
-          const lp = spherePos(light.az, light.el);
-          // Richtungsvektor vom Tile zur Lichtquelle (normiert)
-          // Licht ist weit weg → Richtung = Lichtposition (normiert)
-          const ldot = rnx * lp.x + rny * lp.y + rnz * lp.z;
-          if (ldot < 0.01) return;  // Licht beleuchtet Tile nicht
-
-          // Reflexionsvektor (Licht → Tile → Auge)
-          // Einfall: Vektor vom Licht zum Tile = -lp (normiert)
-          const refl = reflect(-lp.x, -lp.y, -lp.z, rnx, rny, rnz);
-
-          // Intensität — sehr scharf (nur wenn Reflexion fast zur Kamera zeigt)
-          const camDot = refl.x * CAM.x + refl.y * CAM.y + refl.z * CAM.z;
-
-          // Wenn der reflektierte Strahl zur Kamera zeigt → Tile leuchtet hell
-          const tileAlpha = Math.pow(Math.max(0, camDot), 12) * 2.5;
-
-          // Wo trifft der Reflexionsstrahl den Raum?
-          // Boden (y = h), Decke (y = 0), Wände (x = 0, x = w)
-          if (refl.y !== 0) {
-            // Boden-Treffer
-            if (refl.y < 0) {  // Strahl geht nach unten
-              const dist = (h - BY) / (-refl.y * BALL_R * 2);
-              const sx = BX + refl.x * dist * h;
-              const sy = h - 10;
-              if (sx > -100 && sx < w + 100) {
-                reflectedSpots.push({ x: sx, y: sy, color: light.color, type: 'floor', intensity: ldot * 0.8 });
-              }
-            }
-            // Decken-Treffer
-            if (refl.y > 0) {
-              const dist = BY / (refl.y * BALL_R * 2);
-              const sx = BX + refl.x * dist * h;
-              const sy = 15;
-              if (sx > -50 && sx < w + 50) {
-                reflectedSpots.push({ x: sx, y: sy, color: light.color, type: 'ceiling', intensity: ldot * 0.6 });
-              }
-            }
-          }
-          // Wand-Treffer
-          if (Math.abs(refl.x) > 0.05) {
-            const wallX = refl.x > 0 ? w - 8 : 8;
-            const wy = BY - refl.y / Math.abs(refl.x) * w * 0.4;
-            if (wy > 0 && wy < h) {
-              reflectedSpots.push({ x: wallX, y: wy, color: light.color, type: 'wall', intensity: ldot * 0.5 });
-            }
-          }
-
-          // Tile-Eigenleuchten (für die Kugel selbst)
-          tile._alpha  = Math.max(tile._alpha || 0, tileAlpha);
-          tile._color  = tileAlpha > (tile._alpha || 0) ? light.color : (tile._color || '#fff');
-          tile._ldot   = ldot;
-        });
-      });
-
-      // ── Boden/Decken/Wand-Spots zeichnen ─────────────────────────────────
-      reflectedSpots.forEach(spot => {
-        const [r, g, b] = hexRGB(spot.color);
-        const spotR = spot.type === 'floor' ? 22 : spot.type === 'ceiling' ? 18 : 16;
-
-        const sg = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, spotR * (spot.type === 'floor' ? 2.5 : 2));
-        sg.addColorStop(0,   `rgba(255,255,255,${(spot.intensity * 0.95).toFixed(2)})`);
-        sg.addColorStop(0.15, `rgba(${r},${g},${b},${(spot.intensity * 0.7).toFixed(2)})`);
-        sg.addColorStop(0.5,  `rgba(${r},${g},${b},${(spot.intensity * 0.2).toFixed(2)})`);
-        sg.addColorStop(1,    'transparent');
-
-        ctx.beginPath();
-        if (spot.type === 'floor') {
-          ctx.ellipse(spot.x, spot.y, spotR * 2.5, spotR * 0.7, 0, 0, Math.PI * 2);
-        } else if (spot.type === 'ceiling') {
-          ctx.ellipse(spot.x, spot.y, spotR * 2, spotR * 0.6, 0, 0, Math.PI * 2);
-        } else {
-          ctx.ellipse(spot.x, spot.y, spotR * 0.6, spotR * 2, 0, 0, Math.PI * 2);
-        }
-        ctx.fillStyle = sg;
-        ctx.fill();
-      });
-
-      // ── Aufhängung ────────────────────────────────────────────────────────
-      const chainGrad = ctx.createLinearGradient(BX - 3, 0, BX + 3, 0);
-      chainGrad.addColorStop(0, 'rgba(160,160,160,0.5)');
-      chainGrad.addColorStop(0.5, 'rgba(255,255,255,0.85)');
-      chainGrad.addColorStop(1, 'rgba(120,120,120,0.5)');
-      ctx.fillStyle = chainGrad;
-      ctx.fillRect(BX - 1.5, 0, 3, BY - BALL_R);
-
-      // ── Kugel-Basis (dunkel) ──────────────────────────────────────────────
-      ctx.save();
-      ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2);
-      ctx.clip();
-      const baseGrad = ctx.createRadialGradient(BX, BY, 0, BX, BY, BALL_R);
-      baseGrad.addColorStop(0, '#1a1a22');
-      baseGrad.addColorStop(1, '#06060a');
-      ctx.fillStyle = baseGrad; ctx.fillRect(BX - BALL_R, BY - BALL_R, BALL_R * 2, BALL_R * 2);
-      ctx.restore();
-
-      // ── Tiles zeichnen ────────────────────────────────────────────────────
-      // Clip auf Kreis
-      ctx.save();
-      ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2); ctx.clip();
-
-      // Tiles sortieren: weiter hinten zuerst (Painter's algorithm)
-      const visibleTiles = tiles
-        .map(tile => {
-          const rnx = tile.nx * rotCos - tile.nz * rotSin;
-          const rny = tile.ny;
-          const rnz = tile.nx * rotSin + tile.nz * rotCos;
-          return { tile, rnx, rny, rnz };
-        })
-        .filter(({ rnz }) => rnz > -0.15)
-        .sort((a, b) => a.rnz - b.rnz);
-
-      visibleTiles.forEach(({ tile, rnx, rny, rnz }) => {
-        const tx = BX + rnx * BALL_R;
-        const ty = BY - rny * BALL_R;
-
-        // Perspektivische Skalierung
-        const perspective = 0.5 + rnz * 0.5;
-        const tw = tile.tileW * perspective;
-        const th = tile.tileH * perspective;
-
-        // Licht-Beiträge für dieses Tile
-        let totalR = 0, totalG = 0, totalB = 0, totalIntensity = 0;
-        let hasHighlight = false;
-
-        LIGHTS.forEach(light => {
-          const lp = spherePos(light.az, light.el);
-          const ldot = rnx * lp.x + rny * lp.y + rnz * lp.z;
-          if (ldot < 0.02) return;
-
-          // Reflexion zur Kamera
-          const refl = reflect(-lp.x, -lp.y, -lp.z, rnx, rny, rnz);
-          const camDot = refl.z;  // Kamera ist in +z
-          const highlight = Math.pow(Math.max(0, camDot), 8);
-
-          // Ambientes Licht vom Tile (diffus, schwächer)
-          const diffuse = ldot * 0.15;
-          const total = highlight + diffuse;
-
-          if (total > 0.005) {
-            const [r, g, b] = hexRGB(light.color);
-            totalR += r * total;
-            totalG += g * total;
-            totalB += b * total;
-            totalIntensity += total;
-            if (highlight > 0.4) hasHighlight = true;
-          }
-        });
-
-        // Basis-Tile-Farbe (metallisches Grau)
-        const baseLight = 35 + rnz * 45;
-        let r = baseLight, g = baseLight, b = baseLight + 8;
-
-        if (totalIntensity > 0) {
-          const scale = Math.min(1 / totalIntensity, 2);
-          r = Math.min(255, r + totalR * scale);
-          g = Math.min(255, g + totalG * scale);
-          b = Math.min(255, b + totalB * scale);
-        }
-
-        const alpha = 0.75 + rnz * 0.25;
-        ctx.fillStyle = `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${alpha.toFixed(2)})`;
-
-        // Tile als kleines Rechteck mit leichter Rotation
-        ctx.save();
-        ctx.translate(tx, ty);
-        ctx.rotate(tile.thetaM + rotY);
-        fillRoundRect(-tw / 2, -th / 2, tw, th, 1.5);
-
-        // Glanzpunkt auf hellen Tiles
-        if (hasHighlight && tw > 3 && th > 3) {
-          const hg = ctx.createRadialGradient(-tw * 0.2, -th * 0.2, 0, 0, 0, tw * 0.6);
-          hg.addColorStop(0, 'rgba(255,255,255,0.9)');
-          hg.addColorStop(0.3, 'rgba(255,255,255,0.3)');
-          hg.addColorStop(1, 'transparent');
-          ctx.fillStyle = hg;
-          fillRoundRect(-tw / 2, -th / 2, tw, th, 1.5);
-        }
-        ctx.restore();
-      });
-
-      ctx.restore(); // Clip aufheben
-
-      // ── Kugel-Rim-Abdunkelung ─────────────────────────────────────────────
-      const rimGrad = ctx.createRadialGradient(BX, BY, BALL_R * 0.65, BX, BY, BALL_R);
-      rimGrad.addColorStop(0, 'transparent');
-      rimGrad.addColorStop(1, 'rgba(0,0,0,0.75)');
-      ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2);
-      ctx.fillStyle = rimGrad; ctx.fill();
-
-      // ── Haupt-Glanzpunkt (oben links, weich) ─────────────────────────────
-      ctx.save();
-      ctx.beginPath(); ctx.arc(BX, BY, BALL_R, 0, Math.PI * 2); ctx.clip();
-      const specGrad = ctx.createRadialGradient(
-        BX - BALL_R * 0.38, BY - BALL_R * 0.38, 1,
-        BX - BALL_R * 0.2,  BY - BALL_R * 0.15, BALL_R * 0.62
-      );
-      specGrad.addColorStop(0,   'rgba(255,255,255,0.55)');
-      specGrad.addColorStop(0.25,'rgba(255,255,255,0.18)');
-      specGrad.addColorStop(1,   'transparent');
-      ctx.fillStyle = specGrad;
-      ctx.fillRect(BX - BALL_R, BY - BALL_R, BALL_R * 2, BALL_R * 2);
-      ctx.restore();
-
-      // ── Aura-Glow ─────────────────────────────────────────────────────────
-      const aura = ctx.createRadialGradient(BX, BY, BALL_R * 0.9, BX, BY, BALL_R * 1.7);
-      aura.addColorStop(0, 'rgba(160,80,255,0.18)');
-      aura.addColorStop(0.5,'rgba(80,40,180,0.06)');
-      aura.addColorStop(1, 'transparent');
-      ctx.beginPath(); ctx.arc(BX, BY, BALL_R * 1.7, 0, Math.PI * 2);
-      ctx.fillStyle = aura; ctx.fill();
-
-      // ── Licht-Kegel von oben ──────────────────────────────────────────────
-      const coneGrad = ctx.createLinearGradient(BX, 0, BX, BY - BALL_R);
-      coneGrad.addColorStop(0, 'rgba(255,255,255,0.0)');
-      coneGrad.addColorStop(0.7,'rgba(255,255,255,0.03)');
-      coneGrad.addColorStop(1, 'rgba(255,255,255,0.1)');
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(BX - 4, 0); ctx.lineTo(BX + 4, 0);
-      ctx.lineTo(BX + BALL_R * 0.35, BY - BALL_R);
-      ctx.lineTo(BX - BALL_R * 0.35, BY - BALL_R);
-      ctx.closePath();
-      ctx.fillStyle = coneGrad; ctx.fill();
-      ctx.restore();
-
-      t += 0.016;
-      rafRef.current = requestAnimationFrame(draw);
-    }
-
-    draw();
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener('resize', resize);
     };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.92, pointerEvents: 'none' }}
-    />
-  );
+  });
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />;
 }
 
+// 🇩🇪 DEUTSCHLAND — 3D Flagge mit Wellen
+function GermanyFlag3D() {
+  const mountRef = useThreeScene((T, W, H) => {
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(45, W / H, 0.1, 100);
+    camera.position.set(0, 0, 3.8);
 
-// 🎵 Musik — reaktiver Equalizer mit Wellen
-function CanvasMusic({ accentColor, opacity=0.4 }) {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-  useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-    const W=canvas.width,H=canvas.height;
-    let t=0;
-    const BAR_COUNT=60;
-    const heights=Array.from({length:BAR_COUNT},(_,i)=>({
-      h:0.1+Math.random()*0.5,
-      target:0.1+Math.random()*0.6,
-      speed:0.02+Math.random()*0.04,
-      phase:Math.random()*Math.PI*2,
-    }));
-    function draw(){
-      ctx.clearRect(0,0,W,H);
-      // Hintergrund-Welle
-      ctx.beginPath();
-      for(let x=0;x<=W;x+=2){
-        const y=H*0.5+Math.sin(x/W*Math.PI*4+t)*H*0.08+Math.sin(x/W*Math.PI*8-t*1.3)*H*0.04;
-        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-      }
-      ctx.strokeStyle=accentColor+'55'; ctx.lineWidth=2; ctx.stroke();
+    scene.add(new T.AmbientLight(0xffffff, 0.7));
+    const sun = new T.DirectionalLight(0xffd060, 1.4); sun.position.set(4, 5, 6); scene.add(sun);
 
-      // EQ Bars
-      heights.forEach((bar,i)=>{
-        bar.h+=(bar.target-bar.h)*bar.speed;
-        if(Math.abs(bar.h-bar.target)<0.01){
-          bar.target=0.05+Math.random()*0.7*Math.abs(Math.sin(t+bar.phase));
+    const SEG = 40;
+    const geo = new T.PlaneGeometry(3.0, 1.9, SEG, SEG * 0.6);
+    const posArr = geo.attributes.position;
+    const origY = Float32Array.from(posArr.array).filter((_, i) => i % 3 === 1);
+
+    // Vertex-Farben
+    const cols = new Float32Array(posArr.count * 3);
+    for (let i = 0; i < posArr.count; i++) {
+      const y = posArr.array[i * 3 + 1];
+      const t2 = (y + 0.95) / 1.9;
+      let r, g, b;
+      if (t2 > 0.667)      { r=0.07; g=0.07; b=0.07; }
+      else if (t2 > 0.333) { r=0.82; g=0.0;  b=0.0;  }
+      else                  { r=1.0;  g=0.78; b=0.0;  }
+      cols[i*3]=r; cols[i*3+1]=g; cols[i*3+2]=b;
+    }
+    geo.setAttribute('color', new T.BufferAttribute(cols, 3));
+
+    const mat = new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide });
+    const flag = new T.Mesh(geo, mat);
+    flag.position.x = 0.3; scene.add(flag);
+
+    // Fahnenstab
+    const poleMat = new T.MeshStandardMaterial({ color: 0xbbbbcc, metalness: 0.9, roughness: 0.1 });
+    scene.add(Object.assign(new T.Mesh(new T.CylinderGeometry(0.028, 0.028, 3.8, 12), poleMat), { position: new T.Vector3(-1.6, 0, 0) }));
+    const ball = new T.Mesh(new T.SphereGeometry(0.07, 16, 16), new T.MeshStandardMaterial({ color: 0xddaa00, metalness: 1, roughness: 0.1 }));
+    ball.position.set(-1.6, 1.9, 0); scene.add(ball);
+
+    return {
+      scene, camera,
+      onFrame(t) {
+        for (let i = 0; i < posArr.count; i++) {
+          const x = posArr.array[i * 3];
+          const nx = (x + 1.5) / 3.0;
+          const amp = nx * nx * 0.2;
+          posArr.array[i * 3 + 2] = Math.sin(nx * Math.PI * 3 - t * 2.6) * amp + Math.sin(nx * Math.PI * 5 - t * 1.9) * amp * 0.28;
+          posArr.array[i * 3 + 1] = origY[i] + Math.sin(nx * Math.PI * 2 - t * 2.1) * amp * 0.18;
         }
-        const bw=W/BAR_COUNT-2;
-        const bh=bar.h*H*0.55+Math.sin(t*2+bar.phase)*H*0.03;
-        const bx=i*(W/BAR_COUNT)+1;
-        const by=H*0.78-bh;
-        const g=ctx.createLinearGradient(bx,by,bx,H*0.78);
-        g.addColorStop(0,accentColor+'ff');
-        g.addColorStop(0.5,accentColor+'aa');
-        g.addColorStop(1,accentColor+'33');
-        ctx.fillStyle=g;
-        ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,3); ctx.fill();
-        // Mirror
-        ctx.globalAlpha=0.15;
-        ctx.beginPath(); ctx.roundRect(bx,H*0.78,bw,bh*0.4,3); ctx.fill();
-        ctx.globalAlpha=1;
-      });
-
-      // Noten
-      if(t%120<2){
-        const nx=Math.random()*W, ny=H*0.5+Math.random()*H*0.3;
+        posArr.needsUpdate = true;
+        geo.computeVertexNormals();
+        camera.position.x = Math.sin(t * 0.07) * 0.25;
+        camera.position.y = Math.sin(t * 0.05) * 0.1;
+        camera.lookAt(0, 0, 0);
       }
-      t+=0.022;
-      rafRef.current=requestAnimationFrame(draw);
-    }
-    draw();
-    return ()=>cancelAnimationFrame(rafRef.current);
-  },[accentColor]);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity,pointerEvents:'none'}}/>;
+    };
+  });
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.32, pointerEvents: 'none' }} />;
 }
 
-// 🍺 Bier — Physik-Blasen mit Schaum
-function CanvasBeer({ opacity=0.35 }) {
-  const canvasRef=useRef(null); const rafRef=useRef(null);
+// 🎆 FEUERWERK — 3D Partikel mit Physik
+function Fireworks3D() {
+  const mountRef = useThreeScene((T, W, H) => {
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(70, W / H, 0.1, 200);
+    camera.position.set(0, 0, 9);
+
+    // Sterne
+    const starPos = new Float32Array(3000 * 3);
+    for (let i = 0; i < 3000 * 3; i++) starPos[i] = (Math.random() - 0.5) * 80;
+    const starGeo = new T.BufferGeometry(); starGeo.setAttribute('position', new T.BufferAttribute(starPos, 3));
+    const stars = new T.Points(starGeo, new T.PointsMaterial({ color: 0xffffff, size: 0.06, transparent: true, opacity: 0.45 }));
+    scene.add(stars);
+
+    // Partikel-System
+    const MAX = 3500;
+    const pGeo = new T.BufferGeometry();
+    const pPos = new Float32Array(MAX * 3), pCol = new Float32Array(MAX * 3), pSz = new Float32Array(MAX);
+    pGeo.setAttribute('position', new T.BufferAttribute(pPos, 3));
+    pGeo.setAttribute('color',    new T.BufferAttribute(pCol, 3));
+    pGeo.setAttribute('size',     new T.BufferAttribute(pSz, 1));
+    const pMat = new T.PointsMaterial({ size: 0.13, vertexColors: true, transparent: true, blending: T.AdditiveBlending, depthWrite: false });
+    const pSystem = new T.Points(pGeo, pMat); scene.add(pSystem);
+
+    const COLS = [[1,0.13,0.4],[1,0.6,0],[0,0.87,1],[0.67,0,1],[0,1,0.53],[1,0.27,0.73],[1,1,0.2]];
+    const rockets = [], particles = [];
+
+    function spawnRocket() {
+      rockets.push({ x:(Math.random()-0.5)*8, y:-4.5, z:(Math.random()-0.5)*2, vy:0.13+Math.random()*0.07, vx:(Math.random()-0.5)*0.04, col:COLS[Math.floor(Math.random()*COLS.length)] });
+    }
+    function explode(x,y,z,col) {
+      for (let i=0;i<110+Math.floor(Math.random()*80);i++) {
+        const a=Math.random()*Math.PI*2, p=Math.random()*Math.PI, sp=0.045+Math.random()*0.11;
+        particles.push({ x,y,z, vx:Math.sin(p)*Math.cos(a)*sp, vy:Math.sin(p)*Math.sin(a)*sp, vz:Math.cos(p)*sp,
+          r:col[0],g:col[1],b:col[2], life:1, decay:0.009+Math.random()*0.016, sz:0.11+Math.random()*0.13, grav:0.0009 });
+      }
+    }
+
+    let nextRocket = 0;
+    return {
+      scene, camera,
+      onFrame(t) {
+        if (t > nextRocket) { spawnRocket(); nextRocket = t + 1.4 + Math.random() * 1.8; }
+        for (let i=rockets.length-1;i>=0;i--) {
+          const r=rockets[i]; r.x+=r.vx; r.y+=r.vy; r.vy-=0.0012;
+          if (r.vy<0.01) { explode(r.x,r.y,r.z,r.col); rockets.splice(i,1); }
+        }
+        for (let i=particles.length-1;i>=0;i--) {
+          const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.z+=p.vz;
+          p.vy-=p.grav; p.vx*=0.982; p.vz*=0.982; p.life-=p.decay;
+          if (p.life<=0) { particles.splice(i,1); }
+        }
+        if (particles.length>MAX) particles.splice(0,particles.length-MAX);
+        const n=Math.min(particles.length,MAX);
+        for (let i=0;i<n;i++) {
+          const p=particles[i];
+          pPos[i*3]=p.x; pPos[i*3+1]=p.y; pPos[i*3+2]=p.z;
+          pCol[i*3]=p.r*p.life; pCol[i*3+1]=p.g*p.life; pCol[i*3+2]=p.b*p.life;
+          pSz[i]=p.sz*p.life;
+        }
+        pGeo.setDrawRange(0,n);
+        pGeo.attributes.position.needsUpdate=true; pGeo.attributes.color.needsUpdate=true; pGeo.attributes.size.needsUpdate=true;
+        stars.rotation.y = t*0.004;
+        camera.position.x = Math.sin(t*0.045)*0.6;
+      }
+    };
+  });
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />;
+}
+
+// ⚽ SOCCER — 3D Fußball auf Rasen
+function Soccer3D() {
+  const mountRef = useThreeScene((T, W, H) => {
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(50, W / H, 0.1, 100);
+    camera.position.set(0, 1.8, 6.5); camera.lookAt(0, 0, 0);
+
+    scene.add(new T.AmbientLight(0x224422, 0.5));
+    const sun = new T.DirectionalLight(0xffffff, 1.8); sun.position.set(5, 9, 5); sun.castShadow = true; scene.add(sun);
+
+    // Rasen
+    const grass = new T.Mesh(new T.PlaneGeometry(20, 20), new T.MeshLambertMaterial({ color: 0x1a5c1a }));
+    grass.rotation.x = -Math.PI/2; grass.position.y = -1.3; grass.receiveShadow = true; scene.add(grass);
+    for (let i=-4;i<=4;i+=2) {
+      const line = new T.Mesh(new T.PlaneGeometry(0.05, 20), new T.MeshBasicMaterial({ color: 0x2a7c2a, transparent:true, opacity:0.5 }));
+      line.rotation.x=-Math.PI/2; line.position.set(i,-1.29,0); scene.add(line);
+    }
+
+    // Ball
+    const ballMat = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.35 });
+    const ball = new T.Mesh(new T.SphereGeometry(0.62, 36, 36), ballMat);
+    ball.castShadow = true; ball.position.y = -0.68; scene.add(ball);
+    const patchMat = new T.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
+    [[0,0.63,0],[0,-0.63,0],[0.59,0.22,0.17],[-0.59,0.22,0.17],[0.36,0.22,-0.49],[-0.36,0.22,-0.49],[0,0.22,0.59]].forEach(([px,py,pz]) => {
+      const p = new T.Mesh(new T.CircleGeometry(0.17,5), patchMat);
+      const n = new T.Vector3(px,py,pz).normalize();
+      p.position.copy(n.multiplyScalar(0.63)); p.lookAt(p.position.clone().multiplyScalar(2)); ball.add(p);
+    });
+
+    return {
+      scene, camera,
+      onFrame(t) {
+        ball.position.x = Math.sin(t*0.42)*2.8;
+        ball.position.z = Math.cos(t*0.31)*0.9;
+        ball.rotation.z = -t*1.6; ball.rotation.x = t*0.85;
+        camera.position.x = Math.sin(t*0.055)*0.9; camera.lookAt(0,0,0);
+      }
+    };
+  });
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.42, pointerEvents: 'none' }} />;
+}
+
+// 🏈 AMERICAN FOOTBALL — 3D Spiralwurf
+function AmericanFootball3D() {
+  const mountRef = useThreeScene((T, W, H) => {
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(55, W / H, 0.1, 100);
+    camera.position.set(0, 2, 7.5); camera.lookAt(0, 0.2, 0);
+
+    scene.add(new T.AmbientLight(0x334422, 0.4));
+    const spot = new T.SpotLight(0xffffff, 2.5, 22, Math.PI/5, 0.4); spot.position.set(0, 9, 4); spot.castShadow=true; scene.add(spot);
+
+    // Feld
+    const field = new T.Mesh(new T.PlaneGeometry(18,12), new T.MeshLambertMaterial({color:0x1a4a0a}));
+    field.rotation.x=-Math.PI/2; field.position.y=-1.9; field.receiveShadow=true; scene.add(field);
+    for (let i=-7;i<=7;i+=1.75) {
+      const yl = new T.Mesh(new T.PlaneGeometry(0.05,12), new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.14}));
+      yl.rotation.x=-Math.PI/2; yl.position.set(i,-1.89,0); scene.add(yl);
+    }
+
+    // Football (Ei-Form: SphereGeometry + scale)
+    function makeBall(group) {
+      const fbMat = new T.MeshStandardMaterial({ color:0x7B3A10, roughness:0.55, metalness:0.05 });
+      const fb = new T.Mesh(new T.SphereGeometry(0.38,28,18), fbMat);
+      fb.scale.set(1, 0.62, 1); fb.castShadow=true; group.add(fb);
+      const seamMat = new T.MeshBasicMaterial({ color:0xffffff });
+      const seam = new T.Mesh(new T.TorusGeometry(0.39,0.009,8,32), seamMat);
+      seam.rotation.y=Math.PI/2; group.add(seam);
+    }
+
+    const groups = [new T.Group(), new T.Group()];
+    groups.forEach((g,i) => { makeBall(g); scene.add(g); });
+
+    return {
+      scene, camera,
+      onFrame(t) {
+        groups.forEach((g,i) => {
+          const phase=t*0.42+i*Math.PI;
+          g.position.x = Math.sin(phase)*3.5;
+          g.position.y = Math.abs(Math.cos(phase*0.5))*1.3 - 0.4;
+          g.position.z = (i===1?-1.5:0)+Math.cos(phase*0.3)*0.5;
+          g.rotation.z = t*(i===0?4:-3.5);
+          g.rotation.y = Math.atan2(Math.cos(phase)*3.5, 0.5) + Math.PI/2;
+        });
+        camera.position.x=Math.sin(t*0.045)*0.7; camera.lookAt(0,0.2,0);
+      }
+    };
+  });
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.42, pointerEvents: 'none' }} />;
+}
+
+// ❤️ LOVE — 3D Herzen schweben auf
+function Love3D() {
+  const mountRef = useThreeScene((T, W, H) => {
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(62, W / H, 0.1, 100);
+    camera.position.set(0, 0, 9);
+
+    scene.add(new T.AmbientLight(0xff88aa, 0.45));
+    const pk = new T.PointLight(0xff2266, 3.5, 22); pk.position.set(0, 4, 3); scene.add(pk);
+    const pu = new T.PointLight(0xaa00ff, 2.5, 22); pu.position.set(-3,-2,2); scene.add(pu);
+
+    // Herz-Form
+    const shape = new T.Shape();
+    shape.moveTo(0, 0.5);
+    shape.bezierCurveTo(0,0.85,0.52,0.85,0.52,0.5);
+    shape.bezierCurveTo(0.52,0.15,0,-0.2,0,-0.45);
+    shape.bezierCurveTo(0,-0.2,-0.52,0.15,-0.52,0.5);
+    shape.bezierCurveTo(-0.52,0.85,0,0.85,0,0.5);
+    const heartGeo = new T.ExtrudeGeometry(shape, { depth:0.2, bevelEnabled:true, bevelSize:0.045, bevelThickness:0.045, bevelSegments:8 });
+    heartGeo.center();
+
+    const HCOLS = [0xff2255,0xff66aa,0xff44bb,0xdd0066,0xff88cc,0xee0055,0xff3377,0xcc0044];
+    const hearts = Array.from({length:16},(_,i) => {
+      const mat = new T.MeshStandardMaterial({ color:HCOLS[i%HCOLS.length], roughness:0.18, metalness:0.35, transparent:true, opacity:0.88 });
+      const m = new T.Mesh(heartGeo, mat);
+      const sc = 0.28+Math.random()*0.52; m.scale.setScalar(sc);
+      m.position.set((Math.random()-0.5)*9, -5-Math.random()*6, (Math.random()-0.5)*2.5);
+      m.userData = { vy:0.026+Math.random()*0.032, wb:Math.random()*Math.PI*2, ws:0.018+Math.random()*0.022, rs:(Math.random()-0.5)*0.028 };
+      scene.add(m); return m;
+    });
+
+    // Glitzer
+    const spkPos = new Float32Array(600*3);
+    for (let i=0;i<600*3;i++) spkPos[i]=(Math.random()-0.5)*14;
+    const spkGeo = new T.BufferGeometry(); spkGeo.setAttribute('position',new T.BufferAttribute(spkPos,3));
+    scene.add(new T.Points(spkGeo, new T.PointsMaterial({color:0xffaacc,size:0.045,transparent:true,opacity:0.55,blending:T.AdditiveBlending})));
+
+    return {
+      scene, camera,
+      onFrame(t) {
+        hearts.forEach(h => {
+          h.userData.wb+=h.userData.ws;
+          h.position.y+=h.userData.vy;
+          h.position.x+=Math.sin(h.userData.wb)*0.018;
+          h.rotation.y+=h.userData.rs;
+          h.rotation.z=Math.sin(h.userData.wb*0.5)*0.14;
+          if (h.position.y>6) { h.position.y=-5-Math.random()*3; h.position.x=(Math.random()-0.5)*9; }
+        });
+        pk.position.set(Math.sin(t*0.38)*3.5, Math.cos(t*0.28)*2+1.5, 3);
+        camera.position.x=Math.sin(t*0.038)*0.45;
+      }
+    };
+  });
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.58, pointerEvents: 'none' }} />;
+}
+
+// 🎉 PARTY — 3D Konfetti
+function Party3D() {
+  const mountRef = useThreeScene((T, W, H) => {
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(65, W / H, 0.1, 100);
+    camera.position.set(0, 0, 10);
+    scene.add(new T.AmbientLight(0xffffff, 0.7));
+    const pl = new T.PointLight(0xff88ff, 2.5, 22); pl.position.set(0,5,3); scene.add(pl);
+
+    const CCOLS=[0xff3366,0xff9900,0x00ddff,0xaa00ff,0x00ff88,0xffff44,0xff44bb,0x00aaff];
+    const pieces = Array.from({length:130},(_,i) => {
+      const c=CCOLS[i%CCOLS.length], sh=i%4;
+      let geo;
+      if (sh===0)      geo=new T.PlaneGeometry(0.16,0.24);
+      else if (sh===1) geo=new T.CircleGeometry(0.1,6);
+      else if (sh===2) geo=new T.PlaneGeometry(0.22,0.09);
+      else             geo=new T.CircleGeometry(0.09,3);
+      const mat=new T.MeshLambertMaterial({color:c,side:T.DoubleSide,transparent:true,opacity:0.92});
+      const m=new T.Mesh(geo,mat);
+      m.position.set((Math.random()-0.5)*13,5+Math.random()*9,(Math.random()-0.5)*3.5);
+      m.userData={vy:-(0.042+Math.random()*0.065),vx:(Math.random()-0.5)*0.024,wb:Math.random()*Math.PI*2,ws:0.03+Math.random()*0.045,rx:(Math.random()-0.5)*0.09,ry:(Math.random()-0.5)*0.09,rz:(Math.random()-0.5)*0.055};
+      scene.add(m); return m;
+    });
+
+    return {
+      scene, camera,
+      onFrame(t) {
+        pieces.forEach(p => {
+          p.userData.wb+=p.userData.ws;
+          p.position.y+=p.userData.vy;
+          p.position.x+=p.userData.vx+Math.sin(p.userData.wb)*0.022;
+          p.rotation.x+=p.userData.rx; p.rotation.y+=p.userData.ry; p.rotation.z+=p.userData.rz;
+          if (p.position.y<-6) { p.position.y=7+Math.random()*4; p.position.x=(Math.random()-0.5)*13; }
+        });
+        pl.position.set(Math.sin(t*0.55)*4.5, 5, Math.cos(t*0.48)*3.5);
+        camera.position.x=Math.sin(t*0.032)*0.35;
+      }
+    };
+  });
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.62, pointerEvents: 'none' }} />;
+}
+
+// ❄️ WEIHNACHTEN — 3D Schnee
+function Christmas3D() {
+  const mountRef = useThreeScene((T, W, H) => {
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(65, W / H, 0.1, 100);
+    camera.position.set(0, 0, 9);
+    scene.add(new T.AmbientLight(0xaabbff, 0.5));
+    scene.add(Object.assign(new T.DirectionalLight(0xccddff, 0.9), { position: new T.Vector3(3,5,4) }));
+
+    // Partikel-Schnee
+    const N=700;
+    const fPos=new Float32Array(N*3), fSz=new Float32Array(N);
+    const fVy=new Float32Array(N), fWb=new Float32Array(N), fWs=new Float32Array(N);
+    for (let i=0;i<N;i++) {
+      fPos[i*3]=(Math.random()-0.5)*16; fPos[i*3+1]=(Math.random()-0.5)*11; fPos[i*3+2]=(Math.random()-0.5)*7;
+      fSz[i]=0.045+Math.random()*0.1; fVy[i]=0.016+Math.random()*0.022; fWb[i]=Math.random()*Math.PI*2; fWs[i]=0.01+Math.random()*0.015;
+    }
+    const fGeo=new T.BufferGeometry();
+    fGeo.setAttribute('position',new T.BufferAttribute(fPos,3)); fGeo.setAttribute('size',new T.BufferAttribute(fSz,1));
+    const fMat=new T.PointsMaterial({color:0xddeeff,size:0.08,transparent:true,opacity:0.88,blending:T.AdditiveBlending,depthWrite:false});
+    const flakes=new T.Points(fGeo,fMat); scene.add(flakes);
+
+    return {
+      scene, camera,
+      onFrame(t) {
+        const wind=Math.sin(t*0.18)*0.009;
+        for (let i=0;i<N;i++) {
+          fWb[i]+=fWs[i];
+          fPos[i*3+1]-=fVy[i]; fPos[i*3]+=wind+Math.sin(fWb[i]+i)*0.003;
+          if (fPos[i*3+1]<-5.5) fPos[i*3+1]=5.5;
+        }
+        fGeo.attributes.position.needsUpdate=true;
+      }
+    };
+  });
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.58, pointerEvents: 'none' }} />;
+}
+
+// ── 2D Canvas Animationen (Bier, Cocktail, Sommer, Musik, Food, Halloween) ────
+
+function CanvasBeer() {
+  const c=useRef(null),r=useRef(null);
   useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-    const W=canvas.width,H=canvas.height;
-    const bubbles=Array.from({length:35},()=>({
-      x:Math.random()*W, y:H+Math.random()*H*0.5,
-      r:4+Math.random()*14,
-      vy:-(0.6+Math.random()*1.4),
-      vx:(Math.random()-0.5)*0.5,
-      wobble:Math.random()*Math.PI*2,
-      wobbleSpeed:0.02+Math.random()*0.04,
-      opacity:0.4+Math.random()*0.4,
-    }));
+    const cv=c.current; if(!cv)return; const ctx=cv.getContext('2d');
+    cv.width=cv.offsetWidth; cv.height=cv.offsetHeight;
+    const W=cv.width,H=cv.height;
+    const bs=Array.from({length:35},()=>({x:Math.random()*W,y:H+Math.random()*H*0.5,rad:4+Math.random()*14,vy:-(0.6+Math.random()*1.4),vx:(Math.random()-0.5)*0.5,wb:Math.random()*Math.PI*2,ws:0.02+Math.random()*0.04,op:0.4+Math.random()*0.4}));
     function draw(){
       ctx.clearRect(0,0,W,H);
-      // Glas-Silhouette leicht andeuten
-      const glassX=W*0.5, glassW=W*0.18, glassH=H*0.7;
-      const g=ctx.createLinearGradient(glassX-glassW/2,0,glassX+glassW/2,0);
-      g.addColorStop(0,'rgba(255,200,50,0.03)');
-      g.addColorStop(0.3,'rgba(255,200,50,0.07)');
-      g.addColorStop(0.7,'rgba(255,200,50,0.07)');
-      g.addColorStop(1,'rgba(255,200,50,0.03)');
-      ctx.fillStyle=g;
-      ctx.fillRect(glassX-glassW/2,H*0.15,glassW,glassH);
-
-      bubbles.forEach(b=>{
-        b.wobble+=b.wobbleSpeed;
-        b.x+=b.vx+Math.sin(b.wobble)*0.4;
-        b.y+=b.vy;
-        if(b.y<-b.r*2){ b.y=H+b.r; b.x=Math.random()*W; }
-        const alpha=Math.min(1,(-b.y+H)/(H*0.7))*b.opacity;
-        ctx.globalAlpha=alpha*opacity;
-        const bg=ctx.createRadialGradient(b.x-b.r*0.35,b.y-b.r*0.35,b.r*0.05,b.x,b.y,b.r);
-        bg.addColorStop(0,'rgba(255,240,180,0.9)');
-        bg.addColorStop(0.5,'rgba(220,180,80,0.4)');
-        bg.addColorStop(1,'rgba(180,140,40,0.1)');
-        ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-        ctx.fillStyle=bg; ctx.fill();
-        ctx.strokeStyle='rgba(255,230,100,0.6)'; ctx.lineWidth=1;
-        ctx.stroke();
-        // Glanz
-        ctx.beginPath(); ctx.arc(b.x-b.r*0.3,b.y-b.r*0.3,b.r*0.2,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.fill();
-        ctx.globalAlpha=1;
-      });
-      rafRef.current=requestAnimationFrame(draw);
+      bs.forEach(b=>{b.wb+=b.ws;b.x+=b.vx+Math.sin(b.wb)*0.4;b.y+=b.vy;if(b.y<-b.rad*2){b.y=H+b.rad;b.x=Math.random()*W;}
+        const al=Math.min(1,(-b.y+H)/(H*0.7))*b.op*0.35;ctx.globalAlpha=al;
+        const g=ctx.createRadialGradient(b.x-b.rad*0.35,b.y-b.rad*0.35,b.rad*0.05,b.x,b.y,b.rad);
+        g.addColorStop(0,'rgba(255,240,180,0.9)');g.addColorStop(0.5,'rgba(220,180,80,0.4)');g.addColorStop(1,'rgba(180,140,40,0.1)');
+        ctx.beginPath();ctx.arc(b.x,b.y,b.rad,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+        ctx.strokeStyle='rgba(255,230,100,0.6)';ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1;});
+      r.current=requestAnimationFrame(draw);
     }
-    draw();
-    return ()=>cancelAnimationFrame(rafRef.current);
+    draw(); return()=>cancelAnimationFrame(r.current);
   },[]);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}}/>;
+  return <canvas ref={c} style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}/>;
 }
-
-// 🍹 Cocktail — farbige Flüssigkeits-Blasen
-function CanvasCocktail({ accentColor, opacity=0.4 }) {
-  const canvasRef=useRef(null); const rafRef=useRef(null);
+function CanvasCocktail({accentColor}) {
+  const c=useRef(null),r=useRef(null);
   useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-    const W=canvas.width,H=canvas.height;
+    const cv=c.current;if(!cv)return;const ctx=cv.getContext('2d');
+    cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;const W=cv.width,H=cv.height;
     const COLS=['#f43f5e','#a855f7','#06b6d4','#f59e0b','#22c55e','#ec4899','#3b82f6'];
-    const blobs=Array.from({length:20},(_,i)=>({
-      x:Math.random()*W, y:H+Math.random()*H*0.6,
-      r:10+Math.random()*28, vy:-(0.5+Math.random()*1.2),
-      vx:(Math.random()-0.5)*0.6, color:COLS[i%COLS.length],
-      wobble:Math.random()*Math.PI*2, ws:0.015+Math.random()*0.03,
-    }));
+    const bs=Array.from({length:20},(_,i)=>({x:Math.random()*W,y:H+Math.random()*H*0.6,r:10+Math.random()*28,vy:-(0.5+Math.random()*1.2),vx:(Math.random()-0.5)*0.6,color:COLS[i%COLS.length],wb:Math.random()*Math.PI*2,ws:0.015+Math.random()*0.03}));
     function draw(){
       ctx.clearRect(0,0,W,H);
-      blobs.forEach(b=>{
-        b.wobble+=b.ws; b.x+=b.vx+Math.sin(b.wobble)*0.5; b.y+=b.vy;
-        if(b.y<-b.r*3){ b.y=H+b.r; b.x=Math.random()*W; }
-        const alpha=Math.min(1,(-b.y+H)/(H*0.65))*0.55*opacity;
-        ctx.globalAlpha=alpha;
-        // Blob mit leichter Verformung
-        const rx=b.r*(1+Math.sin(b.wobble*2)*0.12);
-        const ry=b.r*(1+Math.cos(b.wobble*2)*0.12);
-        const bg=ctx.createRadialGradient(b.x-rx*0.3,b.y-ry*0.3,rx*0.05,b.x,b.y,rx);
-        bg.addColorStop(0,b.color+'ff'); bg.addColorStop(0.6,b.color+'88'); bg.addColorStop(1,b.color+'11');
-        ctx.beginPath(); ctx.ellipse(b.x,b.y,rx,ry,b.wobble*0.2,0,Math.PI*2);
-        ctx.fillStyle=bg; ctx.fill();
-        ctx.globalAlpha=alpha*0.6;
-        ctx.beginPath(); ctx.arc(b.x-rx*0.28,b.y-ry*0.28,rx*0.22,0,Math.PI*2);
-        ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill();
-        ctx.globalAlpha=1;
-      });
-      rafRef.current=requestAnimationFrame(draw);
+      bs.forEach(b=>{b.wb+=b.ws;b.x+=b.vx+Math.sin(b.wb)*0.5;b.y+=b.vy;if(b.y<-b.r*3){b.y=H+b.r;b.x=Math.random()*W;}
+        const al=Math.min(1,(-b.y+H)/(H*0.65))*0.45;ctx.globalAlpha=al;
+        const rx=b.r*(1+Math.sin(b.wb*2)*0.12),ry=b.r*(1+Math.cos(b.wb*2)*0.12);
+        const g=ctx.createRadialGradient(b.x-rx*0.3,b.y-ry*0.3,rx*0.05,b.x,b.y,rx);
+        g.addColorStop(0,b.color+'ff');g.addColorStop(0.6,b.color+'88');g.addColorStop(1,b.color+'11');
+        ctx.beginPath();ctx.ellipse(b.x,b.y,rx,ry,b.wb*0.2,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.globalAlpha=1;});
+      r.current=requestAnimationFrame(draw);
     }
-    draw();
-    return ()=>cancelAnimationFrame(rafRef.current);
+    draw();return()=>cancelAnimationFrame(r.current);
   },[]);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}}/>;
+  return <canvas ref={c} style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}/>;
 }
-
-// 🎆 Feuerwerk — echte Partikelphysik mit Gravitation & Trails
-function CanvasFireworks({ accentColor, opacity=0.7 }) {
-  const canvasRef=useRef(null); const rafRef=useRef(null);
+function CanvasSummer() {
+  const c=useRef(null),r=useRef(null);
   useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-    const W=canvas.width,H=canvas.height;
-    const COLS=['#f59e0b','#ef4444','#a855f7','#06b6d4','#22c55e','#ec4899','#3b82f6','#fff'];
-    const rockets=[]; const particles=[];
-    let t=0;
-
-    function spawnRocket(){
-      rockets.push({
-        x:W*0.1+Math.random()*W*0.8, y:H,
-        vy:-(12+Math.random()*8),
-        vx:(Math.random()-0.5)*3,
-        color:COLS[Math.floor(Math.random()*COLS.length)],
-        trail:[],
-      });
-    }
-
-    function explode(x,y,color){
-      const count=80+Math.floor(Math.random()*60);
-      for(let i=0;i<count;i++){
-        const angle=(i/count)*Math.PI*2+(Math.random()-0.5)*0.4;
-        const speed=2+Math.random()*7;
-        particles.push({
-          x,y, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed,
-          color, life:1, decay:0.012+Math.random()*0.018,
-          r:2+Math.random()*3, gravity:0.12+Math.random()*0.08,
-          trail:[],
-        });
-      }
-    }
-
-    function draw(){
-      ctx.fillStyle='rgba(10,10,10,0.18)';
-      ctx.fillRect(0,0,W,H);
-
-      if(t%55===0||(t<10&&t%12===0)) spawnRocket();
-
-      // Raketen
-      for(let i=rockets.length-1;i>=0;i--){
-        const r=rockets[i];
-        r.trail.push({x:r.x,y:r.y});
-        if(r.trail.length>12) r.trail.shift();
-        r.x+=r.vx; r.y+=r.vy; r.vy+=0.3;
-        r.trail.forEach((pt,ti)=>{
-          ctx.globalAlpha=(ti/r.trail.length)*0.6*opacity;
-          ctx.beginPath(); ctx.arc(pt.x,pt.y,1.5,0,Math.PI*2);
-          ctx.fillStyle=r.color; ctx.fill();
-        });
-        if(r.vy>=0){
-          explode(r.x,r.y,r.color);
-          rockets.splice(i,1);
-        }
-      }
-
-      // Partikel
-      for(let i=particles.length-1;i>=0;i--){
-        const p=particles[i];
-        p.trail.push({x:p.x,y:p.y});
-        if(p.trail.length>8) p.trail.shift();
-        p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity;
-        p.vx*=0.98; p.life-=p.decay;
-        if(p.life<=0){ particles.splice(i,1); continue; }
-        // Trail
-        p.trail.forEach((pt,ti)=>{
-          ctx.globalAlpha=(ti/p.trail.length)*p.life*0.5*opacity;
-          ctx.beginPath(); ctx.arc(pt.x,pt.y,p.r*0.4,0,Math.PI*2);
-          ctx.fillStyle=p.color; ctx.fill();
-        });
-        // Partikel
-        ctx.globalAlpha=p.life*opacity;
-        const pg=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*1.5);
-        pg.addColorStop(0,'#fff'); pg.addColorStop(0.3,p.color); pg.addColorStop(1,'transparent');
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r*1.5,0,Math.PI*2);
-        ctx.fillStyle=pg; ctx.fill();
-        ctx.globalAlpha=1;
-      }
-
-      t++;
-      rafRef.current=requestAnimationFrame(draw);
-    }
-    draw();
-    return ()=>cancelAnimationFrame(rafRef.current);
-  },[]);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}}/>;
-}
-
-// ❄️ Weihnachten — Schnee mit Wind-Drift
-function CanvasSnow({ opacity=0.55 }) {
-  const canvasRef=useRef(null); const rafRef=useRef(null);
-  useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-    const W=canvas.width,H=canvas.height;
-    let t=0;
-    const flakes=Array.from({length:80},()=>({
-      x:Math.random()*W, y:Math.random()*H,
-      r:1.5+Math.random()*4.5, vy:0.5+Math.random()*1.5,
-      vx:(Math.random()-0.5)*0.8, wobble:Math.random()*Math.PI*2,
-      ws:0.01+Math.random()*0.02,
-    }));
-    function draw(){
-      ctx.clearRect(0,0,W,H);
-      const wind=Math.sin(t*0.003)*0.6;
-      flakes.forEach(f=>{
-        f.wobble+=f.ws; f.x+=f.vx+wind+Math.sin(f.wobble)*0.4; f.y+=f.vy;
-        if(f.y>H+10){ f.y=-10; f.x=Math.random()*W; }
-        if(f.x>W+10) f.x=-10; if(f.x<-10) f.x=W+10;
-        ctx.globalAlpha=(0.4+Math.sin(f.wobble)*0.2)*opacity;
-        const fg=ctx.createRadialGradient(f.x-f.r*0.3,f.y-f.r*0.3,0,f.x,f.y,f.r);
-        fg.addColorStop(0,'#fff'); fg.addColorStop(0.6,'rgba(200,230,255,0.8)'); fg.addColorStop(1,'transparent');
-        ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
-        ctx.fillStyle=fg; ctx.fill();
-        ctx.globalAlpha=1;
-      });
-      t++;
-      rafRef.current=requestAnimationFrame(draw);
-    }
-    draw();
-    return ()=>cancelAnimationFrame(rafRef.current);
-  },[]);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}}/>;
-}
-
-// ☀️ Sommer — Wellen + Sonne-Strahlen
-function CanvasSummer({ accentColor, opacity=0.4 }) {
-  const canvasRef=useRef(null); const rafRef=useRef(null);
-  useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-    const W=canvas.width,H=canvas.height;
+    const cv=c.current;if(!cv)return;const ctx=cv.getContext('2d');
+    cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;const W=cv.width,H=cv.height;
     let t=0;
     function draw(){
       ctx.clearRect(0,0,W,H);
-      // Sonne
       const sx=W*0.85,sy=H*0.15,sr=80;
-      ctx.globalAlpha=0.25*opacity;
-      for(let ray=0;ray<12;ray++){
-        const angle=(ray/12)*Math.PI*2+t*0.008;
-        const r1=sr+10,r2=sr+40+Math.sin(t*0.05+ray)*15;
-        ctx.strokeStyle='#fde68a'; ctx.lineWidth=3+Math.sin(t*0.04+ray)*1.5;
-        ctx.beginPath();
-        ctx.moveTo(sx+Math.cos(angle)*r1,sy+Math.sin(angle)*r1);
-        ctx.lineTo(sx+Math.cos(angle)*r2,sy+Math.sin(angle)*r2);
-        ctx.stroke();
-      }
-      const sg=ctx.createRadialGradient(sx-sr*0.3,sy-sr*0.3,sr*0.1,sx,sy,sr*1.5);
-      sg.addColorStop(0,'#fde68a'); sg.addColorStop(0.5,'#f59e0b88'); sg.addColorStop(1,'transparent');
-      ctx.beginPath(); ctx.arc(sx,sy,sr*1.5,0,Math.PI*2);
-      ctx.fillStyle=sg; ctx.globalAlpha=0.3*opacity; ctx.fill();
-      ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2);
-      ctx.fillStyle='#fde68a'; ctx.globalAlpha=0.55*opacity; ctx.fill();
-
-      // Wellen
-      ctx.globalAlpha=opacity;
+      ctx.globalAlpha=0.2;
+      for(let ray=0;ray<12;ray++){const a=(ray/12)*Math.PI*2+t*0.008,r1=sr+10,r2=sr+40+Math.sin(t*0.05+ray)*15;ctx.strokeStyle='#fde68a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*r1,sy+Math.sin(a)*r1);ctx.lineTo(sx+Math.cos(a)*r2,sy+Math.sin(a)*r2);ctx.stroke();}
+      const sg=ctx.createRadialGradient(sx,sy,sr*0.1,sx,sy,sr*1.5);sg.addColorStop(0,'#fde68a');sg.addColorStop(1,'transparent');
+      ctx.beginPath();ctx.arc(sx,sy,sr*1.5,0,Math.PI*2);ctx.fillStyle=sg;ctx.globalAlpha=0.28;ctx.fill();
+      ctx.globalAlpha=0.4;
       for(let wave=0;wave<4;wave++){
-        const yBase=H*(0.65+wave*0.1);
-        const amp=H*0.025*(4-wave);
-        const speed=1-wave*0.15;
-        ctx.beginPath();
-        for(let x=0;x<=W;x+=3){
-          const y=yBase+Math.sin(x/W*Math.PI*5-t*speed*1.5+wave)*amp
-                      +Math.sin(x/W*Math.PI*8+t*speed+wave*0.5)*amp*0.4;
-          x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-        }
-        ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
-        const wg=ctx.createLinearGradient(0,yBase,0,H);
-        const alpha=(0.15-wave*0.03)*opacity;
-        wg.addColorStop(0,`rgba(56,189,248,${alpha*2})`);
-        wg.addColorStop(1,`rgba(14,165,233,${alpha})`);
-        ctx.fillStyle=wg; ctx.fill();
+        const yBase=H*(0.65+wave*0.1),amp=H*0.025*(4-wave),sp=1-wave*0.15;
+        ctx.beginPath();for(let x=0;x<=W;x+=3){const y=yBase+Math.sin(x/W*Math.PI*5-t*sp*1.5+wave)*amp;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+        ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+        const wg=ctx.createLinearGradient(0,yBase,0,H);wg.addColorStop(0,'rgba(56,189,248,0.18)');wg.addColorStop(1,'rgba(14,165,233,0.08)');ctx.fillStyle=wg;ctx.fill();
       }
-      ctx.globalAlpha=1;
-      t++;
-      rafRef.current=requestAnimationFrame(draw);
+      ctx.globalAlpha=1;t++;r.current=requestAnimationFrame(draw);
     }
-    draw();
-    return ()=>cancelAnimationFrame(rafRef.current);
+    draw();return()=>cancelAnimationFrame(r.current);
   },[]);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}}/>;
+  return <canvas ref={c} style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}/>;
 }
-
-// ❤️ Love — Herzen mit Physik
-function CanvasLove({ accentColor, opacity=0.45 }) {
-  const canvasRef=useRef(null); const rafRef=useRef(null);
+function CanvasMusic({accentColor}) {
+  const c=useRef(null),r=useRef(null);
   useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-    const W=canvas.width,H=canvas.height;
-    const COLS=['#f43f5e','#ec4899','#f97316','#a855f7'];
-    const hearts=Array.from({length:18},(_,i)=>({
-      x:Math.random()*W, y:H+Math.random()*H*0.4,
-      size:16+Math.random()*36, vy:-(0.6+Math.random()*1.3),
-      vx:(Math.random()-0.5)*0.7, color:COLS[i%COLS.length],
-      wobble:Math.random()*Math.PI*2, ws:0.015+Math.random()*0.025,
-      rotation:Math.random()*Math.PI*2, rs:(Math.random()-0.5)*0.02,
-    }));
-    function drawHeart(x,y,size,color,alpha){
-      ctx.save(); ctx.translate(x,y); ctx.globalAlpha=alpha;
-      const s=size/15;
-      ctx.beginPath();
-      ctx.moveTo(0,-s*4);
-      ctx.bezierCurveTo(s*5,-s*9,s*12,-s*3,0,s*5);
-      ctx.bezierCurveTo(-s*12,-s*3,-s*5,-s*9,0,-s*4);
-      ctx.fillStyle=color; ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(-s*2,-s*6); ctx.bezierCurveTo(-s*1,-s*9,-s*0.5,-s*8,-s*1,-s*6);
-      ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.fill();
-      ctx.restore();
-    }
+    const cv=c.current;if(!cv)return;const ctx=cv.getContext('2d');
+    cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;const W=cv.width,H=cv.height;
+    let t=0;const BAR=60;
+    const hs=Array.from({length:BAR},()=>({h:0.1+Math.random()*0.5,target:0.1+Math.random()*0.6,speed:0.02+Math.random()*0.04,phase:Math.random()*Math.PI*2}));
     function draw(){
       ctx.clearRect(0,0,W,H);
-      hearts.forEach(h=>{
-        h.wobble+=h.ws; h.rotation+=h.rs;
-        h.x+=h.vx+Math.sin(h.wobble)*0.5; h.y+=h.vy;
-        if(h.y<-h.size*3){ h.y=H+h.size; h.x=Math.random()*W; }
-        const alpha=Math.min(1,(-h.y+H)/(H*0.65))*0.7*opacity;
-        ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(h.rotation);
-        drawHeart(0,0,h.size,h.color,alpha);
-        ctx.restore();
+      hs.forEach((b,i)=>{
+        b.h+=(b.target-b.h)*b.speed;if(Math.abs(b.h-b.target)<0.01)b.target=0.05+Math.random()*0.7*Math.abs(Math.sin(t+b.phase));
+        const bw=W/BAR-2,bh=b.h*H*0.55+Math.sin(t*2+b.phase)*H*0.03,bx=i*(W/BAR)+1,by=H*0.78-bh;
+        const g=ctx.createLinearGradient(bx,by,bx,H*0.78);
+        g.addColorStop(0,accentColor+'ff');g.addColorStop(0.5,accentColor+'aa');g.addColorStop(1,accentColor+'33');
+        ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(bx,by,bw,bh,3);ctx.fill();
+        ctx.globalAlpha=0.12;ctx.beginPath();ctx.roundRect(bx,H*0.78,bw,bh*0.4,3);ctx.fill();ctx.globalAlpha=1;
       });
-      // Großes Zentrum-Herz mit Pulse
-      rafRef.current=requestAnimationFrame(draw);
+      t+=0.022;r.current=requestAnimationFrame(draw);
     }
-    draw();
-    return ()=>cancelAnimationFrame(rafRef.current);
-  },[]);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}}/>;
+    draw();return()=>cancelAnimationFrame(r.current);
+  },[accentColor]);
+  return <canvas ref={c} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:0.4,pointerEvents:'none'}}/>;
+}
+function FoodBg(){
+  return(<div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none',opacity:0.18}}>
+    {['🍕','🍔','🍣','🥗','🌮','🍜','🥩','🍷'].map((e,i)=>(<div key={i} style={{position:'absolute',left:`${5+i*12}%`,top:`${15+(i%3)*25}%`,fontSize:`${3+(i%3)*0.8}rem`,filter:'drop-shadow(0 0 12px rgba(255,150,50,0.5))',animation:`drinkFloat ${3+i*0.5}s ${i*0.35}s ease-in-out infinite`}}>{e}</div>))}
+  </div>);
+}
+function HalloweenBg(){
+  return(<div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none',opacity:0.25}}>
+    <style>{`@keyframes ghostFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-20px) rotate(3deg)}}`}</style>
+    {['👻','🎃','🕷️','👻','🦇','🕸️','💀','🌙'].map((e,i)=>(<div key={i} style={{position:'absolute',left:`${5+i*12}%`,top:`${10+(i%3)*28}%`,fontSize:`${2.5+(i%3)*0.5}rem`,filter:'drop-shadow(0 0 8px rgba(255,100,0,0.6))',animation:`ghostFloat ${3+i*0.4}s ${i*0.5}s ease-in-out infinite`}}>{e}</div>))}
+  </div>);
 }
 
-// 🎉 Party / Konfetti
-function CanvasParty({ accentColor, opacity=0.55 }) {
-  const canvasRef=useRef(null); const rafRef=useRef(null);
-  useEffect(()=>{
-    const canvas=canvasRef.current; if(!canvas)return;
-    const ctx=canvas.getContext('2d');
-    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-    const W=canvas.width,H=canvas.height;
-    const COLS=['#f59e0b','#ef4444','#a855f7','#06b6d4','#22c55e','#ec4899','#3b82f6','#f97316'];
-    const pieces=Array.from({length:90},(_,i)=>({
-      x:Math.random()*W, y:Math.random()*H-H,
-      w:6+Math.random()*12, h:4+Math.random()*8,
-      color:COLS[i%COLS.length],
-      vy:1+Math.random()*3, vx:(Math.random()-0.5)*2,
-      rotation:Math.random()*Math.PI*2, rs:(Math.random()-0.5)*0.15,
-      wobble:Math.random()*Math.PI*2, ws:0.02+Math.random()*0.04,
-      shape: i%4, // 0=rect, 1=circle, 2=star, 3=triangle
-    }));
-    function draw(){
-      ctx.clearRect(0,0,W,H);
-      pieces.forEach(p=>{
-        p.wobble+=p.ws; p.rotation+=p.rs;
-        p.x+=p.vx+Math.sin(p.wobble)*0.8; p.y+=p.vy;
-        if(p.y>H+20){ p.y=-20; p.x=Math.random()*W; }
-        const scaleY=Math.abs(Math.cos(p.wobble));
-        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rotation);
-        ctx.globalAlpha=(0.7+Math.sin(p.wobble)*0.2)*opacity;
-        ctx.fillStyle=p.color;
-        if(p.shape===0){
-          ctx.fillRect(-p.w/2,-p.h*scaleY/2,p.w,p.h*scaleY);
-        } else if(p.shape===1){
-          ctx.beginPath(); ctx.ellipse(0,0,p.w*0.5,p.h*0.5*scaleY,0,0,Math.PI*2); ctx.fill();
-        } else if(p.shape===2){
-          ctx.beginPath();
-          ctx.moveTo(0,-p.w/2); ctx.lineTo(p.w*0.15,-p.h*0.1*scaleY); ctx.lineTo(p.w*0.5,0);
-          ctx.lineTo(p.w*0.15,p.h*0.1*scaleY); ctx.lineTo(0,p.w/2);
-          ctx.lineTo(-p.w*0.15,p.h*0.1*scaleY); ctx.lineTo(-p.w*0.5,0);
-          ctx.lineTo(-p.w*0.15,-p.h*0.1*scaleY); ctx.closePath(); ctx.fill();
-        } else {
-          ctx.beginPath(); ctx.moveTo(0,-p.h*scaleY/2); ctx.lineTo(p.w/2,p.h*scaleY/2); ctx.lineTo(-p.w/2,p.h*scaleY/2); ctx.closePath(); ctx.fill();
-        }
-        ctx.restore(); ctx.globalAlpha=1;
-      });
-      rafRef.current=requestAnimationFrame(draw);
-    }
-    draw();
-    return ()=>cancelAnimationFrame(rafRef.current);
-  },[]);
-  return <canvas ref={canvasRef} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:1,pointerEvents:'none'}}/>;
-}
-
-// 🍕 Food — schwebende Icons mit Dampf
-function FoodBg() {
-  const items=['🍕','🍔','🍣','🥗','🌮','🍜','🥩','🍷'];
-  return (
-    <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none',opacity:0.18}}>
-      {items.map((e,i)=>(
-        <div key={i} style={{
-          position:'absolute', left:`${5+i*12}%`,
-          top:`${15+(i%3)*25}%`, fontSize:`${3+((i%3)*0.8)}rem`,
-          filter:'drop-shadow(0 0 12px rgba(255,150,50,0.5))',
-          animation:`drinkFloat ${3+i*0.5}s ${i*0.35}s ease-in-out infinite`,
-        }}>{e}</div>
-      ))}
-    </div>
-  );
-}
-
-// 🎃 Halloween
-function HalloweenBg() {
-  const items=['👻','🎃','🕷️','👻','🦇','🕸️','💀','🌙'];
-  return (
-    <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none',opacity:0.25}}>
-      {items.map((e,i)=>(
-        <div key={i} style={{
-          position:'absolute', left:`${5+i*12}%`, top:`${10+(i%3)*28}%`,
-          fontSize:`${2.5+(i%3)*0.5}rem`,
-          filter:'drop-shadow(0 0 8px rgba(255,100,0,0.6))',
-          animation:`ghostFloat ${3+i*0.4}s ${i*0.5}s ease-in-out infinite`,
-        }}>{e}</div>
-      ))}
-      <style>{`@keyframes ghostFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-20px) rotate(3deg)}}`}</style>
-    </div>
-  );
-}
-
-// ── Theme → Canvas ────────────────────────────────────────────────────────────
+// ── Theme Router ──────────────────────────────────────────────────────────────
 function ThemeBackground({ theme, accent }) {
-  switch(theme){
-    case 'germany':          return <CanvasGermanyFlag />;
-    case 'american_football':return <CanvasAmericanFootball />;
-    case 'soccer':           return <CanvasSoccer />;
-    case 'disco':            return <CanvasDisco accentColor={accent.bg} />;
-    case 'music':            return <CanvasMusic accentColor={accent.bg} />;
-    case 'beer':             return <CanvasBeer />;
-    case 'cocktail':         return <CanvasCocktail accentColor={accent.bg} />;
-    case 'summer':           return <CanvasSummer accentColor={accent.bg} />;
-    case 'fireworks':        return <CanvasFireworks accentColor={accent.bg} />;
-    case 'halloween':        return <HalloweenBg />;
-    case 'christmas':        return <CanvasSnow />;
-    case 'love':             return <CanvasLove accentColor={accent.bg} />;
-    case 'party':            return <CanvasParty accentColor={accent.bg} />;
-    case 'food':             return <FoodBg />;
-    default:                 return <CanvasParty accentColor={accent.bg} opacity={0.2}/>;
+  switch(theme) {
+    case 'germany':           return <GermanyFlag3D />;
+    case 'american_football': return <AmericanFootball3D />;
+    case 'soccer':            return <Soccer3D />;
+    case 'disco':             return <DiscoBall3D />;
+    case 'music':             return <CanvasMusic accentColor={accent.bg} />;
+    case 'beer':              return <CanvasBeer />;
+    case 'cocktail':          return <CanvasCocktail accentColor={accent.bg} />;
+    case 'summer':            return <CanvasSummer />;
+    case 'fireworks':         return <Fireworks3D />;
+    case 'halloween':         return <HalloweenBg />;
+    case 'christmas':         return <Christmas3D />;
+    case 'love':              return <Love3D />;
+    case 'party':             return <Party3D />;
+    case 'food':              return <FoodBg />;
+    default:                  return <Party3D />;
   }
 }
 
-// ── Spotlight-Streak ──────────────────────────────────────────────────────────
-function SpotlightStreak({color}){
-  return(
-    <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}>
-      {[0,1,2].map(i=>(
-        <div key={i} style={{position:'absolute',top:`${15+i*28}%`,left:0,width:'35%',height:i===1?3:1.5,
-          background:`linear-gradient(90deg,transparent,${color},transparent)`,opacity:i===1?0.5:0.2,
-          animation:`spotlight ${3.5+i*1.2}s ${i*0.8}s ease-in-out infinite`}}/>
-      ))}
-    </div>
-  );
-}
-function ShimmerBars({color}){
-  return(
-    <div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}>
-      {[0,1,2,3].map(i=>(
-        <div key={i} style={{position:'absolute',left:0,right:0,top:`${20+i*20}%`,height:1,
-          background:`linear-gradient(90deg,transparent,${color},transparent)`,
-          animation:`shimmerBar ${2.5+i*0.6}s ${i*0.4}s ease-in-out infinite`}}/>
-      ))}
-    </div>
-  );
-}
-function PulseRings({color}){
-  return(
-    <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
-      {[0,1,2].map(i=>(
-        <div key={i} style={{position:'absolute',width:500+i*200,height:500+i*200,borderRadius:'50%',
-          border:`1px solid ${color}`,opacity:0,
-          animation:`ringPulse ${2.5+i*0.7}s ${i*0.6}s ease-in-out infinite`}}/>
-      ))}
-    </div>
-  );
-}
+// ── Overlay Helfer ────────────────────────────────────────────────────────────
+function SpotlightStreak({color}){return(<div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}>{[0,1,2].map(i=>(<div key={i} style={{position:'absolute',top:`${15+i*28}%`,left:0,width:'35%',height:i===1?3:1.5,background:`linear-gradient(90deg,transparent,${color},transparent)`,opacity:i===1?0.5:0.2,animation:`spotlight ${3.5+i*1.2}s ${i*0.8}s ease-in-out infinite`}}/>))}</div>);}
+function ShimmerBars({color}){return(<div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}>{[0,1,2,3].map(i=>(<div key={i} style={{position:'absolute',left:0,right:0,top:`${20+i*20}%`,height:1,background:`linear-gradient(90deg,transparent,${color},transparent)`,animation:`shimmerBar ${2.5+i*0.6}s ${i*0.4}s ease-in-out infinite`}}/>))}</div>);}
+function PulseRings({color}){return(<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>{[0,1,2].map(i=>(<div key={i} style={{position:'absolute',width:500+i*200,height:500+i*200,borderRadius:'50%',border:`1px solid ${color}`,opacity:0,animation:`ringPulse ${2.5+i*0.7}s ${i*0.6}s ease-in-out infinite`}}/>))}</div>);}
 
 // ── Uhr ───────────────────────────────────────────────────────────────────────
-function Clock(){
-  const [time,setTime]=useState(new Date());
-  useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);
-  return(
-    <div style={{textAlign:'right'}}>
-      <div style={{fontSize:'3rem',fontWeight:700,lineHeight:1,color:'#fff',letterSpacing:'-0.02em'}}>{format(time,'HH:mm')}</div>
-      <div style={{fontSize:'0.9rem',color:'rgba(255,255,255,0.5)',marginTop:3}}>{format(time,'EEEE, d. MMMM',{locale:de})}</div>
-    </div>
-  );
-}
+function Clock(){const[time,setTime]=useState(new Date());useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);return(<div style={{textAlign:'right'}}><div style={{fontSize:'3rem',fontWeight:700,lineHeight:1,color:'#fff',letterSpacing:'-0.02em'}}>{format(time,'HH:mm')}</div><div style={{fontSize:'0.9rem',color:'rgba(255,255,255,0.5)',marginTop:3}}>{format(time,'EEEE, d. MMMM',{locale:de})}</div></div>);}
 
 // ── Progress Bar ──────────────────────────────────────────────────────────────
-function ProgressBar({duration,color,resetKey}){
-  const [progress,setProgress]=useState(0);
-  const startRef=useRef(Date.now());
-  useEffect(()=>{
-    setProgress(0); startRef.current=Date.now();
-    const iv=setInterval(()=>{setProgress(Math.min((Date.now()-startRef.current)/1000/duration,1));},50);
-    return()=>clearInterval(iv);
-  },[duration,resetKey]);
-  return(
-    <div style={{position:'absolute',bottom:0,left:0,right:0,height:5,background:'rgba(255,255,255,0.08)'}}>
-      <div style={{height:'100%',width:`${progress*100}%`,background:color,
-        boxShadow:`0 0 10px ${color}`,transition:'width 0.05s linear',borderRadius:'0 3px 3px 0'}}/>
-    </div>
-  );
-}
+function ProgressBar({duration,color,resetKey}){const[p,setP]=useState(0);const sr=useRef(Date.now());useEffect(()=>{setP(0);sr.current=Date.now();const iv=setInterval(()=>setP(Math.min((Date.now()-sr.current)/1000/duration,1)),50);return()=>clearInterval(iv);},[duration,resetKey]);return(<div style={{position:'absolute',bottom:0,left:0,right:0,height:5,background:'rgba(255,255,255,0.08)'}}><div style={{height:'100%',width:`${p*100}%`,background:color,boxShadow:`0 0 10px ${color}`,transition:'width 0.05s linear',borderRadius:'0 3px 3px 0'}}/></div>);}
 
-// ── Slide: ANNOUNCEMENT ───────────────────────────────────────────────────────
-function SlideAnnouncement({slide,accent,theme}){
-  return(
-    <div style={{position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',
-      alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:32}}>
-      <ThemeBackground theme={theme} accent={accent}/>
-      <div style={{fontSize:'clamp(3rem,7vw,5.5rem)',fontWeight:900,color:'#fff',lineHeight:1.05,
-        letterSpacing:'-0.03em',textShadow:`0 2px 40px rgba(0,0,0,0.5),0 0 80px ${accent.glow}`,
-        animation:'floatUp 5s ease-in-out infinite',position:'relative',zIndex:1}}>{slide.title}</div>
-      {slide.subtitle&&<div style={{fontSize:'1.8rem',color:'rgba(255,255,255,0.7)',
-        animation:'floatDown 6s ease-in-out infinite',position:'relative',zIndex:1}}>{slide.subtitle}</div>}
-      {slide.body_text&&<div style={{fontSize:'1.2rem',color:'rgba(255,255,255,0.45)',maxWidth:700,position:'relative',zIndex:1}}>{slide.body_text}</div>}
-      {slide.cta_text&&<div style={{background:accent.bg,color:accent.text,padding:'16px 48px',
-        borderRadius:16,fontWeight:800,fontSize:'1.4rem',boxShadow:`0 0 30px ${accent.glow}`,
-        animation:'pulseGlow 3s ease-in-out infinite',position:'relative',zIndex:1}}>{slide.cta_text}</div>}
-    </div>
-  );
-}
+// ── Slide-Typen ───────────────────────────────────────────────────────────────
+const glass = 'background:rgba(0,0,0,0.5);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 24px;font-weight:600;font-size:1.1rem;color:#fff';
 
-// ── Slide: EVENT ──────────────────────────────────────────────────────────────
+function SlideAnnouncement({slide,accent,theme}){return(<div style={{position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:32}}>
+  <ThemeBackground theme={theme} accent={accent}/>
+  <div style={{fontSize:'clamp(3rem,7vw,5.5rem)',fontWeight:900,color:'#fff',lineHeight:1.05,letterSpacing:'-0.03em',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`,animation:'floatUp 5s ease-in-out infinite',position:'relative',zIndex:1}}>{slide.title}</div>
+  {slide.subtitle&&<div style={{fontSize:'1.8rem',color:'rgba(255,255,255,0.85)',animation:'floatDown 6s ease-in-out infinite',position:'relative',zIndex:1,textShadow:'0 2px 20px rgba(0,0,0,0.9)'}}>{slide.subtitle}</div>}
+  {slide.body_text&&<div style={{fontSize:'1.2rem',color:'rgba(255,255,255,0.65)',maxWidth:700,position:'relative',zIndex:1,textShadow:'0 2px 10px rgba(0,0,0,0.9)'}}>{slide.body_text}</div>}
+  {slide.cta_text&&<div style={{background:accent.bg,color:accent.text,padding:'16px 48px',borderRadius:16,fontWeight:800,fontSize:'1.4rem',boxShadow:`0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`,animation:'pulseGlow 3s ease-in-out infinite',position:'relative',zIndex:1}}>{slide.cta_text}</div>}
+</div>);}
+
 function SlideEvent({slide,accent,theme}){
-  const hasEndDate=slide.event_end_date&&slide.event_end_date!==slide.event_date;
-  const dateStr=slide.event_date?format(parseISO(slide.event_date),'EEEE, d. MMMM',{locale:de}):'';
-  const endDateStr=hasEndDate?format(parseISO(slide.event_end_date),'d. MMMM',{locale:de}):'';
-  const timeStr=[slide.event_time,slide.event_end_time].filter(Boolean).join(' – ')+(slide.event_time?' Uhr':'');
-  return(
-    <div style={{position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',
-      alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:36}}>
-      <ThemeBackground theme={theme} accent={accent}/>
-      <SpotlightStreak color={accent.bg}/>
-      <div style={{background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,
-        padding:'6px 24px',position:'relative',zIndex:1,animation:'slideInUp 0.6s 0.1s both ease-out'}}>
-        <span style={{fontSize:'0.85rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase'}}>EVENT</span>
-      </div>
-      <div style={{fontSize:'clamp(3rem,6.5vw,5rem)',fontWeight:900,lineHeight:1.05,letterSpacing:'-0.03em',
-        background:`linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`,
-        backgroundSize:'200% auto',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',
-        animation:'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both ease-out',position:'relative',zIndex:1}}>{slide.title}</div>
-      {slide.subtitle&&<div style={{fontSize:'1.8rem',color:'rgba(255,255,255,0.65)',
-        animation:'slideInUp 0.7s 0.35s both ease-out',position:'relative',zIndex:1}}>{slide.subtitle}</div>}
-      <div style={{display:'flex',gap:16,flexWrap:'wrap',justifyContent:'center',position:'relative',zIndex:1}}>
-        {dateStr&&<div style={{background:'rgba(255,255,255,0.08)',borderRadius:12,padding:'12px 24px',fontWeight:600,fontSize:'1.1rem',color:'#fff',animation:'slideInUp 0.7s 0.5s both ease-out'}}>📅 {dateStr}{endDateStr?` – ${endDateStr}`:''}</div>}
-        {timeStr&&<div style={{background:'rgba(255,255,255,0.08)',borderRadius:12,padding:'12px 24px',fontWeight:600,fontSize:'1.1rem',color:'#fff',animation:'slideInUp 0.7s 0.65s both ease-out'}}>🕐 {timeStr}</div>}
-        {slide.location&&<div style={{background:'rgba(255,255,255,0.08)',borderRadius:12,padding:'12px 24px',fontWeight:600,fontSize:'1.1rem',color:'#fff',animation:'slideInUp 0.7s 0.8s both ease-out'}}>📍 {slide.location}</div>}
-      </div>
-      {slide.cta_text&&<div style={{background:accent.bg,color:accent.text,padding:'16px 48px',borderRadius:16,fontWeight:800,fontSize:'1.4rem',
-        boxShadow:`0 0 30px ${accent.glow}`,animation:'slideInUp 0.7s 0.95s both ease-out,pulseGlow 3s 1.8s ease-in-out infinite',
-        position:'relative',zIndex:1}}>{slide.cta_text}</div>}
+  const hasEnd=slide.event_end_date&&slide.event_end_date!==slide.event_date;
+  const ds=slide.event_date?format(parseISO(slide.event_date),'EEEE, d. MMMM',{locale:de}):'';
+  const de2=hasEnd?format(parseISO(slide.event_end_date),'d. MMMM',{locale:de}):'';
+  const ts=[slide.event_time,slide.event_end_time].filter(Boolean).join(' – ')+(slide.event_time?' Uhr':'');
+  return(<div style={{position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:36}}>
+    <ThemeBackground theme={theme} accent={accent}/><SpotlightStreak color={accent.bg}/>
+    <div style={{background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'6px 24px',position:'relative',zIndex:1,animation:'slideInUp 0.6s 0.1s both'}}><span style={{fontSize:'0.85rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase'}}>EVENT</span></div>
+    <div style={{fontSize:'clamp(3rem,6.5vw,5rem)',fontWeight:900,lineHeight:1.05,letterSpacing:'-0.03em',background:`linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`,backgroundSize:'200% auto',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',animation:'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both',position:'relative',zIndex:1,filter:'drop-shadow(0 2px 20px rgba(0,0,0,0.9))'}}>{slide.title}</div>
+    {slide.subtitle&&<div style={{fontSize:'1.8rem',color:'rgba(255,255,255,0.8)',animation:'slideInUp 0.7s 0.35s both',position:'relative',zIndex:1,textShadow:'0 2px 20px rgba(0,0,0,0.9)'}}>{slide.subtitle}</div>}
+    <div style={{display:'flex',gap:16,flexWrap:'wrap',justifyContent:'center',position:'relative',zIndex:1}}>
+      {ds&&<div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:12,padding:'12px 24px',fontWeight:600,fontSize:'1.1rem',color:'#fff',animation:'slideInUp 0.7s 0.5s both'}}>📅 {ds}{de2?` – ${de2}`:''}</div>}
+      {ts&&<div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:12,padding:'12px 24px',fontWeight:600,fontSize:'1.1rem',color:'#fff',animation:'slideInUp 0.7s 0.65s both'}}>🕐 {ts}</div>}
+      {slide.location&&<div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:12,padding:'12px 24px',fontWeight:600,fontSize:'1.1rem',color:'#fff',animation:'slideInUp 0.7s 0.8s both'}}>📍 {slide.location}</div>}
     </div>
-  );
-}
+    {slide.cta_text&&<div style={{background:accent.bg,color:accent.text,padding:'16px 48px',borderRadius:16,fontWeight:800,fontSize:'1.4rem',boxShadow:`0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`,animation:'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite',position:'relative',zIndex:1}}>{slide.cta_text}</div>}
+  </div>);}
 
-// ── Slide: DRINK SPECIAL ──────────────────────────────────────────────────────
 function SlideDrinkSpecial({slide,accent,theme}){
-  let drinks=[];
-  try{drinks=JSON.parse(slide.body_text||'[]');}catch{}
-  if(!drinks.length) drinks=[{name:slide.title,price:slide.price_info,emoji:'🍹'}];
+  let drinks=[];try{drinks=JSON.parse(slide.body_text||'[]');}catch{}
+  if(!drinks.length)drinks=[{name:slide.title,price:slide.price_info,emoji:'🍹'}];
   const valid=drinks.filter(d=>d&&d.name);
-  return(
-    <div style={{position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',
-      alignItems:'center',height:'100%',padding:'60px 80px',textAlign:'center',gap:32}}>
-      <ThemeBackground theme={theme} accent={accent}/>
-      <ShimmerBars color={accent.bg}/>
-      <div style={{background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,
-        padding:'6px 24px',position:'relative',zIndex:1,animation:'fadeInScale 0.5s 0.1s both'}}>
-        <span style={{fontSize:'0.85rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase'}}>DRINK SPECIAL</span>
-      </div>
-      {slide.title&&valid.length>1&&<div style={{fontSize:'clamp(2.5rem,5vw,4rem)',fontWeight:900,color:'#fff',
-        letterSpacing:'-0.03em',animation:'slideInUp 0.6s 0.2s both ease-out',position:'relative',zIndex:1}}>{slide.title}</div>}
-      <div style={{display:'flex',gap:24,flexWrap:'wrap',justifyContent:'center',width:'100%',position:'relative',zIndex:1}}>
-        {valid.map((d,i)=>(
-          <div key={i} style={{background:'rgba(255,255,255,0.06)',border:`2px solid ${accent.bg}44`,
-            borderRadius:24,padding:'28px 36px',textAlign:'center',minWidth:180,flex:'1 1 180px',maxWidth:280,
-            animation:`bounceIn 0.7s ${0.35+i*0.15}s both`}}>
-            <div style={{fontSize:'2.8rem',marginBottom:12,display:'inline-block',animation:`drinkFloat ${3.5+i*0.5}s ${i*0.3}s ease-in-out infinite`}}>{d.emoji||'🍹'}</div>
-            <div style={{fontSize:'1.3rem',fontWeight:800,color:'#fff',marginBottom:12}}>{d.name}</div>
-            {d.price&&<div style={{display:'inline-block',padding:'8px 20px',borderRadius:12,
-              background:accent.bg,color:accent.text,fontWeight:900,fontSize:'1.5rem',
-              boxShadow:`0 0 20px ${accent.glow}`,backgroundImage:`linear-gradient(90deg,${accent.bg} 0%,#fff6 40%,${accent.bg} 60%,#fff6 80%,${accent.bg} 100%)`,
-              backgroundSize:'200% auto',animation:'shimmer 3s linear infinite'}}>{d.price}</div>}
-          </div>
-        ))}
-      </div>
-      {slide.subtitle&&<div style={{fontSize:'1.3rem',color:'rgba(255,255,255,0.55)',position:'relative',zIndex:1,animation:'slideInUp 0.6s 0.9s both ease-out'}}>{slide.subtitle}</div>}
+  return(<div style={{position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'60px 80px',textAlign:'center',gap:32}}>
+    <ThemeBackground theme={theme} accent={accent}/><ShimmerBars color={accent.bg}/>
+    <div style={{background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'6px 24px',position:'relative',zIndex:1,animation:'fadeInScale 0.5s 0.1s both'}}><span style={{fontSize:'0.85rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase'}}>DRINK SPECIAL</span></div>
+    {slide.title&&valid.length>1&&<div style={{fontSize:'clamp(2.5rem,5vw,4rem)',fontWeight:900,color:'#fff',letterSpacing:'-0.03em',animation:'slideInUp 0.6s 0.2s both',position:'relative',zIndex:1,textShadow:'0 2px 30px rgba(0,0,0,0.9)'}}>{slide.title}</div>}
+    <div style={{display:'flex',gap:24,flexWrap:'wrap',justifyContent:'center',width:'100%',position:'relative',zIndex:1}}>
+      {valid.map((d,i)=>(<div key={i} style={{background:'rgba(0,0,0,0.5)',backdropFilter:'blur(14px)',border:`2px solid ${accent.bg}55`,borderRadius:24,padding:'28px 36px',textAlign:'center',minWidth:180,flex:'1 1 180px',maxWidth:280,animation:`bounceIn 0.7s ${0.35+i*0.15}s both`,boxShadow:`0 8px 32px rgba(0,0,0,0.5),0 0 24px ${accent.glow}22`}}>
+        <div style={{fontSize:'2.8rem',marginBottom:12,display:'inline-block',animation:`drinkFloat ${3.5+i*0.5}s ${i*0.3}s ease-in-out infinite`}}>{d.emoji||'🍹'}</div>
+        <div style={{fontSize:'1.3rem',fontWeight:800,color:'#fff',marginBottom:12}}>{d.name}</div>
+        {d.price&&<div style={{display:'inline-block',padding:'8px 20px',borderRadius:12,background:accent.bg,color:accent.text,fontWeight:900,fontSize:'1.5rem',boxShadow:`0 0 20px ${accent.glow}`,backgroundImage:`linear-gradient(90deg,${accent.bg} 0%,#fff6 40%,${accent.bg} 60%,#fff6 80%,${accent.bg} 100%)`,backgroundSize:'200% auto',animation:'shimmer 3s linear infinite'}}>{d.price}</div>}
+      </div>))}
     </div>
-  );
-}
+    {slide.subtitle&&<div style={{fontSize:'1.3rem',color:'rgba(255,255,255,0.65)',position:'relative',zIndex:1,animation:'slideInUp 0.6s 0.9s both'}}>{slide.subtitle}</div>}
+  </div>);}
 
-// ── Slide: COUNTDOWN ─────────────────────────────────────────────────────────
 function SlideCountdown({slide,accent,theme}){
-  const [now,setNow]=useState(new Date());
-  useEffect(()=>{const iv=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(iv);},[]);
-  if(!slide.event_date) return null;
+  const[now,setNow]=useState(new Date());useEffect(()=>{const iv=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(iv);},[]);
+  if(!slide.event_date)return null;
   const target=parseISO(slide.event_date+(slide.event_time?'T'+slide.event_time:'T00:00:00'));
-  const totalSec=differenceInSeconds(target,now);
-  if(totalSec<0) return(
-    <div style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:32,textAlign:'center'}}>
-      <ThemeBackground theme={theme} accent={accent}/>
-      <div style={{fontSize:'5rem',animation:'bounceIn 0.8s both',position:'relative',zIndex:1}}>🎉</div>
-      <div style={{fontSize:'4rem',fontWeight:900,color:accent.bg,textShadow:`0 0 60px ${accent.glow}`,
-        animation:'pulseGlow 2s ease-in-out infinite',position:'relative',zIndex:1}}>ES IST SOWEIT!</div>
-      <div style={{fontSize:'2rem',color:'rgba(255,255,255,0.7)',fontWeight:600,position:'relative',zIndex:1}}>{slide.title}</div>
-    </div>
-  );
-  const days=Math.floor(totalSec/86400),hours=Math.floor((totalSec%86400)/3600);
-  const mins=Math.floor((totalSec%3600)/60),secs=totalSec%60;
+  const total=differenceInSeconds(target,now);
+  if(total<0)return(<div style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:32,textAlign:'center'}}><ThemeBackground theme={theme} accent={accent}/><div style={{fontSize:'5rem',animation:'bounceIn 0.8s both',position:'relative',zIndex:1}}>🎉</div><div style={{fontSize:'4rem',fontWeight:900,color:accent.bg,textShadow:`0 0 60px ${accent.glow}`,animation:'pulseGlow 2s ease-in-out infinite',position:'relative',zIndex:1}}>ES IST SOWEIT!</div><div style={{fontSize:'2rem',color:'rgba(255,255,255,0.85)',fontWeight:600,position:'relative',zIndex:1,textShadow:'0 2px 20px rgba(0,0,0,0.9)'}}>{slide.title}</div></div>);
+  const days=Math.floor(total/86400),hours=Math.floor((total%86400)/3600),mins=Math.floor((total%3600)/60),secs=total%60;
   const units=days>0?[{v:days,l:'Tage'},{v:hours,l:'Std.'},{v:mins,l:'Min.'}]:[{v:hours,l:'Std.'},{v:mins,l:'Min.'},{v:secs,l:'Sek.'}];
-  return(
-    <div style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:40,textAlign:'center',padding:'60px 80px'}}>
-      <ThemeBackground theme={theme} accent={accent}/>
-      <PulseRings color={accent.bg}/>
-      <div style={{background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'6px 24px',position:'relative',zIndex:1,animation:'fadeInScale 0.5s 0.1s both'}}>
-        <span style={{fontSize:'0.85rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase'}}>Countdown</span>
-      </div>
-      <div style={{fontSize:'3.8rem',fontWeight:900,color:'#fff',lineHeight:1.05,letterSpacing:'-0.02em',
-        textShadow:'0 2px 40px rgba(0,0,0,0.5)',animation:'slideInUp 0.6s 0.2s both ease-out',position:'relative',zIndex:1}}>{slide.title}</div>
-      <div style={{display:'flex',gap:24,alignItems:'center',justifyContent:'center',position:'relative',zIndex:1}}>
-        {units.map((u,i)=>(
-          <div key={i} style={{textAlign:'center'}}>
-            <div style={{background:'rgba(255,255,255,0.06)',border:`2px solid ${accent.bg}`,borderRadius:20,padding:'24px 36px',minWidth:130,
-              boxShadow:`0 0 40px ${accent.glow}`,animation:`bounceIn 0.7s ${0.4+i*0.12}s both`,overflow:'hidden'}}>
-              <div key={`${i}-${u.v}`} style={{fontSize:'5rem',fontWeight:900,color:'#fff',lineHeight:1,
-                letterSpacing:'-0.04em',fontVariantNumeric:'tabular-nums',animation:'numberFlip 0.35s ease-out both'}}>
-                {String(u.v).padStart(2,'0')}
-              </div>
-              <div style={{fontSize:'1rem',color:'rgba(255,255,255,0.5)',marginTop:8,fontWeight:600}}>{u.l}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      {(slide.event_date||slide.event_time||slide.location)&&(
-        <div style={{display:'flex',gap:16,flexWrap:'wrap',justifyContent:'center',position:'relative',zIndex:1}}>
-          {slide.event_date&&<div style={{background:'rgba(255,255,255,0.08)',borderRadius:10,padding:'10px 22px',color:'#fff',fontWeight:600,fontSize:'1.1rem',animation:'slideInUp 0.6s 0.8s both ease-out'}}>📅 {format(parseISO(slide.event_date),'EEEE, d. MMMM yyyy',{locale:de})}</div>}
-          {slide.event_time&&<div style={{background:'rgba(255,255,255,0.08)',borderRadius:10,padding:'10px 22px',color:'#fff',fontWeight:600,fontSize:'1.1rem',animation:'slideInUp 0.6s 0.95s both ease-out'}}>🕐 {slide.event_time} Uhr</div>}
-          {slide.location&&<div style={{background:'rgba(255,255,255,0.08)',borderRadius:10,padding:'10px 22px',color:'#fff',fontWeight:600,fontSize:'1.1rem',animation:'slideInUp 0.6s 1.1s both ease-out'}}>📍 {slide.location}</div>}
+  return(<div style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:40,textAlign:'center',padding:'60px 80px'}}>
+    <ThemeBackground theme={theme} accent={accent}/><PulseRings color={accent.bg}/>
+    <div style={{background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'6px 24px',position:'relative',zIndex:1,animation:'fadeInScale 0.5s 0.1s both'}}><span style={{fontSize:'0.85rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase'}}>Countdown</span></div>
+    <div style={{fontSize:'3.8rem',fontWeight:900,color:'#fff',lineHeight:1.05,textShadow:'0 2px 40px rgba(0,0,0,0.9)',animation:'slideInUp 0.6s 0.2s both',position:'relative',zIndex:1}}>{slide.title}</div>
+    <div style={{display:'flex',gap:24,alignItems:'center',justifyContent:'center',position:'relative',zIndex:1}}>
+      {units.map((u,i)=>(<div key={i} style={{textAlign:'center'}}>
+        <div style={{background:'rgba(0,0,0,0.6)',backdropFilter:'blur(14px)',border:`2px solid ${accent.bg}`,borderRadius:20,padding:'24px 36px',minWidth:130,boxShadow:`0 0 40px ${accent.glow},0 8px 32px rgba(0,0,0,0.6)`,animation:`bounceIn 0.7s ${0.4+i*0.12}s both`,overflow:'hidden'}}>
+          <div key={`${i}-${u.v}`} style={{fontSize:'5rem',fontWeight:900,color:'#fff',lineHeight:1,letterSpacing:'-0.04em',fontVariantNumeric:'tabular-nums',animation:'numberFlip 0.35s ease-out both'}}>{String(u.v).padStart(2,'0')}</div>
+          <div style={{fontSize:'1rem',color:'rgba(255,255,255,0.6)',marginTop:8,fontWeight:600}}>{u.l}</div>
         </div>
-      )}
+      </div>))}
     </div>
-  );
-}
+    {(slide.event_date||slide.event_time||slide.location)&&(<div style={{display:'flex',gap:16,flexWrap:'wrap',justifyContent:'center',position:'relative',zIndex:1}}>
+      {slide.event_date&&<div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:10,padding:'10px 22px',color:'#fff',fontWeight:600,fontSize:'1.1rem',animation:'slideInUp 0.6s 0.8s both'}}>📅 {format(parseISO(slide.event_date),'EEEE, d. MMMM yyyy',{locale:de})}</div>}
+      {slide.event_time&&<div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:10,padding:'10px 22px',color:'#fff',fontWeight:600,fontSize:'1.1rem',animation:'slideInUp 0.6s 0.95s both'}}>🕐 {slide.event_time} Uhr</div>}
+      {slide.location&&<div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:10,padding:'10px 22px',color:'#fff',fontWeight:600,fontSize:'1.1rem',animation:'slideInUp 0.6s 1.1s both'}}>📍 {slide.location}</div>}
+    </div>)}
+  </div>);}
 
-// ── Dot Nav ───────────────────────────────────────────────────────────────────
-function DotNav({slides,currentIdx,accents}){
-  return(
-    <div style={{position:'absolute',bottom:20,left:'50%',transform:'translateX(-50%)',display:'flex',gap:8,zIndex:20}}>
-      {slides.map((s,i)=>{
-        const a=accents[s.accent_color]||accents.amber;
-        return <div key={i} style={{height:6,width:i===currentIdx?24:6,borderRadius:3,
-          background:i===currentIdx?a.bg:'rgba(255,255,255,0.2)',transition:'all 0.3s ease',
-          boxShadow:i===currentIdx?`0 0 8px ${a.bg}`:'none'}}/>;
-      })}
-    </div>
-  );
-}
+function DotNav({slides,currentIdx}){return(<div style={{position:'absolute',bottom:20,left:'50%',transform:'translateX(-50%)',display:'flex',gap:8,zIndex:20}}>{slides.map((s,i)=>{const a=ACCENTS[s.accent_color]||ACCENTS.amber;return<div key={i} style={{height:6,width:i===currentIdx?24:6,borderRadius:3,background:i===currentIdx?a.bg:'rgba(255,255,255,0.2)',transition:'all 0.3s ease',boxShadow:i===currentIdx?`0 0 8px ${a.bg}`:'none'}}/>;})}</div>);}
 
-// ── Haupt-Komponente ──────────────────────────────────────────────────────────
 export default function Display(){
-  const [currentIdx,setCurrentIdx]=useState(0);
-  const [isTransitioning,setIsTransitioning]=useState(false);
+  const[currentIdx,setCurrentIdx]=useState(0);
+  const[isTransitioning,setIsTransitioning]=useState(false);
   const timerRef=useRef(null);
   useEffect(()=>{injectKeyframes();},[]);
 
-  const {data}=useQuery({
-    queryKey:['displaySlides-v5'],
+  const{data}=useQuery({
+    queryKey:['displaySlides'],
     queryFn:async()=>{
-      const res=await base44.functions.invoke('getDisplaySlides');
-      return res.data;
+      const res=await fetch('/functions/getDisplaySlides');
+      if(!res.ok)throw new Error('Fehler');
+      const json=await res.json();
+      const now=new Date().toISOString();
+      return(json.slides||[]).filter(s=>{if(!s.is_active)return false;if(s.show_from&&now<s.show_from)return false;if(s.show_until&&now>s.show_until)return false;return true;}).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
     },
     refetchInterval:30000,
   });
 
-  const slides=data?.slides||[];
-  const company=data?.company;
+  const slides=data||[];
   useEffect(()=>{
-    if(!slides.length) return;
+    if(!slides.length)return;
     const dur=(slides[currentIdx]?.duration_seconds||8)*1000;
-    timerRef.current=setTimeout(()=>{
-      setIsTransitioning(true);
-      setTimeout(()=>{setCurrentIdx(i=>(i+1)%slides.length);setIsTransitioning(false);},500);
-    },dur);
+    timerRef.current=setTimeout(()=>{setIsTransitioning(true);setTimeout(()=>{setCurrentIdx(i=>(i+1)%slides.length);setIsTransitioning(false);},500);},dur);
     return()=>clearTimeout(timerRef.current);
   },[currentIdx,slides]);
 
@@ -1495,40 +809,21 @@ export default function Display(){
   const accent=slide?(ACCENTS[slide.accent_color]||ACCENTS.amber):ACCENTS.amber;
   const theme=slide?(slide.background_theme&&slide.background_theme!=='auto'?slide.background_theme:detectTheme(slide.title,slide.subtitle)):'default';
 
-  if(!slide) return(
-    <div style={{background:'#0a0a0a',width:'100vw',height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}>
-      <div style={{fontSize:'3rem',opacity:0.3}}>📺</div>
-      <div style={{color:'rgba(255,255,255,0.4)',fontSize:'1.5rem',fontWeight:600}}>Keine aktiven Slides</div>
-      <div style={{color:'rgba(255,255,255,0.2)',fontSize:'0.9rem'}}>Erstelle Slides im Display-Manager</div>
-    </div>
-  );
+  if(!slide)return(<div style={{background:'#0a0a0a',width:'100vw',height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}><div style={{fontSize:'3rem',opacity:0.3}}>📺</div><div style={{color:'rgba(255,255,255,0.4)',fontSize:'1.5rem',fontWeight:600}}>Keine aktiven Slides</div><div style={{color:'rgba(255,255,255,0.2)',fontSize:'0.9rem'}}>Erstelle Slides im Display-Manager</div></div>);
 
-  return(
-    <div style={{background:'#0a0a0a',width:'100vw',height:'100vh',overflow:'hidden',
-      position:'relative',fontFamily:'"Inter",system-ui,sans-serif',color:'#fff'}}>
-      <div style={{position:'absolute',inset:0,pointerEvents:'none',
-        background:`radial-gradient(ellipse 80% 60% at 50% 100%,${accent.glow} 0%,transparent 70%)`,
-        transition:'background 1s ease'}}/>
-      <div style={{position:'absolute',top:0,left:0,right:0,zIndex:30,
-        display:'flex',alignItems:'center',justifyContent:'space-between',padding:'28px 48px',
-        background:'linear-gradient(to bottom,rgba(0,0,0,0.6),transparent)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:12,opacity:0.9}}>
-          {company?.logo_url
-            ? <img src={company.logo_url} alt="Logo" style={{height:48,width:'auto',objectFit:'contain'}}/>
-            : <span style={{fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',color:'#fff'}}>
-                <span style={{color:accent.bg}}>●</span> {company?.company_name||'SAVO'}
-              </span>}
-        </div>
-        <Clock/>
-      </div>
-      <div style={{position:'absolute',inset:0,opacity:isTransitioning?0:1,transition:'opacity 0.5s ease'}}>
-        {slide.slide_type==='announcement' &&<SlideAnnouncement  slide={slide} accent={accent} theme={theme}/>}
-        {slide.slide_type==='event'        &&<SlideEvent         slide={slide} accent={accent} theme={theme}/>}
-        {slide.slide_type==='drink_special'&&<SlideDrinkSpecial  slide={slide} accent={accent} theme={theme}/>}
-        {slide.slide_type==='countdown'    &&<SlideCountdown     slide={slide} accent={accent} theme={theme}/>}
-      </div>
-      {slides.length>1&&<DotNav slides={slides} currentIdx={currentIdx} accents={ACCENTS}/>}
-      <ProgressBar duration={slide.duration_seconds||8} color={accent.bg} resetKey={currentIdx}/>
+  return(<div style={{background:'#050508',width:'100vw',height:'100vh',overflow:'hidden',position:'relative',fontFamily:'"Inter",system-ui,sans-serif',color:'#fff'}}>
+    <div style={{position:'absolute',inset:0,pointerEvents:'none',background:`radial-gradient(ellipse 80% 60% at 50% 100%,${accent.glow} 0%,transparent 70%)`,transition:'background 1s ease'}}/>
+    <div style={{position:'absolute',top:0,left:0,right:0,zIndex:30,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'28px 48px',background:'linear-gradient(to bottom,rgba(0,0,0,0.7),transparent)'}}>
+      <div style={{fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',opacity:0.9}}><span style={{color:accent.bg}}>●</span> SAVO</div>
+      <Clock/>
     </div>
-  );
+    <div style={{position:'absolute',inset:0,opacity:isTransitioning?0:1,transition:'opacity 0.5s ease'}}>
+      {slide.slide_type==='announcement' &&<SlideAnnouncement  slide={slide} accent={accent} theme={theme}/>}
+      {slide.slide_type==='event'        &&<SlideEvent         slide={slide} accent={accent} theme={theme}/>}
+      {slide.slide_type==='drink_special'&&<SlideDrinkSpecial  slide={slide} accent={accent} theme={theme}/>}
+      {slide.slide_type==='countdown'    &&<SlideCountdown     slide={slide} accent={accent} theme={theme}/>}
+    </div>
+    {slides.length>1&&<DotNav slides={slides} currentIdx={currentIdx}/>}
+    <ProgressBar duration={slide.duration_seconds||8} color={accent.bg} resetKey={currentIdx}/>
+  </div>);
 }
