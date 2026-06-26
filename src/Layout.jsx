@@ -96,7 +96,8 @@ export default function Layout({ children, currentPageName }) {
         queryKey: ['notifications'],
         queryFn: () => base44.entities.Notification.list('-created_date', 100),
         enabled: !!currentUser?.email,
-        staleTime: 60000,
+        staleTime: 5 * 60_000,
+        refetchInterval: 60_000,
     });
     const unreadNotifCount = React.useMemo(() => {
         if (!currentUser?.email) return 0;

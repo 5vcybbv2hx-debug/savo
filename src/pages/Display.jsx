@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { base44 } from '@/api/base44Client';
 
 const ACCENTS = {
   amber:   { bg: '#f59e0b', glow: 'rgba(245,158,11,0.45)',  text: '#000', soft: 'rgba(245,158,11,0.14)' },
@@ -788,18 +789,18 @@ export default function Display(){
   useEffect(()=>{injectKeyframes();},[]);
 
   const{data}=useQuery({
-    queryKey:['displaySlides'],
+    queryKey:['displaySlides-v6'],
     queryFn:async()=>{
-      const res=await fetch('/functions/getDisplaySlides');
-      if(!res.ok)throw new Error('Fehler');
-      const json=await res.json();
-      const now=new Date().toISOString();
-      return(json.slides||[]).filter(s=>{if(!s.is_active)return false;if(s.show_from&&now<s.show_from)return false;if(s.show_until&&now>s.show_until)return false;return true;}).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+      const res=await base44.functions.invoke('getDisplaySlides');
+      return res.data;
     },
-    refetchInterval:30000,
+    staleTime:60000,
+    refetchInterval:90000,
+    refetchOnWindowFocus:false,
   });
 
-  const slides=data||[];
+  const slides=data?.slides||[];
+  const company=data?.company;
   useEffect(()=>{
     if(!slides.length)return;
     const dur=(slides[currentIdx]?.duration_seconds||8)*1000;
@@ -816,7 +817,12 @@ export default function Display(){
   return(<div style={{background:'#050508',width:'100vw',height:'100vh',overflow:'hidden',position:'relative',fontFamily:'"Inter",system-ui,sans-serif',color:'#fff'}}>
     <div style={{position:'absolute',inset:0,pointerEvents:'none',background:`radial-gradient(ellipse 80% 60% at 50% 100%,${accent.glow} 0%,transparent 70%)`,transition:'background 1s ease'}}/>
     <div style={{position:'absolute',top:0,left:0,right:0,zIndex:30,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'28px 48px',background:'linear-gradient(to bottom,rgba(0,0,0,0.7),transparent)'}}>
-      <div style={{fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',opacity:0.9}}><span style={{color:accent.bg}}>●</span> SAVO</div>
+      <div style={{display:'flex',alignItems:'center',gap:10,fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',opacity:0.9}}>
+        {company?.logo_url
+          ? <img src={company.logo_url} alt="Logo" style={{height:36,width:'auto',objectFit:'contain'}}/>
+          : <span style={{color:accent.bg}}>●</span>}
+        {company?.company_name||'SAVO'}
+      </div>
       <Clock/>
     </div>
     <div style={{position:'absolute',inset:0,opacity:isTransitioning?0:1,transition:'opacity 0.5s ease'}}>
