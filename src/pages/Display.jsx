@@ -7,7 +7,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { base44 } from '@/api/base44Client';
 
 const ACCENTS = {
   amber:   { bg: '#f59e0b', glow: 'rgba(245,158,11,0.45)',  text: '#000', soft: 'rgba(245,158,11,0.14)' },
@@ -213,63 +212,116 @@ function DiscoBall3D() {
 
 // 🇩🇪 DEUTSCHLAND — 3D Flagge mit Wellen
 function GermanyFlag3D() {
-  const mountRef = useThreeScene((T, W, H) => {
-    const scene = new T.Scene();
-    const camera = new T.PerspectiveCamera(45, W / H, 0.1, 100);
-    camera.position.set(0, 0, 3.8);
+  const mountRef = useRef(null);
+  useEffect(() => {
+    let renderer, animId;
+    loadThree().then(T => {
+      const el = mountRef.current; if (!el) return;
+      const W = el.offsetWidth, H = el.offsetHeight;
 
-    scene.add(new T.AmbientLight(0xffffff, 0.7));
-    const sun = new T.DirectionalLight(0xffd060, 1.4); sun.position.set(4, 5, 6); scene.add(sun);
+      renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(W, H);
+      el.appendChild(renderer.domElement);
 
-    const SEG = 40;
-    const geo = new T.PlaneGeometry(3.0, 1.9, SEG, SEG * 0.6);
-    const posArr = geo.attributes.position;
-    // Kopie der ursprünglichen Y-Positionen (korrekte Indexierung)
-    const origY = new Float32Array(posArr.count);
-    for (let i = 0; i < posArr.count; i++) origY[i] = posArr.array[i * 3 + 1];
+      const scene = new T.Scene();
+      const camera = new T.PerspectiveCamera(45, W / H, 0.1, 100);
+      camera.position.set(0, 0, 4.2);
+      camera.lookAt(0, 0, 0);
 
-    // Vertex-Farben
-    const cols = new Float32Array(posArr.count * 3);
-    for (let i = 0; i < posArr.count; i++) {
-      const y = posArr.array[i * 3 + 1];
-      const t2 = (y + 0.95) / 1.9;
-      let r, g, b;
-      if (t2 > 0.667)      { r=0.07; g=0.07; b=0.07; }
-      else if (t2 > 0.333) { r=0.82; g=0.0;  b=0.0;  }
-      else                  { r=1.0;  g=0.78; b=0.0;  }
-      cols[i*3]=r; cols[i*3+1]=g; cols[i*3+2]=b;
-    }
-    geo.setAttribute('color', new T.BufferAttribute(cols, 3));
+      // Beleuchtung
+      scene.add(new T.AmbientLight(0xffffff, 0.8));
+      const sun = new T.DirectionalLight(0xffeedd, 1.6);
+      sun.position.set(5, 4, 6); scene.add(sun);
+      const fill = new T.DirectionalLight(0x8888ff, 0.4);
+      fill.position.set(-4, 2, 3); scene.add(fill);
 
-    const mat = new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide, transparent: true, opacity: 0.92 });
-    const flag = new T.Mesh(geo, mat);
-    flag.position.x = 0.3; scene.add(flag);
+      // Flagge als Plane-Geometrie (3 Streifen separat für klare Farbtrennung)
+      const STRIPE_H = 0.62;
+      const FLAG_W = 3.0;
+      const SEG_X = 40, SEG_Y = 8;
+      const stripeColors = [0x111111, 0xcc0000, 0xffcc00]; // Schwarz, Rot, Gold
+      const stripes = [];
 
-    // Fahnenstab
-    const poleMat = new T.MeshStandardMaterial({ color: 0xbbbbcc, metalness: 0.9, roughness: 0.1 });
-    scene.add(Object.assign(new T.Mesh(new T.CylinderGeometry(0.028, 0.028, 3.8, 12), poleMat), { position: new T.Vector3(-1.6, 0, 0) }));
-    const ball = new T.Mesh(new T.SphereGeometry(0.07, 16, 16), new T.MeshStandardMaterial({ color: 0xddaa00, metalness: 1, roughness: 0.1 }));
-    ball.position.set(-1.6, 1.9, 0); scene.add(ball);
+      stripeColors.forEach((color, si) => {
+        const geo = new T.PlaneGeometry(FLAG_W, STRIPE_H, SEG_X, SEG_Y);
+        const pos = geo.attributes.position;
+        // Kopiere Ursprungs-Y Werte
+        const baseY = new Float32Array(pos.count);
+        for (let i = 0; i < pos.count; i++) baseY[i] = pos.array[i * 3 + 1];
 
-    return {
-      scene, camera,
-      onFrame(t) {
-        for (let i = 0; i < posArr.count; i++) {
-          const x = posArr.array[i * 3];
-          const nx = (x + 1.5) / 3.0;
-          const amp = nx * nx * 0.35;
-          posArr.array[i * 3 + 2] = Math.sin(nx * Math.PI * 3 - t * 2.2) * amp + Math.sin(nx * Math.PI * 5 - t * 1.6) * amp * 0.3;
-          posArr.array[i * 3 + 1] = origY[i] + Math.sin(nx * Math.PI * 2 - t * 1.8) * amp * 0.25;
-        }
-        posArr.needsUpdate = true;
-        geo.computeVertexNormals();
-        camera.position.x = Math.sin(t * 0.07) * 0.25;
-        camera.position.y = Math.sin(t * 0.05) * 0.1;
+        const mat = new T.MeshStandardMaterial({
+          color, side: T.DoubleSide, roughness: 0.4, metalness: 0.05,
+        });
+        const mesh = new T.Mesh(geo, mat);
+        // Streifen von oben nach unten: Schwarz oben, Rot mitte, Gold unten
+        // Schwarz: y=+STRIPE_H, Rot: y=0, Gold: y=-STRIPE_H
+        mesh.position.set(0.35, STRIPE_H - si * STRIPE_H, 0);
+        scene.add(mesh);
+        stripes.push({ mesh, pos, baseY });
+      });
+
+      // Fahnenstab
+      const poleMat = new T.MeshStandardMaterial({ color: 0xc0c0d0, metalness: 0.95, roughness: 0.05 });
+      const pole = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 4.2, 16), poleMat);
+      pole.position.set(-1.65, 0, 0);
+      scene.add(pole);
+
+      // Kugel oben
+      const knob = new T.Mesh(
+        new T.SphereGeometry(0.09, 20, 20),
+        new T.MeshStandardMaterial({ color: 0xddaa00, metalness: 1.0, roughness: 0.05 })
+      );
+      knob.position.set(-1.65, 2.2, 0);
+      scene.add(knob);
+
+      // Resize
+      const ro = new ResizeObserver(() => {
+        const w2 = el.offsetWidth, h2 = el.offsetHeight;
+        camera.aspect = w2 / h2; camera.updateProjectionMatrix();
+        renderer.setSize(w2, h2);
+      });
+      ro.observe(el); el._ro = ro;
+
+      let t = 0;
+      function animate() {
+        animId = requestAnimationFrame(animate);
+        t += 0.016;
+
+        // Wellen-Animation für jeden Streifen identisch
+        stripes.forEach(({ pos, baseY }) => {
+          for (let i = 0; i < pos.count; i++) {
+            const x = pos.array[i * 3];
+            // nx: 0 (am Stab) → 1 (freies Ende)
+            const nx = (x + FLAG_W / 2) / FLAG_W;
+            // Amplitude steigt zum freien Ende hin stark an
+            const amp = nx * nx * nx * 0.22;
+            // Zwei überlagerte Wellen für natürliches Flattern
+            const wave = Math.sin(nx * Math.PI * 2.5 - t * 1.8) * amp
+                       + Math.sin(nx * Math.PI * 4.5 - t * 1.3) * amp * 0.3;
+            pos.array[i * 3 + 2] = wave;
+            pos.array[i * 3 + 1] = baseY[i] + Math.sin(nx * Math.PI * 1.8 - t * 1.4) * amp * 0.15;
+          }
+          pos.needsUpdate = true;
+        });
+
+        // Kamera leicht schwenken
+        camera.position.x = Math.sin(t * 0.06) * 0.3;
+        camera.position.y = Math.sin(t * 0.045) * 0.12;
         camera.lookAt(0, 0, 0);
+
+        renderer.render(scene, camera);
       }
+      animate();
+    }).catch(console.error);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      if (mountRef.current?._ro) mountRef.current._ro.disconnect();
+      if (renderer) { renderer.dispose(); renderer.domElement?.remove(); }
     };
-  });
-  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.72, pointerEvents: 'none' }} />;
+  }, []);
+  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none' }} />;
 }
 
 // 🎆 FEUERWERK — 3D Partikel mit Physik
@@ -629,7 +681,7 @@ function CanvasSummer() {
       ctx.globalAlpha=0.4;
       for(let wave=0;wave<4;wave++){
         const yBase=H*(0.65+wave*0.1),amp=H*0.025*(4-wave),sp=1-wave*0.15;
-        ctx.beginPath();for(let x=0;x<=W;x+=3){const y=yBase+Math.sin(x/W*Math.PI*4-t*sp*0.003+wave)*amp+Math.sin(x/W*Math.PI*2.5-t*sp*0.0015+wave*0.7)*amp*0.4;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+        ctx.beginPath();for(let x=0;x<=W;x+=3){const y=yBase+Math.sin(x/W*Math.PI*4-t*sp*0.012+wave)*amp+Math.sin(x/W*Math.PI*2.5-t*sp*0.007+wave*0.7)*amp*0.4;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
         ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
         const wg=ctx.createLinearGradient(0,yBase,0,H);wg.addColorStop(0,'rgba(56,189,248,0.18)');wg.addColorStop(1,'rgba(14,165,233,0.08)');ctx.fillStyle=wg;ctx.fill();
       }
@@ -789,18 +841,18 @@ export default function Display(){
   useEffect(()=>{injectKeyframes();},[]);
 
   const{data}=useQuery({
-    queryKey:['displaySlides-v6'],
+    queryKey:['displaySlides'],
     queryFn:async()=>{
-      const res=await base44.functions.invoke('getDisplaySlides');
-      return res.data;
+      const res=await fetch('/functions/getDisplaySlides');
+      if(!res.ok)throw new Error('Fehler');
+      const json=await res.json();
+      const now=new Date().toISOString();
+      return(json.slides||[]).filter(s=>{if(!s.is_active)return false;if(s.show_from&&now<s.show_from)return false;if(s.show_until&&now>s.show_until)return false;return true;}).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
     },
-    staleTime:60000,
-    refetchInterval:90000,
-    refetchOnWindowFocus:false,
+    refetchInterval:30000,
   });
 
-  const slides=data?.slides||[];
-  const company=data?.company;
+  const slides=data||[];
   useEffect(()=>{
     if(!slides.length)return;
     const dur=(slides[currentIdx]?.duration_seconds||8)*1000;
@@ -817,12 +869,7 @@ export default function Display(){
   return(<div style={{background:'#050508',width:'100vw',height:'100vh',overflow:'hidden',position:'relative',fontFamily:'"Inter",system-ui,sans-serif',color:'#fff'}}>
     <div style={{position:'absolute',inset:0,pointerEvents:'none',background:`radial-gradient(ellipse 80% 60% at 50% 100%,${accent.glow} 0%,transparent 70%)`,transition:'background 1s ease'}}/>
     <div style={{position:'absolute',top:0,left:0,right:0,zIndex:30,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'28px 48px',background:'linear-gradient(to bottom,rgba(0,0,0,0.7),transparent)'}}>
-      <div style={{display:'flex',alignItems:'center',gap:10,fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',opacity:0.9}}>
-        {company?.logo_url
-          ? <img src={company.logo_url} alt="Logo" style={{height:36,width:'auto',objectFit:'contain'}}/>
-          : <span style={{color:accent.bg}}>●</span>}
-        {company?.company_name||'SAVO'}
-      </div>
+      <div style={{fontSize:'1.6rem',fontWeight:800,letterSpacing:'-0.03em',opacity:0.9}}><span style={{color:accent.bg}}>●</span> SAVO</div>
       <Clock/>
     </div>
     <div style={{position:'absolute',inset:0,opacity:isTransitioning?0:1,transition:'opacity 0.5s ease'}}>
