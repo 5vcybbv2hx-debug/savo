@@ -1,8 +1,8 @@
 /**
- * navigationConfig.jsx — Zentrale Navigationskonfiguration
- * CANONICAL SOURCE OF TRUTH — wird per GitHub Action nach src/ synced
- *
- * Sidebar: Dashboard, Team, Betrieb, Waren & Lager, Karte, Buchhaltung, Einstellungen
+ * navigationConfig.jsx — Navigationskonfiguration
+ * 
+ * SIDEBAR: Wird aus sidebarConfig.js geladen (Builder-sicher)
+ * MEHR-DRAWER: additionalPages hier pflegen
  */
 import {
     LayoutDashboard, Users, Calendar, ShoppingCart, ClipboardList,
@@ -13,27 +13,14 @@ import {
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare,
     Banknote, BookCopy, Tv, Warehouse,
 } from 'lucide-react';
+import { sidebarPages } from './sidebarConfig';
 
-// ── SIDEBAR (immer sichtbar) ──────────────────────────────────────────────────
+// ── SIDEBAR — aus sidebarConfig.js (wird nicht vom Builder überschrieben) ─────
 export const mainNavigation = [
     {
         id: 'main',
-        name: 'Übersicht',
-        pages: [
-            { page: 'Dashboard', name: 'Dashboard', icon: LayoutDashboard, permission: 'canViewDashboard' },
-        ],
-    },
-    {
-        id: 'hubs',
-        name: 'Bereiche',
-        pages: [
-            { page: 'TeamHub',       name: 'Team',           icon: Users,      permission: 'canViewShifts' },
-            { page: 'BetriebHub',    name: 'Betrieb',        icon: Store,      permission: 'canViewReservations' },
-            { page: 'Warehouse',     name: 'Waren & Lager',  icon: Warehouse,  permission: 'canViewWarehouse' },
-            { page: 'KarteHub',      name: 'Karte',          icon: Wine,       permission: 'canViewDrinkMenu' },
-            { page: 'AccountingHub', name: 'Buchhaltung',    icon: Calculator, permission: 'canViewAccounting' },
-            { page: 'Settings',      name: 'Einstellungen',  icon: Settings,   permission: 'canViewSettings' },
-        ],
+        name: 'Navigation',
+        pages: sidebarPages,
     },
 ];
 
