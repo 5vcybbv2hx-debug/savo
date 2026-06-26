@@ -1157,7 +1157,7 @@ export default function Display(){
 
   const slide=slides[currentIdx];
   const accent=slide?(ACCENTS[slide.accent_color]||ACCENTS.amber):ACCENTS.amber;
-  const theme=slide?detectTheme(slide.title,slide.subtitle):'default';
+  const theme=slide?(slide.background_theme&&slide.background_theme!=='auto'?slide.background_theme:detectTheme(slide.title,slide.subtitle)):'default';
 
   if(!slide) return(
     <div style={{background:'#0a0a0a',width:'100vw',height:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}>
