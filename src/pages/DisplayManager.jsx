@@ -67,7 +67,7 @@ export default function DisplayManager() {
   const { data: slides = [], isLoading } = useQuery({
     queryKey: ['display-slides-all'],
     queryFn:  () => base44.entities.DisplaySlide.list('sort_order', 100),
-    staleTime: STALE.FAST,
+    staleTime: STALE.SLOW,
   });
 
   const saveMut = useMutation({
@@ -349,5 +349,4 @@ export default function DisplayManager() {
       </AlertDialog>
     </div>
   );
-}
 }
