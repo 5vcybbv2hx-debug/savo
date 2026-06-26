@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
-import { MapPin, CheckSquare, ListChecks, Brush, Star } from 'lucide-react';
+import { MapPin, CheckSquare, ListChecks, Brush, Star, Tv } from 'lucide-react';
 import { format } from 'date-fns';
 
 function StatBadge({ count, variant = 'default' }) {
@@ -48,7 +48,6 @@ export default function BetriebHub() {
     const permissions = usePermissions();
     const today = format(new Date(), 'yyyy-MM-dd');
 
-    // Offene Todos heute
     const { data: todos = [] } = useQuery({
         queryKey: ['todos-open-today'],
         queryFn: () => base44.entities.Todo.filter({ status: 'open' }, '-created_date', 100),
@@ -56,7 +55,6 @@ export default function BetriebHub() {
         enabled: permissions.canViewTodos,
     });
 
-    // Reservierungen heute
     const { data: reservations = [] } = useQuery({
         queryKey: ['reservations-today'],
         queryFn: () => base44.entities.Reservation.filter({ date: today }, 'time', 100),
@@ -66,19 +64,18 @@ export default function BetriebHub() {
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-6 pb-32 md:pb-8">
-            {/* Header */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-foreground">Betrieb</h1>
-                <p className="text-muted-foreground text-sm mt-1">
-                    Gäste, Aufgaben & tägliche Abläufe
-                </p>
+                <p className="text-muted-foreground text-sm mt-1">Gäste, Aufgaben & tägliche Abläufe</p>
             </div>
 
             {/* Gäste */}
             <div className="mb-6">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Gäste</p>
                 <div className="space-y-2">
-                    <NavCard icon={MapPin} label="Gäste & Tische" description={reservations.length > 0 ? `${reservations.length} Reservierungen heute` : 'Tische & Reservierungen'} page="GuestHub" badge={reservations.length || undefined} permission="canViewReservations" />
+                    <NavCard icon={MapPin} label="Gäste & Tische"
+                        description={reservations.length > 0 ? `${reservations.length} Reservierungen heute` : 'Tische & Reservierungen'}
+                        page="GuestHub" badge={reservations.length || undefined} permission="canViewReservations" />
                 </div>
             </div>
 
@@ -86,9 +83,9 @@ export default function BetriebHub() {
             <div className="mb-6">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Aufgaben</p>
                 <div className="space-y-2">
-                    <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"         page="Todos"       badge={todos.length || undefined} permission="canViewTodos" />
-                    <NavCard icon={ListChecks}  label="Wochenaufgaben" description="Wiederkehrende Wochenplanung"  page="WeeklyTasks" permission="canViewTodos" />
-                    <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste" page="Cleaning"  permission="canViewCleaning" />
+                    <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"            page="Todos"       badge={todos.length || undefined} permission="canViewTodos" />
+                    <NavCard icon={ListChecks}  label="Wochenaufgaben" description="Wiederkehrende Wochenplanung"     page="WeeklyTasks" permission="canViewTodos" />
+                    <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste"  page="Cleaning"    permission="canViewCleaning" />
                 </div>
             </div>
 
@@ -98,6 +95,18 @@ export default function BetriebHub() {
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Veranstaltungen</p>
                     <div className="space-y-2">
                         <NavCard icon={Star} label="Events" description="Veranstaltungen planen & verwalten" page="Events" permission="canViewEvents" />
+                    </div>
+                </div>
+            )}
+
+            {/* Marketing & Display */}
+            {permissions.isManager && (
+                <div className="mb-6">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Marketing & Display</p>
+                    <div className="space-y-2">
+                        <NavCard icon={Tv} label="TV-Display"
+                            description="Slideshow für Bar-TV verwalten"
+                            page="DisplayManager" permission="isManager" />
                     </div>
                 </div>
             )}
