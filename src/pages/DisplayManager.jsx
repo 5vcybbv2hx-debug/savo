@@ -54,6 +54,26 @@ const ACCENT_COLORS = [
   { value: 'white',    label: 'Weiß',      hex: '#f8fafc' },
 ];
 
+const BACKGROUND_THEMES = [
+  { value: 'auto',             label: '✨ Automatisch',        desc: 'Anhand des Titels erkannt' },
+  { value: 'germany',          label: '🇩🇪 Deutschlandfahne',   desc: 'Wehende Flagge' },
+  { value: 'american_football',label: '🏈 American Football',  desc: 'Spiralball & Yard-Lines' },
+  { value: 'soccer',           label: '⚽ Fußball',             desc: 'Ball & Rasen' },
+  { value: 'disco',            label: '🪩 Disco',               desc: 'Spiegelkugel & Lichter' },
+  { value: 'music',            label: '🎵 Live Music',          desc: 'Equalizer-Visualizer' },
+  { value: 'party',            label: '🎉 Party',               desc: 'Konfetti-Regen' },
+  { value: 'cocktail',         label: '🍹 Cocktails',           desc: 'Farbige Blasen' },
+  { value: 'beer',             label: '🍺 Bier',                desc: 'Aufsteigende Blasen' },
+  { value: 'fireworks',        label: '🎆 Feuerwerk',           desc: 'Partikel-Explosion' },
+  { value: 'summer',           label: '☀️ Sommer',              desc: 'Sonne & Wellen' },
+  { value: 'christmas',        label: '❄️ Weihnachten',         desc: 'Schneeflocken' },
+  { value: 'halloween',        label: '🎃 Halloween',           desc: 'Geister & Kürbisse' },
+  { value: 'love',             label: '❤️ Liebe',               desc: 'Aufsteigende Herzen' },
+  { value: 'food',             label: '🍕 Food',                desc: 'Schwebende Icons' },
+  { value: 'default',          label: '⭐ Standard',            desc: 'Dezente Partikel' },
+];
+
+
 const TYPE_COLORS = {
   announcement:  'bg-blue-500/10 text-blue-400 border-blue-500/30',
   event:         'bg-purple-500/10 text-purple-400 border-purple-500/30',
@@ -149,7 +169,7 @@ export default function DisplayManager() {
     if (s.slide_type === 'drink_special' && s.body_text) {
       try { drinks = JSON.parse(s.body_text); } catch {}
     }
-    setForm({ ...EMPTY_FORM, ...s, drinks, event_end_date: s.event_end_date || '', event_end_time: s.event_end_time || '', location: s.location || '' });
+    setForm({ ...EMPTY_FORM, ...s, drinks, event_end_date: s.event_end_date || '', event_end_time: s.event_end_time || '', location: s.location || '', background_theme: s.background_theme || 'auto' });
     setModal({ open: true, data: s });
     setActiveTab('form');
   };
@@ -405,6 +425,34 @@ export default function DisplayManager() {
                     {ACCENT_COLORS.find(c => c.value === form.accent_color)?.label}
                   </span>
                 </p>
+              </div>
+
+
+              {/* Hintergrund-Animation */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Hintergrund-Animation</Label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {BACKGROUND_THEMES.map(bg => (
+                    <button
+                      key={bg.value}
+                      onClick={() => f('background_theme', bg.value)}
+                      className={cn(
+                        'flex items-start gap-2 p-2.5 rounded-lg border text-left transition-all',
+                        form.background_theme === bg.value
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border bg-card hover:border-primary/50'
+                      )}
+                    >
+                      <span className="text-lg leading-none mt-0.5">{bg.label.split(' ')[0]}</span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-foreground truncate">
+                          {bg.label.split(' ').slice(1).join(' ')}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">{bg.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Anzeigedauer + Reihenfolge */}
