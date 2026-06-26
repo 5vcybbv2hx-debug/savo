@@ -318,14 +318,10 @@ export default function Display() {
   const { data: slides = [] } = useQuery({
     queryKey: ['display-slides'],
     queryFn: async () => {
-      const now = new Date();
-      const all = await base44.entities.DisplaySlide.list('sort_order', 100);
-      return all.filter(s => {
-        if (!s.is_active) return false;
-        if (s.show_from  && isBefore(now, parseISO(s.show_from)))  return false;
-        if (s.show_until && isAfter(now,  parseISO(s.show_until))) return false;
-        return true;
-      });
+      const res = await fetch('/functions/getDisplaySlides');
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.slides || [];
     },
     refetchInterval: 30000,
   });
