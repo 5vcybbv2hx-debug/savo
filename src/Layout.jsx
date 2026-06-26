@@ -211,9 +211,6 @@ export default function Layout({ children, currentPageName }) {
     }, []);
 
 
-    // Derived values
-    const allPages = mainNavigation.flatMap(area => area.pages).concat(additionalPages);
-
     // Drawer: strukturierte Bereiche mit Unterseiten (nicht Hub-Einträge)
     const drawerSections = useMemo(() => [
         {
