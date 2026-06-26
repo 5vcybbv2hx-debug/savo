@@ -393,15 +393,6 @@ function ShimmerBars({color}){return(<div style={{position:'absolute',inset:0,ov
 function PulseRings({color}){return(<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>{[0,1,2].map(i=>(<div key={i} style={{position:'absolute',width:500+i*200,height:500+i*200,borderRadius:'50%',border:`1px solid ${color}`,opacity:0,animation:`ringPulse ${2.5+i*0.7}s ${i*0.6}s ease-in-out infinite`}}/>))}</div>);}
 
 // Text-Backdrop — sorgt für Lesbarkeit bei jedem Hintergrund
-function TextBackdrop({ children, style = {} }) {
-  return (
-    <div style={{ position: 'relative', zIndex: 2, ...style }}>
-      <div style={{ position: 'absolute', inset: '-24px -32px', borderRadius: 24, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', zIndex: -1 }} />
-      {children}
-    </div>
-  );
-}
-
 // ── Uhr ────────────────────────────────────────────────────────────────────────
 function Clock() {
   const [time, setTime] = useState(new Date());
@@ -464,33 +455,6 @@ function NextSlidePreview({ slide, visible }) {
   );
 }
 
-// ── Wetter Widget ─────────────────────────────────────────────────────────────
-const WMO_ICONS = {
-  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',
-  61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',80:'🌦️',81:'🌧️',82:'⛈️',
-  95:'⛈️',96:'⛈️',99:'⛈️',
-};
-function WeatherWidget() {
-  const [weather, setWeather] = useState(null);
-  useEffect(() => {
-    // Open-Meteo — kostenlos, kein API-Key, default Berlin
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,weathercode,windspeed_10m&timezone=Europe%2FBerlin')
-      .then(r => r.json())
-      .then(d => setWeather({ temp: Math.round(d.current.temperature_2m), code: d.current.weathercode, wind: Math.round(d.current.windspeed_10m) }))
-      .catch(() => {});
-  }, []);
-  if (!weather) return null;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 12, padding: '8px 16px', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>{WMO_ICONS[weather.code] || '🌡️'}</span>
-      <div>
-        <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff', lineHeight: 1 }}>{weather.temp}°</div>
-        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>{weather.wind} km/h</div>
-      </div>
-    </div>
-  );
-}
-
 // ══════════════════════════════════════════════════════════════════════════════
 // LOADING SPLASH
 // ══════════════════════════════════════════════════════════════════════════════
@@ -521,10 +485,7 @@ function AmbientScreen() {
       </div>
       {/* Gitter */}
       <div style={{ position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)',backgroundSize:'80px 80px',pointerEvents:'none' }}/>
-      {/* Wetter oben rechts */}
-      <div style={{ position:'absolute',top:40,right:56,zIndex:10 }}>
-        <WeatherWidget />
-      </div>
+
       {/* Große Uhr */}
       <div style={{ position:'relative',zIndex:10,textAlign:'center' }}>
         <div style={{ fontSize:'clamp(5rem,16vw,13rem)',fontWeight:800,lineHeight:1,letterSpacing:'-0.05em',color:'#ffffff',fontVariantNumeric:'tabular-nums',textShadow:'0 0 80px rgba(99,102,241,0.4),0 2px 40px rgba(0,0,0,0.8)' }}>
@@ -554,12 +515,12 @@ function SlideAnnouncement({ slide, accent, theme }) {
   return (
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:isDiscoParty?'flex-end':'center',alignItems:'center',height:'100%',padding:isDiscoParty?'40px 100px 120px':'80px 120px',textAlign:'center',gap:28 }}>
       <ThemeBackground theme={theme} accent={accent} prominentDisco />
-      <TextBackdrop style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:28,padding:'40px 60px' }}>
+      <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:28,padding:'40px 60px' }, position:"relative", zIndex:2}>
         <div style={{ fontSize:'clamp(2.2rem,5.5vw,4.8rem)',fontWeight:900,color:'#fff',lineHeight:1.05,letterSpacing:'-0.03em',textShadow:`0 0 40px ${accent.glow}`,animation:'floatUp 5s ease-in-out infinite' }}>{slide.title}</div>
         {slide.subtitle && <div style={{ fontSize:'clamp(1.2rem,2.2vw,1.8rem)',color:'rgba(255,255,255,0.85)',animation:'floatDown 6s ease-in-out infinite' }}>{slide.subtitle}</div>}
         {slide.body_text && <div style={{ fontSize:'clamp(0.9rem,1.5vw,1.2rem)',color:'rgba(255,255,255,0.65)',maxWidth:700 }}>{slide.body_text}</div>}
         {slide.cta_text && <div style={{ background:accent.bg,color:accent.text,padding:'14px 40px',borderRadius:14,fontWeight:800,fontSize:'clamp(1rem,1.8vw,1.4rem)',boxShadow:`0 0 30px ${accent.glow}`,animation:'pulseGlow 3s ease-in-out infinite' }}>{slide.cta_text}</div>}
-      </TextBackdrop>
+      </div>
     </div>
   );
 }
@@ -573,7 +534,7 @@ function SlideEvent({ slide, accent, theme }) {
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:28 }}>
       <ThemeBackground theme={theme} accent={accent} />
       <SpotlightStreak color={accent.bg} />
-      <TextBackdrop style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:24,padding:'48px 72px',maxWidth:900,width:'100%' }}>
+      <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:24,padding:'48px 72px',maxWidth:900,width:'100%' }, position:"relative", zIndex:2}>
         <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.6s 0.1s both' }}>
           <span style={{ fontSize:'0.8rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>EVENT</span>
         </div>
@@ -585,7 +546,7 @@ function SlideEvent({ slide, accent, theme }) {
           {slide.location && <div style={{ background:'rgba(0,0,0,0.4)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:10,padding:'10px 20px',fontWeight:600,fontSize:'clamp(0.85rem,1.4vw,1.1rem)',color:'#fff',animation:'slideInUp 0.7s 0.8s both' }}>📍 {slide.location}</div>}
         </div>
         {slide.cta_text && <div style={{ background:accent.bg,color:accent.text,padding:'14px 40px',borderRadius:14,fontWeight:800,fontSize:'clamp(1rem,1.8vw,1.4rem)',boxShadow:`0 0 30px ${accent.glow}`,animation:'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite' }}>{slide.cta_text}</div>}
-      </TextBackdrop>
+      </div>
     </div>
   );
 }
@@ -628,11 +589,11 @@ function SlideCountdown({ slide, accent, theme }) {
   if (total < 0) return (
     <div style={{ position:'relative',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:32,textAlign:'center' }}>
       <ThemeBackground theme={theme} accent={accent} />
-      <TextBackdrop style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:20,padding:'48px 80px' }}>
+      <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:20,padding:'48px 80px' }, position:"relative", zIndex:2}>
         <div style={{ fontSize:'clamp(3rem,7vw,5rem)',animation:'bounceIn 0.8s both' }}>🎉</div>
         <div style={{ fontSize:'clamp(2rem,5vw,4rem)',fontWeight:900,color:accent.bg,textShadow:`0 0 60px ${accent.glow}`,animation:'pulseGlow 2s ease-in-out infinite' }}>ES IST SOWEIT!</div>
         <div style={{ fontSize:'clamp(1.2rem,2.5vw,2rem)',color:'rgba(255,255,255,0.85)',fontWeight:600 }}>{slide.title}</div>
-      </TextBackdrop>
+      </div>
     </div>
   );
   const days=Math.floor(total/86400),hours=Math.floor((total%86400)/3600),mins=Math.floor((total%3600)/60),secs=total%60;
@@ -641,7 +602,7 @@ function SlideCountdown({ slide, accent, theme }) {
     <div style={{ position:'relative',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100%',gap:36,textAlign:'center',padding:'60px 80px' }}>
       <ThemeBackground theme={theme} accent={accent} />
       <PulseRings color={accent.bg} />
-      <TextBackdrop style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:32,padding:'48px 72px' }}>
+      <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:32,padding:'48px 72px' }, position:"relative", zIndex:2}>
         <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px' }}>
           <span style={{ fontSize:'0.8rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>Countdown</span>
         </div>
@@ -661,7 +622,7 @@ function SlideCountdown({ slide, accent, theme }) {
           {slide.event_time && <div style={{ background:'rgba(0,0,0,0.4)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:10,padding:'9px 18px',color:'#fff',fontWeight:600,fontSize:'clamp(0.8rem,1.3vw,1.1rem)' }}>🕐 {slide.event_time} Uhr</div>}
           {slide.location && <div style={{ background:'rgba(0,0,0,0.4)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:10,padding:'9px 18px',color:'#fff',fontWeight:600,fontSize:'clamp(0.8rem,1.3vw,1.1rem)' }}>📍 {slide.location}</div>}
         </div>
-      </TextBackdrop>
+      </div>
     </div>
   );
 }
@@ -678,7 +639,7 @@ function SlideQRCode({ slide, accent, theme }) {
   return (
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:40 }}>
       <ThemeBackground theme={theme} accent={accent} />
-      <TextBackdrop style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:32,padding:'48px 72px' }}>
+      <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:32,padding:'48px 72px' }, position:"relative", zIndex:2}>
         <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px' }}>
           <span style={{ fontSize:'0.8rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>{slide.subtitle || 'QR-Code scannen'}</span>
         </div>
@@ -688,7 +649,7 @@ function SlideQRCode({ slide, accent, theme }) {
           <img ref={qrRef} alt="QR Code" style={{ width:clamp240,height:clamp240,borderRadius:14,display:'block',background:'rgba(255,255,255,0.05)' }} />
         </div>
         {slide.cta_text && <div style={{ fontSize:'clamp(0.9rem,1.5vw,1.2rem)',color:'rgba(255,255,255,0.7)',fontWeight:500 }}>{slide.cta_text}</div>}
-      </TextBackdrop>
+      </div>
     </div>
   );
 }
@@ -700,7 +661,7 @@ function SlideTonight({ slide, accent, theme }) {
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:32 }}>
       <ThemeBackground theme={theme} accent={accent} />
       <SpotlightStreak color={accent.bg} />
-      <TextBackdrop style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:28,padding:'48px 80px',maxWidth:900,width:'100%' }}>
+      <div style={{ display:'flex',flexDirection:'column',alignItems:'center',gap:28,padding:'48px 80px',maxWidth:900,width:'100%' }, position:"relative", zIndex:2}>
         <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.5s 0.1s both' }}>
           <span style={{ fontSize:'0.8rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>Heute Abend</span>
         </div>
@@ -716,7 +677,7 @@ function SlideTonight({ slide, accent, theme }) {
           </div>
         )}
         {slide.event_time && <div style={{ background:'rgba(0,0,0,0.4)',border:`1px solid ${accent.bg}55`,borderRadius:10,padding:'10px 24px',fontWeight:600,fontSize:'clamp(0.9rem,1.5vw,1.2rem)',color:accent.bg,animation:'slideInUp 0.6s 0.65s both' }}>🕐 Ab {slide.event_time} Uhr</div>}
-      </TextBackdrop>
+      </div>
     </div>
   );
 }
