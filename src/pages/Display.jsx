@@ -1,6 +1,6 @@
 /**
  * Display.jsx — Vollbild-Slideshow für Bar-TV
- * v6: Full 3D via Three.js — Disco Mirror Ball, German Flag Shader, 3D Fireworks,
+ * v7: Full 3D via Three.js — Disco Mirror Ball, German Flag Shader, 3D Fireworks,
  *     3D Soccer/Football, 3D Hearts, 3D Confetti, 3D Snow
  */
 import { useState, useEffect, useRef } from 'react';
