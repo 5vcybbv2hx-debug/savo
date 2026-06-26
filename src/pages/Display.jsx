@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { base44 } from '@/api/base44Client';
 
 // ── Farb-Palette ──────────────────────────────────────────────────────────────
 const ACCENTS = {
@@ -547,25 +548,16 @@ export default function Display() {
   useEffect(() => { injectKeyframes(); }, []);
 
   const { data } = useQuery({
-    queryKey: ['displaySlides'],
+    queryKey: ['displaySlides-v3'],
     queryFn: async () => {
-      const res = await fetch('/functions/getDisplaySlides');
-      if (!res.ok) throw new Error('Fehler beim Laden');
-      const json = await res.json();
-      const now = new Date().toISOString();
-      return (json.slides || [])
-        .filter(s => {
-          if (!s.is_active) return false;
-          if (s.show_from  && now < s.show_from)  return false;
-          if (s.show_until && now > s.show_until) return false;
-          return true;
-        })
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      const res = await base44.functions.invoke('getDisplaySlides');
+      return res.data;
     },
     refetchInterval: 30000,
   });
 
-  const slides = data || [];
+  const slides = data?.slides || [];
+  const company = data?.company;
 
   // Auto-Advance
   useEffect(() => {
@@ -610,8 +602,12 @@ export default function Display() {
         padding: '28px 48px',
         background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
       }}>
-        <div style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.03em', opacity: 0.9 }}>
-          <span style={{ color: accent.bg }}>●</span> SAVO
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.9 }}>
+          {company?.logo_url
+            ? <img src={company.logo_url} alt="Logo" style={{ height: 48, width: 'auto', objectFit: 'contain' }} />
+            : <span style={{ fontSize: '1.6rem', fontWeight: 800, letterSpacing: '-0.03em', color: '#fff' }}>
+                <span style={{ color: accent.bg }}>●</span> {company?.company_name || 'SAVO'}
+              </span>}
         </div>
         <Clock />
       </div>
