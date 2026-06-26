@@ -3,12 +3,10 @@ import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import { Package, Search, Layers } from 'lucide-react';
 import StorageSearchTab    from '@/components/storage/SearchTab';
-import StorageSlotsTab     from '@/components/storage/SlotsTab';
 import StorageStructureTab from '@/components/storage/StructureTab';
 
 const TABS = [
   { id: 'search',    label: 'Suche',    icon: Search  },
-  { id: 'slots',     label: 'Fächer',   icon: Package },
   { id: 'structure', label: 'Bereiche', icon: Layers  },
 ];
 
@@ -55,8 +53,7 @@ export default function Storage() {
 
       {/* Tab Content */}
       {activeTab === 'search'    && <StorageSearchTab    permissions={permissions} />}
-      {activeTab === 'slots'     && <StorageSlotsTab     permissions={permissions} />}
-      {activeTab === 'structure' && <StorageStructureTab permissions={permissions} />}
+          {activeTab === 'structure' && <StorageStructureTab permissions={permissions} />}
     </div>
   );
 }
