@@ -208,7 +208,28 @@ Deno.serve(async (req) => {
     <div class="footer-items">
         ${companyInfo.address ? `<div class="footer-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${esc(companyInfo.address)}</div>` : ''}
         ${companyInfo.phone ? `<div class="footer-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.18C.01.66.42.01 1 .01H4a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L5.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><a href="tel:${esc(companyInfo.phone)}">${esc(companyInfo.phone)}</a></div>` : ''}
-        ${companyInfo.opening_hours ? `<div class="footer-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${esc(companyInfo.opening_hours)}</div>` : ''}
+        ${(() => {
+            if (!companyInfo.opening_hours) return '';
+            let hoursStr = companyInfo.opening_hours;
+            // Falls JSON-Objekt: kompakt lesbare Darstellung
+            try {
+                const parsed = typeof hoursStr === 'string' ? JSON.parse(hoursStr) : hoursStr;
+                if (typeof parsed === 'object' && parsed !== null) {
+                    const dayMap = { mo:'Mo', di:'Di', mi:'Mi', do:'Do', fr:'Fr', sa:'Sa', so:'So',
+                                     Montag:'Mo', Dienstag:'Di', Mittwoch:'Mi', Donnerstag:'Do',
+                                     Freitag:'Fr', Samstag:'Sa', Sonntag:'So' };
+                    const lines = Object.entries(parsed).map(([d, v]) => {
+                        const day = dayMap[d] || d;
+                        if (!v || v.open === false) return day + ': geschlossen';
+                        const from = v.from || v.open_time || '';
+                        const to = v.to || v.close || v.close_time || '';
+                        return day + ': ' + from + (to ? '–' + to : '');
+                    });
+                    hoursStr = lines.join(' · ');
+                }
+            } catch(e) { /* kein JSON, als Text verwenden */ }
+            return '<div class="footer-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' + esc(hoursStr) + '</div>';
+        })()}
     </div>
     <div class="footer-legal">Preise inkl. MwSt. · Alle Angaben ohne Gewähr · Bei Unverträglichkeiten bitte Personal ansprechen.</div>
 </footer>
@@ -272,8 +293,7 @@ function render() {
             var badges = '';
             if (item.is_seasonal) badges += '<span class="badge badge-seasonal">Saisonal</span>';
             if (item.is_special) badges += '<span class="badge badge-special">Special</span>';
-            var safeId = item.id.replace(/-/g,'_');
-            return '<button class="item-card' + (!item.is_available ? ' unavailable' : '') + '" onclick="' + (!item.is_available ? '' : 'openModal(\'' + safeId + '\')') + '">' +
+            return '<button class="item-card' + (!item.is_available ? ' unavailable' : '') + '" data-item-id="' + item.id.replace(/-/g,'_') + '">' +
                 '<div class="item-left">' +
                     '<div class="item-name">' + esc(item.name) + '</div>' +
                     (metaParts.length ? '<div class="item-meta">' + metaParts.join('') + '</div>' : '') +
@@ -291,6 +311,10 @@ function render() {
             '<div class="item-list">' + cards + '</div></section>';
     });
     main.innerHTML = html;
+    // Event Delegation für item-cards
+    main.querySelectorAll('.item-card:not(.unavailable)').forEach(function(btn) {
+        btn.addEventListener('click', function() { openModal(this.getAttribute('data-item-id')); });
+    });
 }
 var itemMap = {};
 ALL_ITEMS.forEach(function(i) { itemMap[i.id.replace(/-/g,'_')] = i; });
