@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
@@ -32,6 +33,8 @@ const SLIDE_TYPES = [
   { value: 'drink_special', label: '🍹 Drink Special',     desc: 'Bis zu 4 Getränke mit Preisen' },
   { value: 'image_only',    label: '🖼️ Nur Bild',          desc: 'Bild im Vollformat' },
   { value: 'countdown',     label: '⏳ Countdown',          desc: 'Countdown zu einem Event' },
+  { value: 'qr_code',      label: '📱 QR-Code',            desc: 'QR-Code zum Scannen' },
+  { value: 'tonight',      label: '🌙 Heute Abend',         desc: 'Dienst-Info & Team für heute' },
 ];
 
 // Erweiterte Farbpalette
@@ -80,6 +83,8 @@ const TYPE_COLORS = {
   drink_special: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   image_only:    'bg-green-500/10 text-green-400 border-green-500/30',
   countdown:     'bg-red-500/10 text-red-400 border-red-500/30',
+  qr_code:       'bg-violet-500/10 text-violet-400 border-violet-500/30',
+  tonight:       'bg-sky-500/10 text-sky-400 border-sky-500/30',
 };
 
 const EMPTY_DRINK = { name: '', price: '', emoji: '🍹' };
@@ -99,6 +104,40 @@ export default function DisplayManager() {
   const [modal, setModal]       = useState({ open: false, data: null });
   const [form, setForm]         = useState(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [dragId, setDragId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+
+  const handleDragStart = (e, slide) => {
+    setDragId(slide.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, slide) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (slide.id !== dragId) setDragOverId(slide.id);
+  };
+
+  const handleDrop = async (e, targetSlide) => {
+    e.preventDefault();
+    if (!dragId || dragId === targetSlide.id) { setDragId(null); setDragOverId(null); return; }
+    const sorted = [...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
+    const fromIdx = sorted.findIndex(s => s.id === dragId);
+    const toIdx   = sorted.findIndex(s => s.id === targetSlide.id);
+    if (fromIdx === -1 || toIdx === -1) { setDragId(null); setDragOverId(null); return; }
+    // Neu nummerieren
+    const reordered = [...sorted];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+    // Alle betroffenen Slides updaten
+    await Promise.all(reordered.map((s, i) =>
+      base44.entities.DisplaySlide.update(s.id, { sort_order: i + 1 })
+    ));
+    queryClient.invalidateQueries({ queryKey: ['displaySlides'] });
+    setDragId(null); setDragOverId(null);
+  };
+
+  const handleDragEnd = () => { setDragId(null); setDragOverId(null); };
   const [previewOpen, setPreviewOpen]   = useState(false);
   const [activeTab, setActiveTab]       = useState('form');
 
@@ -237,8 +276,22 @@ export default function DisplayManager() {
       ) : (
         <div className="space-y-2">
           {[...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).map(s => (
-            <Card key={s.id} className={cn('border-border/60 transition-opacity', !s.is_active && 'opacity-50')}>
+            <Card
+              key={s.id}
+              draggable
+              onDragStart={e => handleDragStart(e, s)}
+              onDragOver={e => handleDragOver(e, s)}
+              onDrop={e => handleDrop(e, s)}
+              onDragEnd={handleDragEnd}
+              className={cn(
+                'border-border/60 transition-all duration-150 cursor-default select-none',
+                !s.is_active && 'opacity-50',
+                dragOverId === s.id && 'border-primary ring-1 ring-primary scale-[1.01]',
+                dragId === s.id && 'opacity-40 scale-[0.98]',
+              )}
+            >
               <CardContent className="p-3 flex items-center gap-3">
+                <GripVertical className="w-4 h-4 text-muted-foreground/40 cursor-grab active:cursor-grabbing shrink-0" />
                 <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-base"
                   style={{ background: (ACCENT_COLORS.find(c => c.value === s.accent_color)?.hex || '#f59e0b') + '22' }}>
                   {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.split(' ')[0] || '📢'}
