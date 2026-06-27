@@ -4,6 +4,7 @@
  *     Vorschau-Panel, Auto-Deaktivierung bei Ablauf, doppelte Reihenfolge-Validierung
  */
 import { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -18,8 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
-import { GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
@@ -33,8 +33,8 @@ const SLIDE_TYPES = [
   { value: 'drink_special', label: '🍹 Drink Special',     desc: 'Bis zu 4 Getränke mit Preisen' },
   { value: 'image_only',    label: '🖼️ Nur Bild',          desc: 'Bild im Vollformat' },
   { value: 'countdown',     label: '⏳ Countdown',          desc: 'Countdown zu einem Event' },
-  { value: 'qr_code',      label: '📱 QR-Code',            desc: 'QR-Code zum Scannen' },
-  { value: 'tonight',      label: '🌙 Heute Abend',         desc: 'Dienst-Info & Team für heute' },
+  { value: 'qr_code',       label: '📱 QR-Code',           desc: 'QR-Code mit Text' },
+  { value: 'tonight',       label: '🌙 Tonight',           desc: 'Heutige Veranstaltung' },
 ];
 
 // Erweiterte Farbpalette
@@ -83,8 +83,8 @@ const TYPE_COLORS = {
   drink_special: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   image_only:    'bg-green-500/10 text-green-400 border-green-500/30',
   countdown:     'bg-red-500/10 text-red-400 border-red-500/30',
-  qr_code:       'bg-violet-500/10 text-violet-400 border-violet-500/30',
-  tonight:       'bg-sky-500/10 text-sky-400 border-sky-500/30',
+  qr_code:       'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+  tonight:       'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
 };
 
 const EMPTY_DRINK = { name: '', price: '', emoji: '🍹' };
@@ -99,45 +99,11 @@ const EMPTY_FORM = {
 
 export default function DisplayManager() {
   const permissions = usePermissions();
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
 
   const [modal, setModal]       = useState({ open: false, data: null });
   const [form, setForm]         = useState(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [dragId, setDragId] = useState(null);
-  const [dragOverId, setDragOverId] = useState(null);
-
-  const handleDragStart = (e, slide) => {
-    setDragId(slide.id);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e, slide) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (slide.id !== dragId) setDragOverId(slide.id);
-  };
-
-  const handleDrop = async (e, targetSlide) => {
-    e.preventDefault();
-    if (!dragId || dragId === targetSlide.id) { setDragId(null); setDragOverId(null); return; }
-    const sorted = [...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
-    const fromIdx = sorted.findIndex(s => s.id === dragId);
-    const toIdx   = sorted.findIndex(s => s.id === targetSlide.id);
-    if (fromIdx === -1 || toIdx === -1) { setDragId(null); setDragOverId(null); return; }
-    // Neu nummerieren
-    const reordered = [...sorted];
-    const [moved] = reordered.splice(fromIdx, 1);
-    reordered.splice(toIdx, 0, moved);
-    // Alle betroffenen Slides updaten
-    await Promise.all(reordered.map((s, i) =>
-      base44.entities.DisplaySlide.update(s.id, { sort_order: i + 1 })
-    ));
-    queryClient.invalidateQueries({ queryKey: ['displaySlides'] });
-    setDragId(null); setDragOverId(null);
-  };
-
-  const handleDragEnd = () => { setDragId(null); setDragOverId(null); };
   const [previewOpen, setPreviewOpen]   = useState(false);
   const [activeTab, setActiveTab]       = useState('form');
 
@@ -154,7 +120,7 @@ export default function DisplayManager() {
     slides.forEach(s => {
       if (s.is_active && s.show_until && isAfter(now, parseISO(s.show_until))) {
         base44.entities.DisplaySlide.update(s.id, { is_active: false }).then(() => {
-          qc.invalidateQueries({ queryKey: ['display-slides-all'] });
+          queryClient.invalidateQueries({ queryKey: ['display-slides-all'] });
         });
       }
     });
@@ -173,8 +139,8 @@ export default function DisplayManager() {
         : base44.entities.DisplaySlide.create(payload);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['display-slides'] });
-      qc.invalidateQueries({ queryKey: ['display-slides-all'] });
+      queryClient.invalidateQueries({ queryKey: ['display-slides'] });
+      queryClient.invalidateQueries({ queryKey: ['display-slides-all'] });
       setModal({ open: false, data: null });
       toast.success('Slide gespeichert');
     },
@@ -183,18 +149,55 @@ export default function DisplayManager() {
 
   const toggleMut = useMutation({
     mutationFn: ({ id, is_active }) => base44.entities.DisplaySlide.update(id, { is_active }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['display-slides-all'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['display-slides-all'] }),
   });
 
   const deleteMut = useMutation({
     mutationFn: id => base44.entities.DisplaySlide.delete(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['display-slides'] });
-      qc.invalidateQueries({ queryKey: ['display-slides-all'] });
+      queryClient.invalidateQueries({ queryKey: ['display-slides'] });
+      queryClient.invalidateQueries({ queryKey: ['display-slides-all'] });
       setDeleteTarget(null);
       toast.success('Slide gelöscht');
     },
   });
+
+  const reorderMut = useMutation({
+    mutationFn: async (updates) => {
+      return Promise.all(updates.map(({ id, sort_order }) => base44.entities.DisplaySlide.update(id, { sort_order })));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['display-slides-all'] });
+      toast.success('Reihenfolge geändert');
+    },
+  });
+
+  const handleDragEnd = (result) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    if (source.index === destination.index) return;
+
+    const sorted = [...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
+    const moving = sorted[source.index];
+
+    if (source.index < destination.index) {
+      // Move down: Slides between source+1 and dest shift up (order decreases)
+      const updates = sorted.slice(source.index + 1, destination.index + 1).map((s, i, arr) => ({
+        id: s.id,
+        sort_order: (arr[i-1]?.sort_order || (moving.sort_order || 0)) 
+      }));
+      updates.push({ id: moving.id, sort_order: sorted[destination.index].sort_order });
+      reorderMut.mutate(updates);
+    } else {
+      // Move up: Slides between dest and source-1 shift down (order increases)
+      const updates = sorted.slice(destination.index, source.index).map((s, i, arr) => ({
+        id: s.id,
+        sort_order: (s.sort_order || 0) + 1
+      }));
+      updates.push({ id: moving.id, sort_order: sorted[destination.index].sort_order });
+      reorderMut.mutate(updates);
+    }
+  };
 
   const openAdd = () => {
     const maxOrder = slides.length ? Math.max(...slides.map(s => s.sort_order || 0)) + 1 : 1;
@@ -274,56 +277,58 @@ export default function DisplayManager() {
           <Button size="sm" variant="outline" onClick={openAdd} className="mt-3">Erste Slide anlegen</Button>
         </div>
       ) : (
-        <div className="space-y-2">
-          {[...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).map(s => (
-            <Card
-              key={s.id}
-              draggable
-              onDragStart={e => handleDragStart(e, s)}
-              onDragOver={e => handleDragOver(e, s)}
-              onDrop={e => handleDrop(e, s)}
-              onDragEnd={handleDragEnd}
-              className={cn(
-                'border-border/60 transition-all duration-150 cursor-default select-none',
-                !s.is_active && 'opacity-50',
-                dragOverId === s.id && 'border-primary ring-1 ring-primary scale-[1.01]',
-                dragId === s.id && 'opacity-40 scale-[0.98]',
-              )}
-            >
-              <CardContent className="p-3 flex items-center gap-3">
-                <GripVertical className="w-4 h-4 text-muted-foreground/40 cursor-grab active:cursor-grabbing shrink-0" />
-                <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-base"
-                  style={{ background: (ACCENT_COLORS.find(c => c.value === s.accent_color)?.hex || '#f59e0b') + '22' }}>
-                  {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.split(' ')[0] || '📢'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-foreground truncate">{s.title}</p>
-                    <Badge className={cn('text-[10px] h-4 px-1.5 border', TYPE_COLORS[s.slide_type])}>
-                      {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.replace(/^.+? /, '') || s.slide_type}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground">#{s.sort_order}</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                    {s.subtitle || s.location || s.price_info || `${s.duration_seconds || 8}s`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => toggleMut.mutate({ id: s.id, is_active: !s.is_active })}
-                    className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                    {s.is_active ? <Eye className="w-4 h-4 text-primary" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-                  </button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(s)}>
-                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDeleteTarget(s)}>
-                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="slides" direction="vertical">
+            {(provided, snapshot) => (
+              <div ref={provided.innerRef} {...provided.droppableProps} className={cn('space-y-2', snapshot.isDraggingOver && 'bg-primary/5 rounded-lg p-2')}>
+                {[...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).map((s, i) => (
+                  <Draggable key={s.id} draggableId={s.id} index={i}>
+                    {(provided, snapshot) => (
+                      <div ref={provided.innerRef} {...provided.draggableProps} className={cn(snapshot.isDragging && 'opacity-50')}>
+                        <Card className={cn('border-border/60 transition-opacity', !s.is_active && 'opacity-50')}>
+                          <CardContent className="p-3 flex items-center gap-3">
+                            <div {...provided.dragHandleProps} className="shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing transition-colors">
+                              <GripVertical className="w-4 h-4" />
+                            </div>
+                            <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-base"
+                              style={{ background: (ACCENT_COLORS.find(c => c.value === s.accent_color)?.hex || '#f59e0b') + '22' }}>
+                              {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.split(' ')[0] || '📢'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-semibold text-foreground truncate">{s.title}</p>
+                                <Badge className={cn('text-[10px] h-4 px-1.5 border', TYPE_COLORS[s.slide_type])}>
+                                  {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.replace(/^.+? /, '') || s.slide_type}
+                                </Badge>
+                                <span className="text-[10px] text-muted-foreground">#{s.sort_order}</span>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                                {s.subtitle || s.location || s.price_info || `${s.duration_seconds || 8}s`}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button onClick={() => toggleMut.mutate({ id: s.id, is_active: !s.is_active })}
+                                className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                                {s.is_active ? <Eye className="w-4 h-4 text-primary" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                              </button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(s)}>
+                                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                              </Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDeleteTarget(s)}>
+                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       )}
 
       {/* ── Slide Modal ────────────────────────────────────────────────────────── */}
