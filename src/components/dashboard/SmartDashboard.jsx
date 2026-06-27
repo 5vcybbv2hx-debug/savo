@@ -438,7 +438,7 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
             )}
 
             {/* Geburtstage */}
-            {birthdaysToday.length > 0 && (
+            {employees.some(e => { if (!e.birthday) return false; const [,m,d] = e.birthday.split('-'); const next = new Date(new Date().getFullYear(), parseInt(m)-1, parseInt(d)); if (next < new Date(new Date().setHours(0,0,0,0))) next.setFullYear(next.getFullYear()+1); return Math.round((next - new Date(new Date().setHours(0,0,0,0))) / 86400000) <= 7; }) && (
                 <div>
                     <SectionHeader label="Geburtstag heute" />
                     {birthdaysToday.map(e => (
