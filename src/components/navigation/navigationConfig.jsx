@@ -82,7 +82,7 @@ export const additionalPages = [
 
     // Einstellungen & Mehr
     { page: 'Documents',        name: 'Dokumente',       icon: FileText,     permission: 'canViewSettings' },
-    { page: 'Maintenance',      name: 'Wartung',          icon: Wrench,       permission: 'canViewSettings' },
+    { page: 'Maintenance',      name: 'Wartung',          icon: Wrench,       permission: 'canViewReservations' },
     { page: 'Onboarding',       name: 'Onboarding',       icon: HelpCircle,   permission: 'canViewOnboarding' },
     { page: 'BusinessCard',     name: 'Visitenkarte',     icon: CreditCard,   permission: 'canViewDashboard' },
     { page: 'ModuleCenter',     name: 'Modulcenter',      icon: LayoutGrid,   permission: 'canViewSettings' },
