@@ -37,7 +37,7 @@ export const additionalPages = [
     { page: 'GuestHub',       name: 'Gäste & Tische',    icon: Users,         permission: 'canViewReservations' },
     { page: 'Todos',          name: 'Aufgaben',           icon: ClipboardList, permission: 'canViewTodos' },
     { page: 'WeeklyTasks',    name: 'Wochenaufgaben',     icon: ListChecks,    permission: 'canViewSettings' },
-    { page: 'Cleaning',       name: 'Reinigung',          icon: Sparkles,      permission: 'canViewCleaning' },
+    { page: 'Cleaning',       name: 'Putzliste',          icon: Sparkles,      permission: 'canViewCleaning' },
     { page: 'Events',         name: 'Events',             icon: CalendarDays,  permission: 'canViewEvents' },
     { page: 'DisplayManager', name: 'TV-Display',         icon: Tv,            permission: 'isManager' },
 
