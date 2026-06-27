@@ -59,7 +59,6 @@ export default function BetriebHub() {
         queryKey: ['reservations-today'],
         queryFn: () => base44.entities.Reservation.filter({ date: today }, 'time', 100),
         staleTime: STALE.MEDIUM,
-        enabled: permissions.canViewReservations,
     });
 
     return (
@@ -75,7 +74,6 @@ export default function BetriebHub() {
                 <div className="space-y-2">
                     <NavCard icon={MapPin} label="Gäste & Tische"
                         description={reservations.length > 0 ? `${reservations.length} Reservierungen heute` : 'Tische & Reservierungen'}
-                        page="GuestHub" badge={reservations.length || undefined} permission="canViewReservations" />
                 </div>
             </div>
 
@@ -86,7 +84,6 @@ export default function BetriebHub() {
                     <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"            page="Todos"       badge={todos.length || undefined} permission="canViewTodos" />
                     <NavCard icon={ListChecks}  label="Wochenaufgaben" description="Wiederkehrende Wochenplanung"     page="WeeklyTasks" permission="canViewTodos" />
                     <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste"  page="Cleaning"    permission="canViewCleaning" />
-                    <NavCard icon={Wrench}      label="Wartung"        description="Geräte & Wartungsaufgaben"        page="Maintenance" permission="canViewReservations" />
                 </div>
             </div>
 
