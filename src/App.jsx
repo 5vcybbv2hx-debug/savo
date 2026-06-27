@@ -230,6 +230,7 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingHub" element={<LayoutWrapper currentPageName="AccountingHub"><RoleGuard permission="canViewAccounting"><AccountingHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/KarteHub" element={<LayoutWrapper currentPageName="KarteHub"><RoleGuard permission="canViewDrinkMenu"><KarteHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
+      <Route path="/Display" element={<LayoutWrapper currentPageName="Display"><Display /></LayoutWrapper>} />
       <Route path="/DisplayManager" element={<LayoutWrapper currentPageName="DisplayManager"><RoleGuard permission="isManager"><DisplayManager /></RoleGuard></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
@@ -255,7 +256,6 @@ function App() {
             {/* Public pages (NO auth check, rendered outside AuthenticatedApp) */}
             <Route path="/PublicDrinkMenu" element={<PublicDrinkMenu />} />
             <Route path="/StorageLocationScan/:id" element={<PublicPages.StorageLocationScan />} />
-            <Route path="/Display" element={<Display />} />
 
             {/* All authenticated pages */}
             <Route path="*" element={<AuthenticatedApp />} />
