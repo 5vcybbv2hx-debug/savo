@@ -52,6 +52,9 @@ const KEYFRAMES = `
   @keyframes loadSpin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes crossFadeIn { from{opacity:0;transform:scale(1.03)} to{opacity:1;transform:scale(1)} }
 `;
+const MENU_URL = 'https://bar-shift-pro-fc3522b9.base44.app/api/functions/publicDrinkMenu';
+
+
 function injectKeyframes() {
   if (document.getElementById('savo-display-kf')) return;
   const s = document.createElement('style');
@@ -1032,7 +1035,7 @@ function SlideQRCode({ slide, accent, theme }) {
         <div style={{ position:'relative',animation:'bounceIn 0.8s 0.4s both' }}>
           <div style={{ position:'absolute',inset:-8,borderRadius:20,border:`3px solid ${accent.bg}`,boxShadow:`0 0 30px ${accent.glow},0 0 60px ${accent.glow}33`,animation:'pulseGlow 3s ease-in-out infinite',pointerEvents:'none' }}/>
           <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(slide.body_text||'https://savo.app')}&bgcolor=050508&color=ffffff&margin=12`}
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(slide.body_text||MENU_URL)}&bgcolor=050508&color=ffffff&margin=12`}
             alt="QR Code"
             style={{ width:qrSize,height:qrSize,borderRadius:14,display:'block' }}
           />
