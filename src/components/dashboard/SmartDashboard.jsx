@@ -528,20 +528,23 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
             return [...a, ...b];
         },
         staleTime: STALE.MEDIUM,
+        refetchInterval: false,
         enabled: permissions.canViewShopping,
     });
 
     const { data: openQuickList = [] } = useQuery({
         queryKey: ['dashboard-quicklist', today],
         queryFn: () => base44.entities.QuickListItem.filter({ date: today, is_completed: false }),
-        staleTime: STALE.SHORT,
+        staleTime: STALE.MEDIUM,
+        refetchInterval: false,
         enabled: permissions.canViewShopping,
     });
 
     const { data: openRestock = [] } = useQuery({
         queryKey: ['dashboard-restock', today],
         queryFn: () => base44.entities.RestockItem.filter({ date: today, is_completed: false }),
-        staleTime: STALE.SHORT,
+        staleTime: STALE.MEDIUM,
+        refetchInterval: false,
         enabled: permissions.canViewRestock,
     });
 
@@ -549,7 +552,8 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
     const { data: businessCalendarDays = [] } = useQuery({
         queryKey: ['business-calendar-today'],
         queryFn: () => base44.entities.BusinessCalendarDay.list('-date', 60),
-        staleTime: 300000,
+        staleTime: 600000,
+        refetchInterval: false,
         enabled: isManager,
     });
     const todayCalendarEntry = businessCalendarDays.find(d => d.date === today);
