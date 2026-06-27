@@ -80,6 +80,44 @@ function loadThree() {
 // Sofort starten — nicht warten bis ein Slide es braucht
 loadThree().catch(() => console.warn('Three.js konnte nicht geladen werden'));
 
+// ── Zuverlässiger Canvas-Setup Hook ──────────────────────────────────────────
+// Löst das "0×0 canvas"-Problem: wartet bis das Element im DOM gemessen werden kann
+function useCanvas(drawFn) {
+  const cvRef = useRef(null);
+  const rafRef = useRef(null);
+  const stopRef = useRef(null);
+
+  useEffect(() => {
+    const cv = cvRef.current;
+    if (!cv) return;
+
+    function init() {
+      const w = cv.offsetWidth;
+      const h = cv.offsetHeight;
+      if (w === 0 || h === 0) {
+        // Noch nicht gerendert — nächsten Frame abwarten
+        rafRef.current = requestAnimationFrame(init);
+        return;
+      }
+      cv.width = w;
+      cv.height = h;
+      const ctx = cv.getContext('2d');
+      const cleanup = drawFn(ctx, w, h, cv);
+      stopRef.current = cleanup;
+    }
+
+    rafRef.current = requestAnimationFrame(init);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      if (stopRef.current) stopRef.current();
+    };
+  }, []);
+
+  return cvRef;
+}
+
+
+
 // ── Theme-Erkennung ───────────────────────────────────────────────────────────
 function detectTheme(title = '', subtitle = '') {
   const txt = (title + ' ' + subtitle).toLowerCase();
@@ -150,14 +188,8 @@ function useThreeScene(buildScene) {
 
 // 🪩 DISCO — Spiegelkugel prominent in der Mitte
 function CanvasDiscoball() {
-  const cvRef = useRef(null);
-  const rafRef = useRef(null);
-  useEffect(() => {
-    const cv = cvRef.current; if (!cv) return;
-    const ctx = cv.getContext('2d');
-    const resize = () => { cv.width = cv.offsetWidth; cv.height = cv.offsetHeight; };
-    resize();
-    const W = () => cv.width, H = () => cv.height;
+    const cvRef = useCanvas((ctx, W, H) => {
+    let w = W, h = H;
 
     // Disco-Spots die über den Raum wandern
     const SPOT_COLS = ['#ff2255','#ff9900','#00ccff','#aa00ff','#00ff88','#ff44bb','#ffff00','#00ffee','#ff6600','#33ffcc'];
@@ -180,7 +212,7 @@ function CanvasDiscoball() {
 
     let t = 0;
     function draw() {
-      const w = W(), h = H();
+      
       ctx.clearRect(0, 0, w, h);
 
       // Wandernde Disco-Spots
@@ -270,26 +302,19 @@ function CanvasDiscoball() {
       t += 0.016;
       rafRef.current = requestAnimationFrame(draw);
     }
-    draw();
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
+    let raf;
+    function loop() { draw(); raf = requestAnimationFrame(loop); }
+    loop();
+    return () => cancelAnimationFrame(raf);
+  });
   return <canvas ref={cvRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }} />;
 }
 
 
 function GermanyFlag2D() {
-  const canvasRef = useRef(null);
-  const rafRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const resize = () => {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
+  const canvasRef = useCanvas((ctx, W_init, H_init) => {
+    // canvas ist bereits korrekt dimensioniert durch useCanvas
+    const canvas = canvasRef.current;
 
     const SEGS = 60;
     let t = 0;
@@ -356,12 +381,13 @@ function GermanyFlag2D() {
       ctx.beginPath(); ctx.arc(kx, ky, 11, 0, Math.PI * 2); ctx.fill();
 
       t += 0.016;
-      rafRef.current = requestAnimationFrame(draw);
-    }
+      }
 
-    draw();
-    return () => { cancelAnimationFrame(rafRef.current); window.removeEventListener('resize', resize); };
-  }, []);
+    let _raf;
+    function _loop() { draw(); _raf = requestAnimationFrame(_loop); }
+    _loop();
+    return () => cancelAnimationFrame(_raf);
+  });
 
   return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.52, pointerEvents: 'none' }} />;
 }
@@ -507,13 +533,7 @@ function AmericanFootball3D() {
 
 // ❤️ LOVE
 function CanvasLove() {
-  const cvRef = useRef(null);
-  const rafRef = useRef(null);
-  useEffect(() => {
-    const cv = cvRef.current; if (!cv) return;
-    const ctx = cv.getContext('2d');
-    cv.width = cv.offsetWidth; cv.height = cv.offsetHeight;
-    const W = cv.width, H = cv.height;
+  const cvRef = useCanvas((ctx, W, H) => {
     const COLS = ['#ff2255','#ff66aa','#ff44bb','#dd0066','#ff88cc','#ee0055','#ff3377','#cc0044','#ff99bb','#ee1177'];
     // Herz per Canvas-Path zeichnen
     function drawHeart(ctx, x, y, size) {
@@ -560,10 +580,12 @@ function CanvasLove() {
       });
       rafRef.current = requestAnimationFrame(draw);
     }
-    draw();
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-  return <canvas ref={cvRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', opacity:0.65 }} />;
+    let raf;
+    function loop() { draw(); raf = requestAnimationFrame(loop); }
+    loop();
+    return () => cancelAnimationFrame(raf);
+  });
+  return <canvas ref={cvRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', opacity:0.85 }} />;
 }
 
 // 🎉 PARTY
@@ -638,11 +660,7 @@ function Christmas3D() {
 
 // ── 2D Canvas Animationen ─────────────────────────────────────────────────────
 function CanvasBeer() {
-  const c=useRef(null),r=useRef(null);
-  useEffect(()=>{
-    const cv=c.current;if(!cv)return;const ctx=cv.getContext('2d');
-    cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;
-    const W=cv.width,H=cv.height;
+  const c = useCanvas((ctx, W, H) => {
     const bs=Array.from({length:35},()=>({x:Math.random()*W,y:H+Math.random()*H*0.5,rad:4+Math.random()*14,vy:-(0.6+Math.random()*1.4),vx:(Math.random()-0.5)*0.5,wb:Math.random()*Math.PI*2,ws:0.02+Math.random()*0.04,op:0.4+Math.random()*0.4}));
     function draw(){
       ctx.clearRect(0,0,W,H);
@@ -660,10 +678,7 @@ function CanvasBeer() {
 }
 
 function CanvasCocktail() {
-  const c=useRef(null),r=useRef(null);
-  useEffect(()=>{
-    const cv=c.current;if(!cv)return;const ctx=cv.getContext('2d');
-    cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;const W=cv.width,H=cv.height;
+  const c = useCanvas((ctx, W, H) => {
     const COLS=['#f43f5e','#a855f7','#06b6d4','#f59e0b','#22c55e','#ec4899','#3b82f6'];
     const bs=Array.from({length:20},(_,i)=>({x:Math.random()*W,y:H+Math.random()*H*0.6,r:10+Math.random()*28,vy:-(0.5+Math.random()*1.2),vx:(Math.random()-0.5)*0.6,color:COLS[i%COLS.length],wb:Math.random()*Math.PI*2,ws:0.015+Math.random()*0.03}));
     function draw(){
@@ -682,10 +697,7 @@ function CanvasCocktail() {
 }
 
 function CanvasSummer() {
-  const c=useRef(null),r=useRef(null);
-  useEffect(()=>{
-    const cv=c.current;if(!cv)return;const ctx=cv.getContext('2d');
-    cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;const W=cv.width,H=cv.height;
+  const c = useCanvas((ctx, W, H) => {
     let t=0;
     function draw(){
       ctx.clearRect(0,0,W,H);
@@ -722,10 +734,7 @@ function CanvasSummer() {
 }
 
 function CanvasMusic({ accentColor }) {
-   const c=useRef(null),r=useRef(null);
-   useEffect(()=>{
-     const cv=c.current;if(!cv)return;const ctx=cv.getContext('2d');
-     cv.width=cv.offsetWidth;cv.height=cv.offsetHeight;const W=cv.width,H=cv.height;
+   const c = useCanvas((ctx, W, H) => {
      let t=0;const BAR=60;
      const hs=Array.from({length:BAR},()=>({h:0.1+Math.random()*0.5,target:0.1+Math.random()*0.6,speed:0.02+Math.random()*0.04,phase:Math.random()*Math.PI*2}));
      function draw(){
