@@ -230,7 +230,7 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingHub" element={<LayoutWrapper currentPageName="AccountingHub"><RoleGuard permission="canViewAccounting"><AccountingHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/KarteHub" element={<LayoutWrapper currentPageName="KarteHub"><RoleGuard permission="canViewDrinkMenu"><KarteHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
-      <Route path="/Display" element={<LayoutWrapper currentPageName="Display"><Display /></LayoutWrapper>} />
+      <Route path="/Display" element={<DisplayFullscreen />} />
       <Route path="/DisplayManager" element={<LayoutWrapper currentPageName="DisplayManager"><RoleGuard permission="isManager"><DisplayManager /></RoleGuard></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
@@ -244,6 +244,18 @@ const AuthenticatedApp = () => {
     </>
   );
 }
+
+
+// Vollbild-Display — Auth ohne Layout-Wrapper
+const DisplayFullscreen = () => {
+  const { currentUser, isLoadingAuth } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!isLoadingAuth && !currentUser) navigate('/login');
+  }, [isLoadingAuth, currentUser]);
+  if (isLoadingAuth) return null;
+  return <Display />;
+};
 
 function App() {
 
