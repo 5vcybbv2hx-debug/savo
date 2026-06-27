@@ -188,10 +188,8 @@ function useThreeScene(buildScene) {
 
 // 🪩 DISCO — Spiegelkugel prominent in der Mitte
 function CanvasDiscoball() {
-    const cvRef = useCanvas((ctx, W, H) => {
+  const cvRef = useCanvas((ctx, W, H) => {
     let w = W, h = H;
-
-    // Disco-Spots die über den Raum wandern
     const SPOT_COLS = ['#ff2255','#ff9900','#00ccff','#aa00ff','#00ff88','#ff44bb','#ffff00','#00ffee','#ff6600','#33ffcc'];
     const spots = Array.from({length: 12}, (_, i) => ({
       angle: (i / 12) * Math.PI * 2,
@@ -201,21 +199,15 @@ function CanvasDiscoball() {
       size: 55 + (i % 4) * 22,
       elevation: 0.2 + (i % 4) * 0.18,
     }));
-
-    // Glitzer-Partikel
     const sparks = Array.from({length: 80}, () => ({
       x: Math.random(), y: Math.random(),
       life: Math.random(), speed: 0.003 + Math.random() * 0.005,
       size: 1 + Math.random() * 3,
       color: SPOT_COLS[Math.floor(Math.random() * SPOT_COLS.length)],
     }));
-
     let t = 0;
     function draw() {
-      
       ctx.clearRect(0, 0, w, h);
-
-      // Wandernde Disco-Spots
       spots.forEach(s => {
         s.angle += s.speed;
         const cx = w * (0.2 + Math.cos(s.angle) * s.radius * 0.7 + 0.3);
@@ -229,8 +221,6 @@ function CanvasDiscoball() {
         ctx.fillStyle = grad;
         ctx.fill();
       });
-
-      // Glitzer
       sparks.forEach(s => {
         s.life += s.speed;
         if (s.life > 1) { s.life = 0; s.x = Math.random(); s.y = Math.random(); }
@@ -242,11 +232,7 @@ function CanvasDiscoball() {
         ctx.fill();
       });
       ctx.globalAlpha = 1;
-
-      // Disco-Kugel in der Mitte oben — als SVG-ähnliche Canvas-Zeichnung
       const bx = w * 0.5, by = h * 0.22, br = Math.min(w, h) * 0.11;
-
-      // Kugel-Körper
       const ballGrad = ctx.createRadialGradient(bx - br*0.3, by - br*0.3, br*0.05, bx, by, br);
       ballGrad.addColorStop(0, '#e0e0f0');
       ballGrad.addColorStop(0.5, '#8888aa');
@@ -255,8 +241,6 @@ function CanvasDiscoball() {
       ctx.arc(bx, by, br, 0, Math.PI * 2);
       ctx.fillStyle = ballGrad;
       ctx.fill();
-
-      // Kacheln auf der Kugel
       const ROWS = 8, COLS_N = 12;
       for (let row = 0; row < ROWS; row++) {
         for (let col = 0; col < COLS_N; col++) {
@@ -264,10 +248,9 @@ function CanvasDiscoball() {
           const theta = ((col + 0.5) / COLS_N) * Math.PI * 2 + t * 0.3;
           const px = bx + br * 0.92 * Math.sin(phi) * Math.cos(theta);
           const py = by + br * 0.92 * Math.cos(phi);
-          const pz = Math.sin(phi) * Math.sin(theta); // -1 bis 1
-          if (pz < 0) continue; // nur sichtbare Seite
+          const pz = Math.sin(phi) * Math.sin(theta);
+          if (pz < 0) continue;
           const tileSize = (br * 0.13) * Math.sin(phi);
-          // Reflexionsfarbe basierend auf Spot-Nähe
           const nearSpot = spots.reduce((best, s) => {
             const sx = w * (0.2 + Math.cos(s.angle) * s.radius * 0.7 + 0.3);
             const sy = h * (0.15 + Math.abs(Math.sin(s.angle * s.elevation)) * 0.7);
@@ -281,8 +264,6 @@ function CanvasDiscoball() {
         }
       }
       ctx.globalAlpha = 1;
-
-      // Highlight oben links
       const hlGrad = ctx.createRadialGradient(bx - br*0.35, by - br*0.35, 0, bx - br*0.35, by - br*0.35, br*0.5);
       hlGrad.addColorStop(0, 'rgba(255,255,255,0.4)');
       hlGrad.addColorStop(1, 'transparent');
@@ -290,21 +271,18 @@ function CanvasDiscoball() {
       ctx.arc(bx, by, br, 0, Math.PI * 2);
       ctx.fillStyle = hlGrad;
       ctx.fill();
-
-      // Aufhängung
       ctx.strokeStyle = 'rgba(200,200,220,0.5)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(bx, by - br);
       ctx.lineTo(bx, 0);
       ctx.stroke();
-
       t += 0.016;
     }
-    let raf;
-    function loop() { draw(); raf = requestAnimationFrame(loop); }
-    loop();
-    return () => cancelAnimationFrame(raf);
+    let _raf;
+    function _loop() { draw(); _raf = requestAnimationFrame(_loop); }
+    _loop();
+    return () => cancelAnimationFrame(_raf);
   });
   return <canvas ref={cvRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }} />;
 }
@@ -534,7 +512,6 @@ function AmericanFootball3D() {
 function CanvasLove() {
   const cvRef = useCanvas((ctx, W, H) => {
     const COLS = ['#ff2255','#ff66aa','#ff44bb','#dd0066','#ff88cc','#ee0055','#ff3377','#cc0044','#ff99bb','#ee1177'];
-    // Herz per Canvas-Path zeichnen
     function drawHeart(ctx, x, y, size) {
       ctx.beginPath();
       ctx.moveTo(x, y + size * 0.3);
@@ -569,7 +546,6 @@ function CanvasLove() {
         ctx.translate(h.x, h.y);
         ctx.rotate(h.rot + Math.sin(h.wb * 0.5) * 0.12);
         ctx.translate(-h.x, -h.y);
-        // Glow
         ctx.shadowColor = h.color;
         ctx.shadowBlur = 18;
         ctx.fillStyle = h.color;
@@ -578,10 +554,10 @@ function CanvasLove() {
         ctx.restore();
       });
     }
-    let raf;
-    function loop() { draw(); raf = requestAnimationFrame(loop); }
-    loop();
-    return () => cancelAnimationFrame(raf);
+    let _raf;
+    function _loop() { draw(); _raf = requestAnimationFrame(_loop); }
+    _loop();
+    return () => cancelAnimationFrame(_raf);
   });
   return <canvas ref={cvRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', opacity:0.85 }} />;
 }
@@ -659,112 +635,163 @@ function Christmas3D() {
 // ── 2D Canvas Animationen ─────────────────────────────────────────────────────
 function CanvasBeer() {
   const c = useCanvas((ctx, W, H) => {
-    const bs=Array.from({length:35},()=>({x:Math.random()*W,y:H+Math.random()*H*0.5,rad:4+Math.random()*14,vy:-(0.6+Math.random()*1.4),vx:(Math.random()-0.5)*0.5,wb:Math.random()*Math.PI*2,ws:0.02+Math.random()*0.04,op:0.4+Math.random()*0.4}));
-    function draw(){
-      ctx.clearRect(0,0,W,H);
-      bs.forEach(b=>{b.wb+=b.ws;b.x+=b.vx+Math.sin(b.wb)*0.4;b.y+=b.vy;if(b.y<-b.rad*2){b.y=H+b.rad;b.x=Math.random()*W;}
-        const al=Math.min(1,(-b.y+H)/(H*0.7))*b.op*0.35;ctx.globalAlpha=al;
-        const g=ctx.createRadialGradient(b.x-b.rad*0.35,b.y-b.rad*0.35,b.rad*0.05,b.x,b.y,b.rad);
-        g.addColorStop(0,'rgba(255,240,180,0.9)');g.addColorStop(0.5,'rgba(220,180,80,0.4)');g.addColorStop(1,'rgba(180,140,40,0.1)');
-        ctx.beginPath();ctx.arc(b.x,b.y,b.rad,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-        ctx.strokeStyle='rgba(255,230,100,0.6)';ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1;});
+    const bs = Array.from({length:35}, () => ({x:Math.random()*W, y:H+Math.random()*H*0.5, rad:4+Math.random()*14, vy:-(0.6+Math.random()*1.4), vx:(Math.random()-0.5)*0.5, wb:Math.random()*Math.PI*2, ws:0.02+Math.random()*0.04, op:0.4+Math.random()*0.4}));
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      bs.forEach(b => {
+        b.wb += b.ws;
+        b.x += b.vx + Math.sin(b.wb)*0.4;
+        b.y += b.vy;
+        if (b.y < -b.rad*2) { b.y = H+b.rad; b.x = Math.random()*W; }
+        const al = Math.min(1, (-b.y+H)/(H*0.7))*b.op*0.35;
+        ctx.globalAlpha = al;
+        const g = ctx.createRadialGradient(b.x-b.rad*0.35, b.y-b.rad*0.35, b.rad*0.05, b.x, b.y, b.rad);
+        g.addColorStop(0, 'rgba(255,240,180,0.9)');
+        g.addColorStop(0.5, 'rgba(220,180,80,0.4)');
+        g.addColorStop(1, 'rgba(180,140,40,0.1)');
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.rad, 0, Math.PI*2);
+        ctx.fillStyle = g;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,230,100,0.6)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      });
     }
     let _raf;
     function _loop() { draw(); _raf = requestAnimationFrame(_loop); }
     _loop();
     return () => cancelAnimationFrame(_raf);
   });
-
-  return <canvas ref={c} style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}/>;
+  return <canvas ref={c} style={{position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none'}}/>;
 }
 
 function CanvasCocktail() {
   const c = useCanvas((ctx, W, H) => {
-    const COLS=['#f43f5e','#a855f7','#06b6d4','#f59e0b','#22c55e','#ec4899','#3b82f6'];
-    const bs=Array.from({length:20},(_,i)=>({x:Math.random()*W,y:H+Math.random()*H*0.6,r:10+Math.random()*28,vy:-(0.5+Math.random()*1.2),vx:(Math.random()-0.5)*0.6,color:COLS[i%COLS.length],wb:Math.random()*Math.PI*2,ws:0.015+Math.random()*0.03}));
-    function draw(){
-      ctx.clearRect(0,0,W,H);
-      bs.forEach(b=>{b.wb+=b.ws;b.x+=b.vx+Math.sin(b.wb)*0.5;b.y+=b.vy;if(b.y<-b.r*3){b.y=H+b.r;b.x=Math.random()*W;}
-        const al=Math.min(1,(-b.y+H)/(H*0.65))*0.45;ctx.globalAlpha=al;
-        const rx=b.r*(1+Math.sin(b.wb*2)*0.12),ry=b.r*(1+Math.cos(b.wb*2)*0.12);
-        const g=ctx.createRadialGradient(b.x-rx*0.3,b.y-ry*0.3,rx*0.05,b.x,b.y,rx);
-        g.addColorStop(0,b.color+'ff');g.addColorStop(0.6,b.color+'88');g.addColorStop(1,b.color+'11');
-        ctx.beginPath();ctx.ellipse(b.x,b.y,rx,ry,b.wb*0.2,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.globalAlpha=1;});
+    const COLS = ['#f43f5e', '#a855f7', '#06b6d4', '#f59e0b', '#22c55e', '#ec4899', '#3b82f6'];
+    const bs = Array.from({length:20}, (_,i) => ({x:Math.random()*W, y:H+Math.random()*H*0.6, r:10+Math.random()*28, vy:-(0.5+Math.random()*1.2), vx:(Math.random()-0.5)*0.6, color:COLS[i%COLS.length], wb:Math.random()*Math.PI*2, ws:0.015+Math.random()*0.03}));
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      bs.forEach(b => {
+        b.wb += b.ws;
+        b.x += b.vx + Math.sin(b.wb)*0.5;
+        b.y += b.vy;
+        if (b.y < -b.r*3) { b.y = H+b.r; b.x = Math.random()*W; }
+        const al = Math.min(1, (-b.y+H)/(H*0.65))*0.45;
+        ctx.globalAlpha = al;
+        const rx = b.r*(1+Math.sin(b.wb*2)*0.12);
+        const ry = b.r*(1+Math.cos(b.wb*2)*0.12);
+        const g = ctx.createRadialGradient(b.x-rx*0.3, b.y-ry*0.3, rx*0.05, b.x, b.y, rx);
+        g.addColorStop(0, b.color+'ff');
+        g.addColorStop(0.6, b.color+'88');
+        g.addColorStop(1, b.color+'11');
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, rx, ry, b.wb*0.2, 0, Math.PI*2);
+        ctx.fillStyle = g;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
     }
     let _raf;
     function _loop() { draw(); _raf = requestAnimationFrame(_loop); }
     _loop();
     return () => cancelAnimationFrame(_raf);
   });
-
-  return <canvas ref={c} style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}/>;
+  return <canvas ref={c} style={{position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none'}}/>;
 }
 
 function CanvasSummer() {
   const c = useCanvas((ctx, W, H) => {
-    let t=0;
-    function draw(){
-      ctx.clearRect(0,0,W,H);
-      const sx=W*0.85,sy=H*0.15,sr=80;
-      ctx.globalAlpha=0.2;
-      for(let ray=0;ray<12;ray++){
-        const a=(ray/12)*Math.PI*2+t*0.00008;
-        const r1=sr+10,r2=sr+40+Math.sin(t*0.0005+ray)*15;
-        ctx.strokeStyle='#fde68a';ctx.lineWidth=3;
-        ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*r1,sy+Math.sin(a)*r1);ctx.lineTo(sx+Math.cos(a)*r2,sy+Math.sin(a)*r2);ctx.stroke();
-      }
-      const sg=ctx.createRadialGradient(sx,sy,sr*0.1,sx,sy,sr*1.5);
-      sg.addColorStop(0,'#fde68a');sg.addColorStop(1,'transparent');
-      ctx.beginPath();ctx.arc(sx,sy,sr*1.5,0,Math.PI*2);ctx.fillStyle=sg;ctx.globalAlpha=0.28;ctx.fill();
-      ctx.globalAlpha=0.4;
-      for(let wave=0;wave<4;wave++){
-        const yBase=H*(0.65+wave*0.1),amp=H*0.025*(4-wave);
-        const sp=(1-wave*0.15)*0.012;
+    let t = 0;
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      const sx = W*0.85, sy = H*0.15, sr = 80;
+      ctx.globalAlpha = 0.2;
+      for (let ray = 0; ray < 12; ray++) {
+        const a = (ray/12)*Math.PI*2 + t*0.00008;
+        const r1 = sr+10, r2 = sr+40 + Math.sin(t*0.0005+ray)*15;
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        for(let x=0;x<=W;x+=3){
-          const y=yBase+Math.sin(x/W*Math.PI*4-t*sp+wave)*amp + Math.sin(x/W*Math.PI*2.5-t*sp*0.6+wave*0.7)*amp*0.4;
-          x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-        }
-        ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
-        const wg=ctx.createLinearGradient(0,yBase,0,H);
-        wg.addColorStop(0,'rgba(56,189,248,0.18)');wg.addColorStop(1,'rgba(14,165,233,0.08)');
-        ctx.fillStyle=wg;ctx.fill();
+        ctx.moveTo(sx+Math.cos(a)*r1, sy+Math.sin(a)*r1);
+        ctx.lineTo(sx+Math.cos(a)*r2, sy+Math.sin(a)*r2);
+        ctx.stroke();
       }
-      ctx.globalAlpha=1;t++;
+      const sg = ctx.createRadialGradient(sx, sy, sr*0.1, sx, sy, sr*1.5);
+      sg.addColorStop(0, '#fde68a');
+      sg.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr*1.5, 0, Math.PI*2);
+      ctx.fillStyle = sg;
+      ctx.globalAlpha = 0.28;
+      ctx.fill();
+      ctx.globalAlpha = 0.4;
+      for (let wave = 0; wave < 4; wave++) {
+        const yBase = H*(0.65+wave*0.1);
+        const amp = H*0.025*(4-wave);
+        const sp = (1-wave*0.15)*0.012;
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 3) {
+          const y = yBase + Math.sin(x/W*Math.PI*4-t*sp+wave)*amp + Math.sin(x/W*Math.PI*2.5-t*sp*0.6+wave*0.7)*amp*0.4;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.lineTo(W, H);
+        ctx.lineTo(0, H);
+        ctx.closePath();
+        const wg = ctx.createLinearGradient(0, yBase, 0, H);
+        wg.addColorStop(0, 'rgba(56,189,248,0.18)');
+        wg.addColorStop(1, 'rgba(14,165,233,0.08)');
+        ctx.fillStyle = wg;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      t++;
     }
     let _raf;
     function _loop() { draw(); _raf = requestAnimationFrame(_loop); }
     _loop();
     return () => cancelAnimationFrame(_raf);
   });
-
-  return <canvas ref={c} style={{position:'absolute',inset:0,width:'100%',height:'100%',pointerEvents:'none'}}/>;
+  return <canvas ref={c} style={{position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none'}}/>;
 }
 
 function CanvasMusic({ accentColor }) {
-   const c = useCanvas((ctx, W, H) => {
-     let t=0;const BAR=60;
-     const hs=Array.from({length:BAR},()=>({h:0.1+Math.random()*0.5,target:0.1+Math.random()*0.6,speed:0.02+Math.random()*0.04,phase:Math.random()*Math.PI*2}));
-     function draw(){
-       ctx.clearRect(0,0,W,H);
-       hs.forEach((b,i)=>{
-         b.h+=(b.target-b.h)*b.speed;
-         if(Math.abs(b.h-b.target)<0.01)b.target=0.05+Math.random()*0.7*Math.abs(Math.sin(t+b.phase));
-         const bw=W/BAR-2,bh=b.h*H*0.55+Math.sin(t*2+b.phase)*H*0.03,bx=i*(W/BAR)+1,by=H*0.78-bh;
-         const g=ctx.createLinearGradient(bx,by,bx,H*0.78);
-         g.addColorStop(0,accentColor+'ff');g.addColorStop(0.5,accentColor+'aa');g.addColorStop(1,accentColor+'33');
-         ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(bx,by,bw,bh,3);ctx.fill();
-         ctx.globalAlpha=0.12;ctx.beginPath();ctx.roundRect(bx,H*0.78,bw,bh*0.4,3);ctx.fill();ctx.globalAlpha=1;
-       });
-       t+=0.022;
-     }
-     let _raf;
-     function _loop() { draw(); _raf = requestAnimationFrame(_loop); }
-     _loop();
-     return () => cancelAnimationFrame(_raf);
-   });
-
-   return <canvas ref={c} style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:0.4,pointerEvents:'none'}}/>;
+  const c = useCanvas((ctx, W, H) => {
+    let t = 0;
+    const BAR = 60;
+    const hs = Array.from({length:BAR}, () => ({h:0.1+Math.random()*0.5, target:0.1+Math.random()*0.6, speed:0.02+Math.random()*0.04, phase:Math.random()*Math.PI*2}));
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      hs.forEach((b, i) => {
+        b.h += (b.target-b.h)*b.speed;
+        if (Math.abs(b.h-b.target) < 0.01) b.target = 0.05+Math.random()*0.7*Math.abs(Math.sin(t+b.phase));
+        const bw = W/BAR-2;
+        const bh = b.h*H*0.55 + Math.sin(t*2+b.phase)*H*0.03;
+        const bx = i*(W/BAR)+1;
+        const by = H*0.78 - bh;
+        const g = ctx.createLinearGradient(bx, by, bx, H*0.78);
+        g.addColorStop(0, accentColor+'ff');
+        g.addColorStop(0.5, accentColor+'aa');
+        g.addColorStop(1, accentColor+'33');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 3);
+        ctx.fill();
+        ctx.globalAlpha = 0.12;
+        ctx.beginPath();
+        ctx.roundRect(bx, H*0.78, bw, bh*0.4, 3);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+      t += 0.022;
+    }
+    let _raf;
+    function _loop() { draw(); _raf = requestAnimationFrame(_loop); }
+    _loop();
+    return () => cancelAnimationFrame(_raf);
+  });
+  return <canvas ref={c} style={{position:'absolute', inset:0, width:'100%', height:'100%', opacity:0.4, pointerEvents:'none'}}/>;
 }
 
 // ── Theme-Router ──────────────────────────────────────────────────────────────
