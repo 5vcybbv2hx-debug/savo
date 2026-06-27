@@ -77,7 +77,6 @@ export const additionalPages = [
     { page: 'ShiftSwaps',     name: 'Schichttausch',   icon: RefreshCw,     permission: 'canRequestShiftSwap' },
     { page: 'Permissions',    name: 'Berechtigungen',  icon: Shield,        permission: 'canEditEmployeePermissions' },
     { page: 'TeamMeeting',    name: 'Teamsitzung',     icon: MessageSquare, permission: 'canViewTeamMeeting' },
-    { page: 'WorldCupSchedule', name: 'WM-Spielplan',  icon: Trophy,        permission: 'canViewTeamMeeting' },
     { page: 'Stationsplan',   name: 'Stationsplan',    icon: LayoutGrid,    permission: 'canViewShifts' },
 
     // Einstellungen & Mehr
