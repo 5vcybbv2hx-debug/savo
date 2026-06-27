@@ -11,7 +11,6 @@ import Articles from './pages/Articles';
 import Calendar from './pages/Calendar';
 import Cleaning from './pages/Cleaning';
 import DailyAnalysis from './pages/DailyAnalysis';
-import DailySpecialsDisplay from './pages/DailySpecialsDisplay';
 import Dashboard from './pages/Dashboard';
 import Documents from './pages/Documents';
 import DrinkMenu from './pages/DrinkMenu';
@@ -54,7 +53,9 @@ import Wastage from './pages/Wastage';
 import Inventory from './pages/Inventory';
 import BusinessCard from './pages/BusinessCard';
 import WeeklyTasks from './pages/WeeklyTasks';
-import WorldCupSchedule from './pages/WorldCupSchedule';
+
+import Display from './pages/Display';
+import DisplayManager from './pages/DisplayManager';
 
 // Special pages (manual imports — non-standard routing)
 import CleaningChecklist from './pages/CleaningChecklist';
@@ -74,7 +75,6 @@ const CORE_PAGES = {
     "Calendar": Calendar,
     "Cleaning": Cleaning,
     "DailyAnalysis": DailyAnalysis,
-    "DailySpecialsDisplay": DailySpecialsDisplay,
     "Dashboard": Dashboard,
     "Documents": Documents,
     "DrinkMenu": DrinkMenu,
@@ -111,12 +111,12 @@ const CORE_PAGES = {
     "Inventory": Inventory,
     "BusinessCard": BusinessCard,
     "WeeklyTasks": WeeklyTasks,
-    "WorldCupSchedule": WorldCupSchedule,
     // Hub-Seiten — mit Layout (Sidebar + Navigation)
     "TeamHub": TeamHub,
     "AccountingHub": AccountingHub,
     "BetriebHub": BetriebHub,
     "KarteHub": KarteHub,
+    "DisplayManager": DisplayManager,
 };
 
 // Special pages: with Layout wrapper
@@ -134,6 +134,7 @@ const SPECIAL_PAGES_WITH_LAYOUT = {
 const PUBLIC_PAGES = {
     "PublicDrinkMenu": PublicDrinkMenu,
     "StorageLocationScan": StorageLocationScan,
+    "Display": Display,
 };
 
 // Combined pages object (all accessible pages)
