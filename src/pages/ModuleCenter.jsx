@@ -85,7 +85,6 @@ const MODULE_REGISTRY = [
         color: 'bg-green-600',
         category: 'gast',
         page: 'GuestHub',
-        subpages: ['Reservations'],
     },
     {
         id: 'events',
@@ -230,7 +229,6 @@ const MODULE_REGISTRY = [
         category: 'analytics',
         page: 'DailyAnalysis',
         sensitive: true,
-        subpages: ['Reports', 'SalesAnalysis'],
         dependents: ['buchhaltung'],
     },
     {
@@ -240,7 +238,6 @@ const MODULE_REGISTRY = [
         icon: Trophy,
         color: 'bg-amber-500',
         category: 'analytics',
-        page: 'WorldCupSchedule',
     },
 
     // VERWALTUNG
