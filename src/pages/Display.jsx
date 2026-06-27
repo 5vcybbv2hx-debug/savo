@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { DisplaySlide, CompanyInfo } from '@/api/entities';
 
 // ── Akzentfarben ──────────────────────────────────────────────────────────────
 const ACCENTS = {
@@ -1113,12 +1114,14 @@ export default function Display() {
     queryKey: ['displaySlides'],
     queryFn: async () => {
       const now = new Date().toISOString();
-      // Relativer Pfad — funktioniert auf bar-shift-pro.base44.app Domain
-      const res = await fetch('/functions/getDisplaySlides');
-      if (!res.ok) throw new Error('Fehler beim Laden');
-      const json = await res.json();
-      if (json.logo_url) setCompanyLogo(json.logo_url);
-      return (json.slides || [])
+      // Logo laden
+      try {
+        const companies = await CompanyInfo.list();
+        if (companies?.[0]?.logo_url) setCompanyLogo(companies[0].logo_url);
+      } catch (_) {}
+      // Slides direkt aus DB — User ist eingeloggt, SDK hat Token
+      const all = await DisplaySlide.list();
+      return (all || [])
         .filter(s => {
           if (!s.is_active) return false;
           if (s.show_from && now < s.show_from) return false;
