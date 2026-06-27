@@ -1,7 +1,7 @@
 /**
  * PublicDrinkMenu — Öffentliche Getränkekarte für Gäste
  * v2: Logo statt Emoji, Kategorie-Icons, bessere Preisdarstellung,
- *     kein Zurück-Button, Footer mit Bar-Infos aus CompanyInfo
+ *     kein Zurück-Button, elegante Footer-Karte mit Bar-Infos aus CompanyInfo
  */
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
