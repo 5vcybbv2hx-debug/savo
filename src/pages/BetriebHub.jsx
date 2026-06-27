@@ -74,6 +74,7 @@ export default function BetriebHub() {
                 <div className="space-y-2">
                     <NavCard icon={MapPin} label="Gäste & Tische"
                         description={reservations.length > 0 ? `${reservations.length} Reservierungen heute` : 'Tische & Reservierungen'}
+                        page="GuestHub" permission="canViewReservations" />
                 </div>
             </div>
 

@@ -186,13 +186,6 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
 
-      {/* Datenexport & Migration */}
-          <RoleGuard permission="canViewSettings">
-            <DataExport />
-          </RoleGuard>
-        </LayoutWrapper>
-      } />
-
       {/* Mein Tag — jetzt auf Dashboard umgeleitet */}
 
       {/* Modulcenter — Admin Modulverwaltung */}
@@ -210,11 +203,6 @@ const AuthenticatedApp = () => {
           <RoleGuard permission="isManager">
             <DataQuality />
           </RoleGuard>
-        </LayoutWrapper>
-      } />
-
-      {/* WM-Spielplan */}
-          <WorldCupSchedule />
         </LayoutWrapper>
       } />
 

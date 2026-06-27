@@ -428,7 +428,6 @@ export default function Settings() {
                                     <Download className="w-4 h-4 text-blue-400 shrink-0" />
                                 </div>
                             </Card>
-                        </Link>
                     </div>
                 )}
 
@@ -461,10 +460,10 @@ export default function Settings() {
                             </div>
                         </div>
                     </Card>
-                     </div>
-                     </TabsContent>
+                </div>
+            </TabsContent>
 
-                     {/* Branding Tab */}
+            {/* Branding Tab */}
                      <TabsContent value="branding" className="space-y-6">
                          <BrandingTab
                              company={company}
