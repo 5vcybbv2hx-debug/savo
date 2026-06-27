@@ -512,49 +512,76 @@ export default function PublicDrinkMenu() {
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-border/60 px-4 py-6 bg-card/30">
-        <div className="max-w-2xl mx-auto space-y-3">
-          {/* Bar-Infos */}
-          <div className="flex items-center gap-2.5">
-            {companyInfo.logo_url ? (
-              <img src={companyInfo.logo_url} alt={barName}
-                className="w-8 h-8 rounded-lg object-contain" />
-            ) : (
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
-                {barName.charAt(0)}
+      <footer className="mt-8 px-4 pb-10">
+        <div className="max-w-2xl mx-auto">
+          <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+
+            {/* Brand-Header */}
+            <div className="px-5 pt-5 pb-4 flex items-center gap-3 border-b border-border/40">
+              {companyInfo.logo_url ? (
+                <img src={companyInfo.logo_url} alt={barName}
+                  className="w-11 h-11 rounded-xl object-contain bg-background border border-border/40 p-1 shrink-0" />
+              ) : (
+                <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg shrink-0">
+                  {barName.charAt(0)}
+                </div>
+              )}
+              <div>
+                <p className="font-bold text-foreground text-sm leading-tight">{barName}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Getränkekarte</p>
+              </div>
+            </div>
+
+            {/* Kontakt-Infos als Kacheln */}
+            {(companyInfo.address || companyInfo.phone || companyInfo.opening_hours) && (
+              <div className="divide-y divide-border/40">
+                {companyInfo.address && (
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(companyInfo.address)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-3.5 px-5 py-3.5 hover:bg-muted/40 transition-colors group">
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                      <MapPin className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Adresse</p>
+                      <p className="text-sm text-foreground truncate">{companyInfo.address}</p>
+                    </div>
+                  </a>
+                )}
+                {companyInfo.phone && (
+                  <a href={`tel:${companyInfo.phone}`}
+                    className="flex items-center gap-3.5 px-5 py-3.5 hover:bg-muted/40 transition-colors group">
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                      <Phone className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Telefon</p>
+                      <p className="text-sm text-foreground">{companyInfo.phone}</p>
+                    </div>
+                  </a>
+                )}
+                {companyInfo.opening_hours && (
+                  <div className="flex items-start gap-3.5 px-5 py-3.5">
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Öffnungszeiten</p>
+                      <p className="text-sm text-foreground whitespace-pre-line">{companyInfo.opening_hours}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-            <p className="font-bold text-foreground text-sm">{barName}</p>
-          </div>
 
-          <div className="space-y-1.5 text-sm text-muted-foreground">
-            {companyInfo.address && (
-              <a
-                href={`https://maps.google.com/?q=${encodeURIComponent(companyInfo.address)}`}
-                target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 hover:text-foreground transition-colors">
-                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                {companyInfo.address}
-              </a>
-            )}
-            {companyInfo.phone && (
-              <a href={`tel:${companyInfo.phone}`}
-                className="flex items-center gap-2 hover:text-foreground transition-colors">
-                <Phone className="w-3.5 h-3.5 shrink-0" />
-                {companyInfo.phone}
-              </a>
-            )}
-            {companyInfo.opening_hours && (
-              <div className="flex items-start gap-2">
-                <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                <span>{companyInfo.opening_hours}</span>
-              </div>
-            )}
+            {/* Legal */}
+            <div className="px-5 py-3 bg-muted/20 border-t border-border/40">
+              <p className="text-[10px] text-muted-foreground/50 text-center">
+                Preise inkl. MwSt. · Bei Allergien bitte Personal ansprechen.
+              </p>
+            </div>
           </div>
-
-          <p className="text-[10px] text-muted-foreground/40 pt-1">
-            Preise inkl. MwSt. · Bei Allergien bitte Personal ansprechen.
-          </p>
         </div>
       </footer>
 
