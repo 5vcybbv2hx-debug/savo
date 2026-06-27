@@ -320,14 +320,14 @@ function GermanyFlag2D() {
       const W = canvas.width, H = canvas.height;
       ctx.clearRect(0, 0, W, H);
 
-      // Fahne zentriert — kein Mast, keine Kugel
-      const flagW = W * 0.78;
-      const flagH = H * 0.54;
+      // Fahne zentriert — kein Mast, korrektes 3:5 Seitenverhältnis
+      const flagW = W * 0.68;
+      const flagH = flagW * 0.6;   // 3:5 = Höhe ist 60% der Breite
       const startX = (W - flagW) / 2;
       const startY = (H - flagH) / 2;
       const sH = flagH / 3;
 
-      // Farben: Schwarz, Rot, Gold
+      // Mehr Amplitude & 2 Wellenmodi
       const COLORS = [
         ['#111111', '#252525'],
         ['#cc0000', '#ee1111'],
@@ -342,13 +342,13 @@ function GermanyFlag2D() {
           const nx  = xi / SEGS;
           const px  = startX + nx * flagW;
 
-          // Erhöhte Wellenamplitude (0.055 → 0.14) mit progressivem Aufbau von links
+          // Stärkere Wellenamplitude — von links (0) nach rechts (max)
           const amp = nx * nx * sH * 0.14;
 
-          // 3 überlagerte Sinuswellen für natürlichere, flüssigere Bewegung
-          const w1 = Math.sin(nx * Math.PI * 2.4 - t * 2.2) * amp;           // Hauptwelle
-          const w2 = Math.sin(nx * Math.PI * 4.8 - t * 1.4) * amp * 0.35;    // Schnellere Welle
-          const w3 = Math.sin(nx * Math.PI * 1.1 - t * 0.8) * amp * 0.18;    // Langsame Grundwelle
+          // Zwei überlagerte Wellen für natürlichere Bewegung
+          const w1 = Math.sin(nx * Math.PI * 2.4 - t * 2.2) * amp;
+          const w2 = Math.sin(nx * Math.PI * 4.8 - t * 1.4) * amp * 0.35;
+          const w3 = Math.sin(nx * Math.PI * 1.1 - t * 0.8) * amp * 0.18;
 
           const wave = w1 + w2 + w3;
           top.push({ x: px, y: sy0 + wave });
@@ -362,7 +362,6 @@ function GermanyFlag2D() {
         [...bot].reverse().forEach(p => ctx.lineTo(p.x, p.y));
         ctx.closePath();
 
-        // Gradient-Farbverlauf über die Fahnenbreite
         const g = ctx.createLinearGradient(startX, 0, startX + flagW, 0);
         g.addColorStop(0,    cols[0] + 'dd');
         g.addColorStop(0.35, cols[1]);
@@ -371,14 +370,13 @@ function GermanyFlag2D() {
         ctx.fillStyle = g;
         ctx.fill();
 
-        // Subtiler Glanz-Highlight oben auf jedem Streifen
+        // Leichter Glanz oben auf jedem Streifen
         const gloss = ctx.createLinearGradient(0, sy0, 0, sy0 + sH * 0.45);
         gloss.addColorStop(0, 'rgba(255,255,255,0.12)');
         gloss.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = gloss;
         ctx.fill();
 
-        // Leichte Konturlinie
         ctx.strokeStyle = 'rgba(0,0,0,0.10)';
         ctx.lineWidth = 0.5;
         ctx.stroke();
