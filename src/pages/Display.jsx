@@ -1112,7 +1112,7 @@ export default function Display() {
   const { data, isLoading } = useQuery({
     queryKey: ['displaySlides'],
     queryFn: async () => {
-      const res = await fetch('/functions/getDisplaySlides');
+      const res = await fetch('https://bar-shift-pro.base44.app/functions/getDisplaySlides');
       if (!res.ok) throw new Error('Fehler');
       const json = await res.json();
       const now = new Date().toISOString();
