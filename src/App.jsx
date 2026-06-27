@@ -15,13 +15,11 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import PublicWeeklySpecialDisplay from './pages/PublicWeeklySpecialDisplay';
 import PublicDrinkMenu from './pages/PublicDrinkMenu';
 import AccountingDashboard from './pages/AccountingDashboard';
 import AccountingCashbook from './pages/AccountingCashbook';
 import AccountingReceipts from './pages/AccountingReceipts';
 import AccountingCreditors from './pages/AccountingCreditors';
-import AccountingDebitors from './pages/AccountingDebitors';
 import AccountingExport from './pages/AccountingExport';
 import AccountingFixedCosts from './pages/AccountingFixedCosts';
 import AccountingLiabilities from './pages/AccountingLiabilities';
@@ -32,14 +30,11 @@ import KarteHub from './pages/KarteHub';
 import AccountingBank from './pages/AccountingBank';
 import BusinessCard from './pages/BusinessCard';
 import AdminTimeEditor from './pages/AdminTimeEditor';
-import DataExport from './pages/DataExport';
-import MeinTag from './pages/MeinTag';
 import ModuleCenter from './pages/ModuleCenter';
 import DisplayManager from './pages/DisplayManager';
 import Display from './pages/Display';
 
 import BusinessCalendar from './pages/BusinessCalendar';
-import WorldCupSchedule from './pages/WorldCupSchedule';
 import DataQuality from './pages/DataQuality';
 
 const { Pages, CorePages, SpecialPagesWithLayout, PublicPages, Layout, mainPage } = pagesConfig;
@@ -192,8 +187,6 @@ const AuthenticatedApp = () => {
       } />
 
       {/* Datenexport & Migration */}
-      <Route path="/DataExport" element={
-        <LayoutWrapper currentPageName="DataExport">
           <RoleGuard permission="canViewSettings">
             <DataExport />
           </RoleGuard>
@@ -201,7 +194,6 @@ const AuthenticatedApp = () => {
       } />
 
       {/* Mein Tag — jetzt auf Dashboard umgeleitet */}
-      <Route path="/MeinTag" element={<Navigate to="/" replace />} />
 
       {/* Modulcenter — Admin Modulverwaltung */}
       <Route path="/ModuleCenter" element={
@@ -222,8 +214,6 @@ const AuthenticatedApp = () => {
       } />
 
       {/* WM-Spielplan */}
-      <Route path="/WorldCupSchedule" element={
-        <LayoutWrapper currentPageName="WorldCupSchedule">
           <WorldCupSchedule />
         </LayoutWrapper>
       } />
@@ -242,7 +232,6 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingCashbook" element={<LayoutWrapper currentPageName="AccountingCashbook"><RoleGuard permission="canViewAccountingCashbook"><AccountingCashbook /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingReceipts" element={<LayoutWrapper currentPageName="AccountingReceipts"><RoleGuard permission="canViewAccountingReceipts"><AccountingReceipts /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingCreditors" element={<LayoutWrapper currentPageName="AccountingCreditors"><RoleGuard permission="canViewAccountingCreditors"><AccountingCreditors /></RoleGuard></LayoutWrapper>} />
-      <Route path="/AccountingDebitors" element={<LayoutWrapper currentPageName="AccountingDebitors"><RoleGuard permission="canViewAccountingDebitors"><AccountingDebitors /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingExport" element={<LayoutWrapper currentPageName="AccountingExport"><RoleGuard permission="canExportAccounting"><AccountingExport /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingFixedCosts" element={<LayoutWrapper currentPageName="AccountingFixedCosts"><RoleGuard permission="canViewAccounting"><AccountingFixedCosts /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingLiabilities" element={<LayoutWrapper currentPageName="AccountingLiabilities"><RoleGuard permission="canViewLiabilities"><AccountingLiabilities /></RoleGuard></LayoutWrapper>} />
@@ -277,7 +266,6 @@ function App() {
           <Routes>
             {/* Public pages (NO auth check, rendered outside AuthenticatedApp) */}
             <Route path="/PublicDrinkMenu" element={<PublicDrinkMenu />} />
-            <Route path="/PublicWeeklySpecialDisplay" element={<PublicWeeklySpecialDisplay />} />
             <Route path="/StorageLocationScan/:id" element={<PublicPages.StorageLocationScan />} />
             <Route path="/Display" element={<Display />} />
 
