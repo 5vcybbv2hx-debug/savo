@@ -445,11 +445,19 @@ export default function Recipes() {
     const closeModal = () => { setModalOpen(false); setSelectedRecipe(null); };
 
     const handleSave = () => {
+        // Numerische Felder: leerer String → null (API-Validierung)
+        const cleanData = {
+            ...formData,
+            slushy_original_volume_liters:
+                formData.slushy_original_volume_liters === '' || formData.slushy_original_volume_liters === undefined
+                    ? null
+                    : Number(formData.slushy_original_volume_liters),
+        };
         if (!formData.name.trim()) { toast.error('Name ist erforderlich'); return; }
         if (selectedRecipe) {
-            updateMutation.mutate({ id: selectedRecipe.id, data: formData });
+            updateMutation.mutate({ id: selectedRecipe.id, data: cleanData });
         } else {
-            createMutation.mutate(formData);
+            createMutation.mutate(cleanData);
         }
     };
 
@@ -841,7 +849,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                     <Label className="text-xs text-muted-foreground">Originalmenge (L)</Label>
                                     <Input className="h-9" type="number" step="0.1" placeholder="z.B. 9.5"
                                         value={formData.slushy_original_volume_liters}
-                                        onChange={e => setFormData(f => ({ ...f, slushy_original_volume_liters: parseFloat(e.target.value) || '' }))} />
+                                        onChange={e => setFormData(f => ({ ...f, slushy_original_volume_liters: e.target.value === '' ? null : parseFloat(e.target.value) || null }))} />
                                     <p className="text-[10px] text-muted-foreground">Wird auf 3,5L skaliert</p>
                                 </div>
                             </div>
