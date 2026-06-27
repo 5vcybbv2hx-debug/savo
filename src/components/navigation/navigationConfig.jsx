@@ -43,8 +43,8 @@ export const additionalPages = [
 
     // Waren & Lager
     { page: 'Restock',    name: 'Auffüllen',    icon: Package,       permission: 'canViewRestock' },
-    { page: 'Shopping',   name: 'Einkauf',      icon: ShoppingCart,  permission: 'canViewShopping' },
-    { page: 'QuickList',  name: 'Schnellliste', icon: ListChecks,    permission: 'canViewShopping' },
+    { page: 'Shopping',   name: 'Bestellung',   icon: ShoppingCart,  permission: 'canViewShopping' },
+    { page: 'QuickList',  name: 'Einkaufsliste', icon: ListChecks,   permission: 'canViewShopping' },
     { page: 'Articles',   name: 'Artikel',      icon: Boxes,         permission: 'canViewWarehouse' },
     { page: 'Storage',    name: 'Lagerorte',    icon: MapPin,        permission: 'canViewWarehouse' },
     { page: 'Inventory',  name: 'Inventur',     icon: ClipboardList, permission: 'canViewInventory' },
