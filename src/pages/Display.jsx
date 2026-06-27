@@ -448,53 +448,64 @@ function AmericanFootball3D() {
 }
 
 // ❤️ LOVE
-function Love3D() {
-  const mountRef = useThreeScene((T, W, H) => {
-    const scene = new T.Scene();
-    const camera = new T.PerspectiveCamera(62, W / H, 0.1, 100);
-    camera.position.set(0, 0, 9);
-    scene.add(new T.AmbientLight(0xff88aa, 0.45));
-    scene.add(Object.assign(new T.PointLight(0xff2266, 3.5, 22), { position: new T.Vector3(0, 4, 3) }));
-    scene.add(Object.assign(new T.PointLight(0xaa00ff, 2.5, 22), { position: new T.Vector3(-3, -2, 2) }));
-
-    const shape = new T.Shape();
-    shape.moveTo(0, 0.5);
-    shape.bezierCurveTo(0,0.85,0.52,0.85,0.52,0.5);
-    shape.bezierCurveTo(0.52,0.15,0,-0.2,0,-0.45);
-    shape.bezierCurveTo(0,-0.2,-0.52,0.15,-0.52,0.5);
-    shape.bezierCurveTo(-0.52,0.85,0,0.85,0,0.5);
-    const heartGeo = new T.ExtrudeGeometry(shape, { depth:0.2, bevelEnabled:true, bevelSize:0.045, bevelThickness:0.045, bevelSegments:8 });
-    heartGeo.center();
-
-    const HCOLS = [0xff2255,0xff66aa,0xff44bb,0xdd0066,0xff88cc,0xee0055,0xff3377,0xcc0044];
-    const hearts = Array.from({length:16},(_,i) => {
-      const m = new T.Mesh(heartGeo, new T.MeshStandardMaterial({ color:HCOLS[i%HCOLS.length], roughness:0.18, metalness:0.35, transparent:true, opacity:0.88 }));
-      const sc = 0.28+Math.random()*0.52; m.scale.setScalar(sc);
-      m.position.set((Math.random()-0.5)*9, -5-Math.random()*6, (Math.random()-0.5)*2.5);
-      m.userData = { vy:0.026+Math.random()*0.032, wb:Math.random()*Math.PI*2, ws:0.018+Math.random()*0.022, rs:(Math.random()-0.5)*0.028 };
-      scene.add(m); return m;
-    });
-
-    const spkPos = new Float32Array(600*3);
-    for (let i=0;i<600*3;i++) spkPos[i]=(Math.random()-0.5)*14;
-    const spkGeo = new T.BufferGeometry(); spkGeo.setAttribute('position',new T.BufferAttribute(spkPos,3));
-    scene.add(new T.Points(spkGeo, new T.PointsMaterial({color:0xffaacc,size:0.045,transparent:true,opacity:0.55,blending:T.AdditiveBlending})));
-
-    return {
-      scene, camera,
-      onFrame(t) {
-        hearts.forEach(h => {
-          h.userData.wb+=h.userData.ws;
-          h.position.y+=h.userData.vy;
-          h.position.x+=Math.sin(h.userData.wb)*0.018;
-          h.rotation.y+=h.userData.rs; h.rotation.z=Math.sin(h.userData.wb*0.5)*0.14;
-          if (h.position.y>6) { h.position.y=-5-Math.random()*3; h.position.x=(Math.random()-0.5)*9; }
-        });
-        camera.position.x=Math.sin(t*0.038)*0.45;
-      }
-    };
-  });
-  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, opacity: 0.6, pointerEvents: 'none' }} />;
+function CanvasLove() {
+  const cvRef = useRef(null);
+  const rafRef = useRef(null);
+  useEffect(() => {
+    const cv = cvRef.current; if (!cv) return;
+    const ctx = cv.getContext('2d');
+    cv.width = cv.offsetWidth; cv.height = cv.offsetHeight;
+    const W = cv.width, H = cv.height;
+    const COLS = ['#ff2255','#ff66aa','#ff44bb','#dd0066','#ff88cc','#ee0055','#ff3377','#cc0044','#ff99bb','#ee1177'];
+    // Herz per Canvas-Path zeichnen
+    function drawHeart(ctx, x, y, size) {
+      ctx.beginPath();
+      ctx.moveTo(x, y + size * 0.3);
+      ctx.bezierCurveTo(x, y, x - size * 0.5, y, x - size * 0.5, y + size * 0.3);
+      ctx.bezierCurveTo(x - size * 0.5, y + size * 0.65, x, y + size * 0.9, x, y + size);
+      ctx.bezierCurveTo(x, y + size * 0.9, x + size * 0.5, y + size * 0.65, x + size * 0.5, y + size * 0.3);
+      ctx.bezierCurveTo(x + size * 0.5, y, x, y, x, y + size * 0.3);
+      ctx.closePath();
+    }
+    const hearts = Array.from({length: 22}, () => ({
+      x: Math.random() * W,
+      y: H + Math.random() * H * 0.6,
+      size: 20 + Math.random() * 55,
+      vy: -(0.5 + Math.random() * 1.1),
+      vx: (Math.random() - 0.5) * 0.5,
+      wb: Math.random() * Math.PI * 2,
+      ws: 0.012 + Math.random() * 0.02,
+      rot: (Math.random() - 0.5) * 0.4,
+      color: COLS[Math.floor(Math.random() * COLS.length)],
+      op: 0.35 + Math.random() * 0.5,
+    }));
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      hearts.forEach(h => {
+        h.wb += h.ws;
+        h.x += h.vx + Math.sin(h.wb) * 0.6;
+        h.y += h.vy;
+        if (h.y < -h.size * 2) { h.y = H + h.size; h.x = Math.random() * W; }
+        const fade = Math.min(1, (H - h.y) / (H * 0.5)) * h.op;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, fade);
+        ctx.translate(h.x, h.y);
+        ctx.rotate(h.rot + Math.sin(h.wb * 0.5) * 0.12);
+        ctx.translate(-h.x, -h.y);
+        // Glow
+        ctx.shadowColor = h.color;
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = h.color;
+        drawHeart(ctx, h.x - h.size * 0.5, h.y - h.size * 0.5, h.size);
+        ctx.fill();
+        ctx.restore();
+      });
+      rafRef.current = requestAnimationFrame(draw);
+    }
+    draw();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+  return <canvas ref={cvRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', opacity:0.65 }} />;
 }
 
 // 🎉 PARTY
@@ -690,7 +701,7 @@ function ThemeBackground({ theme, accent, prominentDisco = false }) {
     case 'summer':            return <CanvasSummer />;
     case 'fireworks':         return <Fireworks3D />;
     case 'christmas':         return <Christmas3D />;
-    case 'love':              return <Love3D />;
+    case 'love':              return <CanvasLove />;
     case 'party':             return <Party3D />;
     default:                  return <Party3D />;
   }
