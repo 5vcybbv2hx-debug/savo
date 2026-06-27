@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, ChevronDown, ChevronUp, GripVertical, QrCode, X, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
@@ -252,6 +252,10 @@ export default function DisplayManager() {
               Vollbild
               <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
             </a>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setShowQR(true)} className="h-9 text-xs gap-1.5">
+            <QrCode className="w-3.5 h-3.5" />
+            Gäste-Link
           </Button>
           <Button size="sm" onClick={openAdd} className="h-9 text-xs">
             <Plus className="w-3.5 h-3.5 mr-1" />
@@ -666,5 +670,56 @@ function SlidePreview({ form }) {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: accentHex, boxShadow: `0 0 8px ${glow}` }} />
       </div>
     </div>
+      {/* ── QR-Code Dialog ── */}
+      <Dialog open={showQR} onOpenChange={setShowQR}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-4 h-4 text-primary" />
+              Gäste-Link · Getränkekarte
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 pt-2">
+            {/* QR-Code via Google Charts API */}
+            <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(MENU_URL)}&bgcolor=ffffff&color=111827&margin=2`}
+                alt="QR-Code Getränkekarte"
+                width={220}
+                height={220}
+                className="rounded-lg block"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground text-center leading-relaxed">
+              Gäste scannen diesen Code mit der Kamera-App<br/>
+              und sehen die Getränkekarte sofort im Browser.
+            </p>
+            {/* URL-Zeile mit Copy-Button */}
+            <div className="w-full flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+              <span className="text-[11px] text-muted-foreground truncate flex-1 font-mono">{MENU_URL}</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(MENU_URL);
+                  setQrCopied(true);
+                  setTimeout(() => setQrCopied(false), 2000);
+                }}
+                className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                title="Link kopieren"
+              >
+                {qrCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+              <a
+                href={MENU_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                title="Im Browser öffnen"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
   );
 }
