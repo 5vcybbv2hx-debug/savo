@@ -16,7 +16,6 @@ import {
 const sidebarPages = [
     { page: 'Dashboard',     name: 'Dashboard',      icon: LayoutDashboard, permission: 'canViewDashboard' },
     { page: 'TeamHub',       name: 'Team',            icon: Users,           permission: 'canViewShifts' },
-    { page: 'BetriebHub',    name: 'Betrieb',         icon: Store,            permission: 'canViewReservations' },
     { page: 'Warehouse',     name: 'Waren & Lager',   icon: Warehouse,       permission: 'canViewWarehouse' },
     { page: 'KarteHub',      name: 'Karte',           icon: Wine,             permission: 'canViewDrinkMenu' },
     { page: 'AccountingHub', name: 'Buchhaltung',     icon: Calculator,       permission: 'canViewAccounting' },
@@ -34,11 +33,9 @@ export const mainNavigation = [
 // ── MEHR-DRAWER ───────────────────────────────────────────────────────────────
 export const additionalPages = [
     // Betrieb
-    { page: 'GuestHub',       name: 'Gäste & Tische',    icon: Users,         permission: 'canViewReservations' },
     { page: 'Todos',          name: 'Aufgaben',           icon: ClipboardList, permission: 'canViewTodos' },
     { page: 'WeeklyTasks',    name: 'Wochenaufgaben',     icon: ListChecks,    permission: 'canViewSettings' },
     { page: 'Cleaning',       name: 'Putzliste',          icon: Sparkles,      permission: 'canViewCleaning' },
-    { page: 'Maintenance',    name: 'Wartung',            icon: Wrench,        permission: 'canViewReservations' },
     { page: 'Events',         name: 'Events',             icon: CalendarDays,  permission: 'canViewEvents' },
     { page: 'DisplayManager', name: 'TV-Display',         icon: Tv,            permission: 'isManager' },
 
