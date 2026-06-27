@@ -84,7 +84,7 @@ const ALLERGEN_FILTERS = [
 function DrinkCard({ item, onClick }) {
   const hasAllergenInfo = item.allergens_list?.length > 0 || item.additives?.length > 0 || item.allergens;
   const isUnavailable   = item.is_available === false;
-  const isAlcoholFree   = !item.alcohol_content || parseFloat(item.alcohol_content) === 0;
+  const isAlcoholFree   = item.alcohol_content != null && item.alcohol_content !== '' && parseFloat(item.alcohol_content) === 0;
 
   return (
     <button
@@ -153,7 +153,7 @@ function DrinkCard({ item, onClick }) {
 // ── Detail-Dialog ─────────────────────────────────────────────────────────────
 function DrinkDetail({ item, open, onClose }) {
   if (!item) return null;
-  const isAlcoholFree = !item.alcohol_content || parseFloat(item.alcohol_content) === 0;
+  const isAlcoholFree = item.alcohol_content != null && item.alcohol_content !== '' && parseFloat(item.alcohol_content) === 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
