@@ -1,27 +1,20 @@
 /**
  * navigationConfig.js — Navigationskonfiguration
- * Sidebar-Pages sind INLINE definiert (kein externer Import).
+ * ⚠️  sidebarPages wird aus sidebarConfig.js importiert — NICHT hier editieren!
+ *     Nur additionalPages (Mehr-Drawer) hier pflegen.
  */
 import {
     LayoutDashboard, Users, Calendar, ShoppingCart, ClipboardList,
     Sparkles, BookOpen, Package, Boxes, Store, Calculator,
     Wine, Receipt, Euro, Settings, FileText, Wrench, HelpCircle,
-    CalendarDays, Clock, Plane, RefreshCw, Shield, Trophy,
+    CalendarDays, Clock, Plane, RefreshCw, Shield,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare,
     Banknote, BookCopy, Tv, Warehouse,
 } from 'lucide-react';
 
-// ── SIDEBAR (inline — nicht aus sidebarConfig importieren) ───────────────────
-const sidebarPages = [
-    { page: 'Dashboard',     name: 'Dashboard',      icon: LayoutDashboard, permission: 'canViewDashboard' },
-    { page: 'TeamHub',       name: 'Team',            icon: Users,           permission: 'canViewShifts' },
-    { page: 'BetriebHub',    name: 'Betrieb',         icon: Store,            permission: 'canViewReservations' },
-    { page: 'Warehouse',     name: 'Waren & Lager',   icon: Warehouse,       permission: 'canViewWarehouse' },
-    { page: 'KarteHub',      name: 'Karte',           icon: Wine,             permission: 'canViewDrinkMenu' },
-    { page: 'AccountingHub', name: 'Buchhaltung',     icon: Calculator,       permission: 'canViewAccounting' },
-    { page: 'Settings',      name: 'Einstellungen',   icon: Settings,         permission: 'canViewSettings' },
-];
+// ── SIDEBAR — aus sidebarConfig.js (Builder-sicher) ─────────────────────────
+import { sidebarPages } from './sidebarConfig.js';
 
 export const mainNavigation = [
     {
@@ -31,7 +24,6 @@ export const mainNavigation = [
     },
 ];
 
-// ── MEHR-DRAWER ───────────────────────────────────────────────────────────────
 export const additionalPages = [
     // Betrieb
     { page: 'Todos',          name: 'Aufgaben',           icon: ClipboardList, permission: 'canViewTodos' },
