@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { DisplaySlide, CompanyInfo } from '@/api/entities';
+import { base44 } from '@/api/base44Client';
 
 // ── Akzentfarben ──────────────────────────────────────────────────────────────
 const ACCENTS = {
@@ -1114,13 +1114,13 @@ export default function Display() {
     queryKey: ['displaySlides'],
     queryFn: async () => {
       const now = new Date().toISOString();
-      // Logo laden
+      // Logo laden — public client, kein User-Login nötig
       try {
-        const companies = await CompanyInfo.list();
+        const companies = await base44.entities.CompanyInfo.list();
         if (companies?.[0]?.logo_url) setCompanyLogo(companies[0].logo_url);
       } catch (_) {}
-      // Slides direkt aus DB — User ist eingeloggt, SDK hat Token
-      const all = await DisplaySlide.list();
+      // Slides laden
+      const all = await base44.entities.DisplaySlide.list();
       return (all || [])
         .filter(s => {
           if (!s.is_active) return false;
