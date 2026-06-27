@@ -229,7 +229,7 @@ export default function Layout({ children, currentPageName }) {
     const drawerSections = useMemo(() => [
         {
             id: 'betrieb', name: 'Betrieb',
-            pages: additionalPages.filter(p => ['GuestHub','Todos','WeeklyTasks','Cleaning','Events'].includes(p.page))
+            pages: additionalPages.filter(p => ['GuestHub','Todos','WeeklyTasks','Cleaning','Events','Maintenance','DisplayManager'].includes(p.page))
         },
         {
             id: 'waren', name: 'Waren & Lager',
@@ -249,7 +249,7 @@ export default function Layout({ children, currentPageName }) {
         },
         {
             id: 'sonstiges', name: 'Einstellungen & Mehr',
-            pages: additionalPages.filter(p => ['Settings','Documents','Maintenance','Onboarding','BusinessCard','ModuleCenter','BusinessCalendar','DataQuality'].includes(p.page))
+            pages: additionalPages.filter(p => ['Settings','Documents','Onboarding','BusinessCard','ModuleCenter','BusinessCalendar','DataQuality'].includes(p.page))
         },
     ], [additionalPages]);
     const getPageName = (pageName) => allPages.find(p => p.page === pageName)?.name || 'BarManager';
