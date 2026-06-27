@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, Check } from 'lucide-react';
+import { addDays, addWeeks, endOfWeek, format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import SmartCombobox from '@/components/ui/SmartCombobox';
@@ -22,9 +23,23 @@ const PRIORITIES = [
 ];
 
 const STATUSES = [
-    { value: 'offen',          label: 'Offen' },
-    { value: 'in_bearbeitung', label: 'Aktiv' },
-    { value: 'erledigt',       label: 'Erledigt' },
+    { value: 'offen',          label: 'Offen',    icon: '○' },
+    { value: 'in_bearbeitung', label: 'Aktiv',    icon: '◑' },
+    { value: 'erledigt',       label: 'Erledigt', icon: '●' },
+];
+
+const priorityAccent = {
+    niedrig: 'bg-slate-500',
+    mittel:  'bg-blue-500',
+    hoch:    'bg-orange-500',
+    dringend:'bg-red-500',
+};
+
+const quickDates = [
+    { label: 'Heute',         getValue: () => format(new Date(), 'yyyy-MM-dd') },
+    { label: 'Morgen',        getValue: () => format(addDays(new Date(), 1), 'yyyy-MM-dd') },
+    { label: 'Diese Woche',   getValue: () => format(endOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd') },
+    { label: 'Nächste Woche', getValue: () => format(endOfWeek(addWeeks(new Date(), 1), { weekStartsOn: 1 }), 'yyyy-MM-dd') },
 ];
 
 function generateId() {
@@ -133,6 +148,7 @@ export default function TodoModal({ open, onClose, todo, employees, onSave, curr
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent>
+                <div className={cn("h-1 w-full rounded-t-lg transition-colors duration-300", priorityAccent[formData.priority])} />
                 <MobileModalHeader onClose={onClose}>
                     {todo ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}
                 </MobileModalHeader>
@@ -187,29 +203,47 @@ export default function TodoModal({ open, onClose, todo, employees, onSave, curr
                         </div>
                     </div>
 
-                    {/* Category + Status */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label className="text-sm font-semibold">Kategorie</Label>
-                            <SmartCombobox
-                                value={formData.category}
-                                onChange={(val) => set('category', val)}
-                                options={categories}
-                                placeholder="Kategorie..."
-                                allowCreate={true}
-                            />
+                    {/* Category - Chip-Grid */}
+                    <div className="space-y-1.5">
+                        <Label className="text-sm font-semibold">Kategorie</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {categories.map(cat => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => set('category', cat)}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-full text-sm font-medium border transition-all active:scale-95",
+                                        formData.category === cat
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "border-border text-muted-foreground hover:border-primary/50"
+                                    )}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
                         </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-sm font-semibold">Status</Label>
-                            <select
-                                value={formData.status}
-                                onChange={e => set('status', e.target.value)}
-                                className="w-full h-12 rounded-xl border border-input bg-background px-3 text-base text-foreground"
-                            >
-                                {STATUSES.map(s => (
-                                    <option key={s.value} value={s.value}>{s.label}</option>
-                                ))}
-                            </select>
+                    </div>
+
+                    {/* Status - 3 Chips */}
+                    <div className="space-y-1.5">
+                        <Label className="text-sm font-semibold">Status</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {STATUSES.map(s => (
+                                <button
+                                    key={s.value}
+                                    type="button"
+                                    onClick={() => set('status', s.value)}
+                                    className={cn(
+                                        "py-3 rounded-xl border text-sm font-medium transition-all active:scale-95",
+                                        formData.status === s.value
+                                            ? "border-foreground bg-accent text-foreground"
+                                            : "border-border text-muted-foreground"
+                                    )}
+                                >
+                                    <span className="mr-1">{s.icon}</span>{s.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
@@ -217,6 +251,26 @@ export default function TodoModal({ open, onClose, todo, employees, onSave, curr
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                             <Label className="text-sm font-semibold">Fällig am</Label>
+                            <div className="flex gap-1.5 flex-wrap mb-2">
+                                {quickDates.map(qd => {
+                                    const isActive = qd.getValue() === formData.due_date;
+                                    return (
+                                        <button
+                                            key={qd.label}
+                                            type="button"
+                                            onClick={() => set('due_date', qd.getValue())}
+                                            className={cn(
+                                                "text-xs px-2.5 py-1 rounded-full border transition-all active:scale-95",
+                                                isActive
+                                                    ? "bg-primary text-primary-foreground border-primary"
+                                                    : "border-border text-muted-foreground hover:border-primary/50"
+                                            )}
+                                        >
+                                            {qd.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                             <Input
                                 type="date"
                                 value={formData.due_date}
@@ -283,10 +337,24 @@ export default function TodoModal({ open, onClose, todo, employees, onSave, curr
                         <Label className="text-sm font-semibold">Unteraufgaben</Label>
                         {formData.subtasks.length > 0 && (
                             <div className="space-y-1 mb-2">
-                                {formData.subtasks.map(sub => (
-                                    <div key={sub.id} className="flex items-center gap-2 px-3 py-2 bg-secondary/30 rounded-lg">
-                                        <span className="text-xs flex-1 text-foreground">{sub.title}</span>
-                                        <button type="button" onClick={() => removeSubtask(sub.id)}
+                                {formData.subtasks.map(subtask => (
+                                    <div key={subtask.id} className="flex items-center gap-2 px-3 py-2 bg-secondary/30 rounded-lg">
+                                        <button
+                                            type="button"
+                                            onClick={() => set('subtasks', formData.subtasks.map(s =>
+                                                s.id === subtask.id ? { ...s, done: !s.done } : s
+                                            ))}
+                                            className={cn(
+                                                "w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all",
+                                                subtask.done
+                                                    ? "bg-primary border-primary"
+                                                    : "border-border hover:border-primary"
+                                            )}
+                                        >
+                                            {subtask.done && <Check className="w-3 h-3 text-primary-foreground" />}
+                                        </button>
+                                        <span className={cn("text-xs flex-1", subtask.done ? "line-through text-muted-foreground" : "text-foreground")}>{subtask.title}</span>
+                                        <button type="button" onClick={() => removeSubtask(subtask.id)}
                                             className="text-muted-foreground hover:text-red-400 transition-colors">
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
