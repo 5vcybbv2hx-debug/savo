@@ -1082,6 +1082,8 @@ function NextSlidePreview({ slide, visible }) {
 // HAUPT-COMPONENT
 // ══════════════════════════════════════════════════════════════════════════════
 export default function Display() {
+  const [companyLogo, setCompanyLogo] = useState(null);
+
   const [currentIdx, setCurrentIdx] = useState(0);
   const [phase, setPhase] = useState('in');
   const [showNextPreview, setShowNextPreview] = useState(false);
@@ -1097,6 +1099,7 @@ export default function Display() {
       if (!res.ok) throw new Error('Fehler');
       const json = await res.json();
       const now = new Date().toISOString();
+      if (json.logo_url) setCompanyLogo(json.logo_url);
       return (json.slides || [])
         .filter(s => {
           if (!s.is_active) return false;
@@ -1161,6 +1164,17 @@ export default function Display() {
 
       {/* Ambient Glow unten */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse 80% 55% at 50% 105%,${accent.glow} 0%,transparent 70%)`, transition: 'background 1.2s ease' }} />
+
+      {/* Logo oben links */}
+      {companyLogo && (
+        <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 30, padding: '24px 40px', display: 'flex', alignItems: 'center' }}>
+          <img
+            src={companyLogo}
+            alt="Logo"
+            style={{ height: 'clamp(32px, 4vh, 56px)', maxWidth: 'clamp(80px, 12vw, 180px)', objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7)) brightness(1.1)', opacity: 0.9 }}
+          />
+        </div>
+      )}
 
       {/* Uhr oben rechts */}
       <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, padding: '28px 48px' }}>
