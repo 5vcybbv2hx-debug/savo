@@ -229,7 +229,7 @@ export default function Layout({ children, currentPageName }) {
     const drawerSections = useMemo(() => [
         {
             id: 'betrieb', name: 'Betrieb',
-            pages: additionalPages.filter(p => ['GuestHub','Todos','WeeklyTasks','Cleaning','Events','Maintenance','DisplayManager'].includes(p.page))
+            pages: additionalPages.filter(p => ['GuestHub','Todos','WeeklyTasks','Cleaning','Maintenance','Events','DisplayManager'].includes(p.page))
         },
         {
             id: 'waren', name: 'Waren & Lager',

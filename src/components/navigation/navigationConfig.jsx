@@ -38,6 +38,7 @@ export const additionalPages = [
     { page: 'Todos',          name: 'Aufgaben',           icon: ClipboardList, permission: 'canViewTodos' },
     { page: 'WeeklyTasks',    name: 'Wochenaufgaben',     icon: ListChecks,    permission: 'canViewSettings' },
     { page: 'Cleaning',       name: 'Putzliste',          icon: Sparkles,      permission: 'canViewCleaning' },
+    { page: 'Maintenance',    name: 'Wartung',            icon: Wrench,        permission: 'canViewReservations' },
     { page: 'Events',         name: 'Events',             icon: CalendarDays,  permission: 'canViewEvents' },
     { page: 'DisplayManager', name: 'TV-Display',         icon: Tv,            permission: 'isManager' },
 
@@ -82,7 +83,6 @@ export const additionalPages = [
 
     // Einstellungen & Mehr
     { page: 'Documents',        name: 'Dokumente',       icon: FileText,     permission: 'canViewSettings' },
-    { page: 'Maintenance',      name: 'Wartung',          icon: Wrench,       permission: 'canViewReservations' },
     { page: 'Onboarding',       name: 'Onboarding',       icon: HelpCircle,   permission: 'canViewOnboarding' },
     { page: 'BusinessCard',     name: 'Visitenkarte',     icon: CreditCard,   permission: 'canViewDashboard' },
     { page: 'ModuleCenter',     name: 'Modulcenter',      icon: LayoutGrid,   permission: 'canViewSettings' },
