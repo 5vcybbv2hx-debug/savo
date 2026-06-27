@@ -16,7 +16,7 @@ import {
     Clock, ArrowRight, CheckSquare, Check, Sparkles, CalendarCheck,
     Users, Calendar, LogIn, LogOut, Wrench, TrendingDown,
     ShoppingCart, FileText, Package, RefreshCw, AlertTriangle,
-    ChevronRight, Timer, ShoppingBasket
+    ChevronRight, Timer, ShoppingBasket, Pause, Play, Coffee
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -46,6 +46,17 @@ function getOperationPhase() {
 }
 
 // ── Stempeluhr-Karte (erste Priorität) ───────────────────────────────────────
+
+function calcTotalBreakMinutes(breaks) {
+    if (!Array.isArray(breaks) || breaks.length === 0) return 0;
+    const now = new Date();
+    return breaks.reduce((sum, b) => {
+        if (!b?.start) return sum;
+        const start = new Date(b.start);
+        const end = b.end ? new Date(b.end) : now;
+        return sum + Math.max(0, differenceInMinutes(end, start));
+    }, 0);
+}
 
 function ClockCard({ currentEmployee }) {
     const queryClient = useQueryClient();
@@ -87,11 +98,14 @@ function ClockCard({ currentEmployee }) {
             const entry = clockEntries.find(e => e.id === entryId);
             const now = new Date();
             const totalMinutes = calcWorkMinutes(entry.clock_in, now);
-            const breakMinutes = totalMinutes > 9 * 60 ? 45 : totalMinutes > 6 * 60 ? 30 : 0;
+            const actualBreakMinutes = calcTotalBreakMinutes(entry.breaks);
+            const legalBreak = totalMinutes > 9 * 60 ? 45 : totalMinutes > 6 * 60 ? 30 : 0;
+            const breakMinutes = Math.max(actualBreakMinutes, legalBreak);
             const totalHours   = Math.round(((totalMinutes - breakMinutes) / 60) * 100) / 100;
             await base44.entities.ClockEntry.update(entryId, {
                 clock_out: now.toISOString(), break_minutes: breakMinutes,
                 total_hours: totalHours, status: 'clocked_out',
+                breaks: entry.breaks,
             });
             await base44.entities.TimeEntry.create({
                 employee_id: entry.employee_id, employee_name: entry.employee_name,
@@ -112,49 +126,104 @@ function ClockCard({ currentEmployee }) {
 
     if (!currentEmployee) return null;
 
+    const isOnBreak = active?.status === 'on_break';
+    const openBreak = isOnBreak ? (active.breaks || []).find(b => !b.end) : null;
+
+    const handleStartBreak = async () => {
+        const currentBreaks = active.breaks || [];
+        await base44.entities.ClockEntry.update(active.id, {
+            status: 'on_break',
+            breaks: [...currentBreaks, { start: new Date().toISOString(), end: null }],
+        });
+        queryClient.invalidateQueries({ queryKey: ['clock-entries'] });
+    };
+
+    const handleEndBreak = async () => {
+        const updatedBreaks = (active.breaks || []).map((b, i, arr) =>
+            i === arr.length - 1 && !b.end ? { ...b, end: new Date().toISOString() } : b
+        );
+        await base44.entities.ClockEntry.update(active.id, {
+            status: 'clocked_in',
+            breaks: updatedBreaks,
+        });
+        queryClient.invalidateQueries({ queryKey: ['clock-entries'] });
+    };
+
+    const completedBreaks = (active?.breaks || []).filter(b => b.end);
+    const totalBreakMin = calcTotalBreakMinutes(active?.breaks);
+
     return (
         <Card className={cn(
             'border transition-colors',
-            active ? 'border-green-500/40 bg-green-500/5' : 'border-border bg-card'
+            isOnBreak ? 'border-amber-500/40 bg-amber-500/5' : active ? 'border-green-500/40 bg-green-500/5' : 'border-border bg-card'
         )}>
-            <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm"
-                    style={{ backgroundColor: currentEmployee.color || '#64748b' }}>
-                    {currentEmployee.name?.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                    {active ? (
-                        <>
-                            <div className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                                <p className="text-sm font-semibold text-green-400">Eingestempelt</p>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                Seit {format(new Date(active.clock_in), 'HH:mm')}
-                                {elapsed ? ` · ${elapsed}` : ''}
-                            </p>
-                        </>
+            <CardContent className="p-4 space-y-3">
+                <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm"
+                        style={{ backgroundColor: currentEmployee.color || '#64748b' }}>
+                        {currentEmployee.name?.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        {active ? (
+                            <>
+                                <div className="flex items-center gap-1.5">
+                                    <span className={cn('w-2 h-2 rounded-full animate-pulse', isOnBreak ? 'bg-amber-400' : 'bg-green-400')} />
+                                    <p className={cn('text-sm font-semibold', isOnBreak ? 'text-amber-400' : 'text-green-400')}>
+                                        {isOnBreak ? 'Pause' : 'Eingestempelt'}
+                                    </p>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    {isOnBreak && openBreak
+                                        ? `Pause seit ${format(new Date(openBreak.start), 'HH:mm')}`
+                                        : `Seit ${format(new Date(active.clock_in), 'HH:mm')}${elapsed ? ` · ${elapsed}` : ''}`}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-sm font-semibold text-foreground">Nicht eingestempelt</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{currentEmployee.name}</p>
+                            </>
+                        )}
+                    </div>
+                    {/* Buttons */}
+                    {!active ? (
+                        <Button size="sm"
+                            onClick={() => clockInMutation.mutate()}
+                            disabled={clockInMutation.isPending}
+                            className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5 shrink-0">
+                            <LogIn className="w-4 h-4" />Ein
+                        </Button>
+                    ) : isOnBreak ? (
+                        <Button size="sm"
+                            onClick={handleEndBreak}
+                            className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5 shrink-0">
+                            <Play className="w-4 h-4" />Beenden
+                        </Button>
                     ) : (
-                        <>
-                            <p className="text-sm font-semibold text-foreground">Nicht eingestempelt</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{currentEmployee.name}</p>
-                        </>
+                        <div className="flex gap-2 shrink-0">
+                            <Button size="sm" variant="outline"
+                                onClick={handleStartBreak}
+                                className="h-10 px-3 border-amber-500/50 text-amber-500 hover:bg-amber-500/10 gap-1.5">
+                                <Pause className="w-4 h-4" />Pause
+                            </Button>
+                            <Button size="sm"
+                                onClick={() => clockOutMutation.mutate(active.id)}
+                                disabled={clockOutMutation.isPending}
+                                className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white gap-1.5">
+                                <LogOut className="w-4 h-4" />Aus
+                            </Button>
+                        </div>
                     )}
                 </div>
-                {active ? (
-                    <Button size="sm"
-                        onClick={() => clockOutMutation.mutate(active.id)}
-                        disabled={clockOutMutation.isPending}
-                        className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white gap-1.5 shrink-0">
-                        <LogOut className="w-4 h-4" />Ausstempeln
-                    </Button>
-                ) : (
-                    <Button size="sm"
-                        onClick={() => clockInMutation.mutate()}
-                        disabled={clockInMutation.isPending}
-                        className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5 shrink-0">
-                        <LogIn className="w-4 h-4" />Einstempeln
-                    </Button>
+
+                {/* Pause-Verlauf */}
+                {completedBreaks.length > 0 && (
+                    <div className="pt-2 border-t border-border/50 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Coffee className="w-3 h-3 shrink-0" />
+                        <span>{completedBreaks.length} Pause{completedBreaks.length > 1 ? 'n' : ''}</span>
+                        <span className="text-muted-foreground/60">·</span>
+                        <span className="font-medium">{totalBreakMin} Min gesamt</span>
+                    </div>
                 )}
             </CardContent>
         </Card>
