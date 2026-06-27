@@ -1113,29 +1113,12 @@ export default function Display() {
     queryKey: ['displaySlides'],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const APP_ID = import.meta.env.VITE_BASE44_APP_ID;
-      const BASE_URL = `https://app.base44.com/api/apps/${APP_ID}`;
-
-      // Logo laden
-      try {
-        const r = await fetch(`${BASE_URL}/entities/CompanyInfo/records?limit=1`, {
-          headers: { 'Content-Type': 'application/json' }
-        });
-        if (r.ok) {
-          const companies = await r.json();
-          const arr = Array.isArray(companies) ? companies : companies.records || [];
-          if (arr.length > 0 && arr[0].logo_url) setCompanyLogo(arr[0].logo_url);
-        }
-      } catch (_) {}
-
-      // Slides laden
-      const res = await fetch(`${BASE_URL}/entities/DisplaySlide/records?limit=100&sort=sort_order`, {
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) throw new Error('Slide-Fetch fehlgeschlagen');
+      // Relativer Pfad — funktioniert auf bar-shift-pro.base44.app Domain
+      const res = await fetch('/functions/getDisplaySlides');
+      if (!res.ok) throw new Error('Fehler beim Laden');
       const json = await res.json();
-      const all = Array.isArray(json) ? json : json.records || [];
-      return all
+      if (json.logo_url) setCompanyLogo(json.logo_url);
+      return (json.slides || [])
         .filter(s => {
           if (!s.is_active) return false;
           if (s.show_from && now < s.show_from) return false;
