@@ -149,76 +149,134 @@ function useThreeScene(buildScene) {
 }
 
 // 🪩 DISCO — Spiegelkugel prominent in der Mitte
-function DiscoBall3D({ prominent = false }) {
-  const mountRef = useThreeScene((T, W, H) => {
-    const scene = new T.Scene();
-    const camera = new T.PerspectiveCamera(55, W / H, 0.1, 100);
-    camera.position.set(0, prominent ? 1.2 : 0.8, prominent ? 4.5 : 5);
-    camera.lookAt(0, prominent ? 1.2 : 0.8, 0);
+function CanvasDiscoball() {
+  const cvRef = useRef(null);
+  const rafRef = useRef(null);
+  useEffect(() => {
+    const cv = cvRef.current; if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const resize = () => { cv.width = cv.offsetWidth; cv.height = cv.offsetHeight; };
+    resize();
+    const W = () => cv.width, H = () => cv.height;
 
-    const roomMat = new T.MeshStandardMaterial({ color: 0x060610, roughness: 0.98, side: T.BackSide });
-    scene.add(Object.assign(new T.Mesh(new T.BoxGeometry(16, 10, 16), roomMat), { position: new T.Vector3(0, 1, 0) }));
-    const floor = new T.Mesh(new T.PlaneGeometry(16, 16), new T.MeshStandardMaterial({ color: 0x0a0a18, roughness: 0.2, metalness: 0.6 }));
-    floor.rotation.x = -Math.PI / 2; floor.position.y = -3.5; floor.receiveShadow = true; scene.add(floor);
+    // Disco-Spots die über den Raum wandern
+    const SPOT_COLS = ['#ff2255','#ff9900','#00ccff','#aa00ff','#00ff88','#ff44bb','#ffff00','#00ffee','#ff6600','#33ffcc'];
+    const spots = Array.from({length: 12}, (_, i) => ({
+      angle: (i / 12) * Math.PI * 2,
+      speed: 0.004 + i * 0.0015,
+      radius: 0.28 + (i % 3) * 0.09,
+      color: SPOT_COLS[i % SPOT_COLS.length],
+      size: 55 + (i % 4) * 22,
+      elevation: 0.2 + (i % 4) * 0.18,
+    }));
 
-    const wireMat = new T.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.95, roughness: 0.05 });
-    scene.add(Object.assign(new T.Mesh(new T.CylinderGeometry(0.01, 0.01, prominent ? 2.2 : 2.8, 8), wireMat),
-      { position: new T.Vector3(0, prominent ? 3.5 : 3.2, 0) }));
+    // Glitzer-Partikel
+    const sparks = Array.from({length: 80}, () => ({
+      x: Math.random(), y: Math.random(),
+      life: Math.random(), speed: 0.003 + Math.random() * 0.005,
+      size: 1 + Math.random() * 3,
+      color: SPOT_COLS[Math.floor(Math.random() * SPOT_COLS.length)],
+    }));
 
-    const ballGroup = new T.Group();
-    ballGroup.position.set(0, prominent ? 2.8 : 2.5, 0); scene.add(ballGroup);
-    ballGroup.add(new T.Mesh(new T.SphereGeometry(prominent ? 1.1 : 0.8, 64, 64),
-      new T.MeshStandardMaterial({ color: 0x666677, metalness: 1.0, roughness: 0.04 })));
+    let t = 0;
+    function draw() {
+      const w = W(), h = H();
+      ctx.clearRect(0, 0, w, h);
 
-    const tileMat = new T.MeshStandardMaterial({ color: 0xddddf0, metalness: 1.0, roughness: 0.0 });
-    const R = prominent ? 1.11 : 0.805;
-    const LAT = 24, LON = 32;
-    for (let li = 0; li < LAT; li++) {
-      const phiM = ((li + 0.5) / LAT) * Math.PI;
-      const sinP = Math.sin(phiM), cosP = Math.cos(phiM);
-      for (let lo = 0; lo < LON; lo++) {
-        const thetaM = (lo / LON) * Math.PI * 2;
-        const px = R * sinP * Math.cos(thetaM), py = R * cosP, pz = R * sinP * Math.sin(thetaM);
-        const tw = 0.07 * sinP + 0.012, th = 0.055;
-        const tile = new T.Mesh(new T.PlaneGeometry(tw * 0.84, th * 0.84), tileMat.clone());
-        tile.position.set(px, py, pz);
-        tile.lookAt(px * 2, py * 2, pz * 2);
-        tile.rotateZ((Math.random() - 0.5) * 0.25);
-        ballGroup.add(tile);
+      // Wandernde Disco-Spots
+      spots.forEach(s => {
+        s.angle += s.speed;
+        const cx = w * (0.2 + Math.cos(s.angle) * s.radius * 0.7 + 0.3);
+        const cy = h * (0.15 + Math.abs(Math.sin(s.angle * s.elevation)) * 0.7);
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, s.size);
+        grad.addColorStop(0, s.color + 'cc');
+        grad.addColorStop(0.4, s.color + '44');
+        grad.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(cx, cy, s.size, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      });
+
+      // Glitzer
+      sparks.forEach(s => {
+        s.life += s.speed;
+        if (s.life > 1) { s.life = 0; s.x = Math.random(); s.y = Math.random(); }
+        const alpha = Math.sin(s.life * Math.PI);
+        ctx.globalAlpha = alpha * 0.9;
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.arc(s.x * w, s.y * h, s.size * alpha, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      // Disco-Kugel in der Mitte oben — als SVG-ähnliche Canvas-Zeichnung
+      const bx = w * 0.5, by = h * 0.22, br = Math.min(w, h) * 0.11;
+
+      // Kugel-Körper
+      const ballGrad = ctx.createRadialGradient(bx - br*0.3, by - br*0.3, br*0.05, bx, by, br);
+      ballGrad.addColorStop(0, '#e0e0f0');
+      ballGrad.addColorStop(0.5, '#8888aa');
+      ballGrad.addColorStop(1, '#333344');
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fillStyle = ballGrad;
+      ctx.fill();
+
+      // Kacheln auf der Kugel
+      const ROWS = 8, COLS_N = 12;
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS_N; col++) {
+          const phi = ((row + 0.5) / ROWS) * Math.PI;
+          const theta = ((col + 0.5) / COLS_N) * Math.PI * 2 + t * 0.3;
+          const px = bx + br * 0.92 * Math.sin(phi) * Math.cos(theta);
+          const py = by + br * 0.92 * Math.cos(phi);
+          const pz = Math.sin(phi) * Math.sin(theta); // -1 bis 1
+          if (pz < 0) continue; // nur sichtbare Seite
+          const tileSize = (br * 0.13) * Math.sin(phi);
+          // Reflexionsfarbe basierend auf Spot-Nähe
+          const nearSpot = spots.reduce((best, s) => {
+            const sx = w * (0.2 + Math.cos(s.angle) * s.radius * 0.7 + 0.3);
+            const sy = h * (0.15 + Math.abs(Math.sin(s.angle * s.elevation)) * 0.7);
+            const d = Math.hypot(sx - px, sy - py);
+            return d < best.d ? { d, color: s.color } : best;
+          }, { d: Infinity, color: '#ffffff' });
+          const brightness = Math.max(0, pz);
+          ctx.globalAlpha = 0.6 + brightness * 0.4;
+          ctx.fillStyle = nearSpot.d < 120 ? nearSpot.color : `rgba(${180+brightness*75},${180+brightness*75},${200+brightness*55},0.9)`;
+          ctx.fillRect(px - tileSize/2, py - tileSize/2, tileSize * 0.85, tileSize * 0.85);
+        }
       }
+      ctx.globalAlpha = 1;
+
+      // Highlight oben links
+      const hlGrad = ctx.createRadialGradient(bx - br*0.35, by - br*0.35, 0, bx - br*0.35, by - br*0.35, br*0.5);
+      hlGrad.addColorStop(0, 'rgba(255,255,255,0.4)');
+      hlGrad.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fillStyle = hlGrad;
+      ctx.fill();
+
+      // Aufhängung
+      ctx.strokeStyle = 'rgba(200,200,220,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bx, by - br);
+      ctx.lineTo(bx, 0);
+      ctx.stroke();
+
+      t += 0.016;
+      rafRef.current = requestAnimationFrame(draw);
     }
-
-    scene.add(new T.AmbientLight(0x111128, 0.4));
-    const topSpot = new T.SpotLight(0xffffff, 5, 12, Math.PI / 14, 0.4, 1.5);
-    topSpot.position.set(0, 6, 0); topSpot.target = ballGroup; topSpot.castShadow = true;
-    scene.add(topSpot); scene.add(topSpot.target);
-
-    const LCOLS = [0xff2255, 0xff9900, 0x00ccff, 0xaa00ff, 0x00ff88, 0xff44bb, 0xffff00, 0x00ffee];
-    const lights = LCOLS.map((c, i) => {
-      const l = new T.PointLight(c, prominent ? 6 : 4.5, 16, 2);
-      l.castShadow = true; l.shadow.mapSize.set(256, 256); scene.add(l);
-      return { light: l, angle: (i / LCOLS.length) * Math.PI * 2, el: 0.2 + (i % 3) * 0.22, speed: 0.007 + i * 0.002 };
-    });
-
-    return {
-      scene, camera,
-      onFrame(t) {
-        ballGroup.rotation.y = t * 0.2;
-        lights.forEach(l => {
-          l.angle += l.speed;
-          const el = l.el + Math.sin(t * 0.25 + l.angle) * 0.18;
-          l.light.position.set(Math.cos(l.angle) * 5, 2 + Math.sin(el) * 2, Math.sin(l.angle) * 5);
-          l.light.intensity = (prominent ? 5.5 : 4.0) + Math.sin(t * 2.2 + l.angle) * 1.5;
-        });
-        camera.position.x = Math.sin(t * 0.04) * 0.4;
-        camera.lookAt(0, prominent ? 1.2 : 0.8, 0);
-      }
-    };
-  });
-  return <div ref={mountRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />;
+    draw();
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+  return <canvas ref={cvRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none' }} />;
 }
 
-// 🇩🇪 DEUTSCHLAND — 2D Canvas Flagge mit Wellen
+
 function GermanyFlag2D() {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -694,7 +752,7 @@ function ThemeBackground({ theme, accent, prominentDisco = false }) {
     case 'germany':           return <GermanyFlag2D />;
     case 'american_football': return <AmericanFootball3D />;
     case 'soccer':            return <Soccer3D />;
-    case 'disco':             return <DiscoBall3D prominent={prominentDisco} />;
+    case 'disco':             return <CanvasDiscoball />;
     case 'music':             return <CanvasMusic accentColor={accent.bg} />;
     case 'beer':              return <CanvasBeer />;
     case 'cocktail':          return <CanvasCocktail />;
