@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import {
     Plus, Wine, Search, Eye, EyeOff, Link2,
     ExternalLink, Copy, Share2, Info, BookOpen,
-    MoreVertical, Printer, ChevronDown, AlertTriangle
+    MoreVertical, Printer, ChevronDown, AlertTriangle,
+    QrCode, Check
 } from "lucide-react";
 import { ALLERGENS, ADDITIVES } from '../components/menu/AllergenSelector';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -21,7 +22,6 @@ import QRCodeGenerator from "@/components/qr/QRCodeGenerator";
 import WeeklySpecialGenerator from "../components/menu/WeeklySpecialGenerator";
 import { getGuestMenuLink, copyToClipboard, shareLink, MENU_URL } from '@/lib/guestLinks';
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ListSkeleton } from '@/components/ui/StateDisplay';
 
 export default function DrinkMenuPage() {
@@ -483,48 +483,48 @@ export default function DrinkMenuPage() {
                     .print\\:space-y-2 > * + * { margin-top: 0.5rem; }
                 }
             `}</style>
-        </div>
 
-      {/* QR-Code Dialog Getränkekarte */}
-      <Dialog open={showMenuQR} onOpenChange={setShowMenuQR}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <QrCode className="w-4 h-4 text-amber-500" />
-              Gäste-Link · Getränkekarte
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4 pt-2">
-            <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(MENU_URL)}&bgcolor=ffffff&color=111827&margin=2`}
-                alt="QR-Code"
-                width={220}
-                height={220}
-                className="rounded-lg block"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground text-center leading-relaxed">
-              Gäste scannen diesen Code mit der Kamera-App<br/>
-              und sehen die Getränkekarte sofort im Browser.
-            </p>
-            <div className="w-full flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
-              <span className="text-[11px] text-muted-foreground truncate flex-1 font-mono">{MENU_URL}</span>
-              <button
-                onClick={async () => { await copyToClipboard(MENU_URL); setMenuQRCopied(true); setTimeout(() => setMenuQRCopied(false), 2000); }}
-                className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                title="Link kopieren"
-              >
-                {menuQRCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-              <a href={MENU_URL} target="_blank" rel="noopener noreferrer"
-                className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                title="Im Browser öffnen">
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+            {/* QR-Code Dialog Getränkekarte */}
+            <Dialog open={showMenuQR} onOpenChange={setShowMenuQR}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <QrCode className="w-4 h-4 text-amber-500" />
+                            Gäste-Link · Getränkekarte
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center gap-4 pt-2">
+                        <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                            <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(MENU_URL)}&bgcolor=ffffff&color=111827&margin=2`}
+                                alt="QR-Code"
+                                width={220}
+                                height={220}
+                                className="rounded-lg block"
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                            Gäste scannen diesen Code mit der Kamera-App<br/>
+                            und sehen die Getränkekarte sofort im Browser.
+                        </p>
+                        <div className="w-full flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                            <span className="text-[11px] text-muted-foreground truncate flex-1 font-mono">{MENU_URL}</span>
+                            <button
+                                onClick={async () => { await copyToClipboard(MENU_URL); setMenuQRCopied(true); setTimeout(() => setMenuQRCopied(false), 2000); }}
+                                className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                                title="Link kopieren"
+                            >
+                                {menuQRCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                            <a href={MENU_URL} target="_blank" rel="noopener noreferrer"
+                                className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                                title="Im Browser öffnen">
+                                <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }
