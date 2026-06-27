@@ -1,22 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { STALE } from '@/lib/queryUtils';;
-import { LoadingState, ListSkeleton, ErrorState, EmptyState } from '@/components/ui/StateDisplay';
-import { ErrorFallback, useErrorHandler } from '@/components/error/ErrorHandler';
+import { STALE } from '@/lib/queryUtils';
+import { LoadingState, ErrorState } from '@/components/ui/StateDisplay';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Plus, Sparkles, RefreshCw, FileText, AlertTriangle, Cloud, CloudOff, Archive, CheckSquare } from 'lucide-react';
+import {
+    Plus, Sparkles, FileText, Cloud, CloudOff, CheckCircle2,
+    Circle, ChevronRight, RefreshCw, Trash2, Archive
+} from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CleaningList from '@/components/cleaning/CleaningList';
-import CleaningQRGenerator from '@/components/cleaning/CleaningQRGenerator';
+import { Badge } from "@/components/ui/badge";
 import AreasManager from '@/components/cleaning/AreasManager';
 import PinVerification from '@/components/terminal/PinVerification';
 import { usePermissions } from '@/components/auth/usePermissions';
@@ -28,38 +28,28 @@ export default function Cleaning() {
     const permissions = usePermissions();
     const [modalOpen, setModalOpen] = useState(false);
     const [reportsModalOpen, setReportsModalOpen] = useState(false);
-    const [qrModalOpen, setQrModalOpen] = useState(false);
-    const [pinModalOpen, setPinModalOpen] = useState(false);
     const [endDayDialogOpen, setEndDayDialogOpen] = useState(false);
     const [endDayLoading, setEndDayLoading] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [pinModalOpen, setPinModalOpen] = useState(false);
+    const [activeArea, setActiveArea] = useState('all');
     const WEEKDAYS = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
     const [formData, setFormData] = useState({
-        title: '',
-        area: 'Theke',
-        frequency: 'täglich',
-        due_weekdays: [],
-        due_date: '',
-        assigned_to: '',
-        assigned_to_name: '',
+        title: '', area: 'Theke', frequency: 'täglich',
+        due_weekdays: [], due_date: '', assigned_to: '', assigned_to_name: '',
     });
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingUpdates, setPendingUpdates] = useState([]);
 
-    // Load pending updates from localStorage
     useEffect(() => {
         const saved = localStorage.getItem('cleaning_pending_updates');
-        if (saved) {
-            setPendingUpdates(JSON.parse(saved));
-        }
+        if (saved) setPendingUpdates(JSON.parse(saved));
     }, []);
 
-    // Save pending updates to localStorage
     useEffect(() => {
         localStorage.setItem('cleaning_pending_updates', JSON.stringify(pendingUpdates));
     }, [pendingUpdates]);
 
-    // Online/offline detection + sync
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
@@ -68,71 +58,71 @@ export default function Cleaning() {
         const handleOffline = () => setIsOnline(false);
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
+        return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
     }, []);
 
-    const { data: user } = useQuery({
-        queryKey: ['user'],
-        queryFn: () => base44.auth.me()
-    });
-
+    const { data: user } = useQuery({ queryKey: ['user'], queryFn: () => base44.auth.me() });
     const { data: employees = [] } = useQuery({
         queryKey: ['employees'],
         queryFn: () => base44.entities.Employee.filter({ is_active: true }, 'name')
     });
-
     const { data: allTasks = [], isLoading, isError: tasksError, error: tasksErrorObj } = useQuery({
         queryKey: ['cleaning'],
         queryFn: () => base44.entities.CleaningTask.filter({ is_active: true }, 'area', 200),
         staleTime: STALE.MEDIUM
     });
-    const { handleError } = useErrorHandler();
-
-    // Wochentagsaufgaben gehören zu WeeklyTasks — hier ausschließen
-    // due_weekdays: Aufgabe nur am passenden Wochentag zeigen
-    const todayName = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'][new Date().getDay()];
-    const tasks = allTasks.filter(t => {
-        if (t.area === 'Wochentagsaufgaben') return false;
-        if (t.due_weekdays && t.due_weekdays.length > 0 && !t.due_weekdays.includes(todayName)) return false;
-        return true;
+    const { data: reports = [] } = useQuery({
+        queryKey: ['cleaning-reports'],
+        queryFn: () => base44.entities.CleaningReport.list('-created_date', 20),
+        staleTime: STALE.MEDIUM
     });
-    // Deaktivierte Aufgaben separat laden
-    const { data: deactivatedTasks = [] } = useQuery({
-        queryKey: ['cleaning-deactivated'],
-        queryFn: () => base44.entities.CleaningTask.filter({ is_active: false }, 'area', 200),
-        staleTime: STALE.SLOW,
-    });
-
     const { data: allAreas = [] } = useQuery({
         queryKey: ['cleaning-areas'],
         queryFn: () => base44.entities.CleaningArea.list('order'),
         staleTime: STALE.SLOW,
     });
 
-    const { data: shifts = [] } = useQuery({
-        queryKey: ['shifts'],
-        queryFn: () => {
-            const today = format(new Date(), 'yyyy-MM-dd');
-            return base44.entities.Shift.filter({ date: today }, 'start_time', 50);
-        },
-        staleTime: STALE.MEDIUM
-    });
-
-
-
-    const { data: reports = [] } = useQuery({
-        queryKey: ['cleaning-reports'],
-        queryFn: () => base44.entities.CleaningReport.list('-created_date', 20),
-        staleTime: STALE.MEDIUM
-    });
-
-    // Filtere saisonale Bereiche (April-Oktober)
-    const currentMonth = new Date().getMonth() + 1; // 1-12
+    const todayName = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'][new Date().getDay()];
+    const currentMonth = new Date().getMonth() + 1;
     const isSeason = currentMonth >= 4 && currentMonth <= 10;
     const areas = allAreas.filter(area => !area.seasonal || isSeason);
+
+    const tasks = allTasks.filter(t => {
+        if (t.area === 'Wochentagsaufgaben') return false;
+        if (t.due_weekdays && t.due_weekdays.length > 0 && !t.due_weekdays.includes(todayName)) return false;
+        return true;
+    });
+
+    // Bereiche aus aktiven Aufgaben ableiten
+    const taskAreas = useMemo(() => {
+        const seen = new Set();
+        tasks.forEach(t => seen.add(t.area));
+        return Array.from(seen).sort();
+    }, [tasks]);
+
+    // Aufgaben nach Bereich filtern + erledigte ans Ende
+    const filteredTasks = useMemo(() => {
+        const base = activeArea === 'all' ? tasks : tasks.filter(t => t.area === activeArea);
+        const open = base.filter(t => !t.is_completed);
+        const done = base.filter(t => t.is_completed);
+        return [...open, ...done];
+    }, [tasks, activeArea]);
+
+    const completedCount = tasks.filter(t => t.is_completed).length;
+    const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, data }) => {
+            if (!navigator.onLine) {
+                await queueMutation({ entityName: 'CleaningTask', type: 'update', id, data });
+                queryClient.setQueryData(['cleaning'], (old) =>
+                    old?.map(task => task.id === id ? { ...task, ...data } : task) || old);
+                return { queued: true };
+            }
+            return base44.entities.CleaningTask.update(id, data);
+        },
+        onSuccess: (result) => { if (!result?.queued) queryClient.invalidateQueries({ queryKey: ['cleaning'] }); }
+    });
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.CleaningTask.create(data),
@@ -140,22 +130,7 @@ export default function Cleaning() {
             queryClient.invalidateQueries({ queryKey: ['cleaning'] });
             setModalOpen(false);
             setFormData({ title: '', area: 'Theke', frequency: 'täglich', due_weekdays: [], due_date: '', assigned_to: '', assigned_to_name: '' });
-        }
-    });
-
-    const updateMutation = useMutation({
-        mutationFn: async ({ id, data }) => {
-            if (!navigator.onLine) {
-                await queueMutation({ entityName: 'CleaningTask', type: 'update', id, data });
-                queryClient.setQueryData(['cleaning'], (old) => 
-                    old?.map(task => task.id === id ? { ...task, ...data } : task) || old
-                );
-                return { queued: true };
-            }
-            return base44.entities.CleaningTask.update(id, data);
-        },
-        onSuccess: (result) => {
-            if (!result?.queued) queryClient.invalidateQueries({ queryKey: ['cleaning'] });
+            toast.success('Aufgabe erstellt');
         }
     });
 
@@ -166,95 +141,57 @@ export default function Cleaning() {
         } else {
             const displayName = getUserDisplayName({ employeeName: permissions.employeeName, user });
             updateMutation.mutate({
-            id: task.id,
-            data: {
-                is_completed: !task.is_completed,
-                completed_by: task.is_completed ? null : displayName,
-                completed_at: task.is_completed ? null : new Date().toISOString()
-            }
+                id: task.id,
+                data: {
+                    is_completed: !task.is_completed,
+                    completed_by: task.is_completed ? null : displayName,
+                    completed_at: task.is_completed ? null : new Date().toISOString()
+                }
             });
         }
     };
 
     const handlePinVerified = async (pin) => {
         const employee = employees.find(e => e.pin === pin);
-        if (!employee) {
-            toast.error('Falsche PIN — bitte nochmal versuchen');
-            return;
-        }
-
+        if (!employee) { toast.error('Falsche PIN — bitte nochmal versuchen'); return; }
         const displayName = employee.name.split(' ').reverse().join(', ');
         await updateMutation.mutateAsync({
             id: selectedTask.id,
-            data: {
-                is_completed: true,
-                completed_by: displayName,
-                completed_at: new Date().toISOString()
-            }
+            data: { is_completed: true, completed_by: displayName, completed_at: new Date().toISOString() }
         });
-
         setPinModalOpen(false);
         setSelectedTask(null);
-    };
-
-    const handleReset = (task) => {
-        updateMutation.mutate({
-            id: task.id,
-            data: {
-                is_completed: false,
-                completed_by: null,
-                completed_at: null
-            }
-        });
     };
 
     const endDay = async () => {
         setEndDayLoading(true);
         try {
-            // Erstelle Tagesbericht
             const today = new Date();
             const completedTasks = tasks.filter(t =>
-                t.is_completed &&
-                t.completed_at &&
+                t.is_completed && t.completed_at &&
                 format(new Date(t.completed_at), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
             );
-
-            const reportData = completedTasks.map(task => ({
-                task_title: task.title,
-                area: task.area,
-                frequency: task.frequency,
-                completed_by: task.completed_by,
-                completed_at: task.completed_at
-            }));
-
             const dailyTasksTotal = tasks.filter(t => t.frequency === 'täglich');
-            const report = {
+            await base44.entities.CleaningReport.create({
                 week_start: format(today, 'yyyy-MM-dd'),
                 week_end: format(today, 'yyyy-MM-dd'),
-                report_data: reportData,
+                report_data: completedTasks.map(t => ({ task_title: t.title, area: t.area, frequency: t.frequency, completed_by: t.completed_by, completed_at: t.completed_at })),
                 total_tasks: dailyTasksTotal.length,
                 completed_tasks: completedTasks.length,
-                completion_rate: dailyTasksTotal.length > 0
-                    ? Math.round((completedTasks.length / dailyTasksTotal.length) * 100)
-                    : 0
-            };
-
-            await base44.entities.CleaningReport.create(report);
-            queryClient.invalidateQueries({ queryKey: ['cleaning-reports'] });
-
-            // Setze tägliche Aufgaben zurück — sequenziell um Rate Limit zu vermeiden
+                completion_rate: dailyTasksTotal.length > 0 ? Math.round((completedTasks.length / dailyTasksTotal.length) * 100) : 0
+            });
             const dailyTasks = tasks.filter(t => t.frequency === 'täglich' && t.is_completed);
             for (const task of dailyTasks) {
                 await base44.entities.CleaningTask.update(task.id, {
-                    is_completed: false,
-                    completed_by: null,
-                    completed_at: null,
-                last_reset: format(new Date(), 'yyyy-MM-dd')
-            });
-        }
+                    is_completed: false, completed_by: null, completed_at: null, last_reset: format(today, 'yyyy-MM-dd')
+                });
+            }
             queryClient.invalidateQueries({ queryKey: ['cleaning'] });
+            queryClient.invalidateQueries({ queryKey: ['cleaning-reports'] });
+            toast.success('Tag abgeschlossen & Bericht gespeichert');
         } catch (err) {
             console.error('endDay Fehler:', err);
+            toast.error('Fehler beim Tagesabschluss');
         } finally {
             setEndDayLoading(false);
             setEndDayDialogOpen(false);
@@ -266,423 +203,245 @@ export default function Cleaning() {
         createMutation.mutate(formData);
     };
 
-    const generateWeeklyReport = async () => {
-        // Wochenbericht direkt erstellen (kein confirm nötig)
+    if (isLoading) return <LoadingState />;
+    if (tasksError) return <ErrorState title="Putzaufgaben konnten nicht geladen werden" onRetry={() => queryClient.invalidateQueries({ queryKey: ['cleaning'] })} />;
 
-        const today = new Date();
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - 7);
-        
-        const completedTasks = tasks.filter(t => 
-            t.is_completed && 
-            t.completed_at && 
-            new Date(t.completed_at) >= weekStart
-        );
+    return (
+        <div className="min-h-screen bg-background pb-32 md:pb-8 animate-page-enter">
+            <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
 
-        const reportData = completedTasks.map(task => ({
-            task_title: task.title,
-            area: task.area,
-            frequency: task.frequency,
-            completed_by: task.completed_by,
-            completed_at: task.completed_at
-        }));
+                {/* ── Header ─────────────────────────────────────────── */}
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Putzliste</h1>
+                        <p className="text-muted-foreground text-sm mt-0.5">
+                            {format(new Date(), "EEEE, d. MMMM", { locale: de })}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {isOnline
+                            ? <Cloud className="w-4 h-4 text-emerald-500" />
+                            : <CloudOff className="w-4 h-4 text-amber-500" />}
+                        {(permissions.isManager || permissions.isAdmin) && (
+                            <AreasManager />
+                        )}
+                        {(permissions.isManager || permissions.isAdmin) && (
+                            <Button size="sm" variant="outline" onClick={() => setModalOpen(true)} className="h-9 gap-1">
+                                <Plus className="w-4 h-4" /> Aufgabe
+                            </Button>
+                        )}
+                    </div>
+                </div>
 
-        const report = {
-            week_start: format(weekStart, 'yyyy-MM-dd'),
-            week_end: format(today, 'yyyy-MM-dd'),
-            report_data: reportData,
-            total_tasks: tasks.length,
-            completed_tasks: completedTasks.length,
-            completion_rate: tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0
-        };
-
-        await base44.entities.CleaningReport.create(report);
-        queryClient.invalidateQueries({ queryKey: ['cleaning-reports'] });
-        queryClient.invalidateQueries({ queryKey: ['cleaning-reports'] });
-    };
-
-    const completedCount = tasks.filter(t => t.is_completed).length;
-     const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
-
-    if (tasksError) {
-        return (
-            <div className="min-h-screen bg-background p-4 flex items-center justify-center">
-                {handleError({ error: tasksErrorObj, title: 'Putzaufgaben konnten nicht geladen werden', onRetry: () => queryClient.invalidateQueries({ queryKey: ['cleaning'] }) })}
-            </div>
-        );
-    }
-
-     return (
-        <div className="min-h-screen bg-background animate-page-enter pb-24 md:pb-0">
-            <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-8">
-                {/* Header */}
-                <div className="flex flex-col gap-2 sm:gap-3 mb-5 sm:mb-6">
-                    <div className="flex items-center justify-between gap-2">
+                {/* ── Fortschritt ─────────────────────────────────────── */}
+                <div className="rounded-xl border bg-card p-4 mb-5 shadow-sm">
+                    <div className="flex items-end justify-between mb-2">
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Putzliste</h1>
-                            <p className="text-muted-foreground text-sm mt-1">
-                                {format(new Date(), "EEEE, d. MMMM", { locale: de })}
-                            </p>
+                            <span className="text-3xl font-bold text-foreground">{completedCount}</span>
+                            <span className="text-lg text-muted-foreground">/{tasks.length}</span>
+                            <p className="text-xs text-muted-foreground mt-0.5">Aufgaben erledigt</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            {isOnline ? (
-                                <Cloud className="w-5 h-5 text-green-500" />
-                            ) : (
-                                <CloudOff className="w-5 h-5 text-amber-500" />
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                                {isOnline ? 'Online' : `Offline (${pendingUpdates.length})`}
+                        <div className="text-right">
+                            <span className={`text-2xl font-bold ${progress === 100 ? 'text-emerald-500' : progress >= 50 ? 'text-primary' : 'text-muted-foreground'}`}>
+                                {progress}%
                             </span>
                         </div>
                     </div>
-                    <div className="flex gap-1 sm:gap-2 flex-wrap">
-                         <Button
-                             size="sm"
-                             variant="outline"
-                             onClick={() => setQrModalOpen(true)}
-                             className="text-amber-400 border-amber-500/40 hover:bg-amber-500/10 text-xs h-9"
-                         >
-                             <span className="hidden sm:inline">QR-Codes</span>
-                             <span className="sm:hidden">QR</span>
-                         </Button>
-                         <Button 
-                             size="sm"
-                             variant="outline"
-                             onClick={() => setReportsModalOpen(true)}
-                             className="text-muted-foreground border-border text-xs h-9"
-                         >
-                             <FileText className="w-3 h-3 mr-1" />
-                             <span className="hidden sm:inline">Berichte</span>
-                             <span className="sm:hidden">B</span>
-                         </Button>
-                         <Button 
-                             size="sm"
-                             variant="outline"
-                             onClick={generateWeeklyReport}
-                             className="bg-green-500/15 text-green-400 border-green-500/30 hover:bg-green-500/25 text-xs h-9"
-                         >
-                             <FileText className="w-3 h-3 mr-1" />
-                             <span className="hidden sm:inline">Wochenbericht</span>
-                             <span className="sm:hidden">W</span>
-                         </Button>
-                         <AreasManager />
-                         <Button 
-                             size="sm"
-                             variant="outline"
-                             onClick={endDay}
-                             className="bg-orange-500/15 text-orange-400 border-orange-500/30 hover:bg-orange-500/25 text-xs h-9"
-                         >
-                             <RefreshCw className="w-3 h-3 mr-1" />
-                             <span className="hidden sm:inline">Tag beenden</span>
-                             <span className="sm:hidden">Tag</span>
-                         </Button>
-                         <Button 
-                             size="sm"
-                             onClick={() => setModalOpen(true)}
-                             className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-primary-foreground text-xs h-9 shadow-sm shadow-amber-500/20"
-                         >
-                             <Plus className="w-3 h-3 mr-1" />
-                             <span className="hidden sm:inline">Aufgabe</span>
-                             <span className="sm:hidden">+</span>
-                         </Button>
-                     </div>
+                    <Progress value={progress} className="h-3 rounded-full" />
+                    {progress === 100 && (
+                        <p className="text-xs text-emerald-500 mt-2 font-medium flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Alles erledigt — super gemacht!
+                        </p>
+                    )}
                 </div>
 
-                {/* Progress */}
-                <div className={`rounded-2xl border p-4 sm:p-5 mb-5 transition-all ${
-                    progress === 100 
-                        ? 'bg-emerald-500/10 border-emerald-500/30' 
-                        : progress >= 50 
-                            ? 'bg-amber-500/8 border-amber-500/20'
-                            : 'bg-card border-border'
-                }`}>
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            {progress === 100 
-                                ? <Sparkles className="w-5 h-5 text-emerald-400" />
-                                : <CheckSquare className="w-5 h-5 text-amber-400" />
-                            }
-                            <span className="font-semibold text-foreground text-sm">
-                                {progress === 100 ? 'Alles erledigt! 🎉' : 'Tagesfortschritt'}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{completedCount}/{tasks.length}</span>
-                            <span className={`text-lg font-bold tabular-nums ${
-                                progress === 100 ? 'text-emerald-400' : 'text-foreground'
-                            }`}>{progress}%</span>
-                        </div>
-                    </div>
-                    <Progress 
-                        value={progress} 
-                        className={`h-2.5 ${progress === 100 ? '[&>div]:bg-emerald-500' : '[&>div]:bg-amber-500'}`}
-                    />
-                </div>
-
-                {/* Task List */}
-                {isLoading ? <div className="space-y-3"><ListSkeleton count={4} height="h-20" /></div> :
-                 tasksError ? <ErrorFallback error={tasksErrorObj} title="Putzaufgaben konnten nicht geladen werden" onRetry={() => queryClient.invalidateQueries({ queryKey: ['cleaning'] })} /> : (
-                    <Tabs defaultValue="active" className="space-y-4">
-                        <TabsList className="bg-card border border-border grid w-full grid-cols-2">
-                            <TabsTrigger value="active" className="text-muted-foreground">
-                                Aktiv ({tasks.length})
-                            </TabsTrigger>
-                            <TabsTrigger value="deactivated" className="text-muted-foreground">
-                                <Archive className="w-4 h-4 mr-2" />
-                                Deaktiviert ({deactivatedTasks.length})
-                            </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="active">
-                            {tasks.length === 0 ? <EmptyState text="Keine aktiven Aufgaben" /> : (
-                                <CleaningList 
-                                    tasks={tasks}
-                                    areas={areas}
-                                    onComplete={handleComplete}
-                                    onReset={handleReset}
-                                    userName={getUserDisplayName({ employeeName: permissions.employeeName, user })}
-                                    />
+                {/* ── Bereich-Tabs ─────────────────────────────────────── */}
+                {taskAreas.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
+                        <button
+                            onClick={() => setActiveArea('all')}
+                            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                activeArea === 'all'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground hover:bg-accent'
+                            }`}
+                        >
+                            Alle ({tasks.length})
+                        </button>
+                        {taskAreas.map(area => {
+                            const areaTotal = tasks.filter(t => t.area === area).length;
+                            const areaDone = tasks.filter(t => t.area === area && t.is_completed).length;
+                            return (
+                                <button
+                                    key={area}
+                                    onClick={() => setActiveArea(area)}
+                                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                                        activeArea === area
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'bg-muted text-muted-foreground hover:bg-accent'
+                                    }`}
+                                >
+                                    {area}
+                                    {areaDone === areaTotal && areaTotal > 0 && (
+                                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                                     )}
-                                    </TabsContent>
-
-                                    <TabsContent value="deactivated">
-                                    {deactivatedTasks.length === 0 ? (
-                                    <EmptyState text="Keine deaktivierten Aufgaben" />
-                                    ) : (
-                                    <CleaningList 
-                                     tasks={deactivatedTasks}
-                                     areas={areas}
-                                     onComplete={handleComplete}
-                                     onReset={handleReset}
-                                     userName={getUserDisplayName({ employeeName: permissions.employeeName, user })}
-                                />
-                            )}
-                        </TabsContent>
-                    </Tabs>
+                                </button>
+                            );
+                        })}
+                    </div>
                 )}
 
-                {/* Add Modal */}
+                {/* ── Aufgabenliste ─────────────────────────────────────── */}
+                <div className="space-y-2">
+                    {filteredTasks.length === 0 && (
+                        <div className="text-center py-12 text-muted-foreground">
+                            <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                            <p className="font-medium">Keine Aufgaben in diesem Bereich</p>
+                        </div>
+                    )}
+                    {filteredTasks.map(task => (
+                        <button
+                            key={task.id}
+                            onClick={() => handleComplete(task)}
+                            className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all active:scale-[0.98] text-left ${
+                                task.is_completed
+                                    ? 'bg-muted/50 border-border/50 opacity-60'
+                                    : 'bg-card border-border hover:border-primary/40 shadow-sm'
+                            }`}
+                        >
+                            <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                task.is_completed
+                                    ? 'bg-emerald-500 border-emerald-500'
+                                    : 'border-border'
+                            }`}>
+                                {task.is_completed && <CheckCircle2 className="w-4 h-4 text-white" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className={`font-medium text-sm leading-tight ${task.is_completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                                    {task.title}
+                                </p>
+                                {task.is_completed && task.completed_by && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">✓ {task.completed_by}</p>
+                                )}
+                                {!task.is_completed && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">{task.area} · {task.frequency}</p>
+                                )}
+                            </div>
+                            {!task.is_completed && <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+                        </button>
+                    ))}
+                </div>
+
+                {/* ── Berichte Modal ───────────────────────────────────── */}
+                <Dialog open={reportsModalOpen} onOpenChange={setReportsModalOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader><DialogTitle>Tagesberichte</DialogTitle></DialogHeader>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                            {reports.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">Noch keine Berichte</p>}
+                            {reports.map(r => (
+                                <div key={r.id} className="rounded-lg border bg-card p-3">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="font-medium text-sm">{format(new Date(r.week_start), "dd. MMM yyyy", { locale: de })}</span>
+                                        <Badge variant={r.completion_rate === 100 ? 'default' : 'secondary'}>
+                                            {r.completion_rate}%
+                                        </Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{r.completed_tasks}/{r.total_tasks} Aufgaben erledigt</p>
+                                </div>
+                            ))}
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* ── Neue Aufgabe Modal ───────────────────────────────── */}
                 <Dialog open={modalOpen} onOpenChange={setModalOpen}>
                     <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Neue Putzaufgabe</DialogTitle>
-                        </DialogHeader>
-                        
-                        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                            <div className="space-y-2">
-                                <Label>Aufgabe</Label>
-                                <Input
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    placeholder="z.B. Tresen abwischen"
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <Label>Bereich</Label>
-                                    <Select value={formData.area} onValueChange={(v) => setFormData({ ...formData, area: v })}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {(areas.length > 0 ? areas : allAreas).filter(a => a.name !== 'Wochentagsaufgaben').map(area => (
-                                                 <SelectItem key={area.id} value={area.name}>
-                                                     <div className="flex items-center gap-2">
-                                                         <div 
-                                                             className="w-3 h-3 rounded-full"
-                                                             style={{ backgroundColor: area.color }}
-                                                         />
-                                                         {area.name}
-                                                     </div>
-                                                 </SelectItem>
-                                             ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                
-                                <div className="space-y-2">
-                                    <Label>Häufigkeit</Label>
-                                    <Select value={formData.frequency} onValueChange={(v) => setFormData({ ...formData, frequency: v })}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="täglich">Täglich</SelectItem>
-                                                <SelectItem value="am Wochenende">Am Wochenende (Fr+Sa)</SelectItem>
-                                                <SelectItem value="an Sonderöffnungstagen">An Sonderöffnungstagen</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            {/* Wochentage einschränken */}
-                            <div className="space-y-2">
-                                <Label className="text-sm">Nur an bestimmten Tagen <span className="text-muted-foreground font-normal">(leer = immer)</span></Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {WEEKDAYS.map(day => {
-                                        const selected = formData.due_weekdays.includes(day);
-                                        return (
-                                            <button
-                                                key={day}
-                                                type="button"
-                                                onClick={() => {
-                                                    const next = selected
-                                                        ? formData.due_weekdays.filter(d => d !== day)
-                                                        : [...formData.due_weekdays, day];
-                                                    setFormData({ ...formData, due_weekdays: next });
-                                                }}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-                                                    selected
-                                                        ? 'bg-amber-500 text-black border-amber-500'
-                                                        : 'bg-card text-muted-foreground border-border hover:border-amber-500/50'
-                                                }`}
-                                            >
-                                                {day.slice(0, 2)}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 pt-4">
-                                <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="flex-1">
-                                    Abbrechen
+                        <DialogHeader><DialogTitle>Neue Aufgabe</DialogTitle></DialogHeader>
+                        <form onSubmit={handleSubmit} className="space-y-3">
+                            <Input
+                                placeholder="Aufgabe (z.B. Theke reinigen)"
+                                value={formData.title}
+                                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                                required
+                            />
+                            <Select value={formData.area} onValueChange={v => setFormData({ ...formData, area: v })}>
+                                <SelectTrigger><SelectValue placeholder="Bereich" /></SelectTrigger>
+                                <SelectContent>
+                                    {areas.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+                                    {['Theke','Bar','WC','Eingang','Lager'].map(a => (
+                                        !areas.find(x => x.name === a) && <SelectItem key={a} value={a}>{a}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Select value={formData.frequency} onValueChange={v => setFormData({ ...formData, frequency: v })}>
+                                <SelectTrigger><SelectValue placeholder="Häufigkeit" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="täglich">Täglich</SelectItem>
+                                    <SelectItem value="wöchentlich">Wöchentlich</SelectItem>
+                                    <SelectItem value="monatlich">Monatlich</SelectItem>
+                                    <SelectItem value="einmalig">Einmalig</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <DialogFooter>
+                                <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>Abbrechen</Button>
+                                <Button type="submit" disabled={createMutation.isPending}>
+                                    {createMutation.isPending ? 'Wird gespeichert…' : 'Erstellen'}
                                 </Button>
-                                <Button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700">
-                                    Hinzufügen
-                                </Button>
-                            </div>
+                            </DialogFooter>
                         </form>
                     </DialogContent>
                 </Dialog>
 
-                {/* QR Generator */}
-                <CleaningQRGenerator open={qrModalOpen} onClose={() => setQrModalOpen(false)} />
+                {/* ── PIN Modal ────────────────────────────────────────── */}
+                {pinModalOpen && (
+                    <PinVerification
+                        onVerified={handlePinVerified}
+                        onCancel={() => { setPinModalOpen(false); setSelectedTask(null); }}
+                        title="PIN eingeben um abzuhaken"
+                    />
+                )}
 
-                {/* Pin Verification */}
-                <PinVerification
-                    open={pinModalOpen}
-                    onClose={() => {
-                        setPinModalOpen(false);
-                        setSelectedTask(null);
-                    }}
-                    onVerified={handlePinVerified}
-                    title="Aufgabe bestätigen"
-                />
-
-                {/* Tag beenden Bestätigungs-Dialog */}
+                {/* ── Tag beenden Dialog ───────────────────────────────── */}
                 <Dialog open={endDayDialogOpen} onOpenChange={setEndDayDialogOpen}>
                     <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                                <RefreshCw className="w-5 h-5 text-orange-400" />
-                                Tag beenden
-                            </DialogTitle>
-                        </DialogHeader>
-                        <div className="py-3 text-sm text-muted-foreground">
-                            Dies erstellt einen Tagesbericht und setzt alle täglichen Aufgaben zurück. Fortfahren?
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                            <Button variant="outline" onClick={() => setEndDayDialogOpen(false)} disabled={endDayLoading}>
-                                Abbrechen
+                        <DialogHeader><DialogTitle>Tag abschließen?</DialogTitle></DialogHeader>
+                        <p className="text-sm text-muted-foreground">
+                            Tagesbericht wird gespeichert und alle täglichen Aufgaben werden zurückgesetzt.
+                            Abgeschlossen: <strong>{completedCount}/{tasks.filter(t => t.frequency === 'täglich').length}</strong> tägl. Aufgaben.
+                        </p>
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={() => setEndDayDialogOpen(false)}>Abbrechen</Button>
+                            <Button variant="destructive" onClick={endDay} disabled={endDayLoading}>
+                                {endDayLoading ? 'Wird verarbeitet…' : 'Tag abschließen'}
                             </Button>
-                            <Button
-                                onClick={endDay}
-                                disabled={endDayLoading}
-                                className="bg-orange-500 hover:bg-orange-600 text-white"
-                            >
-                                {endDayLoading ? (
-                                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Wird verarbeitet...</>
-                                ) : (
-                                    'Tag beenden'
-                                )}
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Reports Modal */}
-                <Dialog open={reportsModalOpen} onOpenChange={setReportsModalOpen}>
-                    <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Putzberichte</DialogTitle>
-                        </DialogHeader>
-                        
-                        <div className="space-y-4 mt-4">
-                            {reports.length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                    <p>Noch keine Berichte vorhanden</p>
-                                </div>
-                            ) : (
-                                reports.map((report, idx) => (
-                                    <div key={report.id} style={{ '--delay': `${idx*55}ms` }} className="p-5 animate-stagger bg-card rounded-xl border border-border shadow-sm">
-                                       <div className="flex items-start justify-between mb-4">
-                                           <div className="flex items-start gap-3">
-                                               <div className="flex-shrink-0 w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                                                   <FileText className="w-5 h-5 text-green-500" />
-                                               </div>
-                                               <div>
-                                                   <h3 className="font-semibold text-foreground text-lg">
-                                                       {format(new Date(report.week_start), 'dd.MM.', { locale: de })} - {format(new Date(report.week_end), 'dd.MM.yyyy', { locale: de })}
-                                                   </h3>
-                                                   <div className="flex items-center gap-3 mt-2">
-                                                       <div className="flex items-center gap-1.5">
-                                                           <span className="text-2xl font-bold text-green-500">{report.completion_rate}%</span>
-                                                           <span className="text-xs text-muted-foreground">Erledigt</span>
-                                                       </div>
-                                                       <div className="h-4 w-px bg-border" />
-                                                       <span className="text-sm text-muted-foreground">
-                                                           {report.completed_tasks} von {report.total_tasks} Aufgaben
-                                                       </span>
-                                                   </div>
-                                               </div>
-                                           </div>
-                                       </div>
-                                        
-                                        {report.report_data && report.report_data.length > 0 && (
-                                            <div className="mt-4 space-y-3">
-                                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Erledigte Aufgaben:</p>
-                                                <div className="space-y-2">
-                                                    {report.report_data.map((task, idx) => (
-                                                        <div key={idx} className="flex items-start gap-3 p-3 bg-background rounded-lg border border-border">
-                                                            <div className="flex-shrink-0 w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center">
-                                                                <span className="text-green-500 text-xs">✓</span>
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex items-start justify-between gap-2">
-                                                                    <div className="flex-1">
-                                                                        <p className="font-medium text-foreground">{task.task_title}</p>
-                                                                        <p className="text-xs text-muted-foreground mt-0.5">{task.area} · {task.frequency}</p>
-                                                                    </div>
-                                                                </div>
-                                                                {task.completed_by && (
-                                                                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border">
-                                                                        <span className="text-xs text-muted-foreground">
-                                                                            👤 <span className="font-medium text-foreground">{task.completed_by}</span>
-                                                                        </span>
-                                                                        {task.completed_at && (
-                                                                            <span className="text-xs text-muted-foreground">
-                                                                                · {format(new Date(task.completed_at), 'dd.MM. HH:mm', { locale: de })} Uhr
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>
+
+            {/* ── Fixierter "Tag beenden"-Button ───────────────────────── */}
+            {(permissions.isManager || permissions.isAdmin) && (
+                <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-4 flex justify-center gap-2 pointer-events-none">
+                    <div className="flex items-center gap-2 pointer-events-auto">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-10 gap-1 shadow-lg bg-card"
+                            onClick={() => setReportsModalOpen(true)}
+                        >
+                            <FileText className="w-4 h-4" /> Berichte
+                        </Button>
+                        <Button
+                            size="default"
+                            className="h-12 px-6 gap-2 shadow-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-2xl"
+                            onClick={() => setEndDayDialogOpen(true)}
+                        >
+                            <Archive className="w-4 h-4" />
+                            Tag beenden
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
