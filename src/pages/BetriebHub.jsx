@@ -1,13 +1,13 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import { usePermissions } from '@/components/auth/usePermissions';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { STALE } from '@/lib/queryUtils';
-import { cn } from '@/lib/utils';
-import { MapPin, CheckSquare, ListChecks, Brush, Star, Tv } from 'lucide-react';
-import { format } from 'date-fns';
+import { Wrench, useNavigate } from 'react-router-dom';
+import { Wrench, createPageUrl } from '@/utils';
+import { Wrench, usePermissions } from '@/components/auth/usePermissions';
+import { Wrench, useQuery } from '@tanstack/react-query';
+import { Wrench, base44 } from '@/api/base44Client';
+import { Wrench, STALE } from '@/lib/queryUtils';
+import { Wrench, cn } from '@/lib/utils';
+import { Wrench, MapPin, CheckSquare, ListChecks, Brush, Star, Tv } from 'lucide-react';
+import { Wrench, format } from 'date-fns';
 
 function StatBadge({ count, variant = 'default' }) {
     if (!count) return null;
@@ -86,6 +86,7 @@ export default function BetriebHub() {
                     <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"            page="Todos"       badge={todos.length || undefined} permission="canViewTodos" />
                     <NavCard icon={ListChecks}  label="Wochenaufgaben" description="Wiederkehrende Wochenplanung"     page="WeeklyTasks" permission="canViewTodos" />
                     <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste"  page="Cleaning"    permission="canViewCleaning" />
+                    <NavCard icon={Wrench}      label="Wartung"        description="Geräte & Wartungsaufgaben verwalten"  page="Maintenance" permission="canViewSettings" />
                 </div>
             </div>
 
