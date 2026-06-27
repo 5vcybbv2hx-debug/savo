@@ -60,18 +60,25 @@ function injectKeyframes() {
 }
 
 // ── Three.js Loader ───────────────────────────────────────────────────────────
+// Three.js wird sofort beim Seitenstart geladen — nicht erst bei erstem Slide
 let _THREE = null;
+let _threePromise = null;
 function loadThree() {
-  return new Promise((resolve, reject) => {
-    if (_THREE) { resolve(_THREE); return; }
-    if (window.THREE) { _THREE = window.THREE; resolve(_THREE); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-    s.onload = () => { _THREE = window.THREE; resolve(_THREE); };
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
+  if (_THREE) return Promise.resolve(_THREE);
+  if (!_threePromise) {
+    _threePromise = new Promise((resolve, reject) => {
+      if (window.THREE) { _THREE = window.THREE; resolve(_THREE); return; }
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+      s.onload = () => { _THREE = window.THREE; resolve(_THREE); };
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+  return _threePromise;
 }
+// Sofort starten — nicht warten bis ein Slide es braucht
+loadThree().catch(() => console.warn('Three.js konnte nicht geladen werden'));
 
 // ── Theme-Erkennung ───────────────────────────────────────────────────────────
 function detectTheme(title = '', subtitle = '') {
