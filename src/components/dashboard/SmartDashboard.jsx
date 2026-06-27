@@ -281,14 +281,14 @@ function TodoWidget({ todos }) {
     const [completing, setCompleting] = React.useState(new Set());
 
     const completeMutation = useMutation({
-        mutationFn: ({ id }) => base44.entities.Todo.update(id, { status: 'done' }),
+        mutationFn: ({ id }) => base44.entities.TodoItem.update(id, { status: 'erledigt' }),
         onMutate: async ({ id }) => {
             setCompleting(prev => new Set([...prev, id]));
             // Optimistisch aus der Liste entfernen
             await queryClient.cancelQueries({ queryKey: ['todos'] });
             const prev = queryClient.getQueryData(['todos']);
             queryClient.setQueryData(['todos'], old =>
-                old?.map(t => t.id === id ? { ...t, status: 'done' } : t) || old
+                old?.map(t => t.id === id ? { ...t, status: 'erledigt' } : t) || old
             );
             return { prev };
         },
