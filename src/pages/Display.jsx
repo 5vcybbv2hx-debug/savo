@@ -7,7 +7,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { DisplaySlide, CompanyInfo } from '@/api/entities';
 
 // ── Akzentfarben ──────────────────────────────────────────────────────────────
 const ACCENTS = {
@@ -1114,16 +1113,29 @@ export default function Display() {
     queryKey: ['displaySlides'],
     queryFn: async () => {
       const now = new Date().toISOString();
+      const APP_ID = import.meta.env.VITE_BASE44_APP_ID;
+      const BASE_URL = `https://app.base44.com/api/apps/${APP_ID}`;
+
       // Logo laden
       try {
-        const companies = await CompanyInfo.list();
-        if (companies && companies.length > 0 && companies[0].logo_url) {
-          setCompanyLogo(companies[0].logo_url);
+        const r = await fetch(`${BASE_URL}/entities/CompanyInfo/records?limit=1`, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (r.ok) {
+          const companies = await r.json();
+          const arr = Array.isArray(companies) ? companies : companies.records || [];
+          if (arr.length > 0 && arr[0].logo_url) setCompanyLogo(arr[0].logo_url);
         }
       } catch (_) {}
-      // Slides direkt aus DB laden
-      const all = await DisplaySlide.list();
-      return (all || [])
+
+      // Slides laden
+      const res = await fetch(`${BASE_URL}/entities/DisplaySlide/records?limit=100&sort=sort_order`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) throw new Error('Slide-Fetch fehlgeschlagen');
+      const json = await res.json();
+      const all = Array.isArray(json) ? json : json.records || [];
+      return all
         .filter(s => {
           if (!s.is_active) return false;
           if (s.show_from && now < s.show_from) return false;
