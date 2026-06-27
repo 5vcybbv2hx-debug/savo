@@ -2,10 +2,12 @@ import { createPageUrl } from '@/utils';
 
 /**
  * Öffentlicher Gäste-Link zur Getränkekarte.
- * Zeigt auf die React-Seite /PublicDrinkMenu — kein Login nötig.
+ * Zeigt auf die Backend-Function — kein Login nötig, funktioniert auf jedem Gerät.
  */
+export const MENU_URL = 'https://bar-shift-pro-fc3522b9.base44.app/api/functions/publicDrinkMenu';
+
 export function getGuestMenuLink() {
-    return `${window.location.origin}/PublicDrinkMenu`;
+    return MENU_URL;
 }
 
 /**
@@ -21,6 +23,7 @@ export function getGuestReservationLink() {
 export async function copyToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
+        return true;
     } catch {
         const el = document.createElement('textarea');
         el.value = text;
@@ -28,16 +31,19 @@ export async function copyToClipboard(text) {
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
+        return true;
     }
 }
 
 /**
- * Native Share-API, Fallback auf Clipboard.
+ * Link teilen (Web Share API oder Fallback auf Copy).
  */
 export async function shareLink(url, title = 'Getränkekarte') {
     if (navigator.share) {
-        await navigator.share({ title, url });
-    } else {
-        await copyToClipboard(url);
+        try {
+            await navigator.share({ title, url });
+            return true;
+        } catch { /* abgebrochen */ }
     }
+    return copyToClipboard(url);
 }
