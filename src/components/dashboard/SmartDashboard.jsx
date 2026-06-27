@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import UpcomingBirthdaysWidget from '@/components/dashboard/UpcomingBirthdaysWidget';
 import TeamNotes from '@/components/dashboard/TeamNotes';
 import ManagerDashboard from '@/components/dashboard/ManagerDashboard';
 import AlarmPanel from '@/components/dashboard/AlarmPanel';
@@ -439,21 +440,7 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
 
             {/* Geburtstage */}
             {employees.some(e => { if (!e.birthday) return false; const [,m,d] = e.birthday.split('-'); const next = new Date(new Date().getFullYear(), parseInt(m)-1, parseInt(d)); if (next < new Date(new Date().setHours(0,0,0,0))) next.setFullYear(next.getFullYear()+1); return Math.round((next - new Date(new Date().setHours(0,0,0,0))) / 86400000) <= 7; }) && (
-                <div>
-                    <SectionHeader label="Geburtstag heute" />
-                    {birthdaysToday.map(e => (
-                        <Card key={e.id} className="border-pink-500/30 bg-pink-500/5">
-                            <CardContent className="p-3 flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                                    style={{ backgroundColor: e.color || '#64748b' }}>
-                                    {e.name?.charAt(0)}
-                                </div>
-                                <p className="text-sm font-medium text-foreground">{e.name}</p>
-                                <span className="ml-auto text-base">🎂</span>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                <UpcomingBirthdaysWidget employees={employees} />
             )}
 
             {/* Events heute */}
