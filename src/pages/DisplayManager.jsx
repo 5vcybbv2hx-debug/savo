@@ -88,6 +88,13 @@ const TYPE_COLORS = {
 };
 
 const EMPTY_DRINK = { name: '', price: '', emoji: '🍹' };
+
+const DRINK_EMOJIS = [
+  '🍹','🍸','🍷','🍾','🍻','🥂','🥃','🍺','🧃','🧋',
+  '🥤','☕','🍵','🧊','🫧','🍓','🍋','🍊','🥝','🍇',
+  '🌹','🌊','🔥','⭐','🎉','💎','🍑','🍒','🥭','🍈',
+  '🫖','🧉','🍶','🥛','🍼','🫗','🍀','🌸',
+];
 const EMPTY_FORM = {
   title: '', subtitle: '', body_text: '', slide_type: 'announcement',
   image_url: '', accent_color: 'amber', background_theme: 'auto', cta_text: '', event_date: '',
@@ -96,6 +103,40 @@ const EMPTY_FORM = {
   show_from: '', show_until: '', duration_seconds: 8,
   drinks: [{ ...EMPTY_DRINK }],
 };
+
+
+// ── Emoji-Picker Popover ───────────────────────────────────────────────────
+function EmojiPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="h-9 w-14 text-xl flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent transition-colors"
+        title="Emoji wählen"
+      >
+        {value || '🍹'}
+      </button>
+      {open && (
+        <div className="absolute z-50 top-10 left-0 bg-popover border border-border rounded-xl shadow-xl p-2 w-56">
+          <div className="grid grid-cols-8 gap-1">
+            {DRINK_EMOJIS.map(em => (
+              <button
+                key={em}
+                type="button"
+                onClick={() => { onChange(em); setOpen(false); }}
+                className={\`text-xl p-1 rounded-md hover:bg-accent transition-colors \${value === em ? 'bg-primary/20 ring-1 ring-primary' : ''}\`}
+              >
+                {em}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DisplayManager() {
   const permissions = usePermissions();
@@ -422,9 +463,9 @@ export default function DisplayManager() {
                   </div>
                   {form.drinks.map((dr, i) => (
                     <div key={i} className="flex gap-2 items-center">
-                      <Input value={dr.emoji} onChange={e => {
-                        const d = [...form.drinks]; d[i] = { ...d[i], emoji: e.target.value }; f('drinks', d);
-                      }} className="h-9 w-14 text-center text-lg p-1" placeholder="🍹" />
+                      <EmojiPicker value={dr.emoji} onChange={em => {
+                        const d = [...form.drinks]; d[i] = { ...d[i], emoji: em }; f('drinks', d);
+                      }} />
                       <Input value={dr.name} onChange={e => {
                         const d = [...form.drinks]; d[i] = { ...d[i], name: e.target.value }; f('drinks', d);
                       }} className="h-9 text-sm flex-1" placeholder="Getränk-Name" />
