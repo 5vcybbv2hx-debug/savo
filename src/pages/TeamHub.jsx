@@ -114,7 +114,6 @@ export default function TeamHub() {
                         <NavCard icon={Users}    label="Mitarbeiter"    description="Profile, Kontakte & Daten"        page="Employees"    permission="canViewEmployees" />
                         <NavCard icon={Shield}   label="Berechtigungen" description="Rollen & Zugriffsrechte"          page="Permissions"  permission="canEditEmployeePermissions" />
                         <NavCard icon={Video}    label="Teamsitzung"    description="Meeting-Notizen & Protokolle"     page="TeamMeeting"  permission="canViewTeamMeeting" />
-                        <NavCard icon={Trophy}   label="WM-Spielplan"   description="FIFA WM 2026"                     page="WorldCupSchedule" permission="canViewTeamMeeting" />
                     </div>
                 </div>
             )}
