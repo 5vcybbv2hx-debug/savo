@@ -4,7 +4,7 @@
  *     kein Zurück-Button, elegante Footer-Karte mit Bar-Infos aus CompanyInfo
  */
 import React, { useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { publicBase44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X, SlidersHorizontal, Phone, MapPin, Clock, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -253,20 +253,20 @@ export default function PublicDrinkMenu() {
 
   const { data: items = [], isLoading: itemsLoading, error: itemsError } = useQuery({
     queryKey: ['public-menu-items'],
-    queryFn: () => base44.entities.MenuItem.filter({ is_available: true }, 'category', 1000),
+    queryFn: () => publicBase44.entities.MenuItem.filter({ is_available: true }, 'category', 1000),
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
 
   const { data: companyList = [] } = useQuery({
     queryKey: ['public-company'],
-    queryFn: () => base44.entities.CompanyInfo.list('created_date', 1),
+    queryFn: () => publicBase44.entities.CompanyInfo.list('created_date', 1),
     staleTime: 10 * 60 * 1000,
   });
 
   const { data: specials = [] } = useQuery({
     queryKey: ['public-specials'],
-    queryFn: () => base44.entities.WeeklySpecial.filter({ is_active: true }),
+    queryFn: () => publicBase44.entities.WeeklySpecial.filter({ is_active: true }),
     staleTime: 5 * 60 * 1000,
   });
 
