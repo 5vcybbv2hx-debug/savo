@@ -1,35 +1,36 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': '*',
+  };
+
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
-    // Public display endpoint — use service role so the bar TV can load
-    // slides without requiring an authenticated user session.
-    const [slides, companyInfoList] = await Promise.all([
-      base44.asServiceRole.entities.DisplaySlide.list(),
-      base44.asServiceRole.entities.CompanyInfo.list(),
-    ]);
 
-    const companyInfo = companyInfoList?.[0] || {};
-    const logo_url = companyInfo.logo_url || null;
-    const company_name = companyInfo.company_name || null;
-    const branding_color = companyInfo.branding_color || null;
+    const all = await base44.asServiceRole.entities.DisplaySlide.list('sort_order', 200);
 
-    // Only return active slides, sorted by sort_order
-    const now = new Date();
-    const active = slides
-      .filter(s => s.is_active !== false)
-      .filter(s => {
-        const start = s.show_from ? new Date(s.show_from) : null;
-        const end = s.show_until ? new Date(s.show_until) : null;
-        if (start && now < start) return false;
-        if (end && now > end) return false;
-        return true;
-      })
-      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    let logo_url = null;
+    try {
+      const companies = await base44.asServiceRole.entities.CompanyInfo.list('created_date', 1);
+      if (companies && companies.length > 0) {
+        logo_url = companies[0].logo_url || null;
+      }
+    } catch (_) {}
 
-    return Response.json({ slides: active, logo_url, company_name, branding_color });
-  } catch (error) {
-    return Response.json({ slides: [], error: error.message }, { status: 500 });
+    const slides = (all || []).filter((s: any) => s.is_active === true);
+
+    return new Response(JSON.stringify({ slides, logo_url }), { status: 200, headers });
+  } catch (e: any) {
+    return new Response(
+      JSON.stringify({ error: e.message, slides: [], logo_url: null }),
+      { status: 500, headers }
+    );
   }
 });
