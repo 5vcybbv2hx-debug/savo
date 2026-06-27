@@ -36,6 +36,21 @@ const statusConfig = {
     'genehmigt':   { label: 'Genehmigt',   color: 'bg-green-500/15 text-green-600 dark:text-green-400',                  icon: CheckCircle2 },
 };
 
+/**
+ * Berechnet die gesamte Pausenzeit in Minuten aus einem breaks-Array.
+ * Laufende Pausen (end === null) werden bis zur aktuellen Zeit berechnet.
+ */
+function calcTotalBreakMinutes(breaks) {
+    if (!Array.isArray(breaks) || breaks.length === 0) return 0;
+    const now = new Date();
+    return breaks.reduce((sum, b) => {
+        if (!b?.start) return sum;
+        const start = new Date(b.start);
+        const end = b.end ? new Date(b.end) : now;
+        return sum + Math.max(0, differenceInMinutes(end, start));
+    }, 0);
+}
+
 export default function TimeTracking() {
     const queryClient = useQueryClient();
     const permissions = usePermissions();
@@ -202,7 +217,8 @@ export default function TimeTracking() {
             if (!entry) return;
             const clockOutTime = new Date();
             const totalMinutes = differenceInMinutes(clockOutTime, new Date(entry.clock_in));
-            const breakMinutes = calcLegalBreak(totalMinutes);
+            const actualBreakMinutes = calcTotalBreakMinutes(entry.breaks);
+            const breakMinutes = Math.max(actualBreakMinutes, calcLegalBreak(totalMinutes));
             const workedMinutes = totalMinutes - breakMinutes;
             const workedHours = (workedMinutes / 60).toFixed(2);
             const hourlyRate = currentEmployee?.hourly_rate;
@@ -221,6 +237,7 @@ export default function TimeTracking() {
                 status: 'clocked_out',
                 total_minutes: workedMinutes,
                 break_minutes: breakMinutes,
+                breaks: entry.breaks,
             });
             const employee = allEmployees.find(e => e.id === entry.employee_id);
             await base44.entities.TimeEntry.create({
@@ -234,11 +251,21 @@ export default function TimeTracking() {
                 status: 'eingereicht',
                 arbzg_warning: formatWarnings(warnings) || undefined,
             });
+            // Pausen-Details für das Summary aufbereiten
+            const breakDetails = (entry.breaks || []).map(b => ({
+                start: format(new Date(b.start), 'HH:mm'),
+                end: b.end ? format(new Date(b.end), 'HH:mm') : null,
+                minutes: b.end
+                    ? differenceInMinutes(new Date(b.end), new Date(b.start))
+                    : differenceInMinutes(clockOutTime, new Date(b.start)),
+            }));
             setShiftSummary({
                 workedHours, workedMinutes, breakMinutes, earned, hourlyRate,
                 clockIn: format(new Date(entry.clock_in), 'HH:mm'),
                 clockOut: format(clockOutTime, 'HH:mm'),
                 arbzgWarning: formatWarnings(warnings),
+                actualBreakMinutes,
+                breakDetails,
             });
         },
         onSuccess: () => {
@@ -253,7 +280,8 @@ export default function TimeTracking() {
             const clockOutTime = new Date();
             return Promise.all(activeClockedIn.map(async (entry) => {
                 const totalMinutes = differenceInMinutes(clockOutTime, new Date(entry.clock_in));
-                const breakMinutes = calcLegalBreak(totalMinutes);
+                const actualBreakMinutes = calcTotalBreakMinutes(entry.breaks);
+                const breakMinutes = Math.max(actualBreakMinutes, calcLegalBreak(totalMinutes));
                 const workedMinutes = totalMinutes - breakMinutes;
                 const workedHours = (workedMinutes / 60).toFixed(2);
                 await base44.entities.ClockEntry.update(entry.id, {
@@ -261,6 +289,7 @@ export default function TimeTracking() {
                     status: 'clocked_out',
                     total_minutes: workedMinutes,
                     break_minutes: breakMinutes,
+                    breaks: entry.breaks,
                 });
                 const employee = allEmployees.find(e => e.id === entry.employee_id);
                 await base44.entities.TimeEntry.create({
@@ -325,6 +354,28 @@ export default function TimeTracking() {
     const handleClockOut = (entry) => {
         if (clockOutMutation.isPending) return;
         clockOutMutation.mutate(entry.id);
+    };
+
+    const handleStartBreak = async () => {
+        if (!activeClockEntry) return;
+        const currentBreaks = activeClockEntry.breaks || [];
+        await base44.entities.ClockEntry.update(activeClockEntry.id, {
+            status: 'on_break',
+            breaks: [...currentBreaks, { start: new Date().toISOString(), end: null }],
+        });
+        queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
+    };
+
+    const handleEndBreak = async () => {
+        if (!activeClockEntry) return;
+        const updatedBreaks = (activeClockEntry.breaks || []).map((b, i, arr) =>
+            i === arr.length - 1 && !b.end ? { ...b, end: new Date().toISOString() } : b
+        );
+        await base44.entities.ClockEntry.update(activeClockEntry.id, {
+            status: 'clocked_in',
+            breaks: updatedBreaks,
+        });
+        queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
     };
 
     const getWorkingDuration = (clockIn) => {
@@ -427,13 +478,7 @@ export default function TimeTracking() {
                             ) : activeClockEntry.status === 'clocked_in' ? (
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
-                                        onClick={async () => {
-                                            await base44.entities.ClockEntry.update(activeClockEntry.id, {
-                                                status: 'on_break',
-                                                pause_start: new Date().toISOString(),
-                                            });
-                                            queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
-                                        }}
+                                        onClick={handleStartBreak}
                                         className="h-14 rounded-2xl bg-amber-600 hover:bg-amber-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-white font-bold"
                                     >
                                         <Pause className="w-5 h-5" />
@@ -449,19 +494,62 @@ export default function TimeTracking() {
                                     </button>
                                 </div>
                             ) : (
-                                <button
-                                    onClick={async () => {
-                                        await base44.entities.ClockEntry.update(activeClockEntry.id, {
-                                            status: 'clocked_in',
-                                            pause_start: null,
-                                        });
-                                        queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
-                                    }}
-                                    className="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-white font-bold text-lg shadow-lg disabled:opacity-60"
-                                >
-                                    <Play className="w-6 h-6" />
-                                    Pause beenden
-                                </button>
+                                <div className="space-y-3">
+                                    {/* Pause läuft Banner */}
+                                    {(() => {
+                                        const openBreak = (activeClockEntry.breaks || []).find(b => !b.end);
+                                        const breakStart = openBreak ? format(new Date(openBreak.start), 'HH:mm') : '--:--';
+                                        return (
+                                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
+                                                <Coffee className="w-4 h-4 shrink-0" />
+                                                <span className="text-sm font-medium">Pause läuft — seit {breakStart} Uhr</span>
+                                            </div>
+                                        );
+                                    })()}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={handleEndBreak}
+                                            className="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-white font-bold"
+                                        >
+                                            <Play className="w-5 h-5" />
+                                            Pause beenden
+                                        </button>
+                                        <button
+                                            disabled
+                                            className="h-14 rounded-2xl bg-red-600/40 text-white/50 font-bold flex items-center justify-center gap-2 cursor-not-allowed"
+                                        >
+                                            <LogOut className="w-5 h-5" />
+                                            Ausstempeln
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Pause-Verlauf */}
+                            {(activeClockEntry.breaks || []).length > 0 && (
+                                <div className="mt-3 p-3 rounded-lg bg-muted/40 space-y-1">
+                                    <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                                        <Coffee className="w-3 h-3" />
+                                        Pausen heute:
+                                    </p>
+                                    {(activeClockEntry.breaks || []).map((b, i) => {
+                                        const startStr = format(new Date(b.start), 'HH:mm');
+                                        const endStr = b.end ? format(new Date(b.end), 'HH:mm') : 'laufend…';
+                                        const mins = b.end
+                                            ? differenceInMinutes(new Date(b.end), new Date(b.start))
+                                            : differenceInMinutes(new Date(), new Date(b.start));
+                                        return (
+                                            <div key={i} className="text-xs text-muted-foreground flex justify-between">
+                                                <span>{startStr} – {endStr} Uhr</span>
+                                                <span className="font-medium">{mins} Min</span>
+                                            </div>
+                                        );
+                                    })}
+                                    <div className="border-t border-border/50 pt-1 mt-1 text-xs text-muted-foreground flex justify-between font-semibold">
+                                        <span>Gesamt:</span>
+                                        <span>{calcTotalBreakMinutes(activeClockEntry.breaks)} Min bisher</span>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </Card>
@@ -834,7 +922,11 @@ export default function TimeTracking() {
                                 <div className="bg-muted rounded-xl p-4 text-center space-y-1">
                                     <Coffee className="w-5 h-5 mx-auto text-amber-500" />
                                     <p className="text-2xl font-bold text-foreground">{shiftSummary.breakMinutes} Min</p>
-                                    <p className="text-xs text-muted-foreground">Pause (gesetzl.)</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {shiftSummary.actualBreakMinutes > 0 && shiftSummary.breakMinutes === shiftSummary.actualBreakMinutes
+                                            ? 'Pause (inkl. deiner Pausen)'
+                                            : 'Pause'}
+                                    </p>
                                 </div>
                                 {shiftSummary.earned && (
                                     <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1 col-span-2">
@@ -844,6 +936,24 @@ export default function TimeTracking() {
                                     </div>
                                 )}
                             </div>
+                            {shiftSummary.breakDetails && shiftSummary.breakDetails.length > 0 && (
+                                <div className="bg-muted/50 rounded-xl p-3 space-y-1.5">
+                                    <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                                        <Coffee className="w-3 h-3" />
+                                        Pausen im Detail:
+                                    </p>
+                                    {shiftSummary.breakDetails.map((b, i) => (
+                                        <div key={i} className="flex justify-between text-xs text-muted-foreground">
+                                            <span>{b.start} – {b.end || 'laufend'} Uhr</span>
+                                            <span className="font-medium">{b.minutes} Min</span>
+                                        </div>
+                                    ))}
+                                    <div className="border-t border-border/50 pt-1.5 flex justify-between text-xs font-semibold text-foreground">
+                                        <span>Gesamtpause:</span>
+                                        <span>{shiftSummary.breakMinutes} Min</span>
+                                    </div>
+                                </div>
+                            )}
                             {shiftSummary.arbzgWarning && (
                                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm text-amber-500 flex items-start gap-2">
                                     <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />

@@ -30,6 +30,25 @@
       "default": 0,
       "description": "Pausenzeit in Minuten"
     },
+    "breaks": {
+      "type": "array",
+      "description": "Stapelbare Pausen: Array von { start, end } Objekten",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Pausenstart (ISO)"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Pausenende (ISO, null = laufende Pause)"
+          }
+        }
+      }
+    },
     "total_hours": {
       "type": "number",
       "description": "Gesamtstunden inkl. bezahlter Pausen"
