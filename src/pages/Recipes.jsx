@@ -318,6 +318,14 @@ function RecipeCard({ recipe, articles, permissions, onSelect, isSelected, onCli
                     <span className="text-green-400 font-medium">· {totalCost.toFixed(2)} €</span>
                 )}
             </div>
+
+            {/* Notiz-Vorschau */}
+            {recipe.notes && (
+                <div className="mt-2.5 flex items-start gap-1.5 bg-amber-500/8 border border-amber-500/20 rounded-lg p-2">
+                    <StickyNote className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">{recipe.notes}</p>
+                </div>
+            )}
         </div>
     );
 }
