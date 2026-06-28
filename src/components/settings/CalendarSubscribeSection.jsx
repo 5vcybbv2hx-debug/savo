@@ -3,10 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, Link2, Calendar, Apple, Mail, ShieldAlert } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Copy, Check, Link2, Calendar, Apple, Mail, ShieldAlert, MessageSquare, ExternalLink, Loader2, Users } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
+import { usePermissions } from '@/components/auth/usePermissions';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const INSTRUCTIONS = [
     { icon: Calendar, name: 'Google Calendar', steps: 'Andere Kalender → Per URL hinzufügen → Link einfügen', color: 'text-blue-400' },
@@ -16,8 +19,17 @@ const INSTRUCTIONS = [
 
 export default function CalendarSubscribeSection() {
     const { data: employee } = useCurrentEmployee();
+    const permissions = usePermissions();
     const [abonnementLink, setAbonnementLink] = useState('');
     const [copied, setCopied] = useState(false);
+
+    // Team-Benachrichtigung
+    const [teamModalOpen, setTeamModalOpen] = useState(false);
+    const [teamEmployees, setTeamEmployees] = useState([]);
+    const [preparing, setPreparing] = useState(false);
+    const [notified, setNotified] = useState(
+        localStorage.getItem('calendarOnboardingSent') === 'true'
+    );
 
     useEffect(() => {
         if (!employee?.id) return;
@@ -37,6 +49,67 @@ export default function CalendarSubscribeSection() {
                 setAbonnementLink(`${window.location.origin}/api/functions/my-shifts-calendar?employee_id=${employee.id}`);
             });
     }, [employee?.id]);
+
+    const buildWhatsAppMessage = (empName, calUrl) => {
+        const firstName = empName.split(' ')[0];
+        return `Hallo ${firstName} 👋
+
+Ab sofort kannst du deine Schichten direkt in deinem iPhone- oder Google-Kalender sehen – automatisch und immer aktuell! 📅
+
+*So geht's (iPhone):*
+Einstellungen → Kalender → Accounts → Account hinzufügen → Andere → Kalenderabo hinzufügen → diesen Link einfügen:
+
+${calUrl}
+
+*Google Calendar:*
+calendar.google.com → Andere Kalender → Per URL → Link einfügen
+
+Einmal einrichten, danach läuft alles automatisch. Bei Fragen einfach melden! 🙌`;
+    };
+
+    const handlePrepareTeamNotification = async () => {
+        setPreparing(true);
+        try {
+            const employees = await base44.entities.Employee.filter({ is_active: true });
+            const withPhone = employees.filter(e => e.phone && !e.is_system_account);
+
+            const prepared = [];
+            for (const emp of withPhone) {
+                let token = emp.calendar_token;
+                if (!token) {
+                    try {
+                        const res = await base44.functions.invoke('generateCalendarToken', { employee_id: emp.id });
+                        token = res?.data?.token;
+                    } catch { /* fallback below */ }
+                }
+                const calUrl = token
+                    ? `${window.location.origin}/api/functions/my-shifts-calendar?token=${token}`
+                    : `${window.location.origin}/api/functions/my-shifts-calendar?employee_id=${emp.id}&token=${token || ''}`;
+                const message = buildWhatsAppMessage(emp.name, calUrl);
+                const phone = emp.phone.replace(/\D/g, '');
+                prepared.push({
+                    id: emp.id,
+                    name: emp.name,
+                    phone: emp.phone,
+                    color: emp.color,
+                    waLink: `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+                });
+            }
+
+            if (prepared.length === 0) {
+                toast.error('Keine Mitarbeiter mit Telefonnummer gefunden');
+                return;
+            }
+
+            setTeamEmployees(prepared);
+            setTeamModalOpen(true);
+            toast.success(`${prepared.length} Mitarbeiter vorbereitet`);
+        } catch (err) {
+            toast.error('Fehler: ' + (err?.message || 'Unbekannt'));
+        } finally {
+            setPreparing(false);
+        }
+    };
 
     const handleCopy = async () => {
         if (!abonnementLink) return;
@@ -103,6 +176,86 @@ export default function CalendarSubscribeSection() {
                     Der Link ist personalisiert und zeigt nur deine eigenen Schichten. Teile ihn nicht mit anderen.
                 </p>
             </div>
+
+            {/* Einmalige Team-Benachrichtigung — nur für Manager/Admin */}
+            {(permissions.isManager || permissions.isAdmin) && (
+                <div className="mt-6 pt-6 border-t border-border">
+                    <h4 className="text-sm font-semibold text-foreground mb-1">
+                        Team benachrichtigen
+                    </h4>
+                    <p className="text-xs text-muted-foreground mb-3">
+                        Schicke allen Mitarbeitern einmalig eine WhatsApp-Anleitung
+                        zum Kalender-Abo.
+                    </p>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handlePrepareTeamNotification}
+                        disabled={notified || preparing}
+                        className="w-full gap-2 min-h-[44px]"
+                    >
+                        {preparing ? (
+                            <><Loader2 className="w-4 h-4 animate-spin" />Bereite vor…</>
+                        ) : notified ? (
+                            <><Check className="w-4 h-4" />Benachrichtigung vorbereitet</>
+                        ) : (
+                            <><MessageSquare className="w-4 h-4" />Team per WhatsApp informieren</>
+                        )}
+                    </Button>
+                </div>
+            )}
+
+            {/* Team-Benachrichtigung Dialog */}
+            <Dialog open={teamModalOpen} onOpenChange={setTeamModalOpen}>
+                <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-green-400" />
+                            WhatsApp an Team ({teamEmployees.length})
+                        </DialogTitle>
+                    </DialogHeader>
+                    <p className="text-xs text-muted-foreground -mt-1 mb-2">
+                        Tippe auf einen Mitarbeiter, um WhatsApp mit der fertigen Nachricht zu öffnen.
+                    </p>
+                    <div className="space-y-2">
+                        {teamEmployees.map(emp => (
+                            <div key={emp.id}
+                                className="flex items-center gap-3 p-2.5 rounded-xl border border-border bg-card">
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                                    style={{ backgroundColor: emp.color || '#64748b' }}>
+                                    {emp.name?.charAt(0)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-foreground truncate">{emp.name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{emp.phone}</p>
+                                </div>
+                                <a
+                                    href={emp.waLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500/15 text-green-400 border border-green-500/30 text-xs font-medium hover:bg-green-500/25 transition-all min-h-[44px] flex items-center"
+                                >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                    Senden
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                            localStorage.setItem('calendarOnboardingSent', 'true');
+                            setNotified(true);
+                            setTeamModalOpen(false);
+                            toast.success('Alle Links geöffnet — als erledigt markiert');
+                        }}
+                        className="w-full mt-2 min-h-[44px]"
+                    >
+                        <Check className="w-4 h-4 mr-1.5" />Als erledigt markieren
+                    </Button>
+                </DialogContent>
+            </Dialog>
         </Card>
     );
 }
