@@ -111,7 +111,8 @@ export default function WeeklyTasks() {
     // Zeitbereich-Dialog (Mobile)
     const [timeConfigOpen, setTimeConfigOpen] = useState(false);
 
-    const gridRef = useRef(null);
+    const gridRef       = useRef(null);
+    const dragOverMinRef = useRef(null); // speichert snappedMin synchron für Drop
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: todos = [] } = useQuery({
@@ -184,6 +185,7 @@ export default function WeeklyTasks() {
         setDraggedTodo(null);
         setDraggedItem(null);
         setDragOverSlot(null);
+        dragOverMinRef.current = null;
     };
 
     const handleSlotDragOver = (e, dateStr, hour) => {
@@ -191,22 +193,23 @@ export default function WeeklyTasks() {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         // Pixelgenaue Mausposition → 15min snap
-        const rect = e.currentTarget.getBoundingClientRect();
-        const py   = Math.max(0, e.clientY - rect.top);
-        const rawMin  = hour * 60 + Math.min(59, Math.floor((py / SLOT_H) * 60));
+        // Wir nutzen das Slot-Element direkt (currentTarget ist immer der registrierte Handler)
+        const rect    = e.currentTarget.getBoundingClientRect();
+        const py      = Math.max(0, Math.min(rect.height - 1, e.clientY - rect.top));
+        const rawMin  = hour * 60 + Math.floor((py / rect.height) * 60);
         const snapped = snapTo15(rawMin);
+        dragOverMinRef.current = snapped; // synchron schreiben — kein async
         setDragOverSlot({ dateStr, hour, snappedMin: snapped });
     };
 
     const handleSlotDrop = (e, date, hour) => {
         e.preventDefault();
         const newDate = format(date, 'yyyy-MM-dd');
-        // Pixel-Position im Slot → 15min snap (gleiche Logik wie DragOver)
-        const rect     = e.currentTarget.getBoundingClientRect();
-        const py       = Math.max(0, e.clientY - rect.top);
-        const rawMin   = hour * 60 + Math.min(59, Math.floor((py / SLOT_H) * 60));
-        const snapped  = snapTo15(rawMin);
-        const newTime  = minutesToTime(snapped);
+        // snappedMin aus dem synchronen Ref lesen (zuverlässiger als e.clientY im Drop)
+        const snapped = dragOverMinRef.current !== null
+            ? dragOverMinRef.current
+            : snapTo15(hour * 60); // Fallback: Stundenbeginn
+        const newTime = minutesToTime(snapped);
 
         if (draggedItem?.type === 'appointment') {
             updateAppointment.mutate({
@@ -239,6 +242,7 @@ export default function WeeklyTasks() {
         setDraggedTodo(null);
         setDraggedItem(null);
         setDragOverSlot(null);
+        dragOverMinRef.current = null;
     };
 
     const handleSlotDragLeave = () => {
