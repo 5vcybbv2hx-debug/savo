@@ -345,8 +345,8 @@ export default function Recipes() {
     const [similarRecipe,      setSimilarRecipe]      = useState(null);
     const [categoriesOpen,     setCategoriesOpen]     = useState(false);
     const [newCatInput,        setNewCatInput]        = useState('');
-    const [standardCategories, setStandardCategories] = useState(DEFAULT_standardCategories);
-    const [slushyCategories,   setSlushyCategories]   = useState(DEFAULT_slushyCategories);
+    const [standardCategories, setStandardCategories] = useState(DEFAULT_STANDARD_CATEGORIES);
+    const [slushyCategories,   setSlushyCategories]   = useState(DEFAULT_SLUSHY_CATEGORIES);
 
     const persistCategories = async (nextStandard, nextSlushy) => {
         if (!companyInfo?.id) return;
@@ -1130,7 +1130,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         <span className="text-muted-foreground/70">
                                             ({recipes.filter(r => r.category === cat && r.recipe_type !== 'slushy').length})
                                         </span>
-                                        {!DEFAULT_standardCategories.includes(cat) && (
+                                        {!DEFAULT_STANDARD_CATEGORIES.includes(cat) && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeCategory('standard', cat)}
@@ -1153,7 +1153,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         <span className="text-blue-400/60">
                                             ({recipes.filter(r => r.category === cat && r.recipe_type === 'slushy').length})
                                         </span>
-                                        {!DEFAULT_slushyCategories.includes(cat) && (
+                                        {!DEFAULT_SLUSHY_CATEGORIES.includes(cat) && (
                                             <button
                                                 type="button"
                                                 onClick={() => removeCategory('slushy', cat)}
