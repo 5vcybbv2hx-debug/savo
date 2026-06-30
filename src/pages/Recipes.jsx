@@ -889,70 +889,74 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
             {/* ── Edit / Create Modal ─────────────────────────────────────── */}
             <Dialog open={modalOpen} onOpenChange={o => !o && closeModal()}>
-                <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{selectedRecipe ? 'Rezept bearbeiten' : 'Neues Rezept'}</DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-4 py-2">
-                        {/* Name */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">Name *</Label>
-                            <Input className="h-9" placeholder="z.B. Mojito, Aperol Spritz…"
-                                value={formData.name}
-                                onChange={e => setFormData(f => ({ ...f, name: e.target.value }))} />
+                    <div className="space-y-5 py-1">
+
+                        {/* ── Basisinfo ── */}
+                        <div className="space-y-3">
+                            {/* Name */}
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name *</Label>
+                                <Input className="h-10 text-base" placeholder="z.B. Mojito, Aperol Spritz…"
+                                    value={formData.name}
+                                    onChange={e => setFormData(f => ({ ...f, name: e.target.value }))} />
+                            </div>
+
+                            {/* Kategorie + Portionen / Slushy-Felder */}
+                            {formData.recipe_type === 'slushy' ? (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Spirituose</Label>
+                                        <Select value={formData.slushy_spirit_base}
+                                            onValueChange={v => setFormData(f => ({ ...f, slushy_spirit_base: v }))}>
+                                            <SelectTrigger className="h-9"><SelectValue placeholder="Wählen…" /></SelectTrigger>
+                                            <SelectContent>
+                                                {slushyCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Originalmenge (L)</Label>
+                                        <Input className="h-9" type="number" step="0.1" placeholder="z.B. 9.5"
+                                            value={formData.slushy_original_volume_liters ?? ''}
+                                            onChange={e => setFormData(f => ({ ...f, slushy_original_volume_liters: e.target.value === '' ? null : parseFloat(e.target.value) || null }))} />
+                                        <p className="text-[10px] text-muted-foreground">Wird auf 3,5L skaliert</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kategorie</Label>
+                                        <Select value={formData.category}
+                                            onValueChange={v => setFormData(f => ({ ...f, category: v }))}>
+                                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                {standardCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Portionen</Label>
+                                        <Input className="h-9" type="number" min="1"
+                                            value={formData.servings}
+                                            onChange={e => setFormData(f => ({ ...f, servings: parseInt(e.target.value) || 1 }))} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Slushy-spezifische Felder */}
-                        {formData.recipe_type === 'slushy' ? (
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Spirituose</Label>
-                                    <Select value={formData.slushy_spirit_base}
-                                        onValueChange={v => setFormData(f => ({ ...f, slushy_spirit_base: v }))}>
-                                        <SelectTrigger className="h-9"><SelectValue placeholder="Wählen…" /></SelectTrigger>
-                                        <SelectContent>
-                                            {slushyCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Originalmenge (L)</Label>
-                                    <Input className="h-9" type="number" step="0.1" placeholder="z.B. 9.5"
-                                        value={formData.slushy_original_volume_liters}
-                                        onChange={e => setFormData(f => ({ ...f, slushy_original_volume_liters: e.target.value === '' ? null : parseFloat(e.target.value) || null }))} />
-                                    <p className="text-[10px] text-muted-foreground">Wird auf 3,5L skaliert</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Kategorie</Label>
-                                    <Select value={formData.category}
-                                        onValueChange={v => setFormData(f => ({ ...f, category: v }))}>
-                                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            {standardCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Portionen</Label>
-                                    <Input className="h-9" type="number" min="1"
-                                        value={formData.servings}
-                                        onChange={e => setFormData(f => ({ ...f, servings: parseInt(e.target.value) || 1 }))} />
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Zutaten */}
-                        <div className="space-y-1.5">
+                        {/* ── Zutaten ── */}
+                        <div className="pt-3 border-t border-border/60 space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label className="text-xs text-muted-foreground">Zutaten</Label>
+                                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Zutaten</Label>
                                 <Button type="button" variant="outline" size="sm"
                                     onClick={suggestIngredients}
                                     disabled={suggestingIngredients || !formData.name}
-                                    className="h-7 text-xs gap-1 border-amber-500/40 text-amber-500 hover:bg-amber-500/10">
+                                    className="h-7 text-xs gap-1.5 border-amber-500/40 text-amber-500 hover:bg-amber-500/10">
                                     <Sparkles className="w-3 h-3" />
                                     {suggestingIngredients ? 'Lädt…' : 'KI-Vorschlag'}
                                 </Button>
@@ -964,136 +968,173 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                             />
                         </div>
 
-                        {/* Mischvarianten für Longdrinks */}
+                        {/* ── Mischvarianten (nur Longdrink) ── */}
                         {formData.category === 'Longdrink' && (
-                            <div className="space-y-2">
+                            <div className="pt-3 border-t border-border/60 space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <Label className="text-xs text-muted-foreground">Mischvarianten (Softdrinks)</Label>
+                                    <div>
+                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Mischvarianten</Label>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">Variable Softdrink-Optionen — Basis-Zutaten oben</p>
+                                    </div>
                                     <Button type="button" variant="outline" size="sm"
                                         onClick={() => setFormData(f => ({
                                             ...f,
                                             mix_variants: [...(f.mix_variants || []), { name: '', ingredients: [] }]
                                         }))}
-                                        className="h-7 text-xs gap-1">
+                                        className="h-7 text-xs gap-1 shrink-0">
                                         <Plus className="w-3 h-3" /> Variante
                                     </Button>
                                 </div>
-                                <p className="text-[10px] text-muted-foreground">
-                                    Feste Basis-Zutaten (Alkohol) oben, variable Softdrink-Optionen hier unten.
-                                </p>
-                                {(formData.mix_variants || []).map((variant, vi) => (
-                                    <div key={vi} className="border border-border rounded-xl p-3 space-y-2 bg-secondary/20">
-                                        <div className="flex items-center gap-2">
-                                            <Input
-                                                className="h-8 flex-1 text-sm"
-                                                placeholder={`z.B. mit Cola, mit Sprite…`}
-                                                value={variant.name}
-                                                onChange={e => setFormData(f => {
-                                                    const v = [...(f.mix_variants || [])];
-                                                    v[vi] = { ...v[vi], name: e.target.value };
-                                                    return { ...f, mix_variants: v };
-                                                })}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData(f => ({
-                                                    ...f,
-                                                    mix_variants: (f.mix_variants || []).filter((_, i) => i !== vi)
-                                                }))}
-                                                className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
-                                                <X className="w-4 h-4" />
-                                            </button>
+                                <div className="space-y-2">
+                                    {(formData.mix_variants || []).map((variant, vi) => (
+                                        <div key={vi} className="border border-border/60 rounded-xl bg-secondary/20">
+                                            {/* Varianten-Header */}
+                                            <div className="flex items-center gap-2 px-3 pt-2.5 pb-2">
+                                                <Input
+                                                    className="h-8 flex-1 text-sm bg-background"
+                                                    placeholder={`z.B. mit Cola, mit Sprite…`}
+                                                    value={variant.name}
+                                                    onChange={e => setFormData(f => {
+                                                        const v = [...(f.mix_variants || [])];
+                                                        v[vi] = { ...v[vi], name: e.target.value };
+                                                        return { ...f, mix_variants: v };
+                                                    })}
+                                                />
+                                                <button type="button"
+                                                    onClick={() => setFormData(f => ({
+                                                        ...f,
+                                                        mix_variants: (f.mix_variants || []).filter((_, i) => i !== vi)
+                                                    }))}
+                                                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            {/* Zutaten dieser Variante — compact */}
+                                            <div className="px-3 pb-2.5">
+                                                <IngredientSelector
+                                                    ingredients={variant.ingredients || []}
+                                                    onChange={newIngredients => setFormData(f => {
+                                                        const v = [...(f.mix_variants || [])];
+                                                        v[vi] = { ...v[vi], ingredients: newIngredients };
+                                                        return { ...f, mix_variants: v };
+                                                    })}
+                                                    articles={articles}
+                                                    compact
+                                                />
+                                            </div>
                                         </div>
-                                        <IngredientSelector
-                                            ingredients={variant.ingredients || []}
-                                            onChange={newIngredients => setFormData(f => {
-                                                const v = [...(f.mix_variants || [])];
-                                                v[vi] = { ...v[vi], ingredients: newIngredients };
-                                                return { ...f, mix_variants: v };
-                                            })}
-                                            articles={articles}
-                                        />
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
 
-                        {/* Zubereitung */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">Zubereitung</Label>
-                            <Textarea placeholder="Minze muddeln, Eis hinzufügen…" rows={3}
+                        {/* ── Zubereitung ── */}
+                        <div className="pt-3 border-t border-border/60 space-y-2">
+                            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Zubereitung</Label>
+                            <Textarea placeholder="Minze muddeln, Eis hinzufügen, Limettensaft…" rows={3}
                                 value={formData.preparation}
                                 onChange={e => setFormData(f => ({ ...f, preparation: e.target.value }))} />
                         </div>
 
-                        {/* Glas + Garnitur */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-muted-foreground">Glasart</Label>
-                                <Input className="h-9" placeholder="z.B. Highball"
-                                    value={formData.glass_type}
-                                    onChange={e => setFormData(f => ({ ...f, glass_type: e.target.value }))} />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs text-muted-foreground">Garnitur</Label>
-                                <Input className="h-9" placeholder="z.B. Minzzweig"
-                                    value={formData.garnish}
-                                    onChange={e => setFormData(f => ({ ...f, garnish: e.target.value }))} />
+                        {/* ── Details ── */}
+                        <div className="pt-3 border-t border-border/60 space-y-3">
+                            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Details</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Glasart — Select */}
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs text-muted-foreground">Glasart</Label>
+                                    <Select value={formData.glass_type || ''}
+                                        onValueChange={v => setFormData(f => ({ ...f, glass_type: v }))}>
+                                        <SelectTrigger className="h-9"><SelectValue placeholder="Wählen…" /></SelectTrigger>
+                                        <SelectContent>
+                                            {['Highball', 'Lowball / Old Fashioned', 'Cocktailglas', 'Martiniglas', 'Weinglas', 'Sektglas / Flöte', 'Bierglas', 'Shotglas', 'Kupferbecher', 'Hurricane', 'Tiki-Glas', 'Mason Jar', 'Sonstiges'].map(g => (
+                                                <SelectItem key={g} value={g}>{g}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                {/* Garnitur */}
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs text-muted-foreground">Garnitur</Label>
+                                    <Input className="h-9" placeholder="z.B. Minzzweig, Zitronenscheibe"
+                                        value={formData.garnish}
+                                        onChange={e => setFormData(f => ({ ...f, garnish: e.target.value }))} />
+                                </div>
+                                {/* Alkoholgehalt */}
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs text-muted-foreground">Alkohol (% vol.)</Label>
+                                    <Input className="h-9" type="number" step="0.1" min="0" max="100"
+                                        placeholder="z.B. 5.2"
+                                        value={formData.alcohol_content ?? ''}
+                                        onChange={e => setFormData(f => ({ ...f, alcohol_content: e.target.value === '' ? null : parseFloat(e.target.value) || null }))} />
+                                </div>
+                                {/* Notizen */}
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs text-muted-foreground">Notizen</Label>
+                                    <Input className="h-9" placeholder="Zusätzliche Hinweise…"
+                                        value={formData.notes || ''}
+                                        onChange={e => setFormData(f => ({ ...f, notes: e.target.value }))} />
+                                </div>
                             </div>
                         </div>
 
-                        {/* Notizen */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">Notizen</Label>
-                            <Textarea placeholder="Zusätzliche Hinweise…" rows={2}
-                                value={formData.notes}
-                                onChange={e => setFormData(f => ({ ...f, notes: e.target.value }))} />
-                        </div>
-
-                        {/* Bild */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs text-muted-foreground">Bild (optional)</Label>
-                            {formData.image_url && (
-                                <div className="relative w-full h-32 rounded-xl overflow-hidden border border-border/50">
+                        {/* ── Bild ── */}
+                        <div className="pt-3 border-t border-border/60 space-y-2">
+                            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Bild (optional)</Label>
+                            {formData.image_url ? (
+                                <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border/50 group">
                                     <img src={formData.image_url} alt="Vorschau" className="w-full h-full object-cover" />
-                                    <Button type="button" variant="destructive" size="sm"
-                                        onClick={() => setFormData(f => ({ ...f, image_url: '' }))}
-                                        className="absolute top-2 right-2 h-7 text-xs">
-                                        Entfernen
-                                    </Button>
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                        <Button type="button" variant="destructive" size="sm"
+                                            onClick={() => setFormData(f => ({ ...f, image_url: '' }))}
+                                            className="h-7 text-xs">
+                                            Entfernen
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex gap-2">
+                                    <label className="flex-1 cursor-pointer">
+                                        <div className={cn(
+                                            'flex items-center justify-center gap-1.5 h-9 rounded-lg border border-dashed border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all',
+                                            uploadingImage && 'opacity-50 pointer-events-none'
+                                        )}>
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                            Datei hochladen
+                                        </div>
+                                        <Input type="file" accept="image/*" onChange={handleImageUpload}
+                                            disabled={uploadingImage} className="hidden" />
+                                    </label>
+                                    <label className="flex-1 cursor-pointer">
+                                        <div className={cn(
+                                            'flex items-center justify-center gap-1.5 h-9 rounded-lg border border-amber-500/30 text-xs font-medium text-amber-500 hover:bg-amber-500/10 transition-all',
+                                            uploadingImage && 'opacity-50 pointer-events-none'
+                                        )}>
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                            Foto aufnehmen
+                                        </div>
+                                        <Input type="file" accept="image/*" capture="environment"
+                                            onChange={handleImageUpload} disabled={uploadingImage} className="hidden" />
+                                    </label>
                                 </div>
                             )}
-                            <div className="flex gap-2">
-                                <label className="flex-1 cursor-pointer">
-                                    <div className={cn(
-                                        'flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all',
-                                        uploadingImage && 'opacity-50 pointer-events-none'
-                                    )}>
-                                        📁 Datei
-                                    </div>
-                                    <Input type="file" accept="image/*" onChange={handleImageUpload}
-                                        disabled={uploadingImage} className="hidden" />
-                                </label>
-                                <label className="flex-1 cursor-pointer">
-                                    <div className={cn(
-                                        'flex items-center justify-center gap-1.5 h-9 rounded-lg border border-amber-500/40 text-xs font-medium text-amber-500 hover:bg-amber-500/10 transition-all',
-                                        uploadingImage && 'opacity-50 pointer-events-none'
-                                    )}>
-                                        📷 Foto
-                                    </div>
-                                    <Input type="file" accept="image/*" capture="environment"
-                                        onChange={handleImageUpload} disabled={uploadingImage} className="hidden" />
-                                </label>
-                            </div>
-                            {uploadingImage && <p className="text-xs text-muted-foreground">Wird hochgeladen…</p>}
+                            {uploadingImage && <p className="text-xs text-muted-foreground animate-pulse">Wird hochgeladen…</p>}
                         </div>
+
                     </div>
 
-                    <DialogFooter className="gap-2">
+                    <DialogFooter className="gap-2 pt-2">
                         <Button variant="outline" onClick={closeModal}>Abbrechen</Button>
+                        {selectedRecipe && (
+                            <Button type="button" variant="ghost"
+                                onClick={() => { setDeleteTarget(selectedRecipe.id); closeModal(); }}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10 mr-auto">
+                                Löschen
+                            </Button>
+                        )}
                         <Button onClick={handleSave}
-                            disabled={createMutation.isPending || updateMutation.isPending}
-                            className="bg-amber-600 hover:bg-amber-700 text-white">
+                            disabled={createMutation.isPending || updateMutation.isPending || !formData.name?.trim()}
+                            className="bg-amber-600 hover:bg-amber-700 text-white min-w-24">
                             {(createMutation.isPending || updateMutation.isPending)
                                 ? 'Speichert…' : selectedRecipe ? 'Speichern' : 'Erstellen'}
                         </Button>
