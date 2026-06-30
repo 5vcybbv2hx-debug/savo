@@ -4,22 +4,10 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Name des Getr\u00e4nks"
+      "description": "Name des Getränks"
     },
     "category": {
       "type": "string",
-      "enum": [
-        "Bier",
-        "Wein",
-        "Sekt & Champagner",
-        "Spirituosen",
-        "Longdrinks",
-        "Cocktails",
-        "Shots",
-        "Softdrinks",
-        "Hei\u00dfgetr\u00e4nke",
-        "Moonshiner-Cocktails"
-      ],
       "description": "Kategorie"
     },
     "subcategory": {
@@ -36,7 +24,7 @@
     },
     "size": {
       "type": "string",
-      "description": "Gr\u00f6\u00dfe (z.B. 0,3l, 4cl, 0,1l)"
+      "description": "Größe (z.B. 0,3l, 4cl, 0,1l)"
     },
     "purchase_price": {
       "type": "number",
@@ -49,12 +37,12 @@
     },
     "linked_recipe_id": {
       "type": "string",
-      "description": "Verkn\u00fcpftes Rezept f\u00fcr automatische Berechnung"
+      "description": "Verknüpftes Rezept für automatische Berechnung"
     },
     "is_available": {
       "type": "boolean",
       "default": true,
-      "description": "Aktuell verf\u00fcgbar"
+      "description": "Aktuell verfügbar"
     },
     "is_seasonal": {
       "type": "boolean",
@@ -97,7 +85,11 @@
       "items": {
         "type": "string"
       },
-      "description": "IDs der verkn\u00fcpften Artikel (mehrere m\u00f6glich)"
+      "description": "IDs der verknüpften Artikel (mehrere möglich)"
+    },
+    "recipe_variant_name": {
+      "type": "string",
+      "description": "Varianten-Name (z.B. 'mit Cola') wenn aus Rezept-Mischvariante erstellt"
     }
   },
   "required": [
