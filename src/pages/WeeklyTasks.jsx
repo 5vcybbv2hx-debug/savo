@@ -188,16 +188,25 @@ export default function WeeklyTasks() {
 
     const handleSlotDragOver = (e, dateStr, hour) => {
         if (!draggedItem && !draggedTodo) return;
-        // prevent default to allow drop
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        setDragOverSlot({ dateStr, hour });
+        // Pixelgenaue Mausposition → 15min snap
+        const rect = e.currentTarget.getBoundingClientRect();
+        const py   = Math.max(0, e.clientY - rect.top);
+        const rawMin  = hour * 60 + Math.min(59, Math.floor((py / SLOT_H) * 60));
+        const snapped = snapTo15(rawMin);
+        setDragOverSlot({ dateStr, hour, snappedMin: snapped });
     };
 
     const handleSlotDrop = (e, date, hour) => {
         e.preventDefault();
         const newDate = format(date, 'yyyy-MM-dd');
-        const newTime = minutesToTime(hour * 60);
+        // Pixel-Position im Slot → 15min snap (gleiche Logik wie DragOver)
+        const rect     = e.currentTarget.getBoundingClientRect();
+        const py       = Math.max(0, e.clientY - rect.top);
+        const rawMin   = hour * 60 + Math.min(59, Math.floor((py / SLOT_H) * 60));
+        const snapped  = snapTo15(rawMin);
+        const newTime  = minutesToTime(snapped);
 
         if (draggedItem?.type === 'appointment') {
             updateAppointment.mutate({
@@ -205,7 +214,7 @@ export default function WeeklyTasks() {
                 data: {
                     date:       newDate,
                     start_time: newTime,
-                    end_time:   minutesToTime(hour * 60 + (draggedItem.item.duration || 60)),
+                    end_time:   minutesToTime(snapped + (draggedItem.item.duration || 60)),
                 },
             });
         } else if (draggedItem?.type === 'planned-todo') {
@@ -217,7 +226,6 @@ export default function WeeklyTasks() {
                 },
             });
         } else if (draggedTodo) {
-            // Backlog todo → calendar
             updateTodo.mutate({
                 id: draggedTodo.id,
                 data: {
