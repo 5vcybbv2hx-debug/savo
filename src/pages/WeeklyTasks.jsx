@@ -601,10 +601,19 @@ export default function WeeklyTasks() {
                                                 )}
                                                 style={{ top: `${top}px`, height: `${h}px`, minHeight: '24px' }}
                                                 onClick={e => { e.stopPropagation(); setEditItem({ type: 'appointment', item: appt }); }}>
-                                                <div className="px-1.5 py-1 min-w-0">
+                                                <div className="px-1.5 py-1 min-w-0 flex-1">
                                                     <p className={cn('text-[11px] font-semibold truncate leading-tight', col.text)}>
                                                         {appt.start_time} {appt.title}
                                                     </p>
+                                                    {appt.attendees?.length > 0 && (
+                                                        <p className="text-[9px] text-muted-foreground/60 truncate mt-0.5 flex items-center gap-0.5">
+                                                            <Users className="w-2.5 h-2.5 inline shrink-0" />
+                                                            {appt.attendees.join(', ')}
+                                                        </p>
+                                                    )}
+                                                    {appt.notes && (
+                                                        <p className="text-[9px] text-muted-foreground/50 truncate mt-0.5">{appt.notes}</p>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -678,6 +687,28 @@ export default function WeeklyTasks() {
 
             {/* ── Desktop: volle Wochenansicht ─────────────────────────────── */}
             <div className="hidden md:flex flex-1 overflow-hidden">
+
+                {/* ── Ganztags-Banner (Mobile) ──────────────────────────── */}
+                {(() => {
+                    const allDayAppts = weekAppointments.filter(a => a.date === activeDateStr && a.is_all_day);
+                    if (!allDayAppts.length) return null;
+                    return (
+                        <div className="md:hidden px-3 py-1.5 border-b border-border bg-card/60 flex flex-wrap gap-1.5">
+                            {allDayAppts.map(a => {
+                                const col = APPOINTMENT_COLORS[a.color] || APPOINTMENT_COLORS.blue;
+                                return (
+                                    <button key={a.id}
+                                        onClick={() => setEditItem({ type: 'appointment', item: a })}
+                                        className={cn('flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border', col.bg, col.border, col.text)}>
+                                        <CalendarRange className="w-3 h-3" />
+                                        {a.title}
+                                        {a.attendees?.length > 0 && <span className="opacity-60">· {a.attendees.length}×</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    );
+                })()}
 
                 {/* Kalender-Hauptbereich — ein Scroll-Container für horizontal + vertikal */}
                 <div className="flex-1 overflow-auto" ref={gridRef}>
