@@ -8,15 +8,7 @@
     },
     "category": {
       "type": "string",
-      "enum": [
-        "Cocktail",
-        "Longdrink",
-        "Shot",
-        "Mocktail",
-        "Moonshiner-Cocktails",
-        "Sonstiges"
-      ],
-      "description": "Kategorie"
+      "description": "Kategorie (Standard oder benutzerdefiniert)"
     },
     "recipe_type": {
       "type": "string",
@@ -29,15 +21,6 @@
     },
     "slushy_spirit_base": {
       "type": "string",
-      "enum": [
-        "Vodka",
-        "Rum",
-        "Gin",
-        "Whiskey",
-        "Likör",
-        "Alkoholfrei",
-        "Sonstiges"
-      ],
       "description": "Basis-Spirituose für Slushy-Rezepte"
     },
     "slushy_original_volume_liters": {
