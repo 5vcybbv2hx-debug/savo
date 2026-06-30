@@ -41,11 +41,11 @@ export default function PayrollReportSender() {
 
     const { data: timeEntries = [] } = useQuery({
         queryKey: ['time-entries-for-report', format(selectedMonth, 'yyyy-MM')],
-        queryFn: () => base44.entities.TimeEntry.filter(
-            { date_gte: monthStart, date_lte: monthEnd },
-            '-date',
-            500
-        ),
+        queryFn: async () => {
+            // Base44 SDK unterstützt keine date_gte/date_lte — clientseitig filtern
+            const all = await base44.entities.TimeEntry.list('-date', 1000);
+            return all.filter(e => e.date >= monthStart && e.date <= monthEnd);
+        },
         staleTime: STALE.MEDIUM
     });
 
