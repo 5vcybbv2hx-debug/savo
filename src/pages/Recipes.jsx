@@ -617,7 +617,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         {generatingFromInventory ? 'Generiere…' : 'KI-Rezept aus Inventar'}
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => setCategoriesOpen(true)}>
+                                    <DropdownMenuItem onSelect={e => { e.preventDefault(); setCategoriesOpen(true); }}>
                                         <Settings className="w-4 h-4 mr-2" />
                                         Kategorien verwalten
                                     </DropdownMenuItem>
