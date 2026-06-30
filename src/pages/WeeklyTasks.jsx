@@ -511,8 +511,51 @@ export default function WeeklyTasks() {
                             ))}
                         </select>
                     </div>
+                    {/* Stats + Print */}
+                    <Button variant="ghost" size="icon"
+                        className={cn('h-7 w-7 rounded-lg', showStats && 'bg-amber-500/20 text-amber-400')}
+                        onClick={() => setShowStats(s => !s)} title="Wochenübersicht">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon"
+                        className="h-7 w-7 rounded-lg print:hidden"
+                        onClick={() => window.print()} title="Drucken">
+                        <Printer className="w-3.5 h-3.5" />
+                    </Button>
                 </div>
             </div>
+
+            {/* ── Wochen-Stats-Bar ─────────────────────────────────────────────── */}
+            {showStats && (
+                <div className="border-b border-border bg-card/60 px-4 py-2 flex items-center gap-4 overflow-x-auto scrollbar-none print:hidden animate-in slide-in-from-top-1 duration-150">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <CalendarDays className="w-3.5 h-3.5 text-blue-400" />
+                        <span className="text-[11px] text-muted-foreground">Termine</span>
+                        <span className="text-[11px] font-bold">{weekStats.appointments}</span>
+                    </div>
+                    <div className="w-px h-3.5 bg-border shrink-0" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="text-[11px] text-muted-foreground">Geplant</span>
+                        <span className="text-[11px] font-bold">{weekStats.hoursLabel}</span>
+                    </div>
+                    <div className="w-px h-3.5 bg-border shrink-0" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <CheckSquare className="w-3.5 h-3.5 text-green-400" />
+                        <span className="text-[11px] text-muted-foreground">Todos</span>
+                        <span className="text-[11px] font-bold">{weekStats.done}/{weekStats.todos}</span>
+                        {weekStats.todos > 0 && (
+                            <div className="flex items-center gap-1">
+                                <div className="w-14 h-1.5 bg-muted rounded-full overflow-hidden">
+                                    <div className="h-full bg-green-500 rounded-full transition-all duration-300"
+                                        style={{ width: `${weekStats.donePercent}%` }} />
+                                </div>
+                                <span className="text-[10px] text-muted-foreground">{weekStats.donePercent}%</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* ── Mobile Tab-Leiste ────────────────────────────────────────── */}
             <div className="md:hidden flex border-b border-border bg-card">
@@ -994,16 +1037,25 @@ export default function WeeklyTasks() {
                                                     style={{ top: `${top}px`, height: `${resizingId === appt.id && resizePreview ? (resizePreview.duration / 60 * SLOT_H) : h}px`, minHeight: '24px', overflow: 'hidden' }}
                                                     onClick={e => { if (resizingId) return; e.stopPropagation(); setEditItem({ type: 'appointment', item: appt }); }}>
                                                     <div className="px-1.5 py-1 min-w-0">
-                                                        <p className={cn('text-[11px] font-semibold truncate leading-tight', col.text)}>
-                                                            {appt.start_time} {appt.title}
+                                                        <p className={cn('text-[11px] font-semibold leading-tight flex items-center gap-1', col.text)}>
+                                                            {appt.recurrence && appt.recurrence !== 'none' && (
+                                                                <RotateCcw className="w-2.5 h-2.5 shrink-0 opacity-60" />
+                                                            )}
+                                                            <span className="truncate">{appt.start_time} {appt.title}</span>
                                                             {resizingId === appt.id && resizePreview && (
-                                                                <span className="ml-1 opacity-70 font-normal">
+                                                                <span className="ml-1 opacity-70 font-normal shrink-0">
                                                                     {resizePreview.duration < 60 ? `${resizePreview.duration}min` : `${(resizePreview.duration/60).toFixed(1).replace('.0','')}h`}
                                                                 </span>
                                                             )}
                                                         </p>
-                                                        {h > 36 && appt.notes && (
-                                                            <p className={cn('text-[10px] truncate', col.text, 'opacity-70')}>{appt.notes}</p>
+                                                        {h > 36 && appt.attendees?.length > 0 && (
+                                                            <p className="text-[9px] text-muted-foreground/60 truncate mt-0.5 flex items-center gap-0.5">
+                                                                <Users className="w-2.5 h-2.5 inline shrink-0" />
+                                                                {appt.attendees.join(', ')}
+                                                            </p>
+                                                        )}
+                                                        {h > 48 && appt.notes && (
+                                                            <p className={cn('text-[10px] truncate mt-0.5', col.text, 'opacity-70')}>{appt.notes}</p>
                                                         )}
                                                     </div>
                                                     {/* Resize-Handle */}
@@ -1051,10 +1103,21 @@ export default function WeeklyTasks() {
                                     )}>
                                     <div className={cn('w-1 rounded-full shrink-0', stripe)} />
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-semibold text-foreground truncate">{todo.title}</p>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                        <p className={cn('text-xs font-semibold text-foreground truncate',
+                                            todo.status === 'erledigt' && 'line-through opacity-50')}>
+                                            {todo.title}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                            {todo.priority && (
+                                                <span className={cn('text-[9px] font-bold uppercase px-1 py-0 rounded',
+                                                    todo.priority === 'dringend' ? 'bg-red-500/20 text-red-400' :
+                                                    todo.priority === 'hoch'     ? 'bg-orange-500/20 text-orange-400' :
+                                                    todo.priority === 'mittel'   ? 'bg-blue-500/20 text-blue-400' :
+                                                    'bg-muted text-muted-foreground'
+                                                )}>{todo.priority}</span>
+                                            )}
                                             {todo.category && (
-                                                <span className="text-[10px] text-muted-foreground">{todo.category}</span>
+                                                <span className="text-[10px] text-muted-foreground truncate">{todo.category}</span>
                                             )}
                                             {todo.due_date && (
                                                 <span className="text-[10px] text-amber-400">{todo.due_date}</span>
@@ -1385,3 +1448,7 @@ export default function WeeklyTasks() {
         </div>
     );
 }
+
+// Print-Styles (inline als globale Klassen)
+// In index.css oder globals.css sollte folgendes stehen:
+// @media print { .print\:hidden { display: none !important; } }
