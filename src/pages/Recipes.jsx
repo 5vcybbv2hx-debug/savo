@@ -35,8 +35,8 @@ import PDFExportButton from '@/components/export/PDFExportButton';
 import SlushyRecipeCard from '@/components/recipes/SlushyRecipeCard';
 
 // ── Kategorien ────────────────────────────────────────────────────────────────
-const STANDARD_CATEGORIES = ['Cocktail', 'Shot', 'Longdrink', 'Mocktail', 'Moonshiner-Cocktails', 'Sonstiges'];
-const SLUSHY_CATEGORIES   = ['Vodka', 'Rum', 'Gin', 'Whiskey', 'Likör', 'Alkoholfrei', 'Sonstiges'];
+const DEFAULT_STANDARD_CATEGORIES = ['Cocktail', 'Shot', 'Longdrink', 'Mocktail', 'Moonshiner-Cocktails', 'Sonstiges'];
+const DEFAULT_SLUSHY_CATEGORIES = ['Vodka', 'Rum', 'Gin', 'Whiskey', 'Likör', 'Alkoholfrei', 'Sonstiges'];
 
 const CATEGORY_COLORS = {
     'Cocktail':             'bg-pink-500/12 text-pink-400 border-pink-500/25',
@@ -343,6 +343,25 @@ export default function Recipes() {
     const [similarModal,       setSimilarModal]       = useState(false);
     const [similarRecipe,      setSimilarRecipe]      = useState(null);
     const [categoriesOpen,     setCategoriesOpen]     = useState(false);
+    const [newCatInput,        setNewCatInput]        = useState('');
+    const [standardCategories, setStandardCategories] = useState(DEFAULT_standardCategories);
+    const [slushyCategories,   setSlushyCategories]   = useState(DEFAULT_slushyCategories);
+
+    const addCategory = (type) => {
+        const name = newCatInput.trim();
+        if (!name) return;
+        if (type === 'standard' && !standardCategories.includes(name)) {
+            setStandardCategories(prev => [...prev, name]);
+        } else if (type === 'slushy' && !slushyCategories.includes(name)) {
+            setSlushyCategories(prev => [...prev, name]);
+        }
+        setNewCatInput('');
+    };
+
+    const removeCategory = (type, cat) => {
+        if (type === 'standard') setStandardCategories(prev => prev.filter(c => c !== cat));
+        else setSlushyCategories(prev => prev.filter(c => c !== cat));
+    };
 
     // Filter
     const [searchQuery,        setSearchQuery]        = useState('');
@@ -417,7 +436,7 @@ export default function Recipes() {
         });
     }, [recipes, activeTab, categoryFilter, searchQuery, ingredientFilter, standardRecipes, slushyRecipes]);
 
-    const activeCategories = activeTab === 'slushy' ? SLUSHY_CATEGORIES : STANDARD_CATEGORIES;
+    const activeCategories = activeTab === 'slushy' ? slushyCategories : standardCategories;
 
     // ── Modal Helpers ─────────────────────────────────────────────────────────
     const openModal = (recipe = null) => {
@@ -849,7 +868,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         onValueChange={v => setFormData(f => ({ ...f, slushy_spirit_base: v }))}>
                                         <SelectTrigger className="h-9"><SelectValue placeholder="Wählen…" /></SelectTrigger>
                                         <SelectContent>
-                                            {SLUSHY_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                            {slushyCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -869,7 +888,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         onValueChange={v => setFormData(f => ({ ...f, category: v }))}>
                                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                                         <SelectContent>
-                                            {STANDARD_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                            {standardCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -1058,65 +1077,103 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
             </AlertDialog>
 
             {/* ── Kategorien verwalten ────────────────────────────────────── */}
-            <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
-                <DialogContent className="sm:max-w-md">
+            <Dialog open={categoriesOpen} onOpenChange={open => { setCategoriesOpen(open); if (!open) setNewCatInput(''); }}>
+                <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Kategorien verwalten</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-2">
+                    <div className="space-y-5 py-2">
+
+                        {/* Standard-Rezepte */}
                         <div>
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Standard-Rezepte</p>
                             <div className="flex flex-wrap gap-2">
-                                {STANDARD_CATEGORIES.map(cat => (
+                                {standardCategories.map(cat => (
                                     <span key={cat} className={cn(
-                                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border',
+                                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border group',
                                         CATEGORY_COLORS[cat] || 'bg-secondary text-muted-foreground border-border'
                                     )}>
                                         {cat}
                                         <span className="text-muted-foreground/70">
                                             ({recipes.filter(r => r.category === cat && r.recipe_type !== 'slushy').length})
                                         </span>
+                                        {!DEFAULT_standardCategories.includes(cat) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeCategory('standard', cat)}
+                                                className="ml-0.5 opacity-50 hover:opacity-100 hover:text-destructive transition-opacity"
+                                                title="Kategorie entfernen"
+                                            >✕</button>
+                                        )}
                                     </span>
                                 ))}
                             </div>
                         </div>
+
+                        {/* Slushies */}
                         <div>
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Slushies</p>
                             <div className="flex flex-wrap gap-2">
-                                {SLUSHY_CATEGORIES.map(cat => (
+                                {slushyCategories.map(cat => (
                                     <span key={cat} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-blue-500/10 text-blue-400 border-blue-500/25">
                                         {cat}
                                         <span className="text-blue-400/60">
                                             ({recipes.filter(r => r.category === cat && r.recipe_type === 'slushy').length})
                                         </span>
+                                        {!DEFAULT_slushyCategories.includes(cat) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeCategory('slushy', cat)}
+                                                className="ml-0.5 opacity-50 hover:opacity-100 hover:text-destructive transition-opacity"
+                                            >✕</button>
+                                        )}
                                     </span>
                                 ))}
                             </div>
                         </div>
-                        <div className="pt-2 border-t border-border">
-                            <p className="text-xs text-muted-foreground">
-                                Kategorien werden beim Erstellen oder Bearbeiten eines Rezepts zugewiesen. 
-                                Die verfügbaren Kategorien sind für Standard-Rezepte und Slushies getrennt definiert.
-                            </p>
+
+                        {/* Neue Kategorie hinzufügen */}
+                        <div className="pt-3 border-t border-border space-y-3">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Neue Kategorie</p>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newCatInput}
+                                    onChange={e => setNewCatInput(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && addCategory('standard')}
+                                    placeholder="z.B. Aperitif"
+                                    className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => addCategory('standard')}
+                                    disabled={!newCatInput.trim()}
+                                    className="h-9 px-3 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-semibold disabled:opacity-40 hover:bg-amber-500/30 transition-colors"
+                                >+ Standard</button>
+                                <button
+                                    type="button"
+                                    onClick={() => addCategory('slushy')}
+                                    disabled={!newCatInput.trim()}
+                                    className="h-9 px-3 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 text-xs font-semibold disabled:opacity-40 hover:bg-blue-500/30 transition-colors"
+                                >+ Slushy</button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Standard-Kategorien können nicht gelöscht werden. Eigene Kategorien (mit ✕) schon.</p>
                         </div>
-                        <div className="pt-1 border-t border-border">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Rezepte ohne Kategorie</p>
-                            {recipes.filter(r => !STANDARD_CATEGORIES.includes(r.category) && !SLUSHY_CATEGORIES.includes(r.category)).length === 0 ? (
-                                <p className="text-xs text-muted-foreground">Alle Rezepte haben eine gültige Kategorie ✓</p>
-                            ) : (
+
+                        {/* Rezepte ohne gültige Kategorie */}
+                        {recipes.filter(r => !standardCategories.includes(r.category) && !slushyCategories.includes(r.category)).length > 0 && (
+                            <div className="pt-2 border-t border-border">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Ohne gültige Kategorie</p>
                                 <div className="space-y-1">
                                     {recipes
-                                        .filter(r => !STANDARD_CATEGORIES.includes(r.category) && !SLUSHY_CATEGORIES.includes(r.category))
+                                        .filter(r => !standardCategories.includes(r.category) && !slushyCategories.includes(r.category))
                                         .map(r => (
-                                            <div key={r.id} className="flex items-center justify-between text-xs">
-                                                <span className="text-foreground">{r.name}</span>
-                                                <span className="text-muted-foreground">{r.category || '—'}</span>
-                                            </div>
+                                            <p key={r.id} className="text-xs text-muted-foreground px-2">• {r.name} ({r.category || '—'})</p>
                                         ))
                                     }
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setCategoriesOpen(false)}>Schließen</Button>
