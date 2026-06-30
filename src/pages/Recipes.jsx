@@ -17,7 +17,7 @@ import {
     Lightbulb, CheckSquare, X, Sparkles, ChefHat, MoreVertical,
     FileText, Snowflake, GlassWater, UtensilsCrossed, StickyNote,
     Minus, CreditCard
-} from 'lucide-react';
+, Trash2 } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1008,8 +1008,10 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                                         ...f,
                                                         mix_variants: (f.mix_variants || []).filter((_, i) => i !== vi)
                                                     }))}
-                                                    className="ml-2 text-muted-foreground/40 hover:text-destructive transition-colors shrink-0">
-                                                    <X className="w-3.5 h-3.5" />
+                                                    title="Variante löschen"
+                                                    className="ml-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                    <span className="hidden sm:inline">Löschen</span>
                                                 </button>
                                             </div>
                                             {/* Zutaten dieser Variante — compact */}
