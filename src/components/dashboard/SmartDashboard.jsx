@@ -107,7 +107,7 @@ function ClockCard({ currentEmployee }) {
             await base44.entities.ClockEntry.update(entryId, {
                 clock_out: now.toISOString(), break_minutes: breakMinutes,
                 total_hours: totalHours, status: 'clocked_out',
-                breaks: entry.breaks,
+                breaks: entry.breaks || [],
             });
             await base44.entities.TimeEntry.create({
                 employee_id: entry.employee_id, employee_name: entry.employee_name,
