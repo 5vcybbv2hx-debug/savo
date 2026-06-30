@@ -359,15 +359,7 @@ export default function Recipes() {
         queryClient.invalidateQueries({ queryKey: ['companyInfo'] });
     };
 
-    // Gespeicherte Kategorien laden, sobald companyInfo verfügbar ist
-    React.useEffect(() => {
-        if (!companyInfo?.module_states) return;
-        try {
-            const states = JSON.parse(companyInfo.module_states);
-            if (states.recipe_categories?.standard) setStandardCategories(states.recipe_categories.standard);
-            if (states.recipe_categories?.slushy) setSlushyCategories(states.recipe_categories.slushy);
-        } catch { /* ignore malformed JSON */ }
-    }, [companyInfo?.module_states]);
+
 
     const addCategory = (type) => {
         const name = newCatInput.trim();
@@ -430,6 +422,16 @@ export default function Recipes() {
         },
         staleTime: STALE.SLOW,
     });
+
+    // Gespeicherte Kategorien laden, sobald companyInfo verfügbar ist
+    React.useEffect(() => {
+        if (!companyInfo?.module_states) return;
+        try {
+            const states = JSON.parse(companyInfo.module_states);
+            if (states.recipe_categories?.standard) setStandardCategories(states.recipe_categories.standard);
+            if (states.recipe_categories?.slushy) setSlushyCategories(states.recipe_categories.slushy);
+        } catch { /* ignore malformed JSON */ }
+    }, [companyInfo?.module_states]);
 
     const { data: articles = [] } = useQuery({ queryKey: ['articles'], queryFn: () => base44.entities.Article.list('name', 500),  staleTime: STALE.SLOW });
 
