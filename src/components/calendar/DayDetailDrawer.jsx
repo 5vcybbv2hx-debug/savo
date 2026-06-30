@@ -4,6 +4,17 @@ import { de } from 'date-fns/locale';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Badge } from '@/components/ui/badge';
 
+export default function DayDetailDrawer({
+    day,
+    open,
+    onClose,
+    shifts = [],
+    vacations = [],
+    holidays = [],
+    maintenanceTasks = [],
+    reservations = [],
+    employees = [],
+}) {
     if (!day) return null;
 
     const dayStr = format(day, 'yyyy-MM-dd');

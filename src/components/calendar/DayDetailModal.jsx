@@ -18,6 +18,18 @@ function Section({ icon: Icon, title, color, children }) {
     );
 }
 
+export default function DayDetailModal({
+    day,
+    open,
+    onClose,
+    shifts = [],
+    vacations = [],
+    holidays = [],
+    reservations = [],
+    events = [],
+    employees = [],
+    onShiftSwap,
+}) {
     if (!day) return null;
 
     const dayStr = format(day, 'yyyy-MM-dd');
