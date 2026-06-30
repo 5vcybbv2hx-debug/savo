@@ -350,15 +350,24 @@ export default function Recipes() {
 
     const persistCategories = async (nextStandard, nextSlushy) => {
         if (!companyInfo?.id) return;
-        const currentStates = companyInfo.module_states || {};
+        let currentStates = {};
+        try { currentStates = companyInfo.module_states ? JSON.parse(companyInfo.module_states) : {}; } catch { currentStates = {}; }
+        currentStates.recipe_categories = { standard: nextStandard, slushy: nextSlushy };
         await CompanyInfo.update(companyInfo.id, {
-            module_states: {
-                ...currentStates,
-                recipe_categories: { standard: nextStandard, slushy: nextSlushy }
-            }
+            module_states: JSON.stringify(currentStates)
         });
         queryClient.invalidateQueries({ queryKey: ['companyInfo'] });
     };
+
+    // Gespeicherte Kategorien laden, sobald companyInfo verfügbar ist
+    React.useEffect(() => {
+        if (!companyInfo?.module_states) return;
+        try {
+            const states = JSON.parse(companyInfo.module_states);
+            if (states.recipe_categories?.standard) setStandardCategories(states.recipe_categories.standard);
+            if (states.recipe_categories?.slushy) setSlushyCategories(states.recipe_categories.slushy);
+        } catch { /* ignore malformed JSON */ }
+    }, [companyInfo?.module_states]);
 
     const addCategory = (type) => {
         const name = newCatInput.trim();
