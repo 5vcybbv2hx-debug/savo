@@ -989,24 +989,27 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                     {(formData.mix_variants || []).map((variant, vi) => (
                                         <div key={vi} className="border border-border/60 rounded-xl bg-secondary/20">
                                             {/* Varianten-Header */}
-                                            <div className="flex items-center gap-2 px-3 pt-2.5 pb-2">
-                                                <Input
-                                                    className="h-8 flex-1 text-sm bg-background"
-                                                    placeholder={`z.B. mit Cola, mit Sprite…`}
-                                                    value={variant.name}
-                                                    onChange={e => setFormData(f => {
-                                                        const v = [...(f.mix_variants || [])];
-                                                        v[vi] = { ...v[vi], name: e.target.value };
-                                                        return { ...f, mix_variants: v };
-                                                    })}
-                                                />
+                                            <div className="flex items-center justify-between px-3 pt-2 pb-1.5 border-b border-border/40">
+                                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide shrink-0">Variante:</span>
+                                                    <input
+                                                        className="flex-1 min-w-0 bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none border-b border-transparent focus:border-primary/50 transition-colors py-0.5"
+                                                        placeholder="z.B. mit Cola, mit Sprite…"
+                                                        value={variant.name}
+                                                        onChange={e => setFormData(f => {
+                                                            const v = [...(f.mix_variants || [])];
+                                                            v[vi] = { ...v[vi], name: e.target.value };
+                                                            return { ...f, mix_variants: v };
+                                                        })}
+                                                    />
+                                                </div>
                                                 <button type="button"
                                                     onClick={() => setFormData(f => ({
                                                         ...f,
                                                         mix_variants: (f.mix_variants || []).filter((_, i) => i !== vi)
                                                     }))}
-                                                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
-                                                    <X className="w-4 h-4" />
+                                                    className="ml-2 text-muted-foreground/40 hover:text-destructive transition-colors shrink-0">
+                                                    <X className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
                                             {/* Zutaten dieser Variante — compact */}
@@ -1047,7 +1050,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         onValueChange={v => setFormData(f => ({ ...f, glass_type: v }))}>
                                         <SelectTrigger className="h-9"><SelectValue placeholder="Wählen…" /></SelectTrigger>
                                         <SelectContent>
-                                            {['Highball', 'Lowball / Old Fashioned', 'Cocktailglas', 'Martiniglas', 'Weinglas', 'Sektglas / Flöte', 'Bierglas', 'Shotglas', 'Kupferbecher', 'Hurricane', 'Tiki-Glas', 'Mason Jar', 'Sonstiges'].map(g => (
+                                            {['Highball', 'Longdrinkglas', 'Lowball / Old Fashioned', 'Cocktailglas', 'Martiniglas', 'Weinglas', 'Sektglas / Flöte', 'Bierglas', 'Shotglas', 'Kupferbecher', 'Hurricane', 'Tiki-Glas', 'Mason Jar', 'Sonstiges'].map(g => (
                                                 <SelectItem key={g} value={g}>{g}</SelectItem>
                                             ))}
                                         </SelectContent>
