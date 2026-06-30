@@ -59,8 +59,13 @@ function useInvalidateAll() {
 export function useCreateReservation() {
     const invalidate = useInvalidateAll();
     return useMutation({
-        mutationFn: (data) => reservationService.create(data),
-        onSuccess: () => { invalidate(); toast.success('Reservierung erstellt'); },
+        mutationFn: (data) => data.is_recurring
+            ? reservationService.createRecurring(data)
+            : reservationService.create(data),
+        onSuccess: (_, data) => {
+            invalidate();
+            toast.success(data.is_recurring ? 'Wiederkehrende Reservierung angelegt' : 'Reservierung erstellt');
+        },
     });
 }
 

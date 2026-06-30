@@ -23,6 +23,33 @@ export const reservationService = {
     get: (id) => R.filter({ id }).then(r => r[0] ?? null),
 
     create:  (data) => R.create(data),
+
+    /** Erstellt eine Serie wiederkehrender Reservierungen */
+    createRecurring: (data) => {
+        const { is_recurring, recurring_pattern, recurring_end_date, ...base } = data;
+        if (!is_recurring) return R.create(base);
+
+        const seriesId = `series_${crypto.randomUUID()}`;
+        const startDate = new Date(base.date);
+        const end = recurring_end_date ? new Date(recurring_end_date) : new Date(startDate.getFullYear(), startDate.getMonth() + 6, startDate.getDate());
+        const step = recurring_pattern === 'biweekly' ? 14 : recurring_pattern === 'weekly' ? 7 : 0;
+
+        const records = [];
+        if (recurring_pattern === 'monthly') {
+            let d = new Date(startDate);
+            while (d <= end) {
+                records.push({ ...base, date: d.toISOString().split('T')[0], is_recurring: true, recurring_pattern, recurring_series_id: seriesId });
+                d = new Date(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            }
+        } else {
+            let d = new Date(startDate);
+            while (d <= end) {
+                records.push({ ...base, date: d.toISOString().split('T')[0], is_recurring: true, recurring_pattern, recurring_series_id: seriesId });
+                d = new Date(d.getTime() + step * 86400000);
+            }
+        }
+        return R.bulkCreate(records).then(() => records);
+    },
     update:  (id, data) => R.update(id, data),
     delete:  (id)  => R.delete(id),
 

@@ -149,11 +149,7 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
         e.preventDefault();
         if (isBlocked) return;
         haptics.light();
-        const dataToSave = { ...formData };
-        if (formData.is_recurring && !reservation) {
-            dataToSave.recurring_series_id = `series_${crypto.randomUUID()}`;
-        }
-        onSave(dataToSave, reservation?.id);
+        onSave({ ...formData }, reservation?.id);
     };
 
     return (
