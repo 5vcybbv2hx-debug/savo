@@ -97,9 +97,10 @@ function ClockCard({ currentEmployee }) {
     const clockOutMutation = useMutation({
         mutationFn: async (entryId) => {
             const entry = clockEntries.find(e => e.id === entryId);
+            if (!entry) throw new Error('ClockEntry nicht gefunden');
             const now = new Date();
             const totalMinutes = calcWorkMinutes(entry.clock_in, now);
-            const actualBreakMinutes = calcTotalBreakMinutes(entry.breaks);
+            const actualBreakMinutes = calcTotalBreakMinutes(entry?.breaks || []);
             const legalBreak = totalMinutes > 9 * 60 ? 45 : totalMinutes > 6 * 60 ? 30 : 0;
             const breakMinutes = Math.max(actualBreakMinutes, legalBreak);
             const totalHours   = Math.round(((totalMinutes - breakMinutes) / 60) * 100) / 100;
