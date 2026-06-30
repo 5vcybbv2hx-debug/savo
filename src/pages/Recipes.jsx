@@ -433,6 +433,7 @@ export default function Recipes() {
     }, [companyInfo]);
 
     const { data: articles = [] } = useQuery({ queryKey: ['articles'], queryFn: () => base44.entities.Article.list('name', 500),  staleTime: STALE.SLOW });
+    const { data: menuItems = [] } = useQuery({ queryKey: ['menu-items'], queryFn: () => base44.entities.MenuItem.list('name', 500), staleTime: STALE.SLOW });
 
     // ── Mutations ─────────────────────────────────────────────────────────────
     const createMutation = useMutation({

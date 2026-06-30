@@ -12,7 +12,8 @@ import {
 import { de } from 'date-fns/locale';
 import {
     ChevronLeft, ChevronRight, Plus, X, Clock, CalendarDays,
-    CheckSquare, Trash2, Check, List
+    CheckSquare, Trash2, Check, List, TrendingUp, Printer,
+    RotateCcw, Users, CalendarRange
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -117,6 +118,7 @@ export default function WeeklyTasks() {
     const resizePreviewRef= useRef(null); // live duration während Resize
     const [resizingId,    setResizingId]    = useState(null);
     const [resizePreview, setResizePreview] = useState(null); // { id, duration }
+    const [showStats,     setShowStats]     = useState(false);
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: todos = [] } = useQuery({
@@ -372,6 +374,24 @@ export default function WeeklyTasks() {
             a.date >= weekStr && a.date <= weekEndStr
         ), [appointments, weekStr, weekEndStr]
     );
+
+    const weekStats = useMemo(() => {
+        const appts = weekAppointments.length;
+        const apptMins = weekAppointments.reduce((s, a) => s + (a.duration || 60), 0);
+        const todoMins = plannedTodos.reduce((s, t) => s + (t.planned_duration || 0), 0);
+        const totalMins = apptMins + todoMins;
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
+        const done = plannedTodos.filter(t => t.status === 'erledigt').length;
+        const total = plannedTodos.length;
+        return {
+            appointments: appts,
+            hoursLabel: `${h}h ${m > 0 ? `${m}m` : ''}`.trim(),
+            todos: total,
+            done,
+            donePercent: total > 0 ? Math.round((done / total) * 100) : 0,
+        };
+    }, [weekAppointments, plannedTodos]);
 
     // ── Handler ───────────────────────────────────────────────────────────────
     const handleSlotClick = (date, clickMinutes) => {
