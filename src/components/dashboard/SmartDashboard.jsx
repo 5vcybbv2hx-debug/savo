@@ -128,7 +128,7 @@ function ClockCard({ currentEmployee }) {
     if (!currentEmployee) return null;
 
     const isOnBreak = active?.status === 'on_break';
-    const openBreak = isOnBreak ? (active.breaks || []).find(b => !b.end) : null;
+    const openBreak = isOnBreak ? (active.breaks || []).find(b => b && b.start && !b.end) : null;
 
     const handleStartBreak = async () => {
         const currentBreaks = active.breaks || [];
@@ -140,7 +140,7 @@ function ClockCard({ currentEmployee }) {
     };
 
     const handleEndBreak = async () => {
-        const updatedBreaks = (active.breaks || []).map((b, i, arr) =>
+        const updatedBreaks = (active.breaks || []).filter(b => b && b.start).map((b, i, arr) =>
             i === arr.length - 1 && !b.end ? { ...b, end: new Date().toISOString() } : b
         );
         await base44.entities.ClockEntry.update(active.id, {
@@ -150,7 +150,7 @@ function ClockCard({ currentEmployee }) {
         queryClient.invalidateQueries({ queryKey: ['clock-entries'] });
     };
 
-    const completedBreaks = (active?.breaks || []).filter(b => b.end);
+    const completedBreaks = (active?.breaks || []).filter(b => b && b.start && b.end);
     const totalBreakMin = calcTotalBreakMinutes(active?.breaks);
 
     return (
