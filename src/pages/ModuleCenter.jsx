@@ -231,14 +231,6 @@ const MODULE_REGISTRY = [
         sensitive: true,
         dependents: ['buchhaltung'],
     },
-    {
-        id: 'wm',
-        name: 'WM-Spielplan',
-        description: 'Weltmeisterschaft 2026 — Live-Spielplan, Gruppen, Bracket',
-        icon: Trophy,
-        color: 'bg-amber-500',
-        category: 'analytics',
-    },
 
     // VERWALTUNG
     {
