@@ -1057,6 +1057,73 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                 </AlertDialogContent>
             </AlertDialog>
 
+            {/* ── Kategorien verwalten ────────────────────────────────────── */}
+            <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Kategorien verwalten</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Standard-Rezepte</p>
+                            <div className="flex flex-wrap gap-2">
+                                {STANDARD_CATEGORIES.map(cat => (
+                                    <span key={cat} className={cn(
+                                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border',
+                                        CATEGORY_COLORS[cat] || 'bg-secondary text-muted-foreground border-border'
+                                    )}>
+                                        {cat}
+                                        <span className="text-muted-foreground/70">
+                                            ({recipes.filter(r => r.category === cat && r.recipe_type !== 'slushy').length})
+                                        </span>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Slushies</p>
+                            <div className="flex flex-wrap gap-2">
+                                {SLUSHY_CATEGORIES.map(cat => (
+                                    <span key={cat} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-blue-500/10 text-blue-400 border-blue-500/25">
+                                        {cat}
+                                        <span className="text-blue-400/60">
+                                            ({recipes.filter(r => r.category === cat && r.recipe_type === 'slushy').length})
+                                        </span>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="pt-2 border-t border-border">
+                            <p className="text-xs text-muted-foreground">
+                                Kategorien werden beim Erstellen oder Bearbeiten eines Rezepts zugewiesen. 
+                                Die verfügbaren Kategorien sind für Standard-Rezepte und Slushies getrennt definiert.
+                            </p>
+                        </div>
+                        <div className="pt-1 border-t border-border">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Rezepte ohne Kategorie</p>
+                            {recipes.filter(r => !STANDARD_CATEGORIES.includes(r.category) && !SLUSHY_CATEGORIES.includes(r.category)).length === 0 ? (
+                                <p className="text-xs text-muted-foreground">Alle Rezepte haben eine gültige Kategorie ✓</p>
+                            ) : (
+                                <div className="space-y-1">
+                                    {recipes
+                                        .filter(r => !STANDARD_CATEGORIES.includes(r.category) && !SLUSHY_CATEGORIES.includes(r.category))
+                                        .map(r => (
+                                            <div key={r.id} className="flex items-center justify-between text-xs">
+                                                <span className="text-foreground">{r.name}</span>
+                                                <span className="text-muted-foreground">{r.category || '—'}</span>
+                                            </div>
+                                        ))
+                                    }
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setCategoriesOpen(false)}>Schließen</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* ── Ähnliche Rezepte ────────────────────────────────────────── */}
             <Dialog open={similarModal} onOpenChange={setSimilarModal}>
                 <DialogContent className="sm:max-w-md">
