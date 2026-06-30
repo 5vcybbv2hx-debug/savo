@@ -40,33 +40,41 @@ export default function AccountingDashboard() {
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: cashbookEntries = [] } = useQuery({
         queryKey: ['cashbook-entries'],
-        queryFn: () => base44.entities.CashbookEntry.filter(
-            { date_gte: format(subMonths(now, 1), 'yyyy-MM-dd') }, '-date', 200
-        ),
+        queryFn: async () => {
+            const from = format(subMonths(now, 1), 'yyyy-MM-dd');
+            const all = await base44.entities.CashbookEntry.list('-date', 500);
+            return all.filter(e => e.date >= from);
+        },
         staleTime: STALE.MEDIUM,
     });
 
     const { data: receipts = [] } = useQuery({
         queryKey: ['accounting-receipts'],
-        queryFn: () => base44.entities.AccountingReceipt.filter(
-            { receipt_date_gte: format(subMonths(now, 1), 'yyyy-MM-dd') }, '-receipt_date', 100
-        ),
+        queryFn: async () => {
+            const from = format(subMonths(now, 1), 'yyyy-MM-dd');
+            const all = await base44.entities.AccountingReceipt.list('-receipt_date', 300);
+            return all.filter(e => (e.receipt_date || '') >= from);
+        },
         staleTime: STALE.MEDIUM,
     });
 
     const { data: creditorInvoices = [] } = useQuery({
         queryKey: ['creditor-invoices'],
-        queryFn: () => base44.entities.CreditorInvoice.filter(
-            { invoice_date_gte: format(subMonths(now, 3), 'yyyy-MM-dd') }, '-invoice_date', 100
-        ),
+        queryFn: async () => {
+            const from = format(subMonths(now, 3), 'yyyy-MM-dd');
+            const all = await base44.entities.CreditorInvoice.list('-invoice_date', 300);
+            return all.filter(e => (e.invoice_date || '') >= from);
+        },
         staleTime: STALE.MEDIUM,
     });
 
     const { data: dailyRevenues = [] } = useQuery({
         queryKey: ['daily-revenues'],
-        queryFn: () => base44.entities.DailyRevenue.filter(
-            { date_gte: format(subMonths(now, 1), 'yyyy-MM-dd') }, '-date', 50
-        ),
+        queryFn: async () => {
+            const from = format(subMonths(now, 1), 'yyyy-MM-dd');
+            const all = await base44.entities.DailyRevenue.list('-date', 200);
+            return all.filter(e => e.date >= from);
+        },
         staleTime: STALE.MEDIUM,
     });
 
