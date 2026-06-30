@@ -26,7 +26,6 @@ import GlobalSearch from '@/components/search/GlobalSearch';
 import { loadSavedColors } from '@/components/settings/ColorCustomizer';
 import ErrorBoundary from '@/components/error/ErrorBoundary';
 import { useAnalytics } from '@/components/analytics/useAnalytics';
-import BarAssistant from '@/components/assistant/BarAssistant';
 import DesktopQuickBar from '@/components/navigation/DesktopQuickBar';
 import { useOneSignal, oneSignalLogout } from '@/lib/useOneSignal';
 import PushPermissionPrompt from '@/components/pwa/PushPermissionPrompt';
@@ -647,7 +646,7 @@ export default function Layout({ children, currentPageName }) {
                 <PushPermissionPrompt employeeId={permissions.employeeId} isAuthenticated={!!currentUser} />
 
                 {/* KI-Assistent (nur Manager) */}
-                <BarAssistant isManager={permissions.isManager} />
+                
 
                 {/* Desktop Schnellzugriff-Leiste */}
                 <DesktopQuickBar />
