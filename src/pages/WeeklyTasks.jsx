@@ -470,11 +470,17 @@ export default function WeeklyTasks() {
                             <div className="w-12 shrink-0 relative">
                                 {hours.map(h => (
                                     <div key={h}
-                                        className="absolute left-0 right-0 flex items-start justify-end pr-1.5"
+                                        className="absolute left-0 right-0"
                                         style={{ top: `${(h - hourStart) * SLOT_H}px`, height: `${SLOT_H}px` }}>
-                                        <span className="text-[10px] text-muted-foreground font-mono -mt-2">
+                                        <span className="absolute right-1 text-[10px] text-muted-foreground font-mono -mt-2 top-0">
                                             {displayHour(h)}
                                         </span>
+                                        {[1,2,3].map(q => (
+                                            <span key={q} className="absolute right-1 text-[8px] text-muted-foreground/40 font-mono"
+                                                style={{ top: `${(SLOT_H / 4) * q - 6}px` }}>
+                                                :{String(q * 15).padStart(2,'0')}
+                                            </span>
+                                        ))}
                                     </div>
                                 ))}
                             </div>
@@ -491,12 +497,19 @@ export default function WeeklyTasks() {
                                            isDropTarget && (draggedTodo || draggedItem) && 'bg-amber-500/20 border-amber-500/50'
                                        )}
                                        style={{ top: `${(h - hourStart) * SLOT_H}px`, height: `${SLOT_H}px` }}
-                                       onClick={() => handleSlotClick(activeDay, h)}
+                                       onClick={e => {
+                                           const rect = e.currentTarget.getBoundingClientRect();
+                                           const py = e.clientY - rect.top;
+                                           const clickMin = h * 60 + Math.max(0, Math.min(59, Math.floor((py / SLOT_H) * 60)));
+                                           handleSlotClick(activeDay, clickMin);
+                                       }}
                                        onDragOver={e => handleSlotDragOver(e, activeDateStr, h)}
                                        onDragLeave={handleSlotDragLeave}
                                        onDrop={e => handleSlotDrop(e, activeDay, h)}>
-                                       <div className="absolute left-0 right-0 border-t border-border/20"
-                                           style={{ top: `${SLOT_H / 2}px` }} />
+                                       {/* 15min Subticks */}
+                                       <div className="absolute left-0 right-0 border-t border-border/20 pointer-events-none" style={{ top: `${SLOT_H * 0.25}px` }} />
+                                       <div className="absolute left-0 right-0 border-t border-border/30 pointer-events-none" style={{ top: `${SLOT_H * 0.5}px` }} />
+                                       <div className="absolute left-0 right-0 border-t border-border/20 pointer-events-none" style={{ top: `${SLOT_H * 0.75}px` }} />
                                        {isDropTarget && (draggedTodo || draggedItem) ? (
                                            <div className="absolute inset-0 flex items-center justify-center">
                                                <span className="text-[10px] text-amber-400 font-semibold truncate px-1">
@@ -736,12 +749,19 @@ export default function WeeklyTasks() {
                                                     isDropTarget && (draggedTodo || draggedItem) && 'bg-amber-500/20 border-amber-500/50'
                                                 )}
                                                 style={{ top: `${(h - hourStart) * SLOT_H}px`, height: `${SLOT_H}px` }}
-                                                onClick={() => handleSlotClick(day, h)}
+                                                onClick={e => {
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    const py = e.clientY - rect.top;
+                                                    const clickMin = h * 60 + Math.max(0, Math.min(59, Math.floor((py / SLOT_H) * 60)));
+                                                    handleSlotClick(day, clickMin);
+                                                }}
                                                 onDragOver={e => handleSlotDragOver(e, dateStr, h)}
                                                 onDragLeave={handleSlotDragLeave}
                                                 onDrop={e => handleSlotDrop(e, day, h)}>
-                                                <div className="absolute left-0 right-0 border-t border-border/20"
-                                                    style={{ top: `${SLOT_H / 2}px` }} />
+                                                {/* 15min Subticks */}
+                                                <div className="absolute left-0 right-0 border-t border-border/20 pointer-events-none" style={{ top: `${SLOT_H * 0.25}px` }} />
+                                                <div className="absolute left-0 right-0 border-t border-border/30 pointer-events-none" style={{ top: `${SLOT_H * 0.5}px` }} />
+                                                <div className="absolute left-0 right-0 border-t border-border/20 pointer-events-none" style={{ top: `${SLOT_H * 0.75}px` }} />
                                                 {isDropTarget && (draggedTodo || draggedItem) ? (
                                                     <div className="absolute inset-0 flex items-center justify-center">
                                                         <span className="text-[10px] text-amber-400 font-semibold truncate px-1">
@@ -975,7 +995,7 @@ export default function WeeklyTasks() {
                                 <div className="flex gap-2">
                                     <div className="flex-1">
                                         <p className="text-[10px] text-muted-foreground mb-1">Startzeit</p>
-                                        <input type="time" value={newTime}
+                                        <input type="time" step="900" value={newTime}
                                             onChange={e => setNewTime(e.target.value)}
                                             className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm text-foreground" />
                                     </div>
@@ -983,7 +1003,7 @@ export default function WeeklyTasks() {
                                         <p className="text-[10px] text-muted-foreground mb-1">Dauer</p>
                                         <select value={newDuration} onChange={e => setNewDuration(Number(e.target.value))}
                                             className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm text-foreground">
-                                            {[15, 30, 45, 60, 90, 120].map(m => (
+                                            {[15, 30, 45, 60, 75, 90, 105, 120, 150, 180].map(m => (
                                                 <option key={m} value={m}>{m < 60 ? `${m} Min` : `${m / 60} Std`}</option>
                                             ))}
                                         </select>
