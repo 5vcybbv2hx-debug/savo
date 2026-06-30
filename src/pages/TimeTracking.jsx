@@ -384,9 +384,13 @@ export default function TimeTracking() {
     };
 
     // ── Derived State ──────────────────────────────────────────────────────────
-    const activeClockEntry = clockEntries.find(
-        e => e.employee_id === currentEmployee?.id && (e.status === 'clocked_in' || e.status === 'on_break')
-    );
+    const activeClockEntry = (() => {
+        const e = clockEntries.find(
+            e => e.employee_id === currentEmployee?.id && (e.status === 'clocked_in' || e.status === 'on_break')
+        );
+        if (!e) return undefined;
+        return { ...e, breaks: Array.isArray(e.breaks) ? e.breaks : [] };
+    })();
     const activeClockEntries = clockEntries.filter(e => !e.clock_out);
 
     const visibleEntries = permissions.isManager
