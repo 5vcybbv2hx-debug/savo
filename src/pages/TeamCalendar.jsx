@@ -21,7 +21,6 @@ import ShiftSwapRequestModal from '@/components/shifts/ShiftSwapRequestModal';
 import TeamCalendarExport from '@/components/calendar/TeamCalendarExport';
 import { getHolidaysBW } from '@/components/shifts/getHolidays';
 import DayDetailDrawer from '@/components/calendar/DayDetailDrawer';
-import { useWorldCupMatches } from '@/components/worldcup/useWorldCupMatches';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 
 export default function TeamCalendar() {
@@ -84,7 +83,6 @@ export default function TeamCalendar() {
         staleTime: STALE.MEDIUM,
     });
 
-    const { data: wcMatches = [] } = useWorldCupMatches();
 
     // Feiertage BW
     const currentYear = new Date().getFullYear();
@@ -149,7 +147,6 @@ export default function TeamCalendar() {
                     maintenanceTasks={maintenanceTasks}
                     events={events}
                     reservations={reservations}
-                    wcMatches={showWcMatches ? wcMatches : []}
                     onEventClick={handleEventClick}
                     selectedEmployees={selectedEmployees}
                     onEmployeeToggle={setSelectedEmployees}
@@ -179,7 +176,6 @@ export default function TeamCalendar() {
                 employees={employees}
                 maintenanceTasks={maintenanceTasks}
                 reservations={reservations}
-                wcMatches={wcMatches}
             />
 
             {shiftSwapData && (
