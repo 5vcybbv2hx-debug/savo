@@ -110,6 +110,11 @@ function ItemDetailModal({ item, onClose }) {
                                 <Flame className="w-3 h-3" /> {item.alcohol_content}% vol.
                             </span>
                         )}
+                        {item.recipe_variant_name && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
+                                {item.recipe_variant_name}
+                            </span>
+                        )}
                     </div>
 
                     {/* Beschreibung */}
