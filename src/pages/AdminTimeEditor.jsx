@@ -234,7 +234,9 @@ export default function AdminTimeEditor() {
         queryFn: () => {
             const start = `${filterMonth}-01`;
             const end = format(endOfMonth(parseISO(start)), 'yyyy-MM-dd');
-            return base44.entities.TimeEntry.filter({ date_gte: start, date_lte: end }, '-date', 500);
+            // Base44 SDK unterstützt keine date_gte/date_lte — clientseitig filtern
+            const all = await base44.entities.TimeEntry.list('-date', 1000);
+            return all.filter(e => e.date >= start && e.date <= end);
         }
     });
 
