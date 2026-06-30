@@ -31,8 +31,10 @@ import {
 
 // ── Hilfsfunktionen ───────────────────────────────────────────────────────────
 function shiftDurationMinutes(start_time, end_time) {
+    if (!start_time || !end_time) return 0;
     const [sh, sm] = start_time.split(':').map(Number);
     const [eh, em] = end_time.split(':').map(Number);
+    if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return 0;
     let startMin = sh * 60 + sm;
     let endMin   = eh * 60 + em;
     if (endMin <= startMin) endMin += 24 * 60;
