@@ -292,7 +292,7 @@ export default function WeeklyTasks() {
         datesToCreate.forEach(date => createAppointment.mutate({ ...baseData, date }));
         setSlotPopover(null);
         setNewRecurrence('none');
-        if (newRecurrence !== 'none') toast.success(\`\${datesToCreate.length} Termine angelegt\`);
+        if (newRecurrence !== 'none') toast.success(`${datesToCreate.length} Termine angelegt`);
     };
 
     const handlePlanTodo = (todo, date, time) => {

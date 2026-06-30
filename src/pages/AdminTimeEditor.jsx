@@ -231,7 +231,7 @@ export default function AdminTimeEditor() {
 
     const { data: timeEntries = [], isLoading: loadingTE } = useQuery({
         queryKey: ['admin-time-entries', filterMonth],
-        queryFn: () => {
+        queryFn: async () => {
             const start = `${filterMonth}-01`;
             const end = format(endOfMonth(parseISO(start)), 'yyyy-MM-dd');
             // Base44 SDK unterstützt keine date_gte/date_lte — clientseitig filtern
