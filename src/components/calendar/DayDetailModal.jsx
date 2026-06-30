@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Clock, User, Umbrella, Star, CalendarCheck, Calendar, AlertCircle, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import WorldCupDayBanner from '@/components/worldcup/WorldCupDayBanner';
 
 function Section({ icon: Icon, title, color, children }) {
     return (
@@ -19,7 +18,6 @@ function Section({ icon: Icon, title, color, children }) {
     );
 }
 
-export default function DayDetailModal({ open, onClose, day, shifts = [], vacations = [], holidays = [], reservations = [], events = [], employees = [], onShiftSwap, wcMatches = [] }) {
     if (!day) return null;
 
     const dayStr = format(day, 'yyyy-MM-dd');
@@ -55,7 +53,6 @@ export default function DayDetailModal({ open, onClose, day, shifts = [], vacati
 
                 <div className="space-y-6 pt-2">
                     {/* WM-Spiele */}
-                    <WorldCupDayBanner matches={wcMatches} dateStr={dayStr} />
 
                     {/* Feiertage */}
                     {dayHolidays.length > 0 && (
