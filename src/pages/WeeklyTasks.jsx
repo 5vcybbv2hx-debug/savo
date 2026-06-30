@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/dialog';
 
 // ── Konstanten ────────────────────────────────────────────────────────────────
-const SLOT_H = 56; // px pro Stunde
+const SLOT_H = 80; // px pro Stunde (20px pro 15min-Slot)
 
 function displayHour(h) {
     return String(h % 24).padStart(2, '0') + ':00';
@@ -56,6 +56,11 @@ function minutesToTime(m) {
     const min = m % 60;
     return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 }
+// Rundet Minuten auf nächstes 15-Minuten-Raster
+function snapTo15(minutes) {
+    return Math.round(minutes / 15) * 15;
+}
+
 function minutesToPx(minutes, hourStart) {
     return ((minutes - hourStart * 60) / 60) * SLOT_H;
 }
@@ -259,13 +264,14 @@ export default function WeeklyTasks() {
     );
 
     // ── Handler ───────────────────────────────────────────────────────────────
-    const handleSlotClick = (date, hour) => {
+    const handleSlotClick = (date, clickMinutes) => {
+        const snapped = snapTo15(clickMinutes);
         setNewTitle('');
-        setNewTime(minutesToTime(hour * 60));
+        setNewTime(minutesToTime(snapped));
         setNewDuration(60);
         setNewColor('blue');
         setNewMode('appointment');
-        setSlotPopover({ date, hour });
+        setSlotPopover({ date, hour: Math.floor(snapped / 60) });
     };
 
     const handleCreateAppointment = () => {
