@@ -129,6 +129,13 @@
     "alcohol_content": {
       "type": "number",
       "description": "Alkoholgehalt in % vol."
+    },
+    "linked_menu_item_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs der verknüpften MenuItems (Getränkekarte)"
     }
   },
   "required": [
