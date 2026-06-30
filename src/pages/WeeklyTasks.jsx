@@ -127,21 +127,25 @@ export default function WeeklyTasks() {
     const updateTodo = useMutation({
         mutationFn: ({ id, data }) => base44.entities.TodoItem.update(id, data),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
+        onError: () => toast.error('Fehler beim Speichern'),
     });
 
     const createAppointment = useMutation({
         mutationFn: (data) => base44.entities.ManagerAppointment.create(data),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['manager-appointments'] }),
+        onError: () => toast.error('Fehler beim Speichern'),
     });
 
     const updateAppointment = useMutation({
         mutationFn: ({ id, data }) => base44.entities.ManagerAppointment.update(id, data),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['manager-appointments'] }),
+        onError: () => toast.error('Fehler beim Speichern'),
     });
 
     const deleteAppointment = useMutation({
         mutationFn: (id) => base44.entities.ManagerAppointment.delete(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['manager-appointments'] }),
+        onError: () => toast.error('Fehler beim Speichern'),
     });
 
     const deleteTodoPlanning = (todo) => {
