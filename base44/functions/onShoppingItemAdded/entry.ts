@@ -4,7 +4,7 @@ const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
 
 async function pushToEmployees(employeeIds, title, message) {
     if (!employeeIds || employeeIds.length === 0) return;
-    const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY');
+    const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY_2');
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
         method: 'POST',
         headers: {
