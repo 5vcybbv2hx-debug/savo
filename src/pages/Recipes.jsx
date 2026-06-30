@@ -9,6 +9,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
+import { CompanyInfo } from '@/api/entities';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import {
@@ -347,20 +348,43 @@ export default function Recipes() {
     const [standardCategories, setStandardCategories] = useState(DEFAULT_standardCategories);
     const [slushyCategories,   setSlushyCategories]   = useState(DEFAULT_slushyCategories);
 
+    const persistCategories = async (nextStandard, nextSlushy) => {
+        if (!companyInfo?.id) return;
+        const currentStates = companyInfo.module_states || {};
+        await CompanyInfo.update(companyInfo.id, {
+            module_states: {
+                ...currentStates,
+                recipe_categories: { standard: nextStandard, slushy: nextSlushy }
+            }
+        });
+        queryClient.invalidateQueries({ queryKey: ['companyInfo'] });
+    };
+
     const addCategory = (type) => {
         const name = newCatInput.trim();
         if (!name) return;
         if (type === 'standard' && !standardCategories.includes(name)) {
-            setStandardCategories(prev => [...prev, name]);
+            const next = [...standardCategories, name];
+            setStandardCategories(next);
+            persistCategories(next, slushyCategories);
         } else if (type === 'slushy' && !slushyCategories.includes(name)) {
-            setSlushyCategories(prev => [...prev, name]);
+            const next = [...slushyCategories, name];
+            setSlushyCategories(next);
+            persistCategories(standardCategories, next);
         }
         setNewCatInput('');
     };
 
     const removeCategory = (type, cat) => {
-        if (type === 'standard') setStandardCategories(prev => prev.filter(c => c !== cat));
-        else setSlushyCategories(prev => prev.filter(c => c !== cat));
+        if (type === 'standard') {
+            const next = standardCategories.filter(c => c !== cat);
+            setStandardCategories(next);
+            persistCategories(next, slushyCategories);
+        } else {
+            const next = slushyCategories.filter(c => c !== cat);
+            setSlushyCategories(next);
+            persistCategories(standardCategories, next);
+        }
     };
 
     // Filter
@@ -389,6 +413,15 @@ export default function Recipes() {
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: recipes  = [] } = useQuery({ queryKey: ['recipes'],  queryFn: () => base44.entities.Recipe.list('name', 500),   staleTime: STALE.SLOW });
+    const { data: companyInfo } = useQuery({
+        queryKey: ['companyInfo'],
+        queryFn: async () => {
+            const list = await CompanyInfo.list();
+            return list[0] || null;
+        },
+        staleTime: STALE.SLOW,
+    });
+
     const { data: articles = [] } = useQuery({ queryKey: ['articles'], queryFn: () => base44.entities.Article.list('name', 500),  staleTime: STALE.SLOW });
 
     // ── Mutations ─────────────────────────────────────────────────────────────
