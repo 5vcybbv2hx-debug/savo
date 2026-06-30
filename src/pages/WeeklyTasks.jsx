@@ -823,6 +823,7 @@ export default function WeeklyTasks() {
 
                                 return (
                                     <div key={di}
+                                        data-col={dateStr}
                                         className={cn(
                                             'flex-1 border-l border-border relative min-w-[120px]',
                                             isNow && 'bg-amber-500/4'
@@ -924,22 +925,35 @@ export default function WeeklyTasks() {
                                             const isDraggingThis = draggedItem?.type === 'appointment' && draggedItem.item.id === appt.id;
                                             return (
                                                 <div key={appt.id}
-                                                    draggable
+                                                    draggable={resizingId !== appt.id}
                                                     onDragStart={e => { e.stopPropagation(); handleDragStartAppointment(e, appt); }}
                                                     onDragEnd={handleDragEnd}
                                                     className={cn(
-                                                        'absolute left-0.5 right-0.5 z-10 rounded-lg border overflow-hidden cursor-grab active:cursor-grabbing transition-colors',
-                                                        col.bg, col.border, isDraggingThis && 'opacity-40'
+                                                        'absolute left-0.5 right-0.5 z-10 rounded-lg border cursor-grab active:cursor-grabbing transition-colors select-none',
+                                                        col.bg, col.border, isDraggingThis && 'opacity-40',
+                                                        resizingId === appt.id && 'ring-2 ring-amber-400'
                                                     )}
-                                                    style={{ top: `${top}px`, height: `${h}px`, minHeight: '24px' }}
-                                                    onClick={e => { e.stopPropagation(); setEditItem({ type: 'appointment', item: appt }); }}>
+                                                    style={{ top: `${top}px`, height: `${resizingId === appt.id && resizePreview ? (resizePreview.duration / 60 * SLOT_H) : h}px`, minHeight: '24px', overflow: 'hidden' }}
+                                                    onClick={e => { if (resizingId) return; e.stopPropagation(); setEditItem({ type: 'appointment', item: appt }); }}>
                                                     <div className="px-1.5 py-1 min-w-0">
                                                         <p className={cn('text-[11px] font-semibold truncate leading-tight', col.text)}>
                                                             {appt.start_time} {appt.title}
+                                                            {resizingId === appt.id && resizePreview && (
+                                                                <span className="ml-1 opacity-70 font-normal">
+                                                                    {resizePreview.duration < 60 ? `${resizePreview.duration}min` : `${(resizePreview.duration/60).toFixed(1).replace('.0','')}h`}
+                                                                </span>
+                                                            )}
                                                         </p>
                                                         {h > 36 && appt.notes && (
                                                             <p className={cn('text-[10px] truncate', col.text, 'opacity-70')}>{appt.notes}</p>
                                                         )}
+                                                    </div>
+                                                    {/* Resize-Handle */}
+                                                    <div
+                                                        className="absolute bottom-0 left-0 right-0 h-3 flex items-center justify-center cursor-ns-resize touch-none group/rh"
+                                                        onMouseDown={e => startResize(e, appt, e.currentTarget.closest('[data-col]') || e.currentTarget.parentElement.parentElement.parentElement)}
+                                                        onTouchStart={e => startResize(e, appt, e.currentTarget.closest('[data-col]') || e.currentTarget.parentElement.parentElement.parentElement)}>
+                                                        <div className={cn('w-6 h-0.5 rounded-full opacity-0 group-hover/rh:opacity-60 transition-opacity', col.text, 'bg-current')} />
                                                     </div>
                                                 </div>
                                             );
