@@ -995,9 +995,18 @@ export default function WeeklyTasks() {
                                         ))}
                                     </div>
                                 </div>
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground mb-1">Wiederholung</p>
+                                    <select value={newRecurrence} onChange={e => setNewRecurrence(e.target.value)}
+                                        className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm text-foreground">
+                                        <option value="none">Einmalig</option>
+                                        <option value="weekly">Wöchentlich (8×)</option>
+                                        <option value="biweekly">Alle 2 Wochen (8×)</option>
+                                    </select>
+                                </div>
                                 <Button onClick={handleCreateAppointment} disabled={!newTitle.trim()}
                                     className="w-full h-9 bg-amber-600 hover:bg-amber-700 text-white">
-                                    Termin anlegen
+                                    {newRecurrence === 'none' ? 'Termin anlegen' : '8× Termine anlegen'}
                                 </Button>
                             </div>
                         )}
