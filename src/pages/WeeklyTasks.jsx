@@ -112,7 +112,11 @@ export default function WeeklyTasks() {
     const [timeConfigOpen, setTimeConfigOpen] = useState(false);
 
     const gridRef       = useRef(null);
-    const dragOverMinRef = useRef(null); // speichert snappedMin synchron für Drop
+    const dragOverMinRef  = useRef(null); // speichert snappedMin synchron für Drop
+    const resizeRef       = useRef(null); // { apptId, appt, startY, startDuration }
+    const resizePreviewRef= useRef(null); // live duration während Resize
+    const [resizingId,    setResizingId]    = useState(null);
+    const [resizePreview, setResizePreview] = useState(null); // { id, duration }
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: todos = [] } = useQuery({
@@ -186,6 +190,59 @@ export default function WeeklyTasks() {
         setDraggedItem(null);
         setDragOverSlot(null);
         dragOverMinRef.current = null;
+    };
+
+    // ── Resize-Handle (Dauer per Maus/Touch anpassen) ──────────────────────────
+    const startResize = (e, appt) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        resizeRef.current = {
+            apptId:        appt.id,
+            appt:          { ...appt },
+            startY:        clientY,
+            startDuration: appt.duration || 60,
+        };
+        resizePreviewRef.current = appt.duration || 60;
+        setResizingId(appt.id);
+        setResizePreview({ id: appt.id, duration: appt.duration || 60 });
+
+        const onMove = (ev) => {
+            ev.preventDefault();
+            const cy = ev.touches ? ev.touches[0].clientY : ev.clientY;
+            const { startY, startDuration } = resizeRef.current;
+            const deltaY    = cy - startY;
+            const deltaMins = Math.round((deltaY / SLOT_H) * 60);
+            const snapped   = Math.max(15, snapTo15(startDuration + deltaMins));
+            resizePreviewRef.current = snapped;
+            setResizePreview({ id: resizeRef.current.apptId, duration: snapped });
+        };
+
+        const onEnd = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup',   onEnd);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend',  onEnd);
+            if (!resizeRef.current) return;
+            const a        = resizeRef.current.appt;
+            const finalDur = resizePreviewRef.current ?? a.duration ?? 60;
+            if (finalDur !== (a.duration ?? 60)) {
+                const startMin = timeToMinutes(a.start_time);
+                updateAppointment.mutate({
+                    id: a.id,
+                    data: { duration: finalDur, end_time: minutesToTime(startMin + finalDur) },
+                });
+            }
+            resizeRef.current = null;
+            resizePreviewRef.current = null;
+            setResizingId(null);
+            setResizePreview(null);
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup',   onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend',  onEnd);
     };
 
     // ── Spalten-weiter DragOver (ein Handler pro Tag-Spalte) ─────────────────
@@ -542,6 +599,7 @@ export default function WeeklyTasks() {
 
                             {/* Tag-Spalte */}
                             <div className="flex-1 border-l border-border relative"
+                                data-col={activeDateStr}
                                 onDragOver={e => handleColDragOver(e, activeDateStr)}
                                 onDragLeave={handleSlotDragLeave}
                                 onDrop={e => handleColDrop(e, activeDay, activeDateStr)}>
