@@ -95,6 +95,7 @@ export default function WeeklyTasks() {
     const [newDuration,    setNewDuration]    = useState(60);
     const [newColor,       setNewColor]       = useState('blue');
     const [newMode,        setNewMode]        = useState('appointment');
+    const [newRecurrence,  setNewRecurrence]  = useState('none');
     // Mobile: welcher Tag ist aktiv
     const [activeDayIdx,   setActiveDayIdx]   = useState(() => {
         const today = new Date();
@@ -119,7 +120,12 @@ export default function WeeklyTasks() {
 
     const { data: appointments = [] } = useQuery({
         queryKey: ['manager-appointments', weekStr],
-        queryFn: () => base44.entities.ManagerAppointment.filter({}),
+        queryFn: async () => {
+            const from = format(addDays(weekStart, -28), 'yyyy-MM-dd');
+            const to   = format(addDays(weekStart,  35), 'yyyy-MM-dd');
+            const all  = await base44.entities.ManagerAppointment.list('date', 500);
+            return all.filter(a => a.date >= from && a.date <= to);
+        },
         staleTime: 30_000,
     });
 
@@ -266,15 +272,27 @@ export default function WeeklyTasks() {
         if (!newTitle.trim() || !slotPopover) return;
         const startMin = timeToMinutes(newTime);
         const endMin   = startMin + newDuration;
-        createAppointment.mutate({
+        const baseData = {
             title:      newTitle.trim(),
-            date:       format(slotPopover.date, 'yyyy-MM-dd'),
             start_time: newTime,
             end_time:   minutesToTime(endMin),
             duration:   newDuration,
             color:      newColor,
-        });
+        };
+        // Einmalig oder wiederkehrend
+        const datesToCreate = [];
+        if (newRecurrence === 'none') {
+            datesToCreate.push(format(slotPopover.date, 'yyyy-MM-dd'));
+        } else {
+            const step = newRecurrence === 'biweekly' ? 14 : 7;
+            for (let w = 0; w < 8; w++) {
+                datesToCreate.push(format(addDays(slotPopover.date, w * step), 'yyyy-MM-dd'));
+            }
+        }
+        datesToCreate.forEach(date => createAppointment.mutate({ ...baseData, date }));
         setSlotPopover(null);
+        setNewRecurrence('none');
+        if (newRecurrence !== 'none') toast.success(\`\${datesToCreate.length} Termine angelegt\`);
     };
 
     const handlePlanTodo = (todo, date, time) => {
@@ -328,8 +346,16 @@ export default function WeeklyTasks() {
                 {/* Rechts: Navigation + Heute + Zeitbereich */}
                 <div className="flex items-center gap-1.5 shrink-0">
                     <Button size="sm" variant="outline"
-                        onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-                        className="h-7 px-2 text-xs">
+                        onClick={() => {
+                            setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+                            setActiveDayIdx(Math.max(0, [0,1,2,3,4,5,6].findIndex((_, i) => isSameDay(addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), i), new Date()))));
+                        }}
+                        className={cn(
+                            'h-7 px-2 text-xs transition-all',
+                            !isSameDay(weekStart, startOfWeek(new Date(), { weekStartsOn: 1 }))
+                                ? 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600'
+                                : ''
+                        )}>
                         Heute
                     </Button>
                     <div className="flex border border-border rounded-lg overflow-hidden">
@@ -565,6 +591,23 @@ export default function WeeklyTasks() {
                                         );
                                     })}
                             </div>
+
+                                {/* Zeitlinie — aktueller Zeitpunkt */}
+                                {isToday(activeDay) && (() => {
+                                    const now = new Date();
+                                    const nowMin = now.getHours() * 60 + now.getMinutes();
+                                    const px = minutesToPx(nowMin, hourStart);
+                                    if (px < 0 || px > totalPx) return null;
+                                    return (
+                                        <div className="absolute left-0 right-0 z-20 pointer-events-none"
+                                            style={{ top: `${px}px` }}>
+                                            <div className="flex items-center">
+                                                <div className="w-2 h-2 rounded-full bg-red-500 shrink-0 -ml-1" />
+                                                <div className="flex-1 border-t-2 border-red-500" />
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                         </div>
                     </div>
                 </div>
