@@ -481,8 +481,9 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                                     </button>
                                 </div>
                                 <AllergenSelector
-                                    value={formData.allergens_list}
-                                    onChange={v => set('allergens_list', v)}
+                                    allergensList={formData.allergens_list || []}
+                                    additives={formData.additives || []}
+                                    onChange={(key, val) => set(key, val)}
                                 />
                                 <Input
                                     value={formData.allergens}
