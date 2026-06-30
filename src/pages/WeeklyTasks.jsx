@@ -458,6 +458,8 @@ export default function WeeklyTasks() {
                                         {format(day, 'EEE', { locale: de })}
                                     </span>
                                     <span className="text-base font-bold leading-tight">{format(day, 'd')}</span>
+                                    {now && !active && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-0.5" />}
+                                    {now && active && <span className="w-1.5 h-1.5 rounded-full bg-white/80 mt-0.5" />}
                                 </button>
                             );
                         })}
@@ -723,9 +725,10 @@ export default function WeeklyTasks() {
                                 return (
                                     <div key={i}
                                         className={cn(
-                                            'flex-1 text-center py-2 border-l border-border min-w-[120px]',
-                                            isNow && 'bg-amber-500/8'
+                                            'flex-1 text-center py-2 border-l border-border min-w-[120px] relative',
+                                            isNow && 'bg-amber-500/10'
                                         )}>
+                                        {isNow && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500" />}
                                         <p className={cn('text-[11px] font-semibold uppercase tracking-wider',
                                             isNow ? 'text-amber-500' : 'text-muted-foreground')}>
                                             {format(day, 'EEE', { locale: de })}
