@@ -58,10 +58,12 @@ export default function ShiftSwaps() {
 
     const { data: shifts = [] } = useQuery({
         queryKey: ['shifts'],
-        queryFn: () => {
+        queryFn: async () => {
             const from = format(new Date(), 'yyyy-MM-dd');
             const to = format(addDays(new Date(), 60), 'yyyy-MM-dd');
-            return base44.entities.Shift.filter({ date_gte: from, date_lte: to }, 'date', 200);
+            // Base44 SDK unterstützt keine date_gte/date_lte Filter — clientseitig filtern
+            const all = await base44.entities.Shift.list('date', 500);
+            return all.filter(s => s.date >= from && s.date <= to);
         },
         staleTime: STALE.MEDIUM,
     });
