@@ -192,23 +192,28 @@ export default function WeeklyTasks() {
         if (!draggedItem && !draggedTodo) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        // Pixelgenaue Mausposition → 15min snap
-        // Wir nutzen das Slot-Element direkt (currentTarget ist immer der registrierte Handler)
-        const rect    = e.currentTarget.getBoundingClientRect();
-        const py      = Math.max(0, Math.min(rect.height - 1, e.clientY - rect.top));
-        const rawMin  = hour * 60 + Math.floor((py / rect.height) * 60);
-        const snapped = snapTo15(rawMin);
-        dragOverMinRef.current = snapped; // synchron schreiben — kein async
+
+        // Präziseste Methode: Slot-Rect direkt vom currentTarget lesen.
+        // currentTarget ist IMMER der Div auf dem der Handler registriert ist —
+        // nicht das Event-Target (child). Daher ist getBoundingClientRect() hier korrekt.
+        const slotRect = e.currentTarget.getBoundingClientRect();
+        const pyInSlot = Math.max(0, Math.min(slotRect.height - 1, e.clientY - slotRect.top));
+        // pyInSlot / slotRect.height = Anteil innerhalb der Stunde (0..1)
+        const minutesIntoHour = Math.floor((pyInSlot / slotRect.height) * 60);
+        const totalMin = hour * 60 + minutesIntoHour;
+        const snapped  = snapTo15(totalMin);
+
+        dragOverMinRef.current = snapped; // synchron — kein React-async-Problem
         setDragOverSlot({ dateStr, hour, snappedMin: snapped });
     };
 
     const handleSlotDrop = (e, date, hour) => {
         e.preventDefault();
         const newDate = format(date, 'yyyy-MM-dd');
-        // snappedMin aus dem synchronen Ref lesen (zuverlässiger als e.clientY im Drop)
-        const snapped = dragOverMinRef.current !== null
-            ? dragOverMinRef.current
-            : snapTo15(hour * 60); // Fallback: Stundenbeginn
+
+        // dragOverMinRef wurde im letzten dragover-Event synchron geschrieben.
+        // Das ist der zuverlässigste Wert — e.clientY im drop kann ungenau sein.
+        const snapped = dragOverMinRef.current ?? snapTo15(hour * 60);
         const newTime = minutesToTime(snapped);
 
         if (draggedItem?.type === 'appointment') {
@@ -525,7 +530,7 @@ export default function WeeklyTasks() {
                                        <div className="absolute left-0 right-0 border-t border-border/30 pointer-events-none" style={{ top: `${SLOT_H * 0.5}px` }} />
                                        <div className="absolute left-0 right-0 border-t border-border/20 pointer-events-none" style={{ top: `${SLOT_H * 0.75}px` }} />
                                        {isDropTarget && (draggedTodo || draggedItem) ? (
-                                           <div className="absolute inset-0 flex items-center justify-center">
+                                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                <span className="text-[10px] text-amber-400 font-semibold truncate px-1">
                                                    {draggedTodo?.title || draggedItem?.item?.title}
                                                </span>
@@ -809,7 +814,7 @@ export default function WeeklyTasks() {
                                                 <div className="absolute left-0 right-0 border-t border-border/30 pointer-events-none" style={{ top: `${SLOT_H * 0.5}px` }} />
                                                 <div className="absolute left-0 right-0 border-t border-border/20 pointer-events-none" style={{ top: `${SLOT_H * 0.75}px` }} />
                                                 {isDropTarget && (draggedTodo || draggedItem) ? (
-                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                         <span className="text-[10px] text-amber-400 font-semibold truncate px-1">
                                                             {draggedTodo?.title || draggedItem?.item?.title}
                                                         </span>
