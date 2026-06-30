@@ -41,8 +41,8 @@ export default function QuickList() {
 
     // ── Queries ────────────────────────────────────────────────────────
     const { data: items = [], isLoading } = useQuery({
-        queryKey: ['quicklist-items', today],
-        queryFn: () => base44.entities.QuickListItem.filter({ date: today }, '-created_date', 200),
+        queryKey: ['quicklist-items'],
+        queryFn: () => base44.entities.QuickListItem.list('-created_date', 500),
         staleTime: 30 * 1000,
     });
 
@@ -63,7 +63,7 @@ export default function QuickList() {
         },
         onSuccess: (newItem) => {
             if (newItem?._offline) {
-                queryClient.setQueryData(['quicklist-items', today], (old = []) => [newItem, ...old]);
+                queryClient.setQueryData(['quicklist-items'], (old = []) => [newItem, ...old]);
                 toast.success('Offline hinzugefügt ⚡');
             } else {
                 queryClient.invalidateQueries({ queryKey: ['quicklist-items'] });
@@ -83,7 +83,7 @@ export default function QuickList() {
         },
         onSuccess: (result) => {
             if (result?.queued) {
-                queryClient.setQueryData(['quicklist-items', today], (old = []) =>
+                queryClient.setQueryData(['quicklist-items'], (old = []) =>
                     old.map(item => item.id === result.id ? { ...item, ...result.data } : item)
                 );
             } else {
@@ -102,7 +102,7 @@ export default function QuickList() {
         },
         onSuccess: (result) => {
             if (result?.queued) {
-                queryClient.setQueryData(['quicklist-items', today], (old = []) =>
+                queryClient.setQueryData(['quicklist-items'], (old = []) =>
                     old.filter(item => item.id !== result.id)
                 );
             } else {
