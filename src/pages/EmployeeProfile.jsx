@@ -512,13 +512,13 @@ export default function EmployeeProfile() {
                   </Select>
                 </Field>
                 <Field label="Stundensatz (€)">
-                  <Input type="number" step="0.01" min="0" value={form.hourly_rate} onChange={e => set('hourly_rate', e.target.value)} disabled={!permissions.isManager} />
+                  <Input type="number" step="0.01" min="0" value={form.hourly_rate} onChange={e => set('hourly_rate', e.target.value === '' ? null : Number(e.target.value))} disabled={!permissions.isManager} />
                 </Field>
                 <Field label="Wochenstunden">
-                  <Input type="number" step="0.5" value={form.weekly_hours} onChange={e => set('weekly_hours', e.target.value)} disabled={!permissions.isManager} />
+                  <Input type="number" step="0.5" value={form.weekly_hours} onChange={e => set('weekly_hours', e.target.value === '' ? null : Number(e.target.value))} disabled={!permissions.isManager} />
                 </Field>
                 <Field label="Urlaubstage / Jahr">
-                  <Input type="number" value={form.vacation_days_per_year} onChange={e => set('vacation_days_per_year', e.target.value)} disabled={!permissions.isManager} />
+                  <Input type="number" value={form.vacation_days_per_year} onChange={e => set('vacation_days_per_year', e.target.value === '' ? null : Number(e.target.value))} disabled={!permissions.isManager} />
                 </Field>
                 <Field label="Tätigkeit">
                   <Input value={form.activity} onChange={e => set('activity', e.target.value)} disabled={!permissions.isManager} />
