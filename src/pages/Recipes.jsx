@@ -863,6 +863,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                                     recipe={recipe}
                                                     articles={articles}
                                                     permissions={permissions}
+                                                    menuItems={menuItems}
                                                     isSelected={selectedRecipes.has(recipe.id)}
                                                     onSelect={toggleSelect}
                                                     onClick={() => setDetailRecipe(recipe)}
