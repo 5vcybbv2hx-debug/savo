@@ -406,9 +406,10 @@ export default function Recipes() {
 
     const [formData, setFormData] = useState({
         name: '', category: 'Cocktail', recipe_type: 'standard',
-        slushy_spirit_base: '', slushy_original_volume_liters: '',
+        slushy_spirit_base: '', slushy_original_volume_liters: null,
         servings: 1, ingredients: [], mix_variants: [], preparation: '',
-        glass_type: '', garnish: '', notes: '', image_url: ''
+        glass_type: '', garnish: '', notes: '', image_url: '',
+        alcohol_content: null,
     });
 
     // ── Queries ───────────────────────────────────────────────────────────────
@@ -425,12 +426,10 @@ export default function Recipes() {
     // Gespeicherte Kategorien laden, sobald companyInfo verfügbar ist
     React.useEffect(() => {
         if (!companyInfo?.module_states) return;
-        try {
-            const states = JSON.parse(companyInfo.module_states);
-            if (states.recipe_categories?.standard) setStandardCategories(states.recipe_categories.standard);
-            if (states.recipe_categories?.slushy) setSlushyCategories(states.recipe_categories.slushy);
-        } catch { /* ignore malformed JSON */ }
-    }, [companyInfo?.module_states]);
+        const saved = companyInfo.module_states?.recipe_categories;
+        if (saved?.standard?.length) setStandardCategories(saved.standard);
+        if (saved?.slushy?.length)   setSlushyCategories(saved.slushy);
+    }, [companyInfo]);
 
     const { data: articles = [] } = useQuery({ queryKey: ['articles'], queryFn: () => base44.entities.Article.list('name', 500),  staleTime: STALE.SLOW });
 
@@ -498,6 +497,7 @@ export default function Recipes() {
                     garnish: recipe.garnish || '',
                     notes: recipe.notes || '',
                     image_url: recipe.image_url || '',
+                    alcohol_content: recipe.alcohol_content ?? null,
                 });
         } else {
             setSelectedRecipe(null);
@@ -507,6 +507,7 @@ export default function Recipes() {
                 slushy_spirit_base: '', slushy_original_volume_liters: '',
                 servings: 1, ingredients: [], mix_variants: [], preparation: '',
                 glass_type: '', garnish: '', notes: '', image_url: '',
+                alcohol_content: null,
             });
         }
         setModalOpen(true);
@@ -519,9 +520,11 @@ export default function Recipes() {
         const cleanData = {
             ...formData,
             slushy_original_volume_liters:
-                formData.slushy_original_volume_liters === '' || formData.slushy_original_volume_liters === undefined
-                    ? null
-                    : Number(formData.slushy_original_volume_liters),
+                formData.slushy_original_volume_liters === '' || formData.slushy_original_volume_liters == null
+                    ? null : Number(formData.slushy_original_volume_liters),
+            alcohol_content:
+                formData.alcohol_content === '' || formData.alcohol_content == null
+                    ? null : Number(formData.alcohol_content),
         };
         if (!formData.name.trim()) { toast.error('Name ist erforderlich'); return; }
         if (selectedRecipe) {
@@ -968,7 +971,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                         </div>
 
                         {/* ── Mischvarianten (nur Longdrink) ── */}
-                        {formData.category === 'Longdrink' && (
+                        {formData.recipe_type !== 'slushy' && (
                             <div className="pt-3 border-t border-border/60 space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div>
@@ -1088,10 +1091,10 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                             {formData.image_url ? (
                                 <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border/50 group">
                                     <img src={formData.image_url} alt="Vorschau" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <div className="absolute top-2 right-2">
                                         <Button type="button" variant="destructive" size="sm"
                                             onClick={() => setFormData(f => ({ ...f, image_url: '' }))}
-                                            className="h-7 text-xs">
+                                            className="h-7 text-xs shadow-lg">
                                             Entfernen
                                         </Button>
                                     </div>
