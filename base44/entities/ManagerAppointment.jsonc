@@ -39,6 +39,18 @@
     },
     "created_by": {
       "type": "string"
+    },
+    "attendees": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Teilnehmer des Termins"
+    },
+    "is_all_day": {
+      "type": "boolean",
+      "default": false,
+      "description": "Ganztägiger Termin (kein Start/Endzeit)"
     }
   },
   "required": [
