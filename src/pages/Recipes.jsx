@@ -17,7 +17,6 @@ import {
     Lightbulb, CheckSquare, X, Sparkles, ChefHat, MoreVertical,
     FileText, Snowflake, GlassWater, UtensilsCrossed, StickyNote,
     Minus, CreditCard
-, Trash2 } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
