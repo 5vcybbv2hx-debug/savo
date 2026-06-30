@@ -53,7 +53,7 @@ function ChipToggle({ label, selected, onClick }) {
             type="button"
             onClick={onClick}
             className={cn(
-                'px-3 py-1.5 rounded-full text-xs font-medium border transition-all select-none',
+                'px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer touch-manipulation',
                 selected
                     ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
                     : 'bg-secondary border-border text-muted-foreground hover:border-amber-500/30 hover:text-foreground'
