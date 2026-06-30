@@ -2,12 +2,21 @@ import { createPageUrl } from '@/utils';
 
 /**
  * Öffentlicher Gäste-Link zur Getränkekarte.
- * Zeigt auf die Backend-Function — kein Login nötig, funktioniert auf jedem Gerät.
+ * Zeigt auf die PublicDrinkMenu-Seite — kein Login nötig.
+ * Optional: ?table=5 für Tischnummer.
  */
-export const MENU_URL = 'https://bar-shift-pro-fc3522b9.base44.app/api/functions/publicDrinkMenu';
+export function getMenuUrl(tableNumber = null) {
+    const base = `${window.location.origin}${createPageUrl('PublicDrinkMenu')}`;
+    return tableNumber ? `${base}?table=${encodeURIComponent(tableNumber)}` : base;
+}
 
-export function getGuestMenuLink() {
-    return MENU_URL;
+// Rückwärtskompatibilität
+export const MENU_URL = typeof window !== 'undefined'
+    ? `${window.location.origin}${createPageUrl('PublicDrinkMenu')}`
+    : '/PublicDrinkMenu';
+
+export function getGuestMenuLink(tableNumber = null) {
+    return getMenuUrl(tableNumber);
 }
 
 /**
