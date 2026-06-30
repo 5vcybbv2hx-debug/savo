@@ -1079,6 +1079,26 @@ export default function WeeklyTasks() {
                                     </select>
                                 </div>
                             </div>
+                            <div>
+                                <p className="text-[10px] text-muted-foreground mb-1.5">Farbe</p>
+                                <div className="flex gap-2">
+                                    {Object.entries(APPOINTMENT_COLORS).map(([key, col]) => (
+                                        <button key={key}
+                                            onClick={() => setEditItem(prev => ({ ...prev, item: { ...prev.item, color: key } }))}
+                                            className={cn('w-7 h-7 rounded-full transition-all', col.dot,
+                                                (editItem?.item?.color || 'blue') === key ? 'ring-2 ring-offset-2 ring-offset-card ring-foreground scale-110' : 'opacity-50 hover:opacity-100'
+                                            )} />
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-muted-foreground mb-1">Notiz (optional)</p>
+                                <Input
+                                    value={editItem?.item?.notes || ''}
+                                    onChange={e => setEditItem(prev => ({ ...prev, item: { ...prev.item, notes: e.target.value } }))}
+                                    placeholder="z.B. Raum 3, Ansprechpartner…"
+                                    className="h-9 text-sm" />
+                            </div>
                             <div className="flex gap-2">
                                 <Button
                                     onClick={() => {
@@ -1089,6 +1109,8 @@ export default function WeeklyTasks() {
                                                 start_time: editItem.item.start_time,
                                                 duration:   editItem.item.duration,
                                                 end_time:   minutesToTime(timeToMinutes(editItem.item.start_time) + editItem.item.duration),
+                                                color:      editItem.item.color || 'blue',
+                                                notes:      editItem.item.notes || '',
                                             }
                                         });
                                         setEditItem(null);
@@ -1145,6 +1167,21 @@ export default function WeeklyTasks() {
                             <Button variant="outline"
                                 onClick={() => { deleteTodoPlanning(editItem.item); setEditItem(null); }}
                                 className="w-full h-9 text-sm text-muted-foreground hover:text-foreground">
+                             <div>
+                                 <p className="text-[10px] text-muted-foreground mb-1">Dauer im Kalender</p>
+                                 <select
+                                     value={editItem?.item?.planned_duration || 60}
+                                     onChange={e => {
+                                         const dur = Number(e.target.value);
+                                         setEditItem(prev => ({ ...prev, item: { ...prev.item, planned_duration: dur } }));
+                                         updateTodo.mutate({ id: editItem.item.id, data: { planned_duration: dur } });
+                                     }}
+                                     className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm text-foreground">
+                                     {[15, 30, 45, 60, 90, 120, 180].map(m => (
+                                         <option key={m} value={m}>{m < 60 ? `${m} Min` : `${m/60} Std`}</option>
+                                     ))}
+                                 </select>
+                             </div>
                                 Aus Wochenplan entfernen
                             </Button>
                         </div>
