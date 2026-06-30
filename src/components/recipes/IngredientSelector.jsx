@@ -103,19 +103,17 @@ export default function IngredientSelector({ ingredients, onChange, articles, co
                                     )}
 
                                     {/* Stift-Button — Anzeigenamen bearbeiten */}
-                                    {!compact && (
-                                        <button type="button"
-                                            onClick={() => setEditingName(isRenaming ? null : index)}
-                                            title="Anzeigenamen bearbeiten"
-                                            className={cn(
-                                                "h-7 w-7 flex items-center justify-center rounded transition-colors shrink-0",
-                                                isRenaming
-                                                    ? "text-primary bg-primary/10"
-                                                    : "text-muted-foreground/40 hover:text-muted-foreground"
-                                            )}>
-                                            {isRenaming ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3 h-3" />}
-                                        </button>
-                                    )}
+                                    <button type="button"
+                                        onClick={() => setEditingName(isRenaming ? null : index)}
+                                        title="Anzeigenamen bearbeiten"
+                                        className={cn(
+                                            "h-7 w-7 flex items-center justify-center rounded transition-colors shrink-0",
+                                            isRenaming
+                                                ? "text-primary bg-primary/10"
+                                                : "text-muted-foreground/40 hover:text-muted-foreground"
+                                        )}>
+                                        {isRenaming ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3 h-3" />}
+                                    </button>
 
                                     {cost > 0 && !compact && (
                                         <p className="text-xs font-semibold text-emerald-500 whitespace-nowrap">{cost.toFixed(2)} €</p>
