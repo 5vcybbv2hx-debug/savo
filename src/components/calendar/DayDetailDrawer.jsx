@@ -3,9 +3,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Badge } from '@/components/ui/badge';
-import WorldCupDayBanner from '@/components/worldcup/WorldCupDayBanner';
 
-export default function DayDetailDrawer({ open, onClose, day, shifts = [], vacations = [], holidays = [], employees = [], maintenanceTasks = [], reservations = [], wcMatches = [] }) {
     if (!day) return null;
 
     const dayStr = format(day, 'yyyy-MM-dd');
@@ -45,7 +43,6 @@ export default function DayDetailDrawer({ open, onClose, day, shifts = [], vacat
 
                 <div className="overflow-y-auto p-4 space-y-5 pb-8">
                     {/* WM-Spiele */}
-                    <WorldCupDayBanner matches={wcMatches} dateStr={dayStr} />
 
                     {isEmpty && (
                         <p className="text-sm text-muted-foreground text-center py-6">Keine Einträge für diesen Tag.</p>
