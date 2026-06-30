@@ -497,7 +497,7 @@ export default function TimeTracking() {
                                 <div className="space-y-3">
                                     {/* Pause läuft Banner */}
                                     {(() => {
-                                        const openBreak = (activeClockEntry.breaks || []).find(b => !b.end);
+                                        const openBreak = (activeClockEntry.breaks || []).find(b => b && b.start && !b.end);
                                         const breakStart = openBreak ? format(new Date(openBreak.start), 'HH:mm') : '--:--';
                                         return (
                                             <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
@@ -532,12 +532,12 @@ export default function TimeTracking() {
                                         <Coffee className="w-3 h-3" />
                                         Pausen heute:
                                     </p>
-                                    {(activeClockEntry.breaks || []).map((b, i) => {
-                                        const startStr = format(new Date(b.start), 'HH:mm');
+                                    {(activeClockEntry.breaks || []).filter(b => b && b.start).map((b, i) => {
+                                        const startStr = b.start ? format(new Date(b.start), 'HH:mm') : '--:--';
                                         const endStr = b.end ? format(new Date(b.end), 'HH:mm') : 'laufend…';
-                                        const mins = b.end
+                                        const mins = b.end && b.start
                                             ? differenceInMinutes(new Date(b.end), new Date(b.start))
-                                            : differenceInMinutes(new Date(), new Date(b.start));
+                                            : b.start ? differenceInMinutes(new Date(), new Date(b.start)) : 0;
                                         return (
                                             <div key={i} className="text-xs text-muted-foreground flex justify-between">
                                                 <span>{startStr} – {endStr} Uhr</span>
