@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function IngredientSelector({ ingredients, onChange, articles }) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [showSearch, setShowSearch] = useState(false);
 
     const safeIngredients = Array.isArray(ingredients) ? ingredients : [];
     const safeArticles = Array.isArray(articles) ? articles.filter(a => a && a.name) : [];
@@ -30,7 +29,6 @@ export default function IngredientSelector({ ingredients, onChange, articles }) 
         };
         onChange([...safeIngredients, newIngredient]);
         setSearchTerm('');
-        setShowSearch(false);
     };
 
     const updateIngredient = (index, field, value) => {
@@ -78,58 +76,41 @@ export default function IngredientSelector({ ingredients, onChange, articles }) 
 
     return (
         <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <Label>Zutaten *</Label>
-                <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowSearch(!showSearch)}
-                    className="h-8"
-                >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Artikel hinzufügen
-                </Button>
+            <Label>Zutaten *</Label>
+
+            {/* Live-Suche */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Artikel suchen — Name, Hersteller oder Kategorie..."
+                    className="pl-9 h-9"
+                />
             </div>
 
-            {/* Artikel Suche */}
-            {showSearch && (
-                <div className="p-3 bg-secondary/30 rounded-lg border border-border space-y-2">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Artikel suchen..."
-                            className="pl-9 h-9"
-                            autoFocus
-                        />
-                    </div>
-
-                    {filteredArticles.length > 0 && (
-                        <div className="max-h-48 overflow-y-auto space-y-1">
-                            {filteredArticles.slice(0, 20).map(article => (
-                                <button
-                                    key={article.id}
-                                    type="button"
-                                    onClick={() => addIngredient(article)}
-                                    className="w-full text-left px-3 py-2 rounded hover:bg-accent transition-colors"
-                                >
-                                    <p className="text-sm font-medium text-foreground">{article.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {article.category} {article.content_amount && article.content_unit ? `· ${article.content_amount} ${article.content_unit}` : ''}
-                                    </p>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-                    {searchTerm && filteredArticles.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-2">
-                            Keine Artikel gefunden
-                        </p>
-                    )}
+            {searchTerm && filteredArticles.length > 0 && (
+                <div className="max-h-52 overflow-y-auto space-y-1 border border-border rounded-lg bg-card">
+                    {filteredArticles.slice(0, 20).map(article => (
+                        <button
+                            key={article.id}
+                            type="button"
+                            onClick={() => addIngredient(article)}
+                            className="w-full text-left px-3 py-2 rounded hover:bg-accent transition-colors"
+                        >
+                            <p className="text-sm font-medium text-foreground">{article.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                                {article.category} {article.content_amount && article.content_unit ? `· ${article.content_amount} ${article.content_unit}` : ''}
+                            </p>
+                        </button>
+                    ))}
                 </div>
+            )}
+
+            {searchTerm && filteredArticles.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-2">
+                    Keine Artikel gefunden
+                </p>
             )}
 
             {/* Zutaten Liste */}
