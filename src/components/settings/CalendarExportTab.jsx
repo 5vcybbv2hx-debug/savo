@@ -11,7 +11,9 @@ export default function CalendarExportTab({ activeTab }) {
 
     const { data: shifts = [] } = useQuery({
         queryKey: ['calendar-export-shifts'],
-        queryFn: () => base44.entities.Shift.list('-date', 500),
+        // ⚠️ Limit erhoeht — 750 Shifts im System, Export durfte keine
+        // aelteren Schichten verschweigen.
+        queryFn: () => base44.entities.Shift.list('-date', 3000),
         enabled: activeTab === 'calendar'
     });
 
