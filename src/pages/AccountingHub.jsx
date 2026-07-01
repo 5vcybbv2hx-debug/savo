@@ -54,7 +54,10 @@ export default function AccountingHub() {
     // Offene Belege (ohne Kategorie)
     const { data: receipts = [] } = useQuery({
         queryKey: ['receipts-uncategorized'],
-        queryFn: () => base44.entities.AccountingReceipt.filter({ category: '' }, '-date', 100),
+        queryFn: async () => {
+            const all = await base44.entities.AccountingReceipt.list('-date', 300);
+            return all.filter(r => !r.category || r.category.trim() === '');
+        },
         staleTime: STALE.MEDIUM,
         enabled: permissions.canViewAccountingReceipts,
     });
@@ -62,7 +65,7 @@ export default function AccountingHub() {
     // Offene Verbindlichkeiten
     const { data: liabilities = [] } = useQuery({
         queryKey: ['liabilities-open'],
-        queryFn: () => base44.entities.AccountingLiability.filter({ status: 'offen' }, '-due_date', 50),
+        queryFn: () => base44.entities.Liability.filter({ status: 'offen' }, '-due_date', 50),
         staleTime: STALE.MEDIUM,
         enabled: permissions.canViewLiabilities,
     });
