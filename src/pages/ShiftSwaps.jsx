@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { format, isPast, parseISO, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
@@ -35,6 +39,8 @@ export default function ShiftSwaps() {
     const [selectedShift, setSelectedShift] = useState(null);
     const [marketplaceOpen, setMarketplaceOpen] = useState(false);
     const [directSwapOpen, setDirectSwapOpen] = useState(false);
+    // Confirm-Dialoge (statt confirm())
+    const [confirmDialog, setConfirmDialog] = useState(null); // { type, request, bidId, bidName }
 
     const { data: swapRequests = [], isLoading: loadingRequests } = useQuery({
         queryKey: ['shift-swap-requests'],
@@ -182,42 +188,15 @@ export default function ShiftSwaps() {
         }
         const newEmployeeId = bidEmployeeId || request.target_employee_id;
         const newEmployeeName = bidEmployeeName || request.target_employee_name;
-        if (confirm(`Schichttausch genehmigen? ${newEmployeeName} übernimmt die Schicht. Der Kalender wird automatisch aktualisiert.`)) {
-            approveMutation.mutate({
-                requestId: request.id,
-                shiftId: request.shift_id,
-                newEmployeeId,
-                newEmployeeName,
-                request: request
-            });
-        }
+        setConfirmDialog({ type: 'approve', request, bidId: newEmployeeId, bidName: newEmployeeName });
     };
 
     const handleReject = (request) => {
-        if (confirm('Schichttausch ablehnen?')) {
-            updateMutation.mutate({
-                id: request.id,
-                data: {
-                    status: 'abgelehnt',
-                    approved_by: currentUser?.full_name || currentUser?.email,
-                    response_date: new Date().toISOString()
-                },
-                request: request
-            });
-        }
+        setConfirmDialog({ type: 'reject', request });
     };
 
     const handleWithdraw = (request) => {
-        if (confirm('Schichttausch wirklich zurückziehen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-            updateMutation.mutate({
-                id: request.id,
-                data: {
-                    status: 'abgelehnt',
-                    response_date: new Date().toISOString()
-                },
-                request: request
-            });
-        }
+        setConfirmDialog({ type: 'withdraw', request });
     };
 
     const handleCreateRequest = (shift) => {
@@ -257,18 +236,25 @@ export default function ShiftSwaps() {
         : myUpcomingShifts;
 
     const getStatusBadge = (status) => {
-        if (status === 'ausstehend') {
+        if (status === 'ausstehend' || status === 'offen' || status === 'in_prüfung') {
             return (
                 <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     <Clock className="w-3 h-3 mr-1" />
-                    Ausstehend
+                    {status === 'offen' ? 'Offen' : status === 'in_prüfung' ? 'In Prüfung' : 'Ausstehend'}
                 </Badge>
             );
-        } else if (status === 'genehmigt') {
+        } else if (status === 'genehmigt' || status === 'abgeschlossen') {
             return (
                 <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
                     <Check className="w-3 h-3 mr-1" />
-                    Genehmigt
+                    {status === 'abgeschlossen' ? 'Abgeschlossen' : 'Genehmigt'}
+                </Badge>
+            );
+        } else if (status === 'storniert' || status === 'abgelaufen') {
+            return (
+                <Badge className="bg-slate-500/20 text-slate-400 border border-slate-500/30">
+                    <X className="w-3 h-3 mr-1" />
+                    {status === 'storniert' ? 'Storniert' : 'Abgelaufen'}
                 </Badge>
             );
         } else {
@@ -281,23 +267,50 @@ export default function ShiftSwaps() {
         }
     };
 
-    if (loadingRequests) {
-        return (
-            <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Lade Schichttausch-Anfragen...</p>
-                </div>
-            </div>
-        );
-    }
-
     if (loadingRequests) return (
         <div className="min-h-screen bg-background px-4 py-6 space-y-4">
             <ListSkeleton count={1} height="h-10" />
             <ListSkeleton count={4} height="h-28" />
         </div>
     );
+
+    // Confirm-Aktion ausführen
+    const executeConfirm = () => {
+        if (!confirmDialog) return;
+        const { type, request, bidId, bidName } = confirmDialog;
+        if (type === 'withdraw') {
+            updateMutation.mutate({
+                id: request.id,
+                data: { status: 'storniert', response_date: new Date().toISOString() },
+                request,
+            });
+        } else if (type === 'reject') {
+            updateMutation.mutate({
+                id: request.id,
+                data: {
+                    status: 'abgelehnt',
+                    approved_by: currentUser?.full_name || currentUser?.email,
+                    response_date: new Date().toISOString(),
+                },
+                request,
+            });
+        } else if (type === 'approve') {
+            approveMutation.mutate({
+                requestId: request.id,
+                shiftId: request.shift_id,
+                newEmployeeId: bidId,
+                newEmployeeName: bidName,
+                request,
+            });
+        }
+        setConfirmDialog(null);
+    };
+
+    const confirmTexts = {
+        withdraw: { title: 'Anfrage zurückziehen?', desc: 'Die Tauschanfrage wird storniert und kann nicht wiederhergestellt werden.', action: 'Zurückziehen', variant: 'destructive' },
+        reject:   { title: 'Tausch ablehnen?', desc: 'Die Anfrage wird abgelehnt. Der Mitarbeiter wird benachrichtigt.', action: 'Ablehnen', variant: 'destructive' },
+        approve:  { title: 'Tausch genehmigen?', desc: `${confirmDialog?.bidName || ''} übernimmt die Schicht. Der Kalender wird automatisch aktualisiert.`, action: 'Genehmigen', variant: 'default' },
+    };
 
     return (
         <div className="min-h-screen bg-background p-6">
@@ -337,9 +350,9 @@ export default function ShiftSwaps() {
                         <TabsTrigger value="my-requests" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-slate-900">
                             <User className="w-4 h-4" />
                             Meine Anfragen
-                            {myRequests.filter(r => r.status === 'ausstehend').length > 0 && (
+                            {myRequests.filter(r => isOpenStatus(r)).length > 0 && (
                                 <Badge className="ml-1 bg-amber-500 text-slate-900 text-xs px-1.5 py-0">
-                                    {myRequests.filter(r => r.status === 'ausstehend').length}
+                                    {myRequests.filter(r => isOpenStatus(r)).length}
                                 </Badge>
                             )}
                         </TabsTrigger>
