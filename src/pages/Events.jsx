@@ -153,10 +153,15 @@ export default function Events() {
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.Event.update(id, data),
+        mutationFn: async ({ id, data }) => {
+            const updated = await base44.entities.Event.update(id, data);
+            await syncEventToDisplay(data, id);
+            return updated;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['events'] });
             closeModal();
+            toast.success('Event aktualisiert & TV-Display synchronisiert');
         }
     });
 
