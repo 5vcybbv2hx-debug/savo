@@ -42,7 +42,7 @@ export function useCleaningData() {
 
   const { data: shifts = [] } = useQuery({
     queryKey: ['shifts'],
-    queryFn: () => base44.entities.Shift.list()
+    queryFn: () => base44.entities.Shift.list('-date', 3000) // ⚠️ war ohne jedes Limit (SDK-Default), jetzt explizit gross genug
   });
 
   // Derived data
