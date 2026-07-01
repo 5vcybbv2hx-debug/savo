@@ -569,10 +569,12 @@ export default function Shopping() {
         } else {
             await createMutation.mutateAsync({
                 item_name:  article.name,
-                article_id: article.id,
-                category:   article.supplier_details?.find(s => s.is_primary)?.supplier_name
-                            || article.suppliers?.[0]
-                            || suppliers[0]?.name || '',
+                article_id:          article.id,
+                category:            article.supplier_details?.find(s => s.is_primary)?.supplier_name || article.suppliers?.[0] || suppliers[0]?.name || '',
+                supplier_name:       article.supplier_details?.find(s => s.is_primary)?.supplier_name || article.suppliers?.[0] || '',
+                packaging_option_id: (() => { const ps2 = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0]; return (ps2?.packaging_options||[]).find(o=>o.is_default)?.id || null; })(),
+                packaging_label:     (() => { const ps2 = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0]; const d2 = (ps2?.packaging_options||[]).find(o=>o.is_default)||(ps2?.packaging_options||[])[0]; return d2 ? `${d2.packaging_type} ${d2.units_per_pack}×` : null; })(),
+                price_per_unit:      (() => { const ps2 = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0]; const d2 = (ps2?.packaging_options||[]).find(o=>o.is_default)||(ps2?.packaging_options||[])[0]; return d2?.price_per_unit || article.purchase_price || null; })(),
                 quantity:   1,
                 unit:       article.content_unit || '',
                 status:     'offen',
