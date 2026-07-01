@@ -268,11 +268,22 @@ export default function Restock() {
         handleScan(decodedText);
     };
 
-    const toggleComplete = (item) => {
+    const toggleComplete = async (item) => {
         const nowCompleted = !item.is_completed;
         updateMutation.mutate({ id: item.id, data: { ...item, is_completed: nowCompleted } });
 
         if (nowCompleted) {
+            if (item.article_id && item.quantity > 0 && !item.stock_reduced) {
+                const article = articles.find(a => a.id === item.article_id);
+                if (article && article.current_stock != null) {
+                    const newStock = Math.max(0, (parseFloat(article.current_stock) || 0) - parseFloat(item.quantity));
+                    try {
+                        await base44.entities.Article.update(article.id, { current_stock: newStock });
+                        await base44.entities.RestockItem.update(item.id, { stock_reduced: true });
+                        queryClient.invalidateQueries({ queryKey: ['articles'] });
+                    } catch (e) { console.warn('[Restock] Bestandsabzug fehlgeschlagen:', e); }
+                }
+            }
             const alreadyInOrder = shoppingItems.some(
                 s => s.item_name === item.article_name && (s.status === 'offen' || s.status === 'bestellt')
             );
@@ -281,6 +292,17 @@ export default function Restock() {
                 setTimeout(() => setOrderNudge(prev => ({ ...prev, [item.id]: false })), 8000);
             }
         } else {
+            if (item.article_id && item.quantity > 0 && item.stock_reduced) {
+                const article = articles.find(a => a.id === item.article_id);
+                if (article) {
+                    const newStock = (parseFloat(article.current_stock) || 0) + parseFloat(item.quantity);
+                    try {
+                        await base44.entities.Article.update(article.id, { current_stock: newStock });
+                        await base44.entities.RestockItem.update(item.id, { stock_reduced: false });
+                        queryClient.invalidateQueries({ queryKey: ['articles'] });
+                    } catch (e) { console.warn('[Restock] Bestandsrestore fehlgeschlagen:', e); }
+                }
+            }
             setOrderNudge(prev => ({ ...prev, [item.id]: false }));
         }
     };
@@ -288,14 +310,22 @@ export default function Restock() {
     // Einzeln zur Bestellung
     const addToOrder = async (item) => {
         const article = articles.find(a => a.id === item.article_id);
+        const primarySupplier = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
+        const supplierName = primarySupplier?.supplier_name || article?.suppliers?.[0] || '';
+        const defaultOpt = (primarySupplier?.packaging_options || []).find(o => o.is_default) || (primarySupplier?.packaging_options || [])[0];
         await base44.entities.ShoppingList.create({
-            item_name:  item.article_name,
-            article_id: item.article_id || null,
-            category:   article?.suppliers?.[0] || article?.supplier_details?.[0]?.supplier_name || '',
-            quantity:   item.quantity,
-            unit:       article?.content_unit || 'Stück',
-            status:     'offen',
-            notes:      `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`.trim().replace(/·\s*$/, ''),
+            item_name:           item.article_name,
+            article_id:          item.article_id || null,
+            category:            supplierName,
+            supplier_name:       supplierName,
+            packaging_option_id: defaultOpt?.id || null,
+            packaging_label:     defaultOpt ? `${defaultOpt.packaging_type} ${defaultOpt.units_per_pack}×` : null,
+            price_per_pack:      defaultOpt?.price_per_pack || null,
+            price_per_unit:      defaultOpt?.price_per_unit || article?.purchase_price || null,
+            quantity:            item.quantity,
+            unit:                article?.content_unit || 'Stück',
+            status:              'offen',
+            notes:               `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`,
         });
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         queryClient.invalidateQueries({ queryKey: ['shopping-list-restock'] });
