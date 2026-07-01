@@ -101,9 +101,11 @@ export default function TimeTracking() {
         queryFn: async () => {
             const start = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
             const end   = format(endOfMonth(selectedMonth),   'yyyy-MM-dd');
+            // ⚠️ Limit erhoeht (461 Records aktuell, waechst ~460/Halbjahr) —
+            // gleiche Truncation-Gefahr wie bei TimeEntry, praeventiv erhoeht.
             const all = permissions.isManager
-                ? await base44.entities.ClockEntry.list('-clock_in', 500)
-                : await base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 300);
+                ? await base44.entities.ClockEntry.list('-clock_in', 2000)
+                : await base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 1000);
             const monthlyFiltered = all.filter(e => {
                 if (!e.clock_in) return false;
                 const d = format(new Date(e.clock_in), 'yyyy-MM-dd');
