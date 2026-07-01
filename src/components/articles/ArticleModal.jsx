@@ -93,7 +93,11 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
     // ── Legacy-Migration: alte supplier_details in packaging_options umwandeln ────────
     const migrateSupplierDetails = (details = []) => details.map(s => {
         // Bereits neues Format → unverändert
+        // Bereits neues Format mit Daten → unverändert lassen
         if (Array.isArray(s.packaging_options) && s.packaging_options.length > 0) return s;
+        // packaging_options existiert leer aber keine alten Felder → leer lassen
+        const hasOldFields = s.packaging_units || s.purchase_price;
+        if (Array.isArray(s.packaging_options) && !hasOldFields) return s;
         // Altes Format: packaging_units + packaging_size + purchase_price auf Lieferanten-Ebene
         const units = parseFloat(s.packaging_units);
         const price = parseFloat(s.purchase_price);
