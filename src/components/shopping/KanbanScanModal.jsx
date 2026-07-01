@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -59,15 +60,66 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
         enabled: open
     });
 
+    // Wird per Barcode-Scan direkt im Keller genutzt -> oft schlechter Empfang.
+    // Hinzufuegen/Erhoehen darf dabei nicht scheitern, sonst verliert man beim
+    // Scannen den Ueberblick, was schon erfasst wurde.
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.ShoppingList.create(data),
-        onSuccess: () => queryClient.invalidateQueries(['shopping-list'])
+        mutationFn: async (data) => {
+            if (!navigator.onLine) {
+                await queueMutation({ entityName: 'ShoppingList', type: 'create', data });
+                return { ...data, id: `offline-${Date.now()}`, _offline: true };
+            }
+            try {
+                return await base44.entities.ShoppingList.create(data);
+            } catch (err) {
+                await queueMutation({ entityName: 'ShoppingList', type: 'create', data });
+                return { ...data, id: `offline-${Date.now()}`, _offline: true };
+            }
+        },
+        onSuccess: (result) => {
+            if (result?._offline) {
+                queryClient.setQueryData(['shopping-list'], (old = []) => [result, ...old]);
+            } else {
+                queryClient.invalidateQueries(['shopping-list']);
+            }
+        }
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.ShoppingList.update(id, data),
-        onSuccess: () => queryClient.invalidateQueries(['shopping-list'])
+        mutationFn: async ({ id, data }) => {
+            if (!navigator.onLine) {
+                await queueMutation({ entityName: 'ShoppingList', type: 'update', id, data });
+                return { id, data, offline: true };
+            }
+            try {
+                await base44.entities.ShoppingList.update(id, data);
+                return { id, data, offline: false };
+            } catch (err) {
+                await queueMutation({ entityName: 'ShoppingList', type: 'update', id, data });
+                return { id, data, offline: true };
+            }
+        },
+        onSuccess: ({ id, data, offline }) => {
+            if (offline) {
+                queryClient.setQueryData(['shopping-list'], (old = []) =>
+                    old.map(i => i.id === id ? { ...i, ...data } : i)
+                );
+            } else {
+                queryClient.invalidateQueries(['shopping-list']);
+            }
+        }
     });
+
+    // Beim Reconnect automatisch gequeute Kanban-Scans nachsynchen
+    useEffect(() => {
+        const handleOnline = () => {
+            syncMutations(base44)
+                .then(() => queryClient.invalidateQueries(['shopping-list']))
+                .catch(console.error);
+        };
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, [queryClient]);
 
     const showFeedback = (fb) => {
         setFeedback(fb);
