@@ -5,21 +5,23 @@ import { Search, X, ChevronDown, ChevronUp, Info, Leaf, Flame, Star } from 'luci
 import { cn } from '@/lib/utils';
 
 // ── Allergen-Kürzel (EU-weit standardisiert) ──────────────────────────────────
+// Mapping: interner Label (aus allergens_list[]) → Anzeige
+// Schlüssel = was in MenuItem.allergens_list[] gespeichert ist
 const ALLERGENS = {
-    gluten:      { label: 'Gluten',        short: 'G'  },
-    krebstiere:  { label: 'Krebstiere',    short: 'Kr' },
-    eier:        { label: 'Eier',          short: 'Ei' },
-    fisch:       { label: 'Fisch',         short: 'Fi' },
-    erdnuesse:   { label: 'Erdnüsse',      short: 'En' },
-    soja:        { label: 'Soja',          short: 'So' },
-    milch:       { label: 'Milch',         short: 'Mi' },
-    nuesse:      { label: 'Nüsse',         short: 'Nu' },
-    sellerie:    { label: 'Sellerie',      short: 'Se' },
-    senf:        { label: 'Senf',          short: 'Sn' },
-    sesam:       { label: 'Sesam',         short: 'Ss' },
-    schwefeldi:  { label: 'Schwefeldioxid',short: 'SO' },
-    lupinen:     { label: 'Lupinen',       short: 'Lu' },
-    weichtiere:  { label: 'Weichtiere',    short: 'We' },
+    'Glutenhaltiges Getreide': { label: 'Gluten',          short: 'G',  key: 'gluten'      },
+    'Krebstiere':              { label: 'Krebstiere',       short: 'Kr', key: 'krebstiere'  },
+    'Eier':                    { label: 'Eier',             short: 'Ei', key: 'eier'        },
+    'Fisch':                   { label: 'Fisch',            short: 'Fi', key: 'fisch'       },
+    'Erdnüsse':                { label: 'Erdnüsse',         short: 'En', key: 'erdnuesse'   },
+    'Soja':                    { label: 'Soja',             short: 'So', key: 'soja'        },
+    'Milch / Laktose':         { label: 'Milch/Laktose',    short: 'Mi', key: 'milch'       },
+    'Schalenfrüchte':          { label: 'Schalenfrüchte',   short: 'Nu', key: 'nuesse'      },
+    'Sellerie':                { label: 'Sellerie',         short: 'Se', key: 'sellerie'    },
+    'Senf':                    { label: 'Senf',             short: 'Sn', key: 'senf'        },
+    'Sesam':                   { label: 'Sesam',            short: 'Ss', key: 'sesam'       },
+    'Schwefeldioxid / Sulfite':{ label: 'Sulfite',          short: 'SO', key: 'schwefeldi'  },
+    'Lupinen':                 { label: 'Lupinen',          short: 'Lu', key: 'lupinen'     },
+    'Weichtiere':              { label: 'Weichtiere',       short: 'We', key: 'weichtiere'  },
 };
 
 // ── Kategorie-Icons ───────────────────────────────────────────────────────────
@@ -52,7 +54,8 @@ const formatPrice = (p) => {
 // ── Detail-Modal ──────────────────────────────────────────────────────────────
 function ItemDetailModal({ item, onClose }) {
     if (!item) return null;
-    const allergenList = Object.entries(ALLERGENS).filter(([k]) => item.allergens?.[k]);
+    // Allergen-Liste aus allergens_list[] (Array von Labels) ableiten
+    const allergenList = Object.entries(ALLERGENS).filter(([label]) => (item.allergens_list || []).includes(label));
 
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -225,7 +228,8 @@ export default function PublicDrinkMenu() {
             );
         }
         if (allergenFilters.length > 0) {
-            items = items.filter(i => !allergenFilters.some(a => i.allergens?.[a]));
+            // allergenFilters enthält Label-Keys aus ALLERGENS (z.B. 'Glutenhaltiges Getreide')
+            items = items.filter(i => !allergenFilters.some(a => (i.allergens_list || []).includes(a)));
         }
         return items.sort((a, b) => (a.order_position || 999) - (b.order_position || 999));
     }, [allItems, activeCategory, searchTerm, allergenFilters]);
