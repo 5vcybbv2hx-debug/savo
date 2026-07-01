@@ -90,6 +90,52 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
     const [formData, setFormData] = useState(emptyForm);
     const set = (key, val) => setFormData(prev => ({ ...prev, [key]: val }));
 
+    // ── Legacy-Migration: alte supplier_details in packaging_options umwandeln ────────
+    const migrateSupplierDetails = (details = []) => details.map(s => {
+        // Bereits neues Format → unverändert
+        if (Array.isArray(s.packaging_options) && s.packaging_options.length > 0) return s;
+        // Altes Format: packaging_units + packaging_size + purchase_price auf Lieferanten-Ebene
+        const units = parseFloat(s.packaging_units);
+        const price = parseFloat(s.purchase_price);
+        if (!isNaN(units) && units > 0 && !isNaN(price) && price > 0) {
+            const packPrice  = units > 1 ? price * units : price;
+            const unitPrice  = price;
+            return {
+                ...s,
+                packaging_options: [{
+                    id:             Math.random().toString(36).slice(2, 10),
+                    packaging_type: s.packaging_size || 'Kiste',
+                    units_per_pack: units,
+                    price_per_pack: parseFloat(packPrice.toFixed(4)),
+                    price_per_unit: parseFloat(unitPrice.toFixed(4)),
+                    is_default:     true,
+                    min_order_qty:  '',
+                    deposit_per_unit: s.deposit ? String(s.deposit) : '',
+                    deposit_type:   s.deposit_type || 'kein',
+                }],
+            };
+        }
+        // Nur purchase_price ohne Gebinde → Einzelstück-Option
+        if (!isNaN(price) && price > 0) {
+            return {
+                ...s,
+                packaging_options: [{
+                    id:             Math.random().toString(36).slice(2, 10),
+                    packaging_type: 'Stück',
+                    units_per_pack: 1,
+                    price_per_pack: parseFloat(price.toFixed(4)),
+                    price_per_unit: parseFloat(price.toFixed(4)),
+                    is_default:     true,
+                    min_order_qty:  '',
+                    deposit_per_unit: '',
+                    deposit_type:   'kein',
+                }],
+            };
+        }
+        // Kein Preis → leere packaging_options
+        return { ...s, packaging_options: [] };
+    });
+
     useEffect(() => {
         if (!open) return;
         if (article) {
@@ -99,7 +145,7 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                 manufacturer:     article.manufacturer || '',
                 category:         article.category || '',
                 suppliers:        article.suppliers || [],
-                supplier_details: article.supplier_details || [],
+                supplier_details: migrateSupplierDetails(article.supplier_details || []),
                 unit:             article.unit || '',
                 quantity:         article.quantity || '',
                 content_amount:   article.content_amount || '',
