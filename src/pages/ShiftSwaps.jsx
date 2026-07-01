@@ -67,9 +67,14 @@ export default function ShiftSwaps() {
         queryFn: async () => {
             const from = format(new Date(), 'yyyy-MM-dd');
             const to = format(addDays(new Date(), 60), 'yyyy-MM-dd');
-            // Base44 SDK unterstützt keine date_gte/date_lte Filter — clientseitig filtern
-            const all = await base44.entities.Shift.list('date', 500);
-            return all.filter(s => s.date >= from && s.date <= to);
+            // ⚠️ War aufsteigend sortiert mit Limit 500 — bei >500 vergangenen
+            // Schichten wurden zukuenftige Schichten nie erreicht. Jetzt
+            // absteigend + selbst-skalierend (adaptiveFetch).
+            const { fetchUntilDateCovered } = await import('@/lib/adaptiveFetch');
+            return fetchUntilDateCovered(
+                (limit) => base44.entities.Shift.list('-date', limit),
+                from, to
+            );
         },
         staleTime: STALE.MEDIUM,
     });
