@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
-import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
+import { queueMutation, syncMutations, cacheData, getCachedData } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { ChevronDown, ChevronRight, Trash2, ClipboardList, ShoppingCart, ArrowRight } from 'lucide-react';
@@ -42,7 +42,23 @@ export default function QuickList() {
     // ── Queries ────────────────────────────────────────────────────────
     const { data: items = [], isLoading } = useQuery({
         queryKey: ['quicklist-items'],
-        queryFn: () => base44.entities.QuickListItem.list('-created_date', 500),
+        // ⚠️ Cold-Start-Fix: Beim Einkaufen im Getraenkemarkt oft schlechter Empfang.
+        // War die App komplett offline neu geoeffnet, gab es KEINEN Fallback und
+        // die Liste blieb leer. Jetzt: offline/Fehler -> aus IndexedDB-Cache lesen.
+        queryFn: async () => {
+            if (!navigator.onLine) {
+                return (await getCachedData('QuickListItem')) || [];
+            }
+            try {
+                const fresh = await base44.entities.QuickListItem.list('-created_date', 500);
+                cacheData('QuickListItem', fresh); // Cache aktuell halten fuer naechsten Offline-Start
+                return fresh;
+            } catch (err) {
+                const cached = await getCachedData('QuickListItem');
+                if (cached?.length) return cached;
+                throw err;
+            }
+        },
         staleTime: 30 * 1000,
     });
 
