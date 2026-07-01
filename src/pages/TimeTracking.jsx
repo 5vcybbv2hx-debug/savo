@@ -351,7 +351,9 @@ export default function TimeTracking() {
         mutationFn: async () => {
             const activeClockedIn = clockEntries.filter(e => e.status === 'clocked_in');
             const clockOutTime = new Date();
-            return Promise.all(activeClockedIn.map(async (entry) => {
+            const today = format(clockOutTime, 'yyyy-MM-dd');
+
+            await Promise.all(activeClockedIn.map(async (entry) => {
                 const totalMinutes = differenceInMinutes(clockOutTime, new Date(entry.clock_in));
                 const actualBreakMinutes = calcTotalBreakMinutes(entry.breaks);
                 const breakMinutes = Math.max(actualBreakMinutes, calcLegalBreak(totalMinutes));
@@ -368,24 +370,37 @@ export default function TimeTracking() {
                 await base44.entities.TimeEntry.create({
                     employee_id: entry.employee_id,
                     employee_name: employee?.name || entry.employee_name,
-                    date: format(new Date(entry.clock_in), 'yyyy-MM-dd'),
+                    date: today,
                     start_time: format(new Date(entry.clock_in), 'HH:mm'),
                     end_time: format(clockOutTime, 'HH:mm'),
                     break_minutes: breakMinutes,
                     total_hours: parseFloat(workedHours),
                     status: 'eingereicht',
                 });
+            }));
 
-                // Fuer die Bar-Auszahlung: Verdienst pro Mitarbeiter mit ausweisen,
-                // sonst sieht bei "Alle ausstempeln" niemand den Betrag (anders als
-                // beim einzelnen Ausstempeln mit der Schicht-Zusammenfassung).
+            // Fuer die Bar-Auszahlung: Auszahlungs-Uebersicht ueber ALLE
+            // heutigen TimeEntries bilden — nicht nur die gerade eben per
+            // "Alle ausstempeln" ausgestempelten. So werden Mitarbeiter, die
+            // sich schon frueher am Tag selbst ausgestempelt haben, in der
+            // gleichen Uebersicht mit aufgefuehrt (synchron mit dem
+            // Einzel-Ausstempeln).
+            const todaysEntries = await base44.entities.TimeEntry.filter({ date: today }, '-created_date', 200);
+            const byEmployee = {};
+            todaysEntries.forEach(te => {
+                const employee = allEmployees.find(e => e.id === te.employee_id);
                 const hourlyRate = employee?.hourly_rate;
-                return {
-                    name: employee?.name || entry.employee_name || 'Unbekannt',
-                    workedHours,
-                    hourlyRate,
-                    earned: hourlyRate ? (workedHours * hourlyRate).toFixed(2) : null,
-                };
+                const key = te.employee_id || te.employee_name;
+                if (!byEmployee[key]) {
+                    byEmployee[key] = { name: te.employee_name || employee?.name || 'Unbekannt', hourlyRate, hours: 0 };
+                }
+                byEmployee[key].hours += (te.total_hours || 0);
+            });
+            return Object.values(byEmployee).map(e => ({
+                name: e.name,
+                workedHours: e.hours.toFixed(2),
+                hourlyRate: e.hourlyRate,
+                earned: e.hourlyRate ? (e.hours * e.hourlyRate).toFixed(2) : null,
             }));
         },
         onSuccess: (results) => {
@@ -1101,7 +1116,7 @@ export default function TimeTracking() {
                             <div className="text-center space-y-1">
                                 <div className="text-4xl">💶</div>
                                 <h2 className="text-xl font-bold text-foreground">Auszahlung heute</h2>
-                                <p className="text-sm text-muted-foreground">{payoutSummary.entries.length} Mitarbeiter ausgestempelt</p>
+                                <p className="text-sm text-muted-foreground">{payoutSummary.entries.length} Mitarbeiter heute gesamt</p>
                             </div>
                             <Separator />
                             <div className="space-y-2">
