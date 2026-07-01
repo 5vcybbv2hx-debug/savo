@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
 import { CheckCircle2, Circle, ClipboardList, Loader2, CheckCheck } from 'lucide-react';
@@ -27,9 +28,41 @@ export default function CleaningChecklist() {
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.CleaningTask.update(id, data),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cleaning-tasks-area', area] })
+        mutationFn: async ({ id, data }) => {
+            // Per QR-Code an der Putzstation aufgerufen -> oft Keller/Lager mit
+            // schlechtem Empfang. Abhaken darf dabei nicht ins Leere laufen.
+            if (!navigator.onLine) {
+                await queueMutation({ entityName: 'CleaningTask', type: 'update', id, data });
+                return { id, data, offline: true };
+            }
+            try {
+                await base44.entities.CleaningTask.update(id, data);
+                return { id, data, offline: false };
+            } catch (err) {
+                await queueMutation({ entityName: 'CleaningTask', type: 'update', id, data });
+                return { id, data, offline: true };
+            }
+        },
+        onSuccess: ({ id, data, offline }) => {
+            if (offline) {
+                queryClient.setQueryData(['cleaning-tasks-area', area], (old = []) =>
+                    old.map(t => t.id === id ? { ...t, ...data } : t)
+                );
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['cleaning-tasks-area', area] });
+            }
+        }
     });
+
+    useEffect(() => {
+        const handleOnline = () => {
+            syncMutations(base44)
+                .then(() => queryClient.invalidateQueries({ queryKey: ['cleaning-tasks-area', area] }))
+                .catch(console.error);
+        };
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, [queryClient, area]);
 
     const activeTasks = tasks.filter(t => !t.is_completed);
     const doneTasks = tasks.filter(t => t.is_completed);
