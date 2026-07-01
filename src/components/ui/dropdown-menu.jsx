@@ -6,7 +6,27 @@ import { cn } from "@/lib/utils"
 import { Drawer, DrawerContent } from "@/components/ui/drawer"
 import { useIsMobile } from "@/components/utils/useIsMobile"
 
-const DropdownMenu = DropdownMenuPrimitive.Root
+// Teilt den echten Open-State jeder einzelnen DropdownMenu-Instanz mit ihrem
+// DropdownMenuContent, damit die mobile Drawer-Variante zuverlaessig weiss,
+// wann SIE (und nicht irgendein anderes Dropdown auf der Seite) geoeffnet ist.
+const DropdownMenuOpenContext = React.createContext(null);
+
+const DropdownMenu = ({ open: openProp, onOpenChange, ...props }) => {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : uncontrolledOpen;
+
+  const setOpen = React.useCallback((value) => {
+    if (!isControlled) setUncontrolledOpen(value);
+    onOpenChange?.(value);
+  }, [isControlled, onOpenChange]);
+
+  return (
+    <DropdownMenuOpenContext.Provider value={{ open, setOpen }}>
+      <DropdownMenuPrimitive.Root open={open} onOpenChange={setOpen} {...props} />
+    </DropdownMenuOpenContext.Provider>
+  );
+};
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
@@ -48,23 +68,15 @@ DropdownMenuSubContent.displayName =
 
 const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, children, ...props }, ref) => {
   const isMobile = useIsMobile();
-  const [open, setOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkOpen = () => {
-      const trigger = document.querySelector('[data-state="open"][data-radix-dropdown-menu-trigger]');
-      setOpen(!!trigger);
-    };
-    
-    checkOpen();
-    const observer = new MutationObserver(checkOpen);
-    const triggers = document.querySelectorAll('[data-radix-dropdown-menu-trigger]');
-    triggers.forEach(trigger => {
-      observer.observe(trigger, { attributes: true, attributeFilter: ['data-state'] });
-    });
-    
-    return () => observer.disconnect();
-  }, []);
+  // ✅ Nutzt den echten, pro-Instanz gescopten Open-State aus dem Context statt
+  // einer globalen document.querySelector-Suche nach IRGENDEINEM offenen
+  // Dropdown auf der Seite. Der alte Ansatz beobachtete nur Trigger-Elemente,
+  // die beim allerersten Mount bereits im DOM standen (verpasste z.B. die
+  // Glocke, die erst nach dem Laden von currentUser gerendert wird) und
+  // reagierte zudem auf JEDES Dropdown der ganzen App gleichzeitig.
+  const ctx = React.useContext(DropdownMenuOpenContext);
+  const open = ctx?.open ?? false;
+  const setOpen = ctx?.setOpen ?? (() => {});
 
   if (isMobile) {
     return (
