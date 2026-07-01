@@ -452,8 +452,8 @@ export default function Layout({ children, currentPageName }) {
 
                         {/* Footer */}
                         <div className={`border-t border-border/50 space-y-3 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
-                            {!sidebarCollapsed && currentUser && (
-                                <div className="flex justify-center">
+                            {currentUser && (
+                                <div className={`flex ${sidebarCollapsed ? "justify-center" : "justify-center"}`}>
                                     <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} />
                                 </div>
                             )}
