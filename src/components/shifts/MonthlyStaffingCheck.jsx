@@ -20,7 +20,9 @@ export default function MonthlyStaffingCheck() {
 
     const { data: shifts = [], isLoading } = useQuery({
         queryKey: ['shifts-monthly', selectedMonth],
-        queryFn: () => base44.entities.Shift.list('-date', 500),
+        // ⚠️ Limit erhoeht (750 Shifts aktuell, waechst weiter) — verhindert,
+        // dass aeltere Monate aus dem Auslastungs-Check fallen.
+        queryFn: () => base44.entities.Shift.list('-date', 3000),
         enabled: modalOpen
     });
 
