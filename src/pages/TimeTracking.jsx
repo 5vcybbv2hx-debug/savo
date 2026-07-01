@@ -67,6 +67,8 @@ export default function TimeTracking() {
     const [shiftSummary, setShiftSummary] = useState(null);
     // Bestätigungs-Dialog statt confirm()
     const [clockOutAllDialog, setClockOutAllDialog] = useState(false);
+    // Auszahlungs-Uebersicht nach "Alle ausstempeln" (fuer die abendliche Bar-Auszahlung)
+    const [payoutSummary, setPayoutSummary] = useState(null);
 
     // ── Queries ────────────────────────────────────────────────────────────────
     const { data: timeEntries = [] } = useQuery({
@@ -373,13 +375,29 @@ export default function TimeTracking() {
                     total_hours: parseFloat(workedHours),
                     status: 'eingereicht',
                 });
+
+                // Fuer die Bar-Auszahlung: Verdienst pro Mitarbeiter mit ausweisen,
+                // sonst sieht bei "Alle ausstempeln" niemand den Betrag (anders als
+                // beim einzelnen Ausstempeln mit der Schicht-Zusammenfassung).
+                const hourlyRate = employee?.hourly_rate;
+                return {
+                    name: employee?.name || entry.employee_name || 'Unbekannt',
+                    workedHours,
+                    hourlyRate,
+                    earned: hourlyRate ? (workedHours * hourlyRate).toFixed(2) : null,
+                };
             }));
         },
-        onSuccess: () => {
+        onSuccess: (results) => {
             queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
             invalidateTimeEntries();
             setClockOutAllDialog(false);
-            toast.success('Alle Mitarbeiter ausgestempelt');
+            if (results && results.length > 0) {
+                const total = results.reduce((sum, r) => sum + (r.earned ? parseFloat(r.earned) : 0), 0);
+                setPayoutSummary({ entries: results, total: total.toFixed(2) });
+            } else {
+                toast.success('Alle Mitarbeiter ausgestempelt');
+            }
         },
     });
 
@@ -1070,6 +1088,46 @@ export default function TimeTracking() {
                                     : '☕ Kurze Schicht heute — schönen Feierabend!'}
                             </p>
                             <Button className="w-full" onClick={() => setShiftSummary(null)}>Schließen</Button>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
+
+            {/* ── Auszahlungs-Uebersicht nach "Alle ausstempeln" ──────────────── */}
+            <Sheet open={!!payoutSummary} onOpenChange={open => { if (!open) setPayoutSummary(null); }}>
+                <SheetContent side="bottom" className="rounded-t-2xl pb-10 px-6 pt-6">
+                    {payoutSummary && (
+                        <div className="space-y-5">
+                            <div className="text-center space-y-1">
+                                <div className="text-4xl">💶</div>
+                                <h2 className="text-xl font-bold text-foreground">Auszahlung heute</h2>
+                                <p className="text-sm text-muted-foreground">{payoutSummary.entries.length} Mitarbeiter ausgestempelt</p>
+                            </div>
+                            <Separator />
+                            <div className="space-y-2">
+                                {payoutSummary.entries.map((e, i) => (
+                                    <div key={i} className="flex items-center justify-between bg-muted rounded-xl p-3">
+                                        <div>
+                                            <p className="text-sm font-semibold text-foreground">{e.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {e.workedHours}h{e.hourlyRate ? ` · ${e.hourlyRate} €/h` : ''}
+                                            </p>
+                                        </div>
+                                        {e.earned ? (
+                                            <p className="text-lg font-bold text-emerald-500">{e.earned} €</p>
+                                        ) : (
+                                            <p className="text-xs text-muted-foreground">kein Stundensatz hinterlegt</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <Separator />
+                            <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1">
+                                <Euro className="w-5 h-5 mx-auto text-emerald-500" />
+                                <p className="text-3xl font-bold text-emerald-500">{payoutSummary.total} €</p>
+                                <p className="text-xs text-muted-foreground">Gesamt auszuzahlen</p>
+                            </div>
+                            <Button className="w-full" onClick={() => setPayoutSummary(null)}>Schließen</Button>
                         </div>
                     )}
                 </SheetContent>
