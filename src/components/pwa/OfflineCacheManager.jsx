@@ -8,7 +8,7 @@ export function OfflineCacheManager() {
       try {
         const [employees, shifts, articles, recipes, events, reservations, cleaningTasks] = await Promise.all([
           base44.entities.Employee.list(),
-          base44.entities.Shift.list(),
+          base44.entities.Shift.list('-date', 3000), // war ohne Limit; 750 Shifts im System
           base44.entities.Article.list(),
           base44.entities.Recipe.list(),
           base44.entities.Event.list(),
