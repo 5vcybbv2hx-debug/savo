@@ -28,6 +28,7 @@ import TimeEntryModal from '@/components/timetracking/TimeEntryModal';
 import MonthlyReportExport from '@/components/timetracking/MonthlyReportExport';
 import PayrollReportSender from '@/components/reports/PayrollReportSender';
 import { validateArbZG, formatWarnings } from '@/components/timetracking/ArbZGValidator';
+import { fetchUntilDateCovered } from '@/lib/adaptiveFetch';
 
 const statusConfig = {
     'entwurf':     { label: 'Entwurf',     color: 'bg-slate-500/15 text-muted-foreground/50 dark:text-muted-foreground', icon: FileText },
@@ -72,16 +73,19 @@ export default function TimeTracking() {
         queryFn: async () => {
             const start = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
             const end   = format(endOfMonth(selectedMonth),   'yyyy-MM-dd');
+            // ✅ Selbst-skalierend statt festem Limit — verhindert dauerhaft, dass
+            // aeltere Monate aus dem Fenster fallen, egal wie gross die Tabelle wird.
             if (permissions.isManager) {
-                // ⚠️ Limit erhoeht: bei >500 TimeEntries im System fielen aeltere
-                // Monate (z.B. Januar) aus dem Top-500-Fenster und wurden nicht
-                // angezeigt. 3000 gibt komfortablen Puffer fuer mehrere Jahre.
-                const all = await base44.entities.TimeEntry.list('-date', 3000);
-                return all.filter(e => e.date >= start && e.date <= end);
+                return fetchUntilDateCovered(
+                    (limit) => base44.entities.TimeEntry.list('-date', limit),
+                    start, end
+                );
             } else {
                 if (!currentEmployee?.id) return [];
-                const all = await base44.entities.TimeEntry.filter({ employee_id: currentEmployee.id }, '-date', 3000);
-                return all.filter(e => e.date >= start && e.date <= end);
+                return fetchUntilDateCovered(
+                    (limit) => base44.entities.TimeEntry.filter({ employee_id: currentEmployee.id }, '-date', limit),
+                    start, end
+                );
             }
         },
         enabled: !isLoadingEmployee && (permissions.isManager || !!currentEmployee?.id),
@@ -101,17 +105,24 @@ export default function TimeTracking() {
         queryFn: async () => {
             const start = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
             const end   = format(endOfMonth(selectedMonth),   'yyyy-MM-dd');
-            // ⚠️ Limit erhoeht (461 Records aktuell, waechst ~460/Halbjahr) —
-            // gleiche Truncation-Gefahr wie bei TimeEntry, praeventiv erhoeht.
-            const all = permissions.isManager
-                ? await base44.entities.ClockEntry.list('-clock_in', 2000)
-                : await base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 1000);
-            const monthlyFiltered = all.filter(e => {
-                if (!e.clock_in) return false;
-                const d = format(new Date(e.clock_in), 'yyyy-MM-dd');
-                return d >= start && d <= end;
-            });
-            const active = all.filter(e => e.status === 'clocked_in' || e.status === 'on_break');
+            // ✅ Selbst-skalierend — clock_in ist ein ISO-Timestamp, daher extrahieren
+            // wir hier explizit das Datum (YYYY-MM-DD) für den Bereichsvergleich.
+            const getClockDate = (e) => e.clock_in ? format(new Date(e.clock_in), 'yyyy-MM-dd') : null;
+            const monthlyFiltered = permissions.isManager
+                ? await fetchUntilDateCovered(
+                    (limit) => base44.entities.ClockEntry.list('-clock_in', limit),
+                    start, end, { getDate: getClockDate }
+                )
+                : await fetchUntilDateCovered(
+                    (limit) => base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', limit),
+                    start, end, { getDate: getClockDate }
+                );
+            // Aktive Stempel-Eintraege (auch ausserhalb des Monats) separat nachladen,
+            // damit ein laufender Eintrag vom Vormonat nicht verschwindet.
+            const recentBatch = permissions.isManager
+                ? await base44.entities.ClockEntry.list('-clock_in', 100)
+                : await base44.entities.ClockEntry.filter({ employee_id: currentEmployee.id }, '-clock_in', 100);
+            const active = recentBatch.filter(e => e.status === 'clocked_in' || e.status === 'on_break');
             const seen = new Set(monthlyFiltered.map(e => e.id));
             const extras = active.filter(e => !seen.has(e.id));
             return [...extras, ...monthlyFiltered];
