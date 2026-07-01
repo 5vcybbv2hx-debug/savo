@@ -249,8 +249,7 @@ function EmptyState({ tab, onAdd }) {
     const config = {
         offen:      { icon: '📋', title: 'Keine offenen Themen', sub: 'Reiche ein Thema für die nächste Sitzung ein.' },
         besprochen: { icon: '💬', title: 'Noch nichts besprochen', sub: 'Themen erscheinen hier sobald sie in der Sitzung behandelt wurden.' },
-        erledigt:   { icon: '✅', title: 'Noch nichts erledigt', sub: 'Abgehakte Punkte landen hier.' },
-        archiv:     { icon: '📦', title: 'Archiv ist leer', sub: 'Archivierte Themen erscheinen hier.' },
+        archiv:     { icon: '📦', title: 'Archiv ist leer', sub: 'Als erledigt markierte Themen landen automatisch hier.' },
     };
     const { icon, title, sub } = config[tab] || config.offen;
     return (
@@ -287,12 +286,6 @@ export default function TeamMeeting() {
     const [notes,             setNotes]             = useState('');
 
     // ── Queries ───────────────────────────────────────────────────────────────
-    const { data: topics = [] } = useQuery({
-        queryKey: ['meeting-topics'],
-        queryFn:  () => base44.entities.TeamMeetingTopic.list('-created_date', 200),
-        staleTime: 30_000,
-    });
-
     const { data: schedules = [] } = useQuery({
         queryKey: ['meeting-schedules'],
         queryFn:  () => base44.entities.TeamMeetingSchedule.list('-date', 10),
@@ -319,6 +312,18 @@ export default function TeamMeeting() {
 
     const currentEmployee = employees.find(e => e.email === currentUser?.email);
     const currentSchedule = schedules[0] || null;
+
+    // Themen sind privat: nur die eigene Person + Manager sehen ein Thema.
+    // Manager sehen alle Themen (fürs Vorbereiten der Sitzung), alle anderen
+    // ausschließlich ihre eigenen eingereichten Punkte.
+    const { data: topics = [] } = useQuery({
+        queryKey: ['meeting-topics', permissions.isManager, currentEmployee?.id],
+        queryFn:  () => permissions.isManager
+            ? base44.entities.TeamMeetingTopic.list('-created_date', 200)
+            : base44.entities.TeamMeetingTopic.filter({ employee_id: currentEmployee.id }, '-created_date', 200),
+        enabled: !permissions.isLoading && (permissions.isManager || !!currentEmployee?.id),
+        staleTime: 30_000,
+    });
 
     // Ist der aktuelle User der Protokollant?
     const isScribe = currentSchedule?.scribe_employee_id === currentEmployee?.id;
@@ -386,8 +391,20 @@ export default function TeamMeeting() {
     };
 
     const handleStatusChange = (topic, newStatus) => {
-        updateMutation.mutate({ id: topic.id, data: { ...topic, status: newStatus } });
-        toast.success(newStatus === 'erledigt' ? 'Als erledigt markiert' : newStatus === 'besprochen' ? 'Als besprochen markiert' : 'Wieder geöffnet');
+        const data = { ...topic, status: newStatus };
+        if (newStatus === 'erledigt') {
+            // Erledigt = fertig besprochen -> wandert automatisch ins Archiv,
+            // taucht nicht mehr in der aktuellen Agenda auf.
+            data.is_archived = true;
+            data.archived_at = new Date().toISOString();
+            data.discussed_at = data.discussed_at || new Date().toISOString();
+        } else if (newStatus === 'offen') {
+            // "Wieder öffnen" holt ein Thema (auch aus dem Archiv) zurück in die aktive Liste.
+            data.is_archived = false;
+            data.archived_at = null;
+        }
+        updateMutation.mutate({ id: topic.id, data });
+        toast.success(newStatus === 'erledigt' ? 'Erledigt & archiviert' : newStatus === 'besprochen' ? 'Als besprochen markiert' : 'Wieder geöffnet');
     };
 
     const handleDelete = (topic) => {
@@ -429,10 +446,12 @@ export default function TeamMeeting() {
     const activeTopics   = topics.filter(t => !t.is_archived);
     const archivedTopics = topics.filter(t =>  t.is_archived);
 
+    // 'erledigt' gibt es als Filter-Chip nicht mehr: sobald ein Thema erledigt
+    // ist, wird es automatisch archiviert (siehe handleStatusChange) und taucht
+    // stattdessen im Archiv-Tab auf.
     const agendaGroups = {
         offen:      activeTopics.filter(t => t.status === 'offen'),
         besprochen: activeTopics.filter(t => t.status === 'besprochen'),
-        erledigt:   activeTopics.filter(t => t.status === 'erledigt'),
     };
     const visibleTopics = agendaGroups[agendaFilter] || [];
 
@@ -549,7 +568,6 @@ export default function TeamMeeting() {
                             {[
                                 { id: 'offen',      label: 'Offen',      count: agendaGroups.offen.length },
                                 { id: 'besprochen', label: 'Besprochen', count: agendaGroups.besprochen.length },
-                                { id: 'erledigt',   label: 'Erledigt',   count: agendaGroups.erledigt.length },
                             ].map(f => (
                                 <button
                                     key={f.id}
