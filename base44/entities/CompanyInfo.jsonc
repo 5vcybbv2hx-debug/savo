@@ -125,6 +125,11 @@
       "type": "string",
       "description": "WhatsApp-Gruppenlink für das Team"
     },
+    "branding_color": {
+      "type": "string",
+      "title": "Branding-Farbe",
+      "description": "Primärfarbe als Hex-Code (#RRGGBB)"
+    },
     "last_updated": {
       "type": "string",
       "format": "date-time",
