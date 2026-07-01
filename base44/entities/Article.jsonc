@@ -46,8 +46,9 @@
         }
       }
     },
-    "content_unit":   { "type": "string", "enum": ["l","ml","kg","g","Stück"], "default": "Stück", "description": "Einheit des Inhalts" },
+    "content_unit":   { "type": "string", "enum": ["l","ml","cl","kg","g","Stück"], "default": "Stück", "description": "Einheit des Inhalts" },
     "content_amount": { "type": "number", "description": "Inhaltsmenge (z.B. 0.7 für 0,7L)" },
+    "quantity":        { "type": "number", "description": "Anzahl Einheiten im Gebinde/Verpackung (z.B. 6 für 6er-Pack)" },
     "purchase_price": { "type": "number", "description": "Einkaufspreis pro Einheit (aus Hauptlieferant/Standard-Gebinde)" },
     "tax_rate":       { "type": "number", "enum": [0,7,19], "default": 19, "description": "MwSt-Satz %" },
     "price_per_liter":{ "type": "number", "description": "Umgerechneter Preis pro Liter/kg (automatisch)" },
