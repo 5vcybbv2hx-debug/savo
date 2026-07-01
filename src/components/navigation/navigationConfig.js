@@ -66,7 +66,7 @@ export const additionalPages = [
     { page: 'Vacation',       name: 'Urlaub',          icon: Plane,         permission: 'canViewVacation' },
     { page: 'MyShifts',       name: 'Meine Schichten', icon: CalendarClock, permission: 'canViewShifts' },
     { page: 'ShiftSwaps',     name: 'Schichttausch',   icon: RefreshCw,     permission: 'canRequestShiftSwap' },
-    { page: 'Permissions',    name: 'Berechtigungen',  icon: Shield,        permission: 'canEditEmployeePermissions' },
+    { page: 'PermissionsNew', name: 'Berechtigungen',  icon: Shield,        permission: 'canEditEmployeePermissions' },
     { page: 'TeamMeeting',    name: 'Teamsitzung',     icon: MessageSquare, permission: 'canViewTeamMeeting' },
     { page: 'Stationsplan',   name: 'Stationsplan',    icon: LayoutGrid,    permission: 'canViewShifts' },
 
