@@ -102,9 +102,7 @@ export default function Inventory() {
                 total_difference: totalDiff
             });
         },
-        onSuccess: () => {
         onSuccess: (result) => {
-            const previousCounts = counts;
             setCounts({});
             setActiveArticle(null);
             localStorage.removeItem('inventory_offline_counts');
@@ -116,6 +114,8 @@ export default function Inventory() {
             toast.success(corrected > 0
                 ? `Inventur abgeschlossen — ${corrected} Bestände wurden korrigiert`
                 : 'Inventur abgeschlossen — Keine Abweichungen');
+        },
+        onError: (error) => {
             toast.error('Fehler beim Speichern: ' + error.message);
         }
     });
