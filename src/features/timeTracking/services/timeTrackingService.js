@@ -17,12 +17,15 @@ export const timeTrackingService = {
     entriesForEmployee: (employeeId) =>
         TE.filter({ employee_id: employeeId }, '-date'),
 
-    // ✅ Filter server-side — no full-table scan
+    // ✅ base44 SDK doesn't support range operators (date_gte/date_lte), so we
+    //    fetch a high-limit, date-sorted batch and filter client-side. The
+    //    explicit limit (>=500, per house rule) prevents silent truncation —
+    //    previously this called TE.filter({}, '-date') with NO limit at all,
+    //    which relied on the SDK default and could cut off older months once
+    //    the table grew past it.
     entriesForMonth: async (year, month) => {
         const { from, to } = monthRange(year, month);
-        const all = await TE.filter({}, '-date');
-        // base44 SDK doesn't support range operators, so we fetch the month
-        // with a date-prefix filter instead of pulling all records.
+        const all = await TE.filter({}, '-date', 2000);
         return all.filter(e => e.date >= from && e.date <= to);
     },
 
