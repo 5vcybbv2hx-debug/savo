@@ -86,6 +86,14 @@ export default function Inventory() {
 
             const totalDiff = countsData.reduce((sum, c) => sum + Math.abs(c.difference), 0);
 
+            // ── Bestand zurückschreiben ───────────────────────────────
+            const updatePromises = countsData
+                .filter(c => c.difference !== 0)  // nur Artikel mit Abweichung
+                .map(c => base44.entities.Article.update(c.article_id, {
+                    current_stock: c.counted_stock
+                }));
+            await Promise.all(updatePromises);
+
             return base44.entities.InventorySession.create({
                 date: new Date().toISOString(),
                 counted_by: user.full_name,
