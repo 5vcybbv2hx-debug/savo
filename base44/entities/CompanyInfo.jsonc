@@ -142,6 +142,10 @@
     "print_settings": {
       "type": "string",
       "description": "JSON-String mit Druckformat-Einstellungen pro Bereich"
+    },
+    "branding_color": {
+      "type": "string",
+      "description": "Primärfarbe als Hex-Code (#RRGGBB) für das App-Branding"
     }
   },
   "required": [
