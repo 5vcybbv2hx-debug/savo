@@ -129,3 +129,48 @@ export function getStatusColor(status) {
   };
   return colors[status] || 'bg-slate-500/20 text-slate-400 border border-slate-500/30';
 }
+
+/**
+ * Formatiere Bid-Timestamp für Anzeige
+ */
+export function formatBidTime(bid) {
+  if (!bid?.created_date && !bid?.created_at) return '';
+  try {
+    const d = new Date(bid.created_date || bid.created_at);
+    return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  } catch { return ''; }
+}
+
+/**
+ * Lesbares Label für Bid-Status
+ */
+export function getStatusLabel(status) {
+  const labels = {
+    annehmen:         'Möchte übernehmen',
+    ausstehend:       'Ausstehend',
+    unter_umständen:  'Eventuell',
+    ablehnen:         'Abgelehnt',
+    akzeptiert:       'Akzeptiert',
+    abgelehnt:        'Abgelehnt',
+  };
+  return labels[status] || status || '–';
+}
+
+/**
+ * Tailwind-Farbklassen für Bid/Request-Status
+ */
+export function getStatusColor(status) {
+  const colors = {
+    annehmen:         'text-green-400 bg-green-500/15 border-green-500/30',
+    ausstehend:       'text-amber-400 bg-amber-500/15 border-amber-500/30',
+    unter_umständen:  'text-yellow-400 bg-yellow-500/15 border-yellow-500/30',
+    ablehnen:         'text-red-400 bg-red-500/15 border-red-500/30',
+    akzeptiert:       'text-green-400 bg-green-500/15 border-green-500/30',
+    abgelehnt:        'text-red-400 bg-red-500/15 border-red-500/30',
+    offen:            'text-blue-400 bg-blue-500/15 border-blue-500/30',
+    genehmigt:        'text-green-400 bg-green-500/15 border-green-500/30',
+    storniert:        'text-slate-400 bg-slate-500/15 border-slate-500/30',
+    abgeschlossen:    'text-slate-400 bg-slate-500/15 border-slate-500/30',
+  };
+  return colors[status] || 'text-muted-foreground bg-muted border-border';
+}
