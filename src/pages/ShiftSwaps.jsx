@@ -715,7 +715,6 @@ export default function ShiftSwaps() {
                  onOpenChange={setDirectSwapOpen}
                  myShifts={myUpcomingShifts}
              />
-             </div>
 
             {/* Confirm Dialog */}
             <AlertDialog open={!!confirmDialog} onOpenChange={open => !open && setConfirmDialog(null)}>
@@ -744,5 +743,6 @@ export default function ShiftSwaps() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-             );
-            }
+        </div>
+    );
+}

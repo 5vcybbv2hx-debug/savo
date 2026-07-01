@@ -99,38 +99,6 @@ export async function executeDirectSwap(
 }
 
 /**
- * Format Timestamp für Anzeige
- */
-export function formatBidTime(timestamp) {
-  if (!timestamp) return '';
-  return format(parseISO(timestamp), 'dd.MM.yyyy HH:mm', { locale: de });
-}
-
-/**
- * Status-Label für UI
- */
-export function getStatusLabel(status) {
-  const labels = {
-    'annehmen': 'Annehmen',
-    'ablehnen': 'Ablehnen',
-    'unter_umständen': 'Unter Umständen'
-  };
-  return labels[status] || status;
-}
-
-/**
- * Status-Farbe für Badge
- */
-export function getStatusColor(status) {
-  const colors = {
-    'annehmen': 'bg-green-500/20 text-green-400 border border-green-500/30',
-    'ablehnen': 'bg-red-500/20 text-red-400 border border-red-500/30',
-    'unter_umständen': 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-  };
-  return colors[status] || 'bg-slate-500/20 text-slate-400 border border-slate-500/30';
-}
-
-/**
  * Formatiere Bid-Timestamp für Anzeige
  */
 export function formatBidTime(bid) {
