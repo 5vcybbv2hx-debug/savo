@@ -33,8 +33,15 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
   });
 
   const { data: allShifts = [] } = useQuery({
-    queryKey: ['shifts'],
-    queryFn: () => base44.entities.Shift.list()
+    queryKey: ['shifts-direct-swap'],
+    queryFn: async () => {
+      const { format, addDays } = await import('date-fns');
+      const from = format(new Date(), 'yyyy-MM-dd');
+      const to   = format(addDays(new Date(), 60), 'yyyy-MM-dd');
+      const all  = await base44.entities.Shift.list('date', 500);
+      return all.filter(s => s.date >= from && s.date <= to);
+    },
+    staleTime: 60_000,
   });
 
   const directSwapMutation = useMutation({
