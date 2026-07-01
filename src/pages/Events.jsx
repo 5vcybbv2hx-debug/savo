@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
@@ -166,9 +167,13 @@ export default function Events() {
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id) => base44.entities.Event.delete(id),
+        mutationFn: async (id) => {
+            await removeEventFromDisplay(id);
+            return base44.entities.Event.delete(id);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['events'] });
+            toast.success('Event gelöscht & von TV-Display entfernt');
         }
     });
 
