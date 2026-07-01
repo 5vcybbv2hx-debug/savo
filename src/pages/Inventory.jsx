@@ -103,19 +103,19 @@ export default function Inventory() {
             });
         },
         onSuccess: () => {
-            // Optimistic update - clear immediately
+        onSuccess: (result) => {
             const previousCounts = counts;
             setCounts({});
             setActiveArticle(null);
             localStorage.removeItem('inventory_offline_counts');
-            
+            queryClient.invalidateQueries({ queryKey: ['articles'] });
             queryClient.setQueryData(['inventory-sessions'], (old) => {
-                return old ? [...old, { counts: previousCounts }] : [{ counts: previousCounts }];
+                return old ? [...old, result] : [result];
             });
-            
-            toast.success('Inventur gespeichert');
-        },
-        onError: (error) => {
+            const corrected = (result?.counts || []).filter(c => c.difference !== 0).length;
+            toast.success(corrected > 0
+                ? `Inventur abgeschlossen — ${corrected} Bestände wurden korrigiert`
+                : 'Inventur abgeschlossen — Keine Abweichungen');
             toast.error('Fehler beim Speichern: ' + error.message);
         }
     });
