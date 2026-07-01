@@ -427,14 +427,30 @@ export default function TimeTracking() {
         clockOutMutation.mutate(entry.id);
     };
 
+    // Pause-Update, das auch bei WLAN-Ausfall lokal greift statt fehlzuschlagen
+    const applyClockEntryUpdate = async (entryId, data) => {
+        if (!navigator.onLine) {
+            await queueMutation({ entityName: 'ClockEntry', type: 'update', id: entryId, data });
+        } else {
+            try {
+                await base44.entities.ClockEntry.update(entryId, data);
+            } catch (err) {
+                await queueMutation({ entityName: 'ClockEntry', type: 'update', id: entryId, data });
+            }
+        }
+        queryClient.setQueryData(
+            ['clockEntries', currentEmployee?.id, permissions.isManager, format(selectedMonth, 'yyyy-MM')],
+            (old = []) => old.map(e => e.id === entryId ? { ...e, ...data } : e)
+        );
+    };
+
     const handleStartBreak = async () => {
         if (!activeClockEntry) return;
         const currentBreaks = activeClockEntry.breaks || [];
-        await base44.entities.ClockEntry.update(activeClockEntry.id, {
+        await applyClockEntryUpdate(activeClockEntry.id, {
             status: 'on_break',
             breaks: [...currentBreaks, { start: new Date().toISOString(), end: null }],
         });
-        queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
     };
 
     const handleEndBreak = async () => {
@@ -442,12 +458,22 @@ export default function TimeTracking() {
         const updatedBreaks = (activeClockEntry.breaks || []).map((b, i, arr) =>
             i === arr.length - 1 && !b.end ? { ...b, end: new Date().toISOString() } : b
         );
-        await base44.entities.ClockEntry.update(activeClockEntry.id, {
+        await applyClockEntryUpdate(activeClockEntry.id, {
             status: 'clocked_in',
             breaks: updatedBreaks,
         });
-        queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
     };
+
+    // Beim Reconnect automatisch alle offline gequeuten Stempel-Aktionen nachsynchen
+    useEffect(() => {
+        const handleOnline = () => {
+            syncMutations(base44)
+                .then(() => queryClient.invalidateQueries({ queryKey: ['clockEntries'] }))
+                .catch(console.error);
+        };
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, [queryClient]);
 
     const getWorkingDuration = (clockIn) => {
         const minutes = differenceInMinutes(new Date(), new Date(clockIn));
