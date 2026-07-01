@@ -73,11 +73,14 @@ export default function TimeTracking() {
             const start = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
             const end   = format(endOfMonth(selectedMonth),   'yyyy-MM-dd');
             if (permissions.isManager) {
-                const all = await base44.entities.TimeEntry.list('-date', 500);
+                // ⚠️ Limit erhoeht: bei >500 TimeEntries im System fielen aeltere
+                // Monate (z.B. Januar) aus dem Top-500-Fenster und wurden nicht
+                // angezeigt. 3000 gibt komfortablen Puffer fuer mehrere Jahre.
+                const all = await base44.entities.TimeEntry.list('-date', 3000);
                 return all.filter(e => e.date >= start && e.date <= end);
             } else {
                 if (!currentEmployee?.id) return [];
-                const all = await base44.entities.TimeEntry.filter({ employee_id: currentEmployee.id }, '-date', 500);
+                const all = await base44.entities.TimeEntry.filter({ employee_id: currentEmployee.id }, '-date', 3000);
                 return all.filter(e => e.date >= start && e.date <= end);
             }
         },
