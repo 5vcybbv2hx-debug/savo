@@ -36,10 +36,16 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
     queryKey: ['shifts-direct-swap'],
     queryFn: async () => {
       const { format, addDays } = await import('date-fns');
+      const { fetchUntilDateCovered } = await import('@/lib/adaptiveFetch');
       const from = format(new Date(), 'yyyy-MM-dd');
       const to   = format(addDays(new Date(), 60), 'yyyy-MM-dd');
-      const all  = await base44.entities.Shift.list('date', 500);
-      return all.filter(s => s.date >= from && s.date <= to);
+      // ⚠️ War aufsteigend sortiert mit Limit 500 — bei >500 vergangenen
+      // Schichten wurden ALLE zukuenftigen Schichten (das eigentliche Ziel!)
+      // nie erreicht. Jetzt absteigend + selbst-skalierend.
+      return fetchUntilDateCovered(
+          (limit) => base44.entities.Shift.list('-date', limit),
+          from, to
+      );
     },
     staleTime: 60_000,
   });
