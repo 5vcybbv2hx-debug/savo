@@ -28,14 +28,15 @@ export function groupBidsByStatus(bids) {
  */
 export async function validateDirectSwap(employeeId, shiftDate, shiftTime) {
   try {
-    const shifts = await base44.entities.Shift.filter({});
-    
-    // Prüfe auf Überschneidungen
-    const conflicting = shifts.filter(s => 
-      s.employee_id === employeeId && 
-      s.date === shiftDate
-    );
-    
+    // ⚠️ War Shift.filter({}) ohne Limit — bei 750+ Schichten im System konnte
+    // ein echter Konflikt ausserhalb des SDK-Default-Batches unentdeckt
+    // bleiben (falsches "valid: true" trotz Doppel-Buchung). Jetzt direkt
+    // serverseitig nach employee_id + date gefiltert — praeziser und schneller.
+    const conflicting = await base44.entities.Shift.filter({
+      employee_id: employeeId,
+      date: shiftDate
+    });
+
     if (conflicting.length > 0) {
       return {
         valid: false,
