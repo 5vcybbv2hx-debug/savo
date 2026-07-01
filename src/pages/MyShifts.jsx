@@ -381,8 +381,10 @@ function TeamTab({ myEmployeeId }) {
 
     const { data: weekTeam = [] } = useQuery({
         queryKey: ['team-week', from, to],
-        queryFn: () => base44.entities.Shift.filter({}, 'date', 200).then(
-            all => all.filter(s => s.date >= from && s.date <= to)
+        // ⚠️ War aufsteigend sortiert mit Limit 200 — bei >200 vergangenen
+        // Schichten fiel die aktuelle/zukuenftige Woche komplett raus.
+        queryFn: () => import('@/lib/adaptiveFetch').then(({ fetchUntilDateCovered }) =>
+            fetchUntilDateCovered((limit) => base44.entities.Shift.list('-date', limit), from, to)
         ),
         staleTime: 2 * 60 * 1000,
     });
