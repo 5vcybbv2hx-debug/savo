@@ -182,14 +182,22 @@ export default function QuickList() {
             if (alreadyOrdered) { skipped++; continue; }
 
             const article = articles.find(a => a.id === item.article_id || a.name === item.item_name);
+            const primarySupplierQL = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
+            const supplierNameQL = primarySupplierQL?.supplier_name || article?.suppliers?.[0] || suppliers[0]?.name || '';
+            const defaultOptQL = (primarySupplierQL?.packaging_options || []).find(o => o.is_default) || (primarySupplierQL?.packaging_options || [])[0];
             await base44.entities.ShoppingList.create({
-                item_name:  item.item_name,
-                article_id: item.article_id || null,
-                category:   article?.suppliers?.[0] || suppliers[0]?.name || '',
-                quantity:   item.quantity || 1,
-                unit:       item.unit || 'Stück',
-                status:     'offen',
-                notes:      `Einkaufsliste ${format(new Date(), 'dd.MM.yyyy')}`,
+                item_name:           item.item_name,
+                article_id:          item.article_id || null,
+                category:            supplierNameQL,
+                supplier_name:       supplierNameQL,
+                packaging_option_id: defaultOptQL?.id || null,
+                packaging_label:     defaultOptQL ? `${defaultOptQL.packaging_type} ${defaultOptQL.units_per_pack}×` : null,
+                price_per_unit:      defaultOptQL?.price_per_unit || article?.purchase_price || null,
+                price_per_pack:      defaultOptQL?.price_per_pack || null,
+                quantity:            item.quantity || 1,
+                unit:                item.unit || article?.content_unit || 'Stück',
+                status:              'offen',
+                notes:               `Einkaufsliste ${format(new Date(), 'dd.MM.yyyy')}`,
             });
             added++;
         }
