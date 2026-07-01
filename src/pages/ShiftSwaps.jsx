@@ -466,8 +466,8 @@ export default function ShiftSwaps() {
                         {filteredShifts.length > 0 ? (
                             <div className="grid gap-4">
                                 {filteredShifts.map(shift => {
-                                    const hasPendingRequest = swapRequests.some(r => 
-                                        r.shift_id === shift.id && r.status === 'ausstehend'
+                                    const hasPendingRequest = swapRequests.some(r =>
+                                        r.shift_id === shift.id && isOpenStatus(r)
                                     );
                                     return (
                                         <Card key={shift.id} className="p-5 bg-card border-border hover:border-amber-500/30 transition-all">
@@ -716,5 +716,33 @@ export default function ShiftSwaps() {
                  myShifts={myUpcomingShifts}
              />
              </div>
+
+            {/* Confirm Dialog */}
+            <AlertDialog open={!!confirmDialog} onOpenChange={open => !open && setConfirmDialog(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {confirmDialog?.type === 'withdraw' && 'Anfrage zurückziehen?'}
+                            {confirmDialog?.type === 'reject'   && 'Tausch ablehnen?'}
+                            {confirmDialog?.type === 'approve'  && 'Tausch genehmigen?'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {confirmDialog?.type === 'withdraw' && 'Die Tauschanfrage wird storniert und kann nicht wiederhergestellt werden.'}
+                            {confirmDialog?.type === 'reject'   && 'Die Anfrage wird abgelehnt. Der Mitarbeiter wird benachrichtigt.'}
+                            {confirmDialog?.type === 'approve'  && `${confirmDialog?.bidName || ''} übernimmt die Schicht. Der Kalender wird automatisch aktualisiert.`}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={executeConfirm}
+                            className={confirmDialog?.type !== 'approve' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : ''}>
+                            {confirmDialog?.type === 'withdraw' && 'Zurückziehen'}
+                            {confirmDialog?.type === 'reject'   && 'Ablehnen'}
+                            {confirmDialog?.type === 'approve'  && 'Genehmigen'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
              );
             }
