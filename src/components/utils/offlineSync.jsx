@@ -5,7 +5,7 @@
 
 const DB_NAME = 'BarManagerOfflineCache';
 const SYNC_QUEUE_STORE = 'SyncQueue';
-const DB_VERSION = 2;
+const DB_VERSION = 3; // v3: QuickListItem-Store fuer Offline-Cold-Start (Einkaufsliste im Getraenkemarkt)
 
 /**
  * @typedef {Object} SyncQueueItem
@@ -41,7 +41,8 @@ const initDB = () => {
         'Employee', 'Shift', 'Article', 'ShoppingList', 'RestockItem',
         'Recipe', 'Event', 'Reservation', 'CleaningTask', 'TimeEntry',
         'ClockEntry', 'TodoItem', 'CleaningArea', 'Room', 'Table',
-        'Supplier', 'DailyRevenue', 'Wastage', 'WastageTemplate'
+        'Supplier', 'DailyRevenue', 'Wastage', 'WastageTemplate',
+        'QuickListItem'
       ];
       
       stores.forEach(store => {
