@@ -273,15 +273,15 @@ export default function TimeTracking() {
                 employee_id: entry.employee_id,
             };
             const warnings = validateArbZG(tempEntry, timeEntries);
-            await base44.entities.ClockEntry.update(entryId, {
+            const clockEntryUpdate = {
                 clock_out: clockOutTime.toISOString(),
                 status: 'clocked_out',
                 total_minutes: workedMinutes,
                 break_minutes: breakMinutes,
                 breaks: entry.breaks,
-            });
+            };
             const employee = allEmployees.find(e => e.id === entry.employee_id);
-            await base44.entities.TimeEntry.create({
+            const timeEntryPayload = {
                 employee_id: entry.employee_id,
                 employee_name: employee?.name || entry.employee_name,
                 date: tempEntry.date,
@@ -291,7 +291,25 @@ export default function TimeTracking() {
                 total_hours: parseFloat(workedHours),
                 status: 'eingereicht',
                 arbzg_warning: formatWarnings(warnings) || undefined,
-            });
+            };
+
+            // ⚠️ Ausstempeln ist lohnrelevant — darf bei WLAN-Ausfall nicht verloren
+            // gehen. Beide Schreibvorgaenge (ClockEntry + TimeEntry) werden dann
+            // lokal in die Sync-Queue gelegt und automatisch nachgeholt.
+            let offline = !navigator.onLine;
+            if (!offline) {
+                try {
+                    await base44.entities.ClockEntry.update(entryId, clockEntryUpdate);
+                    await base44.entities.TimeEntry.create(timeEntryPayload);
+                } catch (err) {
+                    offline = true;
+                }
+            }
+            if (offline) {
+                await queueMutation({ entityName: 'ClockEntry', type: 'update', id: entryId, data: clockEntryUpdate });
+                await queueMutation({ entityName: 'TimeEntry', type: 'create', data: timeEntryPayload });
+            }
+
             // Pausen-Details für das Summary aufbereiten
             const breakDetails = (entry.breaks || []).map(b => ({
                 start: format(new Date(b.start), 'HH:mm'),
@@ -308,10 +326,22 @@ export default function TimeTracking() {
                 actualBreakMinutes,
                 breakDetails,
             });
+
+            return { entryId, clockEntryUpdate, offline };
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
-            invalidateTimeEntries();
+        onSuccess: (result) => {
+            if (!result) return;
+            const { entryId, clockEntryUpdate, offline } = result;
+            if (offline) {
+                queryClient.setQueryData(
+                    ['clockEntries', currentEmployee?.id, permissions.isManager, format(selectedMonth, 'yyyy-MM')],
+                    (old = []) => old.map(e => e.id === entryId ? { ...e, ...clockEntryUpdate } : e)
+                );
+                toast.success('Ausgestempelt (offline) ⚡ — wird synchronisiert sobald wieder online');
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
+                invalidateTimeEntries();
+            }
         },
     });
 
