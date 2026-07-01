@@ -84,16 +84,22 @@ function PackagingOptionRow({ opt, idx, unitLabel, isDefault, isCheapest, onUpda
 
     const handlePackPrice = (val) => {
         const pack  = parseFloat(val);
-        const units = parseFloat(opt.units_per_pack);
-        const up    = (!isNaN(pack) && !isNaN(units) && units > 0) ? pack / units : null;
-        onUpdate({ ...opt, price_per_pack: val, price_per_unit: up });
+        // Stück-Typ: units_per_pack ist immer 1
+        const effectiveUnits = opt.packaging_type === 'Stück' ? 1 : parseFloat(opt.units_per_pack);
+        const up    = (!isNaN(pack) && !isNaN(effectiveUnits) && effectiveUnits > 0) ? pack / effectiveUnits : null;
+        onUpdate({
+            ...opt,
+            price_per_pack: val,
+            price_per_unit: up,
+            units_per_pack: opt.packaging_type === 'Stück' ? 1 : opt.units_per_pack,
+        });
     };
 
     const handleUnits = (val) => {
         const pack  = parseFloat(opt.price_per_pack);
         const units = parseFloat(val);
         const up    = (!isNaN(pack) && !isNaN(units) && units > 0) ? pack / units : null;
-        onUpdate({ ...opt, units_per_pack: val, price_per_unit: up });
+        onUpdate({ ...opt, units_per_pack: val === '' ? '' : val, price_per_unit: up });
     };
 
     const handleDepositType = (type) => {
@@ -177,11 +183,11 @@ function PackagingOptionRow({ opt, idx, unitLabel, isDefault, isCheapest, onUpda
                             </Label>
                             <Input
                                 type="number" step="1" min="1"
-                                value={opt.packaging_type === 'Stück' ? '1' : opt.units_per_pack}
+                                value={opt.packaging_type === 'Stück' ? 1 : opt.units_per_pack}
                                 disabled={opt.packaging_type === 'Stück'}
                                 onChange={e => handleUnits(e.target.value)}
                                 placeholder="z.B. 6"
-                                className="h-8 text-xs"
+                                className="h-8 text-xs disabled:opacity-50"
                             />
                         </div>
                         <div className="space-y-1">
