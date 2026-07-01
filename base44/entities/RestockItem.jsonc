@@ -2,52 +2,18 @@
   "name": "RestockItem",
   "type": "object",
   "properties": {
-    "article_id": {
-      "type": "string",
-      "description": "ID des verknüpften Artikels (primäre Verknüpfung)"
-    },
-    "barcode": {
-      "type": "string",
-      "description": "Barcode des Artikels (optional, für Rückwärtskompatibilität)"
-    },
-    "article_name": {
-      "type": "string",
-      "description": "Artikelname"
-    },
-    "article_image_url": {
-      "type": "string",
-      "description": "Bild-URL des Artikels"
-    },
-    "quantity": {
-      "type": "number",
-      "description": "Aufgefüllte Menge"
-    },
-    "area_id": {
-      "type": "string",
-      "description": "ID des Bereichs (Area Entity) — z.B. Theke Nichtraucher"
-    },
-    "area_name": {
-      "type": "string",
-      "description": "Name des Bereichs (denormalisiert für schnellen Zugriff)"
-    },
-    "restocked_by": {
-      "type": "string",
-      "description": "Aufgefüllt von"
-    },
-    "date": {
-      "type": "string",
-      "format": "date",
-      "description": "Datum"
-    },
-    "time": {
-      "type": "string",
-      "description": "Uhrzeit"
-    },
-    "is_completed": {
-      "type": "boolean",
-      "default": false,
-      "description": "Wurde aufgefüllt"
-    }
-  },
-  "required": ["article_name", "quantity"]
+    "article_id":       { "type": "string", "description": "Referenz auf Article" },
+    "barcode":          { "type": "string", "description": "Barcode des Artikels" },
+    "article_name":     { "type": "string", "description": "Artikelname (Snapshot)" },
+    "article_image_url":{ "type": "string", "description": "Bild-URL (Snapshot)" },
+    "quantity":         { "type": "number", "description": "Aufgefüllte Menge (Einzeleinheiten)" },
+    "quantity_from_storage": { "type": "number", "description": "Aus Lager entnommen (für Bestandsreduktion)" },
+    "area_id":          { "type": "string", "description": "Bereich-ID" },
+    "area_name":        { "type": "string", "description": "Bereichsname" },
+    "restocked_by":     { "type": "string", "description": "Mitarbeiter-Name" },
+    "date":             { "type": "string", "description": "Datum YYYY-MM-DD" },
+    "time":             { "type": "string", "description": "Uhrzeit HH:MM" },
+    "is_completed":     { "type": "boolean", "default": false, "description": "Erledigt" },
+    "stock_reduced":    { "type": "boolean", "default": false, "description": "Bestand wurde bereits reduziert" }
+  }
 }
