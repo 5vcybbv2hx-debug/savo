@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
+import { queueMutation } from '@/components/utils/offlineSync';
 
 export default function ShiftSwapManager() {
     const permissions = usePermissions();
@@ -34,6 +35,12 @@ export default function ShiftSwapManager() {
 
     const updateMutation = useMutation({
         mutationFn: async ({ id, data, request }) => {
+            if (!navigator.onLine) {
+                // Offline: wird gequeued und synct automatisch bei Netz.
+                await queueMutation({ entityName: 'ShiftSwapRequest', type: 'update', id, data });
+                return { _offline: true };
+            }
+
             await base44.entities.ShiftSwapRequest.update(id, data);
             
             // Create notification for requesting employee
@@ -52,11 +59,13 @@ export default function ShiftSwapManager() {
                 console.error('Fehler beim Erstellen der Benachrichtigung:', error);
             }
         },
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries(['shift-swap-requests']);
             setSelectedRequest(null);
             setResponseNote('');
-            toast.success('Tauschanfrage abgelehnt');
+            toast.success(result?._offline
+                ? 'Kein Netz — Ablehnung wird synchronisiert, sobald du wieder online bist ⚡'
+                : 'Tauschanfrage abgelehnt');
         },
         onError: (error) => {
             toast.error('Fehler beim Ablehnen: ' + error.message);
@@ -65,6 +74,27 @@ export default function ShiftSwapManager() {
 
     const approveMutation = useMutation({
         mutationFn: async ({ requestId, shiftId, newEmployeeId, request }) => {
+            if (!navigator.onLine) {
+                // Offline: beide Aenderungen (Anfrage + Schicht-Neuzuweisung)
+                // werden gequeued und in Reihenfolge synct, sobald wieder
+                // Netz da ist. Benachrichtigungen entfallen dabei bewusst
+                // (nur ein Nice-to-have, kein kritischer Datenverlust).
+                await queueMutation({
+                    entityName: 'ShiftSwapRequest', type: 'update', id: requestId,
+                    data: {
+                        status: 'genehmigt',
+                        approved_by: currentUser?.full_name || currentUser?.email,
+                        response_date: new Date().toISOString(),
+                        response_note: responseNote
+                    }
+                });
+                await queueMutation({
+                    entityName: 'Shift', type: 'update', id: shiftId,
+                    data: { employee_id: newEmployeeId, employee_name: request.target_employee_name }
+                });
+                return { success: true, _offline: true };
+            }
+
             try {
                 // First, get the shift to get the employee name
                 const shifts = await base44.entities.Shift.filter({ id: shiftId });
@@ -122,12 +152,14 @@ export default function ShiftSwapManager() {
                 throw error;
             }
         },
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries(['shift-swap-requests']);
             queryClient.invalidateQueries(['shifts']);
             setSelectedRequest(null);
             setResponseNote('');
-            toast.success('Tauschanfrage genehmigt');
+            toast.success(result?._offline
+                ? 'Kein Netz — Genehmigung wird synchronisiert, sobald du wieder online bist ⚡'
+                : 'Tauschanfrage genehmigt');
         },
         onError: (error) => {
             toast.error('Fehler beim Genehmigen: ' + error.message);
