@@ -760,12 +760,24 @@ export default function Shopping() {
                         <div className="flex flex-wrap gap-1.5">
                             {lowStockSuggestions.slice(0, 8).map(a => (
                                 <button key={a.id}
-                                    onClick={() => handleArticleAdd({
-                                        item_name: a.name, article_id: a.id,
-                                        category: a.suppliers?.[0] || suppliers[0]?.name || '',
-                                        quantity: Math.max(1, (a.min_stock || 1) - (a.current_stock || 0)),
-                                        unit: a.content_unit || '', status: 'offen',
-                                    })}
+                                    onClick={() => {
+                                        const _ps = a.supplier_details?.find(s => s.is_primary) || a.supplier_details?.[0];
+                                        const _sn = _ps?.supplier_name || a.suppliers?.[0] || suppliers[0]?.name || '';
+                                        const _d  = (_ps?.packaging_options||[]).find(o=>o.is_default)||(_ps?.packaging_options||[])[0];
+                                        handleArticleAdd({
+                                            item_name:           a.name,
+                                            article_id:          a.id,
+                                            category:            _sn,
+                                            supplier_name:       _sn,
+                                            packaging_option_id: _d?.id || null,
+                                            packaging_label:     _d ? `${_d.packaging_type} ${_d.units_per_pack}×` : null,
+                                            price_per_unit:      _d?.price_per_unit || a.purchase_price || null,
+                                            price_per_pack:      _d?.price_per_pack || null,
+                                            quantity:            Math.max(1, (a.min_stock || 1) - (a.current_stock || 0)),
+                                            unit:                a.content_unit || '',
+                                            status:              'offen',
+                                        });
+                                    }}
                                     className="text-xs px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 hover:bg-amber-500/25 transition-colors">
                                     + {a.name}
                                 </button>
