@@ -92,6 +92,53 @@ export default function Events() {
         return matchesSearch && matchesType && matchesStatus;
     });
 
+    // ── Event → DisplaySlide Sync ────────────────────────────────────────────
+    const syncEventToDisplay = async (event, eventId) => {
+        try {
+            // Existierende Slide für dieses Event suchen (via cta_text als Event-ID-Tag)
+            const allSlides = await base44.entities.DisplaySlide.list('sort_order', 200);
+            const existingSlide = allSlides.find(s => s.cta_text === `event:${eventId}`);
+            const maxOrder = allSlides.reduce((m, s) => Math.max(m, s.sort_order || 0), 0);
+            const payload = {
+                title:            event.title,
+                subtitle:         event.artist_name ? `mit ${event.artist_name}` : (event.event_type || 'Event'),
+                body_text:        event.description || '',
+                slide_type:       'event',
+                background_theme: 'event',
+                event_date:       event.date || '',
+                event_time:       event.start_time || '',
+                price_info:       event.entry_fee ? `Eintritt: ${event.entry_fee} €` : 'Eintritt frei',
+                cta_text:         `event:${eventId}`,
+                is_active:        event.status !== 'abgesagt',
+                show_from:        event.date || '',
+                show_until:       event.date || '',
+                sort_order:       existingSlide ? existingSlide.sort_order : maxOrder + 10,
+            };
+            if (existingSlide) {
+                await base44.entities.DisplaySlide.update(existingSlide.id, payload);
+            } else {
+                await base44.entities.DisplaySlide.create(payload);
+            }
+            queryClient.invalidateQueries({ queryKey: ['display-slides'] });
+        } catch (err) {
+            console.warn('[Events] DisplaySlide-Sync fehlgeschlagen:', err);
+        }
+    };
+
+    const removeEventFromDisplay = async (eventId) => {
+        try {
+            const allSlides = await base44.entities.DisplaySlide.list('sort_order', 200);
+            const slide = allSlides.find(s => s.cta_text === `event:${eventId}`);
+            if (slide) {
+                await base44.entities.DisplaySlide.update(slide.id, { is_active: false });
+                queryClient.invalidateQueries({ queryKey: ['display-slides'] });
+            }
+        } catch (err) {
+            console.warn('[Events] DisplaySlide deaktivieren fehlgeschlagen:', err);
+        }
+    };
+
+
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Event.create(data),
         onSuccess: () => {
