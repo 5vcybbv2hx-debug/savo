@@ -35,10 +35,11 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
   const { data: availableShifts = [], isLoading } = useQuery({
     queryKey: ['available-shift-swaps'],
     queryFn: async () => {
-      const requests = await base44.entities.ShiftSwapRequest.filter({ 
-        status: 'ausstehend',
-        marketplace: true
-      });
+      const [offen, ausstehend] = await Promise.all([
+        base44.entities.ShiftSwapRequest.filter({ status: 'offen', marketplace: true }),
+        base44.entities.ShiftSwapRequest.filter({ status: 'ausstehend', marketplace: true }),
+      ]);
+      const requests = [...offen, ...ausstehend];
       return requests;
     }
   });
