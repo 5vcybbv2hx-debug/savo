@@ -54,7 +54,7 @@ export default function TeamHub() {
     // Offene Schichttausch-Anfragen
     const { data: swapRequests = [] } = useQuery({
         queryKey: ['shift-swaps-open'],
-        queryFn: () => base44.entities.ShiftSwap.filter({ status: 'pending' }, '-created_date', 50),
+        queryFn: () => base44.entities.ShiftSwapRequest.filter({ status: 'offen' }, '-created_date', 50),
         staleTime: STALE.MEDIUM,
         enabled: permissions.canRequestShiftSwap,
     });
@@ -62,7 +62,7 @@ export default function TeamHub() {
     // Mitarbeiter-Count
     const { data: employees = [] } = useQuery({
         queryKey: ['employees-count'],
-        queryFn: () => base44.entities.Employee.filter({ is_active: true }, 'full_name', 100),
+        queryFn: () => base44.entities.Employee.filter({ is_active: true }, 'name', 100),
         staleTime: STALE.SLOW,
         enabled: permissions.canViewEmployees,
     });
@@ -112,7 +112,7 @@ export default function TeamHub() {
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Verwaltung</p>
                     <div className="space-y-2">
                         <NavCard icon={Users}    label="Mitarbeiter"    description="Profile, Kontakte & Daten"        page="Employees"    permission="canViewEmployees" />
-                        <NavCard icon={Shield}   label="Berechtigungen" description="Rollen & Zugriffsrechte"          page="Permissions"  permission="canEditEmployeePermissions" />
+                        <NavCard icon={Shield}   label="Berechtigungen" description="Rollen & Zugriffsrechte"          page="PermissionsNew"  permission="canEditEmployeePermissions" />
                         <NavCard icon={Video}    label="Teamsitzung"    description="Meeting-Notizen & Protokolle"     page="TeamMeeting"  permission="canViewTeamMeeting" />
                     </div>
                 </div>
