@@ -6,17 +6,18 @@ export function OfflineCacheManager() {
   useEffect(() => {
     const cacheImportantData = async () => {
       try {
-        const [employees, shifts, articles, recipes, events, reservations, cleaningTasks] = await Promise.all([
+        const [employees, shifts, articles, recipes, events, reservations, cleaningTasks, quickListItems] = await Promise.all([
           base44.entities.Employee.list(),
           base44.entities.Shift.list('-date', 3000), // war ohne Limit; 750 Shifts im System
           base44.entities.Article.list(),
           base44.entities.Recipe.list(),
           base44.entities.Event.list(),
           base44.entities.Reservation.list(),
-          base44.entities.CleaningTask.list()
+          base44.entities.CleaningTask.list(),
+          base44.entities.QuickListItem.list('-created_date', 500) // fuer Offline-Cold-Start der Einkaufsliste
         ]).catch(err => {
           console.warn('Error caching data:', err);
-          return [[], [], [], [], [], [], []];
+          return [[], [], [], [], [], [], [], []];
         });
         
         // Cache all data
@@ -27,7 +28,8 @@ export function OfflineCacheManager() {
           cacheData('Recipe', recipes),
           cacheData('Event', events),
           cacheData('Reservation', reservations),
-          cacheData('CleaningTask', cleaningTasks)
+          cacheData('CleaningTask', cleaningTasks),
+          cacheData('QuickListItem', quickListItems)
         ]);
       } catch (error) {
         console.error('Failed to cache data:', error);
