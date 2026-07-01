@@ -82,7 +82,7 @@ export default function BetriebHub() {
             <div className="mb-6">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Aufgaben</p>
                 <div className="space-y-2">
-                    <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"            page="Todos"       badge={todos.length || undefined} permission="canViewTodos" />
+                    <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"            page="Todos"       badge={todos.filter(t => t.status !== 'erledigt').length || undefined} permission="canViewTodos" />
                     <NavCard icon={ListChecks}  label="Wochenaufgaben" description="Wiederkehrende Wochenplanung"     page="WeeklyTasks" permission="canViewTodos" />
                     <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste"  page="Cleaning"    permission="canViewCleaning" />
                 </div>
