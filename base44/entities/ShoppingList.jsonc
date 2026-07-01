@@ -2,56 +2,26 @@
   "name": "ShoppingList",
   "type": "object",
   "properties": {
-    "article_id": {
-      "type": "string",
-      "description": "Referenz auf Article (optional)"
-    },
-    "item_name": {
-      "type": "string",
-      "description": "Artikelname"
-    },
-    "category": {
-      "type": "string",
-      "description": "Lieferant/Großhändler"
-    },
-    "quantity": {
-      "type": "number",
-      "description": "Bestellte Menge"
-    },
-    "delivered_quantity": {
-      "type": "number",
-      "description": "Tatsächlich gelieferte Menge (beim Wareneingang eingetragen)"
-    },
-    "unit": {
-      "type": "string",
-      "description": "Einheit (z.B. Stück, Liter, kg)"
-    },
-    "status": {
-      "type": "string",
-      "enum": ["offen", "bestellt", "erhalten", "abgeschlossen"],
-      "default": "offen",
-      "description": "Status: offen → bestellt → erhalten → abgeschlossen"
-    },
-    "ordered_at": {
-      "type": "string",
-      "description": "Zeitpunkt der Bestellaufgabe (ISO)"
-    },
-    "received_at": {
-      "type": "string",
-      "description": "Zeitpunkt des Wareneingangs (ISO)"
-    },
-    "delivery_note": {
-      "type": "string",
-      "description": "Notiz bei Wareneingang (Differenz, Schäden etc.)"
-    },
-    "notes": {
-      "type": "string",
-      "description": "Allgemeine Notizen"
-    },
-    "order_batch_id": {
-      "type": "string",
-      "description": "Gruppen-ID für zusammengehörige Bestellungen (gleicher Lieferant, gleicher Tag)"
-    }
+    "article_id":          { "type": "string",  "description": "Referenz auf Article (optional)" },
+    "item_name":           { "type": "string",  "description": "Artikelname" },
+    "category":            { "type": "string",  "description": "Lieferantenname (Anzeige + Filter)" },
+    "supplier_name":       { "type": "string",  "description": "Lieferantenname (aus supplier_details)" },
+    "packaging_option_id": { "type": "string",  "description": "ID der gewählten packaging_option" },
+    "packaging_label":     { "type": "string",  "description": "Anzeige: z.B. 'Kiste 20×'" },
+    "price_per_pack":      { "type": "number",  "description": "EK-Preis pro Gebinde zum Bestellzeitpunkt" },
+    "price_per_unit":      { "type": "number",  "description": "EK-Preis pro Einheit zum Bestellzeitpunkt" },
+    "quantity":            { "type": "number",  "description": "Bestellte Menge (in Gebinde-Einheiten)" },
+    "quantity_units":      { "type": "number",  "description": "Entspricht Anzahl Einzeleinheiten (quantity × units_per_pack)" },
+    "delivered_quantity":  { "type": "number",  "description": "Tatsächlich gelieferte Gebinde-Menge" },
+    "delivered_units":     { "type": "number",  "description": "Gelieferte Einzeleinheiten (für Bestandsupdate)" },
+    "unit":                { "type": "string",  "description": "Einheit (Einzeleinheit, z.B. Flasche, kg)" },
+    "status":              { "type": "string",  "enum": ["offen","bestellt","erhalten","abgeschlossen"], "default": "offen" },
+    "ordered_at":          { "type": "string",  "description": "ISO-Timestamp Bestellzeitpunkt" },
+    "received_at":         { "type": "string",  "description": "ISO-Timestamp Wareneingang" },
+    "delivery_note":       { "type": "string",  "description": "Lieferschein-Nr. oder Notiz" },
+    "notes":               { "type": "string",  "description": "Interne Notizen" },
+    "order_batch_id":      { "type": "string",  "description": "Gruppiert Items einer Bestellung" },
+    "purchase_price_snapshot": { "type": "number", "description": "EK-Preis zum Zeitpunkt der Bestellung (Audit)" }
   },
-  "required": ["item_name", "category", "quantity"]
+  "required": ["item_name"]
 }
