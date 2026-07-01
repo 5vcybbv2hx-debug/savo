@@ -140,10 +140,15 @@ export default function Events() {
 
 
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.Event.create(data),
+        mutationFn: async (data) => {
+            const created = await base44.entities.Event.create(data);
+            await syncEventToDisplay(data, created.id);
+            return created;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['events'] });
             closeModal();
+            toast.success('Event gespeichert & auf TV-Display aktualisiert');
         }
     });
 
