@@ -84,7 +84,7 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
         image_url: '',
         allergens: '', allergens_list: [], additives: [],
         notes: '', unit: '', quantity: '', content_amount: '', content_unit: '',
-        packaging_units: '', packaging_size: '', order_unit: '',
+        deposit: '', deposit_type: 'kein',
         deposit: '', deposit_type: 'kein',
     };
 
@@ -116,11 +116,11 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                 allergens_list:   article.allergens_list || [],
                 additives:        article.additives || [],
                 notes:            article.notes || '',
-                packaging_units:  article.packaging_units || '',
-                packaging_size:   article.packaging_size || '',
-                order_unit:       article.order_unit || '',
                 deposit:          article.deposit || '',
                 deposit_type:     article.deposit_type || 'kein',
+            });
+
+
             });
         } else {
             setFormData(emptyForm);
@@ -182,11 +182,15 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
             // _pack_price_input ist ein UI-Hilfswert — nicht in die DB speichern
             const cleanSupplierDetails = formData.supplier_details.map(s => {
                 const { _pack_price_input, ...clean } = s;
-                return {
-                    ...clean,
-                    purchase_price: clean.purchase_price ? parseFloat(clean.purchase_price) : undefined,
-                    packaging_units: clean.packaging_units ? parseFloat(clean.packaging_units) : undefined,
-                };
+                const cleanOpts = (clean.packaging_options || []).map(opt => ({
+                    ...opt,
+                    units_per_pack:   opt.units_per_pack   !== '' ? parseFloat(opt.units_per_pack)   : undefined,
+                    price_per_pack:   opt.price_per_pack   !== '' ? parseFloat(opt.price_per_pack)   : undefined,
+                    price_per_unit:   opt.price_per_unit   != null ? parseFloat(opt.price_per_unit)  : undefined,
+                    min_order_qty:    opt.min_order_qty    !== '' ? parseFloat(opt.min_order_qty)    : undefined,
+                    deposit_per_unit: opt.deposit_per_unit !== '' ? parseFloat(opt.deposit_per_unit) : undefined,
+                }));
+                return { ...clean, packaging_options: cleanOpts, purchase_price: clean.purchase_price ? parseFloat(clean.purchase_price) : undefined };
             });
 
             const dataToSave = {
@@ -198,7 +202,6 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                 purchase_price:   finalPrice,
                 current_stock:    formData.current_stock !== '' ? parseFloat(formData.current_stock) : 0,
                 min_stock:        formData.min_stock !== ''     ? parseFloat(formData.min_stock)     : undefined,
-                packaging_units:  formData.packaging_units ? parseFloat(formData.packaging_units) : undefined,
                 deposit:          formData.deposit         ? parseFloat(formData.deposit)          : undefined,
             };
 
