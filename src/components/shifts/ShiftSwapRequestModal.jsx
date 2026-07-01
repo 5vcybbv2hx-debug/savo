@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { queueMutation } from '@/components/utils/offlineSync';
 
 const WHATSAPP_GROUP_LINK = 'https://chat.whatsapp.com/FrOmvmQFvvBJvqo4CJaBPA';
 
@@ -37,6 +38,13 @@ export default function ShiftSwapRequestModal({ shift, open, onOpenChange, onSuc
 
      const createMutation = useMutation({
          mutationFn: async (data) => {
+             if (!navigator.onLine) {
+                 // Offline: Anfrage wird gequeued und synct automatisch,
+                 // sobald das Geraet wieder online ist (z.B. im Keller/Lager).
+                 await queueMutation({ entityName: 'ShiftSwapRequest', type: 'create', data });
+                 return { _offline: true };
+             }
+
              await base44.entities.ShiftSwapRequest.create(data);
 
              if (data.marketplace) {
@@ -65,16 +73,22 @@ export default function ShiftSwapRequestModal({ shift, open, onOpenChange, onSuc
                  });
              }
          },
-         onSuccess: (_, variables) => {
+         onSuccess: (result, variables) => {
               queryClient.invalidateQueries(['shift-swap-requests']);
               queryClient.invalidateQueries(['available-shift-swaps']);
-              toast.success('Tauschanfrage wurde versendet');
               setFormData({ reason: '' });
               setTargetEmployeeId('');
               setMode('marketplace');
               // Fenster schließen
               onOpenChange?.(false);
               onSuccess?.();
+
+              if (result?._offline) {
+                  toast.success('Kein Netz — Anfrage wird automatisch gesendet, sobald du wieder online bist ⚡');
+                  return;
+              }
+
+              toast.success('Tauschanfrage wurde versendet');
               // WhatsApp-Gruppe öffnen mit vorbereiteter Nachricht
               const dateStr = format(parseISO(variables.shift_date), 'dd.MM.yyyy', { locale: de });
               const timeStr = `${variables.shift_start_time || ''} - ${variables.shift_end_time || ''}`;
