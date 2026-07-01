@@ -250,7 +250,13 @@ export default function EmployeeDashboard({ currentEmployee, isManager, onSwitch
     const usedVacationDays = approvedVacations.reduce((sum, v) => sum + (v.days_count || 0), 0);
     const remainingVacationDays = (currentEmployee.vacation_days_per_year || 0) - usedVacationDays;
 
-    const activeClockEntry = clockEntries.find(e => e.employee_id === currentEmployee.id && e.status === 'clocked_in');
+    const activeClockEntry = (() => {
+        const e = clockEntries.find(e => e.employee_id === currentEmployee.id && (e.status === 'clocked_in' || e.status === 'on_break'));
+        // war zuvor nur 'clocked_in' — Mitarbeiter in Pause fielen sonst komplett
+        // aus der aktiven Stempelung raus (Buttons verschwanden waehrend der Pause)
+        if (!e) return undefined;
+        return { ...e, breaks: Array.isArray(e.breaks) ? e.breaks : [] };
+    })();
 
     // Stationsplan
     const { data: todayPlans = [] } = useQuery({
@@ -371,10 +377,17 @@ export default function EmployeeDashboard({ currentEmployee, isManager, onSwitch
                         </div>
                         <div>
                             {activeClockEntry ? (
-                                <>
-                                    <p className="text-foreground font-semibold">Eingestempelt</p>
-                                    <p className="text-green-400 text-sm">Seit {format(new Date(activeClockEntry.clock_in), 'HH:mm')} • {getWorkingDuration(activeClockEntry.clock_in)}</p>
-                                </>
+                                activeClockEntry.status === 'on_break' ? (
+                                    <>
+                                        <p className="text-foreground font-semibold">In Pause</p>
+                                        <p className="text-amber-400 text-sm">Seit {format(new Date(activeClockEntry.clock_in), 'HH:mm')} • {getWorkingDuration(activeClockEntry.clock_in)}</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-foreground font-semibold">Eingestempelt</p>
+                                        <p className="text-green-400 text-sm">Seit {format(new Date(activeClockEntry.clock_in), 'HH:mm')} • {getWorkingDuration(activeClockEntry.clock_in)}</p>
+                                    </>
+                                )
                             ) : (
                                 <>
                                     <p className="text-foreground font-semibold">Nicht eingestempelt</p>
@@ -387,7 +400,7 @@ export default function EmployeeDashboard({ currentEmployee, isManager, onSwitch
                         {activeClockEntry ? (
                             <>
                                 <Button onClick={() => pauseMutation.mutate(activeClockEntry.id)} disabled={pauseMutation.isPending} className="bg-amber-600 hover:bg-amber-700 gap-2">
-                                    <Pause className="w-4 h-4" /> Pause
+                                    <Pause className="w-4 h-4" /> {activeClockEntry.status === 'on_break' ? 'Pause beenden' : 'Pause'}
                                 </Button>
                                 <Button onClick={() => clockOutMutation.mutate(activeClockEntry.id)} disabled={clockOutMutation.isPending} className="flex-1 bg-red-600 hover:bg-red-700 gap-2">
                                     <LogOut className="w-4 h-4" /> Ausstempeln
