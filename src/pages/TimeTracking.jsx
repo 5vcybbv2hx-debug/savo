@@ -30,6 +30,7 @@ import MonthlyReportExport from '@/components/timetracking/MonthlyReportExport';
 import PayrollReportSender from '@/components/reports/PayrollReportSender';
 import { validateArbZG, formatWarnings } from '@/components/timetracking/ArbZGValidator';
 import { fetchUntilDateCovered } from '@/lib/adaptiveFetch';
+import { calcTotalBreakMinutes, calcLegalBreak } from '@/lib/timeTrackingHelpers';
 
 const statusConfig = {
     'entwurf':     { label: 'Entwurf',     color: 'bg-slate-500/15 text-muted-foreground/50 dark:text-muted-foreground', icon: FileText },
@@ -38,20 +39,6 @@ const statusConfig = {
     'genehmigt':   { label: 'Genehmigt',   color: 'bg-green-500/15 text-green-600 dark:text-green-400',                  icon: CheckCircle2 },
 };
 
-/**
- * Berechnet die gesamte Pausenzeit in Minuten aus einem breaks-Array.
- * Laufende Pausen (end === null) werden bis zur aktuellen Zeit berechnet.
- */
-function calcTotalBreakMinutes(breaks) {
-    if (!Array.isArray(breaks) || breaks.length === 0) return 0;
-    const now = new Date();
-    return breaks.reduce((sum, b) => {
-        if (!b?.start) return sum;
-        const start = new Date(b.start);
-        const end = b.end ? new Date(b.end) : now;
-        return sum + Math.max(0, differenceInMinutes(end, start));
-    }, 0);
-}
 
 export default function TimeTracking() {
     const queryClient = useQueryClient();
@@ -246,13 +233,6 @@ export default function TimeTracking() {
             }
         },
     });
-
-    const calcLegalBreak = (workMinutes) => {
-        const h = workMinutes / 60;
-        if (h > 9) return 45;
-        if (h > 6) return 30;
-        return 0;
-    };
 
     const clockOutMutation = useMutation({
         mutationFn: async (entryId) => {
