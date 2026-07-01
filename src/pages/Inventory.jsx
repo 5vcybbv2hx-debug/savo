@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
 import { ClipboardCheck, Camera, Save, RotateCcw, Search, AlertTriangle, Cloud, CloudOff, Plus, Minus } from 'lucide-react';
@@ -85,40 +86,72 @@ export default function Inventory() {
             });
 
             const totalDiff = countsData.reduce((sum, c) => sum + Math.abs(c.difference), 0);
-
-            // ── Bestand zurückschreiben ───────────────────────────────
-            const updatePromises = countsData
-                .filter(c => c.difference !== 0)  // nur Artikel mit Abweichung
-                .map(c => base44.entities.Article.update(c.article_id, {
-                    current_stock: c.counted_stock
-                }));
-            await Promise.all(updatePromises);
-
-            return base44.entities.InventorySession.create({
+            const changed = countsData.filter(c => c.difference !== 0); // nur Artikel mit Abweichung
+            const sessionPayload = {
                 date: new Date().toISOString(),
                 counted_by: user.full_name,
                 counts: countsData,
                 total_items: countsData.length,
                 total_difference: totalDiff
-            });
+            };
+
+            // ⚠️ Nach 30-60 Minuten Zählen im Keller darf der finale "Abschließen"-Tap
+            // nicht an einem WLAN-Hänger scheitern — sonst muss alles neu gezählt
+            // wirken, obwohl die Daten eigentlich nur nicht hochgeladen wurden.
+            let offline = !navigator.onLine;
+            if (!offline) {
+                try {
+                    await Promise.all(changed.map(c => base44.entities.Article.update(c.article_id, {
+                        current_stock: c.counted_stock
+                    })));
+                    await base44.entities.InventorySession.create(sessionPayload);
+                } catch (err) {
+                    offline = true;
+                }
+            }
+            if (offline) {
+                for (const c of changed) {
+                    await queueMutation({ entityName: 'Article', type: 'update', id: c.article_id, data: { current_stock: c.counted_stock } });
+                }
+                await queueMutation({ entityName: 'InventorySession', type: 'create', data: sessionPayload });
+            }
+
+            return { result: sessionPayload, offline };
         },
-        onSuccess: (result) => {
+        onSuccess: ({ result, offline }) => {
             setCounts({});
             setActiveArticle(null);
             localStorage.removeItem('inventory_offline_counts');
-            queryClient.invalidateQueries({ queryKey: ['articles'] });
+            if (!offline) {
+                queryClient.invalidateQueries({ queryKey: ['articles'] });
+            }
             queryClient.setQueryData(['inventory-sessions'], (old) => {
                 return old ? [...old, result] : [result];
             });
             const corrected = (result?.counts || []).filter(c => c.difference !== 0).length;
-            toast.success(corrected > 0
-                ? `Inventur abgeschlossen — ${corrected} Bestände wurden korrigiert`
-                : 'Inventur abgeschlossen — Keine Abweichungen');
+            if (offline) {
+                toast.success('Inventur gespeichert (offline) ⚡ — wird synchronisiert sobald wieder online');
+            } else {
+                toast.success(corrected > 0
+                    ? `Inventur abgeschlossen — ${corrected} Bestände wurden korrigiert`
+                    : 'Inventur abgeschlossen — Keine Abweichungen');
+            }
         },
         onError: (error) => {
             toast.error('Fehler beim Speichern: ' + error.message);
         }
     });
+
+    // Beim Reconnect automatisch gequeute Inventur-Daten nachsynchen
+    useEffect(() => {
+        const handleOnline = () => {
+            syncMutations(base44)
+                .then(() => queryClient.invalidateQueries({ queryKey: ['articles'] }))
+                .catch(console.error);
+        };
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, [queryClient]);
 
     const { data: currentUser } = useQuery({
         queryKey: ['user'],
