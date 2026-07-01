@@ -85,7 +85,6 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
         allergens: '', allergens_list: [], additives: [],
         notes: '', unit: '', quantity: '', content_amount: '', content_unit: '',
         deposit: '', deposit_type: 'kein',
-        deposit: '', deposit_type: 'kein',
     };
 
     const [formData, setFormData] = useState(emptyForm);
@@ -118,9 +117,6 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                 notes:            article.notes || '',
                 deposit:          article.deposit || '',
                 deposit_type:     article.deposit_type || 'kein',
-            });
-
-
             });
         } else {
             setFormData(emptyForm);
@@ -176,9 +172,8 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
         try {
             const suppliersArray = formData.supplier_details.map(s => s.supplier_name).filter(Boolean);
             const primary = formData.supplier_details.find(s => s.is_primary) || formData.supplier_details[0];
-            const primary = formData.supplier_details.find(s => s.is_primary) || formData.supplier_details[0];
             const defaultOpt = (primary?.packaging_options || []).find(o => o.is_default) || (primary?.packaging_options || [])[0];
-            const primaryPrice = (defaultOpt?.price_per_unit != null ? parseFloat(defaultOpt.price_per_unit)
+            const finalPrice = (defaultOpt?.price_per_unit != null ? parseFloat(defaultOpt.price_per_unit)
                 : primary?.purchase_price ? parseFloat(primary.purchase_price) : null);
 
             // _pack_price_input ist ein UI-Hilfswert — nicht in die DB speichern
