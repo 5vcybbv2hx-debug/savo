@@ -435,25 +435,36 @@ export default function Shopping() {
     const handleWareneingangConfirm = async ({ deliveredQty, note }) => {
         const item = wareneingangItem;
         const now  = new Date().toISOString();
+
+        // Gebinde → Einzeleinheiten berechnen
+        const article = articles.find(a => a.id === item.article_id || a.name === item.item_name);
+        const primarySupplier = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
+        const usedOpt = (primarySupplier?.packaging_options || []).find(o => o.id === item.packaging_option_id)
+            || (primarySupplier?.packaging_options || []).find(o => o.is_default)
+            || null;
+        const unitsPerPack = parseFloat(usedOpt?.units_per_pack) || 1;
+        const deliveredUnits = deliveredQty * unitsPerPack;
+
         await updateMutation.mutateAsync({
             id: item.id,
             data: {
                 ...item,
-                status: 'erhalten',
+                status:             'erhalten',
                 delivered_quantity: deliveredQty,
-                received_at: now,
-                delivery_note: note || null,
+                delivered_units:    deliveredUnits,
+                received_at:        now,
+                delivery_note:      note || null,
             }
         });
 
-        // Lagerbestand automatisch erhöhen wenn Artikel verknüpft
-        if (item.article_id && deliveredQty > 0) {
-            const article = articles.find(a => a.id === item.article_id || a.name === item.item_name);
+        // Lagerbestand erhöhen (in Einzeleinheiten)
+        if (item.article_id && deliveredUnits > 0) {
             if (article) {
-                const newStock = (parseFloat(article.current_stock) || 0) + deliveredQty;
+                const newStock = (parseFloat(article.current_stock) || 0) + deliveredUnits;
                 await base44.entities.Article.update(article.id, { current_stock: newStock });
                 queryClient.invalidateQueries({ queryKey: ['articles'] });
-                toast.success(`Lagerbestand ${article.name}: +${deliveredQty} → ${newStock}`);
+                const packLabel = usedOpt ? `${deliveredQty}× ${usedOpt.packaging_type}` : `${deliveredUnits} Stück`;
+                toast.success(`${article.name}: +${packLabel} → ${newStock} ${article.content_unit || 'Stück'} im Lager`);
             }
         }
 
