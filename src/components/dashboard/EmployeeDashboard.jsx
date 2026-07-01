@@ -411,7 +411,7 @@ export default function EmployeeDashboard({ currentEmployee, isManager, onSwitch
                                 <LogIn className="w-4 h-4" /> Einstempeln
                             </Button>
                         )}
-                        <Link to={createPageUrl('TerminalClock')} className="flex-1">
+                        <Link to={createPageUrl('TimeTracking')} className="flex-1">
                             <Button variant="outline" className="w-full">Details</Button>
                         </Link>
                     </div>
