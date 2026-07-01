@@ -443,9 +443,54 @@ export default function Recipes() {
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.Recipe.update(id, data),
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['recipes'] }); closeModal(); toast.success('Rezept gespeichert'); },
-        onError:   e => toast.error('Fehler: ' + (e?.message || 'Unbekannt')),
+        mutationFn: async ({ id, data }) => {
+            // ── 1. Rezept speichern ──────────────────────────────────────────
+            const updated = await base44.entities.Recipe.update(id, data);
+
+            // ── 2. Verknüpfte MenuItems synchronisieren ──────────────────────
+            try {
+                const allMenuItems = await base44.entities.MenuItem.list('name', 500);
+                const linked = allMenuItems.filter(mi => mi.linked_recipe_id === id);
+                if (linked.length > 0) {
+                    // EK-Preis aus Rezept-Zutaten neu berechnen
+                    const allArticles = await base44.entities.Article.list('name', 500);
+                    const calcEK = (ingredients) => {
+                        if (!ingredients?.length) return null;
+                        return ingredients.reduce((sum, ing) => {
+                            const art = allArticles.find(a => a.id === ing.article_id);
+                            return sum + (art?.purchase_price || 0) * (parseFloat(ing.amount) || 0);
+                        }, 0);
+                    };
+                    const newEK = calcEK(data.ingredients);
+                    // Allergen-Liste aus Rezept-Zutaten aggregieren
+                    const mergedAllergens = [...new Set(
+                        (data.ingredients || []).flatMap(ing => {
+                            const art = allArticles.find(a => a.id === ing.article_id);
+                            return art?.allergens_list || [];
+                        })
+                    )];
+                    const syncData = {
+                        ...(data.name && { name: data.name }),
+                        ...(newEK !== null && { purchase_price: newEK }),
+                        ...(mergedAllergens.length > 0 && { allergens_list: mergedAllergens }),
+                        ...(data.alcohol_content != null && { alcohol_content: data.alcohol_content }),
+                    };
+                    await Promise.all(linked.map(mi =>
+                        base44.entities.MenuItem.update(mi.id, syncData)
+                    ));
+                }
+            } catch (syncErr) {
+                console.warn('[Recipes] MenuItem-Sync fehlgeschlagen:', syncErr);
+            }
+            return updated;
+        },
+        onSuccess: (_, vars) => {
+            queryClient.invalidateQueries({ queryKey: ['recipes'] });
+            queryClient.invalidateQueries({ queryKey: ['menu-items'] });
+            closeModal();
+            toast.success('Rezept gespeichert & Karte aktualisiert');
+        },
+        onError: e => toast.error('Fehler: ' + (e?.message || 'Unbekannt')),
     });
 
     const deleteMutation = useMutation({
