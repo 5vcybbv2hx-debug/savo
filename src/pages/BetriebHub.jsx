@@ -50,7 +50,7 @@ export default function BetriebHub() {
 
     const { data: todos = [] } = useQuery({
         queryKey: ['todos-open-today'],
-        queryFn: () => base44.entities.Todo.filter({ status: 'open' }, '-created_date', 100),
+        queryFn: () => base44.entities.TodoItem.filter({ is_archived: false }, '-created_date', 100),
         staleTime: STALE.MEDIUM,
         enabled: permissions.canViewTodos,
     });
