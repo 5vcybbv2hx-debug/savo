@@ -610,7 +610,7 @@ export default function Shopping() {
 
         openOrderItems.forEach(item => {
             const article = articles.find(a => a.name === item.item_name);
-            const price = article?.purchase_price || article?.supplier_details?.[0]?.purchase_price;
+            const price = item.price_per_unit || article?.purchase_price || article?.supplier_details?.find(s=>s.is_primary)?.purchase_price || article?.supplier_details?.[0]?.purchase_price;
             if (price) {
                 const qty = parseFloat(item.quantity) || 1;
                 const lineNet = price * qty;
@@ -630,7 +630,7 @@ export default function Shopping() {
 
     const getUnitPrice = (item) => {
         const article = articles.find(a => a.name === item.item_name);
-        return article?.purchase_price || article?.supplier_details?.[0]?.purchase_price || null;
+        return item?.price_per_unit || article?.purchase_price || article?.supplier_details?.find(s=>s.is_primary)?.purchase_price || article?.supplier_details?.[0]?.purchase_price || null;
     };
 
     // Tab-Counts
