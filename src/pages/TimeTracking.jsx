@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     format, startOfMonth, endOfMonth, parseISO,
@@ -208,16 +209,40 @@ export default function TimeTracking() {
             const alreadyActive = clockEntries.find(
                 e => e.employee_id === employeeId && (e.status === 'clocked_in' || e.status === 'on_break')
             );
-            if (alreadyActive) return alreadyActive;
+            if (alreadyActive) return { entry: alreadyActive, offline: false };
             const employee = allEmployees.find(e => e.id === employeeId);
-            return base44.entities.ClockEntry.create({
+            const payload = {
                 employee_id: employeeId,
                 employee_name: employee.name,
                 clock_in: new Date().toISOString(),
                 status: 'clocked_in',
-            });
+            };
+            // ⚠️ Stempeluhr MUSS auch bei WLAN-Ausfall im Laden funktionieren —
+            // Einstempeln darf nie an einem Netzwerk-Hänger scheitern.
+            if (!navigator.onLine) {
+                await queueMutation({ entityName: 'ClockEntry', type: 'create', data: payload });
+                return { entry: { ...payload, id: `offline-${Date.now()}`, _offline: true }, offline: true };
+            }
+            try {
+                const created = await base44.entities.ClockEntry.create(payload);
+                return { entry: created, offline: false };
+            } catch (err) {
+                // Netzwerk brach genau beim Klick weg -> nicht verlieren, sondern queuen
+                await queueMutation({ entityName: 'ClockEntry', type: 'create', data: payload });
+                return { entry: { ...payload, id: `offline-${Date.now()}`, _offline: true }, offline: true };
+            }
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clockEntries'] }),
+        onSuccess: ({ entry, offline }) => {
+            if (offline) {
+                queryClient.setQueryData(
+                    ['clockEntries', currentEmployee?.id, permissions.isManager, format(selectedMonth, 'yyyy-MM')],
+                    (old = []) => [...old, entry]
+                );
+                toast.success('Eingestempelt (offline) ⚡ — wird synchronisiert sobald wieder online');
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['clockEntries'] });
+            }
+        },
     });
 
     const calcLegalBreak = (workMinutes) => {
