@@ -8,11 +8,17 @@ import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isF
 import { de } from 'date-fns/locale';
 import {
     Calendar, Clock, CheckSquare, CheckCircle2, Users, Sparkles, BookOpen, Wine,
-    LogIn, LogOut, Umbrella, GraduationCap, AlertCircle, Pause, MapPin, Briefcase
+    LogIn, LogOut, Umbrella, GraduationCap, AlertCircle, Pause, MapPin, Briefcase,
+    Clock3, Coffee, Euro
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import { toast } from 'sonner';
+import { queueMutation } from '@/components/utils/offlineSync';
+import { calcTotalBreakMinutes, calcLegalBreak } from '@/lib/timeTrackingHelpers';
 import TodayOverview from '@/components/dashboard/TodayOverview';
 import FirstStepsTour from '@/components/onboarding/FirstStepsTour';
 import { InteractiveTour, useTour } from '@/components/onboarding/InteractiveTour';
@@ -23,6 +29,7 @@ import PendingSwapRequestsCard from '@/components/shifts/PendingSwapRequestsCard
 export default function EmployeeDashboard({ currentEmployee, isManager, onSwitchToManager }) {
     const queryClient = useQueryClient();
     const [showOnboardingTour, setShowOnboardingTour] = useState(false);
+    const [shiftSummary, setShiftSummary] = useState(null);
     const { showTour, completeTour, skipTour } = useTour();
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -84,26 +91,65 @@ export default function EmployeeDashboard({ currentEmployee, isManager, onSwitch
         initialData: []
     });
 
+    // ⚠️ Stempeluhr MUSS auch bei WLAN-Ausfall im Laden funktionieren —
+    // Ein-/Ausstempeln darf nie an einem Netzwerk-Haenger scheitern. Diese
+    // Mutationen sind bewusst 1:1 mit TimeTracking.jsx synchron gehalten
+    // (gleiche Pausen-Array-Logik, gleiche Verdienst-Berechnung), damit es
+    // keinen Unterschied macht, ob ein Mitarbeiter hier auf dem Dashboard
+    // oder auf der TimeTracking-Seite stempelt.
+    const applyClockEntryUpdate = async (entryId, data) => {
+        if (!navigator.onLine) {
+            await queueMutation({ entityName: 'ClockEntry', type: 'update', id: entryId, data });
+        } else {
+            try {
+                await base44.entities.ClockEntry.update(entryId, data);
+            } catch (err) {
+                await queueMutation({ entityName: 'ClockEntry', type: 'update', id: entryId, data });
+            }
+        }
+        queryClient.setQueryData(['clock-entries', currentEmployee?.id], (old = []) =>
+            old.map(e => e.id === entryId ? { ...e, ...data } : e)
+        );
+    };
+
     const clockInMutation = useMutation({
-        mutationFn: async () => base44.entities.ClockEntry.create({
-            employee_id: currentEmployee.id,
-            employee_name: currentEmployee.name,
-            clock_in: new Date().toISOString(),
-            status: 'clocked_in'
-        }),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clock-entries'] })
+        mutationFn: async () => {
+            const payload = {
+                employee_id: currentEmployee.id,
+                employee_name: currentEmployee.name,
+                clock_in: new Date().toISOString(),
+                status: 'clocked_in',
+                breaks: [],
+            };
+            if (!navigator.onLine) {
+                await queueMutation({ entityName: 'ClockEntry', type: 'create', data: payload });
+                return { offline: true };
+            }
+            try {
+                await base44.entities.ClockEntry.create(payload);
+                return { offline: false };
+            } catch (err) {
+                await queueMutation({ entityName: 'ClockEntry', type: 'create', data: payload });
+                return { offline: true };
+            }
+        },
+        onSuccess: ({ offline }) => {
+            queryClient.invalidateQueries({ queryKey: ['clock-entries'] });
+            if (offline) toast.success('Eingestempelt (offline) ⚡ — wird synchronisiert sobald wieder online');
+        }
     });
 
     const pauseMutation = useMutation({
         mutationFn: async (entryId) => {
             const entry = clockEntries.find(e => e.id === entryId);
-            const newStatus = entry.status === 'clocked_in' ? 'on_break' : 'clocked_in';
-            const timestamp = new Date().toISOString();
-            const field = newStatus === 'on_break' ? 'pause_start' : 'pause_end';
-            
-            await base44.entities.ClockEntry.update(entryId, {
-                status: newStatus,
-                [field]: timestamp
+            const currentBreaks = entry.breaks || [];
+            const onBreak = entry.status === 'on_break';
+            const updatedBreaks = onBreak
+                ? currentBreaks.map((b, i, arr) => (i === arr.length - 1 && !b.end) ? { ...b, end: new Date().toISOString() } : b)
+                : [...currentBreaks, { start: new Date().toISOString(), end: null }];
+            await applyClockEntryUpdate(entryId, {
+                status: onBreak ? 'clocked_in' : 'on_break',
+                breaks: updatedBreaks,
             });
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clock-entries'] })
@@ -112,30 +158,60 @@ export default function EmployeeDashboard({ currentEmployee, isManager, onSwitch
     const clockOutMutation = useMutation({
         mutationFn: async (entryId) => {
             const entry = clockEntries.find(e => e.id === entryId);
+            if (!entry) return null;
             const clockOutTime = new Date();
             const totalMinutes = differenceInMinutes(clockOutTime, new Date(entry.clock_in));
-            const totalHours = Math.round((totalMinutes / 60) * 100) / 100;
-            await base44.entities.ClockEntry.update(entryId, {
+            const actualBreakMinutes = calcTotalBreakMinutes(entry.breaks);
+            const breakMinutes = Math.max(actualBreakMinutes, calcLegalBreak(totalMinutes));
+            const workedMinutes = totalMinutes - breakMinutes;
+            const workedHours = (workedMinutes / 60).toFixed(2);
+            const hourlyRate = currentEmployee?.hourly_rate;
+            const earned = hourlyRate ? (workedHours * hourlyRate).toFixed(2) : null;
+
+            const clockEntryUpdate = {
                 clock_out: clockOutTime.toISOString(),
-                break_minutes: 0,
-                total_hours: totalHours,
-                status: 'clocked_out'
-            });
-            await base44.entities.TimeEntry.create({
+                status: 'clocked_out',
+                total_minutes: workedMinutes,
+                break_minutes: breakMinutes,
+                breaks: entry.breaks,
+            };
+            const timeEntryPayload = {
                 employee_id: entry.employee_id,
                 employee_name: entry.employee_name,
                 date: format(new Date(entry.clock_in), 'yyyy-MM-dd'),
                 start_time: format(new Date(entry.clock_in), 'HH:mm'),
                 end_time: format(clockOutTime, 'HH:mm'),
-                break_minutes: 0,
-                total_hours: totalHours,
+                break_minutes: breakMinutes,
+                total_hours: parseFloat(workedHours),
                 notes: 'Automatisch von Stempeluhr übertragen',
                 status: 'eingereicht'
-            });
+            };
+
+            let offline = !navigator.onLine;
+            if (!offline) {
+                try {
+                    await base44.entities.ClockEntry.update(entryId, clockEntryUpdate);
+                    await base44.entities.TimeEntry.create(timeEntryPayload);
+                } catch (err) {
+                    offline = true;
+                }
+            }
+            if (offline) {
+                await queueMutation({ entityName: 'ClockEntry', type: 'update', id: entryId, data: clockEntryUpdate });
+                await queueMutation({ entityName: 'TimeEntry', type: 'create', data: timeEntryPayload });
+            }
+
+            return { workedHours, breakMinutes, earned, hourlyRate, offline,
+                clockIn: format(new Date(entry.clock_in), 'HH:mm'),
+                clockOut: format(clockOutTime, 'HH:mm') };
         },
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['clock-entries'] });
             queryClient.invalidateQueries({ queryKey: ['time-entries'] });
+            if (result) {
+                if (result.offline) toast.success('Ausgestempelt (offline) ⚡ — wird synchronisiert sobald wieder online');
+                setShiftSummary(result);
+            }
         }
     });
 
@@ -503,6 +579,42 @@ export default function EmployeeDashboard({ currentEmployee, isManager, onSwitch
             {showTour && (
                 <InteractiveTour onComplete={completeTour} onSkip={skipTour} />
             )}
+
+            {/* ── Schicht-Zusammenfassung nach dem Ausstempeln ────────────────── */}
+            <Sheet open={!!shiftSummary} onOpenChange={open => { if (!open) setShiftSummary(null); }}>
+                <SheetContent side="bottom" className="rounded-t-2xl pb-10 px-6 pt-6">
+                    {shiftSummary && (
+                        <div className="space-y-5">
+                            <div className="text-center space-y-1">
+                                <div className="text-4xl">✅</div>
+                                <h2 className="text-xl font-bold text-foreground">Schicht beendet</h2>
+                                <p className="text-sm text-muted-foreground">{shiftSummary.clockIn} – {shiftSummary.clockOut} Uhr</p>
+                            </div>
+                            <Separator />
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-muted rounded-xl p-4 text-center space-y-1">
+                                    <Clock3 className="w-5 h-5 mx-auto text-blue-500" />
+                                    <p className="text-2xl font-bold text-foreground">{shiftSummary.workedHours}h</p>
+                                    <p className="text-xs text-muted-foreground">Gearbeitet</p>
+                                </div>
+                                <div className="bg-muted rounded-xl p-4 text-center space-y-1">
+                                    <Coffee className="w-5 h-5 mx-auto text-amber-500" />
+                                    <p className="text-2xl font-bold text-foreground">{shiftSummary.breakMinutes} Min</p>
+                                    <p className="text-xs text-muted-foreground">Pause</p>
+                                </div>
+                                {shiftSummary.earned && (
+                                    <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1 col-span-2">
+                                        <Euro className="w-5 h-5 mx-auto text-emerald-500" />
+                                        <p className="text-3xl font-bold text-emerald-500">{shiftSummary.earned} €</p>
+                                        <p className="text-xs text-muted-foreground">Verdient ({shiftSummary.hourlyRate} €/h)</p>
+                                    </div>
+                                )}
+                            </div>
+                            <Button className="w-full" onClick={() => setShiftSummary(null)}>Schließen</Button>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
