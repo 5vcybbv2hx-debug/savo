@@ -452,6 +452,12 @@ export default function AccountingLiabilities() {
         onError: () => toast.error('Fehler beim Löschen'),
     });
 
+    // Mapping auf die (etwas kleinere) Zahlungsart-Liste im Kassenbuch —
+    // Lastschrift existiert dort nicht separat, ist aber wie Ueberweisung
+    // ein Bankvorgang.
+    const toCashbookPaymentMethod = pm =>
+        pm === 'Lastschrift' ? 'Überweisung' : (pm || 'Überweisung');
+
     const paymentMutation = useMutation({
         mutationFn: async data => {
             const payment = await base44.entities.LiabilityPayment.create(data);
@@ -466,14 +472,28 @@ export default function AccountingLiabilities() {
                     status:           newStatus,
                 });
             }
+            // Automatisch ins Kassenbuch buchen — sonst taucht die Zahlung
+            // nie im DATEV-Export auf (der liest nur Belege + Kassenbuch).
+            await base44.entities.CashbookEntry.create({
+                date:           data.payment_date,
+                entry_type:     'Ausgabe',
+                amount:         parseFloat(data.amount),
+                category:       liability?.category || 'Verbindlichkeiten',
+                description:    `Verbindlichkeit: ${liability?.title || liability?.creditor_name || ''}${data.reference ? ' — ' + data.reference : ''}`,
+                payment_method: toCashbookPaymentMethod(data.payment_method),
+                source:         'verbindlichkeit',
+                liability_payment_id: payment.id,
+                status:         'gebucht',
+            });
             return payment;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['liabilities'] });
             queryClient.invalidateQueries({ queryKey: ['liability-payments'] });
+            queryClient.invalidateQueries({ queryKey: ['cashbook-entries'] });
             setPayOpen(false);
             setPayData(EMPTY_PAYMENT);
-            toast.success('Zahlung verbucht');
+            toast.success('Zahlung verbucht — erscheint jetzt auch im DATEV-Export');
         },
         onError: () => toast.error('Fehler beim Verbuchen'),
     });
