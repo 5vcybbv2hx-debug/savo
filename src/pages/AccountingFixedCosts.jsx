@@ -393,18 +393,57 @@ export default function AccountingFixedCosts() {
             : createExpenseMutation.mutate(data);
     };
 
-    const toggleStatus = occ => {
+    // Lastschrift existiert im Kassenbuch nicht separat, ist aber ein
+    // Bankvorgang wie Ueberweisung.
+    const toCashbookPaymentMethod = pm =>
+        pm === 'Lastschrift' ? 'Überweisung' : (pm || 'Überweisung');
+
+    // Bezahlt-Toggle bucht (bzw. storniert) jetzt automatisch einen
+    // Kassenbuch-Eintrag mit — sonst tauchen Fixkosten-Zahlungen nie im
+    // DATEV-Export auf (der liest nur Belege + Kassenbuch).
+    const toggleStatus = async occ => {
         const next = occ.status === 'bezahlt' ? 'erwartet' : 'bezahlt';
-        if (occ.id) {
-            updateOccurrenceMutation.mutate({ id: occ.id, data: { status: next } });
-        } else {
-            createOccurrenceMutation.mutate({
-                recurring_expense_id: occ.recurring_expense_id,
-                month: occ.month,
-                due_date: occ.due_date,
-                expected_amount: occ.expected_amount,
-                status: next,
-            });
+
+        try {
+            if (next === 'bezahlt') {
+                let occurrenceId = occ.id;
+                if (occurrenceId) {
+                    await updateOccurrenceMutation.mutateAsync({ id: occurrenceId, data: { status: next } });
+                } else {
+                    const created = await createOccurrenceMutation.mutateAsync({
+                        recurring_expense_id: occ.recurring_expense_id,
+                        month: occ.month,
+                        due_date: occ.due_date,
+                        expected_amount: occ.expected_amount,
+                        status: next,
+                    });
+                    occurrenceId = created.id;
+                }
+
+                await base44.entities.CashbookEntry.create({
+                    date:           occ.due_date || format(new Date(), 'yyyy-MM-dd'),
+                    entry_type:     'Ausgabe',
+                    amount:         parseFloat(occ.actual_amount || occ.expected_amount || 0),
+                    category:       occ._expense?.category || 'Fixkosten',
+                    description:    `Fixkosten: ${occ._expense?.title || occ._expense?.supplier_name || ''}`,
+                    payment_method: toCashbookPaymentMethod(occ._expense?.payment_method),
+                    source:         'fixkosten',
+                    recurring_expense_occurrence_id: occurrenceId,
+                    status:         'gebucht',
+                });
+                queryClient.invalidateQueries({ queryKey: ['cashbook-entries'] });
+                toast.success('Als bezahlt markiert — im DATEV-Export erfasst');
+            } else {
+                if (occ.id) {
+                    await updateOccurrenceMutation.mutateAsync({ id: occ.id, data: { status: next } });
+                    // verknuepften Kassenbuch-Eintrag wieder entfernen
+                    const linked = await base44.entities.CashbookEntry.filter({ recurring_expense_occurrence_id: occ.id });
+                    await Promise.all(linked.map(e => base44.entities.CashbookEntry.delete(e.id)));
+                    queryClient.invalidateQueries({ queryKey: ['cashbook-entries'] });
+                }
+            }
+        } catch (err) {
+            toast.error('Fehler beim Verbuchen: ' + err.message);
         }
     };
 
