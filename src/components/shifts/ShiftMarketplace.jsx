@@ -48,9 +48,15 @@ export function ShiftMarketplace() {
         queryKey: ['marketplaceShifts'],
         queryFn: async () => {
             if (openRequests.length === 0) return [];
-            const shiftIds = openRequests.map(r => r.shift_id);
-            const allShifts = await base44.entities.Shift.filter({});
-            return allShifts.filter(s => shiftIds.includes(s.id));
+            // ⚠️ War Shift.filter({}) ohne Limit — bei 750+ Schichten im System
+            // konnten benoetigte Schichten ausserhalb des SDK-Default-Batches
+            // fehlen und gar nicht im Marktplatz erscheinen. Jetzt gezielt
+            // pro ID geladen — unabhaengig von der Tabellengroesse korrekt.
+            const shiftIds = [...new Set(openRequests.map(r => r.shift_id))];
+            const results = await Promise.all(
+                shiftIds.map(id => base44.entities.Shift.filter({ id }))
+            );
+            return results.flat();
         },
         enabled: openRequests.length > 0,
     });
