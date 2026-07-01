@@ -2,174 +2,68 @@
   "name": "Article",
   "type": "object",
   "properties": {
-    "barcode": {
-      "type": "string",
-      "description": "Barcode/EAN"
-    },
-    "qr_code": {
-      "type": "string",
-      "description": "QR-Code (optional, für interne Kennzeichnung)"
-    },
-    "name": {
-      "type": "string",
-      "description": "Artikelname"
-    },
-    "manufacturer": {
-      "type": "string",
-      "description": "Hersteller / Marke (optional)"
-    },
-    "category": {
-      "type": "string",
-      "description": "Kategorie"
-    },
+    "barcode": { "type": "string", "description": "Barcode/EAN" },
+    "qr_code": { "type": "string", "description": "QR-Code (optional)" },
+    "name": { "type": "string", "description": "Artikelname" },
+    "manufacturer": { "type": "string", "description": "Hersteller / Marke" },
+    "category": { "type": "string", "description": "Kategorie" },
     "suppliers": {
       "type": "array",
-      "items": {
-        "type": "string"
-      },
+      "items": { "type": "string" },
       "description": "Liste der Lieferantennamen (Rückwärtskompatibilität)"
     },
     "supplier_details": {
       "type": "array",
-      "description": "Lieferanten mit Preisen und Details",
+      "description": "Lieferanten mit Preisen und Gebinde-Optionen",
       "items": {
         "type": "object",
         "properties": {
-          "supplier_name": {
-            "type": "string"
+          "supplier_name":  { "type": "string" },
+          "article_number": { "type": "string", "description": "Art.-Nr. beim Lieferanten" },
+          "notes":          { "type": "string", "description": "Lieferanten-Notiz" },
+          "is_primary":     { "type": "boolean", "description": "Hauptlieferant" },
+          "packaging_options": {
+            "type": "array",
+            "description": "Gebinde-Optionen: verschiedene Packungsgrößen mit je eigenem Preis",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id":             { "type": "string",  "description": "UUID für diese Option" },
+                "label":          { "type": "string",  "description": "Anzeigename, z.B. '6er Karton' oder 'Kiste 20×'" },
+                "packaging_type": { "type": "string",  "description": "Typ: Karton, Kiste, Palette, Fass, Pack, Stück …" },
+                "units_per_pack": { "type": "number",  "description": "Anzahl Einzeleinheiten pro Gebinde, z.B. 6 oder 20" },
+                "price_per_pack": { "type": "number",  "description": "Einkaufspreis pro Gebinde (brutto)" },
+                "price_per_unit": { "type": "number",  "description": "Automatisch berechnet: price_per_pack ÷ units_per_pack" },
+                "is_default":     { "type": "boolean", "description": "Standard-Gebinde für Bestellungen" },
+                "min_order_qty":  { "type": "number",  "description": "Mindestbestellmenge in Gebinde-Einheiten" },
+                "deposit_per_unit":{ "type": "number", "description": "Pfand pro Einzeleinheit (€)" },
+                "deposit_type":   { "type": "string",  "enum": ["kein","einweg","mehrweg_flasche","mehrweg_kiste"], "default": "kein" }
+              }
+            }
           },
-          "purchase_price": {
-            "type": "number"
-          },
-          "article_number": {
-            "type": "string"
-          },
-          "packaging_info": {
-            "type": "string"
-          },
-          "notes": {
-            "type": "string"
-          },
-          "is_primary": {
-            "type": "boolean"
-          }
+          "purchase_price": { "type": "number", "description": "Legacy: Preis pro Einzeleinheit (Hauptlieferant, wird aus is_default Option berechnet)" },
+          "packaging_info": { "type": "string", "description": "Legacy-Freitext" }
         }
       }
     },
-    "content_unit": {
-      "type": "string",
-      "enum": [
-        "l",
-        "ml",
-        "kg",
-        "g",
-        "Stück"
-      ],
-      "default": "Stück",
-      "description": "Einheit des Inhalts"
-    },
-    "content_amount": {
-      "type": "number",
-      "description": "Inhaltsmenge (z.B. 0.7 für 0,7L Flasche)"
-    },
-    "purchase_price": {
-      "type": "number",
-      "description": "Einkaufspreis pro Einheit (Hauptlieferant)"
-    },
-    "tax_rate": {
-      "type": "number",
-      "enum": [
-        0,
-        7,
-        19
-      ],
-      "default": 19,
-      "description": "MwSt-Satz in % (0, 7 oder 19)"
-    },
-    "price_per_liter": {
-      "type": "number",
-      "description": "Umgerechneter Preis pro Liter/kg (automatisch berechnet)"
-    },
-    "current_stock": {
-      "type": "number",
-      "description": "Aktueller Bestand"
-    },
-    "min_stock": {
-      "type": "number",
-      "description": "Mindestbestand"
-    },
-    "shelf_id": {
-      "type": "string",
-      "description": "Regal-ID (z.B. A1, B2, C3)"
-    },
-    "storage_location": {
-      "type": "string",
-      "description": "Lagerort (z.B. Keller, Kühlraum)"
-    },
-    "image_url": {
-      "type": "string",
-      "description": "Bild-URL"
-    },
-    "allergens": {
-      "type": "string",
-      "description": "Allergene (Freitext, Legacy)"
-    },
-    "allergens_list": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Allergene (strukturiert)"
-    },
-    "additives": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Zusatzstoffe"
-    },
-    "notes": {
-      "type": "string",
-      "description": "Notizen"
-    },
-    "order": {
-      "type": "number",
-      "description": "Sortierreihenfolge innerhalb der Kategorie"
-    },
-    "is_active": {
-      "type": "boolean",
-      "default": true,
-      "description": "Aktiv"
-    },
-    "packaging_units": {
-      "type": "number",
-      "description": "Anzahl Einheiten im Gebinde (z.B. 24 für 24er Kiste)"
-    },
-    "packaging_size": {
-      "type": "string",
-      "description": "Gebinde-Typ (z.B. Kiste, Palette, Pack, Fass)"
-    },
-    "order_unit": {
-      "type": "string",
-      "description": "Bestelleinheit (z.B. Kiste, Fass, Palette, Stück)"
-    },
-    "deposit": {
-      "type": "number",
-      "description": "Pfand pro Einheit in € (z.B. 0.25 für Einwegflasche)"
-    },
-    "deposit_type": {
-      "type": "string",
-      "enum": [
-        "kein",
-        "einweg",
-        "mehrweg_flasche",
-        "mehrweg_kiste"
-      ],
-      "default": "kein",
-      "description": "Pfandtyp"
-    }
+    "content_unit":   { "type": "string", "enum": ["l","ml","kg","g","Stück"], "default": "Stück", "description": "Einheit des Inhalts" },
+    "content_amount": { "type": "number", "description": "Inhaltsmenge (z.B. 0.7 für 0,7L)" },
+    "purchase_price": { "type": "number", "description": "Einkaufspreis pro Einheit (aus Hauptlieferant/Standard-Gebinde)" },
+    "tax_rate":       { "type": "number", "enum": [0,7,19], "default": 19, "description": "MwSt-Satz %" },
+    "price_per_liter":{ "type": "number", "description": "Umgerechneter Preis pro Liter/kg (automatisch)" },
+    "current_stock":  { "type": "number", "description": "Aktueller Bestand (Einzeleinheiten)" },
+    "min_stock":      { "type": "number", "description": "Mindestbestand (Einzeleinheiten)" },
+    "shelf_id":       { "type": "string", "description": "Regal-ID" },
+    "storage_location":{ "type": "string", "description": "Lagerort" },
+    "image_url":      { "type": "string", "description": "Bild-URL" },
+    "allergens":      { "type": "string", "description": "Allergene (Legacy)" },
+    "allergens_list": { "type": "array", "items": { "type": "string" }, "description": "Allergene (strukturiert)" },
+    "additives":      { "type": "array", "items": { "type": "string" }, "description": "Zusatzstoffe" },
+    "notes":          { "type": "string", "description": "Notizen" },
+    "order":          { "type": "number", "description": "Sortierreihenfolge" },
+    "is_active":      { "type": "boolean", "default": true, "description": "Aktiv" },
+    "deposit":        { "type": "number", "description": "Pfand pro Einheit (€)" },
+    "deposit_type":   { "type": "string", "enum": ["kein","einweg","mehrweg_flasche","mehrweg_kiste"], "default": "kein" }
   },
-  "required": [
-    "name"
-  ]
+  "required": ["name"]
 }
