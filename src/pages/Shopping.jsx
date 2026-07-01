@@ -113,16 +113,25 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
                         </span>
                     )}
 
+                    {item.packaging_label && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/25 bg-primary/5 text-primary/80 shrink-0">
+                            {item.packaging_label}
+                        </Badge>
+                    )}
                     {item.category && (
                         <Badge variant="outline"
-                            className={cn('text-[10px] px-1.5 py-0 h-4 border', getSupplierColor(supplierIdx))}>
+                            className={cn('text-[10px] px-1.5 py-0 h-4 border shrink-0', getSupplierColor(supplierIdx))}>
                             {item.category}
                         </Badge>
                     )}
-                    {unitPrice && item.status === 'offen' && (
-                        <Badge variant="outline"
-                            className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400">
-                            {(unitPrice * (parseFloat(item.quantity) || 1)).toFixed(2)} €
+                    {item.price_per_pack && item.status === 'offen' && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400 tabular-nums shrink-0">
+                            {(parseFloat(item.price_per_pack) * (parseFloat(item.quantity) || 1)).toFixed(2)} € ges.
+                        </Badge>
+                    )}
+                    {!item.price_per_pack && unitPrice && item.status === 'offen' && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400 tabular-nums shrink-0">
+                            ~{(unitPrice * (parseFloat(item.quantity) || 1)).toFixed(2)} €
                         </Badge>
                     )}
                     {item.delivery_note && (
