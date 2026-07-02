@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Layers, ChevronRight, ChevronDown, Loader2, Package, Grid3x3, X, Link2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Layers, ChevronRight, ChevronDown, Loader2, Package, Grid3x3, X, Link2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fuzzySearch } from '@/lib/fuzzySearch';
@@ -38,7 +39,7 @@ function generateShortCode(areaName, furnitureName, slotName) {
 }
 
 // ── Inline Fach-Zeile ─────────────────────────────────────────────────────────
-function SlotRow({ slot, canEdit, onEdit, onDelete }) {
+function SlotRow({ slot, canEdit, onEdit, onDelete, onMoveUp, onMoveDown, canMoveUp, canMoveDown, index, totalSlots }) {
   return (
     <div
       className={cn(
@@ -56,6 +57,11 @@ function SlotRow({ slot, canEdit, onEdit, onDelete }) {
           <p className="text-[10px] font-mono text-muted-foreground">{slot.short_code}</p>
         )}
       </div>
+      {slot.restock_enabled === false && (
+        <Badge variant="outline" className="text-[9px] h-4 px-1 text-muted-foreground border-border/50">
+          Rundgang aus
+        </Badge>
+      )}
       {slot.capacity && (
         <Badge variant="outline" className="text-[10px] h-4 px-1 text-muted-foreground border-border/50">
           {slot.capacity} Pl.
@@ -63,6 +69,16 @@ function SlotRow({ slot, canEdit, onEdit, onDelete }) {
       )}
       {canEdit && (
         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            disabled={!canMoveUp}
+            onClick={() => onMoveUp(slot)}>
+            <ArrowUp className="w-3 h-3" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            disabled={!canMoveDown}
+            onClick={() => onMoveDown(slot)}>
+            <ArrowDown className="w-3 h-3" />
+          </Button>
           <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10"
             onClick={() => onDelete(slot)}>
             <Trash2 className="w-3 h-3" />
@@ -85,8 +101,8 @@ export default function StructureTab({ permissions }) {
   const [furModal,   setFurModal]   = useState({ open: false, data: null, areaId: '' });
   const [slotModal,  setSlotModal]  = useState({ open: false, data: null, furnitureId: '', areaId: '' });
   const [areaForm,   setAreaForm]   = useState({ name: '', description: '' });
-  const [furForm,    setFurForm]    = useState({ name: '', type: '', area_id: '', notes: '' });
-  const [slotForm,   setSlotForm]   = useState({ name: '', capacity: '', notes: '' });
+  const [furForm,    setFurForm]    = useState({ name: '', type: '', area_id: '', notes: '', restock_enabled: true });
+  const [slotForm,   setSlotForm]   = useState({ name: '', capacity: '', notes: '', restock_enabled: true });
 
   // Inline Artikel-Zuordnung im Fach-Dialog
   const [assignRows,           setAssignRows]           = useState([]);
@@ -123,6 +139,9 @@ export default function StructureTab({ permissions }) {
       if (!map[s.furniture_id]) map[s.furniture_id] = [];
       map[s.furniture_id].push(s);
     });
+    Object.values(map).forEach(arr =>
+      arr.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || ''))
+    );
     return map;
   }, [slots]);
 
@@ -185,6 +204,8 @@ export default function StructureTab({ permissions }) {
         capacity:       slotForm.capacity ? parseInt(slotForm.capacity) : null,
         notes:          slotForm.notes,
         is_active:      true,
+        restock_enabled: slotForm.restock_enabled !== false,
+        sort_order:     slotModal.data?.sort_order ?? 0,
       };
 
       const savedSlot = slotModal.data?.id
@@ -224,11 +245,33 @@ export default function StructureTab({ permissions }) {
     onError:   () => { toast.error('Löschen fehlgeschlagen'); setDeleteSlotTarget(null); },
   });
 
+  // ── Slot Sort Order (Rundgang-Reihenfolge) ───────────────────────────────────
+  const updateSlotSortMut = useMutation({
+    mutationFn: async ({ slot, direction, siblings }) => {
+      const idx = siblings.findIndex(s => s.id === slot.id);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= siblings.length) return;
+      const swapSlot = siblings[swapIdx];
+      const slotOrder = slot.sort_order ?? 0;
+      const swapOrder = swapSlot.sort_order ?? 0;
+      // Wenn beide gleich, verschiebe um 1 — sonst tausche
+      if (slotOrder === swapOrder) {
+        const newOrder = direction === 'up' ? slotOrder - 1 : slotOrder + 1;
+        await base44.entities.StorageSlot.update(slot.id, { sort_order: newOrder });
+      } else {
+        await base44.entities.StorageSlot.update(slot.id, { sort_order: swapOrder });
+        await base44.entities.StorageSlot.update(swapSlot.id, { sort_order: slotOrder });
+      }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['slots'] }); },
+    onError: () => toast.error('Sortierung konnte nicht geändert werden'),
+  });
+
   // ── Modal Opener ──────────────────────────────────────────────────────────────
   const openAddArea  = () => { setAreaForm({ name: '', description: '' }); setAreaModal({ open: true, data: null }); };
   const openEditArea = a  => { setAreaForm({ name: a.name, description: a.description || '' }); setAreaModal({ open: true, data: a }); };
-  const openAddFur   = areaId => { setFurForm({ name: '', type: '', area_id: areaId, notes: '' }); setFurModal({ open: true, data: null, areaId }); };
-  const openEditFur  = f  => { setFurForm({ name: f.name, type: f.type, area_id: f.area_id, notes: f.notes || '' }); setFurModal({ open: true, data: f, areaId: f.area_id }); };
+  const openAddFur   = areaId => { setFurForm({ name: '', type: '', area_id: areaId, notes: '', restock_enabled: true }); setFurModal({ open: true, data: null, areaId }); };
+  const openEditFur  = f  => { setFurForm({ name: f.name, type: f.type, area_id: f.area_id, notes: f.notes || '', restock_enabled: f.restock_enabled !== false }); setFurModal({ open: true, data: f, areaId: f.area_id }); };
   const resetAssignState = () => {
     setAssignRows([]);
     setDeletedAssignmentIds([]);
@@ -237,12 +280,12 @@ export default function StructureTab({ permissions }) {
   };
 
   const openAddSlot  = (furnitureId, areaId) => {
-    setSlotForm({ name: '', capacity: '', notes: '' });
+    setSlotForm({ name: '', capacity: '', notes: '', restock_enabled: true });
     resetAssignState();
     setSlotModal({ open: true, data: null, furnitureId, areaId });
   };
   const openEditSlot = s  => {
-    setSlotForm({ name: s.name, capacity: s.capacity || '', notes: s.notes || '' });
+    setSlotForm({ name: s.name, capacity: s.capacity || '', notes: s.notes || '', restock_enabled: s.restock_enabled !== false });
     const existing = assignments
       .filter(a => a.storage_slot_id === s.id && a.is_active !== false)
       .map(a => ({
@@ -406,13 +449,19 @@ export default function StructureTab({ permissions }) {
                               {furSlots.length === 0 && (
                                 <p className="px-6 py-2 text-[11px] text-muted-foreground/50">Noch keine Fächer</p>
                               )}
-                              {furSlots.map(slot => (
+                              {furSlots.map((slot, idx) => (
                                 <SlotRow
                                   key={slot.id}
                                   slot={slot}
                                   canEdit={canEdit}
                                   onEdit={openEditSlot}
                                   onDelete={setDeleteSlotTarget}
+                                  onMoveUp={(s) => updateSlotSortMut.mutate({ slot: s, direction: 'up', siblings: furSlots })}
+                                  onMoveDown={(s) => updateSlotSortMut.mutate({ slot: s, direction: 'down', siblings: furSlots })}
+                                  canMoveUp={idx > 0}
+                                  canMoveDown={idx < furSlots.length - 1}
+                                  index={idx}
+                                  totalSlots={furSlots.length}
                                 />
                               ))}
                               {canEdit && (
@@ -506,13 +555,20 @@ export default function StructureTab({ permissions }) {
               <Input className="h-9" placeholder="z.B. Nur Getränke"
                 value={furForm.notes} onChange={e => setFurForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
+            <div className="flex items-center justify-between pt-1 border-t border-border/50">
+              <Label className="text-xs text-muted-foreground">Im Auffüll-Rundgang anzeigen</Label>
+              <Switch
+                checked={furForm.restock_enabled !== false}
+                onCheckedChange={(v) => setFurForm(f => ({ ...f, restock_enabled: v }))}
+              />
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setFurModal({ open: false, data: null, areaId: '' })}>Abbrechen</Button>
             <Button onClick={() => {
               const area = areas.find(a => a.id === furForm.area_id);
               if (!furForm.name.trim() || !furForm.type || !area) { toast.error('Bitte alle Felder ausfüllen'); return; }
-              saveFurMut.mutate({ name: furForm.name.trim(), type: furForm.type, area_id: area.id, area_name: area.name, notes: furForm.notes, is_active: true });
+              saveFurMut.mutate({ name: furForm.name.trim(), type: furForm.type, area_id: area.id, area_name: area.name, notes: furForm.notes, is_active: true, restock_enabled: furForm.restock_enabled !== false });
             }} disabled={saveFurMut.isPending} className="bg-amber-600 hover:bg-amber-700 text-white">
               {saveFurMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
             </Button>
@@ -539,6 +595,14 @@ export default function StructureTab({ permissions }) {
               <Label className="text-xs text-muted-foreground">Notizen (optional)</Label>
               <Input className="h-9" placeholder="z.B. Nur Weißwein"
                 value={slotForm.notes} onChange={e => setSlotForm(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+
+            <div className="flex items-center justify-between pt-1 border-t border-border/50">
+              <Label className="text-xs text-muted-foreground">Im Auffüll-Rundgang anzeigen</Label>
+              <Switch
+                checked={slotForm.restock_enabled !== false}
+                onCheckedChange={(v) => setSlotForm(f => ({ ...f, restock_enabled: v }))}
+              />
             </div>
 
             {/* Inline Artikel-Zuordnung — optional, z.B. für Kühlschubladen mit fixem Soll-Bestand */}

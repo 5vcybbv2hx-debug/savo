@@ -10,12 +10,14 @@ import {
     ShoppingCart, AlertCircle, MapPin, ChevronRight
 } from 'lucide-react';
 import QuantityInputModal from '../components/restock/QuantityInputModal';
+import RundgangMode from '../components/restock/RundgangMode';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import BarcodeScanner from '../components/restock/BarcodeScanner';
+import { ClipboardList, ScanLine } from 'lucide-react';
 
 // ── Inline Toast ──────────────────────────────────────────────────────────────
 function Toast({ message, type = 'error', onDismiss }) {
@@ -98,6 +100,7 @@ export default function Restock() {
     const [confirmDialog, setConfirmDialog]       = useState(null);
     const [orderNudge, setOrderNudge]             = useState({});
     const [activeAreaId, setActiveAreaId]         = useState(null); // null = "Alle" als Fallback
+    const [mode, setMode]                         = useState('scan'); // 'scan' | 'rundgang'
 
     const showToast = (message, type = 'error') => setToast({ message, type });
 
@@ -458,12 +461,58 @@ export default function Restock() {
                             Auffüllliste
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            {openCount} offen · {completedCount} erledigt
-                            {activeArea && <span className="text-primary"> · {activeArea.name}</span>}
+                            {mode === 'scan' ? (
+                                <>{openCount} offen · {completedCount} erledigt
+                                {activeArea && <span className="text-primary"> · {activeArea.name}</span>}</>
+                            ) : (
+                                'Systematischer Rundgang durch alle Fächer'
+                            )}
                         </p>
                     </div>
                 </div>
 
+                {/* ── Modus-Umschalter ──────────────────────────────────── */}
+                <div className="flex gap-2 p-1 bg-card rounded-xl border border-border/60">
+                    <button
+                        onClick={() => setMode('scan')}
+                        className={cn(
+                            'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                            mode === 'scan'
+                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                        )}
+                    >
+                        <ScanLine className="w-4 h-4" />
+                        Scan
+                    </button>
+                    <button
+                        onClick={() => setMode('rundgang')}
+                        className={cn(
+                            'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                            mode === 'rundgang'
+                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                        )}
+                    >
+                        <ClipboardList className="w-4 h-4" />
+                        Rundgang
+                    </button>
+                </div>
+
+                {/* ── Rundgang-Modus ────────────────────────────────────── */}
+                {mode === 'rundgang' && (
+                    <RundgangMode
+                        restockItems={restockItems}
+                        articles={articles}
+                        createMutation={createMutation}
+                        updateMutation={updateMutation}
+                        showToast={showToast}
+                    />
+                )}
+
+                {/* ── Scan-Modus ────────────────────────────────────────── */}
+                {mode === 'scan' && (
+                <>
                 {/* ── Bereichs-Tabs ──────────────────────────────────────── */}
                 {areas.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
@@ -715,6 +764,8 @@ export default function Restock() {
                         </div>
                     )}
                 </div>
+                </>
+                )}
             </div>
 
             {/* ── Modals ────────────────────────────────────────────────── */}
