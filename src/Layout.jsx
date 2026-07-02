@@ -244,7 +244,7 @@ export default function Layout({ children, currentPageName }) {
         },
         {
             id: 'team', name: 'Team',
-            pages: additionalPages.filter(p => ['Employees','Calendar','TeamCalendar','TimeManagement','Vacation','MyShifts','ShiftSwaps','Permissions','TeamMeeting','Stationsplan'].includes(p.page))
+            pages: additionalPages.filter(p => ['Employees','Calendar','TeamCalendar','TimeManagement','Vacation','MyShifts','ShiftSwaps','PermissionsNew','TeamMeeting','Stationsplan'].includes(p.page))
         },
         {
             id: 'sonstiges', name: 'Einstellungen & Mehr',
