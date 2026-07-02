@@ -38,6 +38,7 @@ import LazyImage from '@/components/ui/lazy-image';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { getMenuItemSourceArticles, unionAllergensAdditives } from '@/lib/allergenSync';
 import { format } from 'date-fns';
 
 // ── Artikel-Zeile ─────────────────────────────────────────────────────────────
@@ -206,10 +207,45 @@ export default function Articles() {
             return { previous };
         },
         onError: (_, __, context) => queryClient.setQueryData(['articles'], context.previous),
-        onSuccess: (result) => {
+        onSuccess: async (result, variables) => {
             if (!result?.queued) queryClient.invalidateQueries({ queryKey: ['articles'] });
             setModalOpen(false);
             setSelectedArticle(null);
+
+            // Allergene/Zusatzstoffe des Artikels haben sich evtl. geändert
+            // → an alle Getränke kaskadieren, die diesen Artikel (direkt oder über ein Rezept) verwenden.
+            const articleId = variables?.id;
+            const changedAllergenFields = variables?.data && ('allergens_list' in variables.data || 'additives' in variables.data);
+            if (!result?.queued && articleId && changedAllergenFields) {
+                try {
+                    const [allArticles, allRecipes, allMenuItems] = await Promise.all([
+                        base44.entities.Article.list('name', 500),
+                        base44.entities.Recipe.list('name', 500),
+                        base44.entities.MenuItem.list('name', 500),
+                    ]);
+                    const affectedRecipeIds = new Set(
+                        allRecipes.filter(r =>
+                            (r.ingredients || []).some(ing => ing.article_id === articleId) ||
+                            (r.mix_variants || []).some(v => (v.ingredients || []).some(ing => ing.article_id === articleId))
+                        ).map(r => r.id)
+                    );
+                    const affected = allMenuItems.filter(mi =>
+                        (mi.use_recipe_calculation && affectedRecipeIds.has(mi.linked_recipe_id)) ||
+                        mi.linked_article_id === articleId ||
+                        (mi.linked_article_ids || []).includes(articleId)
+                    );
+                    if (affected.length > 0) {
+                        await Promise.all(affected.map(mi => {
+                            const sourceArticles = getMenuItemSourceArticles(mi, allArticles, allRecipes);
+                            const { allergens, additives } = unionAllergensAdditives(sourceArticles);
+                            return base44.entities.MenuItem.update(mi.id, { allergens_list: allergens, additives });
+                        }));
+                        queryClient.invalidateQueries({ queryKey: ['menu-items'] });
+                    }
+                } catch (syncErr) {
+                    console.warn('[Articles] Allergen-Sync zu MenuItems fehlgeschlagen:', syncErr);
+                }
+            }
         },
     });
 

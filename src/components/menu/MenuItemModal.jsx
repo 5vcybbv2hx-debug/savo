@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/mobile-dialog";
@@ -15,6 +15,7 @@ import InlineError from '@/components/ui/InlineError';
 import AllergenSelector from './AllergenSelector';
 import ArticleLinker from './ArticleLinker';
 import RecipeSearchSelect from './RecipeSearchSelect';
+import { getMenuItemSourceArticles, unionAllergensAdditives, hasAutoAllergenSource } from '@/lib/allergenSync';
 import { haptics } from "@/components/utils/haptics";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -91,6 +92,26 @@ export default function MenuItemModal({ item, open, onClose }) {
         placeholderData: []
     });
 
+    const sourceArticles = useMemo(
+        () => getMenuItemSourceArticles(formData, articles, recipes),
+        [formData.use_recipe_calculation, formData.linked_recipe_id, formData.linked_variant_name, formData.linked_article_ids, formData.linked_article_id, articles, recipes]
+    );
+    const autoAllergenSource = hasAutoAllergenSource(formData);
+    const { allergens: autoAllergens, additives: autoAdditives } = useMemo(
+        () => unionAllergensAdditives(sourceArticles),
+        [sourceArticles]
+    );
+
+    useEffect(() => {
+        if (!autoAllergenSource) return;
+        setFormData(prev => {
+            const sameA = JSON.stringify([...(prev.allergens_list || [])].sort()) === JSON.stringify([...autoAllergens].sort());
+            const sameD = JSON.stringify([...(prev.additives || [])].sort()) === JSON.stringify([...autoAdditives].sort());
+            if (sameA && sameD) return prev;
+            return { ...prev, allergens_list: autoAllergens, additives: autoAdditives };
+        });
+    }, [autoAllergenSource, autoAllergens, autoAdditives]);
+
     useEffect(() => {
         if (item) {
             setFormData({
@@ -158,13 +179,9 @@ export default function MenuItemModal({ item, open, onClose }) {
                     const variant = (recipe.mix_variants || []).find(v => v.name === formData.linked_variant_name);
                     effectiveIngs = [...baseIngs, ...(variant?.ingredients || [])];
                 }
-                const mergedAllergens = new Set(formData.allergens_list || []);
-                const mergedAdditives = new Set(formData.additives || []);
                 let totalCost = 0;
                 effectiveIngs.forEach(ingredient => {
                     const article = articles.find(a => a.id === ingredient.article_id);
-                    (article?.allergens_list || []).forEach(a => mergedAllergens.add(a));
-                    (article?.additives || []).forEach(d => mergedAdditives.add(d));
                     if (article?.price_per_liter && ingredient.amount) {
                         const unit = ingredient.unit || 'ml';
                         let liters = 0;
@@ -181,7 +198,6 @@ export default function MenuItemModal({ item, open, onClose }) {
                     }
                 });
                 calculatedPurchasePrice = totalCost;
-                effectiveFormData = { ...effectiveFormData, allergens_list: [...mergedAllergens], additives: [...mergedAdditives] };
             }
         } else if (formData.linked_article_id && !formData.use_recipe_calculation) {
             const linkedArticle = articles.find(a => a.id === formData.linked_article_id);
@@ -201,6 +217,9 @@ export default function MenuItemModal({ item, open, onClose }) {
             }
         }
 
+        if (autoAllergenSource) {
+            effectiveFormData = { ...effectiveFormData, allergens_list: autoAllergens, additives: autoAdditives };
+        }
         // eslint-disable-next-line no-unused-vars
         const { margin_percentage, margin_absolute, allergens, linked_article_id, linked_article_name, ...cleanData } = effectiveFormData;
         saveMutation.mutate({
@@ -447,6 +466,7 @@ export default function MenuItemModal({ item, open, onClose }) {
                             additives={formData.additives || []}
                             category={formData.category}
                             onChange={(key, val) => setFormData(prev => ({ ...prev, [key]: val }))}
+                            locked={autoAllergenSource}
                         />
                     </Section>
 

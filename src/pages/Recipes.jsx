@@ -36,6 +36,7 @@ import { createPageUrl } from '@/utils';
 import IngredientSelector from '@/components/recipes/IngredientSelector';
 import PDFExportButton from '@/components/export/PDFExportButton';
 import SlushyRecipeCard from '@/components/recipes/SlushyRecipeCard';
+import { unionAllergensAdditives } from '@/lib/allergenSync';
 
 // ── Kategorien ────────────────────────────────────────────────────────────────
 const DEFAULT_STANDARD_CATEGORIES = ['Cocktail', 'Shot', 'Longdrink', 'Mocktail', 'Moonshiner-Cocktails', 'Sonstiges'];
@@ -482,12 +483,9 @@ export default function Recipes() {
                             return sum + (art?.purchase_price || 0) * (parseFloat(ing.amount) || 0);
                         }, 0);
                     };
-                    const mergeAllergens = (ingredients) => [...new Set(
-                        (ingredients || []).flatMap(ing => {
-                            const art = allArticles.find(a => a.id === ing.article_id);
-                            return art?.allergens_list || [];
-                        })
-                    )];
+                    const computeAllergensAdditives = (ingredients) => unionAllergensAdditives(
+                        (ingredients || []).map(ing => allArticles.find(a => a.id === ing.article_id)).filter(Boolean)
+                    );
                     await Promise.all(linked.map(mi => {
                         let effectiveIngs = baseIngs;
                         if (hasVariants && mi.linked_variant_name) {
@@ -495,11 +493,12 @@ export default function Recipes() {
                             effectiveIngs = [...baseIngs, ...(variant?.ingredients || [])];
                         }
                         const newEK = calcEK(effectiveIngs);
-                        const mergedAllergens = mergeAllergens(effectiveIngs);
+                        const { allergens: mergedAllergens, additives: mergedAdditives } = computeAllergensAdditives(effectiveIngs);
                         const syncData = {
                             ...(data.name && { name: mi.linked_variant_name ? `${data.name} – ${mi.linked_variant_name}` : data.name }),
                             ...(newEK !== null && { purchase_price: newEK }),
-                            ...(mergedAllergens.length > 0 && { allergens_list: mergedAllergens }),
+                            allergens_list: mergedAllergens,
+                            additives: mergedAdditives,
                             ...(data.alcohol_content != null && { alcohol_content: data.alcohol_content }),
                         };
                         return base44.entities.MenuItem.update(mi.id, syncData);
