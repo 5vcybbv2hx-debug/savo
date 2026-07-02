@@ -13,13 +13,15 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Pencil, Trash2, QrCode, ExternalLink, Package, Download, Loader2, Printer } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, QrCode, ExternalLink, Package, Download, Loader2, Printer, X, Link2 } from 'lucide-react';
 import StorageLabelPrint from './StorageLabelPrint';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { fuzzySearch } from '@/lib/fuzzySearch';
 
 const ALL = '__all__';
 const FURNITURE_TYPES = ['Regal','Schrank','Kühlschrank','Tiefkühlschrank','Schubladenbox','Tisch','Kiste','Sonstiges'];
+const UNITS = ['Stück', 'Fl.', 'l', 'ml', 'kg', 'g'];
 
 // ── Short code generator ──────────────────────────────────────────────────────
 function generateShortCode(areaName, furnitureName, slotName) {
@@ -129,6 +131,12 @@ export default function SlotsTab({ permissions }) {
   const [deleteTarget,    setDeleteTarget]    = useState(null);
   const [form, setForm] = useState({ area_id: '', furniture_id: '', name: '', notes: '' });
 
+  // ── Inline Artikel-Zuordnung im Fach-Dialog ──────────────────────────────────
+  const [assignRows,            setAssignRows]            = useState([]); // [{ id, article_id, article_name, quantity, min_stock, unit }]
+  const [deletedAssignmentIds,  setDeletedAssignmentIds]  = useState([]);
+  const [articleSearchOpen,     setArticleSearchOpen]     = useState(false);
+  const [articleSearchQuery,    setArticleSearchQuery]    = useState('');
+
   // ── Queries ──────────────────────────────────────────────────────────────────
   const { data: areas = [] } = useQuery({
     queryKey: ['st-areas'],
@@ -150,6 +158,11 @@ export default function SlotsTab({ permissions }) {
     queryFn: () => base44.entities.StorageAssignment.filter({ is_active: true }, 'article_name', 1000),
     staleTime: STALE.MEDIUM,
   });
+  const { data: articles = [] } = useQuery({
+    queryKey: ['articles'],
+    queryFn: () => base44.entities.Article.filter({ is_active: true }, 'name', 1000),
+    staleTime: STALE.SLOW,
+  });
 
   // ── Filter-Logik ─────────────────────────────────────────────────────────────
   const filteredFurniture = useMemo(() =>
@@ -169,13 +182,55 @@ export default function SlotsTab({ permissions }) {
     });
   }, [slots, filterArea, filterFurniture, search]);
 
-  // ── Mutations ─────────────────────────────────────────────────────────────────
+  // ── Mutationen ────────────────────────────────────────────────────────────────
+  // Speichert das Fach UND synchronisiert die inline zugeordneten Artikel (Anlegen/Ändern/Löschen)
   const saveMut = useMutation({
-    mutationFn: d => modal.data?.id
-      ? base44.entities.StorageSlot.update(modal.data.id, d)
-      : base44.entities.StorageSlot.create(d),
+    mutationFn: async () => {
+      const area = areas.find(a => a.id === form.area_id);
+      const fur  = furniture.find(f => f.id === form.furniture_id);
+      if (!area || !fur || !form.name.trim()) throw new Error('Bitte alle Felder ausfüllen.');
+
+      const slotData = {
+        area_id:        area.id,
+        area_name:      area.name,
+        furniture_id:   fur.id,
+        furniture_name: fur.name,
+        furniture_type: fur.type,
+        name:           form.name.trim(),
+        full_name:      `${area.name} › ${fur.name} › ${form.name.trim()}`,
+        short_code:     modal.data?.short_code || generateShortCode(area.name, fur.name, form.name.trim()),
+        notes:          form.notes,
+        is_active:      true,
+      };
+
+      const savedSlot = modal.data?.id
+        ? await base44.entities.StorageSlot.update(modal.data.id, slotData)
+        : await base44.entities.StorageSlot.create(slotData);
+      const slotId = modal.data?.id || savedSlot?.id;
+
+      // Entfernte Zuordnungen löschen
+      for (const delId of deletedAssignmentIds) {
+        await base44.entities.StorageAssignment.delete(delId);
+      }
+      // Neue/geänderte Zuordnungen speichern
+      for (const row of assignRows) {
+        const payload = {
+          article_id:      row.article_id,
+          article_name:    row.article_name,
+          storage_slot_id: slotId,
+          slot_full_name:  slotData.full_name,
+          quantity:        row.quantity   !== '' && row.quantity   != null ? parseFloat(row.quantity)  : 0,
+          min_stock:       row.min_stock  !== '' && row.min_stock  != null ? parseFloat(row.min_stock) : null,
+          unit:            row.unit || 'Stück',
+          is_active:       true,
+        };
+        if (row.id) await base44.entities.StorageAssignment.update(row.id, payload);
+        else        await base44.entities.StorageAssignment.create(payload);
+      }
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['slots'] });
+      qc.invalidateQueries({ queryKey: ['assignments'] });
       setModal({ open: false, data: null });
       toast.success(modal.data ? 'Fach aktualisiert' : 'Fach erstellt');
     },
@@ -192,26 +247,64 @@ export default function SlotsTab({ permissions }) {
     onError: () => toast.error('Löschen fehlgeschlagen'),
   });
 
-  const openAdd  = () => { setForm({ area_id: filterArea !== ALL ? filterArea : '', furniture_id: '', name: '', notes: '' }); setModal({ open: true, data: null }); };
-  const openEdit = s => { setForm({ area_id: s.area_id || '', furniture_id: s.furniture_id || '', name: s.name || '', notes: s.notes || '' }); setModal({ open: true, data: s }); };
-
-  const handleSave = () => {
-    const area = areas.find(a => a.id === form.area_id);
-    const fur  = furniture.find(f => f.id === form.furniture_id);
-    if (!area || !fur || !form.name.trim()) { toast.error('Bitte alle Felder ausfüllen.'); return; }
-    saveMut.mutate({
-      area_id:        area.id,
-      area_name:      area.name,
-      furniture_id:   fur.id,
-      furniture_name: fur.name,
-      furniture_type: fur.type,
-      name:           form.name.trim(),
-      full_name:      `${area.name} › ${fur.name} › ${form.name.trim()}`,
-      short_code:     modal.data?.short_code || generateShortCode(area.name, fur.name, form.name.trim()),
-      notes:          form.notes,
-      is_active:      true,
-    });
+  const resetAssignState = () => {
+    setAssignRows([]);
+    setDeletedAssignmentIds([]);
+    setArticleSearchOpen(false);
+    setArticleSearchQuery('');
   };
+
+  const openAdd  = () => {
+    setForm({ area_id: filterArea !== ALL ? filterArea : '', furniture_id: '', name: '', notes: '' });
+    resetAssignState();
+    setModal({ open: true, data: null });
+  };
+  const openEdit = s => {
+    setForm({ area_id: s.area_id || '', furniture_id: s.furniture_id || '', name: s.name || '', notes: s.notes || '' });
+    const existing = assignments
+      .filter(a => a.storage_slot_id === s.id && a.is_active !== false)
+      .map(a => ({
+        id: a.id, article_id: a.article_id, article_name: a.article_name,
+        quantity: a.quantity ?? '', min_stock: a.min_stock ?? '', unit: a.unit || 'Stück',
+      }));
+    setAssignRows(existing);
+    setDeletedAssignmentIds([]);
+    setArticleSearchOpen(false);
+    setArticleSearchQuery('');
+    setModal({ open: true, data: s });
+  };
+
+  const handleSave = () => saveMut.mutate();
+
+  const updateAssignRow = (idx, patch) =>
+    setAssignRows(rows => rows.map((r, i) => i === idx ? { ...r, ...patch } : r));
+
+  const removeAssignRow = idx => {
+    const row = assignRows[idx];
+    if (row.id) setDeletedAssignmentIds(ids => [...ids, row.id]);
+    setAssignRows(rows => rows.filter((_, i) => i !== idx));
+  };
+
+  const addArticleAssignment = article => {
+    if (assignRows.some(r => r.article_id === article.id)) {
+      toast.info('Dieser Artikel ist bereits zugeordnet.');
+      return;
+    }
+    setAssignRows(rows => [...rows, {
+      id: null, article_id: article.id, article_name: article.name,
+      quantity: '', min_stock: '', unit: 'Stück',
+    }]);
+    setArticleSearchQuery('');
+    setArticleSearchOpen(false);
+  };
+
+  const filteredModalArticles = useMemo(() => {
+    if (!articleSearchQuery.trim()) return [];
+    return fuzzySearch(
+      articles, articleSearchQuery,
+      a => [a.name || '', a.category || '', a.barcode || '']
+    ).slice(0, 8);
+  }, [articles, articleSearchQuery]);
 
   const modalFurniture = useMemo(() =>
     furniture.filter(f => f.area_id === form.area_id),
@@ -427,6 +520,72 @@ export default function SlotsTab({ permissions }) {
               <Label className="text-xs text-muted-foreground">Notizen (optional)</Label>
               <Input className="h-9" placeholder="Interne Hinweise…" value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+            </div>
+
+            {/* Inline Artikel-Zuordnung — optional, z.B. für Kühlschubladen mit fixem Soll-Bestand */}
+            <div className="space-y-1.5 pt-1 border-t border-border/50">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Link2 className="w-3 h-3" />Artikel-Zuordnung (optional)
+              </Label>
+
+              {assignRows.length > 0 && (
+                <div className="space-y-1.5">
+                  {assignRows.map((row, idx) => (
+                    <div key={row.id || `new-${idx}`}
+                      className="flex items-center gap-1.5 bg-secondary/40 border border-border/50 rounded-lg p-2">
+                      <span className="flex-1 text-xs font-medium text-foreground truncate" title={row.article_name}>
+                        {row.article_name}
+                      </span>
+                      <Input type="number" inputMode="decimal" className="h-7 w-14 text-xs px-1.5" placeholder="Menge"
+                        value={row.quantity} onChange={e => updateAssignRow(idx, { quantity: e.target.value })} />
+                      <Input type="number" inputMode="decimal" className="h-7 w-16 text-xs px-1.5" placeholder="Soll"
+                        value={row.min_stock} onChange={e => updateAssignRow(idx, { min_stock: e.target.value })} />
+                      <Select value={row.unit} onValueChange={v => updateAssignRow(idx, { unit: v })}>
+                        <SelectTrigger className="h-7 w-[4.5rem] text-xs px-1.5"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/10 shrink-0"
+                        onClick={() => removeAssignRow(idx)}>
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {articleSearchOpen ? (
+                <div className="space-y-1.5">
+                  <Input autoFocus className="h-9 text-xs" placeholder="Artikel suchen…"
+                    value={articleSearchQuery} onChange={e => setArticleSearchQuery(e.target.value)} />
+                  {articleSearchQuery.trim() && (
+                    <div className="border border-border rounded-lg max-h-36 overflow-y-auto bg-card">
+                      {filteredModalArticles.length === 0 ? (
+                        <p className="text-[11px] text-muted-foreground p-2">Keine Treffer</p>
+                      ) : filteredModalArticles.map(a => (
+                        <button key={a.id} type="button"
+                          className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-secondary/50 border-b border-border/30 last:border-0"
+                          onClick={() => addArticleAssignment(a)}>
+                          {a.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <Button size="sm" variant="ghost" className="h-7 text-[11px] text-muted-foreground"
+                    onClick={() => { setArticleSearchOpen(false); setArticleSearchQuery(''); }}>
+                    Abbrechen
+                  </Button>
+                </div>
+              ) : (
+                <Button size="sm" variant="outline" className="h-8 text-xs w-full"
+                  onClick={() => setArticleSearchOpen(true)}>
+                  <Plus className="w-3.5 h-3.5 mr-1" />Artikel verknüpfen
+                </Button>
+              )}
+              <p className="text-[10px] text-muted-foreground/60">
+                Menge = aktueller Bestand hier, Soll = Mindestbestand für Auffüll-Warnung.
+              </p>
             </div>
           </div>
           <DialogFooter className="gap-2">
