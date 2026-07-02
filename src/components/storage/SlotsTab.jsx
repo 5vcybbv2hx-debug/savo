@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Pencil, Trash2, QrCode, ExternalLink, Package, Download, Loader2, Printer, X, Link2 } from 'lucide-react';
+import { Search, Plus, Trash2, QrCode, ExternalLink, Package, Download, Loader2, Printer, X, Link2 } from 'lucide-react';
 import StorageLabelPrint from './StorageLabelPrint';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -399,7 +399,14 @@ export default function SlotsTab({ permissions }) {
             const lowCount = slotAssignments.filter(a => a.min_stock != null && a.quantity != null && a.quantity < a.min_stock).length;
 
             return (
-              <Card key={slot.id} className="p-3 border-border/60 hover:border-border transition-all">
+              <Card
+                key={slot.id}
+                className={cn(
+                  "p-3 border-border/60 hover:border-border transition-all",
+                  canEdit && "cursor-pointer active:scale-[0.99]"
+                )}
+                onClick={() => canEdit && openEdit(slot)}
+              >
                 <div className="flex items-start gap-3">
                   {/* Icon */}
                   <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -453,7 +460,7 @@ export default function SlotsTab({ permissions }) {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-0.5 shrink-0">
+                  <div className="flex gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-500 hover:bg-amber-500/10"
                       onClick={() => setQrSlot({ id: slot.id, name: slot.full_name || slot.name, code: slot.short_code })}
                       title="QR-Code">
@@ -464,16 +471,10 @@ export default function SlotsTab({ permissions }) {
                       <Printer className="w-3.5 h-3.5" />
                     </Button>
                     {canEdit && (
-                      <>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground"
-                          onClick={() => openEdit(slot)}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                          onClick={() => setDeleteTarget(slot)}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        onClick={() => setDeleteTarget(slot)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
                     )}
                   </div>
                 </div>
