@@ -532,12 +532,14 @@ export default function Shopping() {
                 data: { ...existing, quantity: parseFloat(existing.quantity || 0) + 1 }
             });
         } else {
+            const _ps = article.supplier_details?.find(s => s.is_primary) || article.supplier_details?.[0];
+            const _d  = (_ps?.packaging_options || []).find(o => o.is_default) || (_ps?.packaging_options || [])[0];
             await createMutation.mutateAsync({
                 item_name:  article.name,
                 article_id: article.id,
-                category:   article.suppliers?.[0] || suppliers[0]?.name || '',
+                category:   article.suppliers?.[0] || _ps?.supplier_name || suppliers[0]?.name || '',
                 quantity:   1,
-                unit:       article.content_unit || '',
+                unit:       _d?.packaging_type || 'Stück',
                 status:     'offen',
             });
         }
@@ -576,17 +578,20 @@ export default function Shopping() {
             });
             toast.success(`${article.name} — Menge erhöht`);
         } else {
+            const ps2 = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0];
+            const d2  = (ps2?.packaging_options||[]).find(o=>o.is_default)||(ps2?.packaging_options||[])[0];
+            const _sn = ps2?.supplier_name || article.suppliers?.[0] || suppliers[0]?.name || '';
             await createMutation.mutateAsync({
-                item_name:  article.name,
+                item_name:           article.name,
                 article_id:          article.id,
-                category:            article.supplier_details?.find(s => s.is_primary)?.supplier_name || article.suppliers?.[0] || suppliers[0]?.name || '',
-                supplier_name:       article.supplier_details?.find(s => s.is_primary)?.supplier_name || article.suppliers?.[0] || '',
-                packaging_option_id: (() => { const ps2 = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0]; return (ps2?.packaging_options||[]).find(o=>o.is_default)?.id || null; })(),
-                packaging_label:     (() => { const ps2 = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0]; const d2 = (ps2?.packaging_options||[]).find(o=>o.is_default)||(ps2?.packaging_options||[])[0]; return d2 ? `${d2.packaging_type} ${d2.units_per_pack}×` : null; })(),
-                price_per_unit:      (() => { const ps2 = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0]; const d2 = (ps2?.packaging_options||[]).find(o=>o.is_default)||(ps2?.packaging_options||[])[0]; return d2?.price_per_unit || article.purchase_price || null; })(),
-                quantity:   1,
-                unit:       article.content_unit || '',
-                status:     'offen',
+                category:            _sn,
+                supplier_name:       _sn,
+                packaging_option_id: d2?.id || null,
+                packaging_label:     d2 ? `${d2.packaging_type} ${d2.units_per_pack}×` : null,
+                price_per_unit:      d2?.price_per_unit || article.purchase_price || null,
+                quantity:            1,
+                unit:                d2?.packaging_type || 'Stück',
+                status:              'offen',
             });
             toast.success(`${article.name} hinzugefügt`);
         }
@@ -783,7 +788,7 @@ export default function Shopping() {
                                             price_per_unit:      _d?.price_per_unit || a.purchase_price || null,
                                             price_per_pack:      _d?.price_per_pack || null,
                                             quantity:            Math.max(1, (a.min_stock || 1) - (a.current_stock || 0)),
-                                            unit:                a.content_unit || '',
+                                            unit:                _d?.packaging_type || 'Stück',
                                             status:              'offen',
                                         });
                                     }}

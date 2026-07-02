@@ -289,7 +289,7 @@ export default function Restock() {
             price_per_pack:      defaultOpt?.price_per_pack || null,
             price_per_unit:      defaultOpt?.price_per_unit || article?.purchase_price || null,
             quantity:            item.quantity,
-            unit:                article?.content_unit || 'Stück',
+            unit:                defaultOpt?.packaging_type || 'Stück',
             status:              'offen',
             notes:               `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`,
         });
@@ -311,12 +311,14 @@ export default function Restock() {
             if (alreadyInOrder) { skipped++; continue; }
 
             const article = articles.find(a => a.id === item.article_id);
+            const _ps = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
+            const _d  = (_ps?.packaging_options || []).find(o => o.is_default) || (_ps?.packaging_options || [])[0];
             await base44.entities.ShoppingList.create({
                 item_name:  item.article_name,
                 article_id: item.article_id || null,
-                category:   article?.suppliers?.[0] || article?.supplier_details?.[0]?.supplier_name || '',
+                category:   article?.suppliers?.[0] || _ps?.supplier_name || '',
                 quantity:   item.quantity,
-                unit:       article?.content_unit || 'Stück',
+                unit:       _d?.packaging_type || 'Stück',
                 status:     'offen',
                 notes:      `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`.trim().replace(/·\s*$/, ''),
             });

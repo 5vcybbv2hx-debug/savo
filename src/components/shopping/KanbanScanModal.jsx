@@ -145,13 +145,21 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
             });
             showFeedback({ type: 'updated', name: article.name, qty: newQty });
         } else {
+            const _ps = article.supplier_details?.find(s => s.is_primary) || article.supplier_details?.[0];
+            const _d  = (_ps?.packaging_options || []).find(o => o.is_default) || (_ps?.packaging_options || [])[0];
+            const _sn = _ps?.supplier_name || article.suppliers?.[0] || suppliers[0]?.name || '';
             await createMutation.mutateAsync({
-                item_name: article.name,
-                category: article.suppliers?.[0] || suppliers[0]?.name || '',
-                quantity: parseFloat(qty),
-                unit: article.content_unit || '',
-                status: 'offen',
-                notes: `Kanban${urgencyNote}${article.barcode ? ` · ${article.barcode}` : ''}`
+                item_name:           article.name,
+                article_id:          article.id,
+                category:            _sn,
+                supplier_name:       _sn,
+                packaging_option_id: _d?.id || null,
+                packaging_label:     _d ? `${_d.packaging_type} ${_d.units_per_pack}×` : null,
+                price_per_unit:      _d?.price_per_unit || article.purchase_price || null,
+                quantity:            parseFloat(qty),
+                unit:                _d?.packaging_type || 'Stück',
+                status:              'offen',
+                notes:               `Kanban${urgencyNote}${article.barcode ? ` · ${article.barcode}` : ''}`
             });
             showFeedback({ type: 'added', name: article.name, qty });
         }
