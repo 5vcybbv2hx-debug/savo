@@ -3,6 +3,7 @@ import { Search, X, Plus, Pencil, Check } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { fuzzyMatches, articleSearchText } from '@/lib/fuzzySearch';
 
 export default function IngredientSelector({ ingredients, onChange, articles, compact = false }) {
     const [searchTerm, setSearchTerm]   = useState('');
@@ -13,13 +14,9 @@ export default function IngredientSelector({ ingredients, onChange, articles, co
     const safeArticles    = Array.isArray(articles)    ? articles.filter(a => a && a.name) : [];
 
     const filteredArticles = useMemo(() => {
-        const term = searchTerm.trim().toLowerCase();
+        const term = searchTerm.trim();
         if (!term) return [];
-        return safeArticles.filter(a =>
-            a.name.toLowerCase().includes(term) ||
-            (a.manufacturer && a.manufacturer.toLowerCase().includes(term)) ||
-            (a.category && a.category.toLowerCase().includes(term))
-        ).slice(0, 100);
+        return safeArticles.filter(a => fuzzyMatches(articleSearchText(a), term)).slice(0, 100);
     }, [safeArticles, searchTerm]);
 
     const addIngredient = (article) => {
