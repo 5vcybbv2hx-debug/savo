@@ -31,6 +31,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import IngredientSelector from '@/components/recipes/IngredientSelector';
 import PDFExportButton from '@/components/export/PDFExportButton';
 import SlushyRecipeCard from '@/components/recipes/SlushyRecipeCard';
@@ -78,6 +80,7 @@ function getScaledIngredients(ingredients, originalServings, viewServings) {
 
 // ── Detail-Dialog ─────────────────────────────────────────────────────────────
 function RecipeDetailDialog({ recipe, articles, permissions, open, onClose, onEdit, onDelete }) {
+    const navigate = useNavigate();
     const [servings, setServings] = useState(recipe?.servings || 1);
     const [activeVariant, setActiveVariant] = useState(null); // null = Basis, index = Variante
 
@@ -253,6 +256,20 @@ function RecipeDetailDialog({ recipe, articles, permissions, open, onClose, onEd
                         <Button variant="outline" size="sm" onClick={() => { onClose(); onDelete(recipe.id); }}
                             className="text-destructive border-destructive/30 hover:bg-destructive/10">
                             <Trash2 className="w-3.5 h-3.5 mr-1.5" />Löschen
+                        </Button>
+                        <Button variant="outline" size="sm"
+                            onClick={() => {
+                                onClose();
+                                const variantName = activeVariant !== null
+                                    ? recipe.mix_variants[activeVariant]?.name
+                                    : null;
+                                const url = createPageUrl('DrinkMenu') + '?recipe=' + recipe.id
+                                    + (variantName ? '&variant=' + encodeURIComponent(variantName) : '');
+                                navigate(url);
+                            }}
+                            className="border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+                        >
+                            <Wine className="w-3.5 h-3.5 mr-1.5" />Zur Getränkekarte
                         </Button>
                         <Button size="sm" onClick={() => { onClose(); onEdit(recipe); }}
                             className="bg-amber-600 hover:bg-amber-700 text-white flex-1">
@@ -452,8 +469,12 @@ export default function Recipes() {
                 const allMenuItems = await base44.entities.MenuItem.list('name', 500);
                 const linked = allMenuItems.filter(mi => mi.linked_recipe_id === id);
                 if (linked.length > 0) {
-                    // EK-Preis aus Rezept-Zutaten neu berechnen
+                    // EK-Preis aus Rezept-Zutaten neu berechnen (varianten-aware)
                     const allArticles = await base44.entities.Article.list('name', 500);
+                    const hasVariants = (data.mix_variants || []).length > 0;
+                    const baseIngs = hasVariants
+                        ? (data.ingredients || []).filter(i => i.is_base !== false)
+                        : (data.ingredients || []);
                     const calcEK = (ingredients) => {
                         if (!ingredients?.length) return null;
                         return ingredients.reduce((sum, ing) => {
@@ -461,23 +482,28 @@ export default function Recipes() {
                             return sum + (art?.purchase_price || 0) * (parseFloat(ing.amount) || 0);
                         }, 0);
                     };
-                    const newEK = calcEK(data.ingredients);
-                    // Allergen-Liste aus Rezept-Zutaten aggregieren
-                    const mergedAllergens = [...new Set(
-                        (data.ingredients || []).flatMap(ing => {
+                    const mergeAllergens = (ingredients) => [...new Set(
+                        (ingredients || []).flatMap(ing => {
                             const art = allArticles.find(a => a.id === ing.article_id);
                             return art?.allergens_list || [];
                         })
                     )];
-                    const syncData = {
-                        ...(data.name && { name: data.name }),
-                        ...(newEK !== null && { purchase_price: newEK }),
-                        ...(mergedAllergens.length > 0 && { allergens_list: mergedAllergens }),
-                        ...(data.alcohol_content != null && { alcohol_content: data.alcohol_content }),
-                    };
-                    await Promise.all(linked.map(mi =>
-                        base44.entities.MenuItem.update(mi.id, syncData)
-                    ));
+                    await Promise.all(linked.map(mi => {
+                        let effectiveIngs = baseIngs;
+                        if (hasVariants && mi.linked_variant_name) {
+                            const variant = (data.mix_variants || []).find(v => v.name === mi.linked_variant_name);
+                            effectiveIngs = [...baseIngs, ...(variant?.ingredients || [])];
+                        }
+                        const newEK = calcEK(effectiveIngs);
+                        const mergedAllergens = mergeAllergens(effectiveIngs);
+                        const syncData = {
+                            ...(data.name && { name: mi.linked_variant_name ? `${data.name} – ${mi.linked_variant_name}` : data.name }),
+                            ...(newEK !== null && { purchase_price: newEK }),
+                            ...(mergedAllergens.length > 0 && { allergens_list: mergedAllergens }),
+                            ...(data.alcohol_content != null && { alcohol_content: data.alcohol_content }),
+                        };
+                        return base44.entities.MenuItem.update(mi.id, syncData);
+                    }));
                 }
             } catch (syncErr) {
                 console.warn('[Recipes] MenuItem-Sync fehlgeschlagen:', syncErr);

@@ -70,7 +70,7 @@ export default function MenuItemModal({ item, open, onClose }) {
     const [formData, setFormData]   = useState({
         name: "", category: "Cocktails", subcategory: "", description: "",
         price: "", size: "", purchase_price: "",
-        use_recipe_calculation: false, linked_recipe_id: "",
+        use_recipe_calculation: false, linked_recipe_id: "", linked_variant_name: null,
         is_available: true, is_seasonal: false, is_special: false,
         order_position: "", allergens_list: [], additives: [],
         alcohol_content: "", image_url: "",
@@ -103,7 +103,7 @@ export default function MenuItemModal({ item, open, onClose }) {
             setFormData({
                 name: "", category: "Cocktails", subcategory: "", description: "",
                 price: "", size: "", purchase_price: "",
-                use_recipe_calculation: false, linked_recipe_id: "",
+                use_recipe_calculation: false, linked_recipe_id: "", linked_variant_name: null,
                 is_available: true, is_seasonal: false, is_special: false,
                 order_position: "", allergens_list: [], additives: [],
                 alcohol_content: "", image_url: "",
@@ -113,7 +113,7 @@ export default function MenuItemModal({ item, open, onClose }) {
     }, [item, open]);
 
     const saveMutation = useMutation({
-        mutationFn: async (data) => item
+        mutationFn: async (data) => item?.id
             ? base44.entities.MenuItem.update(item.id, data)
             : base44.entities.MenuItem.create(data),
         onSuccess: () => {
@@ -148,10 +148,19 @@ export default function MenuItemModal({ item, open, onClose }) {
         if (formData.use_recipe_calculation && formData.linked_recipe_id) {
             const recipe = recipes.find(r => r.id === formData.linked_recipe_id);
             if (recipe?.ingredients) {
+                const hasVariants = (recipe.mix_variants || []).length > 0;
+                const baseIngs = hasVariants
+                    ? recipe.ingredients.filter(i => i.is_base !== false)
+                    : recipe.ingredients;
+                let effectiveIngs = baseIngs;
+                if (hasVariants && formData.linked_variant_name) {
+                    const variant = (recipe.mix_variants || []).find(v => v.name === formData.linked_variant_name);
+                    effectiveIngs = [...baseIngs, ...(variant?.ingredients || [])];
+                }
                 const mergedAllergens = new Set(formData.allergens_list || []);
                 const mergedAdditives = new Set(formData.additives || []);
                 let totalCost = 0;
-                recipe.ingredients.forEach(ingredient => {
+                effectiveIngs.forEach(ingredient => {
                     const article = articles.find(a => a.id === ingredient.article_id);
                     (article?.allergens_list || []).forEach(a => mergedAllergens.add(a));
                     (article?.additives || []).forEach(d => mergedAdditives.add(d));
@@ -204,11 +213,17 @@ export default function MenuItemModal({ item, open, onClose }) {
 
     const isBusy = saveMutation.isPending || deleteMutation.isPending;
 
+    // Verknüpftes Rezept + Mischvarianten
+    const linkedRecipe = formData.use_recipe_calculation && formData.linked_recipe_id
+        ? recipes.find(r => r.id === formData.linked_recipe_id)
+        : null;
+    const recipeHasVariants = linkedRecipe?.mix_variants?.length > 0;
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent>
                 <MobileModalHeader onClose={onClose}>
-                    {item ? 'Getränk bearbeiten' : 'Neues Getränk'}
+                    {item?.id ? 'Getränk bearbeiten' : 'Neues Getränk'}
                 </MobileModalHeader>
 
                 <MobileModalContent>
@@ -329,6 +344,7 @@ export default function MenuItemModal({ item, open, onClose }) {
                         </div>
 
                         {formData.use_recipe_calculation ? (
+                            <>
                             <Field
                                 label="Rezept verknüpfen"
                                 hint="EK wird automatisch aus den Artikelpreisen berechnet."
@@ -348,6 +364,29 @@ export default function MenuItemModal({ item, open, onClose }) {
                                     </SelectContent>
                                 </Select>
                             </Field>
+
+                            {recipeHasVariants && (
+                                <Field
+                                    label="Mischvariante"
+                                    hint="Basis-Zutaten + ausgewählte Variante für EK-Berechnung"
+                                >
+                                    <Select
+                                        value={formData.linked_variant_name || "__none__"}
+                                        onValueChange={v => set('linked_variant_name', v === "__none__" ? null : v)}
+                                    >
+                                        <SelectTrigger className={fieldClass}>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">Nur Basis</SelectItem>
+                                            {linkedRecipe.mix_variants.map((v, i) => (
+                                                <SelectItem key={i} value={v.name}>{v.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </Field>
+                            )}
+                            </>
                         ) : (
                             <Field
                                 label="Einkaufspreis (€)"
@@ -440,7 +479,7 @@ export default function MenuItemModal({ item, open, onClose }) {
                         {saveMutation.isPending ? 'Speichern…' : 'Speichern'}
                     </Button>
 
-                    {item && (
+                    {item?.id && (
                         <Button
                             type="button"
                             variant="destructive"

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { createPageUrl } from '@/utils';
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -56,6 +56,38 @@ export default function DrinkMenuPage() {
             base44.entities.MenuItem.update(id, { is_available }),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['menu-items'] }),
     });
+
+    // ── URL-Parameter: Rezept-Vorlage für neues MenuItem ──────────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    const recipeIdFromUrl = urlParams.get('recipe');
+    const variantFromUrl  = urlParams.get('variant');
+
+    const { data: recipeFromUrl } = useQuery({
+        queryKey: ['recipe-from-url', recipeIdFromUrl],
+        queryFn: () => base44.entities.Recipe.get(recipeIdFromUrl),
+        enabled: !!recipeIdFromUrl,
+        staleTime: 0,
+    });
+
+    useEffect(() => {
+        if (recipeIdFromUrl && recipeFromUrl) {
+            const variantName = variantFromUrl || null;
+            setSelectedItem({
+                name: variantName ? `${recipeFromUrl.name} – ${variantName}` : recipeFromUrl.name,
+                category: recipeFromUrl.category || 'Cocktails',
+                subcategory: '', description: '', price: '', size: '', purchase_price: '',
+                use_recipe_calculation: true,
+                linked_recipe_id: recipeFromUrl.id,
+                linked_variant_name: variantName,
+                is_available: true, is_seasonal: false, is_special: false,
+                order_position: '', allergens_list: [], additives: [],
+                alcohol_content: '', image_url: '', linked_article_ids: [],
+            });
+            setShowModal(true);
+            // URL-Parameter entfernen, damit Modal nicht bei Reload erneut öffnet
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, [recipeIdFromUrl, recipeFromUrl, variantFromUrl]);
 
     if (permissions.isLoading || isLoading) return (
         <div className="min-h-screen bg-background p-4 space-y-4">

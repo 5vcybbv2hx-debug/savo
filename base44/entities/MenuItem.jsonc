@@ -4,7 +4,7 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Name des Getränks"
+      "description": "Name des Getr\u00e4nks"
     },
     "category": {
       "type": "string",
@@ -24,7 +24,7 @@
     },
     "size": {
       "type": "string",
-      "description": "Größe (z.B. 0,3l, 4cl, 0,1l)"
+      "description": "Gr\u00f6\u00dfe (z.B. 0,3l, 4cl, 0,1l)"
     },
     "purchase_price": {
       "type": "number",
@@ -37,12 +37,16 @@
     },
     "linked_recipe_id": {
       "type": "string",
-      "description": "Verknüpftes Rezept für automatische Berechnung"
+      "description": "Verkn\u00fcpftes Rezept f\u00fcr automatische Berechnung"
+    },
+    "linked_variant_name": {
+      "type": "string",
+      "description": "Identifiziert welche Mischvariante eines verkn\u00fcpften Rezepts dieser Men\u00fcpunkt repr\u00e4sentiert (leer/null = nur Basis-Rezept ohne Variante)"
     },
     "is_available": {
       "type": "boolean",
       "default": true,
-      "description": "Aktuell verfügbar"
+      "description": "Aktuell verf\u00fcgbar"
     },
     "is_seasonal": {
       "type": "boolean",
@@ -85,7 +89,7 @@
       "items": {
         "type": "string"
       },
-      "description": "IDs der verknüpften Artikel (mehrere möglich)"
+      "description": "IDs der verkn\u00fcpften Artikel (mehrere m\u00f6glich)"
     },
     "recipe_variant_name": {
       "type": "string",
