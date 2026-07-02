@@ -52,21 +52,9 @@
     "end_time"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
+    "create": true,
     "read": true,
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "update": true,
+    "delete": true
   }
 }
