@@ -42,7 +42,7 @@ export default function MarginCalculator({ menuItem }) {
     const { data: articles = [] } = useQuery({
         queryKey: ['articles-for-margin'],
         queryFn: () => base44.entities.Article.list(),
-        initialData: []
+        placeholderData: []
     });
 
     useEffect(() => {

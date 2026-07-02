@@ -83,12 +83,12 @@ export default function MenuItemModal({ item, open, onClose }) {
     const { data: articles = [] } = useQuery({
         queryKey: ['articles-for-linking'],
         queryFn: () => base44.entities.Article.list('-name', 500),
-        initialData: []
+        placeholderData: []
     });
     const { data: recipes = [] } = useQuery({
         queryKey: ['recipes-for-linking'],
         queryFn: () => base44.entities.Recipe.list('-name', 500),
-        initialData: []
+        placeholderData: []
     });
 
     useEffect(() => {

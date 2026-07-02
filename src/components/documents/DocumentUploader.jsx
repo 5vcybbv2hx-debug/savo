@@ -27,19 +27,19 @@ export default function DocumentUploader({ onClose, onSuccess }) {
     const { data: employees = [] } = useQuery({
         queryKey: ['employees'],
         queryFn: () => base44.entities.Employee.list(),
-        initialData: []
+        placeholderData: []
     });
 
     const { data: events = [] } = useQuery({
         queryKey: ['events'],
         queryFn: () => base44.entities.Event.list(),
-        initialData: []
+        placeholderData: []
     });
 
     const { data: suppliers = [] } = useQuery({
         queryKey: ['suppliers'],
         queryFn: () => base44.entities.Supplier.list(),
-        initialData: []
+        placeholderData: []
     });
 
     const handleFileSelect = (e) => {

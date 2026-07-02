@@ -20,13 +20,13 @@ export default function SalesAnalyticsDashboard() {
     const { data: reports = [] } = useQuery({
         queryKey: ['sales-reports'],
         queryFn: () => base44.entities.SalesReport.filter({ processing_status: 'completed' }, '-report_date'),
-        initialData: []
+        placeholderData: []
     });
 
     const { data: salesData = [] } = useQuery({
         queryKey: ['sales-data'],
         queryFn: () => base44.entities.SalesDataItem.list('-date', 1000),
-        initialData: []
+        placeholderData: []
     });
 
     // Filter data by time range and other criteria
