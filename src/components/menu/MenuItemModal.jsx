@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import InlineError from '@/components/ui/InlineError';
 import AllergenSelector from './AllergenSelector';
 import ArticleLinker from './ArticleLinker';
+import RecipeSearchSelect from './RecipeSearchSelect';
 import { haptics } from "@/components/utils/haptics";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -349,20 +350,11 @@ export default function MenuItemModal({ item, open, onClose }) {
                                 label="Rezept verknüpfen"
                                 hint="EK wird automatisch aus den Artikelpreisen berechnet."
                             >
-                                <Select
-                                    value={formData.linked_recipe_id || ""}
-                                    onValueChange={v => set('linked_recipe_id', v)}
-                                >
-                                    <SelectTrigger className={fieldClass}>
-                                        <SelectValue placeholder="Rezept auswählen…" />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-60">
-                                        <SelectItem value={null}>Kein Rezept</SelectItem>
-                                        {recipes.map(r => (
-                                            <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <RecipeSearchSelect
+                                    recipes={recipes}
+                                    value={formData.linked_recipe_id}
+                                    onChange={v => set('linked_recipe_id', v)}
+                                />
                             </Field>
 
                             {recipeHasVariants && (
