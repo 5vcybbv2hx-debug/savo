@@ -212,6 +212,19 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
         haptics.light();
         
         if (shift) {
+            // Doppelbuchungs-Check: Datum wurde ggf. geändert und die Person hat an
+            // diesem neuen Tag bereits eine ANDERE Schicht (analog zur Schnelleinplanung).
+            const editConflict = existingShifts.find(s =>
+                s.id !== shift.id &&
+                s.employee_id === formData.employee_id &&
+                s.date === formData.date
+            );
+            if (editConflict) {
+                const ok = window.confirm(
+                    `${formData.employee_name} ist am ${format(new Date(formData.date), 'dd.MM.yyyy', { locale: de })} bereits für "${editConflict.shift_type}" eingeplant.\n\nTrotzdem speichern?`
+                );
+                if (!ok) return;
+            }
             // Edit existing shift
             onSave(formData, shift.id);
             return;
@@ -226,6 +239,29 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
         const datesToCreate = generateRecurringDates();
         const seriesId = isRecurring ? `series_${Date.now()}` : null;
         let shiftsCreated = 0;
+        let skippedCount = 0;
+
+        // Doppelbuchungs-Check: Personen, die an einem der Zieltage bereits eine
+        // andere Schicht haben (analog zur Schnelleinplanung).
+        const conflicts = [];
+        for (const date of datesToCreate) {
+            for (const empData of selectedEmployees) {
+                const conflict = existingShifts.find(
+                    s => s.employee_id === empData.employee_id && s.date === date
+                );
+                if (conflict) {
+                    const employee = employees.find(e => e.id === empData.employee_id);
+                    conflicts.push(`${employee?.name || '?'} am ${format(new Date(date), 'dd.MM.yyyy', { locale: de })} (bereits: ${conflict.shift_type})`);
+                }
+            }
+        }
+        if (conflicts.length > 0) {
+            const preview = conflicts.slice(0, 8).join('\n') + (conflicts.length > 8 ? `\n… und ${conflicts.length - 8} weitere` : '');
+            const ok = window.confirm(
+                `Doppelbuchung bei ${conflicts.length} Zuweisung${conflicts.length !== 1 ? 'en' : ''}:\n\n${preview}\n\nDiese werden übersprungen. Trotzdem fortfahren?`
+            );
+            if (!ok) return;
+        }
 
         // Create shifts
         for (const date of datesToCreate) {
@@ -234,7 +270,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                 const hasExisting = existingShifts.some(
                     s => s.employee_id === empData.employee_id && s.date === date
                 );
-                if (hasExisting) continue;
+                if (hasExisting) { skippedCount++; continue; }
 
                 const employee = employees.find(e => e.id === empData.employee_id);
                 const shiftColor = getColorForShiftType(empData.shift_type);
@@ -277,7 +313,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
             }
         }
         
-        alert(`${shiftsCreated} Schicht${shiftsCreated !== 1 ? 'en' : ''} erfolgreich erstellt!`);
+        alert(`${shiftsCreated} Schicht${shiftsCreated !== 1 ? 'en' : ''} erfolgreich erstellt!${skippedCount > 0 ? ` (${skippedCount} wegen Doppelbuchung übersprungen)` : ''}`);
         onClose();
     };
 
