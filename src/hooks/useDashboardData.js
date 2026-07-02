@@ -12,7 +12,9 @@ export function useDashboardData({ isManager, currentEmployee }) {
 
     const { data: shifts = [] } = useQuery({
         queryKey: ['shifts-dashboard', today],
-        queryFn: () => base44.entities.Shift.list('date', 1000),
+        // ⚠️ Grosszuegiger Puffer (Shift waechst kontinuierlich) — kein date-range-Fall,
+        // daher hartes Limit statt adaptiveFetch, aber mit Sicherheitsmarge.
+        queryFn: () => base44.entities.Shift.list('date', 3000),
         staleTime: STALE.SLOW,
         gcTime: 15 * 60_000,
     });
@@ -45,7 +47,10 @@ export function useDashboardData({ isManager, currentEmployee }) {
     });
     const { data: articles = [] } = useQuery({
         queryKey: ['articles-low-stock'],
-        queryFn: () => base44.entities.Article.list('name', 100),
+        // ⚠️ Limit bewusst großzügig (Artikel-Tabelle war mit nur 100 gedeckelt,
+        // hat aber schon >200 Records — Mindestbestand-Warnung hat dadurch
+        // Artikel im hinteren Alphabet verschluckt).
+        queryFn: () => base44.entities.Article.list('name', 1000),
         staleTime: STALE.SLOW,
         gcTime: 15 * 60_000,
         enabled: isManager,
@@ -65,7 +70,9 @@ export function useDashboardData({ isManager, currentEmployee }) {
     });
     const { data: timeEntries = [] } = useQuery({
         queryKey: ['time-entries-dashboard'],
-        queryFn: () => base44.entities.TimeEntry.list('-date', isManager ? 80 : 20),
+        // ⚠️ Manager-Limit angehoben: TimeEntry waechst kontinuierlich (>600 Records),
+        // 80 reichten nicht um alle offenen Genehmigungen zuverlaessig zu erfassen.
+        queryFn: () => base44.entities.TimeEntry.list('-date', isManager ? 1000 : 20),
         staleTime: STALE.MEDIUM,
     });
 
