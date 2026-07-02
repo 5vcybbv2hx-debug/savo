@@ -1,55 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { STALE } from '@/lib/queryUtils';;
-import { ClipboardCheck, Camera, Save, RotateCcw, Search, AlertTriangle, Cloud, CloudOff, Plus, Minus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { STALE } from '@/lib/queryUtils';
+import { Camera, Save, RotateCcw, Cloud, CloudOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
     AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePermissions } from '@/components/auth/usePermissions';
 import { toast } from 'sonner';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import BarcodeScanner from '@/components/restock/BarcodeScanner';
 import PDFExportButton from '@/components/export/PDFExportButton';
-import { cn } from "@/lib/utils";
-import VirtualizedList from '@/components/ui/virtualized-list';
+import SlotCountingSection from '@/components/inventory/SlotCountingSection';
+import UnassignedArticlesSection from '@/components/inventory/UnassignedArticlesSection';
 
 export default function Inventory() {
     const permissions = usePermissions();
     const queryClient = useQueryClient();
+
+    // ── State ──────────────────────────────────────────────────────────────────
     const [scannerOpen, setScannerOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterCategory, setFilterCategory] = useState('all');
-    const [counts, setCounts] = useState({});
-    const [activeArticle, setActiveArticle] = useState(null);
     const [scanMode, setScanMode] = useState(false);
     const [saveDialogOpen, setSaveDialogOpen] = useState(false);
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [lastScanned, setLastScanned] = useState(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [activeArticle, setActiveArticle] = useState(null);
 
-    // Load offline counts from localStorage
+    // Fach-basierte Zählung: slotValues ist vorbefüllt mit assignment.quantity
+    const [slotValues, setSlotValues] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('inv_slot_values') || '{}'); }
+        catch { return {}; }
+    });
+    // Trackt welche Zuordnungen der Nutzer bearbeitet hat (für Fortschritt)
+    const [touchedAssignments, setTouchedAssignments] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('inv_touched') || '{}'); }
+        catch { return {}; }
+    });
+
+    // Nicht-zugeordnete Artikel: flache Zähl-Liste (wie bisher)
+    const [unassignedCounts, setUnassignedCounts] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('inv_unassigned_counts') || '{}'); }
+        catch { return {}; }
+    });
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategory, setFilterCategory] = useState('all');
+
+    // ── localStorage persistence (Offline-Schutz: Zähldaten dürfen nicht verloren gehen) ──
     useEffect(() => {
-        const savedCounts = localStorage.getItem('inventory_offline_counts');
-        if (savedCounts) {
-            setCounts(JSON.parse(savedCounts));
-        }
-    }, []);
-
-    // Save counts to localStorage for offline support
+        localStorage.setItem('inv_slot_values', JSON.stringify(slotValues));
+    }, [slotValues]);
     useEffect(() => {
-        localStorage.setItem('inventory_offline_counts', JSON.stringify(counts));
-    }, [counts]);
+        localStorage.setItem('inv_touched', JSON.stringify(touchedAssignments));
+    }, [touchedAssignments]);
+    useEffect(() => {
+        localStorage.setItem('inv_unassigned_counts', JSON.stringify(unassignedCounts));
+    }, [unassignedCounts]);
 
-    // Online/offline detection
+    // ── Online/offline detection ──
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
@@ -61,21 +75,187 @@ export default function Inventory() {
         };
     }, []);
 
+    // ── Queries ────────────────────────────────────────────────────────────────
+    const { data: areas = [] } = useQuery({
+        queryKey: ['inv-areas'],
+        queryFn: () => base44.entities.Area.list('name', 1000),
+        staleTime: STALE.SLOW,
+    });
+    const { data: slots = [] } = useQuery({
+        queryKey: ['inv-slots'],
+        queryFn: () => base44.entities.StorageSlot.list('full_name', 1000),
+        staleTime: STALE.MEDIUM,
+    });
+    const { data: assignments = [] } = useQuery({
+        queryKey: ['inv-assignments'],
+        queryFn: () => base44.entities.StorageAssignment.filter({ is_active: true }, 'article_name', 1000),
+        staleTime: STALE.MEDIUM,
+    });
     const { data: articles = [] } = useQuery({
         queryKey: ['articles'],
-        queryFn: () => base44.entities.Article.list('name')
+        queryFn: () => base44.entities.Article.list('name', 1000),
     });
-
     const { data: categories = [] } = useQuery({
         queryKey: ['article-categories'],
-        queryFn: () => base44.entities.ArticleCategory.list('order')
+        queryFn: () => base44.entities.ArticleCategory.list('order'),
+    });
+    const { data: currentUser } = useQuery({
+        queryKey: ['user'],
+        queryFn: () => base44.auth.me(),
+        staleTime: STALE.SLOW,
     });
 
+    // ── slotValues aus assignment.quantity initialisieren (Vorbefüllung) ────────
+    useEffect(() => {
+        if (assignments.length > 0) {
+            setSlotValues(prev => {
+                let changed = false;
+                const next = { ...prev };
+                assignments.forEach(a => {
+                    if (next[a.id] === undefined) {
+                        next[a.id] = a.quantity ?? 0;
+                        changed = true;
+                    }
+                });
+                return changed ? next : prev;
+            });
+        }
+    }, [assignments]);
+
+    // ── Derived data ───────────────────────────────────────────────────────────
+    const assignmentsBySlot = useMemo(() => {
+        const map = {};
+        assignments.forEach(a => {
+            if (!map[a.storage_slot_id]) map[a.storage_slot_id] = [];
+            map[a.storage_slot_id].push(a);
+        });
+        return map;
+    }, [assignments]);
+
+    const assignedArticleIds = useMemo(() =>
+        new Set(assignments.map(a => a.article_id)),
+        [assignments]
+    );
+
+    const unassignedArticles = useMemo(() =>
+        articles.filter(a => !assignedArticleIds.has(a.id)),
+        [articles, assignedArticleIds]
+    );
+
+    // Interagierte Artikel (mind. eine berührte Zuordnung ODER Eintrag im Nicht-zugeordnet-Bereich)
+    const interactedArticleIds = useMemo(() => {
+        const ids = new Set();
+        for (const a of assignments) {
+            if (touchedAssignments[a.id]) ids.add(a.article_id);
+        }
+        for (const id of Object.keys(unassignedCounts)) {
+            ids.add(id);
+        }
+        return ids;
+    }, [assignments, touchedAssignments, unassignedCounts]);
+
+    // Aggregierte gezählte Menge pro Artikel (ALLE Zuordnungen + Nicht-zugeordnet)
+    const articleAggregates = useMemo(() => {
+        const agg = {};
+        for (const a of assignments) {
+            if (interactedArticleIds.has(a.article_id)) {
+                const count = slotValues[a.id] ?? a.quantity ?? 0;
+                agg[a.article_id] = (agg[a.article_id] || 0) + count;
+            }
+        }
+        for (const [id, count] of Object.entries(unassignedCounts)) {
+            agg[id] = (agg[id] || 0) + count;
+        }
+        return agg;
+    }, [assignments, interactedArticleIds, slotValues, unassignedCounts]);
+
+    // ── Fortschritt & Stats ────────────────────────────────────────────────────
+    const { countedSlots, totalSlots, totalDiff } = useMemo(() => {
+        const slotsWithAssignments = slots.filter(s =>
+            assignmentsBySlot[s.id]?.length > 0
+        );
+        const counted = slotsWithAssignments.filter(s =>
+            assignmentsBySlot[s.id].every(a => touchedAssignments[a.id])
+        ).length;
+
+        const diff = [...interactedArticleIds].reduce((sum, id) => {
+            const article = articles.find(a => a.id === id);
+            return sum + Math.abs((articleAggregates[id] || 0) - (article?.current_stock || 0));
+        }, 0);
+
+        return { countedSlots: counted, totalSlots: slotsWithAssignments.length, totalDiff: diff };
+    }, [slots, assignmentsBySlot, touchedAssignments, interactedArticleIds, articleAggregates, articles]);
+
+    const totalItemsCounted = Object.keys(touchedAssignments).length + Object.keys(unassignedCounts).length;
+
+    // ── Count handlers ─────────────────────────────────────────────────────────
+    const handleSlotCountChange = (assignmentId, value) => {
+        const numValue = parseInt(value) || 0;
+        setSlotValues(prev => ({ ...prev, [assignmentId]: numValue }));
+        setTouchedAssignments(prev => ({ ...prev, [assignmentId]: true }));
+    };
+
+    const handleUnassignedCountChange = (articleId, value) => {
+        const numValue = parseInt(value) || 0;
+        setUnassignedCounts(prev => ({ ...prev, [articleId]: numValue }));
+        setActiveArticle(articleId);
+    };
+
+    // ── Barcode scan ───────────────────────────────────────────────────────────
+    const handleScan = (barcode) => {
+        const article = articles.find(a => a.barcode === barcode);
+        if (!article) {
+            toast.error(`Artikel nicht gefunden: ${barcode}`);
+            return;
+        }
+
+        const articleAssignments = assignments.filter(a => a.article_id === article.id && a.is_active !== false);
+
+        if (articleAssignments.length > 0) {
+            // Artikel ist in Fächern zugeordnet → erste Zuordnung hochzählen
+            const assignment = articleAssignments[0];
+            const current = slotValues[assignment.id] ?? assignment.quantity ?? 0;
+            setSlotValues(prev => ({ ...prev, [assignment.id]: current + 1 }));
+            setTouchedAssignments(prev => ({ ...prev, [assignment.id]: true }));
+            setLastScanned({
+                name: article.name,
+                count: current + 1,
+                slot: assignment.slot_full_name,
+                timestamp: Date.now()
+            });
+        } else {
+            // Nicht zugeordneter Artikel
+            const current = unassignedCounts[article.id] || 0;
+            setUnassignedCounts(prev => ({ ...prev, [article.id]: current + 1 }));
+            setActiveArticle(article.id);
+            setLastScanned({
+                name: article.name,
+                count: current + 1,
+                timestamp: Date.now()
+            });
+            setTimeout(() => {
+                document.getElementById(`article-${article.id}`)?.scrollIntoView({
+                    behavior: 'smooth', block: 'center'
+                });
+            }, 100);
+        }
+
+        setTimeout(() => setLastScanned(null), 2000);
+    };
+
+    // ── Save mutation (Offline-fähig via queueMutation) ────────────────────────
     const saveMutation = useMutation({
-        mutationFn: async ({ counts, articles, user }) => {
-            const countsData = Object.entries(counts).map(([id, counted]) => {
+        mutationFn: async () => {
+            // 1. Berührte Zuordnungen mit geändertem Wert updaten
+            const changedAssignments = assignments.filter(a =>
+                touchedAssignments[a.id] && slotValues[a.id] !== a.quantity
+            );
+
+            // 2. Aggregierte Counts pro Artikel
+            const countsData = [...interactedArticleIds].map(id => {
                 const article = articles.find(a => a.id === id);
                 const systemStock = article?.current_stock || 0;
+                const counted = articleAggregates[id] || 0;
                 return {
                     article_id: id,
                     article_name: article?.name,
@@ -85,14 +265,16 @@ export default function Inventory() {
                 };
             });
 
-            const totalDiff = countsData.reduce((sum, c) => sum + Math.abs(c.difference), 0);
-            const changed = countsData.filter(c => c.difference !== 0); // nur Artikel mit Abweichung
+            const totalDiffVal = countsData.reduce((sum, c) => sum + Math.abs(c.difference), 0);
+            // 3. Nur Artikel mit Abweichung updaten
+            const changedArticles = countsData.filter(c => c.difference !== 0);
+
             const sessionPayload = {
                 date: new Date().toISOString(),
-                counted_by: user.full_name,
+                counted_by: currentUser?.full_name || 'Unbekannt',
                 counts: countsData,
                 total_items: countsData.length,
-                total_difference: totalDiff
+                total_difference: totalDiffVal
             };
 
             // ⚠️ Nach 30-60 Minuten Zählen im Keller darf der finale "Abschließen"-Tap
@@ -101,40 +283,66 @@ export default function Inventory() {
             let offline = !navigator.onLine;
             if (!offline) {
                 try {
-                    await Promise.all(changed.map(c => base44.entities.Article.update(c.article_id, {
-                        current_stock: c.counted_stock
-                    })));
+                    await Promise.all(changedAssignments.map(a =>
+                        base44.entities.StorageAssignment.update(a.id, { quantity: slotValues[a.id] })
+                    ));
+                    await Promise.all(changedArticles.map(c =>
+                        base44.entities.Article.update(c.article_id, { current_stock: c.counted_stock })
+                    ));
                     await base44.entities.InventorySession.create(sessionPayload);
                 } catch (err) {
                     offline = true;
                 }
             }
             if (offline) {
-                for (const c of changed) {
-                    await queueMutation({ entityName: 'Article', type: 'update', id: c.article_id, data: { current_stock: c.counted_stock } });
+                for (const a of changedAssignments) {
+                    await queueMutation({
+                        entityName: 'StorageAssignment', type: 'update',
+                        id: a.id, data: { quantity: slotValues[a.id] }
+                    });
                 }
-                await queueMutation({ entityName: 'InventorySession', type: 'create', data: sessionPayload });
+                for (const c of changedArticles) {
+                    await queueMutation({
+                        entityName: 'Article', type: 'update',
+                        id: c.article_id, data: { current_stock: c.counted_stock }
+                    });
+                }
+                await queueMutation({
+                    entityName: 'InventorySession', type: 'create',
+                    data: sessionPayload
+                });
             }
 
-            return { result: sessionPayload, offline };
+            return { result: sessionPayload, offline, changedCount: changedArticles.length };
         },
-        onSuccess: ({ result, offline }) => {
-            setCounts({});
+        onSuccess: ({ result, offline, changedCount }) => {
+            // Reset: touched + unassigned löschen, slotValues auf alte Quantities zurücksetzen
+            setTouchedAssignments({});
+            setUnassignedCounts({});
+            const initial = {};
+            assignments.forEach(a => { initial[a.id] = a.quantity ?? 0; });
+            setSlotValues(initial);
             setActiveArticle(null);
-            localStorage.removeItem('inventory_offline_counts');
+
+            localStorage.removeItem('inv_touched');
+            localStorage.removeItem('inv_unassigned_counts');
+            localStorage.setItem('inv_slot_values', JSON.stringify(initial));
+
             if (!offline) {
                 queryClient.invalidateQueries({ queryKey: ['articles'] });
+                queryClient.invalidateQueries({ queryKey: ['inv-assignments'] });
             }
-            queryClient.setQueryData(['inventory-sessions'], (old) => {
-                return old ? [...old, result] : [result];
-            });
-            const corrected = (result?.counts || []).filter(c => c.difference !== 0).length;
+            queryClient.setQueryData(['inventory-sessions'], (old) =>
+                old ? [...old, result] : [result]
+            );
+
             if (offline) {
                 toast.success('Inventur gespeichert (offline) ⚡ — wird synchronisiert sobald wieder online');
             } else {
-                toast.success(corrected > 0
-                    ? `Inventur abgeschlossen — ${corrected} Bestände wurden korrigiert`
-                    : 'Inventur abgeschlossen — Keine Abweichungen');
+                toast.success(changedCount > 0
+                    ? `Inventur abgeschlossen — ${changedCount} Bestände wurden korrigiert`
+                    : 'Inventur abgeschlossen — Keine Abweichungen'
+                );
             }
         },
         onError: (error) => {
@@ -142,64 +350,25 @@ export default function Inventory() {
         }
     });
 
-    // Beim Reconnect automatisch gequeute Inventur-Daten nachsynchen
+    // ── Beim Reconnect gequeute Daten nachsynchen ──────────────────────────────
     useEffect(() => {
         const handleOnline = () => {
             syncMutations(base44)
-                .then(() => queryClient.invalidateQueries({ queryKey: ['articles'] }))
+                .then(() => {
+                    queryClient.invalidateQueries({ queryKey: ['articles'] });
+                    queryClient.invalidateQueries({ queryKey: ['inv-assignments'] });
+                })
                 .catch(console.error);
         };
         window.addEventListener('online', handleOnline);
         return () => window.removeEventListener('online', handleOnline);
     }, [queryClient]);
 
-    const { data: currentUser } = useQuery({
-        queryKey: ['user'],
-        queryFn: () => base44.auth.me(),
-        staleTime: STALE.SLOW,
-    });
-
-    const handleCountChange = (articleId, value) => {
-        const numValue = parseInt(value) || 0;
-        // Optimistic update
-        setCounts(prev => {
-            const newCounts = { ...prev, [articleId]: numValue };
-            return newCounts;
-        });
-        setActiveArticle(articleId);
-    };
-
-    const handleScan = (barcode) => {
-        const article = articles.find(a => a.barcode === barcode);
-        if (article) {
-            const currentCount = counts[article.id] || 0;
-            setCounts(prev => ({ ...prev, [article.id]: currentCount + 1 }));
-            setActiveArticle(article.id);
-            setLastScanned({ 
-                name: article.name, 
-                count: currentCount + 1,
-                timestamp: Date.now()
-            });
-            
-            // Scroll to article
-            setTimeout(() => {
-                document.getElementById(`article-${article.id}`)?.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-            }, 100);
-
-            // Clear notification after 2 seconds
-            setTimeout(() => {
-                setLastScanned(null);
-            }, 2000);
-        } else {
-            toast.error(`Artikel nicht gefunden: ${barcode}`);
-        }
-    };
+    // ── Actions ────────────────────────────────────────────────────────────────
+    const hasAnyCounts = totalItemsCounted > 0;
 
     const handleSave = () => {
-        if (Object.keys(counts).length === 0) {
+        if (!hasAnyCounts) {
             toast.warning('Keine Zählungen vorhanden');
             return;
         }
@@ -208,32 +377,32 @@ export default function Inventory() {
 
     const handleSaveConfirmed = () => {
         setSaveDialogOpen(false);
-        saveMutation.mutate({ counts, articles, user: currentUser });
-    };
-
-    const handleReset = () => {
-        setResetDialogOpen(true);
+        saveMutation.mutate();
     };
 
     const handleResetConfirmed = () => {
         setResetDialogOpen(false);
-        setCounts({});
+        setTouchedAssignments({});
+        setUnassignedCounts({});
+        const initial = {};
+        assignments.forEach(a => { initial[a.id] = a.quantity ?? 0; });
+        setSlotValues(initial);
         setActiveArticle(null);
     };
 
-    const filteredArticles = articles.filter(a => {
-        const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            a.barcode?.includes(searchTerm);
-        const matchesCategory = filterCategory === 'all' || a.category === filterCategory;
-        return matchesSearch && matchesCategory;
-    });
-
-    const countedArticles = filteredArticles.filter(a => counts[a.id] !== undefined);
-    const uncountedArticles = filteredArticles.filter(a => counts[a.id] === undefined);
-    const totalDiff = filteredArticles.reduce((sum, a) => {
-        if (counts[a.id] === undefined) return sum;
-        return sum + Math.abs((counts[a.id] || 0) - (a.current_stock || 0));
-    }, 0);
+    // ── PDF export data ────────────────────────────────────────────────────────
+    const pdfData = useMemo(() => {
+        return [...interactedArticleIds].map(id => {
+            const article = articles.find(a => a.id === id);
+            const counted = articleAggregates[id] || 0;
+            return {
+                ...article,
+                counted_stock: counted,
+                difference: counted - (article?.current_stock || 0),
+                total_value: counted * (article?.purchase_price || 0)
+            };
+        });
+    }, [interactedArticleIds, articleAggregates, articles]);
 
     if (!permissions.canEditShopping) {
         return <PermissionDenied />;
@@ -248,7 +417,7 @@ export default function Inventory() {
                         <div>
                             <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Inventur</h1>
                             <p className="text-muted-foreground text-sm mt-1">
-                                {countedArticles.length} von {filteredArticles.length} gezählt
+                                {countedSlots} von {totalSlots} Fächern gezählt
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -262,9 +431,9 @@ export default function Inventory() {
                             </span>
                         </div>
                     </div>
-                    
+
                     <div className="flex gap-2 flex-wrap">
-                        <Button 
+                        <Button
                             onClick={() => {
                                 setScanMode(!scanMode);
                                 if (!scanMode) setScannerOpen(true);
@@ -275,12 +444,7 @@ export default function Inventory() {
                             {scanMode ? 'Scannen aktiv' : 'Scanner starten'}
                         </Button>
                         <PDFExportButton
-                            data={filteredArticles.filter(a => counts[a.id] !== undefined).map(a => ({
-                                ...a,
-                                counted_stock: counts[a.id],
-                                difference: counts[a.id] - (a.current_stock || 0),
-                                total_value: (counts[a.id] || 0) * (a.purchase_price || 0)
-                            }))}
+                            data={pdfData}
                             filename={`inventur_${new Date().toISOString().split('T')[0]}`}
                             title="Inventur-Bericht"
                             columns={[
@@ -299,18 +463,18 @@ export default function Inventory() {
                             ]}
                             variant="outline"
                             className="border-purple-600 text-foreground bg-purple-600 hover:bg-purple-700"
-                            disabled={Object.keys(counts).length === 0}
+                            disabled={!hasAnyCounts}
                         />
-                        <Button 
+                        <Button
                             onClick={handleSave}
-                            disabled={Object.keys(counts).length === 0}
+                            disabled={!hasAnyCounts}
                             className="bg-green-600 hover:bg-green-700"
                         >
                             <Save className="w-4 h-4 mr-2" />
-                            Speichern ({Object.keys(counts).length})
+                            Speichern ({totalItemsCounted})
                         </Button>
-                        <Button 
-                            onClick={handleReset}
+                        <Button
+                            onClick={() => setResetDialogOpen(true)}
                             variant="outline"
                             className="border-red-600 text-foreground bg-red-600 hover:bg-red-700"
                         >
@@ -327,7 +491,10 @@ export default function Inventory() {
                             <Camera className="w-5 h-5 text-foreground" />
                             <div>
                                 <p className="font-semibold text-foreground">{lastScanned.name}</p>
-                                <p className="text-sm text-green-100">Menge: {lastScanned.count}</p>
+                                <p className="text-sm text-green-100">
+                                    Menge: {lastScanned.count}
+                                    {lastScanned.slot && ` · ${lastScanned.slot}`}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -336,12 +503,12 @@ export default function Inventory() {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3 mb-6">
                     <Card className="p-4 bg-card border-border">
-                        <p className="text-sm text-muted-foreground mb-1">Gezählt</p>
-                        <p className="text-2xl font-bold text-foreground">{countedArticles.length}</p>
+                        <p className="text-sm text-muted-foreground mb-1">Fächer gezählt</p>
+                        <p className="text-2xl font-bold text-foreground">{countedSlots}</p>
                     </Card>
                     <Card className="p-4 bg-card border-border">
-                        <p className="text-sm text-muted-foreground mb-1">Offen</p>
-                        <p className="text-2xl font-bold text-amber-500">{uncountedArticles.length}</p>
+                        <p className="text-sm text-muted-foreground mb-1">Fächer offen</p>
+                        <p className="text-2xl font-bold text-amber-500">{totalSlots - countedSlots}</p>
                     </Card>
                     <Card className="p-4 bg-card border-border">
                         <p className="text-sm text-muted-foreground mb-1">Differenzen</p>
@@ -349,146 +516,32 @@ export default function Inventory() {
                     </Card>
                 </div>
 
-                {/* Search & Filter */}
-                <Card className="p-4 bg-card border-border mb-6">
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                            <Input
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Artikel suchen..."
-                                className="pl-10 bg-background border-border text-foreground"
-                            />
-                        </div>
-                        <Select
-                            value={filterCategory}
-                            onValueChange={setFilterCategory}
-                        >
-                            <SelectTrigger className="w-full sm:w-[200px] bg-background border-border text-foreground">
-                                <SelectValue placeholder="Kategorie wählen" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Alle Kategorien</SelectItem>
-                                {categories.map(cat => (
-                                    <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </Card>
-
-                {/* Articles */}
-                {filteredArticles.length > 0 ? (
-                    <div className="animate-fade-in">
-                    <VirtualizedList
-                        items={filteredArticles}
-                        height={Math.min(filteredArticles.length * 110, 800)}
-                        itemHeight={110}
-                        renderItem={(article) => {
-                            const counted = counts[article.id];
-                            const systemStock = article.current_stock || 0;
-                            const diff = counted !== undefined ? counted - systemStock : 0;
-                            const hasDiff = counted !== undefined && diff !== 0;
-                            
-                            return (
-                                <Card 
-                                    id={`article-${article.id}`}
-                                    className={cn(
-                                        "p-4 bg-card border-border transition-all mx-0 my-1",
-                                        activeArticle === article.id && "ring-2 ring-blue-500",
-                                        counted !== undefined && "bg-card/50"
-                                    )}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <h3 className="font-semibold text-foreground">{article.name}</h3>
-                                                {hasDiff && (
-                                                    <Badge variant="destructive" className="text-xs">
-                                                        <AlertTriangle className="w-3 h-3 mr-1" />
-                                                        {diff > 0 ? '+' : ''}{diff}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                                {article.barcode && (
-                                                    <span className="font-mono">{article.barcode}</span>
-                                                )}
-                                                {article.category && (
-                                                    <Badge 
-                                                        variant="outline"
-                                                        style={{ 
-                                                            borderColor: categories.find(c => c.name === article.category)?.color,
-                                                            color: categories.find(c => c.name === article.category)?.color 
-                                                        }}
-                                                    >
-                                                        {article.category}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-4">
-                                            <div className="text-center">
-                                                <p className="text-sm text-muted-foreground mb-1">Soll</p>
-                                                <p className="text-lg font-semibold text-foreground/75">{systemStock}</p>
-                                            </div>
-
-                                            <div className="flex flex-col items-center gap-1">
-                                                <p className="text-sm text-muted-foreground">Ist</p>
-                                                <div className="flex items-center gap-1">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleCountChange(article.id, Math.max(0, (counted || 0) - 1))}
-                                                        className="w-8 h-8 flex items-center justify-center rounded bg-secondary hover:bg-secondary text-foreground transition-colors active:bg-slate-500"
-                                                    >
-                                                        <Minus className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <Input
-                                                        type="number"
-                                                        value={counted !== undefined ? counted : ''}
-                                                        onChange={(e) => handleCountChange(article.id, e.target.value)}
-                                                        placeholder="—"
-                                                        className="w-16 text-center bg-background border-border text-foreground text-lg font-semibold px-1"
-                                                        min="0"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleCountChange(article.id, (counted || 0) + 1)}
-                                                        className="w-8 h-8 flex items-center justify-center rounded bg-secondary hover:bg-secondary text-foreground transition-colors active:bg-slate-500"
-                                                    >
-                                                        <Plus className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {counted !== undefined && (
-                                                <div className={cn(
-                                                    "text-center min-w-[50px]",
-                                                    diff > 0 && "text-green-400",
-                                                    diff < 0 && "text-red-400",
-                                                    diff === 0 && "text-muted-foreground"
-                                                )}>
-                                                    <p className="text-sm mb-1">Diff</p>
-                                                    <p className="text-lg font-bold">
-                                                        {diff > 0 ? '+' : ''}{diff}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </Card>
-                            );
-                        }}
+                {/* Fach-basierte Zählung */}
+                <div className="mb-8">
+                    <h2 className="text-lg font-bold text-foreground mb-3">Fach-basierte Zählung</h2>
+                    <SlotCountingSection
+                        areas={areas}
+                        slots={slots}
+                        assignments={assignments}
+                        articles={articles}
+                        slotValues={slotValues}
+                        touchedAssignments={touchedAssignments}
+                        onCountChange={handleSlotCountChange}
                     />
-                    </div>
-                ) : (
-                    <div className="text-center py-12">
-                        <ClipboardCheck className="w-12 h-12 mx-auto mb-3 text-slate-600" />
-                        <p className="text-muted-foreground">Keine Artikel gefunden</p>
-                    </div>
-                )}
+                </div>
+
+                {/* Nicht zugeordnete Artikel */}
+                <UnassignedArticlesSection
+                    articles={unassignedArticles}
+                    counts={unassignedCounts}
+                    categories={categories}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    filterCategory={filterCategory}
+                    setFilterCategory={setFilterCategory}
+                    activeArticle={activeArticle}
+                    onCountChange={handleUnassignedCountChange}
+                />
 
                 <BarcodeScanner
                     open={scannerOpen}
@@ -499,7 +552,6 @@ export default function Inventory() {
                     onScan={(barcode) => {
                         handleScan(barcode);
                         if (scanMode) {
-                            // Keep scanner open in scan mode
                             setTimeout(() => {
                                 setScannerOpen(true);
                             }, 100);
@@ -514,7 +566,9 @@ export default function Inventory() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Inventur speichern?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {Object.keys(counts).length} Artikel werden als Inventursitzung gespeichert. Die Zählungen werden danach zurückgesetzt.
+                            {totalItemsCounted} Zählungen werden als Inventursitzung gespeichert.
+                            Fächer-Zuordnungen werden aktualisiert und Artikel-Bestände bei Abweichungen korrigiert.
+                            Die Zählungen werden danach zurückgesetzt.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
