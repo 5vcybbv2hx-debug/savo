@@ -42,7 +42,7 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
     const stats = [
         { title: 'Aktive Mitarbeiter', value: employees.length, icon: Users, color: 'bg-blue-600', link: 'Employees' },
         { title: 'Schichten heute', value: todayShifts.length, icon: Calendar, color: 'bg-purple-600', link: 'Calendar' },
-        { title: 'Reservierungen', value: todayReservations.length, icon: CalendarCheck, color: 'bg-green-600', link: 'Reservations' },
+        { title: 'Reservierungen', value: todayReservations.length, icon: CalendarCheck, color: 'bg-green-600', link: 'GuestHub' },
         { title: 'Offene Aufgaben', value: openTodos.length, icon: CheckSquare, color: 'bg-orange-600', link: 'Todos', badge: urgentTodos.length > 0 ? `${urgentTodos.length} dringend` : null }
     ];
 
