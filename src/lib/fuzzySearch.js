@@ -78,3 +78,27 @@ export function highlightMatch(text, query) {
     after: text.slice(idx + query.length),
   };
 }
+
+// ── Word-order-independent, hyphen/plural-tolerant matching ─────────────────
+// Splits both the search term and the searchable text into individual words
+// (on whitespace and hyphens) and requires every search word to loosely match
+// (substring in either direction) at least one word in the text — so word
+// order, hyphenation, and simple singular/plural differences don't cause
+// "Artikel nicht gefunden", even though the record actually exists.
+function tokenize(str) {
+  return (str || '').toLowerCase().trim().split(/[\s-]+/).filter(Boolean);
+}
+
+/** True if every word in `term` loosely matches at least one word in `text`. */
+export function fuzzyMatches(text, term) {
+  if (!term?.trim()) return true;
+  const textWords = tokenize(text);
+  const termWords = tokenize(term);
+  if (textWords.length === 0) return false;
+  return termWords.every(qt => textWords.some(hw => hw.includes(qt) || qt.includes(hw)));
+}
+
+/** Convenience: builds the searchable haystack from an Article's common fields. */
+export function articleSearchText(article) {
+  return [article?.name, article?.manufacturer, article?.category, article?.barcode].filter(Boolean).join(' ');
+}
