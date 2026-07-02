@@ -91,6 +91,11 @@ export default function Inventory() {
         queryFn: () => base44.entities.StorageAssignment.filter({ is_active: true }, 'article_name', 1000),
         staleTime: STALE.MEDIUM,
     });
+    const { data: furniture = [] } = useQuery({
+        queryKey: ['inv-furniture'],
+        queryFn: () => base44.entities.Furniture.list('sort_order,name', 1000),
+        staleTime: STALE.SLOW,
+    });
     const { data: articles = [] } = useQuery({
         queryKey: ['articles'],
         queryFn: () => base44.entities.Article.list('name', 1000),
@@ -524,6 +529,7 @@ export default function Inventory() {
                         slots={slots}
                         assignments={assignments}
                         articles={articles}
+                        furniture={furniture}
                         slotValues={slotValues}
                         touchedAssignments={touchedAssignments}
                         onCountChange={handleSlotCountChange}
