@@ -89,7 +89,7 @@ const CORE_PAGES = {
     "NotificationSettings": NotificationSettings,
     "Notifications": Notifications,
     "Onboarding": Onboarding,
-    "Permissions": PermissionsNew,
+    "PermissionsNew": PermissionsNew,
     "PriceCalculator": PriceCalculator,
     "QuickList": QuickList,
     "Recipes": Recipes,
