@@ -44,23 +44,16 @@ export default function Calendar() {
         staleTime: STALE.SLOW,
     });
 
-    const { data: allShiftsDesktop = [], isLoading: desktopLoading } = useQuery({
+    // Einheitliche Schicht-Query für Desktop & Mobile — verhindert, dass Änderungen aus
+    // Quick-Einplanung, Schichttausch, Direkttausch o.ä. auf der jeweils anderen Ansicht
+    // nicht ankommen (beide Plattformen nutzten vorher unterschiedliche Query-Keys für
+    // identische Daten).
+    const { data: shifts = [], isLoading: shiftsLoading } = useQuery({
         queryKey: ['shifts'],
         queryFn: () => base44.entities.Shift.list('date', 2000),
-        enabled: !isMobile,
         staleTime: 2 * 60 * 1000,
         refetchOnWindowFocus: false,
     });
-
-    const { data: mobileShifts = [], isLoading: mobileLoading } = useQuery({
-        queryKey: ['shifts-mobile'],
-        queryFn: () => base44.entities.Shift.list('date', 2000),
-        enabled: isMobile,
-        staleTime: 2 * 60 * 1000,
-    });
-
-    const shifts = isMobile ? mobileShifts : allShiftsDesktop;
-    const shiftsLoading = isMobile ? mobileLoading : desktopLoading;
     const { handleError } = useErrorHandler();
 
     const { data: reservations = [] } = useQuery({
