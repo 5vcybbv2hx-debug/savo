@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
     Search, Wine, Users, Package, Calendar, CheckSquare, 
-    Sparkles, BookOpen, Clock, FileText, Command, MapPin, Warehouse
+    Sparkles, BookOpen, Clock, FileText, Command, MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,12 +49,6 @@ export default function GlobalSearch({ open, onClose }) {
     const { data: todos = [] } = useQuery({
         queryKey: ['todos'],
         queryFn: () => base44.entities.TodoItem.filter({ is_archived: false }),
-        enabled: open
-    });
-
-    const { data: storageItems = [] } = useQuery({
-        queryKey: ['storage-items'],
-        queryFn: () => base44.entities.StorageItem.filter({ is_active: true }),
         enabled: open
     });
 
@@ -118,11 +112,6 @@ export default function GlobalSearch({ open, onClose }) {
                 a.barcode?.includes(q) ||
                 aAssignments.some(asgn => asgn.slot_full_name?.toLowerCase().includes(q));
         }).slice(0, 6),
-        storageItems: storageItems.filter(s =>
-            s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            s.location_label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            s.category?.toLowerCase().includes(searchTerm.toLowerCase())
-        ).slice(0, 6),
         recipes: recipes.filter(r => 
             r.name?.toLowerCase().includes(searchTerm.toLowerCase())
         ).slice(0, 5),
@@ -137,7 +126,7 @@ export default function GlobalSearch({ open, onClose }) {
             t.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             t.description?.toLowerCase().includes(searchTerm.toLowerCase())
         ).slice(0, 5)
-    } : { pages: [], articles: [], recipes: [], employees: [], menuItems: [], todos: [], storageItems: [] };
+    } : { pages: [], articles: [], recipes: [], employees: [], menuItems: [], todos: [] };
 
     const hasResults = Object.values(searchResults).some(arr => arr.length > 0);
 
@@ -145,7 +134,6 @@ export default function GlobalSearch({ open, onClose }) {
     const flatResults = [
         ...searchResults.pages.map(p => ({ type: 'page', item: p, path: createPageUrl(p.page) })),
         ...searchResults.articles.map(a => ({ type: 'article', item: a, path: createPageUrl('Warehouse') })),
-        ...searchResults.storageItems.map(s => ({ type: 'storage', item: s, path: createPageUrl('Storage') })),
         ...searchResults.menuItems.map(m => ({ type: 'menu', item: m, path: createPageUrl('DrinkMenu') })),
         ...searchResults.recipes.map(r => ({ type: 'recipe', item: r, path: createPageUrl('Recipes') })),
         ...searchResults.employees.map(e => ({ type: 'employee', item: e, path: createPageUrl('Employees') })),
@@ -250,24 +238,6 @@ export default function GlobalSearch({ open, onClose }) {
                                             {a.current_stock !== undefined && (
                                                 <Badge variant={a.current_stock <= (a.min_stock || 0) ? 'destructive' : 'outline'} className="shrink-0 text-xs">{a.current_stock}</Badge>
                                             )}
-                                        </button>
-                                      )
-                                    },
-                                    { key: 'storageItems', label: 'Lagerartikel', items: searchResults.storageItems,
-                                      render: (s, idx, focused) => (
-                                        <button key={s.id} ref={el => resultsRef.current[idx] = el}
-                                            onClick={() => handleNavigate(createPageUrl('Storage'))}
-                                            className={cn('w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left', focused ? 'bg-accent' : 'hover:bg-accent/60')}>
-                                            <Warehouse className="w-4 h-4 text-violet-500 shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-sm truncate">{s.name}</p>
-                                                {s.location_label && (
-                                                    <p className="flex items-center gap-1 text-xs text-violet-400 font-semibold mt-0.5">
-                                                        <MapPin className="w-3 h-3 shrink-0" />{s.location_label}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <Badge variant={s.condition === 'defekt' ? 'destructive' : 'outline'} className="shrink-0 text-xs">{s.condition || 'gut'}</Badge>
                                         </button>
                                       )
                                     },
