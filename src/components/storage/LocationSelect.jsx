@@ -16,7 +16,7 @@ export default function LocationSelect({ value, onChange, className }) {
 
   const { data: locations = [], isLoading } = useQuery({
     queryKey: ['locations'],
-    queryFn: () => base44.entities.Location.filter({ is_active: true }, '-order,name', 100)
+    queryFn: () => base44.entities.Location.filter({ is_active: true }, '-order', 100)
   });
 
   const createMutation = useMutation({

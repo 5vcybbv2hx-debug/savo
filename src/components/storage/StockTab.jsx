@@ -15,7 +15,7 @@ export default function StockTab() {
   const [filterArea, setFilterArea] = useState(ALL);
   const [filterLow, setFilterLow] = useState(false);
 
-  const { data: areas, isLoading: aL } = useQuery({ queryKey: ['areas'], queryFn: () => base44.entities.Area.list('order,name', 100) });
+  const { data: areas, isLoading: aL } = useQuery({ queryKey: ['areas'], queryFn: () => base44.entities.Area.list('order', 100) });
   const { data: assignments, isLoading: asL, isError: asE } = useQuery({
     queryKey: ['assignments'],
     queryFn: () => base44.entities.StorageAssignment.filter({ is_active: true }, 'article_name', 1000)

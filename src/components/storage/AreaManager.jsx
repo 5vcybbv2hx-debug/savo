@@ -18,7 +18,7 @@ export default function AreaManager({ permissions }) {
 
   const { data: areas = [], isLoading } = useQuery({
     queryKey: ['areas'],
-    queryFn: () => base44.entities.Area.list('-order,name', 100)
+    queryFn: () => base44.entities.Area.list('-order', 100)
   });
 
   const saveMutation = useMutation({

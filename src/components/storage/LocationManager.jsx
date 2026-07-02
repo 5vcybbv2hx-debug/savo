@@ -37,13 +37,13 @@ export default function LocationManager({ permissions }) {
 
   const { data: areas = [] } = useQuery({
     queryKey: ['areas'],
-    queryFn: () => base44.entities.Area.list('-order,name', 100)
+    queryFn: () => base44.entities.Area.list('-order', 100)
   });
 
   const { data: containers = [] } = useQuery({
     queryKey: ['containers', selectedArea],
     queryFn: () =>
-      selectedArea ? base44.entities.Container.filter({ area_id: selectedArea, is_active: true }, '-order,name') : Promise.resolve([]),
+      selectedArea ? base44.entities.Container.filter({ area_id: selectedArea, is_active: true }, '-order') : Promise.resolve([]),
     enabled: !!selectedArea
   });
 

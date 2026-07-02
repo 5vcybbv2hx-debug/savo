@@ -31,7 +31,7 @@ export default function ContainerSelect({ areaId = '', value, onChange, classNam
   // Fetch containers for this area
   const { data: containers = [], isLoading } = useQuery({
     queryKey: ['containers', areaId],
-    queryFn: () => areaId ? base44.entities.Container.filter({ area_id: areaId, is_active: true }, '-order,name') : Promise.resolve([]),
+    queryFn: () => areaId ? base44.entities.Container.filter({ area_id: areaId, is_active: true }, '-order') : Promise.resolve([]),
     enabled: !!areaId
   });
 

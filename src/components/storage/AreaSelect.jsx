@@ -22,7 +22,7 @@ export default function AreaSelect({ value, onChange, className }) {
 
   const { data: areas = [], isLoading } = useQuery({
     queryKey: ['areas'],
-    queryFn: () => base44.entities.Area.list('order,name', 100)
+    queryFn: () => base44.entities.Area.list('order', 100)
   });
 
   const createMutation = useMutation({

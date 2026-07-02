@@ -93,7 +93,7 @@ export default function Inventory() {
     });
     const { data: furniture = [] } = useQuery({
         queryKey: ['inv-furniture'],
-        queryFn: () => base44.entities.Furniture.list('sort_order,name', 1000),
+        queryFn: () => base44.entities.Furniture.list('sort_order', 1000),
         staleTime: STALE.SLOW,
     });
     const { data: articles = [] } = useQuery({

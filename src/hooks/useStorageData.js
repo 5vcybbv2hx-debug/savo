@@ -10,7 +10,7 @@ import { QK } from '@/lib/queryKeys';
 export function useAreas() {
   return useQuery({
     queryKey: QK.areas(),
-    queryFn: () => base44.entities.Area.list('order,name', 100),
+    queryFn: () => base44.entities.Area.list('order', 100),
     staleTime: STALE.FAST,
   });
 }
@@ -19,8 +19,8 @@ export function useFurniture(areaId) {
   return useQuery({
     queryKey: areaId ? QK.furnitureBy(areaId) : QK.furniture(),
     queryFn: () => areaId
-      ? base44.entities.Furniture.filter({ area_id: areaId }, 'sort_order,name', 500)
-      : base44.entities.Furniture.list('sort_order,name', 500),
+      ? base44.entities.Furniture.filter({ area_id: areaId }, 'sort_order', 500)
+      : base44.entities.Furniture.list('sort_order', 500),
     staleTime: STALE.FAST,
   });
 }
@@ -29,8 +29,8 @@ export function useContainers(furnitureId) {
   return useQuery({
     queryKey: furnitureId ? QK.containersBy(furnitureId) : QK.containers(),
     queryFn: () => furnitureId
-      ? base44.entities.Container.filter({ furniture_id: furnitureId }, 'sort_order,name', 500)
-      : base44.entities.Container.list('sort_order,name', 500),
+      ? base44.entities.Container.filter({ furniture_id: furnitureId }, 'sort_order', 500)
+      : base44.entities.Container.list('sort_order', 500),
     staleTime: STALE.FAST,
   });
 }
