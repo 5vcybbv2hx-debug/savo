@@ -100,7 +100,7 @@ export default function StructureTab({ permissions }) {
   const [areaModal,  setAreaModal]  = useState({ open: false, data: null });
   const [furModal,   setFurModal]   = useState({ open: false, data: null, areaId: '' });
   const [slotModal,  setSlotModal]  = useState({ open: false, data: null, furnitureId: '', areaId: '' });
-  const [areaForm,   setAreaForm]   = useState({ name: '', description: '' });
+  const [areaForm,   setAreaForm]   = useState({ name: '', description: '', restock_enabled: true });
   const [furForm,    setFurForm]    = useState({ name: '', type: '', area_id: '', notes: '', restock_enabled: true });
   const [slotForm,   setSlotForm]   = useState({ name: '', capacity: '', notes: '', restock_enabled: true });
 
@@ -268,8 +268,8 @@ export default function StructureTab({ permissions }) {
   });
 
   // ── Modal Opener ──────────────────────────────────────────────────────────────
-  const openAddArea  = () => { setAreaForm({ name: '', description: '' }); setAreaModal({ open: true, data: null }); };
-  const openEditArea = a  => { setAreaForm({ name: a.name, description: a.description || '' }); setAreaModal({ open: true, data: a }); };
+  const openAddArea  = () => { setAreaForm({ name: '', description: '', restock_enabled: true }); setAreaModal({ open: true, data: null }); };
+  const openEditArea = a  => { setAreaForm({ name: a.name, description: a.description || '', restock_enabled: a.restock_enabled !== false }); setAreaModal({ open: true, data: a }); };
   const openAddFur   = areaId => { setFurForm({ name: '', type: '', area_id: areaId, notes: '', restock_enabled: true }); setFurModal({ open: true, data: null, areaId }); };
   const openEditFur  = f  => { setFurForm({ name: f.name, type: f.type, area_id: f.area_id, notes: f.notes || '', restock_enabled: f.restock_enabled !== false }); setFurModal({ open: true, data: f, areaId: f.area_id }); };
   const resetAssignState = () => {
@@ -507,12 +507,19 @@ export default function StructureTab({ permissions }) {
               <Input className="h-9" placeholder="Kurze Beschreibung"
                 value={areaForm.description} onChange={e => setAreaForm(f => ({ ...f, description: e.target.value }))} />
             </div>
+            <div className="flex items-center justify-between pt-1 border-t border-border/50">
+              <Label className="text-xs text-muted-foreground">Im Auffüll-Rundgang anzeigen</Label>
+              <Switch
+                checked={areaForm.restock_enabled !== false}
+                onCheckedChange={(v) => setAreaForm(f => ({ ...f, restock_enabled: v }))}
+              />
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setAreaModal({ open: false, data: null })}>Abbrechen</Button>
             <Button onClick={() => {
               if (!areaForm.name.trim()) { toast.error('Name erforderlich'); return; }
-              saveAreaMut.mutate({ name: areaForm.name.trim(), description: areaForm.description, is_active: true });
+              saveAreaMut.mutate({ name: areaForm.name.trim(), description: areaForm.description, is_active: true, restock_enabled: areaForm.restock_enabled !== false });
             }} disabled={saveAreaMut.isPending} className="bg-amber-600 hover:bg-amber-700 text-white">
               {saveAreaMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
             </Button>

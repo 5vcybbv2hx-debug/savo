@@ -12,13 +12,17 @@
     },
     "area_type": {
       "type": "string",
-      "enum": ["theke", "lager", "sonstiges"],
+      "enum": [
+        "theke",
+        "lager",
+        "sonstiges"
+      ],
       "default": "theke",
-      "description": "Typ: theke = Auffüll-Bereich, lager = Lagerraum, sonstiges"
+      "description": "Typ: theke = Auff\u00fcll-Bereich, lager = Lagerraum, sonstiges"
     },
     "color": {
       "type": "string",
-      "description": "Tailwind-Farbklasse für UI (z.B. blue, green, amber)"
+      "description": "Tailwind-Farbklasse f\u00fcr UI (z.B. blue, green, amber)"
     },
     "icon": {
       "type": "string",
@@ -33,7 +37,14 @@
       "type": "number",
       "description": "Sortierreihenfolge",
       "default": 0
+    },
+    "restock_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Im Auff\u00fcll-Rundgang anzeigen"
     }
   },
-  "required": ["name"]
+  "required": [
+    "name"
+  ]
 }

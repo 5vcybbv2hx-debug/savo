@@ -1,14 +1,15 @@
 import { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { usePermissions } from '@/components/auth/usePermissions';
 import {
     Layers, ChevronRight, ChevronDown, CheckCircle2, Circle,
-    Package, Check, Plus, ClipboardList
+    Package, Check, Plus, ClipboardList, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,9 +29,13 @@ const FURNITURE_ICONS = {
  * Hierarchie: Bereich (collapsible) → Möbel (collapsible) → Fach (collapsible) → Artikel.
  * Zeigt ALLE Möbeltypen (nicht nur Kühlschränke), aber nur solche mit restock_enabled !== false.
  * Nur Fächer mit restock_enabled !== false.
+ * Nur Bereiche mit restock_enabled !== false.
  */
 export default function RundgangMode({ restockItems, articles, createMutation, updateMutation, showToast }) {
     const today = format(new Date(), 'yyyy-MM-dd');
+    const qc = useQueryClient();
+    const permissions = usePermissions();
+    const canSort = permissions.isManager || permissions.isAdmin;
 
     // ── Queries ──────────────────────────────────────────────────────────────
     const { data: areas = [] } = useQuery({
@@ -79,7 +84,42 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         });
     };
 
+    // ── Sortier-Mutationen (gleiche Logik wie StructureTab) ───────────────────
+    const swapSortOrder = async (item, direction, siblings, entityName, queryKey) => {
+        const idx = siblings.findIndex(s => s.id === item.id);
+        const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= siblings.length) return;
+        const swapItem = siblings[swapIdx];
+        const itemOrder = item.sort_order ?? 0;
+        const swapOrder = swapItem.sort_order ?? 0;
+        if (itemOrder === swapOrder) {
+            const newOrder = direction === 'up' ? itemOrder - 1 : itemOrder + 1;
+            await base44.entities[entityName].update(item.id, { sort_order: newOrder });
+        } else {
+            await base44.entities[entityName].update(item.id, { sort_order: swapOrder });
+            await base44.entities[entityName].update(swapItem.id, { sort_order: itemOrder });
+        }
+    };
+
+    const sortFurMut = useMutation({
+        mutationFn: ({ fur, direction, siblings }) => swapSortOrder(fur, direction, siblings, 'Furniture', ['st-furniture']),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['st-furniture'] }),
+        onError: () => showToast('Sortierung konnte nicht geändert werden', 'error'),
+    });
+
+    const sortSlotMut = useMutation({
+        mutationFn: ({ slot, direction, siblings }) => swapSortOrder(slot, direction, siblings, 'StorageSlot', ['slots']),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['slots'] }),
+        onError: () => showToast('Sortierung konnte nicht geändert werden', 'error'),
+    });
+
     // ── Gefilterte Daten ─────────────────────────────────────────────────────
+    // Nur Bereiche mit restock_enabled !== false und is_active
+    const restockAreas = useMemo(() =>
+        areas.filter(a => a.is_active !== false && a.restock_enabled !== false),
+        [areas]
+    );
+
     // Nur Möbel mit restock_enabled !== false und is_active
     const restockFurniture = useMemo(() =>
         furniture.filter(f => f.is_active !== false && f.restock_enabled !== false),
@@ -127,8 +167,6 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     }, [assignments]);
 
     // ── Fortschritts-Logik ───────────────────────────────────────────────────
-    // Ein Fach ist "durchgegangen" wenn alle seine Artikel entweder geprüft
-    // oder bereits einen heutigen RestockItem-Eintrag haben
     const isSlotDone = (slotId) => {
         const slotAssignments = assignmentsBySlot[slotId];
         if (!slotAssignments?.length) return false;
@@ -196,13 +234,13 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
 
     // ── Nur Bereiche mit restock-fähigen Möbeln/Fächern ──────────────────────
     const areasWithRestock = useMemo(() =>
-        areas.filter(a => {
+        restockAreas.filter(a => {
             const areaFurniture = furnitureByArea[a.id] || [];
             return areaFurniture.some(f =>
                 (slotsByFurniture[f.id] || []).some(s => assignmentsBySlot[s.id]?.length > 0)
             );
         }),
-        [areas, furnitureByArea, slotsByFurniture, assignmentsBySlot]
+        [restockAreas, furnitureByArea, slotsByFurniture, assignmentsBySlot]
     );
 
     if (areasWithRestock.length === 0) {
@@ -254,7 +292,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                         {/* Möbel + Fächer */}
                         {areaExpanded && (
                             <div className="border-t border-border/50">
-                                {areaFurniture.map(fur => {
+                                {areaFurniture.map((fur, furIdx) => {
                                     const furSlots = (slotsByFurniture[fur.id] || [])
                                         .filter(s => assignmentsBySlot[s.id]?.length > 0);
                                     const furExpanded = expandedFurniture[fur.id];
@@ -264,28 +302,44 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                     return (
                                         <div key={fur.id} className="border-b border-border/30 last:border-0">
                                             {/* Möbel Header */}
-                                            <button
-                                                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-secondary/20 transition-colors"
-                                                onClick={() => setExpandedFurniture(prev => ({ ...prev, [fur.id]: !prev[fur.id] }))}
-                                            >
-                                                <span className="text-base w-5 text-center shrink-0">
-                                                    {FURNITURE_ICONS[fur.type] || '📦'}
-                                                </span>
-                                                <div className="flex-1 text-left min-w-0">
-                                                    <p className="text-sm font-medium text-foreground truncate">{fur.name}</p>
-                                                    <p className="text-[11px] text-muted-foreground">
-                                                        {fur.type}{fur.type ? ' · ' : ''}{doneInFur}/{furSlots.length} Fächer
-                                                    </p>
-                                                </div>
-                                                {furExpanded
-                                                    ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                                    : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
-                                            </button>
+                                            <div className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-secondary/20 transition-colors">
+                                                <button
+                                                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                                                    onClick={() => setExpandedFurniture(prev => ({ ...prev, [fur.id]: !prev[fur.id] }))}
+                                                >
+                                                    <span className="text-base w-5 text-center shrink-0">
+                                                        {FURNITURE_ICONS[fur.type] || '📦'}
+                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-foreground truncate">{fur.name}</p>
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            {fur.type}{fur.type ? ' · ' : ''}{doneInFur}/{furSlots.length} Fächer
+                                                        </p>
+                                                    </div>
+                                                    {furExpanded
+                                                        ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                                        : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                                                </button>
+                                                {canSort && (
+                                                    <div className="flex gap-0.5 shrink-0">
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                                            disabled={furIdx === 0}
+                                                            onClick={() => sortFurMut.mutate({ fur, direction: 'up', siblings: areaFurniture })}>
+                                                            <ArrowUp className="w-3 h-3" />
+                                                        </Button>
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                                            disabled={furIdx === areaFurniture.length - 1}
+                                                            onClick={() => sortFurMut.mutate({ fur, direction: 'down', siblings: areaFurniture })}>
+                                                            <ArrowDown className="w-3 h-3" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
 
                                             {/* Fächer */}
                                             {furExpanded && (
                                                 <div className="bg-muted/10">
-                                                    {furSlots.map(slot => (
+                                                    {furSlots.map((slot, slotIdx) => (
                                                         <SlotRestockGroup
                                                             key={slot.id}
                                                             slot={slot}
@@ -302,6 +356,11 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                             checkedArticles={checkedArticles}
                                                             toggleChecked={toggleChecked}
                                                             onRestock={handleRestock}
+                                                            canSort={canSort}
+                                                            slotIdx={slotIdx}
+                                                            totalSlots={furSlots.length}
+                                                            siblings={furSlots}
+                                                            onMoveSlot={sortSlotMut}
                                                         />
                                                     ))}
                                                 </div>
@@ -321,30 +380,47 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
 // ── Slot-Gruppe (Fach Header + aufklappbare Artikel-Liste) ────────────────────
 function SlotRestockGroup({
     slot, area, expanded, onToggle, assignments, articles, restockItems, today,
-    isDone, restockQtys, setRestockQtys, checkedArticles, toggleChecked, onRestock
+    isDone, restockQtys, setRestockQtys, checkedArticles, toggleChecked, onRestock,
+    canSort, slotIdx, totalSlots, siblings, onMoveSlot
 }) {
     return (
         <div className="border-b border-border/20 last:border-0">
             {/* Fach Header */}
-            <button
-                className="w-full flex items-center gap-2 px-6 py-2.5 hover:bg-secondary/20 transition-colors"
-                onClick={onToggle}
-            >
-                {isDone
-                    ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                    : <Circle className="w-4 h-4 text-muted-foreground shrink-0" />}
-                <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{slot.name}</p>
-                </div>
-                {slot.short_code && (
-                    <span className="text-[10px] font-mono bg-secondary text-muted-foreground px-1.5 py-0.5 rounded shrink-0">
-                        {slot.short_code}
-                    </span>
+            <div className="w-full flex items-center gap-2 px-6 py-2.5 hover:bg-secondary/20 transition-colors">
+                <button
+                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                    onClick={onToggle}
+                >
+                    {isDone
+                        ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                        : <Circle className="w-4 h-4 text-muted-foreground shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{slot.name}</p>
+                    </div>
+                    {slot.short_code && (
+                        <span className="text-[10px] font-mono bg-secondary text-muted-foreground px-1.5 py-0.5 rounded shrink-0">
+                            {slot.short_code}
+                        </span>
+                    )}
+                    {expanded
+                        ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                </button>
+                {canSort && (
+                    <div className="flex gap-0.5 shrink-0">
+                        <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            disabled={slotIdx === 0}
+                            onClick={() => onMoveSlot.mutate({ slot, direction: 'up', siblings })}>
+                            <ArrowUp className="w-3 h-3" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            disabled={slotIdx === totalSlots - 1}
+                            onClick={() => onMoveSlot.mutate({ slot, direction: 'down', siblings })}>
+                            <ArrowDown className="w-3 h-3" />
+                        </Button>
+                    </div>
                 )}
-                {expanded
-                    ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
-            </button>
+            </div>
 
             {/* Artikel */}
             {expanded && (
