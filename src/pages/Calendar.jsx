@@ -258,6 +258,7 @@ export default function Calendar() {
                                 onDeleteShift={(id) => {
                                     if (confirm('Schicht entfernen?')) deleteMutation.mutate(id);
                                 }}
+                                onMoveShift={(id, data) => updateMutation.mutate({ id, data })}
                             />
                         </div>
                     ) : (
@@ -441,6 +442,7 @@ export default function Calendar() {
                             onDeleteShift={(id) => {
                                 if (confirm('Schicht entfernen?')) deleteMutation.mutate(id);
                             }}
+                            onMoveShift={(id, data) => updateMutation.mutate({ id, data })}
                         />
                     </div>
                 )}
