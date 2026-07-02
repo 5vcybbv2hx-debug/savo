@@ -4,8 +4,13 @@
 // is_active zum Schema hinzugefügt/verpflichtend wurde, und wurden nie nachträglich
 // befüllt. Da viele UI-Stellen (QuickList, Fach-Zuordnung, Auffüllen) strikt nach
 // is_active=true filtern, waren diese Artikel dort unsichtbar, obwohl sie real existieren.
+// Mit kleiner Verzögerung zwischen Updates, um Rate-Limits zu vermeiden.
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,10 +32,16 @@ Deno.serve(async (req) => {
 
     let fixedCount = 0;
     const fixedNames: string[] = [];
+    const errors: string[] = [];
     for (const article of missing) {
-      await db.Article.update(article.id, { is_active: true });
-      fixedCount++;
-      fixedNames.push(article.name);
+      try {
+        await db.Article.update(article.id, { is_active: true });
+        fixedCount++;
+        fixedNames.push(article.name);
+      } catch (e) {
+        errors.push(`${article.name}: ${String(e)}`);
+      }
+      await sleep(300);
     }
 
     return Response.json({
@@ -39,6 +50,7 @@ Deno.serve(async (req) => {
       missing_flag_found: missing.length,
       fixed_count: fixedCount,
       fixed_names: fixedNames,
+      errors,
     });
   } catch (err) {
     return Response.json({ success: false, error: String(err) }, { status: 500 });
