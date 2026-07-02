@@ -4,7 +4,7 @@ import { differenceInMinutes } from 'date-fns';
  * Berechnet die gesamte Pausenzeit in Minuten aus einem breaks-Array.
  * Laufende Pausen (end === null) werden bis zur aktuellen Zeit berechnet.
  *
- * Geteilte Utility fuer TimeTracking.jsx UND EmployeeDashboard.jsx —
+ * Geteilte Utility fuer TimeTracking.jsx UND SmartDashboard.jsx (ClockCard) —
  * beide Stempeluhr-Oberflaechen muessen exakt dieselbe Pausen- und
  * Lohnberechnung verwenden, sonst driften die Werte je nachdem ueber
  * welche Oberflaeche ein Mitarbeiter aus-/einstempelt.
