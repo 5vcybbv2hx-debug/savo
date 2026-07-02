@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -58,6 +58,21 @@ export default function GlobalSearch({ open, onClose }) {
         enabled: open
     });
 
+    const { data: storageAssignments = [] } = useQuery({
+        queryKey: ['storage-assignments'],
+        queryFn: () => base44.entities.StorageAssignment.filter({ is_active: true }, 'article_name', 1000),
+        enabled: open
+    });
+
+    const assignmentMap = useMemo(() => {
+        const map = {};
+        for (const a of storageAssignments) {
+            if (!map[a.article_id]) map[a.article_id] = [];
+            map[a.article_id].push(a);
+        }
+        return map;
+    }, [storageAssignments]);
+
     // Reset on open/close
     useEffect(() => {
         if (open) {
@@ -96,12 +111,13 @@ export default function GlobalSearch({ open, onClose }) {
             p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.keywords.some(k => k.includes(searchTerm.toLowerCase()))
         ),
-        articles: articles.filter(a => 
-            a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            a.barcode?.includes(searchTerm) ||
-            a.shelf_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            a.storage_location?.toLowerCase().includes(searchTerm.toLowerCase())
-        ).slice(0, 6),
+        articles: articles.filter(a => {
+            const q = searchTerm.toLowerCase();
+            const aAssignments = assignmentMap[a.id] || [];
+            return a.name?.toLowerCase().includes(q) ||
+                a.barcode?.includes(q) ||
+                aAssignments.some(asgn => asgn.slot_full_name?.toLowerCase().includes(q));
+        }).slice(0, 6),
         storageItems: storageItems.filter(s =>
             s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             s.location_label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -218,12 +234,18 @@ export default function GlobalSearch({ open, onClose }) {
                                             <Package className="w-4 h-4 text-blue-500 shrink-0" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-sm truncate">{a.name}</p>
-                                                {(a.shelf_id || a.storage_location) && (
-                                                    <p className="flex items-center gap-1 text-xs text-blue-400 font-semibold mt-0.5">
-                                                        <MapPin className="w-3 h-3 shrink-0" />
-                                                        {[a.shelf_id, a.storage_location].filter(Boolean).join(' · ')}
-                                                    </p>
-                                                )}
+                                                {(() => {
+                                                    const aAssignments = assignmentMap[a.id] || [];
+                                                    if (aAssignments.length === 0) return null;
+                                                    const shown = aAssignments.slice(0, 2).map(a => a.slot_full_name).filter(Boolean);
+                                                    const extra = aAssignments.length - 2;
+                                                    return (
+                                                        <p className="flex items-center gap-1 text-xs text-blue-400 font-semibold mt-0.5">
+                                                            <MapPin className="w-3 h-3 shrink-0" />
+                                                            {shown.join(' · ')}{extra > 0 ? ` +${extra}` : ''}
+                                                        </p>
+                                                    );
+                                                })()}
                                             </div>
                                             {a.current_stock !== undefined && (
                                                 <Badge variant={a.current_stock <= (a.min_stock || 0) ? 'destructive' : 'outline'} className="shrink-0 text-xs">{a.current_stock}</Badge>

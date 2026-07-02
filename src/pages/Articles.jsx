@@ -41,7 +41,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 // ── Artikel-Zeile ─────────────────────────────────────────────────────────────
-function ArticleRow({ article, isLowStock, onEdit, onToggleActive, isManager }) {
+function ArticleRow({ article, isLowStock, onEdit, onToggleActive, isManager, assignments }) {
     const stock    = article.current_stock ?? 0;
     const minStock = article.min_stock ?? 0;
 
@@ -88,9 +88,9 @@ function ArticleRow({ article, isLowStock, onEdit, onToggleActive, isManager }) 
                         </span>
                     )}
                     {/* Lagerort */}
-                    {article.storage_location && (
+                    {assignments.length > 0 && (
                         <span className="text-[10px] text-muted-foreground/60">
-                            📍 {article.storage_location}
+                            📍 {assignments[0].slot_full_name}{assignments.length > 1 && ` +${assignments.length - 1}`}
                         </span>
                     )}
                 </div>
@@ -156,6 +156,21 @@ export default function Articles() {
         queryFn: () => base44.entities.ArticleCategory.list('order'),
         staleTime: STALE.SLOW,
     });
+
+    const { data: storageAssignments = [] } = useQuery({
+        queryKey: ['storage-assignments-active'],
+        queryFn: () => base44.entities.StorageAssignment.filter({ is_active: true }, 'article_name', 1000),
+        staleTime: STALE.SLOW,
+    });
+
+    const assignmentMap = useMemo(() => {
+        const map = {};
+        for (const a of storageAssignments) {
+            if (!map[a.article_id]) map[a.article_id] = [];
+            map[a.article_id].push(a);
+        }
+        return map;
+    }, [storageAssignments]);
 
     // ── Mutations ─────────────────────────────────────────────────────────────
     const createMutation = useMutation({
@@ -429,6 +444,7 @@ export default function Articles() {
                                 onEdit={handleEdit}
                                 onToggleActive={handleToggleActive}
                                 isManager={permissions.isManager}
+                                assignments={assignmentMap[article.id] || []}
                             />
                         ))}
                     </div>
