@@ -326,9 +326,7 @@ export default function Restock() {
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         queryClient.invalidateQueries({ queryKey: ['shopping-list-restock'] });
 
-        if (added > 0 && skipped > 0) showToast(`${added} hinzugefügt · ${skipped} bereits in Bestellung`, 'info');
-        else if (added > 0) showToast(`${added} Artikel zur Bestellliste hinzugefügt ✓`, 'success');
-        else showToast('Alle Artikel bereits in der Bestellung', 'info');
+        return { added, skipped };
     };
 
     const handleDelete = (id) => {
@@ -339,18 +337,30 @@ export default function Restock() {
         });
     };
 
-    const handleDeleteCompleted = () => {
+    // Kombiniert: alle erledigten Artikel bestellen + aus Liste löschen
+    const handleOrderAndClean = () => {
         const completedItems = todayItems.filter(item => item.is_completed);
         if (completedItems.length === 0) { showToast('Keine erledigten Aufgaben vorhanden', 'info'); return; }
         setConfirmDialog({
-            title: `${completedItems.length} Einträge löschen?`,
-            description: `Alle erledigten Aufgaben von heute werden gelöscht.`,
+            title: 'Bestellen & erledigen?',
+            description: `${completedItems.length} erledigte Artikel werden zur Bestellliste hinzugefügt und aus der Auffüllliste entfernt.`,
+            confirmLabel: 'Bestellen & erledigen',
+            danger: false,
             onConfirm: async () => {
-                for (const item of completedItems) {
-                    try { await deleteMutation.mutateAsync(item.id); } catch {}
+                try {
+                    // 1. Bestellen (inkl. Duplikat-Check)
+                    const { added, skipped } = await addAllCompletedToOrder();
+                    // 2. Löschen — erst nach erfolgreichem Bestellen
+                    for (const item of completedItems) {
+                        try { await deleteMutation.mutateAsync(item.id); } catch {}
+                    }
+                    queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+                    setConfirmDialog(null);
+                    const skipNote = skipped > 0 ? ` · ${skipped} bereits in Bestellung` : '';
+                    showToast(`${added} Artikel bestellt, Liste bereinigt${skipNote}`, 'success');
+                } catch (e) {
+                    showToast('Fehler beim Bestellen & Erledigen', 'error');
                 }
-                queryClient.invalidateQueries({ queryKey: ['restock-items'] });
-                setConfirmDialog(null);
             },
         });
     };
@@ -496,25 +506,14 @@ export default function Restock() {
                         </h2>
 
                         {completedCount > 0 && (
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    size="sm"
-                                    onClick={addAllCompletedToOrder}
-                                    className="h-9 gap-1.5"
-                                >
-                                    <ShoppingCart className="w-4 h-4" />
-                                    Alle bestellen
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleDeleteCompleted}
-                                    className="h-9 border-border/60 text-muted-foreground hover:text-foreground"
-                                >
-                                    <CheckCheck className="w-4 h-4 mr-1.5" />
-                                    Löschen
-                                </Button>
-                            </div>
+                            <Button
+                                size="sm"
+                                onClick={handleOrderAndClean}
+                                className="h-9 gap-1.5"
+                            >
+                                <ShoppingCart className="w-4 h-4" />
+                                Bestellen & erledigen
+                            </Button>
                         )}
                     </div>
 
