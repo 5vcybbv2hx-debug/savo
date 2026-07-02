@@ -7,7 +7,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SmartCombobox from '@/components/ui/SmartCombobox';
-import { Camera, Upload, Image as ImageIcon, Crop, Sparkles, ChevronDown } from 'lucide-react';
+import { Camera, Upload, Image as ImageIcon, Crop, Sparkles, ChevronDown, MapPin, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import SupplierDetailsEditor from './SupplierDetailsEditor';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,8 +51,16 @@ function Section({ title, defaultOpen = true, children }) {
 // ── Haupt-Modal ───────────────────────────────────────────────────────────────
 export default function ArticleModal({ open, onClose, article, onSave }) {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const currentUser = useRef(null);
     useEffect(() => { base44.auth.me().then(u => { currentUser.current = u; }).catch(() => {}); }, []);
+
+    const { data: assignments = [] } = useQuery({
+        queryKey: ['article-storage-assignments', article?.id],
+        queryFn: () => base44.entities.StorageAssignment.filter({ article_id: article.id, is_active: true }),
+        enabled: !!article?.id && open,
+        staleTime: 30 * 1000,
+    });
 
     const { data: categories = [] } = useQuery({
         queryKey: ['article-categories'],
@@ -373,24 +383,49 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
                                         className="h-9 mt-1" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            {article?.id && (
                                 <div>
-                                    <Label className="text-xs text-muted-foreground">Lagerort</Label>
-                                    <Input
-                                        value={formData.storage_location}
-                                        onChange={e => set('storage_location', e.target.value)}
-                                        placeholder="z.B. Keller"
-                                        className="h-9 mt-1" />
+                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" /> Fach-Zuordnungen
+                                    </Label>
+                                    {assignments.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground/70 mt-1 px-1">
+                                            Noch keinem Fach zugeordnet
+                                        </p>
+                                    ) : (
+                                        <div className="mt-1 space-y-1.5">
+                                            {assignments.map(a => (
+                                                <div key={a.id}
+                                                    className="flex items-center gap-2 rounded-lg border border-border/50 bg-secondary/20 px-3 py-2">
+                                                    <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-medium text-foreground truncate">
+                                                            {a.slot_full_name || a.storage_slot_id}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                                            <span>Bestand: <strong className="text-foreground">{a.quantity ?? 0}</strong></span>
+                                                            {a.min_stock != null && (
+                                                                <span>· Soll: {a.min_stock}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <p className="text-[10px] text-muted-foreground/60 flex-1">
+                                            Zuordnungen werden im Warehouse-Modul verwaltet.
+                                        </p>
+                                        <Button type="button" variant="outline" size="sm"
+                                            className="h-7 text-[11px] gap-1 shrink-0"
+                                            onClick={() => { onClose(); navigate(createPageUrl('Warehouse')); }}>
+                                            <ExternalLink className="w-3 h-3" />
+                                            In Warehouse verwalten
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div>
-                                    <Label className="text-xs text-muted-foreground">Regal / Fach</Label>
-                                    <Input
-                                        value={formData.shelf_id}
-                                        onChange={e => set('shelf_id', e.target.value)}
-                                        placeholder="z.B. A1"
-                                        className="h-9 mt-1" />
-                                </div>
-                            </div>
+                            )}
                         </Section>
 
                         {/* ── SEKTION 3: Einkauf & Details ─────────────────── */}
