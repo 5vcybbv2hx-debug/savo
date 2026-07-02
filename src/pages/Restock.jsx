@@ -7,7 +7,7 @@ import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
 import {
     Scan, Camera, Check, Trash2, CheckCheck, Plus, X,
-    ShoppingCart, AlertCircle, MapPin, ChevronRight
+    ShoppingCart, AlertCircle, ChevronRight
 } from 'lucide-react';
 import QuantityInputModal from '../components/restock/QuantityInputModal';
 import RundgangMode from '../components/restock/RundgangMode';
@@ -17,7 +17,6 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import BarcodeScanner from '../components/restock/BarcodeScanner';
-import { ClipboardList, ScanLine } from 'lucide-react';
 
 // ── Inline Toast ──────────────────────────────────────────────────────────────
 function Toast({ message, type = 'error', onDismiss }) {
@@ -69,14 +68,6 @@ function ConfirmDialog({ open, title, description, confirmLabel = 'Löschen', on
     );
 }
 
-// ── Farben pro Bereich ────────────────────────────────────────────────────────
-const AREA_COLORS = [
-    { tab: 'border-primary text-primary bg-primary/10', dot: 'bg-primary', badge: 'bg-primary/10 text-primary border-primary/30' },
-    { tab: 'border-blue-500 text-blue-400 bg-blue-500/10', dot: 'bg-blue-500', badge: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
-    { tab: 'border-purple-500 text-purple-400 bg-purple-500/10', dot: 'bg-purple-500', badge: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
-    { tab: 'border-amber-500 text-amber-400 bg-amber-500/10', dot: 'bg-amber-500', badge: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
-];
-
 // ── Haupt-Komponente ──────────────────────────────────────────────────────────
 export default function Restock() {
     const queryClient = useQueryClient();
@@ -99,32 +90,10 @@ export default function Restock() {
     const [toast, setToast]                       = useState(null);
     const [confirmDialog, setConfirmDialog]       = useState(null);
     const [orderNudge, setOrderNudge]             = useState({});
-    const [activeAreaId, setActiveAreaId]         = useState(null); // null = "Alle" als Fallback
-    const [mode, setMode]                         = useState('scan'); // 'scan' | 'rundgang'
 
     const showToast = (message, type = 'error') => setToast({ message, type });
 
     // ── Queries ───────────────────────────────────────────────────────────────
-    // Tabs = alle Kühlschränke aus Furniture-Entity
-    const { data: areas = [], isLoading: areasLoading } = useQuery({
-        queryKey: ['fridges'],
-        queryFn: async () => {
-            const all = await base44.entities.Furniture.list('sort_order', 200);
-            return all.filter(f =>
-                f.is_active !== false &&
-                (f.type === 'Kühlschrank' || f.type === 'Tiefkühlschrank')
-            );
-        },
-        staleTime: STALE.SLOW,
-    });
-
-    // Ersten Kühlschrank vorauswählen
-    useEffect(() => {
-        if (areas.length > 0 && activeAreaId === null) {
-            setActiveAreaId(areas[0].id);
-        }
-    }, [areas, activeAreaId]);
-
     const { data: restockItems = [] } = useQuery({
         queryKey: ['restock-items'],
         queryFn: () => base44.entities.RestockItem.list('-created_date', 200),
@@ -144,11 +113,6 @@ export default function Restock() {
     });
 
     const { handleError } = useErrorHandler();
-
-    // ── Aktiver Bereich ───────────────────────────────────────────────────────
-    const activeArea = areas.find(a => a.id === activeAreaId) || areas[0];
-    const activeAreaIdx = areas.findIndex(a => a.id === activeAreaId);
-    const activeColors = AREA_COLORS[activeAreaIdx >= 0 ? activeAreaIdx % AREA_COLORS.length : 0];
 
     // ── Recent highlight ──────────────────────────────────────────────────────
     const markRecent = (id) => {
@@ -208,14 +172,13 @@ export default function Restock() {
         onError: () => showToast('Fehler beim Löschen'),
     });
 
-    // ── Scan-Logik ────────────────────────────────────────────────────────────
+    // ── Scan-Logik (Abgleich über article_id + date, bereichsübergreifend) ─────
     const handleArticleDirect = (article) => {
         const today = format(new Date(), 'yyyy-MM-dd');
         const existingItem = restockItems.find(
             item => item.article_id === article.id &&
                     item.date === today &&
-                    !item.is_completed &&
-                    (item.area_id === activeAreaId || (!item.area_id && !activeAreaId))
+                    !item.is_completed
         );
         setPendingArticle({ article, existingItem: existingItem || null });
         setQtyModalOpen(true);
@@ -244,8 +207,8 @@ export default function Restock() {
                 article_name:      article.name,
                 article_image_url: article.image_url || null,
                 quantity:          qty,
-                area_id:           activeArea?.id || null,
-                area_name:         activeArea?.name || null,
+                area_id:           null,
+                area_name:         null,
                 restocked_by:      user?.full_name || user?.email || 'Unbekannt',
                 date:              format(new Date(), 'yyyy-MM-dd'),
                 time:              format(new Date(), 'HH:mm'),
@@ -336,7 +299,7 @@ export default function Restock() {
         showToast(`${item.article_name} zur Bestellung hinzugefügt`, 'success');
     };
 
-    // Alle erledigten zur Bestellung (nur aktiver Bereich)
+    // Alle erledigten zur Bestellung (bereichsübergreifend)
     const addAllCompletedToOrder = async () => {
         const completed = todayItems.filter(i => i.is_completed);
         let added = 0, skipped = 0;
@@ -381,7 +344,7 @@ export default function Restock() {
         if (completedItems.length === 0) { showToast('Keine erledigten Aufgaben vorhanden', 'info'); return; }
         setConfirmDialog({
             title: `${completedItems.length} Einträge löschen?`,
-            description: `Alle erledigten Aufgaben von ${activeArea?.name || 'heute'} werden gelöscht.`,
+            description: `Alle erledigten Aufgaben von heute werden gelöscht.`,
             onConfirm: async () => {
                 for (const item of completedItems) {
                     try { await deleteMutation.mutateAsync(item.id); } catch {}
@@ -395,23 +358,15 @@ export default function Restock() {
     // ── Derived ───────────────────────────────────────────────────────────────
     const today = format(new Date(), 'yyyy-MM-dd');
 
-    // Nur heutige Items des aktiven Bereichs
+    // Alle heutigen Items (bereichsübergreifend)
     const todayItems = useMemo(() => {
         return restockItems
-            .filter(item => {
-                if (item.date !== today) return false;
-                // Bereichs-Filter: item.area_id muss zum aktiven Bereich passen
-                // Items ohne area_id (Legacy) werden nur im ersten Bereich angezeigt
-                if (activeAreaId) {
-                    return item.area_id === activeAreaId || (!item.area_id && activeAreaIdx === 0);
-                }
-                return true;
-            })
+            .filter(item => item.date === today)
             .sort((a, b) => {
                 if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
                 return (b.created_date || '').localeCompare(a.created_date || '');
             });
-    }, [restockItems, today, activeAreaId, activeAreaIdx]);
+    }, [restockItems, today]);
 
     const searchMatches = useMemo(() => {
         if (!barcode.trim()) return [];
@@ -432,17 +387,6 @@ export default function Restock() {
         }, {}),
     [todayItems, articles]);
 
-    // Counts pro Bereich für Tab-Badges
-    const areaCounts = useMemo(() => {
-        const counts = {};
-        areas.forEach(area => {
-            counts[area.id] = restockItems.filter(i =>
-                i.date === today && i.area_id === area.id && !i.is_completed
-            ).length;
-        });
-        return counts;
-    }, [restockItems, areas, today]);
-
     const openCount      = todayItems.filter(i => !i.is_completed).length;
     const completedCount = todayItems.filter(i => i.is_completed).length;
 
@@ -454,100 +398,17 @@ export default function Restock() {
             <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
 
                 {/* ── Header ────────────────────────────────────────────── */}
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                            <Scan className="w-5 h-5 text-primary" />
-                            Auffüllliste
-                        </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            {mode === 'scan' ? (
-                                <>{openCount} offen · {completedCount} erledigt
-                                {activeArea && <span className="text-primary"> · {activeArea.name}</span>}</>
-                            ) : (
-                                'Systematischer Rundgang durch alle Fächer'
-                            )}
-                        </p>
-                    </div>
+                <div>
+                    <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                        <Scan className="w-5 h-5 text-primary" />
+                        Auffüllliste
+                    </h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                        {openCount} offen · {completedCount} erledigt
+                    </p>
                 </div>
 
-                {/* ── Modus-Umschalter ──────────────────────────────────── */}
-                <div className="flex gap-2 p-1 bg-card rounded-xl border border-border/60">
-                    <button
-                        onClick={() => setMode('scan')}
-                        className={cn(
-                            'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all',
-                            mode === 'scan'
-                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                        )}
-                    >
-                        <ScanLine className="w-4 h-4" />
-                        Scan
-                    </button>
-                    <button
-                        onClick={() => setMode('rundgang')}
-                        className={cn(
-                            'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all',
-                            mode === 'rundgang'
-                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                        )}
-                    >
-                        <ClipboardList className="w-4 h-4" />
-                        Rundgang
-                    </button>
-                </div>
-
-                {/* ── Rundgang-Modus ────────────────────────────────────── */}
-                {mode === 'rundgang' && (
-                    <RundgangMode
-                        restockItems={restockItems}
-                        articles={articles}
-                        createMutation={createMutation}
-                        updateMutation={updateMutation}
-                        showToast={showToast}
-                    />
-                )}
-
-                {/* ── Scan-Modus ────────────────────────────────────────── */}
-                {mode === 'scan' && (
-                <>
-                {/* ── Bereichs-Tabs ──────────────────────────────────────── */}
-                {areas.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
-                        {areas.map((area, idx) => {
-                            const colors = AREA_COLORS[idx % AREA_COLORS.length];
-                            const isActive = area.id === activeAreaId;
-                            const count = areaCounts[area.id] || 0;
-                            return (
-                                <button
-                                    key={area.id}
-                                    onClick={() => setActiveAreaId(area.id)}
-                                    className={cn(
-                                        'flex items-center gap-2 shrink-0 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all',
-                                        isActive
-                                            ? colors.tab
-                                            : 'border-border text-muted-foreground hover:text-foreground bg-card'
-                                    )}
-                                >
-                                    <MapPin className="w-4 h-4" />
-                                    {area.name}
-                                    {count > 0 && (
-                                        <span className={cn(
-                                            'text-[11px] font-bold rounded-full px-1.5 min-w-[20px] text-center',
-                                            isActive ? 'bg-current/20' : 'bg-muted text-muted-foreground'
-                                        )}>
-                                            {count}
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
-
-                {/* ── Scan-Eingabe ───────────────────────────────────────── */}
+                {/* ── Scan-/Such-Leiste ─────────────────────────────────── */}
                 <Card className="p-4 border-border/60">
                     <form onSubmit={handleBarcodeSubmit} className="space-y-3">
                         <div className="flex gap-2">
@@ -557,7 +418,7 @@ export default function Restock() {
                                 inputMode="text"
                                 value={barcode}
                                 onChange={e => { setBarcode(e.target.value); setSelectedArticle(''); }}
-                                placeholder={`Barcode oder Artikel für ${activeArea?.name || 'Bereich'}...`}
+                                placeholder="Barcode scannen oder Artikel suchen..."
                                 className="flex-1 h-11 text-base"
                                 autoComplete="off"
                             />
@@ -618,16 +479,20 @@ export default function Restock() {
                     </form>
                 </Card>
 
-                {/* ── Listen-Header ──────────────────────────────────────── */}
+                {/* ── Bereich → Möbel → Fach → Artikel Baum ─────────────── */}
+                <RundgangMode
+                    restockItems={restockItems}
+                    articles={articles}
+                    createMutation={createMutation}
+                    updateMutation={updateMutation}
+                    showToast={showToast}
+                />
+
+                {/* ── Heutige Auffüllliste (alle Bereiche) ──────────────── */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
                         <h2 className="text-base font-semibold text-foreground">
                             Heutige Auffüllliste
-                            {activeArea && (
-                                <span className="ml-2 text-sm font-normal text-muted-foreground">
-                                    · {activeArea.name}
-                                </span>
-                            )}
                         </h2>
 
                         {completedCount > 0 && (
@@ -659,8 +524,8 @@ export default function Restock() {
                             <Scan className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
                             <p className="text-muted-foreground font-medium">Noch keine Artikel erfasst</p>
                             <p className="text-xs text-muted-foreground/60 mt-1">
-                                Scanne einen Barcode oder suche einen Artikel für<br />
-                                <span className="font-medium text-muted-foreground">{activeArea?.name || 'diesen Bereich'}</span>
+                                Scanne einen Barcode, suche einen Artikel<br />
+                                oder gehe den Rundgang durch die Fächer
                             </p>
                         </Card>
                     ) : (
@@ -668,7 +533,7 @@ export default function Restock() {
                             {Object.entries(groupedItems).map(([category, items]) => (
                                 <div key={category}>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <div className={cn('w-2 h-2 rounded-full', activeColors.dot)} />
+                                        <div className="w-2 h-2 rounded-full bg-primary" />
                                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
                                             {category}
                                         </span>
@@ -703,6 +568,11 @@ export default function Restock() {
                                                             <span className="text-xs text-muted-foreground">
                                                                 {item.quantity} Stück · {item.time || ''}
                                                             </span>
+                                                            {item.area_name && (
+                                                                <span className="text-xs text-muted-foreground/60 truncate max-w-[100px]">
+                                                                    · {item.area_name}
+                                                                </span>
+                                                            )}
                                                             {item.restocked_by && (
                                                                 <span className="text-xs text-muted-foreground/60 truncate max-w-[100px]">
                                                                     · {item.restocked_by.split(' ')[0]}
@@ -764,8 +634,6 @@ export default function Restock() {
                         </div>
                     )}
                 </div>
-                </>
-                )}
             </div>
 
             {/* ── Modals ────────────────────────────────────────────────── */}

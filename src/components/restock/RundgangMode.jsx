@@ -159,8 +159,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         const existingItem = restockItems.find(item =>
             item.article_id === article.id &&
             item.date === today &&
-            !item.is_completed &&
-            item.area_id === area.id
+            !item.is_completed
         );
 
         if (existingItem) {
