@@ -105,8 +105,11 @@ export default function SlotCountingSection({
                 const areaFurniture = (furnitureByArea[area.id] || []).filter(f =>
                     (slotsByFurniture[f.id] || []).some(s => assignmentsBySlot[s.id]?.length > 0)
                 );
-                // Fallback: Slots ohne furniture_id oder mit gelöschtem Möbel
-                const slotsWithoutFurniture = areaSlots.filter(s => !s.furniture_id);
+                // Fallback: Slots ohne furniture_id ODER deren Möbel nicht in den geladenen Daten existiert
+                // (verhindert dass Fächer unsichtbar werden wenn Furniture-Query noch lädt/fehlschlägt)
+                const slotsWithoutFurniture = areaSlots.filter(s =>
+                    !s.furniture_id || !furniture.find(f => f.id === s.furniture_id)
+                );
 
                 return (
                     <Card key={area.id} className="overflow-hidden border-border">
