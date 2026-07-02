@@ -19,7 +19,7 @@ export default function IngredientSelector({ ingredients, onChange, articles, co
             a.name.toLowerCase().includes(term) ||
             (a.manufacturer && a.manufacturer.toLowerCase().includes(term)) ||
             (a.category && a.category.toLowerCase().includes(term))
-        ).slice(0, 20);
+        ).slice(0, 100);
     }, [safeArticles, searchTerm]);
 
     const addIngredient = (article) => {
