@@ -40,7 +40,13 @@ function generateShortCode(areaName, furnitureName, slotName) {
 // ── Inline Fach-Zeile ─────────────────────────────────────────────────────────
 function SlotRow({ slot, canEdit, onEdit, onDelete }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-b border-border/20 last:border-0 hover:bg-secondary/10 transition-colors group">
+    <div
+      className={cn(
+        "flex items-center gap-2 px-3 py-2 border-b border-border/20 last:border-0 hover:bg-secondary/10 transition-colors group",
+        canEdit && "cursor-pointer"
+      )}
+      onClick={() => canEdit && onEdit(slot)}
+    >
       <div className="w-5 h-5 rounded bg-muted flex items-center justify-center shrink-0">
         <Grid3x3 className="w-2.5 h-2.5 text-muted-foreground" />
       </div>
@@ -56,11 +62,7 @@ function SlotRow({ slot, canEdit, onEdit, onDelete }) {
         </Badge>
       )}
       {canEdit && (
-        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground"
-            onClick={() => onEdit(slot)}>
-            <Pencil className="w-3 h-3" />
-          </Button>
+        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
           <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive hover:bg-destructive/10"
             onClick={() => onDelete(slot)}>
             <Trash2 className="w-3 h-3" />
