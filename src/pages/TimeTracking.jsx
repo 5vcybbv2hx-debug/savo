@@ -640,13 +640,13 @@ export default function TimeTracking() {
                             )}
 
                             {/* Pause-Verlauf */}
-                            {(activeClockEntry.breaks || []).length > 0 && (
+                            {(activeClockEntry?.breaks || []).length > 0 && (
                                 <div className="mt-3 p-3 rounded-lg bg-muted/40 space-y-1">
                                     <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                                         <Coffee className="w-3 h-3" />
                                         Pausen heute:
                                     </p>
-                                    {(activeClockEntry.breaks || []).filter(b => b && b.start).map((b, i) => {
+                                    {(activeClockEntry?.breaks || []).filter(b => b && b.start).map((b, i) => {
                                         const startStr = b.start ? format(new Date(b.start), 'HH:mm') : '--:--';
                                         const endStr = b.end ? format(new Date(b.end), 'HH:mm') : 'laufend…';
                                         const mins = b.end && b.start
@@ -661,7 +661,7 @@ export default function TimeTracking() {
                                     })}
                                     <div className="border-t border-border/50 pt-1 mt-1 text-xs text-muted-foreground flex justify-between font-semibold">
                                         <span>Gesamt:</span>
-                                        <span>{calcTotalBreakMinutes(activeClockEntry.breaks)} Min bisher</span>
+                                        <span>{calcTotalBreakMinutes(activeClockEntry?.breaks)} Min bisher</span>
                                     </div>
                                 </div>
                             )}
