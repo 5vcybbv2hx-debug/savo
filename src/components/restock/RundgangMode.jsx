@@ -55,10 +55,11 @@ function isAssignmentSettled(assignment, { restockItems, today, checkedArticles 
  * Nur Bereiche mit restock_enabled !== false.
  *
  * Vereinfacht (2026-07-03): Bereits geprüfte/aufgefüllte Artikel klappen sich zu einer kompakten
- * Zeile zusammen, damit das Aufklappen von Möbeln/Fächern nicht überladen wirkt. Ebenen mit noch
- * offenen Artikeln öffnen sich beim ersten Laden automatisch. Die Menge wird weiterhin frei
- * eingetippt (wir kennen den echten Bestand nicht ohne Inventur!), ist aber hart auf die
- * Soll-Menge des Artikels gedeckelt, damit Tippfehler nicht zu Überfüllung führen.
+ * Zeile zusammen. Ebenen mit noch offenen Artikeln öffnen sich beim ersten Laden automatisch.
+ * Sobald ein Fach komplett fertig ist, klappt es sich automatisch zu; ist ein ganzes Möbel fertig,
+ * klappt das Möbel zu; ist ein ganzer Bereich fertig, klappt der Bereich zu — das spart beim
+ * Rundgang laufend Platz, ohne dass man manuell etwas schließen muss. Eine Fortschrittsleiste
+ * oben zeigt auf einen Blick, wie viele Fächer insgesamt noch offen sind.
  */
 export default function RundgangMode({ restockItems, articles, createMutation, updateMutation, showToast }) {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -272,23 +273,48 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         [restockAreas, furnitureByArea, slotsByFurniture, assignmentsBySlot]
     );
 
+    // ── Struktur-Baum einmal pro Render aufbauen (wird von mehreren Effekten/Render genutzt) ──
+    const tree = useMemo(() => {
+        return areasWithRestock.map(area => {
+            const areaFurniture = (furnitureByArea[area.id] || []).filter(f =>
+                (slotsByFurniture[f.id] || []).some(s => assignmentsBySlot[s.id]?.length > 0)
+            );
+            const furnitureList = areaFurniture.map(fur => ({
+                fur,
+                furSlots: (slotsByFurniture[fur.id] || []).filter(s => assignmentsBySlot[s.id]?.length > 0),
+            })).filter(f => f.furSlots.length > 0);
+            return { area, furnitureList };
+        });
+    }, [areasWithRestock, furnitureByArea, slotsByFurniture, assignmentsBySlot]);
+
+    // ── Gesamt-Fortschritt (für die Kopfzeile) ────────────────────────────────
+    const overallProgress = useMemo(() => {
+        let total = 0, done = 0;
+        tree.forEach(({ furnitureList }) => {
+            furnitureList.forEach(({ furSlots }) => {
+                furSlots.forEach(slot => {
+                    total++;
+                    if (isSlotDone(slot.id)) done++;
+                });
+            });
+        });
+        return { total, done };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tree, checkedArticles, restockItems]);
+
     // ── Auto-Expand: Ebenen mit offenem Handlungsbedarf öffnen sich beim ersten
     // Laden automatisch, damit man nicht durch alles klicken muss. Läuft nur EINMAL
     // pro Seitenaufruf — danach bleibt es dem Nutzer überlassen, was auf/zu ist.
     const autoExpandedRef = useRef(false);
     useEffect(() => {
-        if (autoExpandedRef.current || areasWithRestock.length === 0) return;
+        if (autoExpandedRef.current || tree.length === 0) return;
         const newAreaExp = {};
         const newFurExp = {};
         const newSlotExp = {};
 
-        areasWithRestock.forEach(area => {
-            const areaFurniture = (furnitureByArea[area.id] || []).filter(f =>
-                (slotsByFurniture[f.id] || []).some(s => assignmentsBySlot[s.id]?.length > 0)
-            );
+        tree.forEach(({ area, furnitureList }) => {
             let areaHasAction = false;
-            areaFurniture.forEach(fur => {
-                const furSlots = (slotsByFurniture[fur.id] || []).filter(s => assignmentsBySlot[s.id]?.length > 0);
+            furnitureList.forEach(({ fur, furSlots }) => {
                 let furHasAction = false;
                 furSlots.forEach(slot => {
                     if (!isSlotDone(slot.id)) {
@@ -306,9 +332,56 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         setExpandedSlots(prev => ({ ...newSlotExp, ...prev }));
         autoExpandedRef.current = true;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [areasWithRestock, furnitureByArea, slotsByFurniture, assignmentsBySlot]);
+    }, [tree]);
 
-    if (areasWithRestock.length === 0) {
+    // ── Auto-Collapse: Sobald ein Fach/Möbel/Bereich fertig wird (Übergang offen → fertig),
+    // klappt es sich automatisch zu — spart laufend Platz beim Rundgang, ohne dass man
+    // irgendwas manuell schließen muss. Reagiert nur auf den ÜBERGANG, nicht auf den
+    // bereits-fertigen Ausgangszustand (der ist ohnehin schon zugeklappt, siehe Auto-Expand oben).
+    const prevSlotDoneRef = useRef({});
+    const prevFurDoneRef = useRef({});
+    const prevAreaDoneRef = useRef({});
+    useEffect(() => {
+        const slotCollapse = {};
+        const furCollapse = {};
+        const areaCollapse = {};
+
+        tree.forEach(({ area, furnitureList }) => {
+            let areaSlotCount = 0, areaDoneCount = 0;
+
+            furnitureList.forEach(({ fur, furSlots }) => {
+                let furDoneCount = 0;
+
+                furSlots.forEach(slot => {
+                    const done = isSlotDone(slot.id);
+                    const prevDone = prevSlotDoneRef.current[slot.id];
+                    if (done && prevDone === false) slotCollapse[slot.id] = false; // false = zugeklappt
+                    prevSlotDoneRef.current[slot.id] = done;
+                    if (done) furDoneCount++;
+                });
+
+                const furDone = furSlots.length > 0 && furDoneCount === furSlots.length;
+                const prevFurDone = prevFurDoneRef.current[fur.id];
+                if (furDone && prevFurDone === false) furCollapse[fur.id] = false;
+                prevFurDoneRef.current[fur.id] = furDone;
+
+                areaSlotCount += furSlots.length;
+                areaDoneCount += furDoneCount;
+            });
+
+            const areaDone = areaSlotCount > 0 && areaDoneCount === areaSlotCount;
+            const prevAreaDone = prevAreaDoneRef.current[area.id];
+            if (areaDone && prevAreaDone === false) areaCollapse[area.id] = false;
+            prevAreaDoneRef.current[area.id] = areaDone;
+        });
+
+        if (Object.keys(slotCollapse).length) setExpandedSlots(prev => ({ ...prev, ...slotCollapse }));
+        if (Object.keys(furCollapse).length) setExpandedFurniture(prev => ({ ...prev, ...furCollapse }));
+        if (Object.keys(areaCollapse).length) setExpandedAreas(prev => ({ ...prev, ...areaCollapse }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tree, checkedArticles, restockItems]);
+
+    if (tree.length === 0) {
         return (
             <Card className="p-10 text-center border-border/40">
                 <ClipboardList className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
@@ -321,15 +394,29 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         );
     }
 
+    const allDone = overallProgress.total > 0 && overallProgress.done === overallProgress.total;
+    const progressPct = overallProgress.total > 0 ? Math.round((overallProgress.done / overallProgress.total) * 100) : 0;
+
     // ── Render ───────────────────────────────────────────────────────────────
     return (
         <div className="space-y-2">
-            {areasWithRestock.map(area => {
-                const areaFurniture = (furnitureByArea[area.id] || []).filter(f =>
-                    (slotsByFurniture[f.id] || []).some(s => assignmentsBySlot[s.id]?.length > 0)
-                );
-                const areaSlots = areaFurniture.flatMap(f => slotsByFurniture[f.id] || [])
-                    .filter(s => assignmentsBySlot[s.id]?.length > 0);
+            {/* Gesamt-Fortschritt */}
+            <div className="flex items-center gap-3 px-1 pb-1">
+                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                        className={cn('h-full rounded-full transition-all', allDone ? 'bg-green-500' : 'bg-amber-500')}
+                        style={{ width: `${progressPct}%` }}
+                    />
+                </div>
+                <p className="text-[11px] font-medium text-muted-foreground shrink-0">
+                    {allDone
+                        ? <span className="text-green-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Rundgang komplett</span>
+                        : `${overallProgress.done}/${overallProgress.total} Fächer erledigt`}
+                </p>
+            </div>
+
+            {tree.map(({ area, furnitureList }) => {
+                const areaSlots = furnitureList.flatMap(f => f.furSlots);
                 const areaExpanded = expandedAreas[area.id];
                 const doneInArea = areaSlots.filter(s => isSlotDone(s.id)).length;
                 const areaAllDone = areaSlots.length > 0 && doneInArea === areaSlots.length;
@@ -363,13 +450,10 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                         {/* Möbel + Fächer */}
                         {areaExpanded && (
                             <div className="border-t border-border/50">
-                                {areaFurniture.map((fur, furIdx) => {
-                                    const furSlots = (slotsByFurniture[fur.id] || [])
-                                        .filter(s => assignmentsBySlot[s.id]?.length > 0);
+                                {furnitureList.map(({ fur, furSlots }, furIdx) => {
                                     const furExpanded = expandedFurniture[fur.id];
                                     const doneInFur = furSlots.filter(s => isSlotDone(s.id)).length;
                                     const furAllDone = furSlots.length > 0 && doneInFur === furSlots.length;
-                                    if (furSlots.length === 0) return null;
 
                                     return (
                                         <div key={fur.id} className="border-b border-border/30 last:border-0">
@@ -396,12 +480,12 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                     <div className="flex gap-0.5 shrink-0">
                                                         <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
                                                             disabled={furIdx === 0}
-                                                            onClick={() => sortFurMut.mutate({ fur, direction: 'up', siblings: areaFurniture })}>
+                                                            onClick={() => sortFurMut.mutate({ fur, direction: 'up', siblings: furnitureList.map(f => f.fur) })}>
                                                             <ArrowUp className="w-3 h-3" />
                                                         </Button>
                                                         <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                                            disabled={furIdx === areaFurniture.length - 1}
-                                                            onClick={() => sortFurMut.mutate({ fur, direction: 'down', siblings: areaFurniture })}>
+                                                            disabled={furIdx === furnitureList.length - 1}
+                                                            onClick={() => sortFurMut.mutate({ fur, direction: 'down', siblings: furnitureList.map(f => f.fur) })}>
                                                             <ArrowDown className="w-3 h-3" />
                                                         </Button>
                                                     </div>
