@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/components/auth/usePermissions';
 import {
     Layers, ChevronRight, ChevronDown, CheckCircle2, Circle,
-    Package, Check, Plus, ClipboardList, ArrowUp, ArrowDown, ArrowUpCircle
+    Package, Check, Plus, ClipboardList, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,28 +24,27 @@ const FURNITURE_ICONS = {
     'Sonstiges': '📌',
 };
 
-// ── Gemeinsame Helfer (Soll/Ist-Logik) ─────────────────────────────────────────
-// Wie viel darf laut Soll-Menge maximal noch aufgefüllt werden? null = kein Soll hinterlegt (kein Limit möglich).
-function getRemainingToSoll(assignment, article) {
-    const currentStock = article?.current_stock;
-    const minStock = assignment?.min_stock;
-    if (currentStock == null || minStock == null) return null;
-    return Math.max(minStock - currentStock, 0);
-}
+/**
+ * Wichtig: Es gibt KEINE Kassenanbindung, current_stock im System ist daher NIE verlässlich
+ * (letzter Zählstand, keine Live-Synchronisation mit tatsächlichem Verkauf). Wir dürfen also
+ * niemals automatisch berechnen "wie viel fehlt noch bis Soll" — das muss die Person vor Ort
+ * anhand des tatsächlichen Blicks ins Fach selbst eintippen.
+ *
+ * Die einzige Sicherheitsregel: Die eingetippte Menge darf die Soll-Menge (min_stock) selbst
+ * niemals überschreiten — das ist die harte Obergrenze gegen Tippfehler (z.B. 44 statt 14),
+ * unabhängig vom (unzuverlässigen) System-Bestand.
+ */
 
-// Ist ein Artikel "erledigt" — bereits geprüft, schon in der Auffüllliste, oder Bestand längst am/über Soll?
-function isAssignmentSettled(assignment, { articles, restockItems, today, checkedArticles }) {
+// Ist ein Artikel "erledigt" — bereits manuell geprüft ODER schon in der heutigen Auffüllliste?
+// (current_stock wird bewusst NICHT herangezogen, da nicht live-synced.)
+function isAssignmentSettled(assignment, { restockItems, today, checkedArticles }) {
     if (checkedArticles[assignment.id]) return true;
     const hasRestockItem = restockItems.some(item =>
         item.article_id === assignment.article_id &&
         item.date === today &&
         !item.is_completed
     );
-    if (hasRestockItem) return true;
-    const article = articles.find(a => a.id === assignment.article_id);
-    const remaining = getRemainingToSoll(assignment, article);
-    if (remaining != null && remaining <= 0) return true; // Soll bereits erreicht/überschritten
-    return false;
+    return hasRestockItem;
 }
 
 /**
@@ -55,10 +54,11 @@ function isAssignmentSettled(assignment, { articles, restockItems, today, checke
  * Nur Fächer mit restock_enabled !== false.
  * Nur Bereiche mit restock_enabled !== false.
  *
- * Vereinfacht (2026-07-03): Nur Artikel, die tatsächlich Handlungsbedarf haben (Bestand < Soll,
- * noch nicht geprüft/aufgefüllt), werden direkt angezeigt. Bereits ausreichend bestückte oder
- * erledigte Artikel klappen sich zu einer kompakten Zeile zusammen. Ebenen mit offenem Bedarf
- * öffnen sich beim ersten Laden automatisch, damit man nicht durch alles klicken muss.
+ * Vereinfacht (2026-07-03): Bereits geprüfte/aufgefüllte Artikel klappen sich zu einer kompakten
+ * Zeile zusammen, damit das Aufklappen von Möbeln/Fächern nicht überladen wirkt. Ebenen mit noch
+ * offenen Artikeln öffnen sich beim ersten Laden automatisch. Die Menge wird weiterhin frei
+ * eingetippt (wir kennen den echten Bestand nicht ohne Inventur!), ist aber hart auf die
+ * Soll-Menge des Artikels gedeckelt, damit Tippfehler nicht zu Überfüllung führen.
  */
 export default function RundgangMode({ restockItems, articles, createMutation, updateMutation, showToast }) {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -96,7 +96,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     const [expandedFurniture, setExpandedFurniture] = useState({});
     const [expandedSlots, setExpandedSlots] = useState({});
 
-    // Restock-Mengen pro Assignment (Input-Feld Werte, nur für manuelle Eingabe)
+    // Restock-Mengen pro Assignment (Input-Feld Werte)
     const [restockQtys, setRestockQtys] = useState({});
 
     // "Geprüft"-Marker: client-seitig, pro Tag, localStorage
@@ -143,19 +143,16 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     });
 
     // ── Gefilterte Daten ─────────────────────────────────────────────────────
-    // Nur Bereiche mit restock_enabled !== false und is_active
     const restockAreas = useMemo(() =>
         areas.filter(a => a.is_active !== false && a.restock_enabled !== false),
         [areas]
     );
 
-    // Nur Möbel mit restock_enabled !== false und is_active
     const restockFurniture = useMemo(() =>
         furniture.filter(f => f.is_active !== false && f.restock_enabled !== false),
         [furniture]
     );
 
-    // Nur Fächer mit restock_enabled !== false und is_active
     const restockSlots = useMemo(() =>
         slots.filter(s => s.is_active !== false && s.restock_enabled !== false),
         [slots]
@@ -195,17 +192,15 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         return map;
     }, [assignments]);
 
-    // ── Fortschritts-Logik ───────────────────────────────────────────────────
-    // Ein Fach gilt jetzt auch dann als "durchgegangen", wenn ALLE zugeordneten Artikel
-    // bereits ausreichend bestückt sind (Bestand >= Soll) — nicht mehr nur bei manuellem Haken.
-    const settledCtx = { articles, restockItems, today, checkedArticles };
+    // ── Fortschritts-Logik (nur manuell geprüft oder schon in Liste = "durchgegangen") ──────
+    const settledCtx = { restockItems, today, checkedArticles };
     const isSlotDone = (slotId) => {
         const slotAssignments = assignmentsBySlot[slotId];
         if (!slotAssignments?.length) return false;
         return slotAssignments.every(a => isAssignmentSettled(a, settledCtx));
     };
 
-    // ── Restock erstellen/aktualisieren (mit Soll-Deckelung) ──────────────────
+    // ── Restock erstellen/aktualisieren (Menge hart auf Soll gedeckelt) ───────
     const handleRestock = async (assignment, area, qty) => {
         let numQty = parseFloat(qty);
         if (!numQty || numQty <= 0) {
@@ -219,17 +214,13 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
             return;
         }
 
-        // Soll-Menge darf nie überschritten werden — Menge notfalls hart kappen.
-        const remaining = getRemainingToSoll(assignment, article);
-        if (remaining != null) {
-            if (remaining <= 0) {
-                showToast(`${article.name}: Soll-Menge bereits erreicht`, 'info');
-                return;
-            }
-            if (numQty > remaining) {
-                numQty = remaining;
-                showToast(`Menge auf Soll-Maximum (${remaining}${assignment.unit ? ` ${assignment.unit}` : ''}) begrenzt`, 'info');
-            }
+        // Sicherheitsnetz gegen Tippfehler (z.B. 44 statt 14): die Soll-Menge selbst ist die
+        // absolute Obergrenze — wir kennen den echten aktuellen Bestand ohne Inventur nicht,
+        // daher wird NICHT gegen current_stock gerechnet, sondern nur gegen min_stock gedeckelt.
+        const maxAllowed = assignment.min_stock;
+        if (maxAllowed != null && numQty > maxAllowed) {
+            numQty = maxAllowed;
+            showToast(`Menge auf Soll-Maximum (${maxAllowed}${assignment.unit ? ` ${assignment.unit}` : ''}) begrenzt`, 'info');
         }
 
         const existingItem = restockItems.find(item =>
@@ -459,106 +450,65 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
 }
 
 // ── Fach-Zeile ─────────────────────────────────────────────────────────────
-function SlotArticleRow({ assignment, article, area, isSettled, onRestock, qtyValue, setRestockQtys, toggleChecked, isChecked }) {
-    const [manualOpen, setManualOpen] = useState(false);
-    const remaining = getRemainingToSoll(assignment, article);
+function SlotArticleRow({ assignment, article, area, onRestock, qtyValue, setRestockQtys, toggleChecked, isChecked }) {
     const currentStock = article?.current_stock ?? null;
+    const minStock = assignment.min_stock;
     const unit = assignment.unit ? ` ${assignment.unit}` : '';
 
     return (
-        <div className="flex flex-col gap-2 px-6 py-3 border-b border-border/20 last:border-0">
-            <div className="flex items-center gap-3">
-                {/* Geprüft-Button */}
-                <button
-                    onClick={() => toggleChecked(assignment.id)}
-                    className={cn(
-                        'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all active:scale-90',
-                        isChecked
-                            ? 'border-green-500 bg-green-500'
-                            : 'border-border hover:border-primary'
+        <div className="flex items-center gap-3 px-6 py-2.5 border-b border-border/20 last:border-0">
+            {/* Geprüft-Button */}
+            <button
+                onClick={() => toggleChecked(assignment.id)}
+                className={cn(
+                    'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all active:scale-90',
+                    isChecked
+                        ? 'border-green-500 bg-green-500'
+                        : 'border-border hover:border-primary'
+                )}
+            >
+                {isChecked && <Check className="w-3.5 h-3.5 text-white" />}
+            </button>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+                <p className="text-sm truncate text-foreground">{assignment.article_name}</p>
+                <p className="text-[10px] text-muted-foreground">
+                    Zuletzt gezählt: {currentStock != null ? currentStock : '—'}
+                    {article?.content_unit ? ` ${article.content_unit}` : ''}
+                    {minStock != null && (
+                        <span className="ml-2 text-blue-400 font-medium">
+                            Soll: {minStock}{unit}
+                        </span>
                     )}
-                >
-                    {isChecked && <Check className="w-3.5 h-3.5 text-white" />}
-                </button>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate text-foreground">{assignment.article_name}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                        Bestand: {currentStock != null ? currentStock : '—'}
-                        {article?.content_unit ? ` ${article.content_unit}` : ''}
-                        {assignment.min_stock != null && (
-                            <span className="ml-2 text-blue-400">
-                                Soll: {assignment.min_stock}{unit}
-                            </span>
-                        )}
-                    </p>
-                </div>
+                </p>
             </div>
 
-            {/* Aktion: 1-Klick auf Soll auffüllen, oder manuelle Menge (auf Soll gedeckelt) */}
-            <div className="flex items-center gap-2 pl-9">
-                {remaining != null && remaining > 0 && !manualOpen && (
-                    <>
-                        <Button
-                            size="sm"
-                            className="h-8 px-3 text-xs gap-1.5"
-                            onClick={() => onRestock(assignment, area, remaining)}
-                        >
-                            <ArrowUpCircle className="w-3.5 h-3.5" />
-                            Auf Soll auffüllen (+{remaining}{unit})
-                        </Button>
-                        <button
-                            type="button"
-                            className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
-                            onClick={() => setManualOpen(true)}
-                        >
-                            andere Menge
-                        </button>
-                    </>
-                )}
-
-                {(remaining == null || manualOpen) && (
-                    <>
-                        <Input
-                            type="number"
-                            inputMode="decimal"
-                            max={remaining != null ? remaining : undefined}
-                            className="h-8 w-20 text-xs px-2"
-                            placeholder="Menge"
-                            value={qtyValue}
-                            onChange={e => {
-                                let v = e.target.value;
-                                if (remaining != null && v !== '' && parseFloat(v) > remaining) v = String(remaining);
-                                setRestockQtys(prev => ({ ...prev, [assignment.id]: v }));
-                            }}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter' && qtyValue) onRestock(assignment, area, qtyValue);
-                            }}
-                        />
-                        <Button
-                            size="sm"
-                            className="h-8 px-3 text-xs gap-1 shrink-0"
-                            disabled={!qtyValue}
-                            onClick={() => onRestock(assignment, area, qtyValue)}
-                        >
-                            <Plus className="w-3 h-3" />
-                        </Button>
-                        {remaining != null && (
-                            <span className="text-[10px] text-muted-foreground/70">max. {remaining}{unit}</span>
-                        )}
-                        {manualOpen && (
-                            <button
-                                type="button"
-                                className="text-[11px] text-muted-foreground/70 hover:text-foreground"
-                                onClick={() => setManualOpen(false)}
-                            >
-                                zurück
-                            </button>
-                        )}
-                    </>
-                )}
-            </div>
+            {/* Menge-Eingabe — frei eintippbar, aber hart auf Soll gedeckelt */}
+            <Input
+                type="number"
+                inputMode="decimal"
+                max={minStock != null ? minStock : undefined}
+                className="h-8 w-16 text-xs px-2"
+                placeholder="Menge"
+                value={qtyValue}
+                onChange={e => {
+                    let v = e.target.value;
+                    if (minStock != null && v !== '' && parseFloat(v) > minStock) v = String(minStock);
+                    setRestockQtys(prev => ({ ...prev, [assignment.id]: v }));
+                }}
+                onKeyDown={e => {
+                    if (e.key === 'Enter' && qtyValue) onRestock(assignment, area, qtyValue);
+                }}
+            />
+            <Button
+                size="sm"
+                className="h-8 px-3 text-xs gap-1 shrink-0"
+                disabled={!qtyValue}
+                onClick={() => onRestock(assignment, area, qtyValue)}
+            >
+                <Plus className="w-3 h-3" />
+            </Button>
         </div>
     );
 }
@@ -570,7 +520,7 @@ function SlotRestockGroup({
     canSort, slotIdx, totalSlots, siblings, onMoveSlot
 }) {
     const [showSettled, setShowSettled] = useState(false);
-    const settledCtx = { articles, restockItems, today, checkedArticles };
+    const settledCtx = { restockItems, today, checkedArticles };
 
     const openItems = [];
     const settledItems = [];
@@ -627,36 +577,29 @@ function SlotRestockGroup({
             {/* Artikel */}
             {expanded && (
                 <div className="bg-muted/20 border-t border-border/20">
-                    {/* Nur offene Artikel direkt anzeigen — reduziert das Chaos beim Aufklappen */}
-                    {openItems.map(({ assignment, article }) => {
-                        const hasRestockItem = restockItems.some(item =>
-                            item.article_id === assignment.article_id &&
-                            item.date === today &&
-                            !item.is_completed
-                        );
-                        return (
-                            <SlotArticleRow
-                                key={assignment.id}
-                                assignment={assignment}
-                                article={article}
-                                area={area}
-                                onRestock={onRestock}
-                                qtyValue={restockQtys[assignment.id] || ''}
-                                setRestockQtys={setRestockQtys}
-                                toggleChecked={toggleChecked}
-                                isChecked={checkedArticles[assignment.id] || hasRestockItem}
-                            />
-                        );
-                    })}
+                    {/* Offene Artikel direkt anzeigen — reduziert das Chaos beim Aufklappen */}
+                    {openItems.map(({ assignment, article }) => (
+                        <SlotArticleRow
+                            key={assignment.id}
+                            assignment={assignment}
+                            article={article}
+                            area={area}
+                            onRestock={onRestock}
+                            qtyValue={restockQtys[assignment.id] || ''}
+                            setRestockQtys={setRestockQtys}
+                            toggleChecked={toggleChecked}
+                            isChecked={checkedArticles[assignment.id] || false}
+                        />
+                    ))}
 
                     {openItems.length === 0 && (
                         <p className="px-6 py-3 text-xs text-muted-foreground/70 flex items-center gap-1.5">
                             <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                            Alles ausreichend bestückt
+                            Alles geprüft
                         </p>
                     )}
 
-                    {/* Erledigte/ausreichend bestückte Artikel eingeklappt — bei Bedarf anzeigen */}
+                    {/* Bereits geprüfte/aufgefüllte Artikel eingeklappt — bei Bedarf anzeigen */}
                     {settledItems.length > 0 && (
                         <div className="border-t border-border/10">
                             <button
@@ -665,7 +608,7 @@ function SlotRestockGroup({
                                 onClick={() => setShowSettled(v => !v)}
                             >
                                 {showSettled ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                                ✓ {settledItems.length} bereits erledigt / ausreichend
+                                ✓ {settledItems.length} bereits erledigt
                             </button>
                             {showSettled && settledItems.map(({ assignment, article }) => {
                                 const currentStock = article?.current_stock ?? null;
@@ -680,8 +623,7 @@ function SlotRestockGroup({
                                         <p className="text-xs text-muted-foreground truncate flex-1">
                                             {assignment.article_name}
                                             <span className="ml-2 text-[10px]">
-                                                ({currentStock != null ? currentStock : '—'}
-                                                {assignment.min_stock != null ? ` / Soll ${assignment.min_stock}` : ''})
+                                                (Soll {assignment.min_stock != null ? assignment.min_stock : '—'})
                                             </span>
                                         </p>
                                     </div>
