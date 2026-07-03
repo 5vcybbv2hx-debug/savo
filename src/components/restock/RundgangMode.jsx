@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { usePermissions } from '@/components/auth/usePermissions';
 import {
     Layers, ChevronRight, ChevronDown, CheckCircle2, Circle,
@@ -381,6 +382,24 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tree, checkedArticles, restockItems]);
 
+    // ── Heute aufgefüllte Artikel (für die Abschluss-Zusammenfassung) ────────
+    const todaysRestockItems = useMemo(() =>
+        restockItems.filter(item => item.date === today && !item.is_completed),
+        [restockItems, today]
+    );
+
+    // ── Abschluss-Zusammenfassung: wenn der komplette Rundgang fertig wird
+    // (Übergang zu "alles erledigt"), kurze Bilanz zeigen — wie beim Ausstempeln.
+    const [showCompletionSummary, setShowCompletionSummary] = useState(false);
+    const prevAllDoneRef = useRef(false);
+    useEffect(() => {
+        const nowAllDone = overallProgress.total > 0 && overallProgress.done === overallProgress.total;
+        if (nowAllDone && !prevAllDoneRef.current) {
+            setShowCompletionSummary(true);
+        }
+        prevAllDoneRef.current = nowAllDone;
+    }, [overallProgress]);
+
     if (tree.length === 0) {
         return (
             <Card className="p-10 text-center border-border/40">
@@ -400,8 +419,8 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     // ── Render ───────────────────────────────────────────────────────────────
     return (
         <div className="space-y-2">
-            {/* Gesamt-Fortschritt */}
-            <div className="flex items-center gap-3 px-1 pb-1">
+            {/* Gesamt-Fortschritt — sticky, damit man beim Scrollen immer den Überblick behält */}
+            <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/95 backdrop-blur-sm flex items-center gap-3">
                 <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                     <div
                         className={cn('h-full rounded-full transition-all', allDone ? 'bg-green-500' : 'bg-amber-500')}
@@ -529,6 +548,45 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                     </Card>
                 );
             })}
+
+            {/* Abschluss-Zusammenfassung */}
+            <Sheet open={showCompletionSummary} onOpenChange={setShowCompletionSummary}>
+                <SheetContent side="bottom" className="rounded-t-2xl pb-8 px-6 pt-6 max-h-[85vh] overflow-y-auto">
+                    <div className="space-y-4">
+                        <div className="text-center space-y-1">
+                            <div className="text-4xl">✅</div>
+                            <h2 className="text-xl font-bold text-foreground">Rundgang komplett!</h2>
+                            <p className="text-sm text-muted-foreground">Alle {overallProgress.total} Fächer durchgegangen</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-muted rounded-xl p-4 text-center space-y-1">
+                                <p className="text-2xl font-bold text-foreground">{todaysRestockItems.length}</p>
+                                <p className="text-xs text-muted-foreground">Artikel aufgefüllt</p>
+                            </div>
+                            <div className="bg-muted rounded-xl p-4 text-center space-y-1">
+                                <p className="text-2xl font-bold text-foreground">
+                                    {todaysRestockItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">Einheiten gesamt</p>
+                            </div>
+                        </div>
+                        {todaysRestockItems.length > 0 && (
+                            <div className="bg-muted/50 rounded-xl p-3 space-y-1.5 max-h-48 overflow-y-auto">
+                                <p className="text-xs font-semibold text-muted-foreground">Aufgefüllt heute:</p>
+                                {todaysRestockItems.map(item => (
+                                    <div key={item.id} className="flex justify-between text-xs text-muted-foreground">
+                                        <span className="truncate">{item.article_name}</span>
+                                        <span className="font-medium shrink-0 ml-2">{item.quantity}×</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <Button className="w-full h-11" onClick={() => setShowCompletionSummary(false)}>
+                            Fertig
+                        </Button>
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
