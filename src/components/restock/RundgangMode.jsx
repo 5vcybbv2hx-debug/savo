@@ -69,29 +69,31 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     const canSort = permissions.isManager || permissions.isAdmin;
 
     // ── Queries ──────────────────────────────────────────────────────────────
-    const { data: areas = [] } = useQuery({
+    const { data: areas = [], isLoading: areasLoading } = useQuery({
         queryKey: ['st-areas'],
         queryFn: () => base44.entities.Area.list('name', 100),
         staleTime: STALE.SLOW,
     });
 
-    const { data: furniture = [] } = useQuery({
+    const { data: furniture = [], isLoading: furnitureLoading } = useQuery({
         queryKey: ['st-furniture'],
         queryFn: () => base44.entities.Furniture.list('sort_order', 500),
         staleTime: STALE.SLOW,
     });
 
-    const { data: slots = [] } = useQuery({
+    const { data: slots = [], isLoading: slotsLoading } = useQuery({
         queryKey: ['slots'],
         queryFn: () => base44.entities.StorageSlot.list('full_name', 1000),
         staleTime: STALE.MEDIUM,
     });
 
-    const { data: assignments = [] } = useQuery({
+    const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
         queryKey: ['assignments'],
         queryFn: () => base44.entities.StorageAssignment.filter({ is_active: true }, 'article_name', 1000),
         staleTime: STALE.MEDIUM,
     });
+
+    const isInitialLoading = areasLoading || furnitureLoading || slotsLoading || assignmentsLoading;
 
     // ── UI State ─────────────────────────────────────────────────────────────
     const [expandedAreas, setExpandedAreas] = useState({});
@@ -399,6 +401,15 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         }
         prevAllDoneRef.current = nowAllDone;
     }, [overallProgress]);
+
+    if (isInitialLoading) {
+        return (
+            <Card className="p-10 text-center border-border/40">
+                <div className="w-6 h-6 mx-auto mb-3 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
+                <p className="text-sm text-muted-foreground">Lade Rundgang…</p>
+            </Card>
+        );
+    }
 
     if (tree.length === 0) {
         return (
