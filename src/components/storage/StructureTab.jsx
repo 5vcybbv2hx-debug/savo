@@ -116,7 +116,7 @@ export default function StructureTab({ permissions }) {
   const [deleteSlotTarget, setDeleteSlotTarget] = useState(null);
 
   // ── Queries ───────────────────────────────────────────────────────────────────
-  const { data: areas = [],     isLoading: aL } = useQuery({ queryKey: ['st-areas'],     queryFn: () => base44.entities.Area.list('name', 100),         staleTime: STALE.SLOW });
+  const { data: areas = [],     isLoading: aL } = useQuery({ queryKey: ['st-areas'],     queryFn: async () => { const d = await base44.entities.Area.list('sort_order', 100); return d.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || '')); },         staleTime: STALE.SLOW });
   const { data: furniture = [], isLoading: fL } = useQuery({ queryKey: ['st-furniture'], queryFn: () => base44.entities.Furniture.list('name', 200),     staleTime: STALE.SLOW });
   const { data: slots = [] }                    = useQuery({ queryKey: ['slots'],         queryFn: () => base44.entities.StorageSlot.list('name', 1000),  staleTime: STALE.MEDIUM });
   const { data: assignments = [] } = useQuery({

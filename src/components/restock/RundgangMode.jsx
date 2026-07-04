@@ -71,7 +71,10 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     // ── Queries ──────────────────────────────────────────────────────────────
     const { data: areas = [], isLoading: areasLoading } = useQuery({
         queryKey: ['st-areas'],
-        queryFn: () => base44.entities.Area.list('name', 100),
+        queryFn: async () => {
+            const data = await base44.entities.Area.list('sort_order', 100);
+            return data.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || ''));
+        },
         staleTime: STALE.SLOW,
     });
 
