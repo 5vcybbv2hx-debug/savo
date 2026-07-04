@@ -267,6 +267,48 @@ export default function StructureTab({ permissions }) {
     onError: () => toast.error('Sortierung konnte nicht geändert werden'),
   });
 
+  // ── Area Sort Order ──────────────────────────────────────────────────────────
+  const updateAreaSortMut = useMutation({
+    mutationFn: async ({ area, direction, siblings }) => {
+      const idx = siblings.findIndex(s => s.id === area.id);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= siblings.length) return;
+      const swapArea = siblings[swapIdx];
+      const aOrder = area.sort_order ?? 0;
+      const sOrder = swapArea.sort_order ?? 0;
+      if (aOrder === sOrder) {
+        const newOrder = direction === 'up' ? aOrder - 1 : aOrder + 1;
+        await base44.entities.Area.update(area.id, { sort_order: newOrder });
+      } else {
+        await base44.entities.Area.update(area.id, { sort_order: sOrder });
+        await base44.entities.Area.update(swapArea.id, { sort_order: aOrder });
+      }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-areas'] }); },
+    onError: () => toast.error('Sortierung konnte nicht geändert werden'),
+  });
+
+  // ── Furniture Sort Order ─────────────────────────────────────────────────────
+  const updateFurSortMut = useMutation({
+    mutationFn: async ({ fur, direction, siblings }) => {
+      const idx = siblings.findIndex(s => s.id === fur.id);
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= siblings.length) return;
+      const swapFur = siblings[swapIdx];
+      const fOrder = fur.sort_order ?? 0;
+      const sOrder = swapFur.sort_order ?? 0;
+      if (fOrder === sOrder) {
+        const newOrder = direction === 'up' ? fOrder - 1 : fOrder + 1;
+        await base44.entities.Furniture.update(fur.id, { sort_order: newOrder });
+      } else {
+        await base44.entities.Furniture.update(fur.id, { sort_order: sOrder });
+        await base44.entities.Furniture.update(swapFur.id, { sort_order: fOrder });
+      }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-furniture'] }); },
+    onError: () => toast.error('Sortierung konnte nicht geändert werden'),
+  });
+
   // ── Modal Opener ──────────────────────────────────────────────────────────────
   const openAddArea  = () => { setAreaForm({ name: '', description: '', restock_enabled: true }); setAreaModal({ open: true, data: null }); };
   const openEditArea = a  => { setAreaForm({ name: a.name, description: a.description || '', restock_enabled: a.restock_enabled !== false }); setAreaModal({ open: true, data: a }); };
@@ -361,7 +403,7 @@ export default function StructureTab({ permissions }) {
         </div>
       ) : (
         <div className="space-y-2">
-          {areas.map(area => {
+          {areas.map((area, areaIdx) => {
             const areaFurniture = furniture.filter(f => f.area_id === area.id);
             const totalSlots    = slotCountByArea[area.id] || 0;
             const isExpanded    = !!expandedAreas[area.id];
@@ -383,6 +425,16 @@ export default function StructureTab({ permissions }) {
                   <div className="flex items-center gap-0.5">
                     {canEdit && (
                       <>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          disabled={areaIdx === 0}
+                          onClick={e => { e.stopPropagation(); updateAreaSortMut.mutate({ area, direction: 'up', siblings: areas }); }}>
+                          <ArrowUp className="w-3 h-3" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          disabled={areaIdx === areas.length - 1}
+                          onClick={e => { e.stopPropagation(); updateAreaSortMut.mutate({ area, direction: 'down', siblings: areas }); }}>
+                          <ArrowDown className="w-3 h-3" />
+                        </Button>
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground"
                           onClick={e => { e.stopPropagation(); openEditArea(area); }}>
                           <Pencil className="w-3.5 h-3.5" />
@@ -406,7 +458,7 @@ export default function StructureTab({ permissions }) {
                       <p className="px-4 py-3 text-xs text-muted-foreground/50">Noch keine Möbel in diesem Bereich</p>
                     )}
 
-                    {areaFurniture.map(f => {
+                    {areaFurniture.map((f, furIdx) => {
                       const furSlots   = slotsByFurniture[f.id] || [];
                       const isFurOpen  = !!expandedFurs[f.id];
 
@@ -427,6 +479,16 @@ export default function StructureTab({ permissions }) {
                             <div className="flex items-center gap-0.5">
                               {canEdit && (
                                 <>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                    disabled={furIdx === 0}
+                                    onClick={e => { e.stopPropagation(); updateFurSortMut.mutate({ fur: f, direction: 'up', siblings: areaFurniture }); }}>
+                                    <ArrowUp className="w-3 h-3" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                    disabled={furIdx === areaFurniture.length - 1}
+                                    onClick={e => { e.stopPropagation(); updateFurSortMut.mutate({ fur: f, direction: 'down', siblings: areaFurniture }); }}>
+                                    <ArrowDown className="w-3 h-3" />
+                                  </Button>
                                   <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground"
                                     onClick={e => { e.stopPropagation(); openEditFur(f); }}>
                                     <Pencil className="w-3 h-3" />
