@@ -146,6 +146,12 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         onError: () => showToast('Sortierung konnte nicht geändert werden', 'error'),
     });
 
+    const sortAreaMut = useMutation({
+        mutationFn: ({ area, direction, siblings }) => swapSortOrder(area, direction, siblings, 'Area', ['st-areas']),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['st-areas'] }),
+        onError: () => showToast('Sortierung konnte nicht geändert werden', 'error'),
+    });
+
     // ── Gefilterte Daten ─────────────────────────────────────────────────────
     const restockAreas = useMemo(() =>
         areas.filter(a => a.is_active !== false && a.restock_enabled !== false),
@@ -445,7 +451,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                 </p>
             </div>
 
-            {tree.map(({ area, furnitureList }) => {
+            {tree.map(({ area, furnitureList }, areaIdx) => {
                 const areaSlots = furnitureList.flatMap(f => f.furSlots);
                 const areaExpanded = expandedAreas[area.id];
                 const doneInArea = areaSlots.filter(s => isSlotDone(s.id)).length;
@@ -454,28 +460,44 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                 return (
                     <Card key={area.id} className="overflow-hidden border-border">
                         {/* Bereich Header */}
-                        <button
-                            className="w-full flex items-center gap-3 p-3 hover:bg-secondary/30 transition-colors"
-                            onClick={() => setExpandedAreas(prev => ({ ...prev, [area.id]: !prev[area.id] }))}
-                        >
-                            <div className={cn(
-                                "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-                                areaAllDone ? "bg-green-500/15" : "bg-amber-500/15"
-                            )}>
-                                {areaAllDone
-                                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                    : <Layers className="w-4 h-4 text-amber-500" />}
-                            </div>
-                            <div className="flex-1 text-left min-w-0">
-                                <p className="font-semibold text-sm text-foreground">{area.name}</p>
-                                <p className="text-[11px] text-muted-foreground">
-                                    {doneInArea}/{areaSlots.length} Fächer durchgegangen
-                                </p>
-                            </div>
-                            {areaExpanded
-                                ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-                                : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
-                        </button>
+                        <div className="w-full flex items-center gap-3 p-3 hover:bg-secondary/30 transition-colors">
+                            <button
+                                className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                                onClick={() => setExpandedAreas(prev => ({ ...prev, [area.id]: !prev[area.id] }))}
+                            >
+                                <div className={cn(
+                                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
+                                    areaAllDone ? "bg-green-500/15" : "bg-amber-500/15"
+                                )}>
+                                    {areaAllDone
+                                        ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        : <Layers className="w-4 h-4 text-amber-500" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-sm text-foreground">{area.name}</p>
+                                    <p className="text-[11px] text-muted-foreground">
+                                        {doneInArea}/{areaSlots.length} Fächer durchgegangen
+                                    </p>
+                                </div>
+                                {areaExpanded
+                                    ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                                    : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
+                            </button>
+                            {canSort && (
+                                <div className="flex gap-0.5 shrink-0">
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                        disabled={areaIdx === 0}
+                                        onClick={() => sortAreaMut.mutate({ area, direction: 'up', siblings: tree.map(t => t.area) })}>
+                                        <ArrowUp className="w-3 h-3" />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                        disabled={areaIdx === tree.length - 1}
+                                        onClick={() => sortAreaMut.mutate({ area, direction: 'down', siblings: tree.map(t => t.area) })}>
+                                        <ArrowDown className="w-3 h-3" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Möbel + Fächer */}
                         {areaExpanded && (
