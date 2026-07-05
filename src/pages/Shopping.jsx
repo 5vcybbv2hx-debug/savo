@@ -60,7 +60,7 @@ function timeAgo(isoStr) {
 }
 
 // ── ShoppingRow ───────────────────────────────────────────────────────────────
-function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpenWareneingang, unitPrice, activeTab }) {
+function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpenWareneingang, onQtyChange, unitPrice, activeTab }) {
     const supplierIdx = suppliers.findIndex(s => s.name === item.category);
     const isDone = item.status === 'abgeschlossen';
     const hasDiff = item.delivered_quantity != null && item.delivered_quantity !== item.quantity;
@@ -107,6 +107,35 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
                             {isShort && <span className="text-destructive ml-1">▼ {(item.quantity - item.delivered_quantity).toFixed(1)} fehlt</span>}
                             {isOver  && <span className="text-blue-400 ml-1">▲ {(item.delivered_quantity - item.quantity).toFixed(1)} extra</span>}
                         </span>
+                    ) : activeTab === 'offen' ? (
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                type="button"
+                                className="w-6 h-6 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors active:scale-90"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newQty = Math.max(0.5, (parseFloat(item.quantity) || 1) - 1);
+                                    onQtyChange(item, newQty);
+                                }}
+                            >
+                                <span className="text-sm font-bold leading-none">−</span>
+                            </button>
+                            <span className="text-sm font-semibold text-foreground tabular-nums min-w-[1.5rem] text-center">
+                                {item.quantity}
+                            </span>
+                            <button
+                                type="button"
+                                className="w-6 h-6 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors active:scale-90"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newQty = (parseFloat(item.quantity) || 0) + 1;
+                                    onQtyChange(item, newQty);
+                                }}
+                            >
+                                <span className="text-sm font-bold leading-none">+</span>
+                            </button>
+                            {item.unit && <span className="text-xs text-muted-foreground ml-0.5">{item.unit}</span>}
+                        </div>
                     ) : (
                         <span className="text-xs text-muted-foreground font-medium">
                             {item.quantity}{item.unit ? ` ${item.unit}` : ''}
@@ -329,6 +358,8 @@ export default function Shopping() {
     const [closeOrderConfirm,    setCloseOrderConfirm]    = useState(false);
     const [markBestelltConfirm,  setMarkBestelltConfirm]  = useState(null); // Array von Items
     const [activeTab,            setActiveTab]            = useState('offen');
+    const [quickAddSheet,        setQuickAddSheet]        = useState(null); // { article, existingItem } | null
+    const [quickAddQty,          setQuickAddQty]          = useState(1);
     const [formData, setFormData] = useState({
         item_name: '', category: '', quantity: '', unit: '', status: 'offen', notes: ''
     });
@@ -516,6 +547,14 @@ export default function Shopping() {
         }
     };
 
+    const handleInlineQtyChange = async (item, newQty) => {
+        await updateMutation.mutateAsync({
+            id: item.id,
+            data: { ...item, quantity: newQty }
+        });
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+    };
+
     const handleEanSubmit = async (e) => {
         e.preventDefault();
         if (!eanInput.trim()) return;
@@ -567,35 +606,12 @@ export default function Shopping() {
         setShowSuggestions(matches.length > 0);
     };
 
-    const handleSuggestionSelect = async (article) => {
+    const handleSuggestionSelect = (article) => {
         setShowSuggestions(false);
         setEanInput('');
         const existing = items.find(i => i.item_name === article.name && i.status === 'offen');
-        if (existing) {
-            await updateMutation.mutateAsync({
-                id: existing.id,
-                data: { ...existing, quantity: parseFloat(existing.quantity || 0) + 1 }
-            });
-            toast.success(`${article.name} — Menge erhöht`);
-        } else {
-            const ps2 = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0];
-            const d2  = (ps2?.packaging_options||[]).find(o=>o.is_default)||(ps2?.packaging_options||[])[0];
-            const _sn = ps2?.supplier_name || article.suppliers?.[0] || suppliers[0]?.name || '';
-            await createMutation.mutateAsync({
-                item_name:           article.name,
-                article_id:          article.id,
-                category:            _sn,
-                supplier_name:       _sn,
-                packaging_option_id: d2?.id || null,
-                packaging_label:     d2 ? `${d2.packaging_type} ${d2.units_per_pack}×` : null,
-                price_per_unit:      d2?.price_per_unit || article.purchase_price || null,
-                quantity:            1,
-                unit:                d2?.packaging_type || 'Stück',
-                status:              'offen',
-            });
-            toast.success(`${article.name} hinzugefügt`);
-        }
-        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+        setQuickAddQty(existing ? parseFloat(existing.quantity) || 1 : 1);
+        setQuickAddSheet({ article, existingItem: existing || null });
     };
 
     // ── Derived ───────────────────────────────────────────────────────────────
@@ -933,6 +949,7 @@ export default function Shopping() {
                                 onDelete={(id) => setDeleteConfirm(id)}
                                 onMarkBestellt={(items) => setMarkBestelltConfirm(items)}
                                 onOpenWareneingang={(item) => setWareneingangItem(item)}
+                                onQtyChange={handleInlineQtyChange}
                             />
                         ))
                     )}
@@ -1082,6 +1099,96 @@ export default function Shopping() {
             {/* ── Picker & Scanner ──────────────────────────────────────── */}
             <KanbanScanModal open={kanbanOpen} onClose={() => setKanbanOpen(false)} onAdd={handleArticleAdd} articles={articles} suppliers={suppliers} />
             <ArticlePickerSheet open={articlePickerOpen} onClose={() => setArticlePickerOpen(false)} onAdd={handleArticleAdd} articles={articles} suppliers={suppliers} />
+
+            {/* ── Quick-Menge Sheet ────────────────────────────────────── */}
+            <Dialog open={!!quickAddSheet} onOpenChange={(o) => { if (!o) setQuickAddSheet(null); }}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            {quickAddSheet?.article?.image_url
+                                ? <img src={quickAddSheet.article.image_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                                : <Package className="w-5 h-5 text-primary" />
+                            }
+                            {quickAddSheet?.article?.name || 'Artikel'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        {quickAddSheet?.existingItem && (
+                            <div className="rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary">
+                                Bereits {quickAddSheet.existingItem.quantity} {quickAddSheet.existingItem.unit || 'Stück'} in der Liste
+                            </div>
+                        )}
+                        <div>
+                            <Label className="text-sm font-medium">Menge</Label>
+                            <div className="flex items-center gap-3 mt-2">
+                                <button type="button"
+                                    className="w-11 h-11 rounded-xl border border-border bg-card flex items-center justify-center text-lg font-bold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors active:scale-90"
+                                    onClick={() => setQuickAddQty(q => Math.max(0.5, (parseFloat(q) || 1) - 1))}>
+                                    −
+                                </button>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    min="0.5"
+                                    value={quickAddQty}
+                                    onChange={e => setQuickAddQty(e.target.value)}
+                                    className="w-16 h-11 text-center text-xl font-bold border border-border rounded-xl bg-card text-foreground tabular-nums"
+                                    autoFocus
+                                />
+                                <button type="button"
+                                    className="w-11 h-11 rounded-xl border border-border bg-card flex items-center justify-center text-lg font-bold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors active:scale-90"
+                                    onClick={() => setQuickAddQty(q => (parseFloat(q) || 0) + 1)}>
+                                    +
+                                </button>
+                                <span className="text-sm text-muted-foreground">
+                                    {(() => {
+                                        const ps = quickAddSheet?.article?.supplier_details?.find(s=>s.is_primary)||quickAddSheet?.article?.supplier_details?.[0];
+                                        const d = (ps?.packaging_options||[]).find(o=>o.is_default)||(ps?.packaging_options||[])[0];
+                                        return d?.packaging_type || 'Stück';
+                                    })()}
+                                </span>
+                            </div>
+                        </div>
+                        <Button
+                            className="w-full h-11"
+                            onClick={async () => {
+                                const article = quickAddSheet.article;
+                                const qty = parseFloat(quickAddQty) || 1;
+                                const existing = quickAddSheet.existingItem;
+                                const ps = article.supplier_details?.find(s=>s.is_primary)||article.supplier_details?.[0];
+                                const d = (ps?.packaging_options||[]).find(o=>o.is_default)||(ps?.packaging_options||[])[0];
+                                const sn = ps?.supplier_name || article.suppliers?.[0] || suppliers[0]?.name || '';
+
+                                if (existing) {
+                                    await updateMutation.mutateAsync({
+                                        id: existing.id,
+                                        data: { ...existing, quantity: qty }
+                                    });
+                                    toast.success(`${article.name} — Menge auf ${qty} gesetzt`);
+                                } else {
+                                    await createMutation.mutateAsync({
+                                        item_name:           article.name,
+                                        article_id:          article.id,
+                                        category:            sn,
+                                        supplier_name:       sn,
+                                        packaging_option_id: d?.id || null,
+                                        packaging_label:     d ? `${d.packaging_type} ${d.units_per_pack}×` : null,
+                                        price_per_unit:      d?.price_per_unit || article.purchase_price || null,
+                                        quantity:            qty,
+                                        unit:                d?.packaging_type || 'Stück',
+                                        status:              'offen',
+                                    });
+                                    toast.success(`${article.name} hinzugefügt (${qty}×)`);
+                                }
+                                queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+                                setQuickAddSheet(null);
+                            }}
+                        >
+                            {quickAddSheet?.existingItem ? 'Menge aktualisieren' : 'Zur Bestellung hinzufügen'}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
