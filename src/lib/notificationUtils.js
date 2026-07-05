@@ -89,8 +89,15 @@ export function filterByUserSettings(notifications, settings, userEmail, userRol
 /**
  * Kombinierte Filterlogik: Rolle + Einstellungen
  */
-export function getVisibleNotifications(notifications, userRole, userEmail, settings) {
-  let filtered = filterByRole(notifications, userRole);
+export function getVisibleNotifications(notifications, userRole, userEmail, settings, employeeId) {
+  // Recipient-Filter: wenn recipient_id oder recipient_email gesetzt, nur für diesen Nutzer sichtbar
+  let filtered = notifications.filter(notif => {
+    if (!notif.recipient_id && !notif.recipient_email) return true; // globale Nachricht
+    if (employeeId && notif.recipient_id === employeeId) return true;
+    if (userEmail && notif.recipient_email === userEmail) return true;
+    return false;
+  });
+  filtered = filterByRole(filtered, userRole);
   filtered = filterByUserSettings(filtered, settings, userEmail, userRole);
   return filtered;
 }

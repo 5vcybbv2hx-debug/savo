@@ -323,7 +323,7 @@ export default function Layout({ children, currentPageName }) {
                             {getPageName(currentPageName)}
                         </h1>
                         {currentUser && (
-                            <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} />
+                            <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} employeeId={permissions.employeeId} />
                         )}
                         <button
                             onClick={() => setSearchOpen(true)}
@@ -454,7 +454,7 @@ export default function Layout({ children, currentPageName }) {
                         <div className={`border-t border-border/50 space-y-3 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
                             {currentUser && (
                                 <div className={`flex ${sidebarCollapsed ? "justify-center" : "justify-center"}`}>
-                                    <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} />
+                                    <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} employeeId={permissions.employeeId} />
                                 </div>
                             )}
                             {!sidebarCollapsed && (

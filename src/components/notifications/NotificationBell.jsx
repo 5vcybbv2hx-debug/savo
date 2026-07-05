@@ -31,7 +31,7 @@ const PRIORITY_BADGES = {
     'info': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
 };
 
-export default function NotificationBell({ userEmail, userRole = 'user' }) {
+export default function NotificationBell({ userEmail, userRole = 'user', employeeId }) {
     const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
     const permissions = usePermissions();
@@ -61,7 +61,8 @@ export default function NotificationBell({ userEmail, userRole = 'user' }) {
         allNotifications,
         permissions.role || 'mitarbeiter',
         userEmail,
-        settings
+        settings,
+        employeeId
     );
 
     const sortedNotifications = sortByPriorityAndDate(visibleNotifications);
