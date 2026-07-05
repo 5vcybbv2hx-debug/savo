@@ -421,7 +421,7 @@ export default function Cleaning() {
 
             {/* ── Fixierter "Tag beenden"-Button ───────────────────────── */}
             {(permissions.isManager || permissions.isAdmin) && (
-                <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-4 flex justify-center gap-2 pointer-events-none">
+                <div className="fixed bottom-[6.5rem] md:bottom-6 left-0 right-0 px-4 flex justify-center gap-2 pointer-events-none z-40">
                     <div className="flex items-center gap-2 pointer-events-auto">
                         <Button
                             variant="outline"
