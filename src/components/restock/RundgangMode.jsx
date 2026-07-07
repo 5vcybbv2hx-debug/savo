@@ -7,7 +7,6 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { Switch } from '@/components/ui/switch';
 import { usePermissions } from '@/components/auth/usePermissions';
 import {
     Layers, ChevronRight, ChevronDown, CheckCircle2, Circle,
@@ -121,21 +120,11 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         });
     };
 
-    // "Schritt-für-Schritt"-Modus: statt alle offenen Fächer gleichzeitig anzuzeigen
-    // (was auf Mobile schnell überladen wirkt), ist immer nur GENAU EIN Fach aufgeklappt —
-    // sobald es fertig ist, klappt es zu und das nächste Fach in der Reihenfolge
-    // (Bereich → Möbel → Fach, gemäß sort_order) klappt automatisch auf. Geräteweit
-    // gemerkt, Standard: an (löst genau das "auf Mobile alles voll"-Problem).
-    const [focusMode, setFocusMode] = useState(() => {
-        try { return localStorage.getItem('rundgang_focus_mode') !== 'false'; } catch { return true; }
-    });
-    const toggleFocusMode = () => {
-        setFocusMode(prev => {
-            const next = !prev;
-            try { localStorage.setItem('rundgang_focus_mode', String(next)); } catch {}
-            return next;
-        });
-    };
+    // Schritt-für-Schritt-Fokus-Modus: statt alle offenen Fächer gleichzeitig anzuzeigen
+    // (überladen auf Mobile), ist immer nur GENAU EIN Fach aufgeklappt — sobald es fertig
+    // ist, klappt es zu und das nächste Fach in der Reihenfolge (Bereich → Möbel → Fach,
+    // gemäß sort_order) klappt automatisch auf. Verbindlich für alle — kein Umschalter,
+    // ein System für alle.
 
     // ── Sortier-Mutationen (gleiche Logik wie StructureTab) ───────────────────
     const swapSortOrder = async (item, direction, siblings, entityName, queryKey) => {
@@ -357,41 +346,13 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     useEffect(() => {
         if (autoExpandedRef.current || tree.length === 0) return;
 
-        // Fokus-Modus: nur den Pfad zum EINEN aktuell dran befindlichen Fach öffnen —
-        // alles andere bleibt zu, das ist der ganze Sinn des Modus. Der Folge-Effekt
-        // unten übernimmt danach das automatische Weiterschalten.
-        if (focusMode) {
-            if (activeSlotEntry) {
-                setExpandedAreas(prev => ({ ...prev, [activeSlotEntry.area.id]: true }));
-                setExpandedFurniture(prev => ({ ...prev, [activeSlotEntry.fur.id]: true }));
-                setExpandedSlots(prev => ({ ...prev, [activeSlotEntry.slot.id]: true }));
-            }
-            autoExpandedRef.current = true;
-            return;
+        // Nur den Pfad zum EINEN aktuell dran befindlichen Fach öffnen — alles andere
+        // bleibt zu. Der Folge-Effekt unten übernimmt danach das automatische Weiterschalten.
+        if (activeSlotEntry) {
+            setExpandedAreas(prev => ({ ...prev, [activeSlotEntry.area.id]: true }));
+            setExpandedFurniture(prev => ({ ...prev, [activeSlotEntry.fur.id]: true }));
+            setExpandedSlots(prev => ({ ...prev, [activeSlotEntry.slot.id]: true }));
         }
-
-        const newAreaExp = {};
-        const newFurExp = {};
-        const newSlotExp = {};
-
-        tree.forEach(({ area, furnitureList }) => {
-            let areaHasAction = false;
-            furnitureList.forEach(({ fur, furSlots }) => {
-                let furHasAction = false;
-                furSlots.forEach(slot => {
-                    if (!isSlotDone(slot.id)) {
-                        newSlotExp[slot.id] = true;
-                        furHasAction = true;
-                    }
-                });
-                if (furHasAction) { newFurExp[fur.id] = true; areaHasAction = true; }
-            });
-            if (areaHasAction) newAreaExp[area.id] = true;
-        });
-
-        setExpandedAreas(prev => ({ ...newAreaExp, ...prev }));
-        setExpandedFurniture(prev => ({ ...newFurExp, ...prev }));
-        setExpandedSlots(prev => ({ ...newSlotExp, ...prev }));
         autoExpandedRef.current = true;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tree]);
@@ -405,7 +366,6 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     const prevActiveSlotIdRef = useRef(null);
     const activeSlotRefEl = useRef(null);
     useEffect(() => {
-        if (!focusMode) return;
         const activeId = activeSlotEntry?.slot?.id || null;
         if (activeId && activeId !== prevActiveSlotIdRef.current) {
             const isFirstLoad = prevActiveSlotIdRef.current === null;
@@ -421,7 +381,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                 }, 150);
             }
         }
-    }, [focusMode, activeSlotEntry]);
+    }, [activeSlotEntry]);
 
     // ── Auto-Collapse: Sobald ein Fach/Möbel/Bereich fertig wird (Übergang offen → fertig),
     // klappt es sich automatisch zu — spart laufend Platz beim Rundgang, ohne dass man
@@ -517,32 +477,18 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     return (
         <div className="space-y-2">
             {/* Gesamt-Fortschritt — sticky, damit man beim Scrollen immer den Überblick behält */}
-            <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/95 backdrop-blur-sm space-y-2">
-                <div className="flex items-center gap-3">
-                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div
-                            className={cn('h-full rounded-full transition-all', allDone ? 'bg-green-500' : 'bg-amber-500')}
-                            style={{ width: `${progressPct}%` }}
-                        />
-                    </div>
-                    <p className="text-[11px] font-medium text-muted-foreground shrink-0">
-                        {allDone
-                            ? <span className="text-green-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Rundgang komplett</span>
-                            : `${overallProgress.done}/${overallProgress.total} Fächer erledigt`}
-                    </p>
+            <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/95 backdrop-blur-sm flex items-center gap-3">
+                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                        className={cn('h-full rounded-full transition-all', allDone ? 'bg-green-500' : 'bg-amber-500')}
+                        style={{ width: `${progressPct}%` }}
+                    />
                 </div>
-                {!allDone && (
-                    <div className="flex items-center justify-between gap-2 px-0.5">
-                        <button
-                            onClick={toggleFocusMode}
-                            className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
-                        >
-                            <Target className={cn('w-3.5 h-3.5', focusMode && 'text-primary')} />
-                            Schritt-für-Schritt
-                        </button>
-                        <Switch checked={focusMode} onCheckedChange={toggleFocusMode} className="scale-90" />
-                    </div>
-                )}
+                <p className="text-[11px] font-medium text-muted-foreground shrink-0">
+                    {allDone
+                        ? <span className="text-green-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Rundgang komplett</span>
+                        : `${overallProgress.done}/${overallProgress.total} Fächer erledigt`}
+                </p>
             </div>
 
             {tree.map(({ area, furnitureList }, areaIdx) => {
@@ -646,7 +592,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                             key={slot.id}
                                                             slot={slot}
                                                             area={area}
-                                                            isActive={focusMode && activeSlotEntry?.slot?.id === slot.id}
+                                                            isActive={activeSlotEntry?.slot?.id === slot.id}
                                                             activeRef={activeSlotEntry?.slot?.id === slot.id ? activeSlotRefEl : null}
                                                             expanded={expandedSlots[slot.id]}
                                                             onToggle={() => setExpandedSlots(prev => ({ ...prev, [slot.id]: !prev[slot.id] }))}
