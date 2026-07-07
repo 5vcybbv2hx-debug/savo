@@ -40,11 +40,19 @@
         "info"
       ],
       "default": "info",
-      "description": "Priorit\u00e4tsstufe"
+      "description": "Prioritätsstufe"
     },
     "related_id": {
       "type": "string",
-      "description": "ID des zugeh\u00f6rigen Objekts"
+      "description": "ID des zugehörigen Objekts"
+    },
+    "recipient_id": {
+      "type": "string",
+      "description": "Employee-ID des Empfängers (leer = globale Nachricht an alle)"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "E-Mail des Empfängers (leer = globale Nachricht an alle)"
     },
     "target_roles": {
       "type": "array",
