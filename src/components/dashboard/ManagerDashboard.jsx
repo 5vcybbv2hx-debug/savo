@@ -19,7 +19,7 @@ import LegalStatusPanel from '@/components/legal/LegalStatusPanel';
 import TeamNotes from '@/components/dashboard/TeamNotes';
 import TimeApprovalPanel from '@/components/dashboard/TimeApprovalPanel';
 
-export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, clockEntry, hoursThisWeek, remainingVacationDays, myUpcomingShifts, currentUser, isManager = true, employees = [], shifts = [], events = [], reservations = [], todos = [], timeEntries = [], vacationRequests = [], maintenanceTasks = [], shoppingList = [], articles = [], cleaningTasks = [] }) {
+export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, clockEntry, hoursThisWeek, remainingVacationDays, myUpcomingShifts, currentUser, isManager = true, employees = [], shifts = [], events = [], reservations = [], todos = [], timeEntries = [], pendingTimeEntries: pendingTimeEntriesProp, vacationRequests = [], maintenanceTasks = [], shoppingList = [], articles = [], cleaningTasks = [] }) {
     const today = format(new Date(), 'yyyy-MM-dd');
 
     const todayShifts = shifts.filter(s => s.date === today);
@@ -29,7 +29,16 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
     const urgentTodos = openTodos.filter(t => t.priority === 'dringend' || t.priority === 'hoch');
     const openShoppingItems = shoppingList.filter(i => i.status === 'offen');
     const lowStockArticles = articles.filter(a => a.min_stock && a.current_stock <= a.min_stock);
-    const pendingTimeEntries = timeEntries; // bereits gefiltert auf status='eingereicht'
+    // War bisher fälschlich = die komplette timeEntries-Liste (bis zu 1000
+    // Records, davon fast alle schon 'genehmigt') — dadurch zeigte das
+    // Dashboard "653 zu genehmigen" an, obwohl alles längst genehmigt war
+    // (653 = Gesamtzahl aller TimeEntry-Records, nicht die offenen).
+    // Jetzt: echte, bereits in useDashboardData korrekt gefilterte Liste
+    // (status='eingereicht' bzw. employee_confirmed=true UND noch nicht
+    // 'genehmigt') verwenden, mit Fallback falls Prop mal fehlt.
+    const pendingTimeEntries = pendingTimeEntriesProp ?? timeEntries.filter(e =>
+        (e.status === 'eingereicht' || e.employee_confirmed === true) && e.status !== 'genehmigt'
+    );
     const pendingVacationRequests = vacationRequests.filter(r => r.status === 'beantragt');
     const urgentMaintenance = maintenanceTasks.filter(t => getTaskStatus(t) === 'überfällig');
     const soonMaintenance   = maintenanceTasks.filter(t => getTaskStatus(t) === 'bald fällig');
