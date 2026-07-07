@@ -54,17 +54,20 @@ export default function CalendarSubscribeSection() {
         const firstName = empName.split(' ')[0];
         return `Hallo ${firstName} 👋
 
-Ab sofort kannst du deine Schichten direkt in deinem iPhone- oder Google-Kalender sehen – automatisch und immer aktuell! 📅
+Kleines Update zum Schicht-Kalender 📅 Falls du schon einen Kalender-Link eingerichtet hast: bitte den ALTEN einmal löschen und danach den NEUEN unten abonnieren – so bleibt alles sauber und aktuell.
 
-*So geht's (iPhone):*
-Einstellungen → Kalender → Accounts → Account hinzufügen → Andere → Kalenderabo hinzufügen → diesen Link einfügen:
+*1️⃣ Alten Kalender löschen (falls vorhanden):*
+📱 iPhone: Einstellungen → Kalender → Accounts → alten Eintrag antippen → „Account löschen"
+💻 Google Calendar: calendar.google.com → Zahnrad → Einstellungen → „Kalender abonnieren" links → alten Eintrag entfernen (Mülleimer-Symbol)
+
+*2️⃣ Neuen Kalender abonnieren:*
+📱 iPhone: Einstellungen → Kalender → Accounts → Account hinzufügen → Andere → Kalenderabo hinzufügen → diesen Link einfügen:
 
 ${calUrl}
 
-*Google Calendar:*
-calendar.google.com → Andere Kalender → Per URL → Link einfügen
+💻 Google Calendar: calendar.google.com → „Weitere Kalender" (+) → Per URL → Link einfügen
 
-Einmal einrichten, danach läuft alles automatisch. Bei Fragen einfach melden! 🙌`;
+Einmal neu einrichten, danach läuft alles automatisch – deine Schichten aktualisieren sich von selbst (kann ein paar Stunden dauern, bis dein Handy sie zieht). Bei Fragen einfach melden! 🙌`;
     };
 
     const handlePrepareTeamNotification = async () => {
