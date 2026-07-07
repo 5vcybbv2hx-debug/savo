@@ -32,34 +32,12 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
 
     const respondMutation = useMutation({
         mutationFn: async ({ request, accepted }) => {
-            // Gegenseitiger 1:1-Tausch (DirectSwapModal): Personaldecke bleibt
-            // unverändert (beide decken sich gegenseitig ab), daher braucht es
-            // hier KEINEN zusätzlichen Manager-Schritt — sobald der Ziel-
-            // Mitarbeiter zustimmt, werden beide Schichten sofort getauscht.
-            if (accepted && request.is_mutual_swap && request.partner_shift_id) {
-                await base44.entities.Shift.update(request.shift_id, {
-                    employee_id: currentEmployee.id,
-                    employee_name: currentEmployee.name,
-                });
-                await base44.entities.Shift.update(request.partner_shift_id, {
-                    employee_id: request.requesting_employee_id,
-                    employee_name: request.requesting_employee_name,
-                });
-                await base44.entities.ShiftSwapRequest.update(request.id, {
-                    status: 'genehmigt',
-                    approved_by: `${currentEmployee.name} (Selbstbestätigung, gegenseitiger Tausch)`,
-                    response_date: new Date().toISOString(),
-                });
-
-                await notifyEmployee({
-                    recipientId: request.requesting_employee_id,
-                    title: 'Gegenseitiger Tausch bestätigt ✅',
-                    message: `${currentEmployee.name} hat deinen Tausch-Vorschlag angenommen. Beide Schichten wurden bereits getauscht.`,
-                    relatedId: request.id,
-                });
-                return;
-            }
-
+            // Sowohl bei einfachem Direkttausch als auch bei gegenseitigem
+            // 1:1-Tausch (is_mutual_swap) gilt jetzt einheitlich: der
+            // Ziel-Mitarbeiter stimmt hier nur der ANFRAGE zu, die
+            // tatsächliche(n) Schicht-Übertragung(en) macht danach noch
+            // ein Manager per "Bestätigen & übertragen" (auf Wunsch des
+            // Nutzers auch für gegenseitige Tausche Pflicht).
             const newStatus = accepted ? 'angenommen' : 'abgelehnt';
             await base44.entities.ShiftSwapRequest.update(request.id, {
                 status: newStatus,
@@ -68,7 +46,7 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
 
             const title = accepted ? 'Tausch angenommen ✅' : 'Tausch abgelehnt ❌';
             const message = accepted
-                ? `${currentEmployee.name} hat deinen Schichttausch für den ${format(parseISO(request.shift_date), 'dd.MM.', { locale: de })} angenommen. Ein Manager muss die Schicht jetzt noch final übertragen.`
+                ? `${currentEmployee.name} hat deinen Schichttausch für den ${format(parseISO(request.shift_date), 'dd.MM.', { locale: de })} angenommen. Ein Manager muss die Schicht(en) jetzt noch final übertragen.`
                 : `${currentEmployee.name} hat deinen Schichttausch für den ${format(parseISO(request.shift_date), 'dd.MM.', { locale: de })} abgelehnt.`;
 
             // Notify requester (nur er/sie sieht das, dank recipientId)
@@ -80,29 +58,26 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
             });
 
             // Wenn angenommen: zusätzlich alle Manager benachrichtigen, damit
-            // die Schicht auch tatsächlich übertragen wird (siehe Pending-Tab
-            // in ShiftSwaps.jsx / ShiftSwapManager.jsx / ShiftSwapApprovalCard.jsx,
-            // die den Status 'angenommen' jetzt korrekt anzeigen und einen
-            // "Bestätigen"-Button anbieten).
+            // die Schicht(en) auch tatsächlich übertragen werden (siehe
+            // Pending-Tab in ShiftSwaps.jsx / ShiftSwapManager.jsx /
+            // ShiftSwapApprovalCard.jsx, die den Status 'angenommen' korrekt
+            // anzeigen und einen "Bestätigen"-Button anbieten — bei
+            // is_mutual_swap werden dabei beide Schichten getauscht).
             if (accepted) {
                 await base44.entities.Notification.create({
                     type: 'general',
                     category: 'schicht',
                     title: 'Schichttausch angenommen 🔄',
-                    message: `${currentEmployee.name} hat den Tausch mit ${request.requesting_employee_name} für den ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} angenommen. Bitte bestätigen, damit die Schicht übertragen wird.`,
+                    message: `${currentEmployee.name} hat den Tausch mit ${request.requesting_employee_name} für den ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} angenommen. Bitte bestätigen, damit die Schicht(en) übertragen werden.`,
                     related_id: request.id,
                     target_roles: ['admin', 'Manager'],
                     read_by: [],
                 });
             }
         },
-        onSuccess: (_, { request, accepted }) => {
+        onSuccess: (_, { accepted }) => {
             invalidateAllSwapQueries(queryClient);
-            if (accepted && request.is_mutual_swap) {
-                toast.success('Gegenseitiger Tausch bestätigt – beide Schichten wurden getauscht!');
-            } else {
-                toast.success(accepted ? 'Tausch angenommen – Manager muss noch final bestätigen.' : 'Tausch abgelehnt.');
-            }
+            toast.success(accepted ? 'Tausch angenommen – Manager muss noch final bestätigen.' : 'Tausch abgelehnt.');
         },
         onError: (e) => toast.error('Fehler: ' + e.message),
     });

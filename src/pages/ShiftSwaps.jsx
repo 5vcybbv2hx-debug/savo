@@ -124,6 +124,16 @@ export default function ShiftSwaps() {
                 employee_name: newEmployeeName
             });
 
+            // Gegenseitiger 1:1-Tausch (DirectSwapModal): zusätzlich die
+            // Partner-Schicht zurück an den ursprünglich Anfragenden geben —
+            // sonst hätte der Ziel-Mitarbeiter am Ende BEIDE Schichten.
+            if (request.is_mutual_swap && request.partner_shift_id) {
+                await base44.entities.Shift.update(request.partner_shift_id, {
+                    employee_id: request.requesting_employee_id,
+                    employee_name: request.requesting_employee_name,
+                });
+            }
+
             // Reject all other bids for this request
             try {
                 const allBids = await base44.entities.ShiftSwapBid.filter({ swap_request_id: requestId });
@@ -145,7 +155,9 @@ export default function ShiftSwaps() {
                         recipientId: requestingEmployee.id,
                         recipientEmail: requestingEmployee.email,
                         title: 'Schichttausch genehmigt ✓',
-                        message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt. ${newEmployeeName} übernimmt deine Schicht.`,
+                        message: request.is_mutual_swap
+                            ? `Dein gegenseitiger Tausch mit ${newEmployeeName} wurde genehmigt. Beide Schichten wurden getauscht.`
+                            : `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt. ${newEmployeeName} übernimmt deine Schicht.`,
                         relatedId: requestId,
                     });
                 }
@@ -154,8 +166,10 @@ export default function ShiftSwaps() {
                     await notifyEmployee({
                         recipientId: targetEmployee.id,
                         recipientEmail: targetEmployee.email,
-                        title: 'Schichttausch genehmigt – Du übernimmst die Schicht',
-                        message: `Du übernimmst die Schicht von ${request.requesting_employee_name} am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })}.`,
+                        title: request.is_mutual_swap ? 'Gegenseitiger Tausch genehmigt ✓' : 'Schichttausch genehmigt – Du übernimmst die Schicht',
+                        message: request.is_mutual_swap
+                            ? `Euer gegenseitiger Tausch mit ${request.requesting_employee_name} wurde genehmigt. Beide Schichten wurden getauscht.`
+                            : `Du übernimmst die Schicht von ${request.requesting_employee_name} am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })}.`,
                         relatedId: requestId,
                     });
                 }
@@ -311,7 +325,13 @@ export default function ShiftSwaps() {
     const confirmTexts = {
         withdraw: { title: 'Anfrage zurückziehen?', desc: 'Die Tauschanfrage wird storniert und kann nicht wiederhergestellt werden.', action: 'Zurückziehen', variant: 'destructive' },
         reject:   { title: 'Tausch ablehnen?', desc: 'Die Anfrage wird abgelehnt. Der Mitarbeiter wird benachrichtigt.', action: 'Ablehnen', variant: 'destructive' },
-        approve:  { title: 'Tausch genehmigen?', desc: `${confirmDialog?.bidName || ''} übernimmt die Schicht. Der Kalender wird automatisch aktualisiert.`, action: 'Genehmigen', variant: 'default' },
+        approve:  {
+            title: 'Tausch genehmigen?',
+            desc: confirmDialog?.request?.is_mutual_swap
+                ? `Beide Schichten werden getauscht: ${confirmDialog?.bidName || ''} und ${confirmDialog?.request?.requesting_employee_name || ''} tauschen ihre jeweiligen Schichten. Der Kalender wird automatisch aktualisiert.`
+                : `${confirmDialog?.bidName || ''} übernimmt die Schicht. Der Kalender wird automatisch aktualisiert.`,
+            action: 'Genehmigen', variant: 'default'
+        },
     };
 
     return (
@@ -639,24 +659,19 @@ export default function ShiftSwaps() {
                                                       Ablehnen
                                                     </Button>
                                                     {/* Non-marketplace: Genehmigen wenn Ziel-Mitarbeiter gesetzt.
-                                                        Gegenseitige Tausche (is_mutual_swap) laufen bewusst OHNE
-                                                        Manager-Genehmigen-Button — die einfache approveMutation
-                                                        würde nur EINE Schicht übertragen und den Partner-Tausch
-                                                        vergessen. Diese bestätigt sich selbst, sobald der
-                                                        Ziel-Mitarbeiter über die Inbox-Karte zustimmt. */}
-                                                    {!request.marketplace && request.target_employee_id && !request.is_mutual_swap && (
+                                                        Gilt auch für gegenseitige Tausche (is_mutual_swap) — der
+                                                        Manager muss auf Nutzerwunsch explizit final bestätigen,
+                                                        approveMutation tauscht dabei beide Schichten. */}
+                                                    {!request.marketplace && request.target_employee_id && (
                                                       <Button
                                                           onClick={() => handleApprove(request)}
                                                           className="flex-1 lg:flex-none bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
                                                       >
                                                           <Check className="w-4 h-4 mr-2" />
-                                                          {request.status === 'angenommen' ? 'Bestätigen & Schicht übertragen' : 'Genehmigen'}
+                                                          {request.is_mutual_swap
+                                                            ? 'Bestätigen & beide Schichten tauschen'
+                                                            : (request.status === 'angenommen' ? 'Bestätigen & Schicht übertragen' : 'Genehmigen')}
                                                       </Button>
-                                                    )}
-                                                    {!request.marketplace && request.is_mutual_swap && (
-                                                      <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                                                          🔁 Wartet auf Bestätigung von {request.target_employee_name}
-                                                      </Badge>
                                                     )}
                                                     {/* Manager kann Schicht selbst übernehmen */}
                                                     {currentEmployee && (

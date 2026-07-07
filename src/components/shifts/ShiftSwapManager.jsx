@@ -93,6 +93,12 @@ export default function ShiftSwapManager() {
                     entityName: 'Shift', type: 'update', id: shiftId,
                     data: { employee_id: newEmployeeId, employee_name: request.target_employee_name }
                 });
+                if (request.is_mutual_swap && request.partner_shift_id) {
+                    await queueMutation({
+                        entityName: 'Shift', type: 'update', id: request.partner_shift_id,
+                        data: { employee_id: request.requesting_employee_id, employee_name: request.requesting_employee_name }
+                    });
+                }
                 return { success: true, _offline: true };
             }
 
@@ -119,6 +125,16 @@ export default function ShiftSwapManager() {
                     employee_name: request.target_employee_name
                 });
 
+                // Gegenseitiger 1:1-Tausch: Partner-Schicht zurück an den
+                // ursprünglich Anfragenden geben, sonst hätte der
+                // Ziel-Mitarbeiter am Ende beide Schichten.
+                if (request.is_mutual_swap && request.partner_shift_id) {
+                    await base44.entities.Shift.update(request.partner_shift_id, {
+                        employee_id: request.requesting_employee_id,
+                        employee_name: request.requesting_employee_name,
+                    });
+                }
+
                 // Create notifications for both employees
                 try {
                     const requestingEmployee = await base44.entities.Employee.filter({ id: request.requesting_employee_id });
@@ -129,7 +145,9 @@ export default function ShiftSwapManager() {
                             recipientId: requestingEmployee[0].id,
                             recipientEmail: requestingEmployee[0].email,
                             title: 'Schichttausch genehmigt ✓',
-                            message: `Dein Schichttausch für ${format(new Date(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt.`,
+                            message: request.is_mutual_swap
+                                ? `Dein gegenseitiger Tausch mit ${request.target_employee_name} wurde genehmigt. Beide Schichten wurden getauscht.`
+                                : `Dein Schichttausch für ${format(new Date(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt.`,
                             relatedId: requestId,
                         });
                     }
@@ -139,7 +157,9 @@ export default function ShiftSwapManager() {
                             recipientId: targetEmployee[0].id,
                             recipientEmail: targetEmployee[0].email,
                             title: 'Schichttausch genehmigt',
-                            message: `Der Schichttausch mit ${request.requesting_employee_name} am ${format(new Date(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt.`,
+                            message: request.is_mutual_swap
+                                ? `Euer gegenseitiger Tausch mit ${request.requesting_employee_name} wurde genehmigt. Beide Schichten wurden getauscht.`
+                                : `Der Schichttausch mit ${request.requesting_employee_name} am ${format(new Date(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt.`,
                             relatedId: requestId,
                         });
                     }
@@ -269,36 +289,27 @@ export default function ShiftSwapManager() {
                                             </div>
                                         </div>
 
-                                        {/* Gegenseitige Tausche bestätigen sich selbst über die Inbox-Karte
-                                            des Ziel-Mitarbeiters — kein Manager-Genehmigen hier, da die
-                                            einfache Genehmigen-Logik nur EINE Schicht übertragen würde. */}
-                                        {request.is_mutual_swap ? (
-                                            <div className="mt-4 pt-3 border-t border-slate-200">
-                                                <Badge className="bg-blue-100 text-blue-700">
-                                                    🔁 Wartet auf Bestätigung von {request.target_employee_name}
-                                                </Badge>
-                                            </div>
-                                        ) : (
-                                            <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleReject(request)}
-                                                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
-                                                >
-                                                    <X className="w-4 h-4 mr-1" />
-                                                    Ablehnen
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleApprove(request)}
-                                                    className="flex-1 bg-green-600 hover:bg-green-700"
-                                                >
-                                                    <Check className="w-4 h-4 mr-1" />
-                                                    {request.status === 'angenommen' ? 'Bestätigen & übertragen' : 'Genehmigen'}
-                                                </Button>
-                                            </div>
-                                        )}
+                                                        <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleReject(request)}
+                                                className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                                            >
+                                                <X className="w-4 h-4 mr-1" />
+                                                Ablehnen
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleApprove(request)}
+                                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                            >
+                                                <Check className="w-4 h-4 mr-1" />
+                                                {request.is_mutual_swap
+                                                    ? 'Bestätigen & beide Schichten tauschen'
+                                                    : (request.status === 'angenommen' ? 'Bestätigen & übertragen' : 'Genehmigen')}
+                                            </Button>
+                                        </div>
                                     </Card>
                                 ))
                             ) : (

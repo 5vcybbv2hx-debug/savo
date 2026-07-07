@@ -51,6 +51,15 @@ export default function ShiftSwapApprovalCard() {
                 employee_id: newEmployeeId,
                 employee_name: newEmployeeName
             });
+            // Gegenseitiger 1:1-Tausch: Partner-Schicht zurück an den
+            // ursprünglich Anfragenden geben, sonst hätte der
+            // Ziel-Mitarbeiter am Ende beide Schichten.
+            if (request.is_mutual_swap && request.partner_shift_id) {
+                await base44.entities.Shift.update(request.partner_shift_id, {
+                    employee_id: request.requesting_employee_id,
+                    employee_name: request.requesting_employee_name,
+                });
+            }
             // Update bids
             const allBids = await base44.entities.ShiftSwapBid.filter({ swap_request_id: requestId });
             for (const bid of allBids) {
@@ -66,7 +75,9 @@ export default function ShiftSwapApprovalCard() {
                     recipientId: requester.id,
                     recipientEmail: requester.email,
                     title: 'Schichttausch genehmigt ✓',
-                    message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt. ${newEmployeeName} übernimmt.`,
+                    message: request.is_mutual_swap
+                        ? `Dein gegenseitiger Tausch mit ${newEmployeeName} wurde genehmigt. Beide Schichten wurden getauscht.`
+                        : `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt. ${newEmployeeName} übernimmt.`,
                     relatedId: requestId,
                 });
             }
@@ -74,8 +85,10 @@ export default function ShiftSwapApprovalCard() {
                 await notifyEmployee({
                     recipientId: target.id,
                     recipientEmail: target.email,
-                    title: 'Du übernimmst eine Schicht',
-                    message: `Du übernimmst die Schicht von ${request.requesting_employee_name} am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })}.`,
+                    title: request.is_mutual_swap ? 'Gegenseitiger Tausch genehmigt ✓' : 'Du übernimmst eine Schicht',
+                    message: request.is_mutual_swap
+                        ? `Euer gegenseitiger Tausch mit ${request.requesting_employee_name} wurde genehmigt. Beide Schichten wurden getauscht.`
+                        : `Du übernimmst die Schicht von ${request.requesting_employee_name} am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })}.`,
                     relatedId: requestId,
                 });
             }
@@ -149,16 +162,9 @@ export default function ShiftSwapApprovalCard() {
                                 )}
                             </div>
 
-                            {/* Gegenseitige Tausche (DirectSwapModal) bestätigen sich selbst über
-                                die Inbox-Karte des Ziel-Mitarbeiters — kein Manager-Approve hier. */}
-                            {!request.marketplace && request.is_mutual_swap && (
-                                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs">
-                                    🔁 Wartet auf Bestätigung von {request.target_employee_name}
-                                </Badge>
-                            )}
-
-                            {/* Direct swap (with target employee) */}
-                            {!request.marketplace && request.target_employee_id && !request.is_mutual_swap && (
+                            {/* Direct swap (with target employee) — gilt auch für gegenseitige
+                                Tausche (is_mutual_swap): approveMutation tauscht dann beide Schichten. */}
+                            {!request.marketplace && request.target_employee_id && (
                                 <div className="flex gap-2 pt-1">
                                     <Button
                                         size="sm"
@@ -183,7 +189,9 @@ export default function ShiftSwapApprovalCard() {
                                         className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs"
                                     >
                                         <Check className="w-3 h-3 mr-1" />
-                                        {request.status === 'angenommen' ? 'Bestätigen' : 'Genehmigen'}
+                                        {request.is_mutual_swap
+                                            ? 'Bestätigen & tauschen'
+                                            : (request.status === 'angenommen' ? 'Bestätigen' : 'Genehmigen')}
                                     </Button>
                                 </div>
                             )}
