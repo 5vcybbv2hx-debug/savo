@@ -13,6 +13,17 @@ function timeToMin(t) {
     return h * 60 + (m || 0);
 }
 
+// Formatiert "H:MM" oder "HH:MM" zu einem RFC5545-konformen 6-stelligen
+// HHMMSS-Zeitanteil. Ohne dies erzeugte z.B. "5:00" (einstellige Stunde,
+// wie sie bei vielen Nachtschichten im System vorkommt, z.B. "16:00-1:00")
+// nur "50000" (5 Ziffern statt 6) — ein ungueltiger ICS-Zeitstempel, den
+// viele Kalender-Apps (v.a. Google Calendar) zum Anlass nehmen, den
+// KOMPLETTEN Feed abzulehnen statt nur das einzelne Event zu ueberspringen.
+function toICSTime(t) {
+    const [h, m] = (t || '00:00').split(':').map(Number);
+    return `${String(h || 0).padStart(2, '0')}${String(m || 0).padStart(2, '0')}00`;
+}
+
 function shiftToEvent(s) {
     const d        = s.date.replace(/-/g, '');
     const startMin = timeToMin(s.start_time);
@@ -27,8 +38,8 @@ function shiftToEvent(s) {
         'BEGIN:VEVENT',
         `UID:shift-${s.id}@barshift.app`,
         `DTSTAMP:${nowStamp()}`,
-        `DTSTART;TZID=Europe/Berlin:${d}T${s.start_time.replace(':', '')}00`,
-        `DTEND;TZID=Europe/Berlin:${endDate}T${s.end_time.replace(':', '')}00`,
+        `DTSTART;TZID=Europe/Berlin:${d}T${toICSTime(s.start_time)}`,
+        `DTEND;TZID=Europe/Berlin:${endDate}T${toICSTime(s.end_time)}`,
         `SUMMARY:🍺 ${esc(s.shift_type || 'Schicht')}`,
     ];
     if (s.notes) lines.push(`DESCRIPTION:${esc(s.notes)}`);
@@ -66,16 +77,17 @@ function meetingToEvent(m) {
     if (!m.date) return null;
     const d    = m.date.replace(/-/g, '');
     const time = m.time || '18:00';
-    const st   = time.replace(':', '');
-    const endH = String(Math.min(parseInt(time.split(':')[0]) + 2, 23)).padStart(2, '0');
-    const endMin = time.split(':')[1] || '00';
-    const et   = `${endH}${endMin}`;
+    const st   = toICSTime(time);
+    const startH = parseInt(time.split(':')[0], 10) || 0;
+    const endH   = String(Math.min(startH + 2, 23)).padStart(2, '0');
+    const endMin = String(parseInt(time.split(':')[1], 10) || 0).padStart(2, '0');
+    const et   = `${endH}${endMin}00`;
     const lines = [
         'BEGIN:VEVENT',
         `UID:meeting-${m.id}@barshift.app`,
         `DTSTAMP:${nowStamp()}`,
-        `DTSTART;TZID=Europe/Berlin:${d}T${st}00`,
-        `DTEND;TZID=Europe/Berlin:${d}T${et}00`,
+        `DTSTART;TZID=Europe/Berlin:${d}T${st}`,
+        `DTEND;TZID=Europe/Berlin:${d}T${et}`,
         `SUMMARY:📋 Teamsitzung`,
     ];
     if (m.location) lines.push(`LOCATION:${esc(m.location)}`);
