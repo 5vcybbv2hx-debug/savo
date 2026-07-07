@@ -6,15 +6,18 @@ import { Calendar, Copy, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-// Baut die öffentliche Funktions-URL — nutzt appBaseUrl wenn verfügbar (echte App),
-// sonst aktuelle Origin (funktioniert auf der live veröffentlichten App korrekt)
+// Baut die oeffentliche Funktions-URL IMMER ueber die feste Base44-Plattform-
+// Domain + appId — niemals ueber window.location.origin/appBaseUrl-Fallback.
+// Grund: wird dieser Link im Editor-Vorschau-Modus generiert, zeigt
+// window.location.origin auf die interne "preview--<app>-<id>.base44.app"-
+// Domain, die eine aktive Base44-Session verlangt — externe Kalender-Clients
+// (iPhone, Google Kalender) koennen sich dort nie authentifizieren
+// ("Accountinformationen konnten nicht ueberprueft werden"). Die
+// base44.app/api/apps/{appId}/functions/...-Route ist dagegen IMMER
+// oeffentlich erreichbar, egal ob der Link aus Preview oder Live-App kommt.
 const getFunctionUrl = (functionName) => {
     const appId = appParams.appId;
-    const base = (appParams.appBaseUrl || '').replace(/\/$/, '');
-    // Auf der echten App: appBaseUrl ist die richtige Domain
-    // Auf Preview: window.location.origin — Preview leitet Funktionen korrekt weiter
-    const origin = base || window.location.origin;
-    return `${origin}/api/apps/${appId}/functions/${functionName}`;
+    return `https://base44.app/api/apps/${appId}/functions/${functionName}`;
 };
 
 const STORAGE_KEY = 'calendarSyncDismissed_v1';

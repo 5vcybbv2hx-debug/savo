@@ -6,10 +6,24 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Copy, Check, Link2, Calendar, Apple, Mail, ShieldAlert, MessageSquare, ExternalLink, Loader2, Users } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { appParams } from '@/lib/app-params';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+// Baut die oeffentliche Funktions-URL IMMER ueber die feste Base44-Plattform-
+// Domain + appId — niemals ueber window.location.origin. Grund: wird dieser
+// Link im Editor-Vorschau-Modus generiert (z.B. wenn ein Manager die Seite
+// dort testet), zeigt window.location.origin auf die interne
+// "preview--<app>-<id>.base44.app"-Domain. Die verlangt eine aktive
+// Base44-Session — ein iPhone/Google-Kalender kann sich dort nie
+// authentifizieren ("Accountinformationen konnten nicht ueberprueft werden").
+// Die base44.app/api/apps/{appId}/functions/...-Route ist dagegen IMMER
+// oeffentlich erreichbar, egal ob der Link aus Preview oder Live-App kommt.
+function getCalendarFunctionUrl(queryString) {
+    return `https://base44.app/api/apps/${appParams.appId}/functions/my-shifts-calendar?${queryString}`;
+}
 
 const INSTRUCTIONS = [
     { icon: Calendar, name: 'Google Calendar', steps: 'Andere Kalender → Per URL hinzufügen → Link einfügen', color: 'text-blue-400' },
@@ -34,19 +48,19 @@ export default function CalendarSubscribeSection() {
     useEffect(() => {
         if (!employee?.id) return;
         if (employee.calendar_token) {
-            setAbonnementLink(`${window.location.origin}/api/functions/my-shifts-calendar?token=${employee.calendar_token}`);
+            setAbonnementLink(getCalendarFunctionUrl(`token=${employee.calendar_token}`));
             return;
         }
         // Try to generate a token
         base44.functions.invoke('generateCalendarToken', { employee_id: employee.id })
             .then(res => {
                 if (res?.data?.token) {
-                    setAbonnementLink(`${window.location.origin}/api/functions/my-shifts-calendar?token=${res.data.token}`);
+                    setAbonnementLink(getCalendarFunctionUrl(`token=${res.data.token}`));
                 }
             })
             .catch(() => {
                 // Fallback: employee_id based link
-                setAbonnementLink(`${window.location.origin}/api/functions/my-shifts-calendar?employee_id=${employee.id}`);
+                setAbonnementLink(getCalendarFunctionUrl(`employee_id=${employee.id}`));
             });
     }, [employee?.id]);
 
@@ -86,8 +100,8 @@ Einmal neu einrichten, danach läuft alles automatisch – deine Schichten aktua
                     } catch { /* fallback below */ }
                 }
                 const calUrl = token
-                    ? `${window.location.origin}/api/functions/my-shifts-calendar?token=${token}`
-                    : `${window.location.origin}/api/functions/my-shifts-calendar?employee_id=${emp.id}&token=${token || ''}`;
+                    ? getCalendarFunctionUrl(`token=${token}`)
+                    : getCalendarFunctionUrl(`employee_id=${emp.id}&token=${token || ''}`);
                 const message = buildWhatsAppMessage(emp.name, calUrl);
                 const phone = emp.phone.replace(/\D/g, '');
                 prepared.push({
