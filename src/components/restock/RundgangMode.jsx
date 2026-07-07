@@ -7,10 +7,11 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Switch } from '@/components/ui/switch';
 import { usePermissions } from '@/components/auth/usePermissions';
 import {
     Layers, ChevronRight, ChevronDown, CheckCircle2, Circle,
-    Package, Check, Plus, ClipboardList, ArrowUp, ArrowDown
+    Package, Check, Plus, ClipboardList, ArrowUp, ArrowDown, Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -116,6 +117,22 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         setCheckedArticles(prev => {
             const next = { ...prev, [assignmentId]: !prev[assignmentId] };
             try { localStorage.setItem(CHECKED_KEY, JSON.stringify(next)); } catch {}
+            return next;
+        });
+    };
+
+    // "Schritt-für-Schritt"-Modus: statt alle offenen Fächer gleichzeitig anzuzeigen
+    // (was auf Mobile schnell überladen wirkt), ist immer nur GENAU EIN Fach aufgeklappt —
+    // sobald es fertig ist, klappt es zu und das nächste Fach in der Reihenfolge
+    // (Bereich → Möbel → Fach, gemäß sort_order) klappt automatisch auf. Geräteweit
+    // gemerkt, Standard: an (löst genau das "auf Mobile alles voll"-Problem).
+    const [focusMode, setFocusMode] = useState(() => {
+        try { return localStorage.getItem('rundgang_focus_mode') !== 'false'; } catch { return true; }
+    });
+    const toggleFocusMode = () => {
+        setFocusMode(prev => {
+            const next = !prev;
+            try { localStorage.setItem('rundgang_focus_mode', String(next)); } catch {}
             return next;
         });
     };
@@ -299,6 +316,25 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         });
     }, [areasWithRestock, furnitureByArea, slotsByFurniture, assignmentsBySlot]);
 
+    // ── Flache, physisch-begehbare Reihenfolge ALLER Fächer (Bereich → Möbel → Fach,
+    // jeweils nach sort_order) — Grundlage für den Schritt-für-Schritt-Fokus-Modus. ────
+    const flatSlots = useMemo(() => {
+        const list = [];
+        tree.forEach(({ area, furnitureList }) => {
+            furnitureList.forEach(({ fur, furSlots }) => {
+                furSlots.forEach(slot => list.push({ area, fur, slot }));
+            });
+        });
+        return list;
+    }, [tree]);
+
+    // ── Das aktuell "dran" befindliche Fach im Fokus-Modus: das erste noch nicht
+    // fertige Fach in der physischen Reihenfolge. null = alles erledigt. ────────────
+    const activeSlotEntry = useMemo(() => {
+        return flatSlots.find(({ slot }) => !isSlotDone(slot.id)) || null;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [flatSlots, checkedArticles, restockItems]);
+
     // ── Gesamt-Fortschritt (für die Kopfzeile) ────────────────────────────────
     const overallProgress = useMemo(() => {
         let total = 0, done = 0;
@@ -320,6 +356,20 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     const autoExpandedRef = useRef(false);
     useEffect(() => {
         if (autoExpandedRef.current || tree.length === 0) return;
+
+        // Fokus-Modus: nur den Pfad zum EINEN aktuell dran befindlichen Fach öffnen —
+        // alles andere bleibt zu, das ist der ganze Sinn des Modus. Der Folge-Effekt
+        // unten übernimmt danach das automatische Weiterschalten.
+        if (focusMode) {
+            if (activeSlotEntry) {
+                setExpandedAreas(prev => ({ ...prev, [activeSlotEntry.area.id]: true }));
+                setExpandedFurniture(prev => ({ ...prev, [activeSlotEntry.fur.id]: true }));
+                setExpandedSlots(prev => ({ ...prev, [activeSlotEntry.slot.id]: true }));
+            }
+            autoExpandedRef.current = true;
+            return;
+        }
+
         const newAreaExp = {};
         const newFurExp = {};
         const newSlotExp = {};
@@ -345,6 +395,33 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         autoExpandedRef.current = true;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tree]);
+
+    // ── Fokus-Modus: sobald das aktuell aktive Fach wechselt (weil das vorherige
+    // fertig wurde), automatisch zum nächsten Fach in der Reihenfolge weiterspringen —
+    // dessen Bereich/Möbel-Pfad öffnen und sanft dorthin scrollen. Das eigentliche
+    // Zuklappen des fertigen Fachs übernimmt bereits der Auto-Collapse-Effekt weiter
+    // unten (reagiert auf den offen→fertig Übergang), hier kümmern wir uns nur ums
+    // Weiterschalten zum NÄCHSTEN Fach. ──────────────────────────────────────────
+    const prevActiveSlotIdRef = useRef(null);
+    const activeSlotRefEl = useRef(null);
+    useEffect(() => {
+        if (!focusMode) return;
+        const activeId = activeSlotEntry?.slot?.id || null;
+        if (activeId && activeId !== prevActiveSlotIdRef.current) {
+            const isFirstLoad = prevActiveSlotIdRef.current === null;
+            setExpandedAreas(prev => ({ ...prev, [activeSlotEntry.area.id]: true }));
+            setExpandedFurniture(prev => ({ ...prev, [activeSlotEntry.fur.id]: true }));
+            setExpandedSlots(prev => ({ ...prev, [activeId]: true }));
+            prevActiveSlotIdRef.current = activeId;
+            // Nur ins Sichtfeld scrollen, wenn wir NICHT ganz am Anfang stehen (sonst
+            // springt die Seite beim allerersten Laden unnötig).
+            if (!isFirstLoad) {
+                setTimeout(() => {
+                    activeSlotRefEl.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150);
+            }
+        }
+    }, [focusMode, activeSlotEntry]);
 
     // ── Auto-Collapse: Sobald ein Fach/Möbel/Bereich fertig wird (Übergang offen → fertig),
     // klappt es sich automatisch zu — spart laufend Platz beim Rundgang, ohne dass man
@@ -440,18 +517,32 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     return (
         <div className="space-y-2">
             {/* Gesamt-Fortschritt — sticky, damit man beim Scrollen immer den Überblick behält */}
-            <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/95 backdrop-blur-sm flex items-center gap-3">
-                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                        className={cn('h-full rounded-full transition-all', allDone ? 'bg-green-500' : 'bg-amber-500')}
-                        style={{ width: `${progressPct}%` }}
-                    />
+            <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/95 backdrop-blur-sm space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                            className={cn('h-full rounded-full transition-all', allDone ? 'bg-green-500' : 'bg-amber-500')}
+                            style={{ width: `${progressPct}%` }}
+                        />
+                    </div>
+                    <p className="text-[11px] font-medium text-muted-foreground shrink-0">
+                        {allDone
+                            ? <span className="text-green-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Rundgang komplett</span>
+                            : `${overallProgress.done}/${overallProgress.total} Fächer erledigt`}
+                    </p>
                 </div>
-                <p className="text-[11px] font-medium text-muted-foreground shrink-0">
-                    {allDone
-                        ? <span className="text-green-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Rundgang komplett</span>
-                        : `${overallProgress.done}/${overallProgress.total} Fächer erledigt`}
-                </p>
+                {!allDone && (
+                    <div className="flex items-center justify-between gap-2 px-0.5">
+                        <button
+                            onClick={toggleFocusMode}
+                            className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
+                        >
+                            <Target className={cn('w-3.5 h-3.5', focusMode && 'text-primary')} />
+                            Schritt-für-Schritt
+                        </button>
+                        <Switch checked={focusMode} onCheckedChange={toggleFocusMode} className="scale-90" />
+                    </div>
+                )}
             </div>
 
             {tree.map(({ area, furnitureList }, areaIdx) => {
@@ -555,6 +646,8 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                             key={slot.id}
                                                             slot={slot}
                                                             area={area}
+                                                            isActive={focusMode && activeSlotEntry?.slot?.id === slot.id}
+                                                            activeRef={activeSlotEntry?.slot?.id === slot.id ? activeSlotRefEl : null}
                                                             expanded={expandedSlots[slot.id]}
                                                             onToggle={() => setExpandedSlots(prev => ({ ...prev, [slot.id]: !prev[slot.id] }))}
                                                             assignments={assignmentsBySlot[slot.id] || []}
@@ -695,7 +788,7 @@ function SlotArticleRow({ assignment, article, area, onRestock, qtyValue, setRes
 function SlotRestockGroup({
     slot, area, expanded, onToggle, assignments, articles, restockItems, today,
     isDone, restockQtys, setRestockQtys, checkedArticles, toggleChecked, onRestock,
-    canSort, slotIdx, totalSlots, siblings, onMoveSlot
+    canSort, slotIdx, totalSlots, siblings, onMoveSlot, isActive, activeRef
 }) {
     const [showSettled, setShowSettled] = useState(false);
     const settledCtx = { restockItems, today, checkedArticles };
@@ -709,7 +802,10 @@ function SlotRestockGroup({
     });
 
     return (
-        <div className="border-b border-border/20 last:border-0">
+        <div ref={activeRef} className={cn(
+            "border-b border-border/20 last:border-0 transition-all",
+            isActive && "ring-2 ring-primary ring-inset bg-primary/5"
+        )}>
             {/* Fach Header */}
             <div className="w-full flex items-center gap-2 px-6 py-2.5 hover:bg-secondary/20 transition-colors">
                 <button
@@ -722,6 +818,11 @@ function SlotRestockGroup({
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{slot.name}</p>
                     </div>
+                    {isActive && (
+                        <span className="text-[10px] font-semibold bg-primary/15 text-primary px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1">
+                            <Target className="w-2.5 h-2.5" />Jetzt dran
+                        </span>
+                    )}
                     {!isDone && openItems.length > 0 && (
                         <span className="text-[10px] font-semibold bg-amber-500/15 text-amber-500 px-1.5 py-0.5 rounded shrink-0">
                             {openItems.length} offen
