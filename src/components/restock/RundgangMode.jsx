@@ -36,14 +36,15 @@ const FURNITURE_ICONS = {
  * unabhängig vom (unzuverlässigen) System-Bestand.
  */
 
-// Ist ein Artikel "erledigt" — bereits manuell geprüft ODER schon in der heutigen Auffüllliste?
-// (current_stock wird bewusst NICHT herangezogen, da nicht live-synced.)
+// Ist ein Fach "erledigt" — bereits manuell geprüft ODER schon heute im Rundgang befüllt?
+// Match strikt über assignment_id (nicht nur article_id), da Rundgang-Einträge inzwischen
+// sofort automatisch abgeschlossen werden (is_completed wird direkt gesetzt) und pro Fach
+// unabhängig geführt werden — auch wenn derselbe Artikel in mehreren Fächern steht.
 function isAssignmentSettled(assignment, { restockItems, today, checkedArticles }) {
     if (checkedArticles[assignment.id]) return true;
     const hasRestockItem = restockItems.some(item =>
-        item.article_id === assignment.article_id &&
-        item.date === today &&
-        !item.is_completed
+        item.assignment_id === assignment.id &&
+        item.date === today
     );
     return hasRestockItem;
 }
@@ -219,6 +220,57 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         return slotAssignments.every(a => isAssignmentSettled(a, settledCtx));
     };
 
+    // ── Live-Bestandsabgleich: Theke-Fach + Gesamtbestand + Keller-Gegenbuchung ─
+    // Sobald im Rundgang eine Menge eingetragen wird, gilt das als bereits erledigt
+    // (physisch wurde ja schon aufgefüllt) — kein separater "erledigt"-Klick mehr nötig:
+    // 1. Gesamtbestand (Article.current_stock) sinkt um die aufgefüllte Menge (= Verkauf/Verbrauch
+    //    seit letztem Rundgang).
+    // 2. Das Theke-Fach selbst (StorageAssignment.quantity) wird um die Menge hochgezählt
+    //    (aufgefüllt), gedeckelt auf die Soll-Menge.
+    // 3. Falls der Artikel auch einem Lager/Keller-Fach zugeordnet ist, wird dort die gleiche
+    //    Menge abgezogen (Ware kam ja von dort). WICHTIG: die verkaufte/aufgefüllte Menge wird
+    //    NIE anhand des Keller-Bestands gedeckelt — auch wenn im Keller laut System nur noch 7
+    //    stehen, aber 8 aufgefüllt wurden, gelten trotzdem 8 als verkauft/entnommen (der
+    //    Keller-Wert selbst wird nur nie unter 0 gezogen). Der Keller-Bestand ist selbst nur ein
+    //    Snapshot und wird bei der nächsten Inventur ohnehin wieder korrigiert.
+    const syncStockOnRestock = async (assignment, article, delta) => {
+        if (!delta) return;
+
+        // 1) Gesamtbestand
+        if (article.current_stock != null) {
+            const newTotal = Math.max(0, (parseFloat(article.current_stock) || 0) - delta);
+            try {
+                await base44.entities.Article.update(article.id, { current_stock: newTotal });
+            } catch (e) { console.warn('[Rundgang] Gesamtbestand-Sync fehlgeschlagen:', e); }
+        }
+
+        // 2) Theke-Fach selbst hochzählen (gedeckelt auf Soll)
+        try {
+            let newSlotQty = (assignment.quantity ?? 0) + delta;
+            if (assignment.min_stock != null) newSlotQty = Math.min(newSlotQty, assignment.min_stock);
+            newSlotQty = Math.max(0, newSlotQty);
+            await base44.entities.StorageAssignment.update(assignment.id, { quantity: newSlotQty });
+        } catch (e) { console.warn('[Rundgang] Fach-Sync fehlgeschlagen:', e); }
+
+        // 3) Lager/Keller-Gegenbuchung: erste passende Lager-Zuordnung des gleichen Artikels
+        try {
+            const lagerAssignment = assignments.find(a => {
+                if (a.article_id !== assignment.article_id || a.id === assignment.id) return false;
+                const slot = slots.find(s => s.id === a.storage_slot_id);
+                const slotArea = slot && areas.find(ar => ar.id === slot.area_id);
+                return slotArea?.area_type === 'lager';
+            });
+            if (lagerAssignment) {
+                const newLagerQty = Math.max(0, (lagerAssignment.quantity ?? 0) - delta);
+                await base44.entities.StorageAssignment.update(lagerAssignment.id, { quantity: newLagerQty });
+            }
+        } catch (e) { console.warn('[Rundgang] Lager-Gegenbuchung fehlgeschlagen:', e); }
+
+        qc.invalidateQueries({ queryKey: ['articles'] });
+        qc.invalidateQueries({ queryKey: ['assignments'] });
+        qc.invalidateQueries({ queryKey: ['inv-assignments'] });
+    };
+
     // ── Restock erstellen/aktualisieren (Menge hart auf Soll gedeckelt) ───────
     const handleRestock = async (assignment, area, qty) => {
         let numQty = parseFloat(qty);
@@ -242,14 +294,21 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
             showToast(`Menge auf Soll-Maximum (${maxAllowed}${assignment.unit ? ` ${assignment.unit}` : ''}) begrenzt`, 'info');
         }
 
+        // Match strikt über die Fach-Zuordnung (assignment_id), nicht nur den Artikel — so bleibt
+        // jedes Fach unabhängig buchbar, auch wenn der gleiche Artikel in mehreren Fächern steht.
         const existingItem = restockItems.find(item =>
-            item.article_id === article.id &&
-            item.date === today &&
-            !item.is_completed
+            item.assignment_id === assignment.id &&
+            item.date === today
         );
 
+        const previousQty = existingItem?.quantity ?? 0;
+        const delta = numQty - previousQty;
+
         if (existingItem) {
-            updateMutation.mutate({ id: existingItem.id, data: { ...existingItem, quantity: numQty } });
+            updateMutation.mutate({
+                id: existingItem.id,
+                data: { ...existingItem, quantity: numQty, is_completed: true, stock_reduced: true },
+            });
             showToast(`${article.name}: Menge aktualisiert`, 'success');
         } else {
             const user = await base44.auth.me();
@@ -261,13 +320,17 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                 quantity: numQty,
                 area_id: area.id,
                 area_name: area.name,
+                assignment_id: assignment.id,
                 restocked_by: user?.full_name || user?.email || 'Unbekannt',
                 date: today,
                 time: format(new Date(), 'HH:mm'),
-                is_completed: false,
+                is_completed: true,
+                stock_reduced: true,
             });
-            showToast(`${article.name} zur Auffüllliste hinzugefügt`, 'success');
+            showToast(`${article.name} aufgefüllt & Bestand aktualisiert`, 'success');
         }
+
+        await syncStockOnRestock(assignment, article, delta);
 
         // Input zurücksetzen und als geprüft markieren
         setRestockQtys(prev => { const next = { ...prev }; delete next[assignment.id]; return next; });

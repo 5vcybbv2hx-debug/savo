@@ -10,6 +10,7 @@
     "quantity_from_storage": { "type": "number", "description": "Aus Lager entnommen (für Bestandsreduktion)" },
     "area_id":          { "type": "string", "description": "Bereich-ID" },
     "area_name":        { "type": "string", "description": "Bereichsname" },
+    "assignment_id":    { "type": "string", "description": "ID der StorageAssignment (Fach-Zuordnung), aus der dieser Eintrag im Rundgang erstellt wurde. Ermöglicht synchronen Abgleich mit Fach-Bestand und Lager-Gegenbuchung." },
     "restocked_by":     { "type": "string", "description": "Mitarbeiter-Name" },
     "date":             { "type": "string", "description": "Datum YYYY-MM-DD" },
     "time":             { "type": "string", "description": "Uhrzeit HH:MM" },
