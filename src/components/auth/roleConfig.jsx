@@ -71,10 +71,10 @@ export const PERMISSION_MATRIX = {
     canViewTeamMeeting:          { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE, M.ORGA], terminal: false },
 
     // ── Reservierungen ────────────────────────────────────────────────────────
-    // Aushilfe sieht keine Reservierungen
-    canViewReservations:         { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER],              terminal: true  },
-    canCreateReservations:       { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER],              terminal: false },
-    canEditReservations:         { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER],              terminal: false },
+    // Alle Mitarbeiterrollen können Reservierungen ansehen, anlegen und bearbeiten. Löschen bleibt Manager-only.
+    canViewReservations:         { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE, M.ORGA], terminal: true  },
+    canCreateReservations:       { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE, M.ORGA], terminal: false },
+    canEditReservations:         { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE, M.ORGA], terminal: false },
     canDeleteReservations:       { roles: [M.MANAGER],                                       terminal: false },
 
     // ── Events ───────────────────────────────────────────────────────────────
