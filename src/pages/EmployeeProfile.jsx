@@ -26,6 +26,7 @@ import {
   ArrowLeft, Save, Loader2, Phone, MessageCircle, Mail,
   UserPlus, ContactRound, Trash2, CheckCircle2, AlertCircle,
   User, FileText, Shield, Banknote, ShoppingBag, ChevronDown, ChevronUp,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -120,6 +121,32 @@ export default function EmployeeProfile() {
     queryFn: () => base44.auth.me(),
     staleTime: STALE.SLOW,
   });
+
+  // ── Weiterblättern (Prev/Next) durch alle aktiven Mitarbeiter ─────────────
+  const { data: navEmployees = [] } = useQuery({
+    queryKey: ['employees-nav-list'],
+    queryFn: async () => {
+      const all = await base44.entities.Employee.list();
+      return all
+        .filter(e => e.is_active !== false)
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+    },
+    enabled: !isNew,
+    staleTime: STALE.MEDIUM,
+  });
+
+  const navIndex = !isNew ? navEmployees.findIndex(e => e.id === id) : -1;
+  const navInfo = navIndex >= 0
+    ? { index: navIndex, total: navEmployees.length, hasPrev: navIndex > 0, hasNext: navIndex < navEmployees.length - 1 }
+    : null;
+
+  const handleNavigateEmployee = (direction) => {
+    if (navIndex < 0) return;
+    const nextIdx = direction === 'next' ? navIndex + 1 : navIndex - 1;
+    if (nextIdx < 0 || nextIdx >= navEmployees.length) return;
+    if (dirty && !window.confirm('Ungespeicherte Änderungen verwerfen und zum nächsten Mitarbeiter wechseln?')) return;
+    navigate(`/EmployeeProfile/${navEmployees[nextIdx].id}`);
+  };
 
   // ── Derived permissions ───────────────────────────────────────────────────
   const isOwn   = currentUser?.email === employee?.email;
@@ -247,6 +274,31 @@ export default function EmployeeProfile() {
               )}
             </div>
           </div>
+
+          {/* Weiterblättern Prev/Next */}
+          {!isNew && navInfo && (
+            <div className="flex items-center gap-0.5 shrink-0">
+              <span className="text-[11px] text-muted-foreground tabular-nums mr-0.5 hidden sm:inline">
+                {navInfo.index + 1} / {navInfo.total}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleNavigateEmployee('prev')}
+                disabled={!navInfo.hasPrev}
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                aria-label="Vorheriger Mitarbeiter">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleNavigateEmployee('next')}
+                disabled={!navInfo.hasNext}
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                aria-label="Nächster Mitarbeiter">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Save button */}
           {canEdit && (

@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SmartCombobox from '@/components/ui/SmartCombobox';
-import { Camera, Upload, Image as ImageIcon, Crop, Sparkles, ChevronDown, MapPin, ExternalLink } from 'lucide-react';
+import { Camera, Upload, Image as ImageIcon, Crop, Sparkles, ChevronDown, MapPin, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import SupplierDetailsEditor from './SupplierDetailsEditor';
@@ -49,7 +49,7 @@ function Section({ title, defaultOpen = true, children }) {
 }
 
 // ── Haupt-Modal ───────────────────────────────────────────────────────────────
-export default function ArticleModal({ open, onClose, article, onSave }) {
+export default function ArticleModal({ open, onClose, article, onSave, onNavigate, navPosition }) {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const currentUser = useRef(null);
@@ -287,9 +287,36 @@ export default function ArticleModal({ open, onClose, article, onSave }) {
             <Dialog open={open} onOpenChange={onClose}>
                 <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto p-0">
                     <DialogHeader className="px-5 pt-5 pb-0">
-                        <DialogTitle className="text-base">
-                            {article?.id ? 'Artikel bearbeiten' : 'Neuer Artikel'}
-                        </DialogTitle>
+                        <div className="flex items-center justify-between gap-2">
+                            <DialogTitle className="text-base">
+                                {article?.id ? 'Artikel bearbeiten' : 'Neuer Artikel'}
+                            </DialogTitle>
+                            {article?.id && onNavigate && (
+                                <div className="flex items-center gap-1 shrink-0">
+                                    {navPosition && (
+                                        <span className="text-[11px] text-muted-foreground tabular-nums mr-0.5">
+                                            {navPosition.index + 1} / {navPosition.total}
+                                        </span>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => onNavigate('prev')}
+                                        disabled={!navPosition?.hasPrev}
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                        aria-label="Vorheriger Artikel">
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => onNavigate('next')}
+                                        disabled={!navPosition?.hasNext}
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                        aria-label="Nächster Artikel">
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit} className="px-5 pb-5 pt-4 space-y-3">
