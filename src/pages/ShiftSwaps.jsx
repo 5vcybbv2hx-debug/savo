@@ -638,8 +638,13 @@ export default function ShiftSwaps() {
                                                       <X className="w-4 h-4 mr-2" />
                                                       Ablehnen
                                                     </Button>
-                                                    {/* Non-marketplace: Genehmigen wenn Ziel-Mitarbeiter gesetzt */}
-                                                    {!request.marketplace && request.target_employee_id && (
+                                                    {/* Non-marketplace: Genehmigen wenn Ziel-Mitarbeiter gesetzt.
+                                                        Gegenseitige Tausche (is_mutual_swap) laufen bewusst OHNE
+                                                        Manager-Genehmigen-Button — die einfache approveMutation
+                                                        würde nur EINE Schicht übertragen und den Partner-Tausch
+                                                        vergessen. Diese bestätigt sich selbst, sobald der
+                                                        Ziel-Mitarbeiter über die Inbox-Karte zustimmt. */}
+                                                    {!request.marketplace && request.target_employee_id && !request.is_mutual_swap && (
                                                       <Button
                                                           onClick={() => handleApprove(request)}
                                                           className="flex-1 lg:flex-none bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
@@ -647,6 +652,11 @@ export default function ShiftSwaps() {
                                                           <Check className="w-4 h-4 mr-2" />
                                                           {request.status === 'angenommen' ? 'Bestätigen & Schicht übertragen' : 'Genehmigen'}
                                                       </Button>
+                                                    )}
+                                                    {!request.marketplace && request.is_mutual_swap && (
+                                                      <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                                                          🔁 Wartet auf Bestätigung von {request.target_employee_name}
+                                                      </Badge>
                                                     )}
                                                     {/* Manager kann Schicht selbst übernehmen */}
                                                     {currentEmployee && (

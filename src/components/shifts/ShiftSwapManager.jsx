@@ -269,25 +269,36 @@ export default function ShiftSwapManager() {
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleReject(request)}
-                                                className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
-                                            >
-                                                <X className="w-4 h-4 mr-1" />
-                                                Ablehnen
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                onClick={() => handleApprove(request)}
-                                                className="flex-1 bg-green-600 hover:bg-green-700"
-                                            >
-                                                <Check className="w-4 h-4 mr-1" />
-                                                {request.status === 'angenommen' ? 'Bestätigen & übertragen' : 'Genehmigen'}
-                                            </Button>
-                                        </div>
+                                        {/* Gegenseitige Tausche bestätigen sich selbst über die Inbox-Karte
+                                            des Ziel-Mitarbeiters — kein Manager-Genehmigen hier, da die
+                                            einfache Genehmigen-Logik nur EINE Schicht übertragen würde. */}
+                                        {request.is_mutual_swap ? (
+                                            <div className="mt-4 pt-3 border-t border-slate-200">
+                                                <Badge className="bg-blue-100 text-blue-700">
+                                                    🔁 Wartet auf Bestätigung von {request.target_employee_name}
+                                                </Badge>
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleReject(request)}
+                                                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                                                >
+                                                    <X className="w-4 h-4 mr-1" />
+                                                    Ablehnen
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleApprove(request)}
+                                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                                >
+                                                    <Check className="w-4 h-4 mr-1" />
+                                                    {request.status === 'angenommen' ? 'Bestätigen & übertragen' : 'Genehmigen'}
+                                                </Button>
+                                            </div>
+                                        )}
                                     </Card>
                                 ))
                             ) : (

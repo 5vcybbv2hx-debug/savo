@@ -32,6 +32,34 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
 
     const respondMutation = useMutation({
         mutationFn: async ({ request, accepted }) => {
+            // Gegenseitiger 1:1-Tausch (DirectSwapModal): Personaldecke bleibt
+            // unverändert (beide decken sich gegenseitig ab), daher braucht es
+            // hier KEINEN zusätzlichen Manager-Schritt — sobald der Ziel-
+            // Mitarbeiter zustimmt, werden beide Schichten sofort getauscht.
+            if (accepted && request.is_mutual_swap && request.partner_shift_id) {
+                await base44.entities.Shift.update(request.shift_id, {
+                    employee_id: currentEmployee.id,
+                    employee_name: currentEmployee.name,
+                });
+                await base44.entities.Shift.update(request.partner_shift_id, {
+                    employee_id: request.requesting_employee_id,
+                    employee_name: request.requesting_employee_name,
+                });
+                await base44.entities.ShiftSwapRequest.update(request.id, {
+                    status: 'genehmigt',
+                    approved_by: `${currentEmployee.name} (Selbstbestätigung, gegenseitiger Tausch)`,
+                    response_date: new Date().toISOString(),
+                });
+
+                await notifyEmployee({
+                    recipientId: request.requesting_employee_id,
+                    title: 'Gegenseitiger Tausch bestätigt ✅',
+                    message: `${currentEmployee.name} hat deinen Tausch-Vorschlag angenommen. Beide Schichten wurden bereits getauscht.`,
+                    relatedId: request.id,
+                });
+                return;
+            }
+
             const newStatus = accepted ? 'angenommen' : 'abgelehnt';
             await base44.entities.ShiftSwapRequest.update(request.id, {
                 status: newStatus,
@@ -68,9 +96,13 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
                 });
             }
         },
-        onSuccess: (_, { accepted }) => {
+        onSuccess: (_, { request, accepted }) => {
             invalidateAllSwapQueries(queryClient);
-            toast.success(accepted ? 'Tausch angenommen – Manager muss noch final bestätigen.' : 'Tausch abgelehnt.');
+            if (accepted && request.is_mutual_swap) {
+                toast.success('Gegenseitiger Tausch bestätigt – beide Schichten wurden getauscht!');
+            } else {
+                toast.success(accepted ? 'Tausch angenommen – Manager muss noch final bestätigen.' : 'Tausch abgelehnt.');
+            }
         },
         onError: (e) => toast.error('Fehler: ' + e.message),
     });
@@ -122,6 +154,15 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
                                 </div>
                                 {request.reason && (
                                     <p className="text-xs text-muted-foreground italic mt-1 truncate">„{request.reason}"</p>
+                                )}
+                                {request.is_mutual_swap && (
+                                    <div className="mt-2 p-2 rounded-lg bg-secondary/50 border border-border/50">
+                                        <p className="text-[10px] font-semibold text-orange-400 mb-1">🔁 Gegenseitiger Tausch — du gibst dafür ab:</p>
+                                        <p className="text-xs text-foreground">
+                                            {request.partner_shift_date && format(parseISO(request.partner_shift_date), 'EEEE, dd.MM.yyyy', { locale: de })}
+                                            {request.partner_shift_time ? ` • ${request.partner_shift_time}` : ''}
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </div>

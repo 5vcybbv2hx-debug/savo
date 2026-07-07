@@ -50,6 +50,12 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
     staleTime: 60_000,
   });
 
+  // War vorher ein SOFORTIGER Tausch ohne jede Zustimmung des Partners —
+  // auf Nutzerwunsch braucht es jetzt genau wie beim einfachen Direkttausch
+  // eine Bestätigung durch den Ziel-Mitarbeiter, bevor irgendetwas passiert.
+  // Es wird daher nur noch eine ShiftSwapRequest (is_mutual_swap=true)
+  // angelegt; die eigentlichen zwei Shift.update-Aufrufe passieren erst,
+  // wenn der Partner über die Inbox-Karte (ShiftSwapInboxCard) annimmt.
   const directSwapMutation = useMutation({
     mutationFn: async () => {
       if (!selectedMyShift || !selectedOtherShift || !selectedEmployee) {
@@ -61,13 +67,15 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
         throw new Error('Aktueller Mitarbeiter nicht gefunden');
       }
 
-      // Validiere Konflikte
+      // Validiere Konflikte (bleibt vorab als Vorabprüfung sinnvoll, auch wenn
+      // der eigentliche Tausch erst nach Bestätigung passiert — verhindert,
+      // dass offensichtlich unmögliche Anfragen überhaupt verschickt werden)
       const val1 = await validateDirectSwap(
         selectedEmployee.id,
         selectedMyShift.date,
         selectedMyShift.start_time
       );
-      
+
       const val2 = await validateDirectSwap(
         currentEmployee.id,
         selectedOtherShift.date,
@@ -78,25 +86,32 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
         throw new Error(val1.error || val2.error || 'Validierung fehlgeschlagen');
       }
 
-      // Tausch durchführen
-      await base44.entities.Shift.update(selectedMyShift.id, {
-        employee_id: selectedEmployee.id,
-        employee_name: selectedEmployee.name
+      await base44.entities.ShiftSwapRequest.create({
+        shift_id: selectedMyShift.id,
+        requesting_employee_id: currentEmployee.id,
+        requesting_employee_name: currentEmployee.full_name,
+        shift_date: selectedMyShift.date,
+        shift_start_time: selectedMyShift.start_time,
+        shift_end_time: selectedMyShift.end_time,
+        shift_time: `${selectedMyShift.start_time}–${selectedMyShift.end_time}`,
+        shift_type: selectedMyShift.shift_type || '',
+        status: 'ausstehend',
+        marketplace: false,
+        target_employee_id: selectedEmployee.id,
+        target_employee_name: selectedEmployee.name,
+        is_mutual_swap: true,
+        partner_shift_id: selectedOtherShift.id,
+        partner_shift_date: selectedOtherShift.date,
+        partner_shift_time: `${selectedOtherShift.start_time}–${selectedOtherShift.end_time}`,
       });
 
-      await base44.entities.Shift.update(selectedOtherShift.id, {
-        employee_id: currentEmployee.id,
-        employee_name: currentEmployee.full_name
-      });
-
-      // Benachrichtigung an den Tausch-Partner (recipientId sorgt dafür, dass
-      // nur er/sie das sieht, nicht die ganze Belegschaft)
+      // Benachrichtigung an den Tausch-Partner — er/sie muss erst zustimmen
       try {
         await notifyEmployee({
           recipientId: selectedEmployee.id,
           recipientEmail: selectedEmployee.email,
-          title: 'Direkter Schichttausch durchgeführt',
-          message: `${currentEmployee.full_name} hat mit dir die Schicht am ${format(parseISO(selectedOtherShift.date), 'dd.MM.yyyy', { locale: de })} getauscht. Du übernimmst jetzt die Schicht am ${format(parseISO(selectedMyShift.date), 'dd.MM.yyyy', { locale: de })}.`,
+          title: '🔁 Anfrage für gegenseitigen Schichttausch',
+          message: `${currentEmployee.full_name} möchte mit dir tauschen: du gibst deine Schicht am ${format(parseISO(selectedOtherShift.date), 'dd.MM.yyyy', { locale: de })} ab und bekommst dafür die Schicht am ${format(parseISO(selectedMyShift.date), 'dd.MM.yyyy', { locale: de })}. Bitte in deiner Inbox bestätigen oder ablehnen.`,
           relatedId: selectedMyShift.id,
         });
       } catch (error) {
@@ -110,10 +125,10 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
       setSelectedEmployee(null);
       setSelectedMyShift(null);
       onOpenChange(false);
-      toast.success('Direkter Tausch erfolgreich durchgeführt!');
+      toast.success(`Anfrage an ${selectedEmployee?.name || 'Mitarbeiter'} gesendet — wartet auf Bestätigung.`);
     },
     onError: (error) => {
-      toast.error('Fehler beim Tausch: ' + error.message);
+      toast.error('Fehler beim Senden der Anfrage: ' + error.message);
     }
   });
 
@@ -135,7 +150,7 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
             Direkter Schichttausch
           </DialogTitle>
           <DialogDescription>
-            Tausche deine Schicht direkt mit einem anderen Mitarbeiter
+            Schlage einen 1:1-Tausch vor — wird erst wirksam, wenn der andere Mitarbeiter zustimmt
           </DialogDescription>
         </DialogHeader>
 
@@ -265,6 +280,12 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
                   {selectedEmployee.name} bekommt deine Schicht, du bekommst {selectedEmployee.name}s Schicht.
                 </p>
               </div>
+              <Alert className="mt-3 border-amber-500/30 bg-amber-500/10">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <AlertDescription className="text-xs text-amber-300">
+                  Der Tausch wird erst wirksam, sobald {selectedEmployee.name} in der Inbox zustimmt.
+                </AlertDescription>
+              </Alert>
             </Card>
           )}
         </div>
@@ -284,12 +305,12 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
             {directSwapMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Wird durchgeführt...
+                Wird gesendet...
               </>
             ) : (
               <>
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
-                Tausch durchführen
+                Anfrage senden
               </>
             )}
           </Button>

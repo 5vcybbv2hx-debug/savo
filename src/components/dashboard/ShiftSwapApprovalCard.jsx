@@ -149,8 +149,16 @@ export default function ShiftSwapApprovalCard() {
                                 )}
                             </div>
 
+                            {/* Gegenseitige Tausche (DirectSwapModal) bestätigen sich selbst über
+                                die Inbox-Karte des Ziel-Mitarbeiters — kein Manager-Approve hier. */}
+                            {!request.marketplace && request.is_mutual_swap && (
+                                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs">
+                                    🔁 Wartet auf Bestätigung von {request.target_employee_name}
+                                </Badge>
+                            )}
+
                             {/* Direct swap (with target employee) */}
-                            {!request.marketplace && request.target_employee_id && (
+                            {!request.marketplace && request.target_employee_id && !request.is_mutual_swap && (
                                 <div className="flex gap-2 pt-1">
                                     <Button
                                         size="sm"

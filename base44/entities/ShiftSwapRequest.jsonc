@@ -107,6 +107,24 @@
     "response_note": {
       "type": "string",
       "description": "Notiz zur Manager-Entscheidung"
+    },
+    "is_mutual_swap": {
+      "type": "boolean",
+      "default": false,
+      "description": "true = gegenseitiger 1:1-Tausch (DirectSwapModal): der Ziel-Mitarbeiter muss bestaetigen, danach werden BEIDE Schichten sofort getauscht — kein Manager-Schritt noetig, da Personaldecke unveraendert bleibt."
+    },
+    "partner_shift_id": {
+      "type": "string",
+      "description": "Bei is_mutual_swap=true: ID der Schicht des Ziel-Mitarbeiters, die der Anfragende im Gegenzug uebernehmen will"
+    },
+    "partner_shift_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Bei is_mutual_swap=true: Datum der Partner-Schicht (fuer Anzeige)"
+    },
+    "partner_shift_time": {
+      "type": "string",
+      "description": "Bei is_mutual_swap=true: Zeitanzeige der Partner-Schicht (fuer Anzeige)"
     }
   },
   "required": [
