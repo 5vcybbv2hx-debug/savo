@@ -346,6 +346,24 @@ export default function Suppliers() {
     };
     const closeModal = () => { setModalOpen(false); setSelectedSupplier(null); setSaving(false); };
 
+    // Weiterblättern (Prev/Next) im Bearbeiten-Modal — folgt exakt der aktuell
+    // sichtbaren/gefilterten Liste (filteredSuppliers, bereits nach 'order' sortiert).
+    const handleNavigateSupplier = (direction) => {
+        if (!selectedSupplier?.id) return;
+        const idx = filteredSuppliers.findIndex(s => s.id === selectedSupplier.id);
+        if (idx === -1) return;
+        const nextIdx = direction === 'next' ? idx + 1 : idx - 1;
+        if (nextIdx < 0 || nextIdx >= filteredSuppliers.length) return;
+        openModal(filteredSuppliers[nextIdx]);
+    };
+
+    const supplierNavPosition = (() => {
+        if (!selectedSupplier?.id) return null;
+        const idx = filteredSuppliers.findIndex(s => s.id === selectedSupplier.id);
+        if (idx === -1) return null;
+        return { index: idx, total: filteredSuppliers.length, hasPrev: idx > 0, hasNext: idx < filteredSuppliers.length - 1 };
+    })();
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
@@ -473,8 +491,33 @@ export default function Suppliers() {
             <Dialog open={modalOpen} onOpenChange={v => !v && closeModal()}>
                 <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto p-0">
                     <DialogHeader className="px-5 pt-5 pb-0">
-                        <DialogTitle className="text-base">
-                            {selectedSupplier ? 'Eintrag bearbeiten' : 'Neuer Eintrag'}
+                        <DialogTitle className="text-base flex items-center justify-between gap-2">
+                            <span className="truncate">{selectedSupplier ? 'Eintrag bearbeiten' : 'Neuer Eintrag'}</span>
+                            {supplierNavPosition && (
+                                <div className="flex items-center gap-0.5 shrink-0">
+                                    <span className="text-[11px] font-normal text-muted-foreground tabular-nums mr-0.5 hidden sm:inline">
+                                        {supplierNavPosition.index + 1} / {supplierNavPosition.total}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleNavigateSupplier('prev')}
+                                        disabled={!supplierNavPosition.hasPrev}
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                        aria-label="Zurück"
+                                    >
+                                        ‹
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleNavigateSupplier('next')}
+                                        disabled={!supplierNavPosition.hasNext}
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                        aria-label="Weiter"
+                                    >
+                                        ›
+                                    </button>
+                                </div>
+                            )}
                         </DialogTitle>
                     </DialogHeader>
 
