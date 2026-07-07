@@ -45,11 +45,12 @@
         "storniert",
         "abgelaufen",
         "ausstehend",
+        "angenommen",
         "genehmigt",
         "abgelehnt"
       ],
       "default": "offen",
-      "description": "Status der Anfrage. offen=aktiv im Marketplace, in_pr\u00fcfung=Manager pr\u00fcft, vergeben=Nachfolger ausgew\u00e4hlt, abgeschlossen=fertig, storniert=zur\u00fcckgezogen, abgelaufen=Datum vergangen. ausstehend/genehmigt/abgelehnt f\u00fcr R\u00fcckw\u00e4rtskompatibilit\u00e4t."
+      "description": "Status der Anfrage. offen=aktiv im Marketplace, in_pr\u00fcfung=Manager pr\u00fcft, vergeben=Nachfolger ausgew\u00e4hlt, abgeschlossen=fertig, storniert=zur\u00fcckgezogen, abgelaufen=Datum vergangen. ausstehend/genehmigt/abgelehnt f\u00fcr R\u00fcckw\u00e4rtskompatibilit\u00e4t. angenommen=Ziel-Mitarbeiter hat Direkttausch/gegenseitigen Tausch \u00fcber die Inbox-Karte akzeptiert, wartet noch auf finale Manager-Genehmigung (Schicht(en) noch nicht \u00fcbertragen)."
     },
     "marketplace": {
       "type": "boolean",
@@ -111,7 +112,7 @@
     "is_mutual_swap": {
       "type": "boolean",
       "default": false,
-      "description": "true = gegenseitiger 1:1-Tausch (DirectSwapModal): der Ziel-Mitarbeiter muss bestaetigen, danach werden BEIDE Schichten sofort getauscht — kein Manager-Schritt noetig, da Personaldecke unveraendert bleibt."
+      "description": "true = gegenseitiger 1:1-Tausch (DirectSwapModal): Ziel-Mitarbeiter muss zuerst bestaetigen (status=angenommen), danach genehmigt der Manager final — erst dann werden BEIDE Schichten (shift_id + partner_shift_id) getauscht."
     },
     "partner_shift_id": {
       "type": "string",
