@@ -14,7 +14,8 @@ import {
   groupBidsByStatus, 
   formatBidTime, 
   getStatusLabel, 
-  getStatusColor 
+  getStatusColor,
+  invalidateAllSwapQueries,
 } from '@/lib/shiftSwapHelpers';
 import { cn } from "@/lib/utils";
 
@@ -94,11 +95,14 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
         });
       }
 
-      // Benachrichtigung an Manager
+      // Benachrichtigung an Manager (Rollen-Broadcast, kein Empfänger im Sinne
+      // von recipient_id, da nicht klar ist welcher Manager gerade zuständig
+      // ist — alle Manager/Admins sollen reagieren können)
       try {
         const statusLabel = getStatusLabel(status);
         await base44.entities.Notification.create({
-          type: 'shift_swap_bid',
+          type: 'general',
+          category: 'schicht',
           title: `Neue Reaktion auf Schichttausch (${statusLabel})`,
           message: `${currentEmployee.name} hat auf deine Anfrage am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} reagiert: ${statusLabel}`,
           related_id: swapRequestId,
@@ -110,9 +114,7 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['available-shift-swaps']);
-      queryClient.invalidateQueries(['my-bids']);
-      queryClient.invalidateQueries(['shift-swap-bids']);
+      invalidateAllSwapQueries(queryClient);
       toast.success('Reaktion gespeichert!');
     },
     onError: (error) => {

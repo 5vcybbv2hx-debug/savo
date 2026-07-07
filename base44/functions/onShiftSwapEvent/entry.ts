@@ -40,7 +40,8 @@ Deno.serve(async (req) => {
             const message = `${requesterName} möchte mit dir die Schicht${shiftDate ? ` am ${shiftDate}` : ''} tauschen.`;
 
             await base44.asServiceRole.entities.Notification.create({
-                type: 'shift_swap_request', title, message, related_id: data.id, read_by: []
+                type: 'general', category: 'schicht', title, message,
+                related_id: data.id, recipient_id: targetEmployeeId, read_by: []
             });
             await pushToEmployee(targetEmployeeId, title, message);
 
@@ -64,7 +65,8 @@ Deno.serve(async (req) => {
                 : `${targetName} hat deinen Schichttausch abgelehnt.`;
 
             await base44.asServiceRole.entities.Notification.create({
-                type: 'shift_swap_response', title, message, related_id: data.id, read_by: []
+                type: 'general', category: 'schicht', title, message,
+                related_id: data.id, recipient_id: requestingEmployeeId, read_by: []
             });
             await pushToEmployee(requestingEmployeeId, title, message);
 

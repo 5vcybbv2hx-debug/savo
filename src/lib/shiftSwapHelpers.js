@@ -143,3 +143,80 @@ export function getStatusColor(status) {
   };
   return colors[status] || 'text-muted-foreground bg-muted border-border';
 }
+/**
+ * Zentrale Notification + Push für Schichttausch-Events.
+ * Ersetzt die früheren duplizierten Notification.create()-Aufrufe in
+ * ShiftSwaps.jsx / ShiftSwapManager.jsx / ShiftSwapApprovalCard.jsx /
+ * ShiftMarketplaceModal.jsx / DirectSwapModal.jsx / ShiftSwapInboxCard.jsx,
+ * die alle mit einem ungültigen `type` (z.B. 'shift_swap', 'direct_swap')
+ * und fehlendem Pflichtfeld `category` fehlschlugen (Notification-Schema
+ * erlaubt nur type: general/alert/success/task + erfordert category).
+ *
+ * recipientId gesetzt → Notification ist NUR für diesen Mitarbeiter sichtbar
+ * (recipient_id-Filter in notificationUtils.js). targetRoles gesetzt (ohne
+ * recipientId) → Rollen-Broadcast (z.B. an alle Manager), unabhängig vom
+ * recipient-Mechanismus.
+ */
+export async function notifyEmployee({
+  recipientId,
+  recipientEmail,
+  title,
+  message,
+  category = 'schicht',
+  priority = 'info',
+  relatedId,
+  targetRoles,
+  sendPush = true,
+}) {
+  try {
+    const payload = {
+      type: 'general',
+      category,
+      priority,
+      title,
+      message,
+      read_by: [],
+    };
+    if (relatedId) payload.related_id = relatedId;
+    if (recipientId) payload.recipient_id = recipientId;
+    if (recipientEmail) payload.recipient_email = recipientEmail;
+    if (targetRoles) payload.target_roles = targetRoles;
+    await base44.entities.Notification.create(payload);
+  } catch (error) {
+    console.error('[notifyEmployee] Notification.create fehlgeschlagen:', error);
+  }
+
+  if (sendPush && recipientId) {
+    try {
+      const { sendPushNotification } = await import('@/lib/pushService');
+      await sendPushNotification({ title, message, external_user_id: recipientId });
+    } catch (_) {
+      // Push ist best-effort, kein kritischer Fehler
+    }
+  }
+}
+
+/**
+ * Invalidiert ALLE React-Query-Keys, die irgendwo im Schichttausch-Feature
+ * (Marketplace, Direkttausch, Inbox, Manager-Ansichten) dieselben zugrunde
+ * liegenden ShiftSwapRequest/ShiftSwapBid/Shift-Daten lesen. Die Feature-Historie
+ * ist über 6+ Komponenten mit je eigenen Query-Keys gewachsen (genau das gleiche
+ * Muster wie der frühere shifts/shifts-mobile-Bug) — statt eines riskanten
+ * Rename-Refactors sorgt diese zentrale Funktion dafür, dass jede Mutation
+ * konsequent ALLE betroffenen Ansichten aktuell hält.
+ */
+export function invalidateAllSwapQueries(queryClient) {
+  const keys = [
+    'shift-swap-requests',
+    'shift-swap-requests-pending',
+    'shift-swap-requests-open',
+    'shift-swap-inbox',
+    'available-shift-swaps',
+    'shift-swap-bids',
+    'my-bids',
+    'shifts',
+    'shifts-direct-swap',
+    'my-shifts',
+  ];
+  keys.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));
+}

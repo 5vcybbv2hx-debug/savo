@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { notifyEmployee, invalidateAllSwapQueries } from '@/lib/shiftSwapHelpers';
 
 export default function ShiftSwapInboxCard({ currentEmployee }) {
     const queryClient = useQueryClient();
@@ -37,47 +38,39 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
                 response_date: new Date().toISOString(),
             });
 
-            // Push-Notification
             const title = accepted ? 'Tausch angenommen ✅' : 'Tausch abgelehnt ❌';
             const message = accepted
-                ? `${currentEmployee.name} hat deinen Schichttausch für den ${format(parseISO(request.shift_date), 'dd.MM.', { locale: de })} angenommen.`
+                ? `${currentEmployee.name} hat deinen Schichttausch für den ${format(parseISO(request.shift_date), 'dd.MM.', { locale: de })} angenommen. Ein Manager muss die Schicht jetzt noch final übertragen.`
                 : `${currentEmployee.name} hat deinen Schichttausch für den ${format(parseISO(request.shift_date), 'dd.MM.', { locale: de })} abgelehnt.`;
 
-            // Notify requester
-            await base44.entities.Notification.create({
-                type: 'shift_swap_response',
+            // Notify requester (nur er/sie sieht das, dank recipientId)
+            await notifyEmployee({
+                recipientId: request.requesting_employee_id,
                 title,
                 message,
-                related_id: request.id,
-                read_by: [],
+                relatedId: request.id,
             });
 
-            // If accepted: also notify manager
+            // Wenn angenommen: zusätzlich alle Manager benachrichtigen, damit
+            // die Schicht auch tatsächlich übertragen wird (siehe Pending-Tab
+            // in ShiftSwaps.jsx / ShiftSwapManager.jsx / ShiftSwapApprovalCard.jsx,
+            // die den Status 'angenommen' jetzt korrekt anzeigen und einen
+            // "Bestätigen"-Button anbieten).
             if (accepted) {
                 await base44.entities.Notification.create({
-                    type: 'shift_swap_response',
+                    type: 'general',
+                    category: 'schicht',
                     title: 'Schichttausch angenommen 🔄',
-                    message: `${currentEmployee.name} hat den Tausch mit ${request.requesting_employee_name} für den ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} angenommen. Bitte bestätigen.`,
+                    message: `${currentEmployee.name} hat den Tausch mit ${request.requesting_employee_name} für den ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} angenommen. Bitte bestätigen, damit die Schicht übertragen wird.`,
                     related_id: request.id,
                     target_roles: ['admin', 'Manager'],
                     read_by: [],
                 });
             }
-
-            // Send push via backend
-            try {
-                await base44.functions.invoke('sendPushNotification', {
-                    title,
-                    message,
-                    targetEmployeeId: request.requesting_employee_id,
-                    targetRoles: accepted ? ['admin', 'Manager'] : [],
-                });
-            } catch (_) {}
         },
         onSuccess: (_, { accepted }) => {
-            queryClient.invalidateQueries({ queryKey: ['shift-swap-inbox'] });
-            queryClient.invalidateQueries({ queryKey: ['shift-swap-requests-open'] });
-            toast.success(accepted ? 'Tausch angenommen!' : 'Tausch abgelehnt.');
+            invalidateAllSwapQueries(queryClient);
+            toast.success(accepted ? 'Tausch angenommen – Manager muss noch final bestätigen.' : 'Tausch abgelehnt.');
         },
         onError: (e) => toast.error('Fehler: ' + e.message),
     });

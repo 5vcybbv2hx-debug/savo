@@ -11,6 +11,7 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { queueMutation } from '@/components/utils/offlineSync';
+import { notifyEmployee, invalidateAllSwapQueries } from '@/lib/shiftSwapHelpers';
 
 const WHATSAPP_GROUP_LINK = 'https://chat.whatsapp.com/FrOmvmQFvvBJvqo4CJaBPA';
 
@@ -60,13 +61,26 @@ export default function ShiftSwapRequestModal({ shift, open, onOpenChange, onSuc
                      read_by: []
                  });
              } else {
-                 // Direkte Anfrage: nur den Ziel-Mitarbeiter benachrichtigen
+                 // Direkte Anfrage: der eigentliche Ziel-Mitarbeiter muss das
+                 // sehen (er/sie soll ja über die Inbox-Karte annehmen/ablehnen) —
+                 // war vorher NUR ein Manager-Broadcast, der Ziel-Mitarbeiter
+                 // bekam nie eine Benachrichtigung/Push, dass überhaupt eine
+                 // Anfrage an ihn/sie existiert.
+                 await notifyEmployee({
+                     recipientId: data.target_employee_id,
+                     title: `🔄 Schichttausch-Anfrage von ${data.requesting_employee_name}`,
+                     message: `${data.requesting_employee_name} möchte die Schicht am ${format(parseISO(data.shift_date), 'dd.MM.yyyy', { locale: de })} (${data.shift_time}) mit dir tauschen.`,
+                     relatedId: shift.id,
+                     priority: 'wichtig',
+                 });
+                 // Zusätzlich Manager informieren (kann auch ohne Zusage des
+                 // Ziel-Mitarbeiters direkt genehmigen)
                  await base44.entities.Notification.create({
                      type: 'general',
                      category: 'schicht',
-                     priority: 'wichtig',
-                     title: `🔄 Schichttausch-Anfrage von ${data.requesting_employee_name}`,
-                     message: `${data.requesting_employee_name} möchte die Schicht am ${format(parseISO(data.shift_date), 'dd.MM.yyyy', { locale: de })} (${data.shift_time}) mit dir tauschen.`,
+                     priority: 'info',
+                     title: `Neue Tauschanfrage: ${data.requesting_employee_name} → ${data.target_employee_name}`,
+                     message: `${data.requesting_employee_name} möchte die Schicht am ${format(parseISO(data.shift_date), 'dd.MM.yyyy', { locale: de })} (${data.shift_time}) mit ${data.target_employee_name} tauschen.`,
                      related_id: shift.id,
                      target_roles: ['admin', 'Manager'],
                      read_by: []
@@ -74,8 +88,7 @@ export default function ShiftSwapRequestModal({ shift, open, onOpenChange, onSuc
              }
          },
          onSuccess: (result, variables) => {
-              queryClient.invalidateQueries(['shift-swap-requests']);
-              queryClient.invalidateQueries(['available-shift-swaps']);
+              invalidateAllSwapQueries(queryClient);
               setFormData({ reason: '' });
               setTargetEmployeeId('');
               setMode('marketplace');

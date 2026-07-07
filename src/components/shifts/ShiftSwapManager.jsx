@@ -15,6 +15,7 @@ import { de } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
 import { queueMutation } from '@/components/utils/offlineSync';
+import { notifyEmployee, invalidateAllSwapQueries } from '@/lib/shiftSwapHelpers';
 
 export default function ShiftSwapManager() {
     const permissions = usePermissions();
@@ -46,13 +47,13 @@ export default function ShiftSwapManager() {
             // Create notification for requesting employee
             try {
                 const requestingEmployee = await base44.entities.Employee.filter({ id: request.requesting_employee_id });
-                if (requestingEmployee[0]?.email) {
-                    await base44.entities.Notification.create({
-                        type: 'shift_swap',
+                if (requestingEmployee[0]) {
+                    await notifyEmployee({
+                        recipientId: requestingEmployee[0].id,
+                        recipientEmail: requestingEmployee[0].email,
                         title: 'Schichttausch abgelehnt',
                         message: `Dein Schichttausch für ${format(new Date(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde abgelehnt.`,
-                        related_id: id,
-                        read_by: []
+                        relatedId: id,
                     });
                 }
             } catch (error) {
@@ -60,7 +61,7 @@ export default function ShiftSwapManager() {
             }
         },
         onSuccess: (result) => {
-            queryClient.invalidateQueries(['shift-swap-requests']);
+            invalidateAllSwapQueries(queryClient);
             setSelectedRequest(null);
             setResponseNote('');
             toast.success(result?._offline
@@ -122,24 +123,24 @@ export default function ShiftSwapManager() {
                 try {
                     const requestingEmployee = await base44.entities.Employee.filter({ id: request.requesting_employee_id });
                     const targetEmployee = await base44.entities.Employee.filter({ id: request.target_employee_id });
-                    
-                    if (requestingEmployee[0]?.email) {
-                        await base44.entities.Notification.create({
-                            type: 'shift_swap',
-                            title: 'Schichttausch genehmigt',
+
+                    if (requestingEmployee[0]) {
+                        await notifyEmployee({
+                            recipientId: requestingEmployee[0].id,
+                            recipientEmail: requestingEmployee[0].email,
+                            title: 'Schichttausch genehmigt ✓',
                             message: `Dein Schichttausch für ${format(new Date(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt.`,
-                            related_id: requestId,
-                            read_by: []
+                            relatedId: requestId,
                         });
                     }
-                    
-                    if (targetEmployee[0]?.email) {
-                        await base44.entities.Notification.create({
-                            type: 'shift_swap',
+
+                    if (targetEmployee[0]) {
+                        await notifyEmployee({
+                            recipientId: targetEmployee[0].id,
+                            recipientEmail: targetEmployee[0].email,
                             title: 'Schichttausch genehmigt',
                             message: `Der Schichttausch mit ${request.requesting_employee_name} am ${format(new Date(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt.`,
-                            related_id: requestId,
-                            read_by: []
+                            relatedId: requestId,
                         });
                     }
                 } catch (error) {
@@ -153,8 +154,7 @@ export default function ShiftSwapManager() {
             }
         },
         onSuccess: (result) => {
-            queryClient.invalidateQueries(['shift-swap-requests']);
-            queryClient.invalidateQueries(['shifts']);
+            invalidateAllSwapQueries(queryClient);
             setSelectedRequest(null);
             setResponseNote('');
             toast.success(result?._offline
@@ -192,8 +192,11 @@ export default function ShiftSwapManager() {
         }
     };
 
-    const pendingRequests = swapRequests.filter(r => r.status === 'ausstehend' || r.status === 'offen');
-    const processedRequests = swapRequests.filter(r => r.status !== 'ausstehend' && r.status !== 'offen');
+    // 'angenommen' = Mitarbeiter hat via Inbox-Karte direkt zugesagt, wartet
+    // noch auf die eigentliche Schicht-Übertragung durch den Manager — muss
+    // hier sichtbar bleiben, sonst verschwindet die Anfrage ohne Reassignment.
+    const pendingRequests = swapRequests.filter(r => r.status === 'ausstehend' || r.status === 'offen' || r.status === 'angenommen');
+    const processedRequests = swapRequests.filter(r => !['ausstehend', 'offen', 'angenommen'].includes(r.status));
 
     // Nur Manager/Admins können Tauschanfragen verwalten
     if (!permissions.canApproveShiftSwaps) {
@@ -237,9 +240,9 @@ export default function ShiftSwapManager() {
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <Badge className="bg-amber-100 text-amber-700">
+                                                    <Badge className={request.status === 'angenommen' ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}>
                                                         <Clock className="w-3 h-3 mr-1" />
-                                                        Ausstehend
+                                                        {request.status === 'angenommen' ? 'Akzeptiert – wartet auf Bestätigung' : 'Ausstehend'}
                                                     </Badge>
                                                     <span className="text-xs text-slate-500">
                                                         {format(new Date(request.created_date), 'dd.MM.yyyy HH:mm', { locale: de })}
@@ -282,7 +285,7 @@ export default function ShiftSwapManager() {
                                                 className="flex-1 bg-green-600 hover:bg-green-700"
                                             >
                                                 <Check className="w-4 h-4 mr-1" />
-                                                Genehmigen
+                                                {request.status === 'angenommen' ? 'Bestätigen & übertragen' : 'Genehmigen'}
                                             </Button>
                                         </div>
                                     </Card>

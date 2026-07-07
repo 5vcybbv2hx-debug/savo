@@ -17,7 +17,6 @@ import { format, isPast, parseISO, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
-import { sendPushNotification } from '@/lib/pushService';
 import ShiftSwapRequestModal from '@/components/shifts/ShiftSwapRequestModal';
 import ShiftMarketplaceModal from '@/components/shifts/ShiftMarketplaceModal';
 import DirectSwapModal from '@/components/shifts/DirectSwapModal';
@@ -27,7 +26,9 @@ import {
   groupBidsByStatus, 
   formatBidTime, 
   getStatusLabel, 
-  getStatusColor 
+  getStatusColor,
+  notifyEmployee,
+  invalidateAllSwapQueries,
 } from '@/lib/shiftSwapHelpers';
 
 export default function ShiftSwaps() {
@@ -85,26 +86,22 @@ export default function ShiftSwaps() {
             
             try {
                 const requestingEmployee = employees.find(e => e.id === request.requesting_employee_id);
-                if (requestingEmployee?.email) {
-                    await base44.entities.Notification.create({
-                        type: 'shift_swap',
-                        title: data.status === 'genehmigt' ? 'Schichttausch genehmigt' : 'Schichttausch abgelehnt',
-                        message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde ${data.status === 'genehmigt' ? 'genehmigt' : 'abgelehnt'}.`,
-                        related_id: id,
-                        read_by: []
+                if (requestingEmployee) {
+                    const approved = data.status === 'genehmigt';
+                    await notifyEmployee({
+                        recipientId: requestingEmployee.id,
+                        recipientEmail: requestingEmployee.email,
+                        title: approved ? 'Schichttausch genehmigt ✓' : 'Schichttausch abgelehnt',
+                        message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde ${approved ? 'genehmigt' : 'abgelehnt'}.`,
+                        relatedId: id,
                     });
-                    sendPushNotification({
-                        title: data.status === 'genehmigt' ? 'Schichttausch genehmigt ✓' : 'Schichttausch abgelehnt',
-                        message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde ${data.status === 'genehmigt' ? 'genehmigt' : 'abgelehnt'}.`,
-                        external_user_id: request.requesting_employee_id
-                    }).catch(() => {});
                 }
             } catch (error) {
                 console.error('Fehler beim Erstellen der Benachrichtigung:', error);
             }
         },
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['shift-swap-requests'] });
+            invalidateAllSwapQueries(queryClient);
             setSelectedRequest(null);
             toast.success(variables.data.status === 'genehmigt' ? 'Tauschanfrage genehmigt' : 'Tauschanfrage abgelehnt');
         }
@@ -142,44 +139,32 @@ export default function ShiftSwaps() {
             try {
                 const requestingEmployee = employees.find(e => e.id === request.requesting_employee_id);
                 const targetEmployee = employees.find(e => e.id === newEmployeeId);
-                
+
                 if (requestingEmployee) {
-                    await base44.entities.Notification.create({
-                        type: 'shift_swap',
-                        title: 'Schichttausch genehmigt',
-                        message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt. ${newEmployeeName} übernimmt deine Schicht.`,
-                        related_id: requestId,
-                        read_by: []
-                    });
-                    sendPushNotification({
+                    await notifyEmployee({
+                        recipientId: requestingEmployee.id,
+                        recipientEmail: requestingEmployee.email,
                         title: 'Schichttausch genehmigt ✓',
                         message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt. ${newEmployeeName} übernimmt deine Schicht.`,
-                        external_user_id: request.requesting_employee_id
-                    }).catch(() => {});
+                        relatedId: requestId,
+                    });
                 }
-                
+
                 if (targetEmployee) {
-                    await base44.entities.Notification.create({
-                        type: 'shift_swap',
+                    await notifyEmployee({
+                        recipientId: targetEmployee.id,
+                        recipientEmail: targetEmployee.email,
                         title: 'Schichttausch genehmigt – Du übernimmst die Schicht',
                         message: `Du übernimmst die Schicht von ${request.requesting_employee_name} am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })}.`,
-                        related_id: requestId,
-                        read_by: []
+                        relatedId: requestId,
                     });
-                    sendPushNotification({
-                        title: 'Schichttausch genehmigt',
-                        message: `Du übernimmst die Schicht von ${request.requesting_employee_name} am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })}.`,
-                        external_user_id: newEmployeeId
-                    }).catch(() => {});
                 }
             } catch (error) {
                 console.error('Fehler beim Erstellen der Benachrichtigung:', error);
             }
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['shift-swap-requests'] });
-            queryClient.invalidateQueries({ queryKey: ['shift-swap-bids'] });
-            queryClient.invalidateQueries({ queryKey: ['shifts'] });
+            invalidateAllSwapQueries(queryClient);
             setSelectedRequest(null);
             toast.success('Schichttausch genehmigt – Kalender wurde aktualisiert');
         }
@@ -218,8 +203,13 @@ export default function ShiftSwaps() {
         r.target_employee_id === currentEmployee?.id
     );
 
-    // Offene Anfragen: beide Status-Werte (offen = neuer, ausstehend = Legacy)
-    const isOpenStatus = (r) => r.status === 'offen' || r.status === 'ausstehend';
+    // Offene Anfragen: offen/ausstehend = noch niemand hat reagiert.
+    // 'angenommen' = Ziel-Mitarbeiter hat direkte Anfrage über die Inbox-Karte
+    // bereits akzeptiert, wartet aber noch auf die Schicht-Übertragung durch
+    // den Manager (siehe notifyEmployee-Text "Bitte bestätigen") — muss daher
+    // ebenfalls in der Pending-Liste bleiben, sonst verschwindet die Anfrage
+    // spurlos und die Schicht wird nie tatsächlich reassigned (war ein Bug).
+    const isOpenStatus = (r) => r.status === 'offen' || r.status === 'ausstehend' || r.status === 'angenommen';
     const pendingRequests = swapRequests.filter(r => isOpenStatus(r));
     const processedRequests = swapRequests.filter(r => !isOpenStatus(r));
 
@@ -246,6 +236,13 @@ export default function ShiftSwaps() {
                 <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     <Clock className="w-3 h-3 mr-1" />
                     {status === 'offen' ? 'Offen' : status === 'in_prüfung' ? 'In Prüfung' : 'Ausstehend'}
+                </Badge>
+            );
+        } else if (status === 'angenommen') {
+            return (
+                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    <Clock className="w-3 h-3 mr-1" />
+                    Akzeptiert – wartet auf Bestätigung
                 </Badge>
             );
         } else if (status === 'genehmigt' || status === 'abgeschlossen') {
@@ -535,10 +532,7 @@ export default function ShiftSwaps() {
                                             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-3">
-                                                        <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                                                            <Clock className="w-3 h-3 mr-1" />
-                                                            Ausstehend
-                                                        </Badge>
+                                                        {getStatusBadge(request.status)}
                                                         <span className="text-xs text-muted-foreground">
                                                             {format(parseISO(request.created_date), 'dd.MM.yyyy HH:mm', { locale: de })}
                                                         </span>
@@ -651,7 +645,7 @@ export default function ShiftSwaps() {
                                                           className="flex-1 lg:flex-none bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
                                                       >
                                                           <Check className="w-4 h-4 mr-2" />
-                                                          Genehmigen
+                                                          {request.status === 'angenommen' ? 'Bestätigen & Schicht übertragen' : 'Genehmigen'}
                                                       </Button>
                                                     )}
                                                     {/* Manager kann Schicht selbst übernehmen */}

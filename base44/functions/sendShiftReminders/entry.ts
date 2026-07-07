@@ -53,9 +53,20 @@ Deno.serve(async (req) => {
             const title = 'Schicht-Erinnerung 🔔';
             const message = `Deine Schicht beginnt um ${shift.start_time} Uhr`;
 
-            await base44.asServiceRole.entities.Notification.create({
-                type: 'shift_reminder', title, message, related_id: shift.id, read_by: []
-            });
+            // War 'type: shift_reminder' (nicht im Notification-Enum erlaubt)
+            // + fehlendes Pflichtfeld 'category' + fehlende 'recipient_id' —
+            // ohne try/catch riss das die gesamte Schleife ab (ein Fehler bei
+            // Schicht 1 verhinderte, dass JEDE weitere Erinnerung inkl. Push
+            // in diesem Lauf zugestellt wurde). Jetzt korrektes Schema +
+            // isoliertes try/catch pro Schicht.
+            try {
+                await base44.asServiceRole.entities.Notification.create({
+                    type: 'general', category: 'schicht', title, message,
+                    related_id: shift.id, recipient_id: employee.id, read_by: []
+                });
+            } catch (notifErr) {
+                console.error('[sendShiftReminders] Notification.create failed:', notifErr);
+            }
 
             await pushToEmployee(employee.id, title, message);
             notifications.push({ employee: employee.name, shift_time: shift.start_time, sent: true });

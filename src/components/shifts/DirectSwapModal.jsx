@@ -14,7 +14,7 @@ import { Loader2, AlertTriangle, Check, ArrowRightLeft } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { validateDirectSwap } from '@/lib/shiftSwapHelpers';
+import { validateDirectSwap, notifyEmployee, invalidateAllSwapQueries } from '@/lib/shiftSwapHelpers';
 
 export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
   const queryClient = useQueryClient();
@@ -89,24 +89,22 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
         employee_name: currentEmployee.full_name
       });
 
-      // Benachrichtigungen
+      // Benachrichtigung an den Tausch-Partner (recipientId sorgt dafür, dass
+      // nur er/sie das sieht, nicht die ganze Belegschaft)
       try {
-        if (selectedEmployee.email) {
-          await base44.entities.Notification.create({
-            type: 'direct_swap',
-            title: 'Direkter Schichttausch durchgeführt',
-            message: `Du tauschst deine Schicht am ${format(parseISO(selectedOtherShift.date), 'dd.MM.yyyy', { locale: de })} mit ${currentEmployee.full_name}.`,
-            related_id: selectedMyShift.id,
-            read_by: []
-          });
-        }
+        await notifyEmployee({
+          recipientId: selectedEmployee.id,
+          recipientEmail: selectedEmployee.email,
+          title: 'Direkter Schichttausch durchgeführt',
+          message: `${currentEmployee.full_name} hat mit dir die Schicht am ${format(parseISO(selectedOtherShift.date), 'dd.MM.yyyy', { locale: de })} getauscht. Du übernimmst jetzt die Schicht am ${format(parseISO(selectedMyShift.date), 'dd.MM.yyyy', { locale: de })}.`,
+          relatedId: selectedMyShift.id,
+        });
       } catch (error) {
         console.error('Benachrichtigung fehlgeschlagen:', error);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['shifts']);
-      queryClient.invalidateQueries(['my-shifts']);
+      invalidateAllSwapQueries(queryClient);
       setSelectedMyShift(null);
       setSelectedOtherShift(null);
       setSelectedEmployee(null);

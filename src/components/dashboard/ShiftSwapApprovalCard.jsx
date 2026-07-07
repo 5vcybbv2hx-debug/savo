@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { notifyEmployee, invalidateAllSwapQueries } from '@/lib/shiftSwapHelpers';
 
 export default function ShiftSwapApprovalCard() {
     const queryClient = useQueryClient();
@@ -21,7 +22,9 @@ export default function ShiftSwapApprovalCard() {
         queryKey: ['shift-swap-requests-pending'],
         queryFn: async () => {
             const all = await base44.entities.ShiftSwapRequest.list('-created_date', 200);
-            return all.filter(r => r.status === 'ausstehend' || r.status === 'offen');
+            // 'angenommen' = per Inbox-Karte bereits vom Mitarbeiter akzeptiert,
+            // wartet noch auf Schicht-Übertragung — muss sichtbar bleiben.
+            return all.filter(r => r.status === 'ausstehend' || r.status === 'offen' || r.status === 'angenommen');
         }
     });
 
@@ -59,24 +62,26 @@ export default function ShiftSwapApprovalCard() {
             const requester = employees.find(e => e.id === request.requesting_employee_id);
             const target = employees.find(e => e.id === newEmployeeId);
             if (requester) {
-                await base44.entities.Notification.create({
-                    type: 'shift_swap', title: 'Schichttausch genehmigt',
+                await notifyEmployee({
+                    recipientId: requester.id,
+                    recipientEmail: requester.email,
+                    title: 'Schichttausch genehmigt ✓',
                     message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde genehmigt. ${newEmployeeName} übernimmt.`,
-                    related_id: requestId, read_by: []
+                    relatedId: requestId,
                 });
             }
             if (target) {
-                await base44.entities.Notification.create({
-                    type: 'shift_swap', title: 'Du übernimmst eine Schicht',
+                await notifyEmployee({
+                    recipientId: target.id,
+                    recipientEmail: target.email,
+                    title: 'Du übernimmst eine Schicht',
                     message: `Du übernimmst die Schicht von ${request.requesting_employee_name} am ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })}.`,
-                    related_id: requestId, read_by: []
+                    relatedId: requestId,
                 });
             }
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['shift-swap-requests-pending']);
-            queryClient.invalidateQueries(['shift-swap-bids']);
-            queryClient.invalidateQueries(['shifts']);
+            invalidateAllSwapQueries(queryClient);
             toast.success('Schichttausch genehmigt – Kalender aktualisiert');
         },
         onError: (e) => toast.error('Fehler: ' + e.message)
@@ -91,15 +96,17 @@ export default function ShiftSwapApprovalCard() {
             });
             const requester = employees.find(e => e.id === request.requesting_employee_id);
             if (requester) {
-                await base44.entities.Notification.create({
-                    type: 'shift_swap', title: 'Schichttausch abgelehnt',
+                await notifyEmployee({
+                    recipientId: requester.id,
+                    recipientEmail: requester.email,
+                    title: 'Schichttausch abgelehnt',
                     message: `Dein Schichttausch für ${format(parseISO(request.shift_date), 'dd.MM.yyyy', { locale: de })} wurde abgelehnt.`,
-                    related_id: requestId, read_by: []
+                    relatedId: requestId,
                 });
             }
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['shift-swap-requests-pending']);
+            invalidateAllSwapQueries(queryClient);
             toast.success('Schichttausch abgelehnt');
         },
         onError: (e) => toast.error('Fehler: ' + e.message)
@@ -135,6 +142,11 @@ export default function ShiftSwapApprovalCard() {
                                 {request.reason && (
                                     <p className="text-xs text-muted-foreground italic mt-0.5">„{request.reason}"</p>
                                 )}
+                                {request.status === 'angenommen' && (
+                                    <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] mt-1">
+                                        Akzeptiert – wartet auf Bestätigung
+                                    </Badge>
+                                )}
                             </div>
 
                             {/* Direct swap (with target employee) */}
@@ -163,7 +175,7 @@ export default function ShiftSwapApprovalCard() {
                                         className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs"
                                     >
                                         <Check className="w-3 h-3 mr-1" />
-                                        Genehmigen
+                                        {request.status === 'angenommen' ? 'Bestätigen' : 'Genehmigen'}
                                     </Button>
                                 </div>
                             )}

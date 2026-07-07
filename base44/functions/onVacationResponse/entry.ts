@@ -46,9 +46,20 @@ Deno.serve(async (req) => {
             : `Dein Urlaubsantrag wurde ${approved ? 'genehmigt' : 'abgelehnt'}.`;
 
         // In-app notification
-        await base44.asServiceRole.entities.Notification.create({
-            type: 'vacation_response', title, message, related_id: data.id, read_by: []
-        });
+        // War 'type: vacation_response' (nicht im Notification-Enum erlaubt)
+        // + fehlendes Pflichtfeld 'category' + fehlende 'recipient_id' — die
+        // create()-Anfrage warf dadurch einen Schema-Fehler OHNE try/catch,
+        // wodurch der pushToEmployee-Aufruf danach nie erreicht wurde. Also
+        // wurden Urlaubs-Genehmigungen/-Ablehnungen bisher WEDER als
+        // In-App-Notification NOCH als Push zugestellt.
+        try {
+            await base44.asServiceRole.entities.Notification.create({
+                type: 'general', category: 'schicht', title, message,
+                related_id: data.id, recipient_id: employeeId, read_by: []
+            });
+        } catch (notifErr) {
+            console.error('[onVacationResponse] Notification.create failed:', notifErr);
+        }
 
         // OneSignal push
         await pushToEmployee(employeeId, title, message);
