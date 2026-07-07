@@ -794,6 +794,12 @@ export default function Shopping() {
                                         const _ps = a.supplier_details?.find(s => s.is_primary) || a.supplier_details?.[0];
                                         const _sn = _ps?.supplier_name || a.suppliers?.[0] || suppliers[0]?.name || '';
                                         const _d  = (_ps?.packaging_options||[]).find(o=>o.is_default)||(_ps?.packaging_options||[])[0];
+                                        // Fehlende Flaschen auf volle Gebinde-Einheiten aufrunden (nicht 1:1
+                                        // als Gebinde-Menge übernehmen — sonst würde z.B. bei einem 6er-Karton
+                                        // "3 Flaschen fehlen" fälschlich zu "3× Karton" bestellt statt "1× Karton").
+                                        const _unitsPerPack = parseFloat(_d?.units_per_pack) || 1;
+                                        const _bottleNeed = Math.max(1, (a.min_stock || 1) - (a.current_stock || 0));
+                                        const _qty = Math.max(1, Math.ceil(_bottleNeed / _unitsPerPack));
                                         handleArticleAdd({
                                             item_name:           a.name,
                                             article_id:          a.id,
@@ -803,7 +809,8 @@ export default function Shopping() {
                                             packaging_label:     _d ? `${_d.packaging_type} ${_d.units_per_pack}×` : null,
                                             price_per_unit:      _d?.price_per_unit || a.purchase_price || null,
                                             price_per_pack:      _d?.price_per_pack || null,
-                                            quantity:            Math.max(1, (a.min_stock || 1) - (a.current_stock || 0)),
+                                            quantity:            _qty,
+                                            quantity_units:      _qty * _unitsPerPack,
                                             unit:                _d?.packaging_type || 'Stück',
                                             status:              'offen',
                                         });

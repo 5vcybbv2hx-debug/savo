@@ -273,36 +273,61 @@ export default function Restock() {
         }
     };
 
-    // Einzeln zur Bestellung
-    const addToOrder = async (item) => {
+    // Gebinde-Bestell-Vorschlag: rechnet die im Rundgang aufgefüllte Flaschen-Menge auf
+    // volle Gebinde-Einheiten (Kiste/Karton/Palette…) des Standard-Lieferanten hoch —
+    // z.B. 3 Flaschen benötigt bei einem 6er-Karton → Vorschlag "1× Karton (6×)".
+    // Ohne diese Umrechnung würde die Flaschen-Anzahl 1:1 als Gebinde-Menge übernommen
+    // (bei Havana Club 3 also fälschlich "3× Karton" statt "1× Karton" bestellt werden).
+    const getOrderSuggestion = (item) => {
         const article = articles.find(a => a.id === item.article_id);
         const primarySupplier = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
         const supplierName = primarySupplier?.supplier_name || article?.suppliers?.[0] || '';
         const defaultOpt = (primarySupplier?.packaging_options || []).find(o => o.is_default) || (primarySupplier?.packaging_options || [])[0];
+        const unitsPerPack = parseFloat(defaultOpt?.units_per_pack) || 1;
+        const bottleNeed = parseFloat(item.quantity) || 0;
+        const suggestedQty = Math.max(1, Math.ceil(bottleNeed / unitsPerPack));
+        return {
+            article, primarySupplier, supplierName, defaultOpt, unitsPerPack, bottleNeed,
+            suggestedQty,
+            suggestedUnits: suggestedQty * unitsPerPack,
+            packagingLabel: defaultOpt ? `${defaultOpt.packaging_type} ${defaultOpt.units_per_pack}×` : null,
+            wasRounded: unitsPerPack > 1 && suggestedQty * unitsPerPack !== bottleNeed,
+        };
+    };
+
+    // Einzeln zur Bestellung
+    const addToOrder = async (item) => {
+        const s = getOrderSuggestion(item);
         await base44.entities.ShoppingList.create({
             item_name:           item.article_name,
             article_id:          item.article_id || null,
-            category:            supplierName,
-            supplier_name:       supplierName,
-            packaging_option_id: defaultOpt?.id || null,
-            packaging_label:     defaultOpt ? `${defaultOpt.packaging_type} ${defaultOpt.units_per_pack}×` : null,
-            price_per_pack:      defaultOpt?.price_per_pack || null,
-            price_per_unit:      defaultOpt?.price_per_unit || article?.purchase_price || null,
-            quantity:            item.quantity,
-            unit:                defaultOpt?.packaging_type || 'Stück',
+            category:            s.supplierName,
+            supplier_name:       s.supplierName,
+            packaging_option_id: s.defaultOpt?.id || null,
+            packaging_label:     s.packagingLabel,
+            price_per_pack:      s.defaultOpt?.price_per_pack || null,
+            price_per_unit:      s.defaultOpt?.price_per_unit || s.article?.purchase_price || null,
+            quantity:            s.suggestedQty,
+            quantity_units:      s.suggestedUnits,
+            unit:                s.defaultOpt?.packaging_type || 'Stück',
             status:              'offen',
             notes:               `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`,
         });
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         queryClient.invalidateQueries({ queryKey: ['shopping-list-restock'] });
         setOrderNudge(prev => ({ ...prev, [item.id]: false }));
-        showToast(`${item.article_name} zur Bestellung hinzugefügt`, 'success');
+        showToast(
+            s.wasRounded
+                ? `${item.article_name}: ${s.suggestedQty}× ${s.defaultOpt?.packaging_type || ''} bestellt (auf volles Gebinde aufgerundet)`
+                : `${item.article_name} zur Bestellung hinzugefügt`,
+            'success'
+        );
     };
 
     // Alle erledigten zur Bestellung (bereichsübergreifend)
     const addAllCompletedToOrder = async () => {
         const completed = todayItems.filter(i => i.is_completed);
-        let added = 0, skipped = 0;
+        let added = 0, skipped = 0, rounded = 0;
 
         for (const item of completed) {
             const alreadyInOrder = shoppingItems.some(
@@ -310,25 +335,30 @@ export default function Restock() {
             );
             if (alreadyInOrder) { skipped++; continue; }
 
-            const article = articles.find(a => a.id === item.article_id);
-            const _ps = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
-            const _d  = (_ps?.packaging_options || []).find(o => o.is_default) || (_ps?.packaging_options || [])[0];
+            const s = getOrderSuggestion(item);
             await base44.entities.ShoppingList.create({
-                item_name:  item.article_name,
-                article_id: item.article_id || null,
-                category:   article?.suppliers?.[0] || _ps?.supplier_name || '',
-                quantity:   item.quantity,
-                unit:       _d?.packaging_type || 'Stück',
-                status:     'offen',
-                notes:      `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`.trim().replace(/·\s*$/, ''),
+                item_name:           item.article_name,
+                article_id:          item.article_id || null,
+                category:            s.supplierName,
+                supplier_name:       s.supplierName,
+                packaging_option_id: s.defaultOpt?.id || null,
+                packaging_label:     s.packagingLabel,
+                price_per_pack:      s.defaultOpt?.price_per_pack || null,
+                price_per_unit:      s.defaultOpt?.price_per_unit || s.article?.purchase_price || null,
+                quantity:            s.suggestedQty,
+                quantity_units:      s.suggestedUnits,
+                unit:                s.defaultOpt?.packaging_type || 'Stück',
+                status:              'offen',
+                notes:               `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`.trim().replace(/·\s*$/, ''),
             });
             added++;
+            if (s.wasRounded) rounded++;
         }
 
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         queryClient.invalidateQueries({ queryKey: ['shopping-list-restock'] });
 
-        return { added, skipped };
+        return { added, skipped, rounded };
     };
 
     const handleDelete = (id) => {
@@ -351,7 +381,7 @@ export default function Restock() {
             onConfirm: async () => {
                 try {
                     // 1. Bestellen (inkl. Duplikat-Check)
-                    const { added, skipped } = await addAllCompletedToOrder();
+                    const { added, skipped, rounded } = await addAllCompletedToOrder();
                     // 2. Löschen — erst nach erfolgreichem Bestellen
                     for (const item of completedItems) {
                         try { await deleteMutation.mutateAsync(item.id); } catch {}
@@ -359,7 +389,8 @@ export default function Restock() {
                     queryClient.invalidateQueries({ queryKey: ['restock-items'] });
                     setConfirmDialog(null);
                     const skipNote = skipped > 0 ? ` · ${skipped} bereits in Bestellung` : '';
-                    showToast(`${added} Artikel bestellt, Liste bereinigt${skipNote}`, 'success');
+                    const roundNote = rounded > 0 ? ` · ${rounded}× auf volles Gebinde aufgerundet` : '';
+                    showToast(`${added} Artikel bestellt, Liste bereinigt${skipNote}${roundNote}`, 'success');
                 } catch (e) {
                     showToast('Fehler beim Bestellen & Erledigen', 'error');
                 }
@@ -605,28 +636,33 @@ export default function Restock() {
                                                 </div>
 
                                                 {/* Order Nudge */}
-                                                {orderNudge[item.id] && (
-                                                    <div className="flex items-center gap-3 px-4 py-3 border-t border-primary/20 bg-primary/5 animate-in slide-in-from-top-2 duration-200">
-                                                        <ShoppingCart className="w-4 h-4 text-primary shrink-0" />
-                                                        <p className="text-xs text-muted-foreground flex-1">
-                                                            In Bestellliste aufnehmen?
-                                                        </p>
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => addToOrder(item)}
-                                                            className="h-8 text-xs gap-1"
-                                                        >
-                                                            <Plus className="w-3 h-3" />
-                                                            Hinzufügen
-                                                        </Button>
-                                                        <button
-                                                            onClick={() => setOrderNudge(prev => ({ ...prev, [item.id]: false }))}
-                                                            className="text-muted-foreground/60 hover:text-muted-foreground"
-                                                        >
-                                                            <X className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                {orderNudge[item.id] && (() => {
+                                                    const s = getOrderSuggestion(item);
+                                                    return (
+                                                        <div className="flex items-center gap-3 px-4 py-3 border-t border-primary/20 bg-primary/5 animate-in slide-in-from-top-2 duration-200">
+                                                            <ShoppingCart className="w-4 h-4 text-primary shrink-0" />
+                                                            <p className="text-xs text-muted-foreground flex-1">
+                                                                {s.wasRounded
+                                                                    ? <>In Bestellliste aufnehmen? <span className="text-foreground font-medium">{s.suggestedQty}× {s.defaultOpt?.packaging_type}</span> deckt die {s.bottleNeed} benötigten Flaschen ({s.packagingLabel}).</>
+                                                                    : 'In Bestellliste aufnehmen?'}
+                                                            </p>
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => addToOrder(item)}
+                                                                className="h-8 text-xs gap-1"
+                                                            >
+                                                                <Plus className="w-3 h-3" />
+                                                                Hinzufügen
+                                                            </Button>
+                                                            <button
+                                                                onClick={() => setOrderNudge(prev => ({ ...prev, [item.id]: false }))}
+                                                                className="text-muted-foreground/60 hover:text-muted-foreground"
+                                                            >
+                                                                <X className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </Card>
                                         ))}
                                     </div>
