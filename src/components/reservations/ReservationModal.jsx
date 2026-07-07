@@ -31,7 +31,7 @@ function getReservationTables(r) {
     return [];
 }
 
-export default function ReservationModal({ open, onClose, reservation, onSave, onDelete, canDelete = false, isManager = false }) {
+export default function ReservationModal({ open, onClose, reservation, onSave, onDelete, canDelete = false, isManager = false, onNavigate, navPosition }) {
     const queryClient = useQueryClient();
     const [formData, setFormData] = useState({
         customer_name: '',
@@ -155,7 +155,7 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent>
-                <MobileModalHeader onClose={onClose}>
+                <MobileModalHeader onClose={onClose} onNavigate={reservation?.id ? onNavigate : undefined} navPosition={navPosition}>
                     {reservation ? 'Reservierung bearbeiten' : 'Neue Reservierung'}
                 </MobileModalHeader>
 

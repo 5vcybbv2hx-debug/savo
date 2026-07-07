@@ -130,6 +130,28 @@ export default function DrinkMenuPage() {
     const openEdit = (item) => { setSelectedItem(item); setShowModal(true); };
     const openNew  = ()     => { setSelectedItem(null); setShowModal(true); };
 
+    // Flache Liste in der auf dem Bildschirm sichtbaren Reihenfolge (Kategorie-Gruppen,
+    // innerhalb per order_position sortiert) — Basis für Weiterblättern im MenuItemModal.
+    const flatVisibleItems = Object.values(groupedByCategory).flatMap(catItems =>
+        [...catItems].sort((a, b) => (a.order_position || 999) - (b.order_position || 999))
+    );
+
+    const handleNavigateMenuItem = (direction) => {
+        if (!selectedItem?.id) return;
+        const idx = flatVisibleItems.findIndex(i => i.id === selectedItem.id);
+        if (idx === -1) return;
+        const nextIdx = direction === 'next' ? idx + 1 : idx - 1;
+        if (nextIdx < 0 || nextIdx >= flatVisibleItems.length) return;
+        setSelectedItem(flatVisibleItems[nextIdx]);
+    };
+
+    const menuItemNavPosition = (() => {
+        if (!selectedItem?.id) return null;
+        const idx = flatVisibleItems.findIndex(i => i.id === selectedItem.id);
+        if (idx === -1) return null;
+        return { index: idx, total: flatVisibleItems.length, hasPrev: idx > 0, hasNext: idx < flatVisibleItems.length - 1 };
+    })();
+
     // Verwendete Allergene + Zusatzstoffe für Legende
     const usedAllergens = [...new Set(filteredItems.flatMap(i => i.allergens_list || []))];
     const usedAdditives = [...new Set(filteredItems.flatMap(i => i.additives || []))];
@@ -472,6 +494,8 @@ export default function DrinkMenuPage() {
                     item={selectedItem}
                     open={showModal}
                     onClose={() => { setShowModal(false); setSelectedItem(null); }}
+                    onNavigate={handleNavigateMenuItem}
+                    navPosition={menuItemNavPosition}
                 />
             )}
 

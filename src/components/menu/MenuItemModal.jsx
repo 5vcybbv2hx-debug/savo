@@ -65,7 +65,7 @@ function SwitchRow({ label, description, checked, onCheckedChange }) {
 
 // ───────────────────────────────────────────────────────────────────────────
 
-export default function MenuItemModal({ item, open, onClose }) {
+export default function MenuItemModal({ item, open, onClose, onNavigate, navPosition }) {
     const queryClient = useQueryClient();
     const navigate    = useNavigate();
     const [formError, setFormError] = useState(null);
@@ -242,7 +242,7 @@ export default function MenuItemModal({ item, open, onClose }) {
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent>
-                <MobileModalHeader onClose={onClose}>
+                <MobileModalHeader onClose={onClose} onNavigate={item?.id ? onNavigate : undefined} navPosition={navPosition}>
                     {item?.id ? 'Getränk bearbeiten' : 'Neues Getränk'}
                 </MobileModalHeader>
 

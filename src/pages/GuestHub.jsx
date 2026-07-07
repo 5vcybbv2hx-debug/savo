@@ -174,6 +174,27 @@ export default function GuestHub() {
         return { reservations: all };
     }, [allReservations, searchTerm, statusFilter, todayStr]);
 
+    // Weiterblättern (Prev/Next) im Reservierungs-Modal — folgt der Liste des
+    // gerade aktiven Tabs (Heute-Tab: nach Uhrzeit sortiert; sonst: Gesamtliste
+    // nach Datum+Uhrzeit sortiert, wie auf dem Bildschirm sichtbar).
+    const reservationNavList = tab === 'today' ? todayReservations : filteredReservations;
+
+    const handleNavigateReservation = (direction) => {
+        if (!selectedRes?.id) return;
+        const idx = reservationNavList.findIndex(r => r.id === selectedRes.id);
+        if (idx === -1) return;
+        const nextIdx = direction === 'next' ? idx + 1 : idx - 1;
+        if (nextIdx < 0 || nextIdx >= reservationNavList.length) return;
+        setSelectedRes(reservationNavList[nextIdx]);
+    };
+
+    const reservationNavPosition = (() => {
+        if (!selectedRes?.id) return null;
+        const idx = reservationNavList.findIndex(r => r.id === selectedRes.id);
+        if (idx === -1) return null;
+        return { index: idx, total: reservationNavList.length, hasPrev: idx > 0, hasNext: idx < reservationNavList.length - 1 };
+    })();
+
     const filteredTables = useMemo(() => {
         let list = selectedRoom ? tables.filter(t => t.room === selectedRoom) : tables;
         if (guestFilter) list = list.filter(t => t.capacity >= Number(guestFilter));
@@ -505,6 +526,8 @@ export default function GuestHub() {
                 onDelete={handleDelete}
                 canDelete={permissions.canDeleteReservations}
                 isManager={permissions.isManager}
+                onNavigate={handleNavigateReservation}
+                navPosition={reservationNavPosition}
             />
 
             {/* Table edit modal */}

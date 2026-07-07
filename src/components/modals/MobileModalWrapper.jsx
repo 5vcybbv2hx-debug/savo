@@ -14,15 +14,40 @@ import { cn } from "@/lib/utils";
  * </MobileModalWrapper>
  */
 
-export function MobileModalHeader({ children, onClose, className }) {
+export function MobileModalHeader({ children, onClose, className, onNavigate, navPosition }) {
     return (
         <div className={cn(
             "flex items-center justify-between px-4 sm:px-5 py-4 border-b border-border/50 shrink-0 bg-background",
             className
         )}>
-            <div className="text-lg font-bold text-foreground flex-1">
+            <div className="text-lg font-bold text-foreground flex-1 truncate">
                 {children}
             </div>
+            {onNavigate && navPosition && (
+                <div className="flex items-center gap-0.5 shrink-0 ml-2">
+                    <span className="text-[11px] font-normal text-muted-foreground tabular-nums mr-0.5 hidden sm:inline">
+                        {navPosition.index + 1} / {navPosition.total}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => onNavigate('prev')}
+                        disabled={!navPosition.hasPrev}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                        aria-label="Zurück"
+                    >
+                        ‹
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onNavigate('next')}
+                        disabled={!navPosition.hasNext}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                        aria-label="Weiter"
+                    >
+                        ›
+                    </button>
+                </div>
+            )}
             {onClose && (
                 <button
                     type="button"
