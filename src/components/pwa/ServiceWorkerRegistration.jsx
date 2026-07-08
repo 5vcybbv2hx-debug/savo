@@ -19,6 +19,17 @@ export default function ServiceWorkerRegistration() {
                     } else if (registration.active) {
                         console.log('[App] Service Worker active');
                     }
+
+                    // Aktiv nach einer neuen SW-Version fragen, sobald die App wieder in den
+                    // Vordergrund kommt (z.B. Handy entsperrt / App-Wechsel) — verhindert, dass
+                    // eine lang geöffnete Session unbemerkt tage-/stundenlang auf altem Code hängt.
+                    // Die eigentliche "immer frische App-Hülle"-Garantie kommt zusätzlich aus dem
+                    // Network-First-Fetch-Handler im Service Worker selbst.
+                    const checkForUpdate = () => registration.update().catch(() => {});
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') checkForUpdate();
+                    });
+                    window.addEventListener('focus', checkForUpdate);
                 } catch (error) {
                     // SW registration can fail in sandboxed/preview environments — not critical
                 }
