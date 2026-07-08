@@ -213,6 +213,20 @@ export default function TimeTracking() {
                 return { entry: { ...payload, id: `offline-${Date.now()}`, _offline: true }, offline: true };
             }
             try {
+                // Doppel-Einstempel-Schutz: der obige `alreadyActive`-Check nutzt nur den
+                // (potenziell veralteten) Client-Cache. Ein Doppel-Tap oder ein Netzwerk-Retry
+                // kann so binnen Millisekunden zwei parallele Sessions erzeugen. Deshalb hier
+                // direkt vor dem Erstellen nochmal FRISCH beim Server nachfragen, ob nicht doch
+                // schon eine aktive Session existiert.
+                const freshActive = await base44.entities.ClockEntry.filter(
+                    { employee_id: employeeId },
+                    '-clock_in',
+                    5
+                );
+                const stillActive = freshActive.find(e => e.status === 'clocked_in' || e.status === 'on_break');
+                if (stillActive) {
+                    return { entry: stillActive, offline: false };
+                }
                 const created = await base44.entities.ClockEntry.create(payload);
                 return { entry: created, offline: false };
             } catch (err) {
