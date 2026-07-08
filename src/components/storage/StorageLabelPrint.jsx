@@ -53,7 +53,10 @@ function getLabelData(location) {
     const pathParts = [location.area, location.furniture, location.container].filter(Boolean);
     const pathStr = pathParts.join(' › ');
     const min_stock = location.min_stock != null ? String(location.min_stock) : '--';
-    return { articles, displayName, pathStr, short_code: location.short_code || '', min_stock };
+    // Lager/Keller-Fächer bekommen bewusst simple Codes (K1, K2 …) — die werden auf dem
+    // Etikett riesig dargestellt, damit sie im Keller auf einen Blick lesbar sind.
+    const emphasizeCode = location.area_type === 'lager';
+    return { articles, displayName, pathStr, short_code: location.short_code || '', min_stock, emphasizeCode };
 }
 
 // ─── Generate QR canvas at given pixel size ───────────────────────────────────
@@ -78,7 +81,7 @@ async function buildLabelPNG(location, configKey) {
     const W = Math.round(cfg.wMM * MM_TO_PX);
     const H = Math.round(cfg.hMM * MM_TO_PX);
 
-    const { articles, displayName, pathStr, short_code, min_stock } = getLabelData(location);
+    const { articles, displayName, pathStr, short_code, min_stock, emphasizeCode } = getLabelData(location);
 
     // QR at full canvas resolution
     const QR_PX = Math.round(22 * MM_TO_PX);
@@ -132,9 +135,9 @@ async function buildLabelPNG(location, configKey) {
 
     const ptToPx = (pt) => Math.round((pt / 72) * DPI);
 
-    // 1. SHORT CODE
+    // 1. SHORT CODE — bei Lager/Keller-Fächern riesig, damit die Fach-Nummer auf einen Blick lesbar ist
     if (short_code) {
-        const fs = ptToPx(11);
+        const fs = ptToPx(emphasizeCode ? 26 : 11);
         ctx.font = `700 ${fs}px Arial, sans-serif`;
         ctx.fillStyle = '#000000';
         ctx.letterSpacing = '2px';
@@ -152,8 +155,8 @@ async function buildLabelPNG(location, configKey) {
         y += Math.round(1 * MM_TO_PX);
     }
 
-    // 3. LAGERPFAD
-    if (pathStr) {
+    // 3. LAGERPFAD (bei Lager/Keller-Fächern weggelassen — Platz für den großen Fach-Code)
+    if (pathStr && !emphasizeCode) {
         const s = pathStr.length > 45 ? pathStr.slice(0, 42) + '…' : pathStr;
         const fs = ptToPx(7.5);
         ctx.font = `700 ${fs}px Arial, sans-serif`;
@@ -211,7 +214,7 @@ async function buildLabelPDF(location, qrPng, configKey) {
     const W = cfg.wMM;
     const H = cfg.hMM;
 
-    const { articles, displayName, pathStr, short_code } = getLabelData(location);
+    const { articles, displayName, pathStr, short_code, emphasizeCode } = getLabelData(location);
     const fonts = await loadFonts();
 
     const doc = new jsPDF({
@@ -258,9 +261,9 @@ async function buildLabelPDF(location, qrPng, configKey) {
         return lines.length * lhMm(pt);
     };
 
-    if (short_code) { y += draw(short_code, 11, 'bold', 0, 0, 0); y += 0.6; }
+    if (short_code) { y += draw(short_code, emphasizeCode ? 24 : 11, 'bold', 0, 0, 0); y += 0.6; }
     if (displayName) { y += draw(displayName, 10, 'bold', 0, 0, 0); y += 0.5; }
-    if (pathStr) {
+    if (pathStr && !emphasizeCode) {
         const s = pathStr.length > 40 ? pathStr.slice(0, 37) + '…' : pathStr;
         y += draw(s, 7.5, 'normal', 50, 50, 50);
         y += 0.8;
@@ -293,7 +296,7 @@ function LabelPreview({ location, qrDataUrl, configKey }) {
     const W = cfg.wMM * SCALE;
     const H = cfg.hMM * SCALE;
     const QR_PX = 22 * SCALE;
-    const { articles, displayName, pathStr, short_code, min_stock } = getLabelData(location);
+    const { articles, displayName, pathStr, short_code, min_stock, emphasizeCode } = getLabelData(location);
 
     return (
         <div style={{
@@ -311,9 +314,9 @@ function LabelPreview({ location, qrDataUrl, configKey }) {
             </div>
             <div style={{ width: 1.5, background: '#000', margin: '8px 0', flexShrink: 0 }} />
             <div style={{ flex: 1, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden', minWidth: 0, justifyContent: 'center' }}>
-                {short_code && <div style={{ fontSize: 13, fontWeight: 700, color: '#000', lineHeight: 1.1, letterSpacing: '0.05em' }}>{short_code}</div>}
+                {short_code && <div style={{ fontSize: emphasizeCode ? 30 : 13, fontWeight: 700, color: '#000', lineHeight: 1.1, letterSpacing: '0.05em' }}>{short_code}</div>}
                 {displayName && <div style={{ fontSize: 10, fontWeight: 700, color: '#0a0a0a', lineHeight: 1.2, wordBreak: 'break-word' }}>{displayName}</div>}
-                {pathStr && <div style={{ fontSize: 7, fontWeight: 400, color: '#555', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pathStr}</div>}
+                {pathStr && !emphasizeCode && <div style={{ fontSize: 7, fontWeight: 400, color: '#555', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pathStr}</div>}
                 <div style={{ borderTop: '1px solid #ddd', paddingTop: 2, marginTop: 1 }}>
                     {articles.length > 0 ? (
                         <>

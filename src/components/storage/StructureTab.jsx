@@ -13,11 +13,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Layers, ChevronRight, ChevronDown, Loader2, Package, Grid3x3, X, Link2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Layers, ChevronRight, ChevronDown, Loader2, Package, Grid3x3, X, Link2, ArrowUp, ArrowDown, Printer } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fuzzySearch } from '@/lib/fuzzySearch';
+import StorageLabelPrint from './StorageLabelPrint';
 
 const FURNITURE_TYPES = ['Regal','Schrank','Kühlschrank','Tiefkühlschrank','Schubladenbox','Tisch','Kiste','Sonstiges'];
 const FURNITURE_ICONS = {
@@ -38,8 +39,20 @@ function generateShortCode(areaName, furnitureName, slotName) {
   return `${initials(areaName)}-${initials(furnitureName)}-${initials(slotName)}${rand}`;
 }
 
+// Lager/Keller-Fächer bekommen bewusst simple, durchlaufende Codes (K1, K2, K3 …) statt des
+// komplexen Bereich-Möbel-Fach-Kürzel-Schemas — leichter zu merken/ansagen und auf dem Etikett
+// groß darstellbar.
+function generateSimpleLagerCode(existingSlots) {
+  const nums = existingSlots
+    .map(s => /^K(\d+)$/.exec(s.short_code || ''))
+    .filter(Boolean)
+    .map(m => parseInt(m[1], 10));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return `K${next}`;
+}
+
 // ── Inline Fach-Zeile ─────────────────────────────────────────────────────────
-function SlotRow({ slot, canEdit, onEdit, onDelete, onMoveUp, onMoveDown, canMoveUp, canMoveDown, index, totalSlots }) {
+function SlotRow({ slot, canEdit, onEdit, onDelete, onPrintLabel, onMoveUp, onMoveDown, canMoveUp, canMoveDown, index, totalSlots }) {
   return (
     <div
       className={cn(
@@ -69,6 +82,11 @@ function SlotRow({ slot, canEdit, onEdit, onDelete, onMoveUp, onMoveDown, canMov
       )}
       {canEdit && (
         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            title="Etikett drucken"
+            onClick={() => onPrintLabel(slot)}>
+            <Printer className="w-3 h-3" />
+          </Button>
           <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
             disabled={!canMoveUp}
             onClick={() => onMoveUp(slot)}>
@@ -115,6 +133,9 @@ export default function StructureTab({ permissions }) {
   const [deleteFurTarget,  setDeleteFurTarget]  = useState(null);
   const [deleteSlotTarget, setDeleteSlotTarget] = useState(null);
 
+  // Etikettendruck
+  const [labelSlot, setLabelSlot] = useState(null);
+
   // ── Queries ───────────────────────────────────────────────────────────────────
   const { data: areas = [],     isLoading: aL } = useQuery({ queryKey: ['st-areas'],     queryFn: async () => { const d = await base44.entities.Area.list('sort_order', 100); return d.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || '')); },         staleTime: STALE.SLOW });
   const { data: furniture = [], isLoading: fL } = useQuery({ queryKey: ['st-furniture'], queryFn: () => base44.entities.Furniture.list('name', 200),     staleTime: STALE.SLOW });
@@ -150,6 +171,28 @@ export default function StructureTab({ permissions }) {
     slots.forEach(s => { map[s.area_id] = (map[s.area_id] || 0) + 1; });
     return map;
   }, [slots]);
+
+  // ── Etikett-Datenaufbereitung ──────────────────────────────────────────────
+  // Produkt(e), Soll-Menge (aus der Fach-Zuordnung) und Fach-Nummer fürs Etikett.
+  // area_type wird mitgegeben, damit StorageLabelPrint den Fach-Code bei Lager/Keller-Fächern
+  // groß darstellen kann.
+  const toLabelLocation = (slot) => {
+    const slotAssignments = assignments.filter(a => a.storage_slot_id === slot.id && a.is_active !== false);
+    const area = areas.find(a => a.id === slot.area_id);
+    const primaryAssignment = slotAssignments[0];
+    return {
+      id:            slot.id,
+      name:          slot.full_name || slot.name,
+      area:          slot.area_name,
+      furniture:     slot.furniture_name,
+      position:      slot.name,
+      short_code:    slot.short_code,
+      location_type: slot.furniture_type || 'Fach',
+      article_names: slotAssignments.map(a => a.article_name).filter(Boolean),
+      min_stock:     primaryAssignment?.min_stock ?? null,
+      area_type:     area?.area_type || 'theke',
+    };
+  };
 
   const toggleArea = id => setExpandedAreas(e => ({ ...e, [id]: !e[id] }));
   const toggleFur  = id => setExpandedFurs(e  => ({ ...e, [id]: !e[id] }));
@@ -200,7 +243,9 @@ export default function StructureTab({ permissions }) {
         area_id:        area.id,
         area_name:      area.name,
         full_name:      `${area.name} › ${fur.name} › ${trimmedName}`,
-        short_code:     slotModal.data?.short_code || generateShortCode(area.name, fur.name, trimmedName),
+        short_code:     slotModal.data?.short_code || (area.area_type === 'lager'
+                                        ? generateSimpleLagerCode(slots)
+                                        : generateShortCode(area.name, fur.name, trimmedName)),
         capacity:       slotForm.capacity ? parseInt(slotForm.capacity) : null,
         notes:          slotForm.notes,
         is_active:      true,
@@ -518,6 +563,7 @@ export default function StructureTab({ permissions }) {
                                   canEdit={canEdit}
                                   onEdit={openEditSlot}
                                   onDelete={setDeleteSlotTarget}
+                                  onPrintLabel={setLabelSlot}
                                   onMoveUp={(s) => updateSlotSortMut.mutate({ slot: s, direction: 'up', siblings: furSlots })}
                                   onMoveDown={(s) => updateSlotSortMut.mutate({ slot: s, direction: 'down', siblings: furSlots })}
                                   canMoveUp={idx > 0}
@@ -791,6 +837,13 @@ export default function StructureTab({ permissions }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Etikettendruck (Produkt, Soll-Menge, Fach-Nummer — bei Lager/Keller groß) */}
+      <StorageLabelPrint
+        open={!!labelSlot}
+        location={labelSlot ? toLabelLocation(labelSlot) : null}
+        onClose={() => setLabelSlot(null)}
+      />
     </>
   );
 }
