@@ -32,13 +32,13 @@ export default function KarteHub() {
         <div className="max-w-2xl mx-auto px-4 py-6 pb-32 md:pb-8">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-foreground">Karte & Rezepte</h1>
-                <p className="text-muted-foreground text-sm mt-1">Getränkekarte, Rezepte & Kalkulation</p>
+                <p className="text-muted-foreground text-sm mt-1">Rezeptur bauen → Preis kalkulieren → veröffentlichen</p>
             </div>
 
             <div className="space-y-2">
-                <NavCard icon={Wine}       label="Getränkekarte" description="Karte pflegen & Preise verwalten"         page="DrinkMenu"       permission="canViewDrinkMenu"       />
-                <NavCard icon={BookOpen}   label="Rezepte"       description="Cocktails & Rezepturen"                  page="Recipes"         permission="canViewRecipes"         />
-                <NavCard icon={TrendingUp} label="Preisrechner"  description="Kalkulation & Deckungsbeitrag berechnen" page="PriceCalculator" permission="canViewPriceCalculator" />
+                <NavCard icon={BookOpen}   label="Rezepte"            description="Zutaten & Rezepturen bauen"                          page="Recipes"         permission="canViewRecipes"         />
+                <NavCard icon={Wine}       label="Getränkekarte"      description="Getränk erstellen, Preis kalkulieren & veröffentlichen" page="DrinkMenu"       permission="canViewDrinkMenu"       />
+                <NavCard icon={TrendingUp} label="Schnellkalkulation" description="Nur für lose Artikel ohne Rezept (optional)"          page="PriceCalculator" permission="canViewPriceCalculator" />
             </div>
         </div>
     );

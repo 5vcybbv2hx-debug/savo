@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { fuzzyMatches, articleSearchText } from '@/lib/fuzzySearch';
+import { calcIngredientCost as sharedCalcIngredientCost } from '@/lib/recipeCosting';
 
 export default function IngredientSelector({ ingredients, onChange, articles, compact = false }) {
     const [searchTerm, setSearchTerm]   = useState('');
@@ -41,20 +42,7 @@ export default function IngredientSelector({ ingredients, onChange, articles, co
 
     const calculateIngredientCost = (ingredient) => {
         const article = safeArticles.find(a => a.id === ingredient.article_id);
-        if (!article?.price_per_liter || !ingredient.amount) return 0;
-        const unit = (ingredient.unit || 'ml').toLowerCase();
-        let liters = 0;
-        switch (unit) {
-            case 'ml':  liters = ingredient.amount / 1000; break;
-            case 'cl':  liters = ingredient.amount / 100;  break;
-            case 'l':   liters = ingredient.amount;         break;
-            case 'g':   liters = ingredient.amount / 1000; break;
-            case 'kg':  liters = ingredient.amount;         break;
-            case 'stk': case 'stück':
-                return article.purchase_price ? article.purchase_price * ingredient.amount : 0;
-            default: return 0;
-        }
-        return liters * article.price_per_liter;
+        return sharedCalcIngredientCost(article, ingredient.amount, ingredient.unit);
     };
 
     const totalCost = safeIngredients.reduce((sum, ing) => sum + calculateIngredientCost(ing), 0);

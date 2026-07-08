@@ -160,7 +160,7 @@ export const PAGE_REGISTRY = {
   },
   priceCalculator: {
     path: 'PriceCalculator',
-    displayName: 'Preisrechner',
+    displayName: 'Schnellkalkulation',
     shortName: 'Kalkulation',
     icon: TrendingUp,
     section: 'karte',

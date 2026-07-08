@@ -12,6 +12,7 @@ import { base44 } from '@/api/base44Client';
 import { CompanyInfo } from '@/api/entities';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
+import { calcIngredientCost as sharedCalcIngredientCost } from '@/lib/recipeCosting';
 import {
     Plus, Search, Wine, Trash2, Edit, Settings, ShoppingCart,
     Lightbulb, CheckSquare, X, Sparkles, ChefHat, MoreVertical,
@@ -51,16 +52,9 @@ const CATEGORY_COLORS = {
     'Sonstiges':            'bg-secondary text-muted-foreground border-border',
 };
 
-// ── Kostenberechnung (DRY) ────────────────────────────────────────────────────
+// ── Kostenberechnung (DRY, zentrale Utility — siehe src/lib/recipeCosting.js) ──
 function calcIngredientCost(ing, article) {
-    if (!article?.price_per_liter || !ing.amount) return 0;
-    const unit = (ing.unit || 'ml').toLowerCase();
-    if (unit === 'stk' || unit === 'stück') {
-        return article.purchase_price ? article.purchase_price * ing.amount : 0;
-    }
-    const factors = { ml: 1/1000, cl: 1/100, l: 1, g: 1/1000, kg: 1 };
-    const liters = ing.amount * (factors[unit] ?? 1/1000);
-    return liters * article.price_per_liter;
+    return sharedCalcIngredientCost(article, ing.amount, ing.unit);
 }
 
 function calcTotalCost(ingredients, articles, scaleFactor = 1) {

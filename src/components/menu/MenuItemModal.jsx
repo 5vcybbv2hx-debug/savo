@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/mobile-select";
 import { Switch } from "@/components/ui/switch";
-import { Calculator, ExternalLink, Trash2, X, ChevronRight } from "lucide-react";
+import { Calculator, Trash2, X, TrendingUp } from "lucide-react";
 import { toast } from 'sonner';
 import InlineError from '@/components/ui/InlineError';
 import AllergenSelector from './AllergenSelector';
@@ -17,8 +17,8 @@ import ArticleLinker from './ArticleLinker';
 import RecipeSearchSelect from './RecipeSearchSelect';
 import { getMenuItemSourceArticles, unionAllergensAdditives, hasAutoAllergenSource } from '@/lib/allergenSync';
 import { haptics } from "@/components/utils/haptics";
-import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { calcRecipeCost, calcIngredientCost as calcArticleIngredientCost, roundPrice, foodCostRating } from '@/lib/recipeCosting';
+import { cn } from '@/lib/utils';
 
 // ── Shared field styling ────────────────────────────────────────────────────
 const fieldClass = "h-12 text-base rounded-xl border-border/70 bg-background focus:border-primary";
@@ -67,7 +67,6 @@ function SwitchRow({ label, description, checked, onCheckedChange }) {
 
 export default function MenuItemModal({ item, open, onClose, onNavigate, navPosition }) {
     const queryClient = useQueryClient();
-    const navigate    = useNavigate();
     const [formError, setFormError] = useState(null);
     const [formData, setFormData]   = useState({
         name: "", category: "Cocktails", subcategory: "", description: "",
@@ -158,6 +157,69 @@ export default function MenuItemModal({ item, open, onClose, onNavigate, navPosi
         onError: (error) => toast.error('Löschen fehlgeschlagen')
     });
 
+    // ── Verknüpftes Rezept + Mischvarianten ─────────────────────────────────
+    const linkedRecipe = formData.use_recipe_calculation && formData.linked_recipe_id
+        ? recipes.find(r => r.id === formData.linked_recipe_id)
+        : null;
+    const recipeHasVariants = linkedRecipe?.mix_variants?.length > 0;
+
+    // ── Einheitliche, live Kalkulation (eine Quelle der Wahrheit für Anzeige + Speichern) ──
+    const recipeCalculatedCost = useMemo(() => {
+        if (!formData.use_recipe_calculation || !linkedRecipe?.ingredients) return null;
+        const hasVariants = (linkedRecipe.mix_variants || []).length > 0;
+        const baseIngs = hasVariants
+            ? linkedRecipe.ingredients.filter(i => i.is_base !== false)
+            : linkedRecipe.ingredients;
+        let variantIngredients = [];
+        if (hasVariants && formData.linked_variant_name) {
+            const variant = (linkedRecipe.mix_variants || []).find(v => v.name === formData.linked_variant_name);
+            variantIngredients = variant?.ingredients || [];
+        }
+        return calcRecipeCost(baseIngs, articles, { variantIngredients });
+    }, [formData.use_recipe_calculation, linkedRecipe, formData.linked_variant_name, articles]);
+
+    // Auto-Vorschlag aus einem einzelnen verknüpften Artikel (z.B. Wein/Spirituose pur),
+    // wenn kein Rezept genutzt wird und die Größe (z.B. "4cl", "0,2l") auswertbar ist.
+    const singleLinkedArticle = (!formData.use_recipe_calculation && (formData.linked_article_ids || []).length === 1)
+        ? articles.find(a => a.id === formData.linked_article_ids[0])
+        : null;
+    const articleSuggestedCost = useMemo(() => {
+        if (!singleLinkedArticle || !formData.size) return null;
+        const v = formData.size.toLowerCase().replace(',', '.').trim();
+        const num = parseFloat(v);
+        if (isNaN(num)) return null;
+        let unit = null;
+        if (v.includes('ml')) unit = 'ml';
+        else if (v.includes('cl')) unit = 'cl';
+        else if (v.includes('kg')) unit = 'kg';
+        else if (v.includes('l'))  unit = 'l';
+        else if (v.includes('g'))  unit = 'g';
+        if (!unit) return null;
+        const cost = calcArticleIngredientCost(singleLinkedArticle, num, unit);
+        return cost > 0 ? cost : null;
+    }, [singleLinkedArticle, formData.size]);
+
+    const effectivePurchasePrice = formData.use_recipe_calculation
+        ? recipeCalculatedCost
+        : (formData.purchase_price !== '' && formData.purchase_price != null
+            ? parseFloat(formData.purchase_price)
+            : articleSuggestedCost);
+
+    const currentSellPrice = formData.price ? parseFloat(formData.price) : null;
+    const foodCostPct = (effectivePurchasePrice != null && currentSellPrice > 0)
+        ? (effectivePurchasePrice / currentSellPrice) * 100
+        : null;
+    const marginAbsolute = (effectivePurchasePrice != null && currentSellPrice != null)
+        ? currentSellPrice - effectivePurchasePrice
+        : null;
+    const rating = foodCostRating(foodCostPct);
+
+    const applyScenario = (pct) => {
+        if (effectivePurchasePrice == null || effectivePurchasePrice <= 0) return;
+        const suggested = roundPrice(effectivePurchasePrice / (pct / 100));
+        if (suggested != null) set('price', String(suggested));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setFormError(null);
@@ -165,58 +227,6 @@ export default function MenuItemModal({ item, open, onClose, onNavigate, navPosi
         if (!formData.price || isNaN(parseFloat(formData.price))) { setFormError('Bitte einen gültigen Preis eingeben.'); return; }
 
         let effectiveFormData = { ...formData };
-        let calculatedPurchasePrice = formData.purchase_price ? parseFloat(formData.purchase_price) : undefined;
-
-        if (formData.use_recipe_calculation && formData.linked_recipe_id) {
-            const recipe = recipes.find(r => r.id === formData.linked_recipe_id);
-            if (recipe?.ingredients) {
-                const hasVariants = (recipe.mix_variants || []).length > 0;
-                const baseIngs = hasVariants
-                    ? recipe.ingredients.filter(i => i.is_base !== false)
-                    : recipe.ingredients;
-                let effectiveIngs = baseIngs;
-                if (hasVariants && formData.linked_variant_name) {
-                    const variant = (recipe.mix_variants || []).find(v => v.name === formData.linked_variant_name);
-                    effectiveIngs = [...baseIngs, ...(variant?.ingredients || [])];
-                }
-                let totalCost = 0;
-                effectiveIngs.forEach(ingredient => {
-                    const article = articles.find(a => a.id === ingredient.article_id);
-                    if (article?.price_per_liter && ingredient.amount) {
-                        const unit = ingredient.unit || 'ml';
-                        let liters = 0;
-                        switch (unit.toLowerCase()) {
-                            case 'ml':  liters = ingredient.amount / 1000; break;
-                            case 'cl':  liters = ingredient.amount / 100;  break;
-                            case 'l':   liters = ingredient.amount;        break;
-                            case 'g':   liters = ingredient.amount / 1000; break;
-                            case 'kg':  liters = ingredient.amount;        break;
-                            case 'stk': case 'stück':
-                                totalCost += (article.purchase_price || 0) * ingredient.amount; return;
-                        }
-                        if (liters > 0) totalCost += liters * article.price_per_liter;
-                    }
-                });
-                calculatedPurchasePrice = totalCost;
-            }
-        } else if (formData.linked_article_id && !formData.use_recipe_calculation) {
-            const linkedArticle = articles.find(a => a.id === formData.linked_article_id);
-            if (linkedArticle?.purchase_price) {
-                const parseServingSize = (s) => {
-                    if (!s) return 0;
-                    const v = s.toLowerCase().replace(',', '.');
-                    if (v.includes('ml')) return (parseFloat(v) || 0) / 1000;
-                    if (v.includes('cl')) return (parseFloat(v) || 0) / 100;
-                    if (v.includes('l'))  return parseFloat(v) || 0;
-                    return 0;
-                };
-                const serving = parseServingSize(formData.size);
-                calculatedPurchasePrice = serving > 0
-                    ? (linkedArticle.purchase_price / (linkedArticle.unit_size || 1)) * serving
-                    : linkedArticle.purchase_price;
-            }
-        }
-
         if (autoAllergenSource) {
             effectiveFormData = { ...effectiveFormData, allergens_list: autoAllergens, additives: autoAdditives };
         }
@@ -225,19 +235,13 @@ export default function MenuItemModal({ item, open, onClose, onNavigate, navPosi
         saveMutation.mutate({
             ...cleanData,
             price:          parseFloat(formData.price),
-            purchase_price: calculatedPurchasePrice,
+            purchase_price: effectivePurchasePrice != null ? parseFloat(effectivePurchasePrice.toFixed(4)) : undefined,
             alcohol_content: formData.alcohol_content ? parseFloat(formData.alcohol_content) : undefined,
             order_position:  formData.order_position  ? parseInt(formData.order_position)    : undefined,
         });
     };
 
     const isBusy = saveMutation.isPending || deleteMutation.isPending;
-
-    // Verknüpftes Rezept + Mischvarianten
-    const linkedRecipe = formData.use_recipe_calculation && formData.linked_recipe_id
-        ? recipes.find(r => r.id === formData.linked_recipe_id)
-        : null;
-    const recipeHasVariants = linkedRecipe?.mix_variants?.length > 0;
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -348,20 +352,18 @@ export default function MenuItemModal({ item, open, onClose, onNavigate, navPosi
                         </Field>
                     </Section>
 
-                    {/* — Margenberechnung — */}
-                    <Section title="Margenberechnung" icon={<Calculator className="w-4 h-4" />}>
-                        <div className="flex items-center justify-between">
-                            <SwitchRow
-                                label="EK aus Rezept berechnen"
-                                description="Einkaufspreis automatisch aus verknüpftem Rezept ermitteln"
-                                checked={formData.use_recipe_calculation}
-                                onCheckedChange={checked => setFormData(prev => ({
-                                    ...prev,
-                                    use_recipe_calculation: checked,
-                                    purchase_price: checked ? "" : prev.purchase_price
-                                }))}
-                            />
-                        </div>
+                    {/* — Kalkulation & Preis — */}
+                    <Section title="Kalkulation & Preis" icon={<Calculator className="w-4 h-4" />}>
+                        <SwitchRow
+                            label="EK aus Rezept berechnen"
+                            description="Einkaufspreis automatisch aus verknüpftem Rezept ermitteln"
+                            checked={formData.use_recipe_calculation}
+                            onCheckedChange={checked => setFormData(prev => ({
+                                ...prev,
+                                use_recipe_calculation: checked,
+                                purchase_price: checked ? "" : prev.purchase_price
+                            }))}
+                        />
 
                         {formData.use_recipe_calculation ? (
                             <>
@@ -401,41 +403,100 @@ export default function MenuItemModal({ item, open, onClose, onNavigate, navPosi
                         ) : (
                             <Field
                                 label="Einkaufspreis (€)"
-                                hint="Manueller EK — für einfache Getränke ohne Rezept."
+                                hint={
+                                    articleSuggestedCost != null && !formData.purchase_price
+                                        ? `Vorschlag aus verknüpftem Artikel: ${articleSuggestedCost.toFixed(2)} € (${formData.size})`
+                                        : "Manueller EK — für einfache Getränke ohne Rezept."
+                                }
                             >
-                                <Input
-                                    className={fieldClass}
-                                    type="number" step="0.01"
-                                    value={formData.purchase_price}
-                                    onChange={e => set('purchase_price', e.target.value)}
-                                    placeholder="2.50"
-                                />
+                                <div className="flex gap-2">
+                                    <Input
+                                        className={fieldClass}
+                                        type="number" step="0.01"
+                                        value={formData.purchase_price}
+                                        onChange={e => set('purchase_price', e.target.value)}
+                                        placeholder={articleSuggestedCost != null ? articleSuggestedCost.toFixed(2) : "2.50"}
+                                    />
+                                    {articleSuggestedCost != null && !formData.purchase_price && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="h-12 px-3 shrink-0 text-xs"
+                                            onClick={() => set('purchase_price', articleSuggestedCost.toFixed(2))}
+                                        >
+                                            Übernehmen
+                                        </Button>
+                                    )}
+                                </div>
                             </Field>
                         )}
 
-                        <button
-                            type="button"
-                            onClick={() => {
-                                onClose();
-                                navigate(createPageUrl('PriceCalculator') + (formData.linked_recipe_id ? '?recipe=' + formData.linked_recipe_id : ''));
-                            }}
-                            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-muted/50 hover:bg-muted text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border border-border/40"
-                        >
-                            <span className="flex items-center gap-2">
-                                <ExternalLink className="w-4 h-4" />
-                                Zum Preisrechner
-                            </span>
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
+                        {/* — Live-Kalkulation: EK, Marge, Wareneinsatz + Preisvorschläge — */}
+                        {effectivePurchasePrice != null && effectivePurchasePrice > 0 && (
+                            <div className={cn(
+                                "rounded-xl border p-3.5 space-y-3",
+                                rating === 'bad'  && "bg-destructive/10 border-destructive/30",
+                                rating === 'ok'   && "bg-amber-500/10 border-amber-500/30",
+                                rating === 'good' && "bg-emerald-500/10 border-emerald-500/30",
+                                rating == null    && "bg-muted/40 border-border/60"
+                            )}>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">Einkaufspreis</span>
+                                    <span className="font-semibold text-foreground">{effectivePurchasePrice.toFixed(2)} €</span>
+                                </div>
+
+                                {foodCostPct != null ? (
+                                    <>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-muted-foreground">Marge</span>
+                                            <span className="font-semibold text-foreground">{marginAbsolute.toFixed(2)} €</span>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-1 border-t border-border/40">
+                                            <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                                <TrendingUp className="w-3.5 h-3.5" />Wareneinsatz
+                                            </span>
+                                            <span className={cn(
+                                                "text-lg font-bold",
+                                                rating === 'bad'  && "text-destructive",
+                                                rating === 'ok'   && "text-amber-500",
+                                                rating === 'good' && "text-emerald-600 dark:text-emerald-400"
+                                            )}>
+                                                {foodCostPct.toFixed(1)}%
+                                            </span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-xs text-muted-foreground">Verkaufspreis eingeben, um Marge & Wareneinsatz zu sehen.</p>
+                                )}
+
+                                <div className="grid grid-cols-3 gap-2 pt-1">
+                                    {[{ label: 'Günstig', pct: 35 }, { label: 'Standard', pct: 28 }, { label: 'Premium', pct: 20 }].map(s => {
+                                        const suggested = roundPrice(effectivePurchasePrice / (s.pct / 100));
+                                        return (
+                                            <button
+                                                key={s.label}
+                                                type="button"
+                                                onClick={() => applyScenario(s.pct)}
+                                                className="rounded-lg border border-border/60 bg-background/70 hover:bg-background hover:border-border px-2 py-2 text-center transition-colors"
+                                            >
+                                                <p className="text-[10px] font-semibold text-muted-foreground">{s.label} · {s.pct}%</p>
+                                                <p className="text-xs font-bold text-foreground">{suggested != null ? suggested.toFixed(2) : '—'} €</p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground text-center">Vorschlag antippen übernimmt den Verkaufspreis oben</p>
+                            </div>
+                        )}
                     </Section>
 
                     {/* — Status — */}
-                    <Section title="Status & Anzeige">
+                    <Section title="Veröffentlichung & Status">
                         <div className="divide-y divide-border/40">
                             <div className="pb-3">
                                 <SwitchRow
-                                    label="Verfügbar"
-                                    description="Getränk wird in der Karte angezeigt"
+                                    label="Auf Gästekarte veröffentlichen"
+                                    description="Sofort sichtbar in der öffentlichen Gästekarte"
                                     checked={formData.is_available}
                                     onCheckedChange={v => set('is_available', v)}
                                 />

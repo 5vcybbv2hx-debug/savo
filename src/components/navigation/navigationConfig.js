@@ -45,7 +45,7 @@ export const additionalPages = [
     // Karte & Rezepte
     { page: 'DrinkMenu',       name: 'Getränkekarte', icon: Wine,       permission: 'canViewDrinkMenu' },
     { page: 'Recipes',         name: 'Rezepte',       icon: BookOpen,   permission: 'canViewRecipes' },
-    { page: 'PriceCalculator', name: 'Preisrechner',  icon: Calculator, permission: 'canViewPriceCalculator' },
+    { page: 'PriceCalculator', name: 'Schnellkalkulation',  icon: Calculator, permission: 'canViewPriceCalculator' },
 
     // Buchhaltung
     { page: 'AccountingDashboard',   name: 'Buchhaltung',       icon: Calculator, permission: 'canViewAccounting' },
