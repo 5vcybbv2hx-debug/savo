@@ -175,11 +175,22 @@ export default function MenuReview() {
     }
 
     // ── Live-Kalkulation fürs aktuelle Getränk ─────────────────────────────
+    // Beim Preis-Anpassen wird live mit dem gerade getippten Wert gerechnet (Schnellkalkulation),
+    // sonst mit dem aktuell gespeicherten Verkaufspreis.
     const effectivePurchasePrice = getEffectivePurchasePrice(current, { articles, recipes });
     const currentSellPrice = current.price;
+    const parsedPriceInput = parseFloat(priceInput.replace(',', '.'));
+    const previewSellPrice = editingPrice && !isNaN(parsedPriceInput) && parsedPriceInput > 0
+        ? parsedPriceInput
+        : currentSellPrice;
     const foodCostPct = (effectivePurchasePrice != null && currentSellPrice > 0)
         ? (effectivePurchasePrice / currentSellPrice) * 100 : null;
+    const previewFoodCostPct = (effectivePurchasePrice != null && previewSellPrice > 0)
+        ? (effectivePurchasePrice / previewSellPrice) * 100 : null;
+    const previewMarginAbsolute = (effectivePurchasePrice != null && previewSellPrice != null)
+        ? previewSellPrice - effectivePurchasePrice : null;
     const rating = foodCostRating(foodCostPct);
+    const previewRating = foodCostRating(previewFoodCostPct);
 
     const lastReviewedLabel = current.last_reviewed_date
         ? `zuletzt geprüft vor ${formatDistanceToNow(new Date(current.last_reviewed_date), { locale: de })}`
@@ -227,7 +238,7 @@ export default function MenuReview() {
                             <span className="text-3xl font-bold text-foreground">{Number(current.price || 0).toFixed(2)} €</span>
                             {current.size && <span className="text-sm text-muted-foreground">{current.size}</span>}
                         </div>
-                    ) : (
+    ) : (
                         <div className="space-y-2.5">
                             <Input
                                 type="number" step="0.10" autoFocus
@@ -236,23 +247,64 @@ export default function MenuReview() {
                                 onChange={e => setPriceInput(e.target.value)}
                                 placeholder={String(current.price)}
                             />
+
+                            {/* Schnellkalkulation — Live-EK, Marge & Wareneinsatz für den gerade
+                                getippten Preis, gleiche Logik/Darstellung wie im Getränke-Modal */}
                             {effectivePurchasePrice != null && effectivePurchasePrice > 0 && (
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[{ label: 'Günstig', pct: 35 }, { label: 'Standard', pct: 28 }, { label: 'Premium', pct: 20 }].map(s => {
-                                        const suggested = roundPrice(effectivePurchasePrice / (s.pct / 100));
-                                        return (
-                                            <button
-                                                key={s.label} type="button"
-                                                onClick={() => suggested != null && setPriceInput(String(suggested))}
-                                                className="rounded-lg border border-border/60 bg-muted/30 hover:bg-muted px-2 py-2 text-center transition-colors"
-                                            >
-                                                <p className="text-[10px] font-semibold text-muted-foreground">{s.label} · {s.pct}%</p>
-                                                <p className="text-xs font-bold text-foreground">{suggested != null ? suggested.toFixed(2) : '—'} €</p>
-                                            </button>
-                                        );
-                                    })}
+                                <div className={cn(
+                                    "rounded-xl border p-3 space-y-2",
+                                    previewRating === 'bad'  && "bg-destructive/10 border-destructive/30",
+                                    previewRating === 'ok'   && "bg-amber-500/10 border-amber-500/30",
+                                    previewRating === 'good' && "bg-emerald-500/10 border-emerald-500/30",
+                                    previewRating == null    && "bg-muted/40 border-border/60"
+                                )}>
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-muted-foreground">Einkaufspreis</span>
+                                        <span className="font-semibold text-foreground">{effectivePurchasePrice.toFixed(2)} €</span>
+                                    </div>
+                                    {previewFoodCostPct != null ? (
+                                        <>
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-muted-foreground">Marge</span>
+                                                <span className="font-semibold text-foreground">{previewMarginAbsolute.toFixed(2)} €</span>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-1 border-t border-border/40">
+                                                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                                    <TrendingUp className="w-3.5 h-3.5" />Wareneinsatz
+                                                </span>
+                                                <span className={cn(
+                                                    "text-base font-bold",
+                                                    previewRating === 'bad'  && "text-destructive",
+                                                    previewRating === 'ok'   && "text-amber-500",
+                                                    previewRating === 'good' && "text-emerald-600 dark:text-emerald-400"
+                                                )}>
+                                                    {previewFoodCostPct.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">Preis eingeben, um Marge & Wareneinsatz zu sehen.</p>
+                                    )}
+
+                                    <div className="grid grid-cols-3 gap-2 pt-1">
+                                        {[{ label: 'Günstig', pct: 35 }, { label: 'Standard', pct: 28 }, { label: 'Premium', pct: 20 }].map(s => {
+                                            const suggested = roundPrice(effectivePurchasePrice / (s.pct / 100));
+                                            return (
+                                                <button
+                                                    key={s.label} type="button"
+                                                    onClick={() => suggested != null && setPriceInput(String(suggested))}
+                                                    className="rounded-lg border border-border/60 bg-background/70 hover:bg-background hover:border-border px-2 py-2 text-center transition-colors"
+                                                >
+                                                    <p className="text-[10px] font-semibold text-muted-foreground">{s.label} · {s.pct}%</p>
+                                                    <p className="text-xs font-bold text-foreground">{suggested != null ? suggested.toFixed(2) : '—'} €</p>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground text-center pt-0.5">Vorschlag antippen übernimmt den Preis oben</p>
                                 </div>
                             )}
+
                             <div className="flex gap-2">
                                 <Button variant="outline" className="flex-1" onClick={resetEditState}>Abbrechen</Button>
                                 <Button className="flex-1" onClick={handleSavePrice} disabled={updateMutation.isPending}>Speichern</Button>
