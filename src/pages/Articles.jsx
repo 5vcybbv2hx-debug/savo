@@ -253,24 +253,6 @@ export default function Articles() {
     const handleAdd = () => { setSelectedArticle(null); setModalOpen(true); };
     const handleEdit = (article) => { setSelectedArticle(article); setModalOpen(true); };
 
-    // Weiterblättern im Artikel-Modal (Prev/Next) — folgt exakt der sichtbaren,
-    // gefilterten/gruppierten Liste, damit die Reihenfolge zum Bildschirm passt.
-    const handleNavigateArticle = (direction) => {
-        if (!selectedArticle?.id) return;
-        const idx = flatVisibleArticles.findIndex(a => a.id === selectedArticle.id);
-        if (idx === -1) return;
-        const nextIdx = direction === 'next' ? idx + 1 : idx - 1;
-        if (nextIdx < 0 || nextIdx >= flatVisibleArticles.length) return;
-        setSelectedArticle(flatVisibleArticles[nextIdx]);
-    };
-
-    const articleNavPosition = useMemo(() => {
-        if (!selectedArticle?.id) return null;
-        const idx = flatVisibleArticles.findIndex(a => a.id === selectedArticle.id);
-        if (idx === -1) return null;
-        return { index: idx, total: flatVisibleArticles.length, hasPrev: idx > 0, hasNext: idx < flatVisibleArticles.length - 1 };
-    }, [selectedArticle, flatVisibleArticles]);
-
     const handleSave = (data, id) => {
         if (id) updateMutation.mutate({ id, data });
         else    createMutation.mutate({ ...data, is_active: true });
@@ -351,6 +333,24 @@ export default function Articles() {
         groupedArticles.flatMap(g => g.items),
         [groupedArticles]
     );
+
+    // Weiterblättern im Artikel-Modal (Prev/Next) — folgt exakt der sichtbaren,
+    // gefilterten/gruppierten Liste, damit die Reihenfolge zum Bildschirm passt.
+    const handleNavigateArticle = (direction) => {
+        if (!selectedArticle?.id) return;
+        const idx = flatVisibleArticles.findIndex(a => a.id === selectedArticle.id);
+        if (idx === -1) return;
+        const nextIdx = direction === 'next' ? idx + 1 : idx - 1;
+        if (nextIdx < 0 || nextIdx >= flatVisibleArticles.length) return;
+        setSelectedArticle(flatVisibleArticles[nextIdx]);
+    };
+
+    const articleNavPosition = useMemo(() => {
+        if (!selectedArticle?.id) return null;
+        const idx = flatVisibleArticles.findIndex(a => a.id === selectedArticle.id);
+        if (idx === -1) return null;
+        return { index: idx, total: flatVisibleArticles.length, hasPrev: idx > 0, hasNext: idx < flatVisibleArticles.length - 1 };
+    }, [selectedArticle, flatVisibleArticles]);
 
     const lowStockArticles = useMemo(() =>
         articles.filter(a => a.is_active !== false && lowStockIds.has(a.id)),
