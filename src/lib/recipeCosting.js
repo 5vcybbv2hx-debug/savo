@@ -74,3 +74,59 @@ export function foodCostRating(pct) {
     if (pct > 30) return 'ok';
     return 'good';
 }
+
+/**
+ * Ermittelt einen Preisvorschlag aus einem einzelnen verknüpften Artikel (z.B. Wein/Spirituose
+ * pur), wenn KEIN Rezept genutzt wird und die MenuItem.size (z.B. "4cl", "0,2l") auswertbar ist.
+ * Gibt null zurück, wenn Größe nicht parsbar oder kein passender Artikel gefunden wurde.
+ */
+export function calcSingleArticleSuggestion(menuItem, articles) {
+    const linkedIds = menuItem?.linked_article_ids || [];
+    if (linkedIds.length !== 1 || !menuItem?.size) return null;
+    const article = (articles || []).find(a => a.id === linkedIds[0]);
+    if (!article) return null;
+    const v = menuItem.size.toLowerCase().replace(',', '.').trim();
+    const num = parseFloat(v);
+    if (isNaN(num)) return null;
+    let unit = null;
+    if (v.includes('ml')) unit = 'ml';
+    else if (v.includes('cl')) unit = 'cl';
+    else if (v.includes('kg')) unit = 'kg';
+    else if (v.includes('l'))  unit = 'l';
+    else if (v.includes('g'))  unit = 'g';
+    if (!unit) return null;
+    const cost = calcIngredientCost(article, num, unit);
+    return cost > 0 ? cost : null;
+}
+
+/**
+ * Einzige Quelle der Wahrheit für "was kostet dieses Getränk effektiv im Einkauf" —
+ * von MenuItemModal (Live-Kalkulation beim Bearbeiten) UND MenuReview (Karten-Review-Modus)
+ * gleichermaßen genutzt, damit beide Stellen niemals auseinanderlaufen können.
+ *
+ * Reihenfolge: 1) Rezept-Berechnung (falls use_recipe_calculation), 2) manuell gepflegter
+ * MenuItem.purchase_price, 3) Auto-Vorschlag aus einzelnem verknüpften Artikel + Größe.
+ */
+export function getEffectivePurchasePrice(menuItem, { articles = [], recipes = [] } = {}) {
+    if (menuItem?.use_recipe_calculation && menuItem?.linked_recipe_id) {
+        const recipe = recipes.find(r => r.id === menuItem.linked_recipe_id);
+        if (recipe?.ingredients) {
+            const hasVariants = (recipe.mix_variants || []).length > 0;
+            const baseIngs = hasVariants
+                ? recipe.ingredients.filter(i => i.is_base !== false)
+                : recipe.ingredients;
+            let variantIngredients = [];
+            if (hasVariants && menuItem.linked_variant_name) {
+                const variant = (recipe.mix_variants || []).find(v => v.name === menuItem.linked_variant_name);
+                variantIngredients = variant?.ingredients || [];
+            }
+            const cost = calcRecipeCost(baseIngs, articles, { variantIngredients });
+            return cost > 0 ? cost : null;
+        }
+        return null;
+    }
+    if (menuItem?.purchase_price != null && menuItem.purchase_price !== '') {
+        return parseFloat(menuItem.purchase_price);
+    }
+    return calcSingleArticleSuggestion(menuItem, articles);
+}

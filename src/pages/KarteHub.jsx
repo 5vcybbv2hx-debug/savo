@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { cn } from '@/lib/utils';
-import { Wine, BookOpen, TrendingUp } from 'lucide-react';
+import { Wine, BookOpen, TrendingUp, ClipboardCheck } from 'lucide-react';
 
 function NavCard({ icon: Icon, label, description, page, permission }) {
     const navigate = useNavigate();
@@ -40,6 +40,18 @@ export default function KarteHub() {
                 <NavCard icon={Wine}       label="Getränkekarte"      description="Getränk erstellen, Preis kalkulieren & veröffentlichen" page="DrinkMenu"       permission="canViewDrinkMenu"       />
                 <NavCard icon={TrendingUp} label="Schnellkalkulation" description="Nur für lose Artikel ohne Rezept (optional)"          page="PriceCalculator" permission="canViewPriceCalculator" />
             </div>
+
+            {(permissions.isManager || permissions.isAdmin) && (
+                <div className="mt-6">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 px-1">Gelegentlich</p>
+                    <NavCard
+                        icon={ClipboardCheck}
+                        label="Karte durchgehen"
+                        description="Wie beim Neudruck: jedes Getränk prüfen — behalten, Preis anpassen oder raus"
+                        page="MenuReview"
+                    />
+                </div>
+            )}
         </div>
     );
 }

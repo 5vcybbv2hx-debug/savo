@@ -94,6 +94,11 @@
     "recipe_variant_name": {
       "type": "string",
       "description": "Varianten-Name (z.B. 'mit Cola') wenn aus Rezept-Mischvariante erstellt"
+    },
+    "last_reviewed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Zeitpunkt der letzten Bestätigung im Karten-Review-Modus (Preis/Verfügbarkeit geprüft)"
     }
   },
   "required": [

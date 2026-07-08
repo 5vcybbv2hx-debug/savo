@@ -31,6 +31,7 @@ export const PAGE_PERMISSIONS = {
 
     // ── Karte & Rezepte ────────────────────────────────────────────────────────
     DrinkMenu:               'canViewDrinkMenu',
+    MenuReview:              'canViewDrinkMenu',
     Recipes:                 'canViewRecipes',
     PriceCalculator:         'canViewPriceCalculator',
 

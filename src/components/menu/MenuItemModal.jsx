@@ -17,7 +17,7 @@ import ArticleLinker from './ArticleLinker';
 import RecipeSearchSelect from './RecipeSearchSelect';
 import { getMenuItemSourceArticles, unionAllergensAdditives, hasAutoAllergenSource } from '@/lib/allergenSync';
 import { haptics } from "@/components/utils/haptics";
-import { calcRecipeCost, calcIngredientCost as calcArticleIngredientCost, roundPrice, foodCostRating } from '@/lib/recipeCosting';
+import { getEffectivePurchasePrice, calcSingleArticleSuggestion, roundPrice, foodCostRating } from '@/lib/recipeCosting';
 import { cn } from '@/lib/utils';
 
 // ── Shared field styling ────────────────────────────────────────────────────
@@ -163,47 +163,17 @@ export default function MenuItemModal({ item, open, onClose, onNavigate, navPosi
         : null;
     const recipeHasVariants = linkedRecipe?.mix_variants?.length > 0;
 
-    // ── Einheitliche, live Kalkulation (eine Quelle der Wahrheit für Anzeige + Speichern) ──
-    const recipeCalculatedCost = useMemo(() => {
-        if (!formData.use_recipe_calculation || !linkedRecipe?.ingredients) return null;
-        const hasVariants = (linkedRecipe.mix_variants || []).length > 0;
-        const baseIngs = hasVariants
-            ? linkedRecipe.ingredients.filter(i => i.is_base !== false)
-            : linkedRecipe.ingredients;
-        let variantIngredients = [];
-        if (hasVariants && formData.linked_variant_name) {
-            const variant = (linkedRecipe.mix_variants || []).find(v => v.name === formData.linked_variant_name);
-            variantIngredients = variant?.ingredients || [];
-        }
-        return calcRecipeCost(baseIngs, articles, { variantIngredients });
-    }, [formData.use_recipe_calculation, linkedRecipe, formData.linked_variant_name, articles]);
-
-    // Auto-Vorschlag aus einem einzelnen verknüpften Artikel (z.B. Wein/Spirituose pur),
-    // wenn kein Rezept genutzt wird und die Größe (z.B. "4cl", "0,2l") auswertbar ist.
-    const singleLinkedArticle = (!formData.use_recipe_calculation && (formData.linked_article_ids || []).length === 1)
-        ? articles.find(a => a.id === formData.linked_article_ids[0])
-        : null;
-    const articleSuggestedCost = useMemo(() => {
-        if (!singleLinkedArticle || !formData.size) return null;
-        const v = formData.size.toLowerCase().replace(',', '.').trim();
-        const num = parseFloat(v);
-        if (isNaN(num)) return null;
-        let unit = null;
-        if (v.includes('ml')) unit = 'ml';
-        else if (v.includes('cl')) unit = 'cl';
-        else if (v.includes('kg')) unit = 'kg';
-        else if (v.includes('l'))  unit = 'l';
-        else if (v.includes('g'))  unit = 'g';
-        if (!unit) return null;
-        const cost = calcArticleIngredientCost(singleLinkedArticle, num, unit);
-        return cost > 0 ? cost : null;
-    }, [singleLinkedArticle, formData.size]);
-
-    const effectivePurchasePrice = formData.use_recipe_calculation
-        ? recipeCalculatedCost
-        : (formData.purchase_price !== '' && formData.purchase_price != null
-            ? parseFloat(formData.purchase_price)
-            : articleSuggestedCost);
+    // ── Einheitliche, live Kalkulation — nutzt dieselbe zentrale Funktion wie MenuReview,
+    // damit Modal und Karten-Review-Modus niemals unterschiedliche Werte anzeigen können. ──
+    const articleSuggestedCost = useMemo(
+        () => calcSingleArticleSuggestion(formData, articles),
+        [formData.linked_article_ids, formData.size, articles]
+    );
+    const effectivePurchasePrice = useMemo(
+        () => getEffectivePurchasePrice(formData, { articles, recipes }),
+        [formData.use_recipe_calculation, formData.linked_recipe_id, formData.linked_variant_name,
+         formData.purchase_price, formData.linked_article_ids, formData.size, articles, recipes]
+    );
 
     const currentSellPrice = formData.price ? parseFloat(formData.price) : null;
     const foodCostPct = (effectivePurchasePrice != null && currentSellPrice > 0)
