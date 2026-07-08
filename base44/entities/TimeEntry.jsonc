@@ -68,6 +68,10 @@
     "arbzg_warning": {
       "type": "string",
       "description": "ArbZG Warnung falls vorhanden"
+    },
+    "source_clock_entry_id": {
+      "type": "string",
+      "description": "ID der ClockEntry, aus der dieser Eintrag automatisch importiert wurde (verhindert Duplikate beim erneuten Sync, auch wenn der Eintrag manuell korrigiert wurde)"
     }
   },
   "required": [
