@@ -36,6 +36,7 @@ import Display from './pages/Display';
 
 import BusinessCalendar from './pages/BusinessCalendar';
 import DataQuality from './pages/DataQuality';
+import MenuReview from './pages/MenuReview';
 
 const { Pages, CorePages, SpecialPagesWithLayout, PublicPages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -229,6 +230,7 @@ const AuthenticatedApp = () => {
       <Route path="/TeamHub" element={<LayoutWrapper currentPageName="TeamHub"><RoleGuard permission="canViewShifts"><TeamHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingHub" element={<LayoutWrapper currentPageName="AccountingHub"><RoleGuard permission="canViewAccounting"><AccountingHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/KarteHub" element={<LayoutWrapper currentPageName="KarteHub"><RoleGuard permission="canViewDrinkMenu"><KarteHub /></RoleGuard></LayoutWrapper>} />
+      <Route path="/MenuReview" element={<LayoutWrapper currentPageName="MenuReview"><RoleGuard permission="canViewDrinkMenu"><MenuReview /></RoleGuard></LayoutWrapper>} />
       <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/Display" element={<Display />} />
       <Route path="/DisplayManager" element={<LayoutWrapper currentPageName="DisplayManager"><RoleGuard permission="isManager"><DisplayManager /></RoleGuard></LayoutWrapper>} />
