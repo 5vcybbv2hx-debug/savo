@@ -42,6 +42,80 @@ const PRIORITY_STRIPE = {
 const TODO_CATEGORIES = ['Einkauf', 'Reparatur', 'Event', 'Bar', 'Lager', 'Küche', 'Sonstiges'];
 const TODO_PRIORITIES = ['niedrig', 'mittel', 'hoch', 'dringend'];
 
+function BacklogQuickAdd({ onCreate }) {
+    const [open, setOpen] = useState(false);
+    const [title, setTitle] = useState('');
+    const [category, setCategory] = useState('Sonstiges');
+    const [priority, setPriority] = useState('mittel');
+
+    const reset = () => {
+        setTitle('');
+        setCategory('Sonstiges');
+        setPriority('mittel');
+        setOpen(false);
+    };
+
+    const submit = () => {
+        if (!title.trim()) return;
+        onCreate({ title: title.trim(), category, priority, status: 'offen' });
+        reset();
+    };
+
+    if (!open) {
+        return (
+            <button onClick={() => setOpen(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Neues Todo
+            </button>
+        );
+    }
+
+    return (
+        <div className="p-2.5 rounded-xl border border-border bg-background space-y-2">
+            <Input autoFocus placeholder="Was ist zu tun?" value={title}
+                onChange={e => setTitle(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') reset(); }}
+                className="h-9 text-sm" />
+            <div className="flex gap-1 flex-wrap">
+                {TODO_CATEGORIES.map(cat => (
+                    <button key={cat} onClick={() => setCategory(cat)}
+                        className={cn(
+                            'px-2 py-0.5 rounded-lg text-[10px] font-medium border transition-all',
+                            category === cat
+                                ? 'bg-amber-500 border-amber-500 text-white'
+                                : 'border-border text-muted-foreground'
+                        )}>
+                        {cat}
+                    </button>
+                ))}
+            </div>
+            <div className="flex gap-1 flex-wrap">
+                {TODO_PRIORITIES.map(prio => (
+                    <button key={prio} onClick={() => setPriority(prio)}
+                        className={cn(
+                            'px-2 py-0.5 rounded-lg text-[10px] font-medium border transition-all flex items-center gap-1',
+                            priority === prio
+                                ? 'bg-amber-500 border-amber-500 text-white'
+                                : 'border-border text-muted-foreground'
+                        )}>
+                        <span className={cn('w-1.5 h-1.5 rounded-full', PRIORITY_STRIPE[prio])} />
+                        {prio}
+                    </button>
+                ))}
+            </div>
+            <div className="flex gap-1.5">
+                <Button onClick={submit} disabled={!title.trim()}
+                    className="flex-1 h-8 text-xs bg-amber-600 hover:bg-amber-700 text-white">
+                    Anlegen
+                </Button>
+                <Button onClick={reset} variant="outline" className="h-8 text-xs px-3">
+                    Abbrechen
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 const APPOINTMENT_COLORS = {
     amber:  { bg: 'bg-amber-500/20',  border: 'border-amber-500/50',  text: 'text-amber-300',  dot: 'bg-amber-500' },
     blue:   { bg: 'bg-blue-500/20',   border: 'border-blue-500/50',   text: 'text-blue-300',   dot: 'bg-blue-500'  },
@@ -869,6 +943,7 @@ export default function WeeklyTasks() {
                         </p>
                     </div>
                     <div className="p-3 space-y-2">
+                        <BacklogQuickAdd onCreate={data => createTodo.mutate(data)} />
                         {backlogTodos.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
                                 <Check className="w-10 h-10 mx-auto mb-2 opacity-20" />
@@ -1144,6 +1219,7 @@ export default function WeeklyTasks() {
                         <p className="text-[10px] text-muted-foreground mt-0.5">Drag → Zeitslot zum Einplanen</p>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                        <BacklogQuickAdd onCreate={data => createTodo.mutate(data)} />
                         {backlogTodos.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
                                 <Check className="w-8 h-8 mx-auto mb-2 opacity-20" />
