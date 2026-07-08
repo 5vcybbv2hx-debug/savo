@@ -39,6 +39,9 @@ const PRIORITY_STRIPE = {
     niedrig:  'bg-slate-400',
 };
 
+const TODO_CATEGORIES = ['Einkauf', 'Reparatur', 'Event', 'Bar', 'Lager', 'Küche', 'Sonstiges'];
+const TODO_PRIORITIES = ['niedrig', 'mittel', 'hoch', 'dringend'];
+
 const APPOINTMENT_COLORS = {
     amber:  { bg: 'bg-amber-500/20',  border: 'border-amber-500/50',  text: 'text-amber-300',  dot: 'bg-amber-500' },
     blue:   { bg: 'bg-blue-500/20',   border: 'border-blue-500/50',   text: 'text-blue-300',   dot: 'bg-blue-500'  },
@@ -102,6 +105,8 @@ export default function WeeklyTasks() {
     const [newColor,       setNewColor]       = useState('blue');
     const [newMode,        setNewMode]        = useState('appointment');
     const [newRecurrence,  setNewRecurrence]  = useState('none');
+    const [newTodoCategory, setNewTodoCategory] = useState('Sonstiges');
+    const [newTodoPriority, setNewTodoPriority] = useState('mittel');
     // Mobile: welcher Tag ist aktiv
     const [activeDayIdx,   setActiveDayIdx]   = useState(() => {
         const today = new Date();
@@ -144,6 +149,12 @@ export default function WeeklyTasks() {
     // ── Mutations ─────────────────────────────────────────────────────────────
     const updateTodo = useMutation({
         mutationFn: ({ id, data }) => base44.entities.TodoItem.update(id, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
+        onError: () => toast.error('Fehler beim Speichern'),
+    });
+
+    const createTodo = useMutation({
+        mutationFn: (data) => base44.entities.TodoItem.create(data),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['todos'] }),
         onError: () => toast.error('Fehler beim Speichern'),
     });
@@ -401,6 +412,8 @@ export default function WeeklyTasks() {
         setNewDuration(60);
         setNewColor('blue');
         setNewMode('appointment');
+        setNewTodoCategory('Sonstiges');
+        setNewTodoPriority('mittel');
         setSlotPopover({ date, hour: Math.floor(snapped / 60) });
     };
 
@@ -439,6 +452,20 @@ export default function WeeklyTasks() {
                 planned_time:     time,
                 planned_duration: newDuration,
             },
+        });
+        setSlotPopover(null);
+    };
+
+    const handleCreateNewTodo = () => {
+        if (!newTitle.trim() || !slotPopover) return;
+        createTodo.mutate({
+            title:            newTitle.trim(),
+            category:         newTodoCategory,
+            priority:         newTodoPriority,
+            status:           'offen',
+            planned_date:     format(slotPopover.date, 'yyyy-MM-dd'),
+            planned_time:     newTime,
+            planned_duration: newDuration,
         });
         setSlotPopover(null);
     };
@@ -1225,8 +1252,9 @@ export default function WeeklyTasks() {
                         {/* Modus-Toggle */}
                         <div className="flex gap-1 p-1 bg-secondary/50 rounded-xl border border-border">
                             {[
-                                { key: 'appointment', label: '📅 Neuer Termin' },
-                                { key: 'todo-pick',   label: '✅ Todo einplanen' },
+                                { key: 'appointment', label: '📅 Termin' },
+                                { key: 'todo-pick',   label: '✅ Einplanen' },
+                                { key: 'todo-new',    label: '🆕 Neues Todo' },
                             ].map(({ key, label }) => (
                                 <button key={key} onClick={() => setNewMode(key)}
                                     className={cn(
@@ -1331,6 +1359,70 @@ export default function WeeklyTasks() {
                                         ))}
                                     </div>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Neues Todo direkt erstellen + einplanen */}
+                        {newMode === 'todo-new' && (
+                            <div className="space-y-3">
+                                <Input autoFocus placeholder="Was ist zu tun?"
+                                    value={newTitle} onChange={e => setNewTitle(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleCreateNewTodo()}
+                                    className="h-10" />
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground mb-1.5">Kategorie</p>
+                                    <div className="flex gap-1.5 flex-wrap">
+                                        {TODO_CATEGORIES.map(cat => (
+                                            <button key={cat} onClick={() => setNewTodoCategory(cat)}
+                                                className={cn(
+                                                    'px-2.5 py-1 rounded-lg text-xs font-medium border transition-all',
+                                                    newTodoCategory === cat
+                                                        ? 'bg-amber-500 border-amber-500 text-white'
+                                                        : 'border-border text-muted-foreground'
+                                                )}>
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground mb-1.5">Priorität</p>
+                                    <div className="flex gap-1.5 flex-wrap">
+                                        {TODO_PRIORITIES.map(prio => (
+                                            <button key={prio} onClick={() => setNewTodoPriority(prio)}
+                                                className={cn(
+                                                    'px-2.5 py-1 rounded-lg text-xs font-medium border transition-all flex items-center gap-1.5',
+                                                    newTodoPriority === prio
+                                                        ? 'bg-amber-500 border-amber-500 text-white'
+                                                        : 'border-border text-muted-foreground'
+                                                )}>
+                                                <span className={cn('w-1.5 h-1.5 rounded-full', PRIORITY_STRIPE[prio])} />
+                                                {prio}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <p className="text-[10px] text-muted-foreground mb-1">Startzeit</p>
+                                        <input type="time" step="900" value={newTime}
+                                            onChange={e => setNewTime(e.target.value)}
+                                            className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm text-foreground" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-[10px] text-muted-foreground mb-1">Dauer</p>
+                                        <select value={newDuration} onChange={e => setNewDuration(Number(e.target.value))}
+                                            className="w-full h-9 px-2 rounded-lg border border-border bg-background text-sm text-foreground">
+                                            {[15, 30, 45, 60, 75, 90, 105, 120, 150, 180].map(m => (
+                                                <option key={m} value={m}>{m < 60 ? `${m} Min` : `${m / 60} Std`}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <Button onClick={handleCreateNewTodo} disabled={!newTitle.trim()}
+                                    className="w-full h-9 bg-amber-600 hover:bg-amber-700 text-white">
+                                    Todo anlegen &amp; einplanen
+                                </Button>
                             </div>
                         )}
                     </div>
