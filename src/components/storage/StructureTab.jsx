@@ -291,22 +291,27 @@ export default function StructureTab({ permissions }) {
   });
 
   // ── Slot Sort Order (Rundgang-Reihenfolge) ───────────────────────────────────
+  // ── Reihenfolge-Helfer: sauberes Reindex + Tausch ──────────────────────────
+  // Normiert zuerst alle Geschwister auf 0,1,2,… um dann einen stabilen Tausch
+  // durchzuführen — verhindert Bugs bei doppelten sort_order-Werten (z.B. alle 0).
+  const reindexAndSwap = async (items, idx, swapIdx, entity) => {
+    // 1. Normalisiere sort_order für alle Geschwister
+    const normalized = items.map((item, i) => ({ ...item, sort_order: i }));
+    // 2. Tausche die zwei Positionen
+    const temp = normalized[idx].sort_order;
+    normalized[idx] = { ...normalized[idx], sort_order: normalized[swapIdx].sort_order };
+    normalized[swapIdx] = { ...normalized[swapIdx], sort_order: temp };
+    // 3. Nur die zwei geänderten Einträge persistieren
+    await entity.update(normalized[idx].id, { sort_order: normalized[idx].sort_order });
+    await entity.update(normalized[swapIdx].id, { sort_order: normalized[swapIdx].sort_order });
+  };
+
   const updateSlotSortMut = useMutation({
     mutationFn: async ({ slot, direction, siblings }) => {
       const idx = siblings.findIndex(s => s.id === slot.id);
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
       if (swapIdx < 0 || swapIdx >= siblings.length) return;
-      const swapSlot = siblings[swapIdx];
-      const slotOrder = slot.sort_order ?? 0;
-      const swapOrder = swapSlot.sort_order ?? 0;
-      // Wenn beide gleich, verschiebe um 1 — sonst tausche
-      if (slotOrder === swapOrder) {
-        const newOrder = direction === 'up' ? slotOrder - 1 : slotOrder + 1;
-        await base44.entities.StorageSlot.update(slot.id, { sort_order: newOrder });
-      } else {
-        await base44.entities.StorageSlot.update(slot.id, { sort_order: swapOrder });
-        await base44.entities.StorageSlot.update(swapSlot.id, { sort_order: slotOrder });
-      }
+      await reindexAndSwap(siblings, idx, swapIdx, base44.entities.StorageSlot);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['slots'] }); },
     onError: () => toast.error('Sortierung konnte nicht geändert werden'),
@@ -318,16 +323,7 @@ export default function StructureTab({ permissions }) {
       const idx = siblings.findIndex(s => s.id === area.id);
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
       if (swapIdx < 0 || swapIdx >= siblings.length) return;
-      const swapArea = siblings[swapIdx];
-      const aOrder = area.sort_order ?? 0;
-      const sOrder = swapArea.sort_order ?? 0;
-      if (aOrder === sOrder) {
-        const newOrder = direction === 'up' ? aOrder - 1 : aOrder + 1;
-        await base44.entities.Area.update(area.id, { sort_order: newOrder });
-      } else {
-        await base44.entities.Area.update(area.id, { sort_order: sOrder });
-        await base44.entities.Area.update(swapArea.id, { sort_order: aOrder });
-      }
+      await reindexAndSwap(siblings, idx, swapIdx, base44.entities.Area);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-areas'] }); },
     onError: () => toast.error('Sortierung konnte nicht geändert werden'),
@@ -339,16 +335,7 @@ export default function StructureTab({ permissions }) {
       const idx = siblings.findIndex(s => s.id === fur.id);
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
       if (swapIdx < 0 || swapIdx >= siblings.length) return;
-      const swapFur = siblings[swapIdx];
-      const fOrder = fur.sort_order ?? 0;
-      const sOrder = swapFur.sort_order ?? 0;
-      if (fOrder === sOrder) {
-        const newOrder = direction === 'up' ? fOrder - 1 : fOrder + 1;
-        await base44.entities.Furniture.update(fur.id, { sort_order: newOrder });
-      } else {
-        await base44.entities.Furniture.update(fur.id, { sort_order: sOrder });
-        await base44.entities.Furniture.update(swapFur.id, { sort_order: fOrder });
-      }
+      await reindexAndSwap(siblings, idx, swapIdx, base44.entities.Furniture);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-furniture'] }); },
     onError: () => toast.error('Sortierung konnte nicht geändert werden'),
