@@ -290,52 +290,43 @@ export default function StructureTab({ permissions }) {
     onError:   () => { toast.error('Löschen fehlgeschlagen'); setDeleteSlotTarget(null); },
   });
 
-  // ── Slot Sort Order (Rundgang-Reihenfolge) ───────────────────────────────────
-  // ── Reihenfolge-Helfer: sauberes Reindex + Tausch ──────────────────────────
-  // Normiert zuerst alle Geschwister auf 0,1,2,… um dann einen stabilen Tausch
-  // durchzuführen — verhindert Bugs bei doppelten sort_order-Werten (z.B. alle 0).
-  const reindexAndSwap = async (items, idx, swapIdx, entity) => {
-    // 1. Normalisiere sort_order für alle Geschwister
-    const normalized = items.map((item, i) => ({ ...item, sort_order: i }));
-    // 2. Tausche die zwei Positionen
-    const temp = normalized[idx].sort_order;
-    normalized[idx] = { ...normalized[idx], sort_order: normalized[swapIdx].sort_order };
-    normalized[swapIdx] = { ...normalized[swapIdx], sort_order: temp };
-    // 3. Nur die zwei geänderten Einträge persistieren
-    await entity.update(normalized[idx].id, { sort_order: normalized[idx].sort_order });
-    await entity.update(normalized[swapIdx].id, { sort_order: normalized[swapIdx].sort_order });
+  // ── Robuste Sortier-Logik: Tausch + Reindex (0..n-1, keine Lücken/Duplikate) ─
+  // Ersetzt die alte fragile Swap-Logik, die bei gleichen sort_order-Werten
+  // versagte. Nach dem Tausch werden alle Elemente sauber reindiziert und per
+  // bulkUpdate in einem Request gespeichert.
+  const reindexAndSwap = async (siblings, idx, swapIdx, entityName) => {
+    if (swapIdx < 0 || swapIdx >= siblings.length) return;
+    const reordered = [...siblings];
+    [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+    const updates = reordered.map((item, i) => ({ id: item.id, sort_order: i }));
+    await base44.entities[entityName].bulkUpdate(updates);
   };
 
   const updateSlotSortMut = useMutation({
-    mutationFn: async ({ slot, direction, siblings }) => {
+    mutationFn: ({ slot, direction, siblings }) => {
       const idx = siblings.findIndex(s => s.id === slot.id);
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= siblings.length) return;
-      await reindexAndSwap(siblings, idx, swapIdx, base44.entities.StorageSlot);
+      return reindexAndSwap(siblings, idx, swapIdx, 'StorageSlot');
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['slots'] }); },
     onError: () => toast.error('Sortierung konnte nicht geändert werden'),
   });
 
-  // ── Area Sort Order ──────────────────────────────────────────────────────────
   const updateAreaSortMut = useMutation({
-    mutationFn: async ({ area, direction, siblings }) => {
+    mutationFn: ({ area, direction, siblings }) => {
       const idx = siblings.findIndex(s => s.id === area.id);
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= siblings.length) return;
-      await reindexAndSwap(siblings, idx, swapIdx, base44.entities.Area);
+      return reindexAndSwap(siblings, idx, swapIdx, 'Area');
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-areas'] }); },
     onError: () => toast.error('Sortierung konnte nicht geändert werden'),
   });
 
-  // ── Furniture Sort Order ─────────────────────────────────────────────────────
   const updateFurSortMut = useMutation({
-    mutationFn: async ({ fur, direction, siblings }) => {
+    mutationFn: ({ fur, direction, siblings }) => {
       const idx = siblings.findIndex(s => s.id === fur.id);
       const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= siblings.length) return;
-      await reindexAndSwap(siblings, idx, swapIdx, base44.entities.Furniture);
+      return reindexAndSwap(siblings, idx, swapIdx, 'Furniture');
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['st-furniture'] }); },
     onError: () => toast.error('Sortierung konnte nicht geändert werden'),
