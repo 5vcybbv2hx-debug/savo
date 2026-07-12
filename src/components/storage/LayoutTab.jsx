@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Layers, Grid3x3 } from 'lucide-react';
+import { Layers, Grid3x3, Pencil, Check, Plus, Minus } from 'lucide-react';
 import RegelGrid from './RegelGrid';
 import { cn } from '@/lib/utils';
 
@@ -21,9 +22,15 @@ const FURNITURE_ICONS = {
     'Sonstiges': '📌',
 };
 
-export default function LayoutTab() {
+export default function LayoutTab({ permissions }) {
     const qc = useQueryClient();
     const today = format(new Date(), 'yyyy-MM-dd');
+    const canEdit = permissions?.isManager || permissions?.isAdmin;
+
+    // Welche Möbel befinden sich gerade im Edit-Modus
+    const [editingFurIds, setEditingFurIds] = useState(new Set());
+    // Grid-Größen-Edit pro Möbel (lokaler State vor dem Speichern)
+    const [gridSizeEdits, setGridSizeEdits] = useState({}); // furId -> {rows, cols}
 
     // ── Queries ──────────────────────────────────────────────────────────────
     const { data: areas = [], isLoading: aL } = useQuery({
@@ -86,10 +93,28 @@ export default function LayoutTab() {
         return map;
     }, [slots]);
 
-    // ── Auffüllliste hinzufügen ───────────────────────────────────────────────
+    // ── Mutationen ────────────────────────────────────────────────────────────
+
+    // Slot-Position aktualisieren (Drag & Drop)
+    const updateSlotMut = useMutation({
+        mutationFn: ({ slotId, data }) => base44.entities.StorageSlot.update(slotId, data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ['slots'] }),
+        onError: () => toast.error('Position konnte nicht gespeichert werden'),
+    });
+
+    // Möbel-Grid-Größe aktualisieren
+    const updateFurnitureMut = useMutation({
+        mutationFn: ({ furId, data }) => base44.entities.Furniture.update(furId, data),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['st-furniture'] });
+            toast.success('Regal-Größe gespeichert');
+        },
+        onError: () => toast.error('Regal-Größe konnte nicht gespeichert werden'),
+    });
+
+    // Auffüllliste
     const addToRestockMut = useMutation({
         mutationFn: async ({ slot, assignment }) => {
-            // Bereits heute hinzugefügt?
             const exists = restockItems.find(r =>
                 r.assignment_id === assignment.id && r.date === today
             );
@@ -97,14 +122,11 @@ export default function LayoutTab() {
                 toast.info(`${assignment.article_name} ist bereits auf der Auffüllliste`);
                 return null;
             }
-
             const needed = Math.max(0, (assignment.min_stock ?? 0) - (assignment.quantity ?? 0));
-
             if (needed === 0 && assignment.min_stock != null) {
                 toast.info(`${assignment.article_name} — Bestand bereits ausreichend`);
                 return null;
             }
-
             const user = await base44.auth.me();
             await base44.entities.RestockItem.create({
                 article_id: assignment.article_id,
@@ -124,21 +146,56 @@ export default function LayoutTab() {
                 stock_reduced: false,
                 added_by: 'layout_viewer',
             });
-
             toast.success(`${assignment.article_name} zur Auffüllliste hinzugefügt`);
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['restock-items'] });
             qc.invalidateQueries({ queryKey: ['restock-items', today] });
         },
-        onError: (err) => {
-            console.error(err);
-            toast.error('Fehler beim Hinzufügen zur Auffüllliste');
-        },
+        onError: () => toast.error('Fehler beim Hinzufügen zur Auffüllliste'),
     });
 
     const handleAddToRestock = (slot, assignment) => {
         addToRestockMut.mutate({ slot, assignment });
+    };
+
+    const handleSlotUpdate = async (slotId, data) => {
+        await updateSlotMut.mutateAsync({ slotId, data });
+    };
+
+    // Edit-Modus Toggle
+    const toggleEditMode = (furId, fur) => {
+        setEditingFurIds(prev => {
+            const next = new Set(prev);
+            if (next.has(furId)) {
+                next.delete(furId);
+                // Grid-Größe speichern wenn vorhanden
+                const edit = gridSizeEdits[furId];
+                if (edit) {
+                    const newRows = Math.max(1, Math.min(12, edit.rows));
+                    const newCols = Math.max(1, Math.min(12, edit.cols));
+                    if (newRows !== (fur.grid_rows || 0) || newCols !== (fur.grid_cols || 0)) {
+                        updateFurnitureMut.mutate({ furId, data: { grid_rows: newRows, grid_cols: newCols } });
+                    }
+                    setGridSizeEdits(prev2 => { const n = { ...prev2 }; delete n[furId]; return n; });
+                }
+            } else {
+                next.add(furId);
+                setGridSizeEdits(prev2 => ({
+                    ...prev2,
+                    [furId]: { rows: fur.grid_rows || 3, cols: fur.grid_cols || 4 },
+                }));
+            }
+            return next;
+        });
+    };
+
+    const adjustGridSize = (furId, field, delta) => {
+        setGridSizeEdits(prev => {
+            const cur = prev[furId] || { rows: 3, cols: 4 };
+            const newVal = Math.max(1, Math.min(12, (cur[field] || 3) + delta));
+            return { ...prev, [furId]: { ...cur, [field]: newVal } };
+        });
     };
 
     // ── Loading ───────────────────────────────────────────────────────────────
@@ -158,19 +215,22 @@ export default function LayoutTab() {
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center px-6">
                 <Grid3x3 className="w-10 h-10 text-muted-foreground/30" />
                 <p className="text-sm text-muted-foreground">Noch keine Bereiche angelegt.</p>
-                <p className="text-xs text-muted-foreground/60">Im Tab „Struktur" zuerst Bereiche und Möbel anlegen.</p>
+                <p className="text-xs text-muted-foreground/60">Im Tab „Bereiche" zuerst Bereiche und Möbel anlegen.</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-6 pb-8">
-            <p className="text-xs text-muted-foreground/70 px-1">
-                Tippe auf einen Artikel um ihn zur Auffüllliste hinzuzufügen. 
-                Farbcode: <span className="text-emerald-600 dark:text-emerald-400 font-medium">grün</span> = voll · 
-                <span className="text-amber-600 dark:text-amber-400 font-medium"> gelb</span> = knapp · 
-                <span className="text-destructive font-medium"> rot</span> = leer
-            </p>
+            {/* Legende */}
+            {!canEdit && (
+                <p className="text-xs text-muted-foreground/70 px-1">
+                    Artikel antippen → zur Auffüllliste hinzufügen.&nbsp;
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">Grün</span> = voll ·&nbsp;
+                    <span className="text-amber-600 dark:text-amber-400 font-medium">Gelb</span> = knapp ·&nbsp;
+                    <span className="text-destructive font-medium">Rot</span> = leer
+                </p>
+            )}
 
             {activeAreas.map(area => {
                 const areaFurniture = (furnitureByArea[area.id] || []).filter(f => f.is_active !== false);
@@ -186,17 +246,30 @@ export default function LayoutTab() {
                             <h3 className="text-sm font-semibold text-foreground">{area.name}</h3>
                         </div>
 
-                        {/* Möbel in diesem Bereich */}
-                        <div className="space-y-3 pl-0">
+                        {/* Möbel */}
+                        <div className="space-y-3">
                             {areaFurniture.map(fur => {
                                 const furSlots = (slotsByFurniture[fur.id] || []).filter(s => s.is_active !== false);
-                                const hasGrid = (fur.grid_rows > 0) && (fur.grid_cols > 0);
+                                const isEditing = editingFurIds.has(fur.id);
+                                const sizeEdit = gridSizeEdits[fur.id];
+                                // Effektive Grid-Größe (aus localem Edit-State wenn vorhanden)
+                                const effectiveRows = isEditing ? (sizeEdit?.rows ?? fur.grid_rows ?? 3) : (fur.grid_rows || 0);
+                                const effectiveCols = isEditing ? (sizeEdit?.cols ?? fur.grid_cols ?? 4) : (fur.grid_cols || 0);
+                                const hasGrid = effectiveRows > 0 && effectiveCols > 0;
                                 const configuredSlots = furSlots.filter(s => s.grid_row != null && s.grid_col != null).length;
+
+                                // Für das Grid ein temporäres furniture-Objekt mit aktuellen Werten
+                                const furForGrid = isEditing
+                                    ? { ...fur, grid_rows: effectiveRows, grid_cols: effectiveCols }
+                                    : fur;
 
                                 return (
                                     <Card key={fur.id} className="overflow-hidden border-border/60">
                                         {/* Möbel-Header */}
-                                        <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-border/40 bg-muted/20">
+                                        <div className={cn(
+                                            'flex items-center gap-2.5 px-3 py-2.5 border-b border-border/40',
+                                            isEditing ? 'bg-primary/5' : 'bg-muted/20',
+                                        )}>
                                             <span className="text-base w-6 text-center shrink-0">
                                                 {FURNITURE_ICONS[fur.type] || '📦'}
                                             </span>
@@ -204,40 +277,106 @@ export default function LayoutTab() {
                                                 <p className="text-sm font-semibold text-foreground truncate">{fur.name}</p>
                                                 {hasGrid && (
                                                     <p className="text-[10px] text-muted-foreground">
-                                                        {fur.grid_rows}×{fur.grid_cols} Regal · {configuredSlots}/{furSlots.length} Fächer platziert
+                                                        {effectiveRows}×{effectiveCols} Regal · {configuredSlots}/{furSlots.length} Fächer platziert
                                                     </p>
                                                 )}
                                             </div>
-                                            {hasGrid && (
+
+                                            {/* Grid-Größen-Stepper (nur im Edit-Modus) */}
+                                            {isEditing && (
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {/* Spalten */}
+                                                    <div className="flex flex-col items-center gap-0.5">
+                                                        <span className="text-[9px] text-muted-foreground">Sp.</span>
+                                                        <div className="flex items-center gap-0.5">
+                                                            <button
+                                                                className="w-5 h-5 rounded border border-border flex items-center justify-center hover:bg-muted/50 transition-colors"
+                                                                onClick={() => adjustGridSize(fur.id, 'cols', -1)}
+                                                            ><Minus className="w-2.5 h-2.5" /></button>
+                                                            <span className="text-xs font-bold w-4 text-center">{effectiveCols}</span>
+                                                            <button
+                                                                className="w-5 h-5 rounded border border-border flex items-center justify-center hover:bg-muted/50 transition-colors"
+                                                                onClick={() => adjustGridSize(fur.id, 'cols', 1)}
+                                                            ><Plus className="w-2.5 h-2.5" /></button>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-muted-foreground text-xs">×</span>
+                                                    {/* Reihen */}
+                                                    <div className="flex flex-col items-center gap-0.5">
+                                                        <span className="text-[9px] text-muted-foreground">Re.</span>
+                                                        <div className="flex items-center gap-0.5">
+                                                            <button
+                                                                className="w-5 h-5 rounded border border-border flex items-center justify-center hover:bg-muted/50 transition-colors"
+                                                                onClick={() => adjustGridSize(fur.id, 'rows', -1)}
+                                                            ><Minus className="w-2.5 h-2.5" /></button>
+                                                            <span className="text-xs font-bold w-4 text-center">{effectiveRows}</span>
+                                                            <button
+                                                                className="w-5 h-5 rounded border border-border flex items-center justify-center hover:bg-muted/50 transition-colors"
+                                                                onClick={() => adjustGridSize(fur.id, 'rows', 1)}
+                                                            ><Plus className="w-2.5 h-2.5" /></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Edit-Button (nur Manager/Admin) */}
+                                            {canEdit && (
+                                                <Button
+                                                    size="icon"
+                                                    variant={isEditing ? 'default' : 'ghost'}
+                                                    className={cn('h-7 w-7 shrink-0', isEditing && 'bg-primary text-primary-foreground')}
+                                                    onClick={() => toggleEditMode(fur.id, fur)}
+                                                    title={isEditing ? 'Fertig' : 'Layout bearbeiten'}
+                                                >
+                                                    {isEditing ? <Check className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
+                                                </Button>
+                                            )}
+
+                                            {!isEditing && hasGrid && (
                                                 <Badge variant="outline" className="text-[10px] shrink-0">
-                                                    {fur.grid_rows}×{fur.grid_cols}
+                                                    {effectiveRows}×{effectiveCols}
                                                 </Badge>
                                             )}
                                         </div>
 
-                                        {/* Grid oder Hinweis */}
+                                        {/* Grid-Inhalt */}
                                         <div className="p-3">
                                             {hasGrid ? (
                                                 <RegelGrid
-                                                    furniture={fur}
+                                                    furniture={furForGrid}
                                                     slots={furSlots}
                                                     assignments={assignments}
                                                     activeSlotId={null}
                                                     onAddToRestock={handleAddToRestock}
                                                     readOnly={false}
+                                                    editMode={isEditing}
+                                                    onSlotUpdate={handleSlotUpdate}
                                                 />
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center gap-1.5 py-5 text-center">
                                                     <Grid3x3 className="w-7 h-7 text-muted-foreground/25" />
-                                                    <p className="text-xs text-muted-foreground/60">
-                                                        Noch kein Regal-Layout konfiguriert
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground/40">
-                                                        Tab „Bereiche" → Möbel bearbeiten → Reihen &amp; Spalten festlegen
-                                                    </p>
+                                                    {canEdit ? (
+                                                        <>
+                                                            <p className="text-xs text-muted-foreground/60">Noch kein Regal-Layout konfiguriert</p>
+                                                            <p className="text-[11px] text-muted-foreground/40">
+                                                                Auf <Pencil className="w-2.5 h-2.5 inline" /> klicken und Spalten/Reihen einstellen
+                                                            </p>
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-xs text-muted-foreground/60">Noch kein Regal-Layout konfiguriert</p>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Edit-Modus Hinweis */}
+                                        {isEditing && (
+                                            <div className="px-3 pb-3">
+                                                <p className="text-[11px] text-primary/70 bg-primary/5 rounded-lg px-3 py-2">
+                                                    ✦ Fächer per Drag &amp; Drop platzieren · Fach-Chip ins Raster ziehen · Größe mit ↗ anpassen · Fertig → ✓
+                                                </p>
+                                            </div>
+                                        )}
                                     </Card>
                                 );
                             })}

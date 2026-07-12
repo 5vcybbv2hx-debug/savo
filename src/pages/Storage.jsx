@@ -56,7 +56,7 @@ export default function Storage() {
       {/* Tab Content */}
       {activeTab === 'search'    && <StorageSearchTab    permissions={permissions} />}
       {activeTab === 'structure' && <StorageStructureTab permissions={permissions} />}
-      {activeTab === 'layout'    && <LayoutTab />}
+      {activeTab === 'layout'    && <LayoutTab permissions={permissions} />}
     </div>
   );
 }
