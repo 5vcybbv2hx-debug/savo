@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { base44, STALE } from '@/api/base44Client';
+import { base44 } from '@/api/base44Client';
+import { STALE } from '@/lib/queryUtils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
