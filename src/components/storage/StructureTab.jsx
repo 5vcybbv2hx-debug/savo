@@ -142,7 +142,7 @@ export default function StructureTab({ permissions }) {
   const { data: slots = [] }                    = useQuery({ queryKey: ['slots'],         queryFn: () => base44.entities.StorageSlot.list('name', 1000),  staleTime: STALE.MEDIUM });
   const { data: assignments = [] } = useQuery({
     queryKey: ['assignments'],
-    queryFn: async () => { const d = await base44.entities.StorageAssignment.filter({ is_active: true }, 'sort_order', 1000); return d.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.article_name || '').localeCompare(b.article_name || '')); },
+    queryFn: () => base44.entities.StorageAssignment.filter({ is_active: true }, 'article_name', 1000),
     staleTime: STALE.MEDIUM,
   });
   const { data: articles = [] } = useQuery({
@@ -261,17 +261,17 @@ export default function StructureTab({ permissions }) {
       for (const delId of deletedAssignmentIds) {
         await base44.entities.StorageAssignment.delete(delId);
       }
-      for (const row of assignRows) {
+      for (const [i, row] of assignRows.entries()) {
         const payload = {
           article_id:      row.article_id,
           article_name:    row.article_name,
           storage_slot_id: slotId,
           slot_full_name:  slotData.full_name,
-          sort_order:      row.sort_order ?? idx,
           quantity:        row.quantity  !== '' && row.quantity  != null ? parseFloat(row.quantity)  : 0,
           min_stock:       row.min_stock !== '' && row.min_stock != null ? parseFloat(row.min_stock) : null,
           unit:            row.unit || 'Stück',
           is_active:       true,
+          sort_order:      i,
         };
         if (row.id) await base44.entities.StorageAssignment.update(row.id, payload);
         else        await base44.entities.StorageAssignment.create(payload);
@@ -354,11 +354,10 @@ export default function StructureTab({ permissions }) {
     setSlotForm({ name: s.name, capacity: s.capacity || '', notes: s.notes || '', restock_enabled: s.restock_enabled !== false });
     const existing = assignments
       .filter(a => a.storage_slot_id === s.id && a.is_active !== false)
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.article_name || '').localeCompare(b.article_name || ''))
-      .map((a, i) => ({
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .map(a => ({
         id: a.id, article_id: a.article_id, article_name: a.article_name,
         quantity: a.quantity ?? '', min_stock: a.min_stock ?? '', unit: a.unit || 'Stück',
-        sort_order: a.sort_order ?? i,
       }));
     setAssignRows(existing);
     setDeletedAssignmentIds([]);
@@ -370,20 +369,20 @@ export default function StructureTab({ permissions }) {
   const updateAssignRow = (idx, patch) =>
     setAssignRows(rows => rows.map((r, i) => i === idx ? { ...r, ...patch } : r));
 
-  const moveAssignRow = (idx, direction) => {
-    setAssignRows(rows => {
-      const arr = [...rows];
-      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= arr.length) return rows;
-      [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
-      return arr.map((r, i) => ({ ...r, sort_order: i }));
-    });
-  };
-
   const removeAssignRow = idx => {
     const row = assignRows[idx];
     if (row.id) setDeletedAssignmentIds(ids => [...ids, row.id]);
     setAssignRows(rows => rows.filter((_, i) => i !== idx));
+  };
+
+  const moveAssignRow = (idx, direction) => {
+    setAssignRows(rows => {
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= rows.length) return rows;
+      const reordered = [...rows];
+      [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+      return reordered;
+    });
   };
 
   const addArticleAssignment = article => {
@@ -391,7 +390,7 @@ export default function StructureTab({ permissions }) {
       toast.info('Dieser Artikel ist bereits zugeordnet.');
       return;
     }
-    setAssignRows(rows => [...rows, { sort_order: rows.length,
+    setAssignRows(rows => [...rows, {
       id: null, article_id: article.id, article_name: article.name,
       quantity: '', min_stock: '', unit: 'Stück',
     }]);
@@ -722,23 +721,6 @@ export default function StructureTab({ permissions }) {
                   {assignRows.map((row, idx) => (
                     <div key={row.id || `new-${idx}`}
                       className="flex items-center gap-1.5 bg-secondary/40 border border-border/50 rounded-lg p-2">
-                      {/* Pfeil-Buttons für Reihenfolge */}
-                      <div className="flex flex-col gap-0.5 shrink-0">
-                        <button
-                          type="button"
-                          disabled={idx === 0}
-                          onClick={() => moveAssignRow(idx, 'up')}
-                          className="h-4 w-4 flex items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-20">
-                          <ArrowUp className="w-3 h-3" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={idx === assignRows.length - 1}
-                          onClick={() => moveAssignRow(idx, 'down')}
-                          className="h-4 w-4 flex items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-20">
-                          <ArrowDown className="w-3 h-3" />
-                        </button>
-                      </div>
                       <span className="flex-1 text-xs font-medium text-foreground truncate" title={row.article_name}>
                         {row.article_name}
                       </span>
@@ -752,6 +734,14 @@ export default function StructureTab({ permissions }) {
                           {UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                         </SelectContent>
                       </Select>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+                        disabled={idx === 0} onClick={() => moveAssignRow(idx, 'up')}>
+                        <ArrowUp className="w-3 h-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+                        disabled={idx === assignRows.length - 1} onClick={() => moveAssignRow(idx, 'down')}>
+                        <ArrowDown className="w-3 h-3" />
+                      </Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/10 shrink-0"
                         onClick={() => removeAssignRow(idx)}>
                         <X className="w-3.5 h-3.5" />
