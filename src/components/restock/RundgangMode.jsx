@@ -13,6 +13,7 @@ import {
     Package, Check, Plus, ClipboardList, ArrowUp, ArrowDown, Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import RegelGrid from '@/components/storage/RegelGrid';
 
 const FURNITURE_ICONS = {
     'Kühlschrank': '🧊',
@@ -646,6 +647,28 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {/* Minimap: Regal-Visualisierung wenn konfiguriert */}
+                                            {furExpanded && fur.grid_rows > 0 && fur.grid_cols > 0 && (() => {
+                                                const furSlotsAll = (slotsByFurniture[fur.id] || []).filter(s => s.is_active !== false);
+                                                const hasPlaced = furSlotsAll.some(s => s.grid_row != null && s.grid_col != null);
+                                                if (!hasPlaced) return null;
+                                                return (
+                                                    <div className="mx-4 mb-3 p-3 rounded-xl border border-border/40 bg-card">
+                                                        <p className="text-[10px] font-medium text-muted-foreground mb-2">
+                                                            {fur.name} — Regal-Übersicht
+                                                        </p>
+                                                        <RegelGrid
+                                                            furniture={fur}
+                                                            slots={furSlotsAll}
+                                                            assignments={assignments}
+                                                            activeSlotId={activeSlotEntry?.slot?.id || null}
+                                                            onAddToRestock={() => {}}
+                                                            readOnly={true}
+                                                        />
+                                                    </div>
+                                                );
+                                            })()}
 
                                             {/* Fächer */}
                                             {furExpanded && (

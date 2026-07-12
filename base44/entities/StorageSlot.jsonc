@@ -12,15 +12,15 @@
     },
     "furniture_id": {
       "type": "string",
-      "description": "ID des M\u00f6bels (Furniture)"
+      "description": "ID des Möbels (Furniture)"
     },
     "furniture_name": {
       "type": "string",
-      "description": "Name des M\u00f6bels (Denormalisierung)"
+      "description": "Name des Möbels (Denormalisierung)"
     },
     "furniture_type": {
       "type": "string",
-      "description": "Typ des M\u00f6bels (Denormalisierung)"
+      "description": "Typ des Möbels (Denormalisierung)"
     },
     "name": {
       "type": "string",
@@ -28,11 +28,11 @@
     },
     "full_name": {
       "type": "string",
-      "description": "Automatisch generierter Pfad: Bereich \u203a M\u00f6bel \u203a Fach"
+      "description": "Automatisch generierter Pfad: Bereich › Möbel › Fach"
     },
     "short_code": {
       "type": "string",
-      "description": "Kurzcode f\u00fcr Etiketten (z.B. BAR-K1-F2)"
+      "description": "Kurzcode für Etiketten (z.B. BAR-K1-F2)"
     },
     "notes": {
       "type": "string",
@@ -46,7 +46,25 @@
     "restock_enabled": {
       "type": "boolean",
       "default": true,
-      "description": "Im Auff\u00fcll-Rundgang anzeigen"
+      "description": "Im Auffüll-Rundgang anzeigen"
+    },
+    "grid_row": {
+      "type": "number",
+      "description": "Zeile im Regal-Grid (0-basiert)"
+    },
+    "grid_col": {
+      "type": "number",
+      "description": "Spalte im Regal-Grid (0-basiert)"
+    },
+    "grid_rowspan": {
+      "type": "number",
+      "description": "Zellen-Höhe im Grid",
+      "default": 1
+    },
+    "grid_colspan": {
+      "type": "number",
+      "description": "Zellen-Breite im Grid",
+      "default": 1
     },
     "sort_order": {
       "type": "number",

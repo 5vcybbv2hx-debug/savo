@@ -119,8 +119,8 @@ export default function StructureTab({ permissions }) {
   const [furModal,   setFurModal]   = useState({ open: false, data: null, areaId: '' });
   const [slotModal,  setSlotModal]  = useState({ open: false, data: null, furnitureId: '', areaId: '' });
   const [areaForm,   setAreaForm]   = useState({ name: '', description: '', restock_enabled: true });
-  const [furForm,    setFurForm]    = useState({ name: '', type: '', area_id: '', notes: '', restock_enabled: true });
-  const [slotForm,   setSlotForm]   = useState({ name: '', capacity: '', notes: '', restock_enabled: true });
+  const [furForm,    setFurForm]    = useState({ name: '', type: '', area_id: '', notes: '', grid_rows: 3, grid_cols: 4, restock_enabled: true });
+  const [slotForm,   setSlotForm]   = useState({ name: '', capacity: '', notes: '', grid_row: '', grid_col: '', grid_rowspan: 1, grid_colspan: 1, restock_enabled: true });
 
   // Inline Artikel-Zuordnung im Fach-Dialog
   const [assignRows,           setAssignRows]           = useState([]);
@@ -248,6 +248,10 @@ export default function StructureTab({ permissions }) {
                                         : generateShortCode(area.name, fur.name, trimmedName)),
         capacity:       slotForm.capacity ? parseInt(slotForm.capacity) : null,
         notes:          slotForm.notes,
+        grid_row:       slotForm.grid_row !== '' && slotForm.grid_row != null ? (parseInt(slotForm.grid_row) - 1) : null,
+        grid_col:       slotForm.grid_col !== '' && slotForm.grid_col != null ? (parseInt(slotForm.grid_col) - 1) : null,
+        grid_rowspan:   slotForm.grid_rowspan !== '' && slotForm.grid_rowspan != null ? parseInt(slotForm.grid_rowspan) : 1,
+        grid_colspan:   slotForm.grid_colspan !== '' && slotForm.grid_colspan != null ? parseInt(slotForm.grid_colspan) : 1,
         is_active:      true,
         restock_enabled: slotForm.restock_enabled !== false,
         sort_order:     slotModal.data?.sort_order ?? 0,
@@ -336,8 +340,8 @@ export default function StructureTab({ permissions }) {
   // ── Modal Opener ──────────────────────────────────────────────────────────────
   const openAddArea  = () => { setAreaForm({ name: '', description: '', restock_enabled: true }); setAreaModal({ open: true, data: null }); };
   const openEditArea = a  => { setAreaForm({ name: a.name, description: a.description || '', restock_enabled: a.restock_enabled !== false }); setAreaModal({ open: true, data: a }); };
-  const openAddFur   = areaId => { setFurForm({ name: '', type: '', area_id: areaId, notes: '', restock_enabled: true }); setFurModal({ open: true, data: null, areaId }); };
-  const openEditFur  = f  => { setFurForm({ name: f.name, type: f.type, area_id: f.area_id, notes: f.notes || '', restock_enabled: f.restock_enabled !== false }); setFurModal({ open: true, data: f, areaId: f.area_id }); };
+  const openAddFur   = areaId => { setFurForm({ name: '', type: '', area_id: areaId, notes: '', grid_rows: 3, grid_cols: 4, restock_enabled: true }); setFurModal({ open: true, data: null, areaId }); };
+  const openEditFur  = f  => { setFurForm({ name: f.name, type: f.type, area_id: f.area_id, notes: f.notes || '', grid_rows: f.grid_rows ?? 3, grid_cols: f.grid_cols ?? 4, restock_enabled: f.restock_enabled !== false }); setFurModal({ open: true, data: f, areaId: f.area_id }); };
   const resetAssignState = () => {
     setAssignRows([]);
     setDeletedAssignmentIds([]);
@@ -346,12 +350,12 @@ export default function StructureTab({ permissions }) {
   };
 
   const openAddSlot  = (furnitureId, areaId) => {
-    setSlotForm({ name: '', capacity: '', notes: '', restock_enabled: true });
+    setSlotForm({ name: '', capacity: '', notes: '', grid_row: '', grid_col: '', grid_rowspan: 1, grid_colspan: 1, restock_enabled: true });
     resetAssignState();
     setSlotModal({ open: true, data: null, furnitureId, areaId });
   };
   const openEditSlot = s  => {
-    setSlotForm({ name: s.name, capacity: s.capacity || '', notes: s.notes || '', restock_enabled: s.restock_enabled !== false });
+    setSlotForm({ name: s.name, capacity: s.capacity || '', notes: s.notes || '', grid_row: s.grid_row != null ? (s.grid_row + 1).toString() : '', grid_col: s.grid_col != null ? (s.grid_col + 1).toString() : '', grid_rowspan: s.grid_rowspan ?? 1, grid_colspan: s.grid_colspan ?? 1, restock_enabled: s.restock_enabled !== false });
     const existing = assignments
       .filter(a => a.storage_slot_id === s.id && a.is_active !== false)
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
@@ -660,6 +664,18 @@ export default function StructureTab({ permissions }) {
               <Input className="h-9" placeholder="z.B. Nur Getränke"
                 value={furForm.notes} onChange={e => setFurForm(f => ({ ...f, notes: e.target.value }))} />
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Grid-Zeilen</Label>
+                <Input type="number" min="1" className="h-9" placeholder="3"
+                  value={furForm.grid_rows} onChange={e => setFurForm(f => ({ ...f, grid_rows: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Grid-Spalten</Label>
+                <Input type="number" min="1" className="h-9" placeholder="4"
+                  value={furForm.grid_cols} onChange={e => setFurForm(f => ({ ...f, grid_cols: e.target.value }))} />
+              </div>
+            </div>
             <div className="flex items-center justify-between pt-1 border-t border-border/50">
               <Label className="text-xs text-muted-foreground">Im Auffüll-Rundgang anzeigen</Label>
               <Switch
@@ -673,7 +689,7 @@ export default function StructureTab({ permissions }) {
             <Button onClick={() => {
               const area = areas.find(a => a.id === furForm.area_id);
               if (!furForm.name.trim() || !furForm.type || !area) { toast.error('Bitte alle Felder ausfüllen'); return; }
-              saveFurMut.mutate({ name: furForm.name.trim(), type: furForm.type, area_id: area.id, area_name: area.name, notes: furForm.notes, is_active: true, restock_enabled: furForm.restock_enabled !== false });
+              saveFurMut.mutate({ name: furForm.name.trim(), type: furForm.type, area_id: area.id, area_name: area.name, notes: furForm.notes, grid_rows: parseInt(furForm.grid_rows) || 3, grid_cols: parseInt(furForm.grid_cols) || 4, is_active: true, restock_enabled: furForm.restock_enabled !== false });
             }} disabled={saveFurMut.isPending} className="bg-amber-600 hover:bg-amber-700 text-white">
               {saveFurMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
             </Button>
@@ -708,6 +724,32 @@ export default function StructureTab({ permissions }) {
                 checked={slotForm.restock_enabled !== false}
                 onCheckedChange={(v) => setSlotForm(f => ({ ...f, restock_enabled: v }))}
               />
+            </div>
+
+            <div className="pt-2 border-t border-border/50 space-y-2">
+              <Label className="text-xs font-semibold text-foreground">Position im Regal</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Zeile (1-basiert)</Label>
+                  <Input type="number" min="1" className="h-8 text-xs" placeholder="z.B. 1"
+                    value={slotForm.grid_row} onChange={e => setSlotForm(f => ({ ...f, grid_row: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Spalte (1-basiert)</Label>
+                  <Input type="number" min="1" className="h-8 text-xs" placeholder="z.B. 1"
+                    value={slotForm.grid_col} onChange={e => setSlotForm(f => ({ ...f, grid_col: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Zeilen-Höhe (Rowspan)</Label>
+                  <Input type="number" min="1" className="h-8 text-xs" placeholder="1"
+                    value={slotForm.grid_rowspan} onChange={e => setSlotForm(f => ({ ...f, grid_rowspan: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Spalten-Breite (Colspan)</Label>
+                  <Input type="number" min="1" className="h-8 text-xs" placeholder="1"
+                    value={slotForm.grid_colspan} onChange={e => setSlotForm(f => ({ ...f, grid_colspan: e.target.value }))} />
+                </div>
+              </div>
             </div>
 
             {/* Inline Artikel-Zuordnung — optional, z.B. für Kühlschubladen mit fixem Soll-Bestand */}

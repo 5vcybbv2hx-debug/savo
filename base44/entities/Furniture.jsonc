@@ -12,21 +12,21 @@
     },
     "name": {
       "type": "string",
-      "description": "Name des M\u00f6bels (z.B. K\u00fchlschrank Bar, Regal Links)"
+      "description": "Name des Möbels (z.B. Kühlschrank Bar, Regal Links)"
     },
     "type": {
       "type": "string",
       "enum": [
         "Regal",
         "Schrank",
-        "K\u00fchlschrank",
-        "Tiefk\u00fchlschrank",
+        "Kühlschrank",
+        "Tiefkühlschrank",
         "Schubladenbox",
         "Tisch",
         "Kiste",
         "Sonstiges"
       ],
-      "description": "M\u00f6beltyp"
+      "description": "Möbeltyp"
     },
     "notes": {
       "type": "string",
@@ -35,16 +35,26 @@
     "is_active": {
       "type": "boolean",
       "default": true,
-      "description": "M\u00f6bel aktiv"
+      "description": "Möbel aktiv"
     },
     "sort_order": {
       "type": "number",
       "description": "Sortierreihenfolge im Bereich"
     },
+    "grid_rows": {
+      "type": "number",
+      "description": "Anzahl Zeilen im Regal-Grid",
+      "default": 3
+    },
+    "grid_cols": {
+      "type": "number",
+      "description": "Anzahl Spalten im Regal-Grid",
+      "default": 4
+    },
     "restock_enabled": {
       "type": "boolean",
       "default": true,
-      "description": "Im Auff\u00fcll-Rundgang anzeigen"
+      "description": "Im Auffüll-Rundgang anzeigen"
     }
   },
   "required": [
