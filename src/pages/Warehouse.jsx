@@ -10,9 +10,10 @@ import { format } from 'date-fns';
 import {
     Package, RefreshCw, ShoppingCart, ShoppingBasket, Layers,
     Building2, TrendingDown, ClipboardCheck, AlertTriangle,
-    PackageCheck, Square, Inbox
+    PackageCheck, Square, Inbox, CheckCircle2, AlertTriangle as AlertTriangleIcon, Minus, Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { sendPushNotification } from '@/lib/pushService';
 
 function StatBadge({ count, variant = 'default' }) {
     if (!count) return null;
@@ -60,6 +61,7 @@ export default function Warehouse() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('bereiche'); // 'bereiche' | 'keller'
+    const [kellerQtys, setKellerQtys] = useState({}); // { [article_id]: number } editierbare Mengen
 
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -101,14 +103,41 @@ export default function Warehouse() {
         enabled: permissions.canViewRestock,
     });
 
-    // Abhaken aller Items eines Artikels im Keller
+    // Abhaken aller Items eines Artikels im Keller (mit tatsächlicher Menge)
     const completeArticleMutation = useMutation({
-        mutationFn: async ({ itemsToComplete }) => {
+        mutationFn: async ({ itemsToComplete, actualQty }) => {
             await Promise.all(
                 itemsToComplete.map(item =>
-                    base44.entities.RestockItem.update(item.id, { is_completed: true })
+                    base44.entities.RestockItem.update(item.id, {
+                        is_completed: true,
+                        quantity: actualQty ?? item.needed_quantity ?? item.quantity ?? 0,
+                    })
                 )
             );
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['restock-open'] });
+        },
+    });
+
+    // "Zu wenig im Keller" — erledigt mit tatsächlicher Menge + Push an Manager
+    const lowStockMutation = useMutation({
+        mutationFn: async ({ group, actualQty }) => {
+            // Items als erledigt markieren mit tatsächlicher Menge
+            await Promise.all(
+                group.items.map(item =>
+                    base44.entities.RestockItem.update(item.id, {
+                        is_completed: true,
+                        quantity: actualQty,
+                    })
+                )
+            );
+            // Push an alle Manager
+            await sendPushNotification({
+                title: '⚠️ Keller-Bestand kritisch',
+                message: `${group.article_name}: nur ${actualQty} von ${group.total_needed} Stück verfügbar — bitte nachbestellen.`,
+                target_role: 'Manager',
+            });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['restock-open'] });
@@ -329,8 +358,9 @@ export default function Warehouse() {
                     ) : (
                         <div className="divide-y divide-border/60 border border-border/50 rounded-xl bg-card overflow-hidden">
                             {kellerGroups.map(group => {
-                                const isPending = completeArticleMutation.isPending &&
-                                    completeArticleMutation.variables?.itemsToComplete?.[0]?.article_id === group.article_id;
+                                const isPending = (completeArticleMutation.isPending || lowStockMutation.isPending) &&
+                                    (completeArticleMutation.variables?.itemsToComplete?.[0]?.article_id === group.article_id ||
+                                     lowStockMutation.variables?.group?.article_id === group.article_id);
                                 return (
                                     <div
                                         key={group.article_id}
