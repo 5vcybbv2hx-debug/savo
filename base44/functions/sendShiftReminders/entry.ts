@@ -8,7 +8,7 @@
  * Die Function nutzt asServiceRole für alle DB-Zugriffe.
  */
 
-import { createClient } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
 
@@ -55,8 +55,8 @@ Deno.serve(async (req) => {
     }
 
     try {
-        // createClient ohne Request-Auth — rein service-seitig
-        const base44 = createClient({ appId: Deno.env.get('APP_ID') || '' });
+        // createClientFromRequest liefert den Service-Token — kein Auth-Guard, nur asServiceRole
+        const base44 = createClientFromRequest(req);
         const db = base44.asServiceRole.entities;
 
         // Morgen als YYYY-MM-DD (UTC — passt zu den Shift.date-Werten die ebenfalls UTC-Date-Strings sind)
