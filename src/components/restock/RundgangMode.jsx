@@ -1,16 +1,15 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { usePermissions } from '@/components/auth/usePermissions';
 import {
-    Layers, ChevronRight, ChevronDown, CheckCircle2, Circle,
-    Package, Check, Plus, ClipboardList, ArrowUp, ArrowDown, Target
+    Layers, CheckCircle2, Package, X, ChevronRight, ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import RegelGrid from '@/components/storage/RegelGrid';
@@ -27,50 +26,24 @@ const FURNITURE_ICONS = {
 };
 
 /**
- * Wichtig: Es gibt KEINE Kassenanbindung, current_stock im System ist daher NIE verlässlich
- * (letzter Zählstand, keine Live-Synchronisation mit tatsächlichem Verkauf). Wir dürfen also
- * niemals automatisch berechnen "wie viel fehlt noch bis Soll" — das muss die Person vor Ort
- * anhand des tatsächlichen Blicks ins Fach selbst eintippen.
- *
- * Die einzige Sicherheitsregel: Die eingetippte Menge darf die Soll-Menge (min_stock) selbst
- * niemals überschreiten — das ist die harte Obergrenze gegen Tippfehler (z.B. 44 statt 14),
- * unabhängig vom (unzuverlässigen) System-Bestand.
+ * Kein Kassenanbindung → current_stock nie verlässlich.
+ * Workflow: Mitarbeiter schaut ins Fach → tippt IST-Menge ein → App berechnet Bedarf.
+ * Sicherheitsregel: IST darf nie > min_stock (Soll) sein.
  */
 
-// Ist ein Fach "erledigt" — bereits manuell geprüft ODER schon heute im Rundgang befüllt?
-// Match strikt über assignment_id (nicht nur article_id), da Rundgang-Einträge inzwischen
-// sofort automatisch abgeschlossen werden (is_completed wird direkt gesetzt) und pro Fach
-// unabhängig geführt werden — auch wenn derselbe Artikel in mehreren Fächern steht.
-function isAssignmentSettled(assignment, { restockItems, today, checkedArticles }) {
-    if (checkedArticles[assignment.id]) return true;
-    const hasRestockItem = restockItems.some(item =>
+// Ist eine Assignment für heute schon erledigt?
+function isAssignmentSettled(assignment, { restockItems, today }) {
+    return restockItems.some(item =>
         item.assignment_id === assignment.id &&
         item.date === today
     );
-    return hasRestockItem;
 }
 
-/**
- * Rundgang-Modus für die Auffüllliste.
- * Hierarchie: Bereich (collapsible) → Möbel (collapsible) → Fach (collapsible) → Artikel.
- * Zeigt ALLE Möbeltypen (nicht nur Kühlschränke), aber nur solche mit restock_enabled !== false.
- * Nur Fächer mit restock_enabled !== false.
- * Nur Bereiche mit restock_enabled !== false.
- *
- * Vereinfacht (2026-07-03): Bereits geprüfte/aufgefüllte Artikel klappen sich zu einer kompakten
- * Zeile zusammen. Ebenen mit noch offenen Artikeln öffnen sich beim ersten Laden automatisch.
- * Sobald ein Fach komplett fertig ist, klappt es sich automatisch zu; ist ein ganzes Möbel fertig,
- * klappt das Möbel zu; ist ein ganzer Bereich fertig, klappt der Bereich zu — das spart beim
- * Rundgang laufend Platz, ohne dass man manuell etwas schließen muss. Eine Fortschrittsleiste
- * oben zeigt auf einen Blick, wie viele Fächer insgesamt noch offen sind.
- */
 export default function RundgangMode({ restockItems, articles, createMutation, updateMutation, showToast }) {
     const today = format(new Date(), 'yyyy-MM-dd');
     const qc = useQueryClient();
-    const permissions = usePermissions();
-    const canSort = permissions.isManager || permissions.isAdmin;
 
-    // ── Queries ──────────────────────────────────────────────────────────────
+    // ── Queries ────────────────────────────────────────────────────────────────
     const { data: areas = [], isLoading: areasLoading } = useQuery({
         queryKey: ['st-areas'],
         queryFn: async () => {
@@ -88,7 +61,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
 
     const { data: slots = [], isLoading: slotsLoading } = useQuery({
         queryKey: ['slots'],
-        queryFn: () => base44.entities.StorageSlot.list('full_name', 1000),
+        queryFn: () => base44.entities.StorageSlot.list('sort_order', 1000),
         staleTime: STALE.MEDIUM,
     });
 
@@ -100,86 +73,32 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
 
     const isInitialLoading = areasLoading || furnitureLoading || slotsLoading || assignmentsLoading;
 
-    // ── UI State ─────────────────────────────────────────────────────────────
+    // ── IST-Popup State ────────────────────────────────────────────────────────
+    const [istPopover, setIstPopover] = useState(null); // { slot, assignments }
+    const [istValues, setIstValues] = useState({});     // { [assignmentId]: number }
+    const [isSaving, setIsSaving] = useState(false);
+
+    // ── Bereiche aufklappbar ───────────────────────────────────────────────────
     const [expandedAreas, setExpandedAreas] = useState({});
-    const [expandedFurniture, setExpandedFurniture] = useState({});
-    const [expandedSlots, setExpandedSlots] = useState({});
 
-    // Restock-Mengen pro Assignment (Input-Feld Werte)
-    const [restockQtys, setRestockQtys] = useState({});
+    // ── Abschluss-Sheet ────────────────────────────────────────────────────────
+    const [showCompletionSummary, setShowCompletionSummary] = useState(false);
+    const completionShownRef = useRef(false);
 
-    // "Geprüft"-Marker: client-seitig, pro Tag, localStorage
-    const CHECKED_KEY = `rundgang_checked_${today}`;
-    const [checkedArticles, setCheckedArticles] = useState(() => {
-        try { return JSON.parse(localStorage.getItem(CHECKED_KEY) || '{}'); } catch { return {}; }
-    });
-
-    const toggleChecked = (assignmentId) => {
-        setCheckedArticles(prev => {
-            const next = { ...prev, [assignmentId]: !prev[assignmentId] };
-            try { localStorage.setItem(CHECKED_KEY, JSON.stringify(next)); } catch {}
-            return next;
-        });
-    };
-
-    // Schritt-für-Schritt-Fokus-Modus: statt alle offenen Fächer gleichzeitig anzuzeigen
-    // (überladen auf Mobile), ist immer nur GENAU EIN Fach aufgeklappt — sobald es fertig
-    // ist, klappt es zu und das nächste Fach in der Reihenfolge (Bereich → Möbel → Fach,
-    // gemäß sort_order) klappt automatisch auf. Verbindlich für alle — kein Umschalter,
-    // ein System für alle.
-
-    // ── Sortier-Mutationen (gleiche Logik wie StructureTab) ───────────────────
-    const swapSortOrder = async (item, direction, siblings, entityName, queryKey) => {
-        const idx = siblings.findIndex(s => s.id === item.id);
-        const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-        if (swapIdx < 0 || swapIdx >= siblings.length) return;
-        const swapItem = siblings[swapIdx];
-        const itemOrder = item.sort_order ?? 0;
-        const swapOrder = swapItem.sort_order ?? 0;
-        if (itemOrder === swapOrder) {
-            const newOrder = direction === 'up' ? itemOrder - 1 : itemOrder + 1;
-            await base44.entities[entityName].update(item.id, { sort_order: newOrder });
-        } else {
-            await base44.entities[entityName].update(item.id, { sort_order: swapOrder });
-            await base44.entities[entityName].update(swapItem.id, { sort_order: itemOrder });
-        }
-    };
-
-    const sortFurMut = useMutation({
-        mutationFn: ({ fur, direction, siblings }) => swapSortOrder(fur, direction, siblings, 'Furniture', ['st-furniture']),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['st-furniture'] }),
-        onError: () => showToast('Sortierung konnte nicht geändert werden', 'error'),
-    });
-
-    const sortSlotMut = useMutation({
-        mutationFn: ({ slot, direction, siblings }) => swapSortOrder(slot, direction, siblings, 'StorageSlot', ['slots']),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['slots'] }),
-        onError: () => showToast('Sortierung konnte nicht geändert werden', 'error'),
-    });
-
-    const sortAreaMut = useMutation({
-        mutationFn: ({ area, direction, siblings }) => swapSortOrder(area, direction, siblings, 'Area', ['st-areas']),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['st-areas'] }),
-        onError: () => showToast('Sortierung konnte nicht geändert werden', 'error'),
-    });
-
-    // ── Gefilterte Daten ─────────────────────────────────────────────────────
+    // ── Gefilterte Daten ───────────────────────────────────────────────────────
     const restockAreas = useMemo(() =>
         areas.filter(a => a.is_active !== false && a.restock_enabled !== false),
         [areas]
     );
-
     const restockFurniture = useMemo(() =>
         furniture.filter(f => f.is_active !== false && f.restock_enabled !== false),
         [furniture]
     );
-
     const restockSlots = useMemo(() =>
         slots.filter(s => s.is_active !== false && s.restock_enabled !== false),
         [slots]
     );
 
-    // Lookups
     const furnitureByArea = useMemo(() => {
         const map = {};
         restockFurniture.forEach(f => {
@@ -187,7 +106,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
             map[f.area_id].push(f);
         });
         Object.values(map).forEach(arr =>
-            arr.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || ''))
+            arr.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
         );
         return map;
     }, [restockFurniture]);
@@ -199,7 +118,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
             map[s.furniture_id].push(s);
         });
         Object.values(map).forEach(arr =>
-            arr.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || ''))
+            arr.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
         );
         return map;
     }, [restockSlots]);
@@ -213,47 +132,42 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         return map;
     }, [assignments]);
 
-    // ── Fortschritts-Logik (nur manuell geprüft oder schon in Liste = "durchgegangen") ──────
-    const settledCtx = { restockItems, today, checkedArticles };
+    // ── Fortschritts-Logik ─────────────────────────────────────────────────────
+    const settledCtx = { restockItems, today };
+
     const isSlotDone = (slotId) => {
         const slotAssignments = assignmentsBySlot[slotId];
         if (!slotAssignments?.length) return false;
         return slotAssignments.every(a => isAssignmentSettled(a, settledCtx));
     };
 
-    // ── Live-Bestandsabgleich: Theke-Fach + Gesamtbestand + Keller-Gegenbuchung ─
-    // Sobald im Rundgang eine Menge eingetragen wird, gilt das als bereits erledigt
-    // (physisch wurde ja schon aufgefüllt) — kein separater "erledigt"-Klick mehr nötig:
-    // 1. Gesamtbestand (Article.current_stock) sinkt um die aufgefüllte Menge (= Verkauf/Verbrauch
-    //    seit letztem Rundgang).
-    // 2. Das Theke-Fach selbst (StorageAssignment.quantity) wird um die Menge hochgezählt
-    //    (aufgefüllt), gedeckelt auf die Soll-Menge.
-    // 3. Falls der Artikel auch einem Lager/Keller-Fach zugeordnet ist, wird dort die gleiche
-    //    Menge abgezogen (Ware kam ja von dort). WICHTIG: die verkaufte/aufgefüllte Menge wird
-    //    NIE anhand des Keller-Bestands gedeckelt — auch wenn im Keller laut System nur noch 7
-    //    stehen, aber 8 aufgefüllt wurden, gelten trotzdem 8 als verkauft/entnommen (der
-    //    Keller-Wert selbst wird nur nie unter 0 gezogen). Der Keller-Bestand ist selbst nur ein
-    //    Snapshot und wird bei der nächsten Inventur ohnehin wieder korrigiert.
+    const overallProgress = useMemo(() => {
+        let total = 0, done = 0;
+        restockAreas.forEach(area => {
+            (furnitureByArea[area.id] || []).forEach(fur => {
+                (slotsByFurniture[fur.id] || [])
+                    .filter(s => (assignmentsBySlot[s.id] || []).length > 0)
+                    .forEach(slot => {
+                        total++;
+                        if (isSlotDone(slot.id)) done++;
+                    });
+            });
+        });
+        return { total, done };
+    }, [restockAreas, furnitureByArea, slotsByFurniture, assignmentsBySlot, restockItems]);
+
+    // ── Live-Bestandsabgleich (identisch zur bestehenden Logik) ───────────────
     const syncStockOnRestock = async (assignment, article, delta) => {
         if (!delta) return;
-
-        // 1) Gesamtbestand
         if (article.current_stock != null) {
             const newTotal = Math.max(0, (parseFloat(article.current_stock) || 0) - delta);
-            try {
-                await base44.entities.Article.update(article.id, { current_stock: newTotal });
-            } catch (e) { console.warn('[Rundgang] Gesamtbestand-Sync fehlgeschlagen:', e); }
+            try { await base44.entities.Article.update(article.id, { current_stock: newTotal }); } catch {}
         }
-
-        // 2) Theke-Fach selbst hochzählen (gedeckelt auf Soll)
         try {
             let newSlotQty = (assignment.quantity ?? 0) + delta;
             if (assignment.min_stock != null) newSlotQty = Math.min(newSlotQty, assignment.min_stock);
-            newSlotQty = Math.max(0, newSlotQty);
-            await base44.entities.StorageAssignment.update(assignment.id, { quantity: newSlotQty });
-        } catch (e) { console.warn('[Rundgang] Fach-Sync fehlgeschlagen:', e); }
-
-        // 3) Lager/Keller-Gegenbuchung: erste passende Lager-Zuordnung des gleichen Artikels
+            await base44.entities.StorageAssignment.update(assignment.id, { quantity: Math.max(0, newSlotQty) });
+        } catch {}
         try {
             const lagerAssignment = assignments.find(a => {
                 if (a.article_id !== assignment.article_id || a.id === assignment.id) return false;
@@ -262,688 +176,397 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                 return slotArea?.area_type === 'lager';
             });
             if (lagerAssignment) {
-                const newLagerQty = Math.max(0, (lagerAssignment.quantity ?? 0) - delta);
-                await base44.entities.StorageAssignment.update(lagerAssignment.id, { quantity: newLagerQty });
+                const newQty = Math.max(0, (lagerAssignment.quantity ?? 0) - delta);
+                await base44.entities.StorageAssignment.update(lagerAssignment.id, { quantity: newQty });
             }
-        } catch (e) { console.warn('[Rundgang] Lager-Gegenbuchung fehlgeschlagen:', e); }
-
+        } catch {}
         qc.invalidateQueries({ queryKey: ['articles'] });
         qc.invalidateQueries({ queryKey: ['assignments'] });
         qc.invalidateQueries({ queryKey: ['inv-assignments'] });
     };
 
-    // ── Restock erstellen/aktualisieren (Menge hart auf Soll gedeckelt) ───────
-    const handleRestock = async (assignment, area, qty) => {
-        let numQty = parseFloat(qty);
-        if (!numQty || numQty <= 0) {
-            showToast('Bitte eine gültige Menge eingeben', 'error');
-            return;
-        }
-
-        const article = articles.find(a => a.id === assignment.article_id);
-        if (!article) {
-            showToast('Artikel nicht gefunden', 'error');
-            return;
-        }
-
-        // Sicherheitsnetz gegen Tippfehler (z.B. 44 statt 14): die Soll-Menge selbst ist die
-        // absolute Obergrenze — wir kennen den echten aktuellen Bestand ohne Inventur nicht,
-        // daher wird NICHT gegen current_stock gerechnet, sondern nur gegen min_stock gedeckelt.
-        const maxAllowed = assignment.min_stock;
-        if (maxAllowed != null && numQty > maxAllowed) {
-            numQty = maxAllowed;
-            showToast(`Menge auf Soll-Maximum (${maxAllowed}${assignment.unit ? ` ${assignment.unit}` : ''}) begrenzt`, 'info');
-        }
-
-        // Match strikt über die Fach-Zuordnung (assignment_id), nicht nur den Artikel — so bleibt
-        // jedes Fach unabhängig buchbar, auch wenn der gleiche Artikel in mehreren Fächern steht.
-        const existingItem = restockItems.find(item =>
-            item.assignment_id === assignment.id &&
-            item.date === today
-        );
-
-        const previousQty = existingItem?.quantity ?? 0;
-        const delta = numQty - previousQty;
-
-        if (existingItem) {
-            updateMutation.mutate({
-                id: existingItem.id,
-                data: { ...existingItem, quantity: numQty, is_completed: true, stock_reduced: true },
-            });
-            showToast(`${article.name}: Menge aktualisiert`, 'success');
-        } else {
-            const user = await base44.auth.me();
-            createMutation.mutate({
-                article_id: article.id,
-                barcode: article.barcode || '',
-                article_name: article.name,
-                article_image_url: article.image_url || null,
-                quantity: numQty,
-                area_id: area.id,
-                area_name: area.name,
-                assignment_id: assignment.id,
-                restocked_by: user?.full_name || user?.email || 'Unbekannt',
-                date: today,
-                time: format(new Date(), 'HH:mm'),
-                is_completed: true,
-                stock_reduced: true,
-            });
-            showToast(`${article.name} aufgefüllt & Bestand aktualisiert`, 'success');
-        }
-
-        await syncStockOnRestock(assignment, article, delta);
-
-        // Input zurücksetzen und als geprüft markieren
-        setRestockQtys(prev => { const next = { ...prev }; delete next[assignment.id]; return next; });
-        if (!checkedArticles[assignment.id]) {
-            setCheckedArticles(prev => {
-                const next = { ...prev, [assignment.id]: true };
-                try { localStorage.setItem(CHECKED_KEY, JSON.stringify(next)); } catch {}
-                return next;
-            });
-        }
+    // ── Fach-Tap → IST-Popup öffnen ────────────────────────────────────────────
+    const handleSlotTap = (slot, slotAssignments) => {
+        setIstPopover({ slot, assignments: slotAssignments });
+        const vals = {};
+        slotAssignments.forEach(a => {
+            // Vorausfüllen: IST aus letztem Rundgang-Item von heute, sonst assignment.quantity
+            const todayItem = restockItems.find(r => r.assignment_id === a.id && r.date === today);
+            vals[a.id] = todayItem ? todayItem.quantity : (a.quantity ?? 0);
+        });
+        setIstValues(vals);
     };
 
-    // ── Nur Bereiche mit restock-fähigen Möbeln/Fächern ──────────────────────
-    const areasWithRestock = useMemo(() =>
-        restockAreas.filter(a => {
-            const areaFurniture = furnitureByArea[a.id] || [];
-            return areaFurniture.some(f =>
-                (slotsByFurniture[f.id] || []).some(s => assignmentsBySlot[s.id]?.length > 0)
+    // ── IST speichern: RestockItem erstellen/updaten + Stock sync ──────────────
+    const handleSaveIst = async () => {
+        if (!istPopover || isSaving) return;
+        setIsSaving(true);
+
+        const { slot, assignments: popAssignments } = istPopover;
+        const user = await base44.auth.me();
+        const userName = user?.full_name || user?.email || 'Unbekannt';
+
+        let anyRestock = false;
+
+        for (const a of popAssignments) {
+            let ist = parseFloat(istValues[a.id]);
+            if (isNaN(ist) || ist < 0) ist = 0;
+            // Sicherheitsdeckel: IST nie > Soll
+            if (a.min_stock != null && ist > a.min_stock) ist = a.min_stock;
+
+            const needed = a.min_stock != null ? Math.max(0, a.min_stock - ist) : null;
+
+            // Nur wenn tatsächlich Bedarf besteht ODER manuell was eingetragen wurde
+            const article = articles.find(art => art.id === a.article_id);
+
+            const existingItem = restockItems.find(r =>
+                r.assignment_id === a.id && r.date === today
             );
-        }),
-        [restockAreas, furnitureByArea, slotsByFurniture, assignmentsBySlot]
-    );
+            const previousQty = existingItem?.quantity ?? 0;
+            const delta = ist - (a.quantity ?? 0); // Differenz zum gespeicherten Fach-Bestand
 
-    // ── Struktur-Baum einmal pro Render aufbauen (wird von mehreren Effekten/Render genutzt) ──
-    const tree = useMemo(() => {
-        return areasWithRestock.map(area => {
-            const areaFurniture = (furnitureByArea[area.id] || []).filter(f =>
-                (slotsByFurniture[f.id] || []).some(s => assignmentsBySlot[s.id]?.length > 0)
-            );
-            const furnitureList = areaFurniture.map(fur => ({
-                fur,
-                furSlots: (slotsByFurniture[fur.id] || []).filter(s => assignmentsBySlot[s.id]?.length > 0),
-            })).filter(f => f.furSlots.length > 0);
-            return { area, furnitureList };
-        });
-    }, [areasWithRestock, furnitureByArea, slotsByFurniture, assignmentsBySlot]);
-
-    // ── Flache, physisch-begehbare Reihenfolge ALLER Fächer (Bereich → Möbel → Fach,
-    // jeweils nach sort_order) — Grundlage für den Schritt-für-Schritt-Fokus-Modus. ────
-    const flatSlots = useMemo(() => {
-        const list = [];
-        tree.forEach(({ area, furnitureList }) => {
-            furnitureList.forEach(({ fur, furSlots }) => {
-                furSlots.forEach(slot => list.push({ area, fur, slot }));
-            });
-        });
-        return list;
-    }, [tree]);
-
-    // ── Das aktuell "dran" befindliche Fach im Fokus-Modus: das erste noch nicht
-    // fertige Fach in der physischen Reihenfolge. null = alles erledigt. ────────────
-    const activeSlotEntry = useMemo(() => {
-        return flatSlots.find(({ slot }) => !isSlotDone(slot.id)) || null;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [flatSlots, checkedArticles, restockItems]);
-
-    // ── Gesamt-Fortschritt (für die Kopfzeile) ────────────────────────────────
-    const overallProgress = useMemo(() => {
-        let total = 0, done = 0;
-        tree.forEach(({ furnitureList }) => {
-            furnitureList.forEach(({ furSlots }) => {
-                furSlots.forEach(slot => {
-                    total++;
-                    if (isSlotDone(slot.id)) done++;
+            if (existingItem) {
+                updateMutation.mutate({
+                    id: existingItem.id,
+                    data: {
+                        ...existingItem,
+                        quantity: ist,
+                        needed_quantity: needed,
+                        is_completed: true,
+                        stock_reduced: true,
+                    },
                 });
-            });
-        });
-        return { total, done };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tree, checkedArticles, restockItems]);
+            } else {
+                createMutation.mutate({
+                    article_id: a.article_id,
+                    article_name: a.article_name,
+                    article_image_url: null,
+                    storage_slot_id: slot.id,
+                    slot_name: slot.name || slot.full_name,
+                    assignment_id: a.id,
+                    quantity: ist,
+                    needed_quantity: needed,
+                    area_id: slot.area_id || null,
+                    restocked_by: userName,
+                    date: today,
+                    time: format(new Date(), 'HH:mm'),
+                    is_completed: true,
+                    stock_reduced: true,
+                });
+                anyRestock = true;
+            }
 
-    // ── Auto-Expand: Ebenen mit offenem Handlungsbedarf öffnen sich beim ersten
-    // Laden automatisch, damit man nicht durch alles klicken muss. Läuft nur EINMAL
-    // pro Seitenaufruf — danach bleibt es dem Nutzer überlassen, was auf/zu ist.
-    const autoExpandedRef = useRef(false);
-    useEffect(() => {
-        if (autoExpandedRef.current || tree.length === 0) return;
-
-        // Nur den Pfad zum EINEN aktuell dran befindlichen Fach öffnen — alles andere
-        // bleibt zu. Der Folge-Effekt unten übernimmt danach das automatische Weiterschalten.
-        if (activeSlotEntry) {
-            setExpandedAreas(prev => ({ ...prev, [activeSlotEntry.area.id]: true }));
-            setExpandedFurniture(prev => ({ ...prev, [activeSlotEntry.fur.id]: true }));
-            setExpandedSlots(prev => ({ ...prev, [activeSlotEntry.slot.id]: true }));
-        }
-        autoExpandedRef.current = true;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tree]);
-
-    // ── Fokus-Modus: sobald das aktuell aktive Fach wechselt (weil das vorherige
-    // fertig wurde), automatisch zum nächsten Fach in der Reihenfolge weiterspringen —
-    // dessen Bereich/Möbel-Pfad öffnen und sanft dorthin scrollen. Das eigentliche
-    // Zuklappen des fertigen Fachs übernimmt bereits der Auto-Collapse-Effekt weiter
-    // unten (reagiert auf den offen→fertig Übergang), hier kümmern wir uns nur ums
-    // Weiterschalten zum NÄCHSTEN Fach. ──────────────────────────────────────────
-    const prevActiveSlotIdRef = useRef(null);
-    const activeSlotRefEl = useRef(null);
-    useEffect(() => {
-        const activeId = activeSlotEntry?.slot?.id || null;
-        if (activeId && activeId !== prevActiveSlotIdRef.current) {
-            const isFirstLoad = prevActiveSlotIdRef.current === null;
-            setExpandedAreas(prev => ({ ...prev, [activeSlotEntry.area.id]: true }));
-            setExpandedFurniture(prev => ({ ...prev, [activeSlotEntry.fur.id]: true }));
-            setExpandedSlots(prev => ({ ...prev, [activeId]: true }));
-            prevActiveSlotIdRef.current = activeId;
-            // Nur ins Sichtfeld scrollen, wenn wir NICHT ganz am Anfang stehen (sonst
-            // springt die Seite beim allerersten Laden unnötig).
-            if (!isFirstLoad) {
-                setTimeout(() => {
-                    activeSlotRefEl.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 150);
+            // Stock sync — delta basiert auf IST vs. gespeichertem Fach-Bestand
+            if (article && delta !== 0) {
+                await syncStockOnRestock(a, article, -delta); // negativ weil IST = was DA ist, nicht was entnommen wurde
             }
         }
-    }, [activeSlotEntry]);
 
-    // ── Auto-Collapse: Sobald ein Fach/Möbel/Bereich fertig wird (Übergang offen → fertig),
-    // klappt es sich automatisch zu — spart laufend Platz beim Rundgang, ohne dass man
-    // irgendwas manuell schließen muss. Reagiert nur auf den ÜBERGANG, nicht auf den
-    // bereits-fertigen Ausgangszustand (der ist ohnehin schon zugeklappt, siehe Auto-Expand oben).
-    const prevSlotDoneRef = useRef({});
-    const prevFurDoneRef = useRef({});
-    const prevAreaDoneRef = useRef({});
-    useEffect(() => {
-        const slotCollapse = {};
-        const furCollapse = {};
-        const areaCollapse = {};
+        // Assignments-Cache aktualisieren (neue quantity-Werte)
+        qc.invalidateQueries({ queryKey: ['assignments'] });
+        qc.invalidateQueries({ queryKey: ['restock-items'] });
 
-        tree.forEach(({ area, furnitureList }) => {
-            let areaSlotCount = 0, areaDoneCount = 0;
+        setIsSaving(false);
+        setIstPopover(null);
+        showToast('Bestand gespeichert ✓', 'success');
 
-            furnitureList.forEach(({ fur, furSlots }) => {
-                let furDoneCount = 0;
+        // Abschluss prüfen
+        setTimeout(() => {
+            qc.invalidateQueries({ queryKey: ['restock-items', today] });
+        }, 500);
+    };
 
-                furSlots.forEach(slot => {
-                    const done = isSlotDone(slot.id);
-                    const prevDone = prevSlotDoneRef.current[slot.id];
-                    if (done && prevDone === false) slotCollapse[slot.id] = false; // false = zugeklappt
-                    prevSlotDoneRef.current[slot.id] = done;
-                    if (done) furDoneCount++;
-                });
-
-                const furDone = furSlots.length > 0 && furDoneCount === furSlots.length;
-                const prevFurDone = prevFurDoneRef.current[fur.id];
-                if (furDone && prevFurDone === false) furCollapse[fur.id] = false;
-                prevFurDoneRef.current[fur.id] = furDone;
-
-                areaSlotCount += furSlots.length;
-                areaDoneCount += furDoneCount;
-            });
-
-            const areaDone = areaSlotCount > 0 && areaDoneCount === areaSlotCount;
-            const prevAreaDone = prevAreaDoneRef.current[area.id];
-            if (areaDone && prevAreaDone === false) areaCollapse[area.id] = false;
-            prevAreaDoneRef.current[area.id] = areaDone;
-        });
-
-        if (Object.keys(slotCollapse).length) setExpandedSlots(prev => ({ ...prev, ...slotCollapse }));
-        if (Object.keys(furCollapse).length) setExpandedFurniture(prev => ({ ...prev, ...furCollapse }));
-        if (Object.keys(areaCollapse).length) setExpandedAreas(prev => ({ ...prev, ...areaCollapse }));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tree, checkedArticles, restockItems]);
-
-    // ── Heute aufgefüllte Artikel (für die Abschluss-Zusammenfassung) ────────
-    const todaysRestockItems = useMemo(() =>
-        restockItems.filter(item => item.date === today && !item.is_completed),
-        [restockItems, today]
-    );
-
-    // ── Abschluss-Zusammenfassung: wenn der komplette Rundgang fertig wird
-    // (Übergang zu "alles erledigt"), kurze Bilanz zeigen — wie beim Ausstempeln.
-    const [showCompletionSummary, setShowCompletionSummary] = useState(false);
-    const prevAllDoneRef = useRef(false);
-    useEffect(() => {
-        const nowAllDone = overallProgress.total > 0 && overallProgress.done === overallProgress.total;
-        if (nowAllDone && !prevAllDoneRef.current) {
-            setShowCompletionSummary(true);
-        }
-        prevAllDoneRef.current = nowAllDone;
-    }, [overallProgress]);
-
+    // ── Loading ────────────────────────────────────────────────────────────────
     if (isInitialLoading) {
         return (
-            <Card className="p-10 text-center border-border/40">
-                <div className="w-6 h-6 mx-auto mb-3 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
-                <p className="text-sm text-muted-foreground">Lade Rundgang…</p>
-            </Card>
+            <div className="flex flex-col items-center justify-center gap-3 py-20">
+                <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                <p className="text-sm text-muted-foreground">Lade Lagerplätze…</p>
+            </div>
         );
     }
 
-    if (tree.length === 0) {
+    const areasToShow = restockAreas.filter(area => {
+        const furs = (furnitureByArea[area.id] || []).filter(f =>
+            (slotsByFurniture[f.id] || []).some(s => (assignmentsBySlot[s.id] || []).length > 0)
+        );
+        return furs.length > 0;
+    });
+
+    if (areasToShow.length === 0) {
         return (
-            <Card className="p-10 text-center border-border/40">
-                <ClipboardList className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
-                <p className="text-muted-foreground font-medium">Keine Fächer für den Rundgang konfiguriert</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">
-                    Aktiviere Möbel und Fächer für den Rundgang unter<br />
-                    <span className="font-medium">Waren &amp; Lager → Bereiche</span>
-                </p>
-            </Card>
+            <div className="flex flex-col items-center justify-center gap-3 py-20 text-center px-6">
+                <Package className="w-12 h-12 text-muted-foreground/30" />
+                <p className="text-sm font-medium text-muted-foreground">Noch keine Lagerplätze konfiguriert.</p>
+                <p className="text-xs text-muted-foreground/60">Bereiche, Möbel und Fächer im Lagerplätze-Bereich anlegen.</p>
+            </div>
         );
     }
 
-    const allDone = overallProgress.total > 0 && overallProgress.done === overallProgress.total;
-    const progressPct = overallProgress.total > 0 ? Math.round((overallProgress.done / overallProgress.total) * 100) : 0;
+    const allDone = overallProgress.done >= overallProgress.total && overallProgress.total > 0;
 
-    // ── Render ───────────────────────────────────────────────────────────────
     return (
-        <div className="space-y-2">
-            {/* Gesamt-Fortschritt — sticky, damit man beim Scrollen immer den Überblick behält */}
-            <div className="sticky top-0 z-20 -mx-1 px-1 py-2 bg-background/95 backdrop-blur-sm flex items-center gap-3">
-                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+        <div className="space-y-4 pb-32">
+            {/* Fortschrittsbalken */}
+            <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm border-b border-border/40 px-1 py-2">
+                <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                        {overallProgress.done}/{overallProgress.total} Fächer geprüft
+                    </span>
+                    {allDone && (
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            ✓ Alles erledigt!
+                        </span>
+                    )}
+                </div>
+                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                        className={cn('h-full rounded-full transition-all', allDone ? 'bg-green-500' : 'bg-amber-500')}
-                        style={{ width: `${progressPct}%` }}
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                        style={{ width: overallProgress.total > 0 ? `${(overallProgress.done / overallProgress.total) * 100}%` : '0%' }}
                     />
                 </div>
-                <p className="text-[11px] font-medium text-muted-foreground shrink-0">
-                    {allDone
-                        ? <span className="text-green-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />Rundgang komplett</span>
-                        : `${overallProgress.done}/${overallProgress.total} Fächer erledigt`}
-                </p>
             </div>
 
-            {tree.map(({ area, furnitureList }, areaIdx) => {
-                const areaSlots = furnitureList.flatMap(f => f.furSlots);
-                const areaExpanded = expandedAreas[area.id];
-                const doneInArea = areaSlots.filter(s => isSlotDone(s.id)).length;
-                const areaAllDone = areaSlots.length > 0 && doneInArea === areaSlots.length;
+            {/* Bereiche */}
+            {areasToShow.map(area => {
+                const areaFurniture = (furnitureByArea[area.id] || []).filter(f =>
+                    (slotsByFurniture[f.id] || []).some(s => (assignmentsBySlot[s.id] || []).length > 0)
+                );
+                const isExpanded = expandedAreas[area.id] !== false; // Default: aufgeklappt
+
+                const areaTotal = areaFurniture.reduce((sum, fur) => {
+                    return sum + (slotsByFurniture[fur.id] || []).filter(s => (assignmentsBySlot[s.id] || []).length > 0).length;
+                }, 0);
+                const areaDone = areaFurniture.reduce((sum, fur) => {
+                    return sum + (slotsByFurniture[fur.id] || []).filter(s => isSlotDone(s.id)).length;
+                }, 0);
+                const areaAllDone = areaDone >= areaTotal && areaTotal > 0;
 
                 return (
-                    <Card key={area.id} className="overflow-hidden border-border">
+                    <div key={area.id}>
                         {/* Bereich Header */}
-                        <div className="w-full flex items-center gap-3 p-3 hover:bg-secondary/30 transition-colors">
-                            <button
-                                className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                                onClick={() => setExpandedAreas(prev => ({ ...prev, [area.id]: !prev[area.id] }))}
-                            >
-                                <div className={cn(
-                                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
-                                    areaAllDone ? "bg-green-500/15" : "bg-amber-500/15"
-                                )}>
-                                    {areaAllDone
-                                        ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                        : <Layers className="w-4 h-4 text-amber-500" />}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-sm text-foreground">{area.name}</p>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        {doneInArea}/{areaSlots.length} Fächer durchgegangen
-                                    </p>
-                                </div>
-                                {areaExpanded
-                                    ? <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-                                    : <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />}
-                            </button>
-                            {canSort && (
-                                <div className="flex gap-0.5 shrink-0">
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                        disabled={areaIdx === 0}
-                                        onClick={() => sortAreaMut.mutate({ area, direction: 'up', siblings: tree.map(t => t.area) })}>
-                                        <ArrowUp className="w-3 h-3" />
-                                    </Button>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                        disabled={areaIdx === tree.length - 1}
-                                        onClick={() => sortAreaMut.mutate({ area, direction: 'down', siblings: tree.map(t => t.area) })}>
-                                        <ArrowDown className="w-3 h-3" />
-                                    </Button>
-                                </div>
+                        <button
+                            className="w-full flex items-center gap-2.5 px-1 py-2"
+                            onClick={() => setExpandedAreas(prev => ({ ...prev, [area.id]: !isExpanded }))}
+                        >
+                            <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center shrink-0">
+                                <Layers className="w-3.5 h-3.5 text-amber-500" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground flex-1 text-left">{area.name}</span>
+                            {areaAllDone && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                             )}
-                        </div>
+                            <span className="text-[10px] text-muted-foreground">{areaDone}/{areaTotal}</span>
+                            {isExpanded
+                                ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                        </button>
 
-                        {/* Möbel + Fächer */}
-                        {areaExpanded && (
-                            <div className="border-t border-border/50">
-                                {furnitureList.map(({ fur, furSlots }, furIdx) => {
-                                    const furExpanded = expandedFurniture[fur.id];
-                                    const doneInFur = furSlots.filter(s => isSlotDone(s.id)).length;
-                                    const furAllDone = furSlots.length > 0 && doneInFur === furSlots.length;
+                        {isExpanded && (
+                            <div className="space-y-3">
+                                {areaFurniture.map(fur => {
+                                    const furSlots = (slotsByFurniture[fur.id] || []).filter(s =>
+                                        (assignmentsBySlot[s.id] || []).length > 0
+                                    );
+                                    const hasGrid = fur.grid_rows > 0 && fur.grid_cols > 0;
+                                    const hasPlacedSlots = hasGrid && furSlots.some(s => s.grid_row != null && s.grid_col != null);
+
+                                    const furDone = furSlots.filter(s => isSlotDone(s.id)).length;
+                                    const furAllDone = furDone >= furSlots.length && furSlots.length > 0;
 
                                     return (
-                                        <div key={fur.id} className="border-b border-border/30 last:border-0">
+                                        <Card key={fur.id} className={cn(
+                                            'overflow-hidden border-border/60 transition-all',
+                                            furAllDone && 'opacity-70'
+                                        )}>
                                             {/* Möbel Header */}
-                                            <div className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-secondary/20 transition-colors">
-                                                <button
-                                                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                                                    onClick={() => setExpandedFurniture(prev => ({ ...prev, [fur.id]: !prev[fur.id] }))}
-                                                >
-                                                    <span className="text-base w-5 text-center shrink-0">
-                                                        {furAllDone ? '✅' : (FURNITURE_ICONS[fur.type] || '📦')}
-                                                    </span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-foreground truncate">{fur.name}</p>
-                                                        <p className="text-[11px] text-muted-foreground">
-                                                            {fur.type}{fur.type ? ' · ' : ''}{doneInFur}/{furSlots.length} Fächer
-                                                        </p>
-                                                    </div>
-                                                    {furExpanded
-                                                        ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                                        : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
-                                                </button>
-                                                {canSort && (
-                                                    <div className="flex gap-0.5 shrink-0">
-                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                                            disabled={furIdx === 0}
-                                                            onClick={() => sortFurMut.mutate({ fur, direction: 'up', siblings: furnitureList.map(f => f.fur) })}>
-                                                            <ArrowUp className="w-3 h-3" />
-                                                        </Button>
-                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                                            disabled={furIdx === furnitureList.length - 1}
-                                                            onClick={() => sortFurMut.mutate({ fur, direction: 'down', siblings: furnitureList.map(f => f.fur) })}>
-                                                            <ArrowDown className="w-3 h-3" />
-                                                        </Button>
-                                                    </div>
+                                            <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-border/30 bg-muted/20">
+                                                <span className="text-base w-6 text-center shrink-0">
+                                                    {FURNITURE_ICONS[fur.type] || '📦'}
+                                                </span>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-semibold text-foreground truncate">{fur.name}</p>
+                                                    <p className="text-[10px] text-muted-foreground">
+                                                        {furDone}/{furSlots.length} Fächer · Fach antippen zum Eintragen
+                                                    </p>
+                                                </div>
+                                                {furAllDone && (
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                                                 )}
                                             </div>
 
-                                            {/* Minimap: Regal-Visualisierung wenn konfiguriert */}
-                                            {furExpanded && fur.grid_rows > 0 && fur.grid_cols > 0 && (() => {
-                                                const furSlotsAll = (slotsByFurniture[fur.id] || []).filter(s => s.is_active !== false);
-                                                const hasPlaced = furSlotsAll.some(s => s.grid_row != null && s.grid_col != null);
-                                                if (!hasPlaced) return null;
-                                                return (
-                                                    <div className="mx-4 mb-3 p-3 rounded-xl border border-border/40 bg-card">
-                                                        <p className="text-[10px] font-medium text-muted-foreground mb-2">
-                                                            {fur.name} — Regal-Übersicht
-                                                        </p>
-                                                        <RegelGrid
-                                                            furniture={fur}
-                                                            slots={furSlotsAll}
-                                                            assignments={assignments}
-                                                            activeSlotId={activeSlotEntry?.slot?.id || null}
-                                                            onAddToRestock={() => {}}
-                                                            readOnly={true}
-                                                        />
+                                            {/* Grid-Ansicht */}
+                                            <div className="p-3">
+                                                {hasPlacedSlots ? (
+                                                    <RegelGrid
+                                                        furniture={fur}
+                                                        slots={furSlots}
+                                                        assignments={assignments}
+                                                        activeSlotId={null}
+                                                        onSlotTap={handleSlotTap}
+                                                        readOnly={false}
+                                                        editMode={false}
+                                                    />
+                                                ) : (
+                                                    /* Fallback: Fächer ohne Grid als klickbare Chips */
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {furSlots.map(slot => {
+                                                            const slotAssignments = assignmentsBySlot[slot.id] || [];
+                                                            const done = isSlotDone(slot.id);
+                                                            return (
+                                                                <button
+                                                                    key={slot.id}
+                                                                    onClick={() => handleSlotTap(slot, slotAssignments)}
+                                                                    className={cn(
+                                                                        'flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all active:scale-95',
+                                                                        done
+                                                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                                                                            : 'bg-card border-border hover:border-primary/50 hover:bg-primary/5 text-foreground'
+                                                                    )}
+                                                                >
+                                                                    {done
+                                                                        ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                                                        : <Package className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                                                                    <span className="truncate max-w-[120px]">{slot.name}</span>
+                                                                    <span className="text-[10px] text-muted-foreground ml-1">
+                                                                        ({slotAssignments.length})
+                                                                    </span>
+                                                                </button>
+                                                            );
+                                                        })}
                                                     </div>
-                                                );
-                                            })()}
-
-                                            {/* Fächer */}
-                                            {furExpanded && (
-                                                <div className="bg-muted/10">
-                                                    {furSlots.map((slot, slotIdx) => (
-                                                        <SlotRestockGroup
-                                                            key={slot.id}
-                                                            slot={slot}
-                                                            area={area}
-                                                            isActive={activeSlotEntry?.slot?.id === slot.id}
-                                                            activeRef={activeSlotEntry?.slot?.id === slot.id ? activeSlotRefEl : null}
-                                                            expanded={expandedSlots[slot.id]}
-                                                            onToggle={() => setExpandedSlots(prev => ({ ...prev, [slot.id]: !prev[slot.id] }))}
-                                                            assignments={assignmentsBySlot[slot.id] || []}
-                                                            articles={articles}
-                                                            restockItems={restockItems}
-                                                            today={today}
-                                                            isDone={isSlotDone(slot.id)}
-                                                            restockQtys={restockQtys}
-                                                            setRestockQtys={setRestockQtys}
-                                                            checkedArticles={checkedArticles}
-                                                            toggleChecked={toggleChecked}
-                                                            onRestock={handleRestock}
-                                                            canSort={canSort}
-                                                            slotIdx={slotIdx}
-                                                            totalSlots={furSlots.length}
-                                                            siblings={furSlots}
-                                                            onMoveSlot={sortSlotMut}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
+                                                )}
+                                            </div>
+                                        </Card>
                                     );
                                 })}
                             </div>
                         )}
-                    </Card>
+                    </div>
                 );
             })}
 
-            {/* Abschluss-Zusammenfassung */}
+            {/* IST-Eingabe Popup */}
+            {istPopover && (
+                <div
+                    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/60 backdrop-blur-sm p-0 sm:p-4"
+                    onClick={() => !isSaving && setIstPopover(null)}
+                >
+                    <div
+                        className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm shadow-xl"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Popup Header */}
+                        <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-border/40">
+                            <div>
+                                <h4 className="text-sm font-bold text-foreground">
+                                    {istPopover.slot?.name || istPopover.slot?.full_name}
+                                </h4>
+                                <p className="text-[11px] text-muted-foreground">Wieviel ist gerade im Fach?</p>
+                            </div>
+                            <button
+                                onClick={() => !isSaving && setIstPopover(null)}
+                                className="text-muted-foreground hover:text-foreground p-1"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Artikel */}
+                        <div className="px-4 py-3 space-y-3 max-h-[60vh] overflow-y-auto">
+                            {istPopover.assignments.map(a => {
+                                const val = istValues[a.id] ?? 0;
+                                const hasMin = a.min_stock != null && a.min_stock > 0;
+                                const needed = hasMin ? Math.max(0, a.min_stock - val) : null;
+                                const ratio = hasMin ? val / a.min_stock : 1;
+
+                                let needColor = 'text-emerald-600 dark:text-emerald-400';
+                                if (hasMin) {
+                                    if (ratio < 0.5) needColor = 'text-destructive';
+                                    else if (ratio < 1) needColor = 'text-amber-600 dark:text-amber-400';
+                                }
+
+                                return (
+                                    <div key={a.id} className="space-y-2 p-3 rounded-xl bg-muted/20 border border-border/30">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-bold text-foreground truncate flex-1">{a.article_name}</span>
+                                            {hasMin && (
+                                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                                                    Soll: {a.min_stock}
+                                                </Badge>
+                                            )}
+                                        </div>
+
+                                        {/* Großes IST-Input */}
+                                        <input
+                                            type="number"
+                                            inputMode="numeric"
+                                            min="0"
+                                            max={hasMin ? a.min_stock : undefined}
+                                            value={val}
+                                            onChange={e => {
+                                                const parsed = parseInt(e.target.value);
+                                                setIstValues(prev => ({
+                                                    ...prev,
+                                                    [a.id]: isNaN(parsed) ? 0 : Math.max(0, parsed),
+                                                }));
+                                            }}
+                                            className="w-full text-center font-bold text-2xl h-14 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                                            autoFocus={istPopover.assignments.indexOf(a) === 0}
+                                        />
+
+                                        {/* Soll / Bedarf */}
+                                        {hasMin && (
+                                            <div className="flex items-center justify-between text-[11px]">
+                                                <span className="text-muted-foreground">Soll: {a.min_stock}</span>
+                                                <span className={cn('font-semibold', needColor)}>
+                                                    {needed === 0
+                                                        ? '✓ Voll'
+                                                        : `Bedarf: +${needed}`}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Speichern Button */}
+                        <div className="px-4 pb-6 pt-3 border-t border-border/40">
+                            <Button
+                                className="w-full h-12 text-base font-semibold"
+                                onClick={handleSaveIst}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <span className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                                        Speichern…
+                                    </span>
+                                ) : 'Bestand speichern'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Abschluss-Sheet */}
             <Sheet open={showCompletionSummary} onOpenChange={setShowCompletionSummary}>
                 <SheetContent side="bottom" className="rounded-t-2xl pb-8 px-6 pt-6 max-h-[85vh] overflow-y-auto">
                     <div className="space-y-4">
                         <div className="text-center space-y-1">
                             <div className="text-4xl">✅</div>
                             <h2 className="text-xl font-bold text-foreground">Rundgang komplett!</h2>
-                            <p className="text-sm text-muted-foreground">Alle {overallProgress.total} Fächer durchgegangen</p>
+                            <p className="text-sm text-muted-foreground">
+                                Alle {overallProgress.total} Fächer geprüft
+                            </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-muted rounded-xl p-4 text-center space-y-1">
-                                <p className="text-2xl font-bold text-foreground">{todaysRestockItems.length}</p>
-                                <p className="text-xs text-muted-foreground">Artikel aufgefüllt</p>
-                            </div>
-                            <div className="bg-muted rounded-xl p-4 text-center space-y-1">
-                                <p className="text-2xl font-bold text-foreground">
-                                    {todaysRestockItems.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0)}
-                                </p>
-                                <p className="text-xs text-muted-foreground">Einheiten gesamt</p>
-                            </div>
-                        </div>
-                        {todaysRestockItems.length > 0 && (
-                            <div className="bg-muted/50 rounded-xl p-3 space-y-1.5 max-h-48 overflow-y-auto">
-                                <p className="text-xs font-semibold text-muted-foreground">Aufgefüllt heute:</p>
-                                {todaysRestockItems.map(item => (
-                                    <div key={item.id} className="flex justify-between text-xs text-muted-foreground">
-                                        <span className="truncate">{item.article_name}</span>
-                                        <span className="font-medium shrink-0 ml-2">{item.quantity}×</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        <Button className="w-full h-11" onClick={() => setShowCompletionSummary(false)}>
-                            Fertig
+                        <Button className="w-full" onClick={() => setShowCompletionSummary(false)}>
+                            Schließen
                         </Button>
                     </div>
                 </SheetContent>
             </Sheet>
-        </div>
-    );
-}
-
-// ── Fach-Zeile ─────────────────────────────────────────────────────────────
-function SlotArticleRow({ assignment, article, area, onRestock, qtyValue, setRestockQtys, toggleChecked, isChecked }) {
-    const currentStock = article?.current_stock ?? null;
-    const minStock = assignment.min_stock;
-    const unit = assignment.unit ? ` ${assignment.unit}` : '';
-
-    return (
-        <div className="flex items-center gap-3 px-6 py-2.5 border-b border-border/20 last:border-0">
-            {/* Geprüft-Button */}
-            <button
-                onClick={() => toggleChecked(assignment.id)}
-                className={cn(
-                    'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all active:scale-90',
-                    isChecked
-                        ? 'border-green-500 bg-green-500'
-                        : 'border-border hover:border-primary'
-                )}
-            >
-                {isChecked && <Check className="w-3.5 h-3.5 text-white" />}
-            </button>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-                <p className="text-sm truncate text-foreground">{assignment.article_name}</p>
-                <p className="text-[10px] text-muted-foreground">
-                    Zuletzt gezählt: {currentStock != null ? currentStock : '—'}
-                    {article?.content_unit ? ` ${article.content_unit}` : ''}
-                    {minStock != null && (
-                        <span className="ml-2 text-blue-400 font-medium">
-                            Soll: {minStock}{unit}
-                        </span>
-                    )}
-                </p>
-            </div>
-
-            {/* Menge-Eingabe — frei eintippbar, aber hart auf Soll gedeckelt */}
-            <Input
-                type="number"
-                inputMode="decimal"
-                max={minStock != null ? minStock : undefined}
-                className="h-8 w-16 text-xs px-2"
-                placeholder="Menge"
-                value={qtyValue}
-                onChange={e => {
-                    let v = e.target.value;
-                    if (minStock != null && v !== '' && parseFloat(v) > minStock) v = String(minStock);
-                    setRestockQtys(prev => ({ ...prev, [assignment.id]: v }));
-                }}
-                onKeyDown={e => {
-                    if (e.key === 'Enter' && qtyValue) onRestock(assignment, area, qtyValue);
-                }}
-            />
-            <Button
-                size="sm"
-                className="h-8 px-3 text-xs gap-1 shrink-0"
-                disabled={!qtyValue}
-                onClick={() => onRestock(assignment, area, qtyValue)}
-            >
-                <Plus className="w-3 h-3" />
-            </Button>
-        </div>
-    );
-}
-
-// ── Slot-Gruppe (Fach Header + aufklappbare Artikel-Liste) ────────────────────
-function SlotRestockGroup({
-    slot, area, expanded, onToggle, assignments, articles, restockItems, today,
-    isDone, restockQtys, setRestockQtys, checkedArticles, toggleChecked, onRestock,
-    canSort, slotIdx, totalSlots, siblings, onMoveSlot, isActive, activeRef
-}) {
-    const [showSettled, setShowSettled] = useState(false);
-    const settledCtx = { restockItems, today, checkedArticles };
-
-    const openItems = [];
-    const settledItems = [];
-    assignments.forEach(assignment => {
-        const article = articles.find(a => a.id === assignment.article_id);
-        const settled = isAssignmentSettled(assignment, settledCtx);
-        (settled ? settledItems : openItems).push({ assignment, article, settled });
-    });
-
-    return (
-        <div ref={activeRef} className={cn(
-            "border-b border-border/20 last:border-0 transition-all",
-            isActive && "ring-2 ring-primary ring-inset bg-primary/5"
-        )}>
-            {/* Fach Header */}
-            <div className="w-full flex items-center gap-2 px-6 py-2.5 hover:bg-secondary/20 transition-colors">
-                <button
-                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                    onClick={onToggle}
-                >
-                    {isDone
-                        ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                        : <Circle className="w-4 h-4 text-muted-foreground shrink-0" />}
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{slot.name}</p>
-                    </div>
-                    {isActive && (
-                        <span className="text-[10px] font-semibold bg-primary/15 text-primary px-1.5 py-0.5 rounded shrink-0 flex items-center gap-1">
-                            <Target className="w-2.5 h-2.5" />Jetzt dran
-                        </span>
-                    )}
-                    {!isDone && openItems.length > 0 && (
-                        <span className="text-[10px] font-semibold bg-amber-500/15 text-amber-500 px-1.5 py-0.5 rounded shrink-0">
-                            {openItems.length} offen
-                        </span>
-                    )}
-                    {slot.short_code && (
-                        <span className="text-[10px] font-mono bg-secondary text-muted-foreground px-1.5 py-0.5 rounded shrink-0">
-                            {slot.short_code}
-                        </span>
-                    )}
-                    {expanded
-                        ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
-                </button>
-                {canSort && (
-                    <div className="flex gap-0.5 shrink-0">
-                        <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            disabled={slotIdx === 0}
-                            onClick={() => onMoveSlot.mutate({ slot, direction: 'up', siblings })}>
-                            <ArrowUp className="w-3 h-3" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            disabled={slotIdx === totalSlots - 1}
-                            onClick={() => onMoveSlot.mutate({ slot, direction: 'down', siblings })}>
-                            <ArrowDown className="w-3 h-3" />
-                        </Button>
-                    </div>
-                )}
-            </div>
-
-            {/* Artikel */}
-            {expanded && (
-                <div className="bg-muted/20 border-t border-border/20">
-                    {/* Offene Artikel direkt anzeigen — reduziert das Chaos beim Aufklappen */}
-                    {openItems.map(({ assignment, article }) => (
-                        <SlotArticleRow
-                            key={assignment.id}
-                            assignment={assignment}
-                            article={article}
-                            area={area}
-                            onRestock={onRestock}
-                            qtyValue={restockQtys[assignment.id] || ''}
-                            setRestockQtys={setRestockQtys}
-                            toggleChecked={toggleChecked}
-                            isChecked={checkedArticles[assignment.id] || false}
-                        />
-                    ))}
-
-                    {openItems.length === 0 && (
-                        <p className="px-6 py-3 text-xs text-muted-foreground/70 flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                            Alles geprüft
-                        </p>
-                    )}
-
-                    {/* Bereits geprüfte/aufgefüllte Artikel eingeklappt — bei Bedarf anzeigen */}
-                    {settledItems.length > 0 && (
-                        <div className="border-t border-border/10">
-                            <button
-                                type="button"
-                                className="w-full flex items-center gap-1.5 px-6 py-2 text-[11px] text-muted-foreground hover:text-foreground"
-                                onClick={() => setShowSettled(v => !v)}
-                            >
-                                {showSettled ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                                ✓ {settledItems.length} bereits erledigt
-                            </button>
-                            {showSettled && settledItems.map(({ assignment, article }) => {
-                                const currentStock = article?.current_stock ?? null;
-                                return (
-                                    <div key={assignment.id} className="flex items-center gap-3 px-6 py-2 opacity-60">
-                                        <button
-                                            onClick={() => toggleChecked(assignment.id)}
-                                            className="w-5 h-5 rounded-full border-2 border-green-500 bg-green-500 flex items-center justify-center shrink-0"
-                                        >
-                                            <Check className="w-3 h-3 text-white" />
-                                        </button>
-                                        <p className="text-xs text-muted-foreground truncate flex-1">
-                                            {assignment.article_name}
-                                            <span className="ml-2 text-[10px]">
-                                                (Soll {assignment.min_stock != null ? assignment.min_stock : '—'})
-                                            </span>
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 }
