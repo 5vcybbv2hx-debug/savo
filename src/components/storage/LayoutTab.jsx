@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Layers, Grid3x3, Pencil, Check, Plus, Minus } from 'lucide-react';
+import { Layers, Grid3x3, Pencil, Check, Plus, Minus, X } from 'lucide-react';
 import RegelGrid from './RegelGrid';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +29,8 @@ export default function LayoutTab({ permissions }) {
 
     // Welche Möbel befinden sich gerade im Edit-Modus
     const [editingFurIds, setEditingFurIds] = useState(new Set());
+    const [istPopover, setIstPopover] = useState(null); // { slot, assignments }
+    const [istValues, setIstValues] = useState({}); // { [assignmentId]: number }
     // Grid-Größen-Edit pro Möbel (lokaler State vor dem Speichern)
     const [gridSizeEdits, setGridSizeEdits] = useState({}); // furId -> {rows, cols}
 
@@ -155,9 +157,105 @@ export default function LayoutTab({ permissions }) {
         onError: () => toast.error('Fehler beim Hinzufügen zur Auffüllliste'),
     });
 
-    const handleAddToRestock = (slot, assignment) => {
-        addToRestockMut.mutate({ slot, assignment });
+        const handleSlotTap = (slot, slotAssignments) => {
+        setIstPopover({ slot, assignments: slotAssignments });
+        const vals = {};
+        slotAssignments.forEach(a => {
+            vals[a.id] = a.quantity ?? 0;
+        });
+        setIstValues(vals);
     };
+
+    
+    // IST-Eingabe Bestand speichern & Auffüllen Mutationen/Funktionen
+    const saveIstMutation = useMutation({
+        mutationFn: async ({ updatedAssignments, restockItemsToCreate }) => {
+            // Speichere alle geänderten IST-Werte
+            for (const item of updatedAssignments) {
+                await base44.entities.StorageAssignment.update(item.id, { quantity: item.quantity });
+            }
+
+            // Erstelle RestockItems falls vorhanden
+            if (restockItemsToCreate && restockItemsToCreate.length > 0) {
+                const user = await base44.auth.me();
+                const userName = user?.full_name || user?.email || 'Unbekannt';
+                for (const item of restockItemsToCreate) {
+                    await base44.entities.RestockItem.create({
+                        article_id: item.article_id,
+                        article_name: item.article_name,
+                        article_image_url: null,
+                        storage_slot_id: item.storage_slot_id,
+                        slot_name: item.slot_name,
+                        assignment_id: item.assignment_id,
+                        needed_quantity: item.needed_quantity,
+                        quantity: 0,
+                        area_id: item.area_id || null,
+                        area_name: item.area_name || null,
+                        restocked_by: userName,
+                        date: today,
+                        time: format(new Date(), 'HH:mm'),
+                        is_completed: false,
+                        stock_reduced: false,
+                        added_by: 'layout_ist_eingabe',
+                    });
+                }
+            }
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['assignments'] });
+            qc.invalidateQueries({ queryKey: ['restock-items'] });
+            qc.invalidateQueries({ queryKey: ['restock-items', today] });
+            toast.success('Bestand erfolgreich aktualisiert');
+            setIstPopover(null);
+        },
+        onError: () => {
+            toast.error('Fehler beim Speichern der Bestände');
+        }
+    });
+
+    const handleSaveIst = (restock = false) => {
+        if (!istPopover) return;
+        const { slot, assignments } = istPopover;
+        const updatedAssignments = [];
+        const restockItemsToCreate = [];
+
+        for (const a of assignments) {
+            const currentVal = istValues[a.id] ?? a.quantity ?? 0;
+            // Falls sich der Wert geändert hat oder wir restocken
+            if (currentVal !== a.quantity) {
+                updatedAssignments.push({ id: a.id, quantity: currentVal });
+            }
+
+            if (restock) {
+                const needed = Math.max(0, (a.min_stock ?? 0) - currentVal);
+                if (needed > 0) {
+                    // Prüfe ob bereits heute auf der Liste
+                    const exists = restockItems.find(r => r.assignment_id === a.id && r.date === today);
+                    if (!exists) {
+                        restockItemsToCreate.push({
+                            article_id: a.article_id,
+                            article_name: a.article_name,
+                            storage_slot_id: slot.id,
+                            slot_name: slot.name || slot.full_name,
+                            assignment_id: a.id,
+                            needed_quantity: needed,
+                            area_id: slot.area_id || null,
+                            area_name: slot.area_name || null,
+                        });
+                    }
+                }
+            }
+        }
+
+        // Falls beim einfachen Speichern (ohne Restock) sich nichts geändert hat, einfach schließen
+        if (!restock && updatedAssignments.length === 0) {
+            setIstPopover(null);
+            return;
+        }
+
+        saveIstMutation.mutate({ updatedAssignments, restockItemsToCreate });
+    };
+
 
     const handleSlotUpdate = async (slotId, data) => {
         await updateSlotMut.mutateAsync({ slotId, data });
@@ -347,7 +445,7 @@ export default function LayoutTab({ permissions }) {
                                                     slots={furSlots}
                                                     assignments={assignments}
                                                     activeSlotId={null}
-                                                    onAddToRestock={handleAddToRestock}
+                                                    onSlotTap={handleSlotTap}
                                                     readOnly={false}
                                                     editMode={isEditing}
                                                     onSlotUpdate={handleSlotUpdate}
@@ -384,6 +482,116 @@ export default function LayoutTab({ permissions }) {
                     </div>
                 );
             })}
+
+            {/* IST-Eingabe Popover */}
+            {istPopover && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm p-4"
+                     onClick={() => setIstPopover(null)}>
+                    <div className="bg-card border border-border rounded-2xl p-4 w-full max-w-sm shadow-xl space-y-4"
+                         onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h4 className="text-sm font-semibold">Ist-Bestand erfassen</h4>
+                                <p className="text-[11px] text-muted-foreground">{istPopover.slot?.name || istPopover.slot?.full_name}</p>
+                            </div>
+                            <button onClick={() => setIstPopover(null)} className="text-muted-foreground hover:text-foreground">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                            {istPopover.assignments.map(a => {
+                                const val = istValues[a.id] ?? 0;
+                                const hasMin = a.min_stock != null;
+                                const needed = hasMin ? Math.max(0, a.min_stock - val) : 0;
+                                
+                                // Bedarfs-Farbe berechnen
+                                let demandColor = "text-emerald-600 dark:text-emerald-400";
+                                if (hasMin) {
+                                    const ratio = a.min_stock > 0 ? (val / a.min_stock) : 1;
+                                    if (ratio >= 1) {
+                                        demandColor = "text-emerald-600 dark:text-emerald-400";
+                                    } else if (ratio >= 0.5) {
+                                        demandColor = "text-amber-600 dark:text-amber-400";
+                                    } else {
+                                        demandColor = "text-destructive";
+                                    }
+                                }
+
+                                return (
+                                    <div key={a.id} className="space-y-1.5 p-2 rounded-lg bg-muted/20 border border-border/40">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold truncate pr-2">{a.article_name}</span>
+                                            {hasMin && (
+                                                <Badge variant="outline" className="text-[10px] py-0 px-1.5 shrink-0">
+                                                    Soll: {a.min_stock}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={hasMin ? a.min_stock : undefined}
+                                            value={val}
+                                            onChange={e => {
+                                                const parsed = parseInt(e.target.value);
+                                                setIstValues(prev => ({
+                                                    ...prev,
+                                                    [a.id]: isNaN(parsed) ? 0 : Math.max(0, parsed)
+                                                }));
+                                            }}
+                                            className="w-full text-center font-bold text-lg h-10 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                        />
+                                        {hasMin && (
+                                            <div className="flex items-center justify-between text-[10px]">
+                                                <span className="text-muted-foreground/80">Soll: {a.min_stock}</span>
+                                                <span className={`${demandColor} font-semibold`}>
+                                                    Bedarf: +{needed}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="space-y-2">
+                            {(() => {
+                                // Prüfen, ob für mindestens ein Assignment ein Soll (min_stock) existiert
+                                const hasAnyMin = istPopover.assignments.some(a => a.min_stock != null);
+                                // Prüfen, ob für mindestens ein Assignment Bedarf > 0 vorhanden ist
+                                const hasAnyNeeded = istPopover.assignments.some(a => {
+                                    const val = istValues[a.id] ?? 0;
+                                    return a.min_stock != null && (a.min_stock - val) > 0;
+                                });
+
+                                return (
+                                    <>
+                                        <Button 
+                                            className="w-full h-9 text-sm" 
+                                            disabled={saveIstMutation.isPending}
+                                            onClick={() => handleSaveIst(false)}
+                                        >
+                                            Bestand speichern
+                                        </Button>
+                                        {hasAnyMin && hasAnyNeeded && (
+                                            <Button 
+                                                variant="outline" 
+                                                className="w-full h-9 text-sm border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                                                disabled={saveIstMutation.isPending}
+                                                onClick={() => handleSaveIst(true)}
+                                            >
+                                                Auffüllen
+                                            </Button>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+

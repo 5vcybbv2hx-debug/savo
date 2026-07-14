@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
  *   slots            — StorageSlot-Array dieses Möbels
  *   assignments      — StorageAssignment-Array (alle aktiven)
  *   activeSlotId     — ID des aktiven Fachs im Rundgang (Highlight)
- *   onAddToRestock   — (slot, assignment) => void
+ *   onSlotTap        — (slot, slotAssignments) => void
  *   readOnly         — boolean (Ansicht, kein Drag & Drop)
  *   editMode         — boolean (Drag & Drop + Resize aktiv)
  *   onSlotUpdate     — (slotId, {grid_row, grid_col, grid_rowspan, grid_colspan}) => Promise
@@ -22,7 +22,7 @@ export default function RegelGrid({
     slots = [],
     assignments = [],
     activeSlotId = null,
-    onAddToRestock,
+    onSlotTap,
     readOnly = false,
     editMode = false,
     onSlotUpdate,
@@ -269,7 +269,7 @@ export default function RegelGrid({
                     const isDragging = dragSlotId === slot.id;
                     const statusClasses = getStatusClasses(slotAssignments);
                     const dotColor = getStatusDot(slotAssignments);
-                    const isClickable = !readOnly && !editMode && slotAssignments.length > 0 && onAddToRestock;
+                    const isClickable = !readOnly && !editMode && slotAssignments.length > 0 && onSlotTap;
 
                     return (
                         <div
@@ -290,7 +290,7 @@ export default function RegelGrid({
                             onDragStart={editMode ? (e) => handleDragStartSlot(e, slot.id) : undefined}
                             onDragEnd={() => { setDragSlotId(null); setDragOverCell(null); }}
                             onClick={isClickable ? () => {
-                                slotAssignments.forEach(a => onAddToRestock(slot, a));
+                                onSlotTap(slot, slotAssignments);
                             } : undefined}
                         >
                             {/* Aktiv-Badge */}
@@ -345,17 +345,28 @@ export default function RegelGrid({
                                 <p className="text-[10px] text-muted-foreground/40 italic flex-1 flex items-center">leer</p>
                             )}
                             {/* Bestand */}
-                            {slotAssignments.length > 0 && !editMode && (
-                                <div className="flex flex-wrap gap-0.5 mt-0.5">
-                                    {slotAssignments.slice(0, 2).map(a =>
-                                        a.min_stock != null ? (
-                                            <span key={a.id} className="text-[9px] text-muted-foreground bg-background/50 rounded px-1 py-0.5">
-                                                {a.quantity ?? '?'}/{a.min_stock}
+                            {slotAssignments.length > 0 && !editMode && (() => {
+                                const totalQty = slotAssignments.reduce((acc, a) => acc + (a.quantity ?? 0), 0);
+                                const hasAllMinStock = slotAssignments.every(a => a.min_stock != null);
+                                if (hasAllMinStock) {
+                                    const totalMin = slotAssignments.reduce((acc, a) => acc + a.min_stock, 0);
+                                    return (
+                                        <div className="absolute bottom-1 right-1">
+                                            <span className="text-[9px] bg-background/60 rounded px-1 py-0.5 text-foreground font-medium">
+                                                {totalQty}/{totalMin}
                                             </span>
-                                        ) : null
-                                    )}
-                                </div>
-                            )}
+                                        </div>
+                                    );
+                                } else {
+                                    return (
+                                        <div className="absolute bottom-1 right-1">
+                                            <span className="text-[9px] bg-background/60 rounded px-1 py-0.5 text-foreground font-medium">
+                                                IST: {totalQty}
+                                            </span>
+                                        </div>
+                                    );
+                                }
+                            })()}
                             {/* Span-Anzeige im Edit-Modus */}
                             {editMode && (pos.grid_rowspan > 1 || pos.grid_colspan > 1) && (
                                 <span className="text-[9px] text-muted-foreground/50 mt-0.5">
