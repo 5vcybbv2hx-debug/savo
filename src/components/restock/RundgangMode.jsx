@@ -232,8 +232,8 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                         ...existingItem,
                         quantity: ist,
                         needed_quantity: needed,
-                        is_completed: true,
-                        stock_reduced: true,
+                        is_completed: false,
+                        stock_reduced: false,
                     },
                 });
             } else {
@@ -250,8 +250,8 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                     restocked_by: userName,
                     date: today,
                     time: format(new Date(), 'HH:mm'),
-                    is_completed: true,
-                    stock_reduced: true,
+                    is_completed: false,
+                    stock_reduced: false,
                 });
                 anyRestock = true;
             }
