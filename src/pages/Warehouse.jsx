@@ -361,36 +361,88 @@ export default function Warehouse() {
                                 const isPending = (completeArticleMutation.isPending || lowStockMutation.isPending) &&
                                     (completeArticleMutation.variables?.itemsToComplete?.[0]?.article_id === group.article_id ||
                                      lowStockMutation.variables?.group?.article_id === group.article_id);
+                                const qty = kellerQtys[group.article_id] ?? group.total_needed;
+                                const missing = Math.max(0, group.total_needed - qty);
+                                const setQty = (v) => {
+                                    const parsed = parseInt(v);
+                                    setKellerQtys(prev => ({ ...prev, [group.article_id]: isNaN(parsed) || parsed < 0 ? 0 : parsed }));
+                                };
                                 return (
                                     <div
                                         key={group.article_id}
                                         className={cn(
-                                            'flex items-center gap-4 p-4 transition-all',
+                                            'p-4 transition-all',
                                             isPending && 'opacity-50 pointer-events-none'
                                         )}
                                     >
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-base font-bold text-foreground leading-tight">
-                                                {group.article_name}
-                                            </p>
-                                            {group.total_needed > 0 && (
-                                                <p className="text-xs text-muted-foreground mt-0.5">
-                                                    Bedarf:{' '}
-                                                    <span className="font-semibold text-foreground">
-                                                        {group.total_needed} Stück
-                                                    </span>
-                                                    {group.items.length > 1 && (
-                                                        <span className="text-muted-foreground/60"> · {group.items.length} Fächer</span>
-                                                    )}
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-base font-bold text-foreground leading-tight">
+                                                    {group.article_name}
                                                 </p>
-                                            )}
+                                                {group.total_needed > 0 && (
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                                        Bedarf:{' '}
+                                                        <span className="font-semibold text-foreground">
+                                                            {group.total_needed} Stück
+                                                        </span>
+                                                        {group.items.length > 1 && (
+                                                            <span className="text-muted-foreground/60"> · {group.items.length} Fächer</span>
+                                                        )}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                        <button
-                                            onClick={() => completeArticleMutation.mutate({ itemsToComplete: group.items })}
-                                            className="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-border bg-card text-muted-foreground hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/5 active:scale-95 transition-all"
-                                        >
-                                            <Square className="w-6 h-6" />
-                                        </button>
+
+                                        {/* Mengen-Stepper */}
+                                        <div className="flex items-center gap-2 mt-3">
+                                            <button
+                                                onClick={() => setQty(Math.max(0, qty - 1))}
+                                                className="w-10 h-10 flex items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:border-primary hover:text-primary active:scale-95 transition-all shrink-0"
+                                            >
+                                                <Minus className="w-4 h-4" />
+                                            </button>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                min="0"
+                                                value={qty}
+                                                onChange={e => setQty(e.target.value)}
+                                                className="w-16 text-center font-bold text-lg h-10 rounded-lg border border-border bg-background focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                            <button
+                                                onClick={() => setQty(qty + 1)}
+                                                className="w-10 h-10 flex items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:border-primary hover:text-primary active:scale-95 transition-all shrink-0"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
+                                            <span className="text-xs text-muted-foreground ml-1">Stück geholt</span>
+
+                                            {/* Erledigt-Button */}
+                                            <button
+                                                onClick={() => completeArticleMutation.mutate({ itemsToComplete: group.items, actualQty: qty })}
+                                                className="ml-auto w-12 h-10 flex items-center justify-center rounded-lg border-2 border-border bg-card text-muted-foreground hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/5 active:scale-95 transition-all shrink-0"
+                                                title="Erledigt — Menge geholt"
+                                            >
+                                                <Square className="w-5 h-5" />
+                                            </button>
+
+                                            {/* Zu-wenig-Button */}
+                                            <button
+                                                onClick={() => lowStockMutation.mutate({ group, actualQty: qty })}
+                                                className="w-12 h-10 flex items-center justify-center rounded-lg border-2 border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive/10 active:scale-95 transition-all shrink-0"
+                                                title="Zu wenig im Keller — Manager benachrichtigen"
+                                            >
+                                                <AlertTriangle className="w-5 h-5" />
+                                            </button>
+                                        </div>
+
+                                        {/* Hinweis: fehlende Menge */}
+                                        {missing > 0 && (
+                                            <p className="text-xs text-amber-500 dark:text-amber-400 font-medium mt-2">
+                                                ⚠ {missing} Stück fehlen im Keller
+                                            </p>
+                                        )}
                                     </div>
                                 );
                             })}
