@@ -117,6 +117,7 @@ export default function Warehouse() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['restock-open'] });
+            queryClient.invalidateQueries({ queryKey: ['restock-items'] });
         },
     });
 
@@ -141,6 +142,7 @@ export default function Warehouse() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['restock-open'] });
+            queryClient.invalidateQueries({ queryKey: ['restock-items'] });
         },
     });
 
