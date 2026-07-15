@@ -61,7 +61,7 @@ function timeAgo(isoStr) {
 }
 
 // ── ShoppingRow (kompakt, 2-Zeilen-Layout) ─────────────────────────────────────
-function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpenWareneingang, onQtyChange, unitPrice, activeTab }) {
+function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpenWareneingang, onQtyChange, unitPrice, activeTab, selectMode, isSelected, onToggleSelect }) {
     const supplierIdx = suppliers.findIndex(s => s.name === item.category);
     const isDone = item.status === 'abgeschlossen';
     const hasDiff = item.delivered_quantity != null && item.delivered_quantity !== item.quantity;
@@ -82,6 +82,19 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
         )}>
             {/* Zeile 1: Name + Status-Badge */}
             <div className="flex items-center justify-between gap-2">
+                {selectMode && (
+                    <button
+                        type="button"
+                        onClick={() => onToggleSelect(item.id)}
+                        className="shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all active:scale-90"
+                        style={{
+                            borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
+                            background: isSelected ? 'var(--primary)' : 'transparent',
+                        }}
+                    >
+                        {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                    </button>
+                )}
                 <p className={cn(
                     'text-sm font-semibold truncate flex-1',
                     isDone ? 'text-muted-foreground line-through' : 'text-foreground'
@@ -351,6 +364,9 @@ export default function Shopping() {
     const [searchSuggestions,    setSearchSuggestions]    = useState([]);
     const [showSuggestions,      setShowSuggestions]      = useState(false);
     const [deleteConfirm,        setDeleteConfirm]        = useState(null);
+    const [selectMode,           setSelectMode]           = useState(false);
+    const [selectedIds,           setSelectedIds]           = useState(new Set());
+    const [bulkDeleteConfirm,     setBulkDeleteConfirm]     = useState(false);
     const [wareneingangItem,     setWareneingangItem]     = useState(null);
     const [closeOrderConfirm,    setCloseOrderConfirm]    = useState(false);
     const [markBestelltConfirm,  setMarkBestelltConfirm]  = useState(null); // Array von Items
@@ -418,6 +434,47 @@ export default function Shopping() {
         onSuccess: (r) => { if (!r?.queued) queryClient.invalidateQueries({ queryKey: ['shopping-list'] }); },
         onError: () => queryClient.invalidateQueries({ queryKey: ['shopping-list'] }),
     });
+
+    const handleBulkDelete = async () => {
+        const ids = Array.from(selectedIds);
+        for (const id of ids) {
+            await deleteMutation.mutateAsync(id);
+        }
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+        setSelectedIds(new Set());
+        setSelectMode(false);
+        setBulkDeleteConfirm(false);
+        toast.success(`${ids.length} Artikel gelöscht`);
+    };
+
+    const toggleSelect = (id) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const selectAllVisible = () => {
+        const allIds = filteredItems.map(i => i.id);
+        const allSelected = allIds.every(id => selectedIds.has(id));
+        if (allSelected) {
+            // Deselect all visible
+            setSelectedIds(prev => {
+                const next = new Set(prev);
+                allIds.forEach(id => next.delete(id));
+                return next;
+            });
+        } else {
+            setSelectedIds(prev => new Set([...prev, ...allIds]));
+        }
+    };
+
+    const exitSelectMode = () => {
+        setSelectMode(false);
+        setSelectedIds(new Set());
+    };
 
     // ── Handlers ──────────────────────────────────────────────────────────────
     const openModal = (item = null) => {
@@ -716,7 +773,7 @@ export default function Shopping() {
         return <PermissionDenied message="Du hast keine Berechtigung, die Bestellungen zu sehen." />;
 
     return (
-        <div className="min-h-screen bg-background pb-24 md:pb-8">
+        <div className={cn('min-h-screen bg-background', selectMode ? 'pb-32 md:pb-32' : 'pb-24 md:pb-8')}>
             <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
 
                 {/* ── Header ────────────────────────────────────────────── */}
@@ -732,13 +789,22 @@ export default function Shopping() {
                     </div>
 
                     {permissions.canEditShopping && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button size="sm" className="h-9 gap-1.5">
-                                    <Plus className="w-4 h-4" />
-                                    Hinzufügen
+                        <div className="flex items-center gap-2">
+                            {activeTab === 'offen' && !selectMode && filteredItems.length > 0 && (
+                                <Button size="sm" variant="ghost" onClick={() => setSelectMode(true)}
+                                    className="h-9 gap-1.5 text-muted-foreground hover:text-foreground">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Auswählen
                                 </Button>
-                            </DropdownMenuTrigger>
+                            )}
+                            {!selectMode && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button size="sm" className="h-9 gap-1.5">
+                                            <Plus className="w-4 h-4" />
+                                            Hinzufügen
+                                        </Button>
+                                    </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => setArticlePickerOpen(true)}>
                                     <Search className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -755,6 +821,8 @@ export default function Shopping() {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        )}
+                    </div>
                     )}
                 </div>
 
@@ -1014,12 +1082,51 @@ export default function Shopping() {
                                 onMarkBestellt={(items) => setMarkBestelltConfirm(items)}
                                 onOpenWareneingang={(item) => setWareneingangItem(item)}
                                 onQtyChange={handleInlineQtyChange}
+                                selectMode={selectMode && activeTab === 'offen'}
+                                isSelected={selectedIds.has(item.id)}
+                                onToggleSelect={toggleSelect}
                             />
                         ))
                     )}
                 </div>
 
             </div>
+
+            {/* ── Bulk-Löschen Toolbar (Select-Modus) ──────────────────── */}
+            {selectMode && (
+                <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-sm px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+                    <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={selectAllVisible}
+                                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                {filteredItems.length > 0 && filteredItems.every(i => selectedIds.has(i.id))
+                                    ? 'Alle abwählen'
+                                    : 'Alle auswählen'}
+                            </button>
+                            <span className="text-sm font-semibold text-foreground">
+                                {selectedIds.size} ausgewählt
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={exitSelectMode}
+                                className="h-9 text-muted-foreground">
+                                Abbrechen
+                            </Button>
+                            <Button
+                                size="sm"
+                                disabled={selectedIds.size === 0}
+                                onClick={() => setBulkDeleteConfirm(true)}
+                                className="h-9 gap-1.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground disabled:opacity-40"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                {selectedIds.size > 0 ? `${selectedIds.size} löschen` : 'Löschen'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Wareneingang Dialog ───────────────────────────────────── */}
             <WareneingangDialog
@@ -1097,6 +1204,29 @@ export default function Shopping() {
                             onClick={() => { deleteMutation.mutate(deleteConfirm); setDeleteConfirm(null); }}
                             className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
                             Löschen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Bulk-Löschen Confirm ─────────────────────────────────── */}
+            <AlertDialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Trash2 className="w-5 h-5 text-destructive" />
+                            {selectedIds.size} Artikel löschen?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Diese Artikel werden dauerhaft aus der Bestellliste entfernt. Z.B. weil du sie woanders günstiger besorgt hast. Diese Aktion kann nicht rückgängig gemacht werden.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleBulkDelete}
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                            {selectedIds.size} Artikel löschen
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
