@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
@@ -60,7 +60,8 @@ export default function Warehouse() {
     const permissions = usePermissions();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState('bereiche'); // 'bereiche' | 'keller'
+    const [searchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'keller' ? 'keller' : 'bereiche'); // 'bereiche' | 'keller'
     const [kellerQtys, setKellerQtys] = useState({}); // { [article_id]: number } editierbare Mengen
 
     const today = format(new Date(), 'yyyy-MM-dd');
