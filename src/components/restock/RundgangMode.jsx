@@ -407,6 +407,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                         onSlotTap={handleSlotTap}
                                                         readOnly={false}
                                                         editMode={false}
+                                                        restockItems={restockItems}
                                                     />
                                                 ) : (
                                                     /* Fallback: Fächer ohne Grid als klickbare Chips */
