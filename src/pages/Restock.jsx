@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -7,7 +9,7 @@ import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
 import {
     Scan, Camera, Check, Trash2, CheckCheck, Plus, X,
-    ShoppingCart, AlertCircle, ChevronRight
+    ShoppingCart, AlertCircle, ChevronRight, PackageCheck
 } from 'lucide-react';
 import QuantityInputModal from '../components/restock/QuantityInputModal';
 import RundgangMode from '../components/restock/RundgangMode';
@@ -70,6 +72,7 @@ function ConfirmDialog({ open, title, description, confirmLabel = 'Löschen', on
 
 // ── Haupt-Komponente ──────────────────────────────────────────────────────────
 export default function Restock() {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     useEffect(() => {
@@ -441,14 +444,25 @@ export default function Restock() {
             <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
 
                 {/* ── Header ────────────────────────────────────────────── */}
-                <div>
-                    <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                        <Scan className="w-5 h-5 text-primary" />
-                        Auffüllliste
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                        {openCount} offen · {completedCount} erledigt
-                    </p>
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                            <Scan className="w-5 h-5 text-primary" />
+                            Auffüllliste
+                        </h1>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            {openCount} offen · {completedCount} erledigt
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(createPageUrl('Warehouse') + '?tab=keller')}
+                        className="gap-1.5 shrink-0"
+                    >
+                        <PackageCheck className="w-4 h-4" />
+                        Keller
+                    </Button>
                 </div>
 
                 {/* ── Scan-/Such-Leiste ─────────────────────────────────── */}
