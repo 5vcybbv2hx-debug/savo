@@ -27,6 +27,7 @@ export default function RegelGrid({
     editMode = false,
     onSlotUpdate,
     onGridSizeChange,
+    restockItems = [],
 }) {
     const rows = furniture?.grid_rows || 3;
     const cols = furniture?.grid_cols || 4;
@@ -95,32 +96,47 @@ export default function RegelGrid({
     }, [placed, getSlotPos]);
 
     // Farb-Status
-    const getStatusClasses = (slotAssignments) => {
-        if (!slotAssignments?.length) return 'bg-muted/20 border-border/30';
-        let totalQty = 0, totalMin = 0, hasMin = false;
-        slotAssignments.forEach(a => {
-            totalQty += (a.quantity ?? 0);
-            if (a.min_stock != null) { totalMin += a.min_stock; hasMin = true; }
+    // ── Ampel-Status: rot = nicht erfasst, gelb = IST gespeichert, grün = Keller abgearbeitet ──
+    const today = new Date().toISOString().slice(0, 10);
+
+    const getWorkflowStatus = (slotAssignments) => {
+        if (!slotAssignments?.length) return 'empty';
+        // Prüfe für alle Assignments dieses Fachs ob heute schon RestockItems existieren
+        const allDone = slotAssignments.every(a => {
+            const items = restockItems.filter(r => r.assignment_id === a.id && r.date === today);
+            return items.length > 0 && items.every(i => i.is_completed);
         });
-        if (!hasMin || totalMin === 0) return 'bg-muted/20 border-border/40';
-        const ratio = totalQty / totalMin;
-        if (ratio >= 1)   return 'bg-emerald-500/15 border-emerald-500/40';
-        if (ratio >= 0.5) return 'bg-amber-500/15 border-amber-500/40';
-        return 'bg-destructive/15 border-destructive/40';
+        if (allDone) return 'done'; // grün
+
+        const anySaved = slotAssignments.some(a => {
+            const items = restockItems.filter(r => r.assignment_id === a.id && r.date === today);
+            return items.length > 0;
+        });
+        if (anySaved) return 'saved'; // gelb
+
+        return 'pending'; // rot
+    };
+
+    const getStatusClasses = (slotAssignments) => {
+        if (editMode) return 'bg-muted/20 border-border/30'; // im Edit-Modus keine Ampel
+        const status = getWorkflowStatus(slotAssignments);
+        switch (status) {
+            case 'done':    return 'bg-emerald-500/15 border-emerald-500/40';
+            case 'saved':   return 'bg-amber-500/15 border-amber-500/40';
+            case 'pending': return 'bg-destructive/10 border-destructive/30';
+            default:        return 'bg-muted/20 border-border/30';
+        }
     };
 
     const getStatusDot = (slotAssignments) => {
-        if (!slotAssignments?.length) return null;
-        let totalQty = 0, totalMin = 0, hasMin = false;
-        slotAssignments.forEach(a => {
-            totalQty += (a.quantity ?? 0);
-            if (a.min_stock != null) { totalMin += a.min_stock; hasMin = true; }
-        });
-        if (!hasMin || totalMin === 0) return null;
-        const ratio = totalQty / totalMin;
-        if (ratio >= 1)   return 'bg-emerald-500';
-        if (ratio >= 0.5) return 'bg-amber-500';
-        return 'bg-destructive';
+        if (editMode) return null;
+        const status = getWorkflowStatus(slotAssignments);
+        switch (status) {
+            case 'done':    return 'bg-emerald-500';
+            case 'saved':   return 'bg-amber-500';
+            case 'pending': return 'bg-destructive';
+            default:        return null;
+        }
     };
 
     // ── Drag & Drop Handlers ──────────────────────────────────────────────────
@@ -307,9 +323,9 @@ export default function RegelGrid({
                             {isActive && (
                                 <div className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-primary rounded-full border-2 border-background z-10" />
                             )}
-                            {/* Status-Dot */}
+                            {/* Status-Dot (Ampel) */}
                             {dotColor && (
-                                <div className={cn('absolute top-1 left-1 w-1.5 h-1.5 rounded-full', dotColor)} />
+                                <div className={cn('absolute top-1 left-1 w-2 h-2 rounded-full shadow-sm', dotColor)} />
                             )}
                             {/* Drag-Handle im Edit-Modus */}
                             {editMode && (

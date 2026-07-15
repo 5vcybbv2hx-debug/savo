@@ -449,6 +449,7 @@ export default function LayoutTab({ permissions }) {
                                                     readOnly={false}
                                                     editMode={isEditing}
                                                     onSlotUpdate={handleSlotUpdate}
+                                                    restockItems={restockItems}
                                                 />
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center gap-1.5 py-5 text-center">
