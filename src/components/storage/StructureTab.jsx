@@ -762,32 +762,38 @@ export default function StructureTab({ permissions }) {
                 <div className="space-y-1.5">
                   {assignRows.map((row, idx) => (
                     <div key={row.id || `new-${idx}`}
-                      className="flex items-center gap-1.5 bg-secondary/40 border border-border/50 rounded-lg p-2">
-                      <span className="flex-1 text-xs font-medium text-foreground truncate" title={row.article_name}>
-                        {row.article_name}
-                      </span>
-                      <Input type="number" inputMode="decimal" className="h-7 w-14 text-xs px-1.5" placeholder="Menge"
-                        value={row.quantity} onChange={e => updateAssignRow(idx, { quantity: e.target.value })} />
-                      <Input type="number" inputMode="decimal" className="h-7 w-16 text-xs px-1.5" placeholder="Soll"
-                        value={row.min_stock} onChange={e => updateAssignRow(idx, { min_stock: e.target.value })} />
-                      <Select value={row.unit} onValueChange={v => updateAssignRow(idx, { unit: v })}>
-                        <SelectTrigger className="h-7 w-[4.5rem] text-xs px-1.5"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
-                        disabled={idx === 0} onClick={() => moveAssignRow(idx, 'up')}>
-                        <ArrowUp className="w-3 h-3" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
-                        disabled={idx === assignRows.length - 1} onClick={() => moveAssignRow(idx, 'down')}>
-                        <ArrowDown className="w-3 h-3" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/10 shrink-0"
-                        onClick={() => removeAssignRow(idx)}>
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
+                      className="bg-secondary/40 border border-border/50 rounded-lg p-2 space-y-1.5">
+                      {/* Zeile 1: Artikelname (volle Breite lesbar) */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="flex-1 text-xs font-semibold text-foreground truncate" title={row.article_name}>
+                          {row.article_name}
+                        </span>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/10 shrink-0"
+                          onClick={() => removeAssignRow(idx)}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                      {/* Zeile 2: Menge, Soll, Einheit, Sortierung */}
+                      <div className="flex items-center gap-1.5">
+                        <Input type="number" inputMode="decimal" className="h-7 w-16 text-xs px-1.5" placeholder="Menge"
+                          value={row.quantity} onChange={e => updateAssignRow(idx, { quantity: e.target.value })} />
+                        <Input type="number" inputMode="decimal" className="h-7 w-16 text-xs px-1.5" placeholder="Soll"
+                          value={row.min_stock} onChange={e => updateAssignRow(idx, { min_stock: e.target.value })} />
+                        <Select value={row.unit} onValueChange={v => updateAssignRow(idx, { unit: v })}>
+                          <SelectTrigger className="h-7 w-[4.5rem] text-xs px-1.5"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+                          disabled={idx === 0} onClick={() => moveAssignRow(idx, 'up')}>
+                          <ArrowUp className="w-3 h-3" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+                          disabled={idx === assignRows.length - 1} onClick={() => moveAssignRow(idx, 'down')}>
+                          <ArrowDown className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
