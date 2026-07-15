@@ -249,18 +249,28 @@ export default function RegelGrid({
 
     const isDragOver = (r, c) => dragOverCell?.r === r && dragOverCell?.c === c;
 
+    // Mindestbreite pro Spalte — auf Mobile zu schmal zum Lesen
+    const MIN_CELL_WIDTH = 90; // px — genug für Artikelnamen + Bestand
+    const gridMinWidth = cols * MIN_CELL_WIDTH + (cols - 1) * 4; // gap=4px
+    const needsHorizontalScroll = gridMinWidth > 320; // typische Mobile-Breite
+
     return (
         <div className="space-y-3">
-            {/* ── Haupt-Grid ── */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateRows: `repeat(${rows}, minmax(60px, auto))`,
-                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                    gap: '4px',
-                }}
-                onDragLeave={() => setDragOverCell(null)}
-            >
+            {/* ── Haupt-Grid (horizontal scroll auf Portrait-Mobile) ── */}
+            <div className={cn(
+                'relative',
+                needsHorizontalScroll && 'overflow-x-auto scrollbar-thin'
+            )}>
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateRows: `repeat(${rows}, minmax(60px, auto))`,
+                        gridTemplateColumns: `repeat(${cols}, minmax(${MIN_CELL_WIDTH}px, 1fr))`,
+                        gap: '4px',
+                        minWidth: needsHorizontalScroll ? `${gridMinWidth}px` : '100%',
+                    }}
+                    onDragLeave={() => setDragOverCell(null)}
+                >
                 {/* Platzierte Slots */}
                 {placed.map(slot => {
                     const pos = getSlotPos(slot);
@@ -400,6 +410,7 @@ export default function RegelGrid({
                         </span>
                     </div>
                 ))}
+                </div>
             </div>
 
             {/* ── Nicht-platzierte Slots ── */}
