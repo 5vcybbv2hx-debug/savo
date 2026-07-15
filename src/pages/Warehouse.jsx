@@ -179,7 +179,7 @@ export default function Warehouse() {
                     items: [],
                 };
             }
-            const qty = parseFloat(item.needed_quantity) || parseFloat(item.quantity) || 0;
+            const qty = item.needed_quantity != null ? parseFloat(item.needed_quantity) : (parseFloat(item.quantity) || 0);
             groups[artId].total_needed += qty;
             groups[artId].items.push(item);
         });

@@ -239,13 +239,14 @@ export default function Restock() {
 
     const toggleComplete = async (item) => {
         const nowCompleted = !item.is_completed;
+        const effectiveQty = item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0;
         updateMutation.mutate({ id: item.id, data: { ...item, is_completed: nowCompleted } });
 
         if (nowCompleted) {
-            if (item.article_id && item.quantity > 0 && !item.stock_reduced) {
+            if (item.article_id && effectiveQty > 0 && !item.stock_reduced) {
                 const article = articles.find(a => a.id === item.article_id);
                 if (article && article.current_stock != null) {
-                    const newStock = Math.max(0, (parseFloat(article.current_stock) || 0) - parseFloat(item.quantity));
+                    const newStock = Math.max(0, (parseFloat(article.current_stock) || 0) - effectiveQty);
                     try {
                         await base44.entities.Article.update(article.id, { current_stock: newStock });
                         await base44.entities.RestockItem.update(item.id, { stock_reduced: true });
@@ -261,10 +262,10 @@ export default function Restock() {
                 setTimeout(() => setOrderNudge(prev => ({ ...prev, [item.id]: false })), 8000);
             }
         } else {
-            if (item.article_id && item.quantity > 0 && item.stock_reduced) {
+            if (item.article_id && effectiveQty > 0 && item.stock_reduced) {
                 const article = articles.find(a => a.id === item.article_id);
                 if (article) {
-                    const newStock = (parseFloat(article.current_stock) || 0) + parseFloat(item.quantity);
+                    const newStock = (parseFloat(article.current_stock) || 0) + effectiveQty;
                     try {
                         await base44.entities.Article.update(article.id, { current_stock: newStock });
                         await base44.entities.RestockItem.update(item.id, { stock_reduced: false });
@@ -287,7 +288,7 @@ export default function Restock() {
         const supplierName = primarySupplier?.supplier_name || article?.suppliers?.[0] || '';
         const defaultOpt = (primarySupplier?.packaging_options || []).find(o => o.is_default) || (primarySupplier?.packaging_options || [])[0];
         const unitsPerPack = parseFloat(defaultOpt?.units_per_pack) || 1;
-        const bottleNeed = parseFloat(item.quantity) || 0;
+        const bottleNeed = item.needed_quantity != null ? parseFloat(item.needed_quantity) : (parseFloat(item.quantity) || 0);
         const suggestedQty = Math.max(1, Math.ceil(bottleNeed / unitsPerPack));
         return {
             article, primarySupplier, supplierName, defaultOpt, unitsPerPack, bottleNeed,
@@ -612,7 +613,7 @@ export default function Restock() {
                                                         </p>
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <span className="text-xs text-muted-foreground">
-                                                                {item.quantity} Stück · {item.time || ''}
+                                                                {item.needed_quantity != null ? item.needed_quantity : item.quantity} Stück · {item.time || ''}
                                                             </span>
                                                             {item.area_name && (
                                                                 <span className="text-xs text-muted-foreground/60 truncate max-w-[100px]">
