@@ -402,6 +402,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                         furniture={fur}
                                                         slots={furSlots}
                                                         assignments={assignments}
+                                                        restockItems={restockItems}
                                                         activeSlotId={null}
                                                         onSlotTap={handleSlotTap}
                                                         readOnly={false}

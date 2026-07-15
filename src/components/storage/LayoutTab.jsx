@@ -444,6 +444,7 @@ export default function LayoutTab({ permissions }) {
                                                     furniture={furForGrid}
                                                     slots={furSlots}
                                                     assignments={assignments}
+                                                    restockItems={restockItems}
                                                     activeSlotId={null}
                                                     onSlotTap={handleSlotTap}
                                                     readOnly={false}
@@ -594,4 +595,3 @@ export default function LayoutTab({ permissions }) {
         </div>
     );
 }
-

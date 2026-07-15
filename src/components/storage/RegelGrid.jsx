@@ -21,6 +21,7 @@ export default function RegelGrid({
     furniture,
     slots = [],
     assignments = [],
+    restockItems = [],
     activeSlotId = null,
     onSlotTap,
     readOnly = false,
@@ -48,6 +49,31 @@ export default function RegelGrid({
         });
         return map;
     }, [assignments]);
+
+    // RestockItems pro Slot (für Ampel-Status) — nach assignment_id gruppiert
+    const restockByAssignment = useMemo(() => {
+        const map = {};
+        restockItems.forEach(r => {
+            if (r.assignment_id) {
+                if (!map[r.assignment_id]) map[r.assignment_id] = [];
+                map[r.assignment_id].push(r);
+            }
+        });
+        return map;
+    }, [restockItems]);
+
+    // Ampel-Status für ein Fach:
+    //   'red'   — heute noch nicht erfasst (kein RestockItem)
+    //   'yellow' — IST gespeichert, Keller-Liste noch offen (is_completed=false)
+    //   'green'  — Keller-Liste abgearbeitet (is_completed=true)
+    //   null     — keine Assignments oder Edit-Modus (neutral)
+    const getAmpelStatus = useCallback((slotAssignments) => {
+        if (editMode || !slotAssignments?.length) return null;
+        const allRestock = slotAssignments.flatMap(a => restockByAssignment[a.id] || []);
+        if (allRestock.length === 0) return 'red';
+        const allCompleted = allRestock.every(r => r.is_completed);
+        return allCompleted ? 'green' : 'yellow';
+    }, [restockByAssignment, editMode]);
 
     // Slot-Daten inkl. pending overrides
     const getSlotPos = useCallback((slot) => {
@@ -298,10 +324,16 @@ export default function RegelGrid({
                             {isActive && (
                                 <div className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-primary rounded-full border-2 border-background z-10" />
                             )}
-                            {/* Status-Dot */}
-                            {dotColor && (
-                                <div className={cn('absolute top-1 left-1 w-1.5 h-1.5 rounded-full', dotColor)} />
-                            )}
+                            {/* Ampel-Status-Dot (größer für Mobile-Sichtbarkeit) */}
+                            {(() => {
+                                const ampel = getAmpelStatus(slotAssignments);
+                                if (ampel === 'red')    return <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-destructive" />;
+                                if (ampel === 'yellow') return <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-amber-500" />;
+                                if (ampel === 'green')  return <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-emerald-500" />;
+                                // Edit-Modus oder keine Assignments: neutraler Bestands-Dot
+                                if (dotColor && !editMode) return <div className={cn('absolute top-1 left-1 w-2 h-2 rounded-full', dotColor)} />;
+                                return null;
+                            })()}
                             {/* Drag-Handle im Edit-Modus */}
                             {editMode && (
                                 <div className="absolute top-1 right-1 z-10 flex gap-0.5">
