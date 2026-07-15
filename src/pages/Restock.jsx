@@ -16,6 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { PackageCheck } from 'lucide-react';
 import BarcodeScanner from '../components/restock/BarcodeScanner';
 
 // ── Inline Toast ──────────────────────────────────────────────────────────────
