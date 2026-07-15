@@ -6,7 +6,7 @@ import {
     Plus, ShoppingCart, Trash2, Check, Package, Camera,
     Search, AlertTriangle, MoreVertical, ChevronRight,
     ChevronDown, ScanLine, Send, Truck, CheckCircle2,
-    XCircle, ArrowRight, ClipboardCheck, RotateCcw, X
+    XCircle, ArrowRight, ClipboardCheck, RotateCcw, ClipboardList
 } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import KanbanScanModal from '../components/shopping/KanbanScanModal';
 import SmartCombobox from '@/components/ui/SmartCombobox';
 import ArticlePickerSheet from '../components/shopping/ArticlePickerSheet';
+import BulkWareneingangSheet from '../components/shopping/BulkWareneingangSheet';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -59,137 +60,18 @@ function timeAgo(isoStr) {
     catch { return ''; }
 }
 
-// ── BulkWareneingangSheet ─────────────────────────────────────────────────────
-function BulkWareneingangSheet({ open, onClose, items, onConfirmAll }) {
-    const [deliveries, setDeliveries] = useState({});
-    const [notes, setNotes] = useState({});
-    const [skipped, setSkipped] = useState({});
-
-    useEffect(() => {
-        if (open && items.length > 0) {
-            const initialDeliveries = {};
-            const initialNotes = {};
-            const initialSkipped = {};
-            items.forEach(item => {
-                initialDeliveries[item.id] = String(item.quantity ?? '');
-                initialNotes[item.id] = item.delivery_note || '';
-                initialSkipped[item.id] = false;
-            });
-            setDeliveries(initialDeliveries);
-            setNotes(initialNotes);
-            setSkipped(initialSkipped);
-        }
-    }, [open, items]);
-
-    if (!open) return null;
-
-    const handleConfirm = () => {
-        const confirmedList = items
-            .filter(item => !skipped[item.id])
-            .map(item => ({
-                item,
-                deliveredQty: parseFloat(deliveries[item.id]) || 0,
-                note: notes[item.id] || ''
-            }));
-
-        if (confirmedList.length === 0) {
-            toast.error('Keine Artikel zum Quittieren ausgewählt');
-            return;
-        }
-
-        onConfirmAll(confirmedList);
-        onClose();
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex flex-col" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="flex-1 bg-black/50" onClick={onClose} />
-            <div className="bg-card rounded-t-2xl shadow-2xl flex flex-col max-h-[90vh]">
-                <div className="flex justify-center pt-3 pb-1">
-                    <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-                </div>
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                    <h2 className="font-bold text-foreground text-base flex items-center gap-2">
-                        <Truck className="w-5 h-5 text-amber-500" />
-                        Sammel-Wareneingang
-                    </h2>
-                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-accent text-muted-foreground">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto divide-y divide-border p-4 space-y-4">
-                    {items.map(item => {
-                        const isSkipped = skipped[item.id];
-                        return (
-                            <div key={item.id} className={cn("py-3 space-y-2.5", isSkipped && "opacity-45")}>
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={!isSkipped}
-                                            onChange={(e) => setSkipped(prev => ({ ...prev, [item.id]: !e.target.checked }))}
-                                            className="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
-                                        />
-                                        <div>
-                                            <p className="font-semibold text-sm text-foreground">{item.item_name}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Soll-Menge: {item.quantity} {item.unit || 'Stück'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {!isSkipped && (
-                                        <div className="flex items-center gap-1.5">
-                                            <Input
-                                                type="number"
-                                                step="0.5"
-                                                min="0"
-                                                value={deliveries[item.id] ?? ''}
-                                                onChange={e => setDeliveries(prev => ({ ...prev, [item.id]: e.target.value }))}
-                                                className="w-20 h-8 text-center text-sm font-bold"
-                                            />
-                                            <span className="text-xs text-muted-foreground">{item.unit || 'St.'}</span>
-                                        </div>
-                                    )}
-                                </div>
-                                {!isSkipped && (
-                                    <Input
-                                        placeholder="Notiz (optional)..."
-                                        value={notes[item.id] ?? ''}
-                                        onChange={e => setNotes(prev => ({ ...prev, [item.id]: e.target.value }))}
-                                        className="h-8 text-xs"
-                                    />
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-
-                <div className="p-4 border-t border-border flex gap-3">
-                    <Button variant="outline" onClick={onClose} className="flex-1 h-11">
-                        Abbrechen
-                    </Button>
-                    <Button onClick={handleConfirm} className="flex-1 h-11 bg-amber-600 hover:bg-amber-700 text-white">
-                        <Check className="w-4 h-4 mr-1.5" />
-                        Alle quittieren
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ── ShoppingRow ───────────────────────────────────────────────────────────────
+// ── ShoppingRow (kompakt, 2-Zeilen-Layout) ─────────────────────────────────────
 function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpenWareneingang, onQtyChange, unitPrice, activeTab }) {
     const supplierIdx = suppliers.findIndex(s => s.name === item.category);
     const isDone = item.status === 'abgeschlossen';
     const hasDiff = item.delivered_quantity != null && item.delivered_quantity !== item.quantity;
     const isShort = hasDiff && item.delivered_quantity < item.quantity;
     const isOver  = hasDiff && item.delivered_quantity > item.quantity;
+    const statusCfg = STATUS_CFG[item.status];
 
     return (
         <div className={cn(
-            'flex flex-col gap-2 px-3 py-3 rounded-xl border transition-all',
+            'px-3 py-2.5 rounded-xl border transition-all',
             isDone
                 ? 'bg-green-500/5 border-green-500/15 opacity-50'
                 : item.status === 'erhalten'
@@ -198,62 +80,91 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
                         ? 'bg-blue-500/5 border-blue-500/15'
                         : 'bg-card border-border/50 hover:border-border'
         )}>
-            {/* Mobile Layout: Max 2 Rows */}
+            {/* Zeile 1: Name + Status-Badge */}
             <div className="flex items-center justify-between gap-2">
-                {/* Row 1 Left: Name */}
-                <span className={cn(
-                    'text-sm font-semibold truncate flex-1 min-w-0',
+                <p className={cn(
+                    'text-sm font-semibold truncate flex-1',
                     isDone ? 'text-muted-foreground line-through' : 'text-foreground'
                 )}>
                     {item.item_name}
-                </span>
-
-                {/* Row 1 Right: Status Badge */}
-                <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0 h-4 border shrink-0', STATUS_CFG[item.status]?.color)}>
-                    {STATUS_CFG[item.status]?.label}
+                </p>
+                <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0 h-4 border shrink-0 gap-0.5', statusCfg.color)}>
+                    <statusCfg.icon className="w-2.5 h-2.5" />
+                    {statusCfg.label}
                 </Badge>
             </div>
 
-            <div className="flex items-center justify-between gap-2 mt-0.5">
-                {/* Row 2 Left: Details & Badges */}
-                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                    {/* Qty & Unit */}
+            {/* Zeile 2: Menge/Einheit/Lieferant/Preis + Action + Menu */}
+            <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
+                    {/* Menge */}
                     {item.status === 'erhalten' || item.status === 'abgeschlossen' ? (
-                        <span className="text-xs font-medium text-muted-foreground shrink-0">
+                        <span className="text-xs font-medium">
                             <span className={cn(
                                 isShort ? 'text-destructive' : isOver ? 'text-blue-400' : 'text-green-400'
                             )}>
                                 {item.delivered_quantity ?? '?'}{item.unit ? ` ${item.unit}` : ''}
                             </span>
-                            <span> / {item.quantity}{item.unit ? ` ${item.unit}` : ''}</span>
+                            <span className="text-muted-foreground"> / {item.quantity} best.</span>
+                            {isShort && <span className="text-destructive ml-1">▼ {(item.quantity - item.delivered_quantity).toFixed(1)} fehlt</span>}
+                            {isOver  && <span className="text-blue-400 ml-1">▲ {(item.delivered_quantity - item.quantity).toFixed(1)} extra</span>}
                         </span>
+                    ) : activeTab === 'offen' ? (
+                        <div className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                className="w-6 h-6 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors active:scale-90"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newQty = Math.max(0.5, (parseFloat(item.quantity) || 1) - 1);
+                                    onQtyChange(item, newQty);
+                                }}
+                            >
+                                <span className="text-sm font-bold leading-none">−</span>
+                            </button>
+                            <span className="text-sm font-semibold text-foreground tabular-nums min-w-[1.5rem] text-center">
+                                {item.quantity}
+                            </span>
+                            <button
+                                type="button"
+                                className="w-6 h-6 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors active:scale-90"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newQty = (parseFloat(item.quantity) || 0) + 1;
+                                    onQtyChange(item, newQty);
+                                }}
+                            >
+                                <span className="text-sm font-bold leading-none">+</span>
+                            </button>
+                            {item.unit && <span className="text-xs text-muted-foreground ml-0.5">{item.unit}</span>}
+                        </div>
                     ) : (
-                        <span className="text-xs text-muted-foreground font-medium shrink-0">
+                        <span className="text-xs text-muted-foreground font-medium">
                             {item.quantity}{item.unit ? ` ${item.unit}` : ''}
                         </span>
                     )}
 
-                    {/* Supplier Badge */}
+                    {item.packaging_label && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/25 bg-primary/5 text-primary/80 shrink-0">
+                            {item.packaging_label}
+                        </Badge>
+                    )}
                     {item.category && (
                         <Badge variant="outline"
                             className={cn('text-[10px] px-1.5 py-0 h-4 border shrink-0', getSupplierColor(supplierIdx))}>
                             {item.category}
                         </Badge>
                     )}
-
-                    {/* Price Tag if available */}
                     {item.price_per_pack && item.status === 'offen' && (
-                        <span className="text-xs text-amber-400 font-semibold shrink-0">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400 tabular-nums shrink-0">
                             {(parseFloat(item.price_per_pack) * (parseFloat(item.quantity) || 1)).toFixed(2)} €
-                        </span>
+                        </Badge>
                     )}
                     {!item.price_per_pack && unitPrice && item.status === 'offen' && (
-                        <span className="text-xs text-amber-400 font-semibold shrink-0">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400 tabular-nums shrink-0">
                             ~{(unitPrice * (parseFloat(item.quantity) || 1)).toFixed(2)} €
-                        </span>
+                        </Badge>
                     )}
-
-                    {/* Warnings/Notes indicators */}
                     {item.delivery_note && (
                         <span className="text-[10px] text-amber-400 italic truncate max-w-[100px]">
                             ⚠ {item.delivery_note}
@@ -261,63 +172,22 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
                     )}
                 </div>
 
-                {/* Row 2 Right: Single Primary Action & 3-Dot Menu */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                    {activeTab === 'offen' && (
-                        <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-0.5 shrink-0">
-                            <button
-                                type="button"
-                                className="w-5 h-5 rounded bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-90"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const newQty = Math.max(0.5, (parseFloat(item.quantity) || 1) - 1);
-                                    onQtyChange(item, newQty);
-                                }}
-                            >
-                                <span className="text-xs font-bold leading-none">−</span>
-                            </button>
-                            <span className="text-xs font-semibold text-foreground tabular-nums min-w-[1rem] text-center">
-                                {item.quantity}
-                            </span>
-                            <button
-                                type="button"
-                                className="w-5 h-5 rounded bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground active:scale-90"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    const newQty = (parseFloat(item.quantity) || 0) + 1;
-                                    onQtyChange(item, newQty);
-                                }}
-                            >
-                                <span className="text-xs font-bold leading-none">+</span>
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Primary Button based on state */}
-                    {item.status === 'offen' && (
-                        <Button
-                            size="sm"
-                            className="h-7 px-2.5 text-xs bg-blue-600 hover:bg-blue-700 text-white shrink-0"
-                            onClick={() => onMarkBestellt([item])}
-                        >
-                            Bestellt
-                        </Button>
-                    )}
-                    {item.status === 'bestellt' && (
-                        <Button
-                            size="sm"
-                            className="h-7 px-2.5 text-xs bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+                {/* Primärer Action-Button + 3-Punkte-Menü */}
+                <div className="flex items-center gap-1 shrink-0">
+                    {activeTab === 'bestellt' && (
+                        <Button size="sm" variant="outline"
                             onClick={() => onOpenWareneingang(item)}
-                        >
+                            className="h-8 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10 px-2.5">
+                            <Truck className="w-3.5 h-3.5 mr-1" />
                             Eingang
                         </Button>
                     )}
 
-                    {/* 3-Dot dropdown menu for everything else */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-muted shrink-0">
-                                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                            <Button variant="ghost" size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <MoreVertical className="w-4 h-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
@@ -482,10 +352,10 @@ export default function Shopping() {
     const [showSuggestions,      setShowSuggestions]      = useState(false);
     const [deleteConfirm,        setDeleteConfirm]        = useState(null);
     const [wareneingangItem,     setWareneingangItem]     = useState(null);
-    const [bulkWareneingangOpen, setBulkWareneingangOpen] = useState(false);
     const [closeOrderConfirm,    setCloseOrderConfirm]    = useState(false);
     const [markBestelltConfirm,  setMarkBestelltConfirm]  = useState(null); // Array von Items
     const [activeTab,            setActiveTab]            = useState('offen');
+    const [bulkWareneingangOpen, setBulkWareneingangOpen] = useState(false);
     const [quickAddSheet,        setQuickAddSheet]        = useState(null); // { article, existingItem } | null
     const [quickAddQty,          setQuickAddQty]          = useState(1);
     const [formData, setFormData] = useState({
@@ -599,6 +469,41 @@ export default function Shopping() {
         if (activeTab === 'offen') setActiveTab('bestellt');
     };
 
+    // Bulk-Wareneingang (mehrere Artikel auf einmal)
+    const handleBulkWareneingangConfirm = async (results) => {
+        const now = new Date().toISOString();
+        for (const { item, deliveredQty, note } of results) {
+            const article = articles.find(a => a.id === item.article_id || a.name === item.item_name);
+            const primarySupplier = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
+            const usedOpt = (primarySupplier?.packaging_options || []).find(o => o.id === item.packaging_option_id)
+                || (primarySupplier?.packaging_options || []).find(o => o.is_default) || null;
+            const unitsPerPack = parseFloat(usedOpt?.units_per_pack) || 1;
+            const deliveredUnits = deliveredQty * unitsPerPack;
+
+            await updateMutation.mutateAsync({
+                id: item.id,
+                data: {
+                    ...item,
+                    status: 'erhalten',
+                    delivered_quantity: deliveredQty,
+                    delivered_units: deliveredUnits,
+                    received_at: now,
+                    delivery_note: note || null,
+                }
+            });
+
+            if (item.article_id && deliveredUnits > 0 && article) {
+                const newStock = (parseFloat(article.current_stock) || 0) + deliveredUnits;
+                await base44.entities.Article.update(article.id, { current_stock: newStock });
+            }
+        }
+        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+        queryClient.invalidateQueries({ queryKey: ['articles'] });
+        setBulkWareneingangOpen(false);
+        toast.success(`${results.length} Artikel quittiert`);
+        setActiveTab('erhalten');
+    };
+
     // Wareneingang quittieren
     const handleWareneingangConfirm = async ({ deliveredQty, note }) => {
         const item = wareneingangItem;
@@ -639,41 +544,6 @@ export default function Shopping() {
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         setWareneingangItem(null);
         toast.success('Wareneingang quittiert');
-        setActiveTab('erhalten');
-    };
-
-    const handleBulkWareneingangConfirm = async (confirmedList) => {
-        const now = new Date().toISOString();
-        for (const entry of confirmedList) {
-            const { item, deliveredQty, note } = entry;
-            const article = articles.find(a => a.id === item.article_id || a.name === item.item_name);
-            const primarySupplier = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
-            const usedOpt = (primarySupplier?.packaging_options || []).find(o => o.id === item.packaging_option_id)
-                || (primarySupplier?.packaging_options || []).find(o => o.is_default)
-                || null;
-            const unitsPerPack = parseFloat(usedOpt?.units_per_pack) || 1;
-            const deliveredUnits = deliveredQty * unitsPerPack;
-
-            await updateMutation.mutateAsync({
-                id: item.id,
-                data: {
-                    ...item,
-                    status:             'erhalten',
-                    delivered_quantity: deliveredQty,
-                    delivered_units:    deliveredUnits,
-                    received_at:        now,
-                    delivery_note:      note || null,
-                }
-            });
-
-            if (item.article_id && deliveredUnits > 0 && article) {
-                const newStock = (parseFloat(article.current_stock) || 0) + deliveredUnits;
-                await base44.entities.Article.update(article.id, { current_stock: newStock });
-            }
-        }
-        queryClient.invalidateQueries({ queryKey: ['articles'] });
-        queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
-        toast.success(`${confirmedList.length} Artikel quittiert`);
         setActiveTab('erhalten');
     };
 
@@ -799,7 +669,7 @@ export default function Shopping() {
     );
 
     const orderSummary = useMemo(() => {
-        const openOrderItems = items.filter(i => i.status === 'offen' && (supplierFilter === 'alle' || i.category === supplierFilter));
+        const openOrderItems = items.filter(i => i.status === 'offen');
         let totalNet = 0, totalVat7 = 0, totalVat19 = 0;
         let itemsWithPrice = 0, itemsWithoutPrice = 0;
 
@@ -821,7 +691,7 @@ export default function Shopping() {
 
         const totalVat = totalVat7 + totalVat19;
         return { totalNet, totalVat, totalVat7, totalVat19, totalGross: totalNet + totalVat, itemsWithPrice, itemsWithoutPrice, openCount: openOrderItems.length };
-    }, [items, articles, supplierFilter]);
+    }, [items, articles]);
 
     const getUnitPrice = (item) => {
         const article = articles.find(a => a.name === item.item_name);
@@ -836,14 +706,11 @@ export default function Shopping() {
         abgeschlossen: items.filter(i => i.status === 'abgeschlossen').length,
     }), [items]);
 
-    // Alle aktiven Lieferanten aus der Query
-    const allActiveSuppliers = useMemo(() => {
-        return suppliers.filter(s => s.is_active !== false);
-    }, [suppliers]);
-
-    const itemsToConfirmBulk = useMemo(() => {
-        return items.filter(i => i.status === 'bestellt' && (supplierFilter === 'alle' || i.category === supplierFilter));
-    }, [items, supplierFilter]);
+    // Aktive Lieferanten (alle Status, nicht nur aktiver Tab)
+    const activeSuppliers = useMemo(() => {
+        const names = new Set(items.map(i => i.category).filter(Boolean));
+        return suppliers.filter(s => names.has(s.name));
+    }, [items, suppliers]);
 
     if (!permissions.canViewShopping)
         return <PermissionDenied message="Du hast keine Berechtigung, die Bestellungen zu sehen." />;
@@ -891,76 +758,6 @@ export default function Shopping() {
                     )}
                 </div>
 
-                {/* ── 1. Lieferanten-Tabs (Primäre Navigation) ──────────── */}
-                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide border-b border-border">
-                    <button
-                        onClick={() => setSupplierFilter('alle')}
-                        className={cn(
-                            'shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all',
-                            supplierFilter === 'alle'
-                                ? 'bg-primary border-primary text-primary-foreground'
-                                : 'border-border text-muted-foreground hover:text-foreground bg-card'
-                        )}>
-                        Alle
-                    </button>
-                    {allActiveSuppliers.map((supplier, idx) => {
-                        const count = items.filter(i => i.status === activeTab && i.category === supplier.name).length;
-                        return (
-                            <button
-                                key={supplier.id || supplier.name}
-                                onClick={() => setSupplierFilter(supplier.name)}
-                                className={cn(
-                                    'shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1',
-                                    supplierFilter === supplier.name
-                                        ? 'bg-primary border-primary text-primary-foreground'
-                                        : 'border-border text-muted-foreground hover:text-foreground bg-card'
-                                )}>
-                                {supplier.name}
-                                {count > 0 && (
-                                    <span className="text-[10px] font-bold rounded-full bg-muted/20 px-1.5 shrink-0">
-                                        {count}
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* ── 2. Status-Tabs (Sekundäre Navigation) ─────────────── */}
-                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
-                    {[
-                        { id: 'offen',         label: 'Offen',       icon: Package },
-                        { id: 'bestellt',      label: 'Bestellt',    icon: Send },
-                        { id: 'erhalten',      label: 'Wareneingang',icon: Truck },
-                        { id: 'abgeschlossen', label: 'Archiv',      icon: CheckCircle2 },
-                    ].map(tab => {
-                        const count = supplierFilter === 'alle' 
-                            ? counts[tab.id] 
-                            : items.filter(i => i.status === tab.id && i.category === supplierFilter).length;
-                        return (
-                            <button key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={cn(
-                                    'flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-xs font-semibold border transition-all',
-                                    activeTab === tab.id
-                                        ? 'bg-card border-foreground text-foreground'
-                                        : 'border-border text-muted-foreground hover:text-foreground bg-transparent'
-                                )}>
-                                <tab.icon className="w-3.5 h-3.5" />
-                                {tab.label}
-                                {count > 0 && (
-                                    <span className={cn(
-                                        'text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center',
-                                        activeTab === tab.id ? 'bg-muted text-muted-foreground' : 'bg-muted text-muted-foreground'
-                                    )}>
-                                        {count}
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-
                 {/* ── Kostenkalkulation Banner (nur Tab Offen) ──────────── */}
                 {activeTab === 'offen' && orderSummary.openCount > 0 && (
                     <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-primary/25 bg-primary/5">
@@ -982,39 +779,25 @@ export default function Shopping() {
                                 {orderSummary.totalVat19 > 0 && <span>19%: +{orderSummary.totalVat19.toFixed(2)} €</span>}
                             </div>
                         </div>
-                        {/* Sammelbestellung pro Lieferant */}
-                        {permissions.canEditShopping && (
-                            <Button
-                                onClick={() => {
-                                    const itemsToOrder = items.filter(i => i.status === 'offen' && (supplierFilter === 'alle' || i.category === supplierFilter));
-                                    setMarkBestelltConfirm(itemsToOrder);
-                                }}
-                                className="h-10 shrink-0 gap-1.5 bg-primary hover:bg-primary/90">
-                                <Send className="w-4 h-4" />
-                                {supplierFilter !== 'alle' ? `Bei ${supplierFilter} bestellen` : 'Alle bestellen'}
-                            </Button>
-                        )}
+                        {/* Bestellt-Button (lieferantenspezifisch) */}
+                        {permissions.canEditShopping && (() => {
+                            const openItems = supplierFilter === 'alle'
+                                ? items.filter(i => i.status === 'offen')
+                                : items.filter(i => i.status === 'offen' && i.category === supplierFilter);
+                            if (openItems.length === 0) return null;
+                            return (
+                                <Button
+                                    onClick={() => setMarkBestelltConfirm(openItems)}
+                                    className="h-10 shrink-0 gap-1.5 bg-primary hover:bg-primary/90">
+                                    <Send className="w-4 h-4" />
+                                    {supplierFilter === 'alle' ? 'Bestellt!' : `Bei ${supplierFilter} bestellen`}
+                                </Button>
+                            );
+                        })()}
                     </div>
                 )}
 
-                {/* ── Wareneingang starten / abschließen Banner ─────────── */}
-                {activeTab === 'bestellt' && itemsToConfirmBulk.length > 0 && permissions.canEditShopping && (
-                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-amber-500/25 bg-amber-500/5">
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">Sammel-Wareneingang</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                {itemsToConfirmBulk.length} bestellte Artikel bereit zum Quittieren.
-                            </p>
-                        </div>
-                        <Button
-                            onClick={() => setBulkWareneingangOpen(true)}
-                            className="h-10 shrink-0 gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
-                            <Truck className="w-4 h-4" />
-                            Wareneingang starten
-                        </Button>
-                    </div>
-                )}
-
+                {/* ── Wareneingang abschließen Banner ───────────────────── */}
                 {activeTab === 'erhalten' && filteredItems.length > 0 && permissions.canEditShopping && (
                     <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-green-500/25 bg-green-500/5">
                         <div>
@@ -1039,15 +822,20 @@ export default function Shopping() {
                     <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3">
                         <div className="flex items-center gap-2 mb-2">
                             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                            <p className="text-sm font-semibold text-amber-400">Niedriger Lagerbestand</p>
+                            <p className="text-sm font-semibold text-foreground">
+                                {lowStockSuggestions.length} Artikel unter Mindestbestand
+                            </p>
                         </div>
-                        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                            {lowStockSuggestions.map(a => (
+                        <div className="flex flex-wrap gap-1.5">
+                            {lowStockSuggestions.slice(0, 8).map(a => (
                                 <button key={a.id}
                                     onClick={() => {
                                         const _ps = a.supplier_details?.find(s => s.is_primary) || a.supplier_details?.[0];
-                                        const _d  = (_ps?.packaging_options || []).find(o => o.is_default) || (_ps?.packaging_options || [])[0];
                                         const _sn = _ps?.supplier_name || a.suppliers?.[0] || suppliers[0]?.name || '';
+                                        const _d  = (_ps?.packaging_options||[]).find(o=>o.is_default)||(_ps?.packaging_options||[])[0];
+                                        // Fehlende Flaschen auf volle Gebinde-Einheiten aufrunden (nicht 1:1
+                                        // als Gebinde-Menge übernehmen — sonst würde z.B. bei einem 6er-Karton
+                                        // "3 Flaschen fehlen" fälschlich zu "3× Karton" bestellt statt "1× Karton").
                                         const _unitsPerPack = parseFloat(_d?.units_per_pack) || 1;
                                         const _bottleNeed = Math.max(1, (a.min_stock || 1) - (a.current_stock || 0));
                                         const _qty = Math.max(1, Math.ceil(_bottleNeed / _unitsPerPack));
@@ -1071,6 +859,75 @@ export default function Shopping() {
                                 </button>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {/* ── Lieferanten-Tabs (primäre Navigation) ─────────────── */}
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+                    {['alle', ...activeSuppliers.map(s => s.name)].map((name, idx) => (
+                        <button key={name}
+                            onClick={() => setSupplierFilter(name)}
+                            className={cn(
+                                'shrink-0 px-3 py-2 rounded-full text-xs font-semibold border transition-all',
+                                supplierFilter === name
+                                    ? 'bg-foreground border-foreground text-background'
+                                    : 'border-border text-muted-foreground hover:text-foreground bg-card'
+                            )}>
+                            {name === 'alle' ? 'Alle' : name}
+                        </button>
+                    ))}
+                </div>
+
+                {/* ── Status-Tabs ───────────────────────────────────────── */}
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+                    {[
+                        { id: 'offen',         label: 'Offen',       icon: Package },
+                        { id: 'bestellt',      label: 'Bestellt',    icon: Send },
+                        { id: 'erhalten',      label: 'Wareneingang',icon: Truck },
+                        { id: 'abgeschlossen', label: 'Archiv',      icon: CheckCircle2 },
+                    ].map(tab => {
+                        const count = counts[tab.id];
+                        return (
+                            <button key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={cn(
+                                    'flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-xs font-semibold border transition-all',
+                                    activeTab === tab.id
+                                        ? 'bg-primary border-primary text-primary-foreground'
+                                        : 'border-border text-muted-foreground hover:text-foreground bg-card'
+                                )}>
+                                <tab.icon className="w-3.5 h-3.5" />
+                                {tab.label}
+                                {count > 0 && (
+                                    <span className={cn(
+                                        'text-[10px] font-bold rounded-full px-1.5 min-w-[18px] text-center',
+                                        activeTab === tab.id ? 'bg-primary-foreground/20' : 'bg-muted text-muted-foreground'
+                                    )}>
+                                        {count}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* ── Wareneingang starten Banner (nur Tab Bestellt) ────── */}
+                {activeTab === 'bestellt' && filteredItems.length > 0 && permissions.canEditShopping && (
+                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-amber-500/25 bg-amber-500/5">
+                        <div>
+                            <p className="text-sm font-semibold text-foreground">
+                                {filteredItems.length} Artikel erwartet
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                {supplierFilter !== 'alle' ? `Von ${supplierFilter}` : 'Von allen Lieferanten'} · Alle auf einmal quittieren
+                            </p>
+                        </div>
+                        <Button
+                            onClick={() => setBulkWareneingangOpen(true)}
+                            className="h-10 shrink-0 gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
+                            <ClipboardList className="w-4 h-4" />
+                            Wareneingang
+                        </Button>
                     </div>
                 )}
 
@@ -1172,12 +1029,12 @@ export default function Shopping() {
                 onConfirm={handleWareneingangConfirm}
             />
 
-            {/* ── Sammel-Wareneingang Sheet ─────────────────────────────── */}
+            {/* ── Bulk Wareneingang Sheet ──────────────────────────────── */}
             <BulkWareneingangSheet
                 open={bulkWareneingangOpen}
+                items={filteredItems.filter(i => i.status === 'bestellt')}
                 onClose={() => setBulkWareneingangOpen(false)}
-                items={itemsToConfirmBulk}
-                onConfirmAll={handleBulkWareneingangConfirm}
+                onConfirm={handleBulkWareneingangConfirm}
             />
 
             {/* ── Bestellung abgeben Confirm ────────────────────────────── */}
