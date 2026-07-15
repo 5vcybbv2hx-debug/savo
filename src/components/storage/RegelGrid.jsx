@@ -253,10 +253,11 @@ export default function RegelGrid({
         <div className="space-y-3">
             {/* ── Haupt-Grid ── */}
             <div
+                className="overflow-x-auto"
                 style={{
                     display: 'grid',
                     gridTemplateRows: `repeat(${rows}, minmax(60px, auto))`,
-                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                    gridTemplateColumns: `repeat(${cols}, minmax(90px, 1fr))`,
                     gap: '4px',
                 }}
                 onDragLeave={() => setDragOverCell(null)}
