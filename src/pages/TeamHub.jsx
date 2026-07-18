@@ -8,7 +8,7 @@ import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
 import {
     Users, Calendar, Clock, Shield, ArrowLeftRight,
-    Palmtree, Video, Trophy, ListChecks, MapPin
+    Palmtree, Video, Trophy, ListChecks, MapPin, HelpCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -114,6 +114,7 @@ export default function TeamHub() {
                         <NavCard icon={Users}    label="Mitarbeiter"    description="Profile, Kontakte & Daten"        page="Employees"    permission="canViewEmployees" />
                         <NavCard icon={Shield}   label="Berechtigungen" description="Rollen & Zugriffsrechte"          page="PermissionsNew"  permission="canEditEmployeePermissions" />
                         <NavCard icon={Video}    label="Teamsitzung"    description="Meeting-Notizen & Protokolle"     page="TeamMeeting"  permission="canViewTeamMeeting" />
+                        <NavCard icon={HelpCircle} label="Onboarding"     description="Einlernliste & Einarbeitung"       page="Onboarding"   permission="canViewOnboarding" />
                     </div>
                 </div>
             )}
