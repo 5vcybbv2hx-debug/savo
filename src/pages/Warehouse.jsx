@@ -107,8 +107,9 @@ export default function Warehouse() {
 
     // Abhaken aller Items eines Artikels im Keller (mit tatsächlicher Menge)
     // → Überträgt den Bestand physisch vom Keller-Fach ins Theken-Fach
+    // → Wenn Menge < Bedarf: automatisch Push an Manager
     const completeArticleMutation = useMutation({
-        mutationFn: async ({ itemsToComplete, actualQty }) => {
+        mutationFn: async ({ itemsToComplete, actualQty, totalNeeded, articleName }) => {
             const transferQty = actualQty ?? itemsToComplete.reduce((sum, item) =>
                 sum + (item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0), 0);
 
@@ -139,54 +140,17 @@ export default function Warehouse() {
                     thekeAssignmentId: itemsToComplete[0].assignment_id || null,
                 });
             }
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['restock-open'] });
-            queryClient.invalidateQueries({ queryKey: ['restock-items'] });
-            queryClient.invalidateQueries({ queryKey: ['articles-warehouse'] });
-            queryClient.invalidateQueries({ queryKey: ['articles'] });
-            queryClient.invalidateQueries({ queryKey: ['assignments'] });
-        },
-    });
 
-    // "Zu wenig im Keller" — erledigt mit tatsächlicher (reduzierter) Menge + Push an Manager
-    // → Überträgt nur die tatsächlich verfügbare Menge vom Keller ins Theken-Fach
-    const lowStockMutation = useMutation({
-        mutationFn: async ({ group, actualQty }) => {
-            // 1. Items als erledigt markieren mit tatsächlicher Menge
-            await Promise.all(
-                group.items.map(item =>
-                    base44.entities.RestockItem.update(item.id, {
-                        is_completed: true,
-                        stock_reduced: true,
-                        quantity: actualQty,
-                    })
-                )
-            );
-
-            // 2. current_stock reduzieren für Items die noch nicht über Rundgang erfasst wurden
-            const unreducedItems = group.items.filter(item => !item.stock_reduced);
-            if (unreducedItems.length > 0) {
-                const totalUnreduced = unreducedItems.reduce((sum, item) =>
-                    sum + (item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0), 0);
-                await reduceCurrentStock(group.article_id, totalUnreduced);
+            // 4. "Zu wenig" automatisch: wenn geholte Menge < Bedarf → Manager benachrichtigen
+            if (totalNeeded != null && actualQty < totalNeeded) {
+                try {
+                    await sendPushNotification({
+                        title: '⚠️ Keller-Bestand kritisch',
+                        message: `${articleName}: nur ${actualQty} von ${totalNeeded} Stück verfügbar — bitte nachbestellen.`,
+                        target_role: 'Manager',
+                    });
+                } catch (e) { console.warn('[Keller] Push fehlgeschlagen:', e); }
             }
-
-            // 3. Keller → Theke Umbuchung (nur die tatsächlich verfügbare Menge)
-            if (group.article_id && actualQty > 0) {
-                await transferKellerToTheke({
-                    articleId: group.article_id,
-                    transferQty: actualQty,
-                    thekeAssignmentId: group.items[0]?.assignment_id || null,
-                });
-            }
-
-            // 4. Push an alle Manager
-            await sendPushNotification({
-                title: '⚠️ Keller-Bestand kritisch',
-                message: `${group.article_name}: nur ${actualQty} von ${group.total_needed} Stück verfügbar — bitte nachbestellen.`,
-                target_role: 'Manager',
-            });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['restock-open'] });
@@ -411,9 +375,8 @@ export default function Warehouse() {
                     ) : (
                         <div className="divide-y divide-border/60 border border-border/50 rounded-xl bg-card overflow-hidden">
                             {kellerGroups.map(group => {
-                                const isPending = (completeArticleMutation.isPending || lowStockMutation.isPending) &&
-                                    (completeArticleMutation.variables?.itemsToComplete?.[0]?.article_id === group.article_id ||
-                                     lowStockMutation.variables?.group?.article_id === group.article_id);
+                                const isPending = completeArticleMutation.isPending &&
+                                    completeArticleMutation.variables?.itemsToComplete?.[0]?.article_id === group.article_id;
                                 const qty = kellerQtys[group.article_id] ?? group.total_needed;
                                 const missing = Math.max(0, group.total_needed - qty);
                                 const setQty = (v) => {
@@ -471,22 +434,23 @@ export default function Warehouse() {
                                             </button>
                                             <span className="text-xs text-muted-foreground ml-1">Stück geholt</span>
 
-                                            {/* Erledigt-Button */}
+                                            {/* Erledigt-Button — automatisch "Zu wenig" wenn Menge < Bedarf */}
                                             <button
-                                                onClick={() => completeArticleMutation.mutate({ itemsToComplete: group.items, actualQty: qty })}
-                                                className="ml-auto w-12 h-10 flex items-center justify-center rounded-lg border-2 border-border bg-card text-muted-foreground hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/5 active:scale-95 transition-all shrink-0"
-                                                title="Erledigt — Menge geholt"
+                                                onClick={() => completeArticleMutation.mutate({
+                                                    itemsToComplete: group.items,
+                                                    actualQty: qty,
+                                                    totalNeeded: group.total_needed,
+                                                    articleName: group.article_name,
+                                                })}
+                                                className={cn(
+                                                    'ml-auto w-12 h-10 flex items-center justify-center rounded-lg border-2 transition-all active:scale-95 shrink-0',
+                                                    missing > 0
+                                                        ? 'border-amber-500/60 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10'
+                                                        : 'border-border bg-card text-muted-foreground hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/5'
+                                                )}
+                                                title={missing > 0 ? `Erledigt — ${missing} Stück fehlen, Manager wird benachrichtigt` : 'Erledigt — Menge geholt'}
                                             >
-                                                <Square className="w-5 h-5" />
-                                            </button>
-
-                                            {/* Zu-wenig-Button */}
-                                            <button
-                                                onClick={() => lowStockMutation.mutate({ group, actualQty: qty })}
-                                                className="w-12 h-10 flex items-center justify-center rounded-lg border-2 border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive/10 active:scale-95 transition-all shrink-0"
-                                                title="Zu wenig im Keller — Manager benachrichtigen"
-                                            >
-                                                <AlertTriangle className="w-5 h-5" />
+                                                {missing > 0 ? <AlertTriangle className="w-5 h-5" /> : <Square className="w-5 h-5" />}
                                             </button>
                                         </div>
 
