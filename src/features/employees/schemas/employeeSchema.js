@@ -38,7 +38,7 @@ export const DEFAULT_PERMISSIONS = {
     canViewAnalytics:      false,
     canViewPriceCalculator:false,
     canClockOutOthers:     false,
-    canViewOnboarding:     false,
+    canViewOnboarding:     true,
     canViewInventory:      false,
     canViewWastage:        false,
 };

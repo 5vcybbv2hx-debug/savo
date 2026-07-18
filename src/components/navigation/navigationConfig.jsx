@@ -69,10 +69,10 @@ export const additionalPages = [
     { page: 'PermissionsNew', name: 'Berechtigungen',  icon: Shield,        permission: 'canEditEmployeePermissions' },
     { page: 'TeamMeeting',    name: 'Teamsitzung',     icon: MessageSquare, permission: 'canViewTeamMeeting' },
     { page: 'Stationsplan',   name: 'Stationsplan',    icon: LayoutGrid,    permission: 'canViewShifts' },
+    { page: 'Onboarding',       name: 'Onboarding',       icon: HelpCircle,   permission: 'canViewOnboarding' },
 
     // Einstellungen & Mehr
     { page: 'Documents',        name: 'Dokumente',       icon: FileText,     permission: 'canViewSettings' },
-    { page: 'Onboarding',       name: 'Onboarding',       icon: HelpCircle,   permission: 'canViewOnboarding' },
     { page: 'BusinessCard',     name: 'Visitenkarte',     icon: CreditCard,   permission: 'canViewDashboard' },
     { page: 'ModuleCenter',     name: 'Modulcenter',      icon: LayoutGrid,   permission: 'canViewSettings' },
     { page: 'BusinessCalendar', name: 'Betriebskalender', icon: CalendarDays, permission: 'canViewSettings' },

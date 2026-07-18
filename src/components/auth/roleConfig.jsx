@@ -172,7 +172,7 @@ export const PERMISSION_MATRIX = {
     canEditCompanySettings:      { roles: [],   adminOnly: true,                              terminal: false },
 
     // ── Einarbeitung ──────────────────────────────────────────────────────────
-    canViewOnboarding:           { roles: [M.MANAGER],                                       terminal: false },
+    canViewOnboarding:           { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE, M.ORGA], terminal: false },
 
     // ── Buchhaltung ───────────────────────────────────────────────────────────
     canViewAccounting:           { roles: [M.MANAGER],      sensitive: true,                 terminal: false },
