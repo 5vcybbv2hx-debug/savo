@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { STALE } from '@/lib/queryUtils';
+import { STALE } from '@/lib/queryUtils'
+import { transferKellerToTheke, reduceCurrentStock, restoreCurrentStock } from '@/lib/stockSync';
 import { useErrorHandler } from '@/components/error/ErrorHandler';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
@@ -243,17 +244,24 @@ export default function Restock() {
         updateMutation.mutate({ id: item.id, data: { ...item, is_completed: nowCompleted } });
 
         if (nowCompleted) {
+            // 1. current_stock reduzieren (nur wenn noch nicht über Rundgang erfolgt)
             if (item.article_id && effectiveQty > 0 && !item.stock_reduced) {
-                const article = articles.find(a => a.id === item.article_id);
-                if (article && article.current_stock != null) {
-                    const newStock = Math.max(0, (parseFloat(article.current_stock) || 0) - effectiveQty);
-                    try {
-                        await base44.entities.Article.update(article.id, { current_stock: newStock });
-                        await base44.entities.RestockItem.update(item.id, { stock_reduced: true });
-                        queryClient.invalidateQueries({ queryKey: ['articles'] });
-                    } catch (e) { console.warn('[Restock] Bestandsabzug fehlgeschlagen:', e); }
-                }
+                await reduceCurrentStock(item.article_id, effectiveQty);
+                try { await base44.entities.RestockItem.update(item.id, { stock_reduced: true }); } catch {}
+                queryClient.invalidateQueries({ queryKey: ['articles'] });
             }
+            // 2. Keller → Theke Umbuchung (physische Übertragung)
+            if (item.article_id && effectiveQty > 0) {
+                try {
+                    await transferKellerToTheke({
+                        articleId: item.article_id,
+                        transferQty: effectiveQty,
+                        thekeAssignmentId: item.assignment_id || null,
+                    });
+                    queryClient.invalidateQueries({ queryKey: ['assignments'] });
+                } catch (e) { console.warn('[Restock] Keller→Theke Umbuchung fehlgeschlagen:', e); }
+            }
+            // 3. Bestell-Hinweis wenn unter Mindestbestand
             const alreadyInOrder = shoppingItems.some(
                 s => s.item_name === item.article_name && (s.status === 'offen' || s.status === 'bestellt')
             );
@@ -262,16 +270,23 @@ export default function Restock() {
                 setTimeout(() => setOrderNudge(prev => ({ ...prev, [item.id]: false })), 8000);
             }
         } else {
+            // 1. current_stock wiederherstellen
             if (item.article_id && effectiveQty > 0 && item.stock_reduced) {
-                const article = articles.find(a => a.id === item.article_id);
-                if (article) {
-                    const newStock = (parseFloat(article.current_stock) || 0) + effectiveQty;
-                    try {
-                        await base44.entities.Article.update(article.id, { current_stock: newStock });
-                        await base44.entities.RestockItem.update(item.id, { stock_reduced: false });
-                        queryClient.invalidateQueries({ queryKey: ['articles'] });
-                    } catch (e) { console.warn('[Restock] Bestandsrestore fehlgeschlagen:', e); }
-                }
+                await restoreCurrentStock(item.article_id, effectiveQty);
+                try { await base44.entities.RestockItem.update(item.id, { stock_reduced: false }); } catch {}
+                queryClient.invalidateQueries({ queryKey: ['articles'] });
+            }
+            // 2. Keller → Theke Umbuchung revertieren
+            if (item.article_id && effectiveQty > 0) {
+                try {
+                    await transferKellerToTheke({
+                        articleId: item.article_id,
+                        transferQty: effectiveQty,
+                        thekeAssignmentId: item.assignment_id || null,
+                        revert: true,
+                    });
+                    queryClient.invalidateQueries({ queryKey: ['assignments'] });
+                } catch (e) { console.warn('[Restock] Umbuchung-Revert fehlgeschlagen:', e); }
             }
             setOrderNudge(prev => ({ ...prev, [item.id]: false }));
         }

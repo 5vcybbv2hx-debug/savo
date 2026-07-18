@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sendPushNotification } from '@/lib/pushService';
+import { transferKellerToTheke, reduceCurrentStock } from '@/lib/stockSync';
 
 function StatBadge({ count, variant = 'default' }) {
     if (!count) return null;
@@ -105,36 +106,82 @@ export default function Warehouse() {
     });
 
     // Abhaken aller Items eines Artikels im Keller (mit tatsächlicher Menge)
+    // → Überträgt den Bestand physisch vom Keller-Fach ins Theken-Fach
     const completeArticleMutation = useMutation({
         mutationFn: async ({ itemsToComplete, actualQty }) => {
+            const transferQty = actualQty ?? itemsToComplete.reduce((sum, item) =>
+                sum + (item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0), 0);
+
+            // 1. Alle Items als erledigt markieren
             await Promise.all(
                 itemsToComplete.map(item =>
                     base44.entities.RestockItem.update(item.id, {
                         is_completed: true,
+                        stock_reduced: true,
                         quantity: actualQty ?? item.needed_quantity ?? item.quantity ?? 0,
                     })
                 )
             );
+
+            // 2. current_stock reduzieren für Items die noch nicht über Rundgang erfasst wurden
+            const unreducedItems = itemsToComplete.filter(item => !item.stock_reduced);
+            if (unreducedItems.length > 0) {
+                const totalUnreduced = unreducedItems.reduce((sum, item) =>
+                    sum + (item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0), 0);
+                await reduceCurrentStock(itemsToComplete[0].article_id, totalUnreduced);
+            }
+
+            // 3. Keller → Theke Umbuchung (physische Übertragung)
+            if (itemsToComplete[0]?.article_id && transferQty > 0) {
+                await transferKellerToTheke({
+                    articleId: itemsToComplete[0].article_id,
+                    transferQty,
+                    thekeAssignmentId: itemsToComplete[0].assignment_id || null,
+                });
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['restock-open'] });
             queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+            queryClient.invalidateQueries({ queryKey: ['articles-warehouse'] });
+            queryClient.invalidateQueries({ queryKey: ['articles'] });
+            queryClient.invalidateQueries({ queryKey: ['assignments'] });
         },
     });
 
-    // "Zu wenig im Keller" — erledigt mit tatsächlicher Menge + Push an Manager
+    // "Zu wenig im Keller" — erledigt mit tatsächlicher (reduzierter) Menge + Push an Manager
+    // → Überträgt nur die tatsächlich verfügbare Menge vom Keller ins Theken-Fach
     const lowStockMutation = useMutation({
         mutationFn: async ({ group, actualQty }) => {
-            // Items als erledigt markieren mit tatsächlicher Menge
+            // 1. Items als erledigt markieren mit tatsächlicher Menge
             await Promise.all(
                 group.items.map(item =>
                     base44.entities.RestockItem.update(item.id, {
                         is_completed: true,
+                        stock_reduced: true,
                         quantity: actualQty,
                     })
                 )
             );
-            // Push an alle Manager
+
+            // 2. current_stock reduzieren für Items die noch nicht über Rundgang erfasst wurden
+            const unreducedItems = group.items.filter(item => !item.stock_reduced);
+            if (unreducedItems.length > 0) {
+                const totalUnreduced = unreducedItems.reduce((sum, item) =>
+                    sum + (item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0), 0);
+                await reduceCurrentStock(group.article_id, totalUnreduced);
+            }
+
+            // 3. Keller → Theke Umbuchung (nur die tatsächlich verfügbare Menge)
+            if (group.article_id && actualQty > 0) {
+                await transferKellerToTheke({
+                    articleId: group.article_id,
+                    transferQty: actualQty,
+                    thekeAssignmentId: group.items[0]?.assignment_id || null,
+                });
+            }
+
+            // 4. Push an alle Manager
             await sendPushNotification({
                 title: '⚠️ Keller-Bestand kritisch',
                 message: `${group.article_name}: nur ${actualQty} von ${group.total_needed} Stück verfügbar — bitte nachbestellen.`,
@@ -144,6 +191,9 @@ export default function Warehouse() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['restock-open'] });
             queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+            queryClient.invalidateQueries({ queryKey: ['articles-warehouse'] });
+            queryClient.invalidateQueries({ queryKey: ['articles'] });
+            queryClient.invalidateQueries({ queryKey: ['assignments'] });
         },
     });
 

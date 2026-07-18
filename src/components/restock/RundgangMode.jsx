@@ -157,29 +157,19 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     }, [restockAreas, furnitureByArea, slotsByFurniture, assignmentsBySlot, restockItems]);
 
     // ── Live-Bestandsabgleich (identisch zur bestehenden Logik) ───────────────
-    const syncStockOnRestock = async (assignment, article, delta) => {
-        if (!delta) return;
-        if (article.current_stock != null) {
-            const newTotal = Math.max(0, (parseFloat(article.current_stock) || 0) - delta);
+    // IST-Erfassung: Theke auf IST-Wert setzen (Realität) + current_stock für Verbrauch reduzieren.
+    // Keller → Theke Umbuchung erfolgt ERST beim Abhaken im Keller-Tab (physische Bestätigung).
+    const syncStockOnRestock = async (assignment, article, istValue, previousQty) => {
+        const consumed = (parseFloat(previousQty) || 0) - (parseFloat(istValue) || 0);
+        // 1. Theke = IST (Realität — nicht schon auf Soll auffüllen)
+        try {
+            await base44.entities.StorageAssignment.update(assignment.id, { quantity: Math.max(0, istValue) });
+        } catch {}
+        // 2. current_stock -= Verbrauch (wurden verkauft)
+        if (article?.current_stock != null && consumed > 0) {
+            const newTotal = Math.max(0, (parseFloat(article.current_stock) || 0) - consumed);
             try { await base44.entities.Article.update(article.id, { current_stock: newTotal }); } catch {}
         }
-        try {
-            let newSlotQty = (assignment.quantity ?? 0) + delta;
-            if (assignment.min_stock != null) newSlotQty = Math.min(newSlotQty, assignment.min_stock);
-            await base44.entities.StorageAssignment.update(assignment.id, { quantity: Math.max(0, newSlotQty) });
-        } catch {}
-        try {
-            const lagerAssignment = assignments.find(a => {
-                if (a.article_id !== assignment.article_id || a.id === assignment.id) return false;
-                const slot = slots.find(s => s.id === a.storage_slot_id);
-                const slotArea = slot && areas.find(ar => ar.id === slot.area_id);
-                return slotArea?.area_type === 'lager';
-            });
-            if (lagerAssignment) {
-                const newQty = Math.max(0, (lagerAssignment.quantity ?? 0) - delta);
-                await base44.entities.StorageAssignment.update(lagerAssignment.id, { quantity: newQty });
-            }
-        } catch {}
         qc.invalidateQueries({ queryKey: ['articles'] });
         qc.invalidateQueries({ queryKey: ['assignments'] });
         qc.invalidateQueries({ queryKey: ['inv-assignments'] });
@@ -233,7 +223,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                         quantity: ist,
                         needed_quantity: needed,
                         is_completed: false,
-                        stock_reduced: false,
+                        stock_reduced: true, // current_stock wurde bereits beim IST-Eintrag reduziert
                     },
                 });
             } else {
@@ -251,14 +241,14 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                     date: today,
                     time: format(new Date(), 'HH:mm'),
                     is_completed: false,
-                    stock_reduced: false,
+                    stock_reduced: true, // current_stock wurde bereits beim IST-Eintrag reduziert
                 });
                 anyRestock = true;
             }
 
-            // Stock sync — delta basiert auf IST vs. gespeichertem Fach-Bestand
-            if (article && delta !== 0) {
-                await syncStockOnRestock(a, article, -delta); // negativ weil IST = was DA ist, nicht was entnommen wurde
+            // Stock sync — Theke auf IST setzen + current_stock für Verbrauch
+            if (article) {
+                await syncStockOnRestock(a, article, ist, a.quantity ?? 0);
             }
         }
 
