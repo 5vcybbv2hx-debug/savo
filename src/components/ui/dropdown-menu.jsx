@@ -11,6 +11,13 @@ import { useIsMobile } from "@/components/utils/useIsMobile"
 // wann SIE (und nicht irgendein anderes Dropdown auf der Seite) geoeffnet ist.
 const DropdownMenuOpenContext = React.createContext(null);
 
+// Signalisiert DropdownMenuItem (und aehnlichen Komponenten), dass sie sich
+// in der mobilen Drawer-Variante befinden. In diesem Fall duerfen sie NICHT
+// als Radix Menu.Item gerendert werden, da dieses Menu.Content als Vorfahre
+// erwartet – beim Drawer fehlt dieser Context, was zu
+// "MenuItem must be used within MenuContent" fuehrt.
+const DropdownMenuMobileContext = React.createContext(false);
+
 const DropdownMenu = ({ open: openProp, onOpenChange, ...props }) => {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
   const isControlled = openProp !== undefined;
@@ -80,13 +87,15 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, child
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="bg-card border-border">
-          <div className="p-4 space-y-1">
-            {children}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <DropdownMenuMobileContext.Provider value={true}>
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerContent className="bg-card border-border">
+            <div className="p-4 space-y-1">
+              {children}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </DropdownMenuMobileContext.Provider>
     );
   }
 
@@ -108,16 +117,45 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, child
 })
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
-const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) => (
-  <DropdownMenuPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0",
-      inset && "pl-8",
-      className
-    )}
-    {...props} />
-))
+const DropdownMenuItem = React.forwardRef(({ className, inset, onClick, ...props }, ref) => {
+  const isMobileItem = React.useContext(DropdownMenuMobileContext);
+  const ctx = React.useContext(DropdownMenuOpenContext);
+
+  // Mobiler Drawer-Pfad: Radix Menu.Item kann nicht verwendet werden, da
+  // Menu.Content als Vorfahre fehlt (stattdessen wird ein vaul-Drawer
+  // gerendert). Plain button mit identischem Styling + Auto-Close.
+  if (isMobileItem) {
+    return (
+      <button
+        ref={ref}
+        type="button"
+        className={cn(
+          "relative flex w-full cursor-default select-none items-center gap-2 rounded-lg px-3 py-3 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 text-left",
+          inset && "pl-8",
+          className
+        )}
+        onClick={(e) => {
+          onClick?.(e);
+          ctx?.setOpen?.(false);
+        }}
+        {...props}
+      />
+    );
+  }
+
+  return (
+    <DropdownMenuPrimitive.Item
+      ref={ref}
+      className={cn(
+        "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0",
+        inset && "pl-8",
+        className
+      )}
+      onClick={onClick}
+      {...props}
+    />
+  );
+})
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => (
@@ -158,20 +196,46 @@ const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props 
 ))
 DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName
 
-const DropdownMenuLabel = React.forwardRef(({ className, inset, ...props }, ref) => (
-  <DropdownMenuPrimitive.Label
-    ref={ref}
-    className={cn("px-2 py-1.5 text-sm font-semibold", inset && "pl-8", className)}
-    {...props} />
-))
+const DropdownMenuLabel = React.forwardRef(({ className, inset, ...props }, ref) => {
+  const isMobileItem = React.useContext(DropdownMenuMobileContext);
+  if (isMobileItem) {
+    return (
+      <div
+        ref={ref}
+        className={cn("px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wide", inset && "pl-8", className)}
+        {...props}
+      />
+    );
+  }
+  return (
+    <DropdownMenuPrimitive.Label
+      ref={ref}
+      className={cn("px-2 py-1.5 text-sm font-semibold", inset && "pl-8", className)}
+      {...props}
+    />
+  );
+})
 DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName
 
-const DropdownMenuSeparator = React.forwardRef(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.Separator
-    ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-muted", className)}
-    {...props} />
-))
+const DropdownMenuSeparator = React.forwardRef(({ className, ...props }, ref) => {
+  const isMobileItem = React.useContext(DropdownMenuMobileContext);
+  if (isMobileItem) {
+    return (
+      <div
+        ref={ref}
+        className={cn("my-1.5 h-px bg-border", className)}
+        {...props}
+      />
+    );
+  }
+  return (
+    <DropdownMenuPrimitive.Separator
+      ref={ref}
+      className={cn("-mx-1 my-1 h-px bg-muted", className)}
+      {...props}
+    />
+  );
+})
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
 
 const DropdownMenuShortcut = ({
