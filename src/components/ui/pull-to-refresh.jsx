@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -7,15 +7,45 @@ export function PullToRefresh({ onRefresh, children }) {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const startY = useRef(0);
     const containerRef = useRef(null);
+    const lastScrollTime = useRef(0);
+    const isTracking = useRef(false);
+
+    const handleScroll = useCallback(() => {
+        lastScrollTime.current = Date.now();
+        // Reset startY if user scrolls away from top — prevents stale tracking
+        if (containerRef.current && containerRef.current.scrollTop > 0) {
+            startY.current = 0;
+            isTracking.current = false;
+        }
+    }, []);
 
     const handleTouchStart = (e) => {
         if (containerRef.current?.scrollTop === 0) {
-            startY.current = e.touches[0].clientY;
+            // Only start tracking if scroll has settled (not during momentum scrolling).
+            // This prevents pull-to-refresh from firing when the user scrolls back up
+            // after content shifted (e.g., closing a panel in the Warehouse/Auffüllliste).
+            const timeSinceLastScroll = Date.now() - lastScrollTime.current;
+            if (timeSinceLastScroll > 300) {
+                startY.current = e.touches[0].clientY;
+                isTracking.current = true;
+            } else {
+                // Still settling — ignore this touch for pull-to-refresh purposes
+                startY.current = 0;
+                isTracking.current = false;
+            }
+        } else {
+            startY.current = 0;
+            isTracking.current = false;
         }
     };
 
     const handleTouchMove = (e) => {
-        if (isRefreshing || !containerRef.current || containerRef.current.scrollTop > 0 || startY.current === 0) return;
+        if (isRefreshing || !containerRef.current || !isTracking.current || startY.current === 0) return;
+        // Re-check scrollTop — if user scrolled since touchstart, abort
+        if (containerRef.current.scrollTop > 0) {
+            isTracking.current = false;
+            return;
+        }
         
         const currentY = e.touches[0].clientY;
         const distance = Math.max(0, currentY - startY.current);
@@ -27,6 +57,7 @@ export function PullToRefresh({ onRefresh, children }) {
     };
 
     const handleTouchEnd = async () => {
+        isTracking.current = false;
         if (pullDistance > 80) {
             setIsRefreshing(true);
             if ('vibrate' in navigator) navigator.vibrate(30);
@@ -49,6 +80,7 @@ export function PullToRefresh({ onRefresh, children }) {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            onScroll={handleScroll}
         >
             {/* Pull indicator */}
             <div 
