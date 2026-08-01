@@ -57,6 +57,13 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
         retry: 1,
     });
 
+    const { data: localEvents = [] } = useQuery({
+        queryKey: ['local-events-all'],
+        queryFn: () => base44.entities.LocalEvent.list('event_date', 500),
+        staleTime: 10 * 60 * 1000,
+        retry: 1,
+    });
+
     // Compute suggestions for the current week
     const suggestions = useMemo(() => {
         if (!revenues.length || !weekStart) return [];
@@ -124,6 +131,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                     holidayEveInfo,
                     bridgeDay,
                     season,
+                    localEvents: matchingEvents,
                 });
                 continue;
             }
@@ -273,6 +281,26 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                 adjustedReason = `🔗 Brückentag. ${reasonText}`;
             }
             
+            // Check for local events on this date
+            const matchingEvents = localEvents.filter(e => {
+                if (!e.is_active && e.is_active === false) return false;
+                if (e.event_date === dateStr) return true;
+                // Multi-day events
+                if (e.event_end_date && e.event_date <= dateStr && e.event_end_date >= dateStr) return true;
+                return false;
+            });
+            
+            if (matchingEvents.length > 0) {
+                const totalStaffAdj = matchingEvents.reduce((sum, e) => sum + (e.staff_adjustment || 0), 0);
+                const eventNames = matchingEvents.map(e => e.event_name).join(', ');
+                if (totalStaffAdj !== 0) {
+                    adjustedRecommendation = Math.max(2, Math.round((adjustedRecommendation || avgStaffCount || 4) + totalStaffAdj));
+                }
+                const eventEmoji = matchingEvents.some(e => e.impact_level === 'large') ? '🔴' 
+                    : matchingEvents.some(e => e.impact_level === 'medium') ? '🟡' : '🟢';
+                adjustedReason = `${eventEmoji} ${eventNames}${totalStaffAdj !== 0 ? ` (${totalStaffAdj > 0 ? '+' : ''}${totalStaffAdj} Personal)` : ''}. ${adjustedReason}`;
+            }
+            
             // Seasonal adjustment
             if (season === 'summer' && avgTemp && avgTemp >= 25) {
                 adjustedRecommendation = Math.round((adjustedRecommendation || avgStaffCount || 4) + 1);
@@ -302,6 +330,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                 holidayEveInfo,
                 bridgeDay,
                 season,
+                localEvents: matchingEvents || [],
             });
         }
 

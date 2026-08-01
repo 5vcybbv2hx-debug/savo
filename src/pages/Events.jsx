@@ -21,6 +21,7 @@ import { usePermissions } from '@/components/auth/usePermissions';
 import EventArchive from '@/components/events/EventArchive';
 import EventIdeas from '@/components/events/EventIdeas';
 import CalendarSubscribe from '@/components/events/CalendarSubscribe';
+import LocalEventsTab from '@/components/events/LocalEventsTab';
 
 const eventTypeColors = {
     'Party': 'bg-purple-100 text-purple-700 border-purple-200',
@@ -47,6 +48,7 @@ export default function Events() {
     const permissions = usePermissions();
     const canEdit = permissions.canEditEvents;
     const [activeTab, setActiveTab] = useState('upcoming');
+    const [showLocalEvents, setShowLocalEvents] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');

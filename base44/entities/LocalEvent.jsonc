@@ -9,33 +9,21 @@
     "event_date": {
       "type": "string",
       "format": "date",
-      "description": "Startdatum des Events"
+      "description": "Startdatum"
     },
     "event_end_date": {
       "type": "string",
       "format": "date",
-      "description": "Enddatum (optional, bei mehrt\u00e4gigen Events)"
+      "description": "Enddatum (optional, bei mehrtägigen Events)"
     },
     "category": {
       "type": "string",
-      "enum": [
-        "concert",
-        "festival",
-        "sports",
-        "market",
-        "conference",
-        "holiday",
-        "other"
-      ],
+      "enum": ["concert", "festival", "sports", "market", "conference", "holiday", "community", "other"],
       "description": "Event-Kategorie"
     },
     "impact_level": {
       "type": "string",
-      "enum": [
-        "small",
-        "medium",
-        "large"
-      ],
+      "enum": ["small", "medium", "large"],
       "description": "Auswirkung auf den Barbetrieb"
     },
     "location": {
@@ -50,11 +38,49 @@
       "type": "boolean",
       "default": true,
       "description": "Event aktiv"
+    },
+    "recurrence_pattern": {
+      "type": "string",
+      "enum": ["none", "annual_fixed", "annual_floating", "irregular"],
+      "default": "none",
+      "description": "Wiederholung: none=einmalig, annual_fixed=jährlich gleiches Datum, annual_floating=jährlich aber Datum verschiebt sich"
+    },
+    "recurrence_name": {
+      "type": "string",
+      "description": "Name des wiederkehrenden Events (z.B. 'Balingen Stadtfest') für automatische Vorschläge"
+    },
+    "recurrence_base_month": {
+      "type": "number",
+      "description": "Ungefährer Monat für jährliche Events (1-12)"
+    },
+    "recurrence_week": {
+      "type": "string",
+      "enum": ["first", "second", "third", "fourth", "last"],
+      "description": "Welche Woche im Monat (für floating events)"
+    },
+    "recurrence_weekday": {
+      "type": "number",
+      "description": "Wochentag für floating events (0=So, 6=Sa)"
+    },
+    "staff_adjustment": {
+      "type": "number",
+      "description": "Personal-Anpassung: +N mehr, -N weniger"
+    },
+    "bar_traffic_impact": {
+      "type": "string",
+      "enum": ["more", "less", "neutral"],
+      "description": "Mehr Busbetrieb, weniger, oder neutral"
+    },
+    "distance_km": {
+      "type": "number",
+      "description": "Entfernung zur Bar in km"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["manually", "auto_search", "auto_suggestion"],
+      "default": "manually",
+      "description": "Quelle: manuell eingegeben, auto-suche, oder auto-vorschlag"
     }
   },
-  "required": [
-    "event_name",
-    "event_date",
-    "impact_level"
-  ]
+  "required": ["event_name", "event_date", "impact_level"]
 }
