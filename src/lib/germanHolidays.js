@@ -104,7 +104,7 @@ function getVariableHolidayEveLevel(dateStr) {
   if (nextDayStr === ostermontag) return 1;  // Ostersonntag → eher ruhig
   if (nextDayStr === himmelfahrt) return 3;  // Vor Himmelfahrt = PARTY (langes WE)
   if (nextDayStr === pfingstmontag) return 3; // Vor Pfingsten = PARTY (langes WE)
-  if (nextDayStr === fronleichnam) return 1; // Vor Fronleichnam = eher ruhig
+  if (nextDayStr === fronleichnam) return 3; // Vor Fronleichnam = Action (User bestätigt)
   
   return 0;
 }

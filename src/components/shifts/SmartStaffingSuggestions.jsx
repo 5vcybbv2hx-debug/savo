@@ -195,19 +195,81 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
             let adjustedRecommendation = recommendation;
             let adjustedReason = reasonText;
             
+            // DATA-DRIVEN HOLIDAY ANALYSIS
+            // Instead of hardcoding levels, compare holiday eve revenue to normal days
             if (holidayEveInfo) {
-                // Tiered: 3=Vollgas (+2), 2=Ganz ok (+1), 1=Ruhig (+0)
-                adjustedRecommendation = Math.round((recommendation || avgStaffCount || 4) + holidayEveInfo.staffBoost);
-                const evePrefix = holidayEveInfo.level === 3 ? `${holidayEveInfo.emoji} Partyabend` 
-                                : holidayEveInfo.level === 2 ? `${holidayEveInfo.emoji} Feiertagsvorabend`
-                                : `${holidayEveInfo.emoji} Vor ${holidayEveInfo.holidayName}`;
-                adjustedReason = `${evePrefix} (vor ${holidayEveInfo.holidayName}). ${reasonText}`;
+                // Find all historical entries that are the SAME holiday eve
+                const sameHolidayEveRevenue = revenues.filter(r => 
+                    r.is_holiday_eve === true && r.revenue > 0
+                );
+                
+                // Compare holiday eve revenue to normal day-of-week revenue
+                const normalDayRevenue = revenues
+                    .filter(r => !r.is_holiday && !r.is_holiday_eve && r.revenue > 0)
+                    .map(r => r.revenue);
+                const avgNormalRevenue = normalDayRevenue.length > 0
+                    ? normalDayRevenue.reduce((a, b) => a + b, 0) / normalDayRevenue.length
+                    : 0;
+                    
+                const holidayEveRevenue = sameHolidayEveRevenue.map(r => r.revenue);
+                const avgHolidayEveRevenue = holidayEveRevenue.length > 0
+                    ? holidayEveRevenue.reduce((a, b) => a + b, 0) / holidayEveRevenue.length
+                    : 0;
+                
+                let staffBoost = holidayEveInfo.staffBoost; // Default from hardcoded level
+                let eveLabel = holidayEveInfo.emoji + ' ' + holidayEveInfo.label;
+                let dataTag = '';
+                
+                if (avgNormalRevenue > 0 && avgHolidayEveRevenue > 0) {
+                    // We have real data — use it!
+                    const ratio = avgHolidayEveRevenue / avgNormalRevenue;
+                    
+                    if (ratio >= 1.8) {
+                        staffBoost = 3;
+                        eveLabel = '🔥 Mega-Abend';
+                        dataTag = ` (Umsatz ${ratio.toFixed(1)}x höher als normal)`;
+                    } else if (ratio >= 1.3) {
+                        staffBoost = 2;
+                        eveLabel = '🔥 Partyabend';
+                        dataTag = ` (Umsatz ${ratio.toFixed(1)}x höher)`;
+                    } else if (ratio >= 1.05) {
+                        staffBoost = 1;
+                        eveLabel = '👌 Ganz ok';
+                        dataTag = ` (Umsatz ${ratio.toFixed(1)}x normal)`;
+                    } else {
+                        staffBoost = 0;
+                        eveLabel = '😴 Ruhig';
+                        dataTag = ` (Umsatz nur ${(ratio * 100).toFixed(0)}% vom Normal)`;
+                    }
+                }
+                
+                adjustedRecommendation = Math.round((recommendation || avgStaffCount || 4) + staffBoost);
+                adjustedReason = `${eveLabel} vor ${holidayEveInfo.holidayName}${dataTag}. ${reasonText}`;
             } else if (holidayName) {
-                // Holiday itself — often quieter (people stay home or away)
-                adjustedRecommendation = Math.max(2, Math.round((recommendation || avgStaffCount || 3) - 1));
-                adjustedReason = `🎉 Feiertag (${holidayName}). ${reasonText}`;
+                // Holiday itself — use data if available
+                const holidayRevenue = revenues
+                    .filter(r => r.is_holiday === true && r.revenue > 0)
+                    .map(r => r.revenue);
+                const normalRevenue = revenues
+                    .filter(r => !r.is_holiday && !r.is_holiday_eve && r.revenue > 0)
+                    .map(r => r.revenue);
+                
+                if (holidayRevenue.length > 0 && normalRevenue.length > 0) {
+                    const avgHoliday = holidayRevenue.reduce((a, b) => a + b, 0) / holidayRevenue.length;
+                    const avgNormal = normalRevenue.reduce((a, b) => a + b, 0) / normalRevenue.length;
+                    const ratio = avgHoliday / avgNormal;
+                    
+                    if (ratio < 0.7) {
+                        adjustedRecommendation = Math.max(2, Math.round((recommendation || avgStaffCount || 3) - 1));
+                        adjustedReason = `🎉 Feiertag (${holidayName}), nur ${(ratio * 100).toFixed(0)}% Umsatz. ${reasonText}`;
+                    } else {
+                        adjustedReason = `🎉 Feiertag (${holidayName}). ${reasonText}`;
+                    }
+                } else {
+                    adjustedRecommendation = Math.max(2, Math.round((recommendation || avgStaffCount || 3) - 1));
+                    adjustedReason = `🎉 Feiertag (${holidayName}). ${reasonText}`;
+                }
             } else if (bridgeDay) {
-                // Bridge day — could go either way, lean slightly up
                 adjustedReason = `🔗 Brückentag. ${reasonText}`;
             }
             

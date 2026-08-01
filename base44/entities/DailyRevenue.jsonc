@@ -121,6 +121,10 @@
         "autumn"
       ],
       "description": "Jahreszeit — automatisch gesetzt für saisonale Gewichtung"
+    },
+    "holiday_name": {
+      "type": "string",
+      "description": "Name des Feiertags (automatisch gesetzt, z.B. 'Silvester', 'Karfreitag')"
     }
   },
   "required": [
