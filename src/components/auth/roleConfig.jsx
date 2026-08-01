@@ -78,12 +78,12 @@ export const PERMISSION_MATRIX = {
     canDeleteReservations:       { roles: [M.MANAGER],                                       terminal: false },
 
     // ── Events ───────────────────────────────────────────────────────────────
-    // Alle Rollen sehen Events (inkl. Umgebung-Events für Personalplanung)
+    // Aushilfe & Orga sehen Events (inkl. Umgebung-Tab für lokale Events)
     canViewEvents:               { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE, M.ORGA], terminal: false },
     canCreateEvents:             { roles: [M.MANAGER],                                       terminal: false },
     canEditEvents:               { roles: [M.MANAGER],                                       terminal: false },
     canDeleteEvents:             { roles: [M.MANAGER],                                       terminal: false },
-    canViewEventIdeas:           { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER],              terminal: false },
+    canViewEventIdeas:           { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE, M.ORGA], terminal: false },
     canEditEventIdeas:           { roles: [M.MANAGER],                                       terminal: false },
 
     // ── Lager & Artikel ───────────────────────────────────────────────────────

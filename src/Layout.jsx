@@ -260,23 +260,19 @@ export default function Layout({ children, currentPageName }) {
 
     // Role-based default bottom tabs
     const getRoleDefaultTabs = () => {
-        if (permissions.isAdmin) {
-            // Admin: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
+        if (permissions.isAdmin || permissions.isManager) {
+            // Admin/Manager: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
             return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
         }
-        if (permissions.isManager) {
-            // Manager: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
+        if (permissions.canViewReservations && permissions.canViewTodos) {
+            // Vollzeit/Barkeeper: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
             return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
         }
-        if (permissions.canViewTodos) {
-            // Barkeeper: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
-            return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
-        }
-        // Aushilfe: Übersicht, Gäste & Tische, Schichtplan, Meine Schichten
         if (permissions.canViewReservations) {
-            return ['Dashboard', 'GuestHub', 'Calendar', 'MyShifts'];
+            // Aushilfe/Orga: sehen Gäste & Tische, aber keine Aufgaben
+            return ['Dashboard', 'GuestHub', 'MyShifts', 'TimeManagement'];
         }
-        // Fallback: Übersicht, Meine Schichten, Zeiterfassung, Schichttausch
+        // Fallback (ohne Reservierungs-Recht)
         return ['Dashboard', 'MyShifts', 'TimeManagement', 'ShiftSwaps'];
     };
 
