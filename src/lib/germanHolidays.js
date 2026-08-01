@@ -72,13 +72,13 @@ export function isHoliday(dateStr) {
  * 0 = kein Feiertags-Vorabend
  */
 const HOLIDAY_EVE_LEVELS = {
-  '01-01': 3,  // Silvester → Neujahr = VOLLGAS
-  '01-06': 1,  // Vor Heilige Drei Könige = egal
-  '12-25': 3,  // Heiligabend → 1. Weihnachtstag = VOLLGAS
-  '12-26': 1,  // 1. Weihnachtsfeiertag → 2. Weihnachtstag = ruhig (Familie)
-  '05-01': 3,  // Tanz in den Mai → Tag der Arbeit = VOLLGAS
-  '10-03': 3,  // Vor Tag der Deutschen Einheit = VOLLGAS
-  '11-01': 1,  // Vor Allerheiligen = egal
+  '12-31': 3,  // Silvester → Neujahr = VOLLGAS
+  '01-05': 1,  // Vor Heilige Drei Könige = egal
+  '12-24': 3,  // Heiligabend → 1. Weihnachtstag = VOLLGAS
+  '12-25': 1,  // 1. Weihnachtstag → 2. Weihnachtstag = ruhig (Familie)
+  '04-30': 3,  // Tanz in den Mai → Tag der Arbeit = VOLLGAS
+  '10-02': 3,  // Vor Tag der Deutschen Einheit = VOLLGAS
+  '10-31': 1,  // Vor Allerheiligen = egal
 };
 
 // Variable holidays (by Easter) — need year
