@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
-import { Plus, Calendar as CalendarIcon, Trash2, Edit, Search, Lightbulb } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Trash2, Edit, Search, Lightbulb, MapPin } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -359,9 +359,10 @@ export default function Events() {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className="bg-card border-border border w-full grid grid-cols-3 h-auto">
+                    <TabsList className="bg-card border-border border w-full grid grid-cols-4 h-auto">
                         <TabsTrigger value="upcoming" className="text-xs sm:text-sm">Kommend</TabsTrigger>
                         <TabsTrigger value="archive" className="text-xs sm:text-sm">Archiv</TabsTrigger>
+                        <TabsTrigger value="umgebung" className="text-xs sm:text-sm flex items-center gap-1"><MapPin className="w-3 h-3" /></TabsTrigger>
                         <TabsTrigger value="ideas" className="text-xs sm:text-sm flex items-center gap-1"><Lightbulb className="w-3 h-3" /></TabsTrigger>
                     </TabsList>
 
@@ -530,6 +531,11 @@ export default function Events() {
                             onConvertToEvent={canEdit ? handleConvertIdeaToEvent : null}
                             canEdit={canEdit}
                         />
+                    </TabsContent>
+
+                    {/* Umgebung Tab — lokale Events / Veranstaltungen in der Nähe */}
+                    <TabsContent value="umgebung" className="space-y-4">
+                        <LocalEventsTab />
                     </TabsContent>
                 </Tabs>
 

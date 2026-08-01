@@ -955,8 +955,8 @@ export default function DailyAnalysis() {
                 timeEntries={todayTimeEntriesWithRates}
                 onSuccess={() => queryClient.invalidateQueries({ queryKey: ['tip-distributions'] })}
             />
-        </div>
 
-        {backfillOpen && <BusynessBackfill onClose={() => setBackfillOpen(false)} />}
+            {backfillOpen && <BusynessBackfill onClose={() => setBackfillOpen(false)} />}
+        </div>
     );
 }

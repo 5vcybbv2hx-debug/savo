@@ -39,6 +39,55 @@ function getDayName(dayOfWeek) {
     return ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'][dayOfWeek];
 }
 
+/**
+ * Prüft, ob ein LocalEvent (inkl. jährlicher Wiederholung) auf ein Datum fällt.
+ * Berücksichtigt: einmalige Events, mehrtägige Events, annual_fixed (festes Datum),
+ * annual_floating (z.B. "2. Freitag im Juli").
+ */
+function localEventMatchesDate(event, dateStr) {
+    if (!event || event.is_active === false) return false;
+    const target = parseISO(dateStr + 'T12:00:00');
+
+    // Einmaliges oder mehrtägiges Event (direkter Datums-Treffer)
+    if (event.event_date === dateStr) return true;
+    if (event.event_end_date && event.event_date <= dateStr && event.event_end_date >= dateStr) return true;
+
+    // Jährliche Wiederholung
+    const pattern = event.recurrence_pattern;
+    if (pattern === 'none' || !pattern) return false;
+
+    const baseDate = parseISO(event.event_date + 'T12:00:00');
+    if (target < baseDate) return false; // nur ab erstem Vorkommen
+
+    if (pattern === 'annual_fixed') {
+        // Gleicher Monat/Tag in jedem Jahr
+        return baseDate.getMonth() === target.getMonth() && baseDate.getDate() === target.getDate();
+    }
+
+    if (pattern === 'annual_floating') {
+        // Gleicher Wochentag in gleicher Woche des Monats
+        const month = event.recurrence_base_month;
+        const week = event.recurrence_week;      // 'first','second','third','fourth','last'
+        const weekday = event.recurrence_weekday; // 0=So..6=Sa
+        if (month == null || !week || weekday == null) return false;
+        if (target.getMonth() !== month - 1) return false;
+        if (target.getDay() !== weekday) return false;
+        // Prüfe, ob target in der richtigen Woche des Monats liegt
+        const dayOfMonth = target.getDate();
+        const weekOfMonth = Math.ceil(dayOfMonth / 7);
+        if (week === 'last') {
+            // Letzte Woche: prüfen, ob im nächsten Monat kein gleicher Wochentag mehr folgt
+            const nextWeek = new Date(target);
+            nextWeek.setDate(dayOfMonth + 7);
+            return nextWeek.getMonth() !== target.getMonth();
+        }
+        const weekMap = { first: 1, second: 2, third: 3, fourth: 4 };
+        return weekMap[week] === weekOfMonth;
+    }
+
+    return false;
+}
+
 export default function SmartStaffingSuggestions({ weekStart, employees }) {
     const [expanded, setExpanded] = useState(false);
 
@@ -118,7 +167,21 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
             const bridgeDay = isBridgeDay(dateStr);
             const season = getSeason(dateStr);
 
+            // Local Events für dieses Datum (inkl. jährlicher Wiederholung)
+            const matchingEvents = localEvents.filter(e => localEventMatchesDate(e, dateStr));
+            const totalEventStaffAdj = matchingEvents.reduce((sum, e) => sum + (e.staff_adjustment || 0), 0);
+            const eventNames = matchingEvents.map(e => e.event_name).join(', ');
+
             if (uniqueMatches.length === 0) {
+                // Auch ohne historische Daten: Event-basierte Empfehlung
+                let eventRec = null;
+                let eventReason = '';
+                if (matchingEvents.length > 0 && totalEventStaffAdj !== 0) {
+                    eventRec = Math.max(2, 3 + totalEventStaffAdj);
+                    const eventEmoji = matchingEvents.some(e => e.impact_level === 'large') ? '🔴'
+                        : matchingEvents.some(e => e.impact_level === 'medium') ? '🟡' : '🟢';
+                    eventReason = `${eventEmoji} ${eventNames} (${totalEventStaffAdj > 0 ? '+' : ''}${totalEventStaffAdj} Personal)`;
+                }
                 days.push({
                     date: dateStr,
                     dateObj: new Date(d),
@@ -132,6 +195,8 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                     bridgeDay,
                     season,
                     localEvents: matchingEvents,
+                    recommendation: eventRec,
+                    reasonText: eventReason,
                 });
                 continue;
             }
@@ -281,24 +346,14 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                 adjustedReason = `🔗 Brückentag. ${reasonText}`;
             }
             
-            // Check for local events on this date
-            const matchingEvents = localEvents.filter(e => {
-                if (!e.is_active && e.is_active === false) return false;
-                if (e.event_date === dateStr) return true;
-                // Multi-day events
-                if (e.event_end_date && e.event_date <= dateStr && e.event_end_date >= dateStr) return true;
-                return false;
-            });
-            
+            // Local Events wurden weiter oben berechnet (matchingEvents, totalEventStaffAdj, eventNames)
             if (matchingEvents.length > 0) {
-                const totalStaffAdj = matchingEvents.reduce((sum, e) => sum + (e.staff_adjustment || 0), 0);
-                const eventNames = matchingEvents.map(e => e.event_name).join(', ');
-                if (totalStaffAdj !== 0) {
-                    adjustedRecommendation = Math.max(2, Math.round((adjustedRecommendation || avgStaffCount || 4) + totalStaffAdj));
+                if (totalEventStaffAdj !== 0) {
+                    adjustedRecommendation = Math.max(2, Math.round((adjustedRecommendation || avgStaffCount || 4) + totalEventStaffAdj));
                 }
-                const eventEmoji = matchingEvents.some(e => e.impact_level === 'large') ? '🔴' 
+                const eventEmoji = matchingEvents.some(e => e.impact_level === 'large') ? '🔴'
                     : matchingEvents.some(e => e.impact_level === 'medium') ? '🟡' : '🟢';
-                adjustedReason = `${eventEmoji} ${eventNames}${totalStaffAdj !== 0 ? ` (${totalStaffAdj > 0 ? '+' : ''}${totalStaffAdj} Personal)` : ''}. ${adjustedReason}`;
+                adjustedReason = `${eventEmoji} ${eventNames}${totalEventStaffAdj !== 0 ? ` (${totalEventStaffAdj > 0 ? '+' : ''}${totalEventStaffAdj} Personal)` : ''}. ${adjustedReason}`;
             }
             
             // Seasonal adjustment
@@ -335,7 +390,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
         }
 
         return days;
-    }, [revenues, allShifts, weekStart]);
+    }, [revenues, allShifts, localEvents, weekStart]);
 
     // Only show if we have enough data
     const daysWithData = suggestions.filter(s => s.hasData);
@@ -383,7 +438,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                 <p className="text-[9px] text-muted-foreground font-medium">
                                     {format(day.dateObj, 'EEEEE', { locale: de })}
                                 </p>
-                                {day.hasData && day.recommendation != null ? (
+                                {day.recommendation != null ? (
                                     <>
                                         <p className={cn(
                                             'text-sm font-bold leading-none mt-0.5',
@@ -418,7 +473,16 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                         <span className="text-xs text-muted-foreground flex-1">
                                             {day.dayName}, {format(day.dateObj, 'dd.MM.')}
                                         </span>
-                                        <span className="text-[10px] text-muted-foreground/50">Keine historischen Daten</span>
+                                        {day.recommendation != null ? (
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-6 h-6 rounded bg-primary/15 flex items-center justify-center">
+                                                    <span className="text-[11px] font-bold text-foreground">{day.recommendation}</span>
+                                                </div>
+                                                <span className="text-[9px] text-muted-foreground max-w-[120px] leading-tight">{day.reasonText}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] text-muted-foreground/50">Keine historischen Daten</span>
+                                        )}
                                     </div>
                                 );
                             }
