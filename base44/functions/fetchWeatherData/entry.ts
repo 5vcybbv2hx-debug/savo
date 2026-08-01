@@ -8,7 +8,7 @@
  * Aufruf: POST /api/apps/{app_id}/functions/fetchWeatherData
  * Body: { days_back?: number }  (default: 180)
  */
-import { base44 } from 'base44';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 const LATITUDE = 52.52;   // Berlin
 const LONGITUDE = 13.405;
@@ -47,11 +47,10 @@ const WMO_DESCRIPTIONS: Record<number, string> = {
 
 // Berliner Feiertage (vereinfacht — fixe + bewegliche)
 function isHoliday(dateStr: string): boolean {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(dateStr);
+  const year = Number(dateStr.split('-')[0]);
   const easter = computeEaster(year);
   const easterDate = new Date(easter);
-  
+
   const holidays = [
     `${year}-01-01`, // Neujahr
     `${year}-03-08`, // Intl. Frauentag (Berlin seit 2019)
@@ -64,7 +63,7 @@ function isHoliday(dateStr: string): boolean {
     `${year}-12-25`, // 1. Weihnachtstag
     `${year}-12-26`, // 2. Weihnachtstag
   ];
-  
+
   return holidays.includes(dateStr);
 }
 
@@ -94,9 +93,8 @@ function easterPlusDays(easter: Date, days: number): string {
 
 // Berliner Schulferien (vereinfacht — grobe Zeiträume)
 function isSchoolVacation(dateStr: string): boolean {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(dateStr);
-  
+  const year = Number(dateStr.split('-')[0]);
+
   const vacations: Array<[string, string]> = [
     // Winterferien (ca. Anfang Februar)
     [`${year}-02-01`, `${year}-02-05`],
@@ -111,80 +109,85 @@ function isSchoolVacation(dateStr: string): boolean {
     // Pfingstferien (ca. Ende Mai)
     [`${year}-05-23`, `${year}-06-01`],
   ];
-  
+
   return vacations.some(([start, end]) => dateStr >= start && dateStr <= end);
 }
 
-export default async function fetchWeatherData(req: any) {
-  const daysBack = req.body?.days_back || 180;
-  const today = new Date();
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - daysBack);
-  
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = today.toISOString().split('T')[0];
-  
-  // 1. Wetterdaten von Open-Meteo holen
-  const weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${LATITUDE}&longitude=${LONGITUDE}&start_date=${startStr}&end_date=${endStr}&daily=temperature_2m_max,temperature_2m_mean,precipitation_sum,weathercode&timezone=Europe/Berlin&format=json`;
-  
-  const weatherRes = await fetch(weatherUrl);
-  if (!weatherRes.ok) {
-    throw new Error(`Open-Meteo API Fehler: ${weatherRes.status}`);
-  }
-  const weatherData = await weatherRes.json();
-  
-  // Map: date → weather data
-  const weatherMap: Record<string, any> = {};
-  if (weatherData.daily && weatherData.daily.time) {
-    for (let i = 0; i < weatherData.daily.time.length; i++) {
-      const date = weatherData.daily.time[i];
-      weatherMap[date] = {
-        temp_max: weatherData.daily.temperature_2m_max[i],
-        temp_mean: weatherData.daily.temperature_2m_mean[i],
-        precipitation: weatherData.daily.precipitation_sum[i],
-        weather_code: weatherData.daily.weathercode[i],
-        weather_description: WMO_DESCRIPTIONS[weatherData.daily.weathercode[i]] || 'Unbekannt',
-      };
+export default async function fetchWeatherData(req: Request): Promise<Response> {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json().catch(() => ({}));
+    const daysBack = body?.days_back || 180;
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - daysBack);
+
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = today.toISOString().split('T')[0];
+
+    // 1. Wetterdaten von Open-Meteo holen
+    const weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${LATITUDE}&longitude=${LONGITUDE}&start_date=${startStr}&end_date=${endStr}&daily=temperature_2m_max,temperature_2m_mean,precipitation_sum,weathercode&timezone=Europe/Berlin&format=json`;
+
+    const weatherRes = await fetch(weatherUrl);
+    if (!weatherRes.ok) {
+      throw new Error(`Open-Meteo API Fehler: ${weatherRes.status}`);
     }
-  }
-  
-  // 2. Alle DailyRevenue-Einträge holen, die noch keine Wetterdaten haben
-  const revenues = await base44.asServiceRole.entities.DailyRevenue.list('-date', 500);
-  const needWeather = revenues.filter((r: any) => r.weather_temp_max == null && weatherMap[r.date]);
-  
-  let updated = 0;
-  let skipped = 0;
-  let notFound = 0;
-  
-  // 3. Jeden Eintrag mit Wetterdaten anreichern
-  for (const rev of needWeather) {
-    const w = weatherMap[rev.date];
-    if (!w) {
-      notFound++;
-      continue;
+    const weatherData = await weatherRes.json();
+
+    // Map: date → weather data
+    const weatherMap: Record<string, any> = {};
+    if (weatherData.daily && weatherData.daily.time) {
+      for (let i = 0; i < weatherData.daily.time.length; i++) {
+        const date = weatherData.daily.time[i];
+        weatherMap[date] = {
+          temp_max: weatherData.daily.temperature_2m_max[i],
+          temp_mean: weatherData.daily.temperature_2m_mean[i],
+          precipitation: weatherData.daily.precipitation_sum[i],
+          weather_code: weatherData.daily.weathercode[i],
+          weather_description: WMO_DESCRIPTIONS[weatherData.daily.weathercode[i]] || 'Unbekannt',
+        };
+      }
     }
-    
-    await base44.asServiceRole.entities.DailyRevenue.update(rev.id, {
-      weather_temp_max: w.temp_max,
-      weather_temp_mean: w.temp_mean,
-      weather_precipitation: w.precipitation,
-      weather_code: w.weather_code,
-      weather_description: w.weather_description,
-      is_holiday: isHoliday(rev.date),
-      is_school_vacation: isSchoolVacation(rev.date),
+
+    // 2. Alle DailyRevenue-Einträge holen, die noch keine Wetterdaten haben
+    const revenues = await base44.asServiceRole.entities.DailyRevenue.list('-date', 500);
+    const needWeather = revenues.filter((r: any) => r.weather_temp_max == null && weatherMap[r.date]);
+
+    let updated = 0;
+    let notFound = 0;
+
+    // 3. Jeden Eintrag mit Wetterdaten anreichern
+    for (const rev of needWeather) {
+      const w = weatherMap[rev.date];
+      if (!w) {
+        notFound++;
+        continue;
+      }
+
+      await base44.asServiceRole.entities.DailyRevenue.update(rev.id, {
+        weather_temp_max: w.temp_max,
+        weather_temp_mean: w.temp_mean,
+        weather_precipitation: w.precipitation,
+        weather_code: w.weather_code,
+        weather_description: w.weather_description,
+        is_holiday: isHoliday(rev.date),
+        is_school_vacation: isSchoolVacation(rev.date),
+      });
+      updated++;
+    }
+
+    return Response.json({
+      success: true,
+      weather_days_fetched: Object.keys(weatherMap).length,
+      revenue_entries_checked: revenues.length,
+      entries_updated: updated,
+      entries_without_weather_match: notFound,
+      date_range: `${startStr} → ${endStr}`,
     });
-    updated++;
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
   }
-  
-  // 4. Für Tage ohne DailyRevenue-Eintrag einen Weather-Only-Eintrag erstellen?
-  // Nein — Wetterdaten werden beim Erstellen des Tagesabschlusses nachgezogen.
-  
-  return {
-    success: true,
-    weather_days_fetched: Object.keys(weatherMap).length,
-    revenue_entries_checked: revenues.length,
-    entries_updated: updated,
-    entries_without_weather_match: notFound,
-    date_range: `${startStr} → ${endStr}`,
-  };
 }
