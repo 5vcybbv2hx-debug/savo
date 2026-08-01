@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { usePermissions } from '@/components/auth/usePermissions';
@@ -64,6 +64,11 @@ export default function Warehouse() {
     const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'keller' ? 'keller' : 'bereiche'); // 'bereiche' | 'keller'
     const [kellerQtys, setKellerQtys] = useState({}); // { [article_id]: number } editierbare Mengen
+
+    // Sync searchParams → activeTab (falls die Page schon gemountet ist und nur der Query-Param wechselt)
+    useEffect(() => {
+        if (searchParams.get('tab') === 'keller') setActiveTab('keller');
+    }, [searchParams]);
 
     const today = format(new Date(), 'yyyy-MM-dd');
 

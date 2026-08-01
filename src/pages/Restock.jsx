@@ -139,7 +139,7 @@ export default function Restock() {
             return base44.entities.RestockItem.create(data);
         },
         onSuccess: (newItem) => {
-            if (!newItem?._offline) queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+            if (!newItem?._offline) { queryClient.invalidateQueries({ queryKey: ['restock-items'] }); queryClient.invalidateQueries({ queryKey: ['restock-open'] }); }
             if (newItem?.id) markRecent(newItem.id);
         },
         onError: () => showToast('Fehler beim Erstellen des Eintrags'),
@@ -155,7 +155,10 @@ export default function Restock() {
             return base44.entities.RestockItem.update(id, data);
         },
         onSuccess: (result, variables) => {
-            if (!result?.queued) queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+            if (!result?.queued) {
+                queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+                queryClient.invalidateQueries({ queryKey: ['restock-open'] });
+            }
             markRecent(result?.id || variables.id);
         },
         onError: () => showToast('Fehler beim Aktualisieren'),
@@ -171,7 +174,10 @@ export default function Restock() {
             return base44.entities.RestockItem.delete(id);
         },
         onSuccess: (result) => {
-            if (!result?.queued) queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+            if (!result?.queued) {
+                queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+                queryClient.invalidateQueries({ queryKey: ['restock-open'] });
+            }
         },
         onError: () => showToast('Fehler beim Löschen'),
     });
@@ -406,6 +412,7 @@ export default function Restock() {
                         try { await deleteMutation.mutateAsync(item.id); } catch {}
                     }
                     queryClient.invalidateQueries({ queryKey: ['restock-items'] });
+                    queryClient.invalidateQueries({ queryKey: ['restock-open'] });
                     setConfirmDialog(null);
                     const skipNote = skipped > 0 ? ` · ${skipped} bereits in Bestellung` : '';
                     const roundNote = rounded > 0 ? ` · ${rounded}× auf volles Gebinde aufgerundet` : '';
