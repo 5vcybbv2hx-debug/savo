@@ -1,15 +1,16 @@
 /**
  * Wusa.jsx — Wurstsalat-Bestellverwaltung
  * Jeden Dienstag: Vorbestellungen erfassen und Etiketten drucken.
+ * Eine Bestellung kann mehrere "Sorten" enthalten (z.B. 4 Personen, jeder anders).
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, addDays, isTuesday, nextTuesday, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
     Plus, X, Printer, Clock, Phone, Trash2, Edit2, ChevronLeft, ChevronRight,
-    Utensils, ShoppingBag, Loader2
+    Utensils, ShoppingBag, Loader2, Minus, User
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,68 +34,165 @@ function getNextTuesdays(count = 8) {
     return tuesdays;
 }
 
-// ── Order Modal ───────────────────────────────────────────────────────────────
+function ingsToDisplay(ings) {
+    if (!ings || ings === 'Alles') return 'Alles';
+    return ings.split(',').join(' · ');
+}
 
-function OrderModal({ open, onClose, editItem, orderDate, currentUser, isManager }) {
-    const queryClient = useQueryClient();
-    const [customerName, setCustomerName] = useState(editItem?.customer_name || '');
-    const [phone, setPhone] = useState(editItem?.phone || '');
-    const [size, setSize] = useState(editItem?.size || 'gross');
-    const [quantity, setQuantity] = useState(editItem?.quantity || 1);
-    const [selectedIngredients, setSelectedIngredients] = useState(() => {
-        if (editItem?.ingredients === 'Alles') return ['Alles'];
-        if (editItem?.ingredients) return editItem.ingredients.split(',').map(s => s.trim());
-        return ['Alles'];
-    });
-    const [pickupType, setPickupType] = useState(editItem?.pickup_type || 'abholung');
-    const [pickupTime, setPickupTime] = useState(editItem?.pickup_time || '');
-    const [price, setPrice] = useState(editItem?.price ?? '');
-    const [notes, setNotes] = useState(editItem?.notes || '');
-    const [source, setSource] = useState(editItem?.source || 'persoenlich');
+function ingsToLabel(ings) {
+    if (!ings || ings === 'Alles') return 'Alles';
+    return ings.split(',').join(' · ');
+}
 
+// ── Salad Line (eine Sorte innerhalb einer Sammelbestellung) ──────────────────
+
+function SaladLine({ line, onChange, onRemove, canRemove }) {
     const toggleIngredient = (ing) => {
+        let newIngs;
         if (ing === 'Alles') {
-            setSelectedIngredients(['Alles']);
+            newIngs = ['Alles'];
         } else {
-            setSelectedIngredients(prev => {
-                const without = prev.filter(i => i !== 'Alles');
-                return without.includes(ing)
-                    ? without.filter(i => i !== ing)
-                    : [...without, ing];
-            });
+            const without = line.ingredients.filter(i => i !== 'Alles');
+            newIngs = without.includes(ing)
+                ? without.filter(i => i !== ing)
+                : [...without, ing];
         }
+        onChange({ ...line, ingredients: newIngs });
     };
 
-    const ingredientsString = selectedIngredients.includes('Alles')
-        ? 'Alles'
-        : selectedIngredients.length === 0 ? 'Alles' : selectedIngredients.join(',');
+    return (
+        <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2.5">
+            <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Salat {line.index}
+                </span>
+                {canRemove && (
+                    <button onClick={onRemove} className="text-muted-foreground hover:text-destructive p-1">
+                        <Minus className="w-3.5 h-3.5" />
+                    </button>
+                )}
+            </div>
+
+            {/* Size */}
+            <div className="flex gap-2">
+                <button onClick={() => onChange({ ...line, size: 'gross' })}
+                    className={cn('flex-1 py-2 rounded-lg border text-xs font-medium transition-all',
+                        line.size === 'gross' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}>
+                    Groß
+                </button>
+                <button onClick={() => onChange({ ...line, size: 'klein' })}
+                    className={cn('flex-1 py-2 rounded-lg border text-xs font-medium transition-all',
+                        line.size === 'klein' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}>
+                    Klein
+                </button>
+            </div>
+
+            {/* Ingredients */}
+            <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => toggleIngredient('Alles')}
+                    className={cn('px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-all',
+                        line.ingredients.includes('Alles') ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground')}>
+                    Alles
+                </button>
+                {INGREDIENTS.map(ing => (
+                    <button key={ing} onClick={() => toggleIngredient(ing)}
+                        className={cn('px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-all',
+                            line.ingredients.includes(ing) ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground')}>
+                        {ing}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// ── Order Modal ───────────────────────────────────────────────────────────────
+
+function OrderModal({ open, onClose, editItem, orderDate, isManager }) {
+    const queryClient = useQueryClient();
+
+    const [customerName, setCustomerName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [pickupType, setPickupType] = useState('abholung');
+    const [pickupTime, setPickupTime] = useState('');
+    const [notes, setNotes] = useState('');
+    const [source, setSource] = useState('persoenlich');
+    // Multiple salad lines
+    const [lines, setLines] = useState([{ size: 'gross', ingredients: ['Alles'] }]);
+
+    // Reset when modal opens
+    useEffect(() => {
+        if (!open) return;
+        if (editItem) {
+            setCustomerName(editItem.customer_name || '');
+            setPhone(editItem.phone || '');
+            setPickupType(editItem.pickup_type || 'abholung');
+            setPickupTime(editItem.pickup_time || '');
+            setNotes(editItem.notes || '');
+            setSource(editItem.source || 'persoenlich');
+            const ings = editItem.ingredients === 'Alles' || !editItem.ingredients
+                ? ['Alles']
+                : editItem.ingredients.split(',').map(s => s.trim());
+            setLines([{ size: editItem.size || 'gross', ingredients: ings }]);
+        } else {
+            setCustomerName(''); setPhone(''); setPickupType('abholung');
+            setPickupTime(''); setNotes(''); setSource('persoenlich');
+            setLines([{ size: 'gross', ingredients: ['Alles'] }]);
+        }
+    }, [open, editItem]);
+
+    const addLine = () => setLines(prev => [...prev, { size: 'gross', ingredients: ['Alles'] }]);
+    const removeLine = (idx) => setLines(prev => prev.filter((_, i) => i !== idx));
+    const updateLine = (idx, line) => setLines(prev => prev.map((l, i) => i === idx ? line : l));
+
+    const ingredientsString = (ings) => {
+        if (ings.includes('Alles') || ings.length === 0) return 'Alles';
+        return ings.join(',');
+    };
 
     const saveMutation = useMutation({
         mutationFn: async () => {
-            const payload = {
+            const basePayload = {
                 customer_name: customerName.trim(),
                 phone: phone.trim() || null,
-                size,
-                quantity: Math.max(1, quantity || 1),
-                ingredients: ingredientsString,
                 pickup_type: pickupType,
                 pickup_time: pickupTime || null,
-                price: price !== '' ? Number(price) : null,
                 notes: notes.trim() || null,
                 source,
                 order_date: orderDate,
                 status: 'offen',
                 is_active: true,
-                created_by_name: editItem?.created_by_name || currentUser?.full_name || currentUser?.email || 'Mitarbeiter',
+                created_by_name: editItem?.created_by_name || 'Mitarbeiter',
             };
-            if (editItem) {
-                return base44.entities.WusaOrder.update(editItem.id, payload);
+
+            if (editItem && lines.length === 1) {
+                // Single edit — update existing record
+                return base44.entities.WusaOrder.update(editItem.id, {
+                    ...basePayload,
+                    size: lines[0].size,
+                    quantity: 1,
+                    ingredients: ingredientsString(lines[0].ingredients),
+                    price: editItem.price ?? null,
+                });
             }
-            return base44.entities.WusaOrder.create(payload);
+
+            // Multi-line: create one record per line
+            // If editing, first delete old record, then create new ones
+            const creates = lines.map(line => ({
+                ...basePayload,
+                size: line.size,
+                quantity: 1,
+                ingredients: ingredientsString(line.ingredients),
+            }));
+
+            if (editItem) {
+                await base44.entities.WusaOrder.update(editItem.id, { is_active: false });
+            }
+            return Promise.all(creates.map(p => base44.entities.WusaOrder.create(p)));
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['wusa-orders'] });
-            toast.success(editItem ? 'Bestellung aktualisiert' : 'Bestellung hinzugefügt');
+            toast.success(editItem ? 'Bestellung aktualisiert' : `${lines.length} Bestellung(en) hinzugefügt`);
             onClose();
         },
         onError: (err) => toast.error('Fehler: ' + (err.message || 'Speichern fehlgeschlagen')),
@@ -115,7 +213,10 @@ function OrderModal({ open, onClose, editItem, orderDate, currentUser, isManager
                         <h3 className="text-base font-bold text-foreground">
                             {editItem ? 'Bestellung bearbeiten' : 'Neue Vorbestellung'}
                         </h3>
-                        <p className="text-xs text-muted-foreground">Für Dienstag, {format(new Date(orderDate), 'dd.MM.yyyy', { locale: de })}</p>
+                        <p className="text-xs text-muted-foreground">
+                            Dienstag, {format(new Date(orderDate), 'dd.MM.yyyy', { locale: de })}
+                            {lines.length > 1 && ` · ${lines.length} Sorten`}
+                        </p>
                     </div>
                     <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 min-h-[44px] min-w-[44px] flex items-center justify-center">
                         <X className="w-5 h-5" />
@@ -124,7 +225,7 @@ function OrderModal({ open, onClose, editItem, orderDate, currentUser, isManager
 
                 {/* Body */}
                 <div className="overflow-y-auto px-5 py-4 space-y-4">
-                    {/* Name & Phone */}
+                    {/* Customer Name & Phone */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name *</label>
@@ -135,49 +236,6 @@ function OrderModal({ open, onClose, editItem, orderDate, currentUser, isManager
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Telefon</label>
                             <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="optional"
                                 className="mt-1 w-full h-11 px-3 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-                        </div>
-                    </div>
-
-                    {/* Size & Quantity */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Größe</label>
-                            <div className="mt-1 flex gap-2">
-                                <button onClick={() => setSize('gross')}
-                                    className={cn('flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all',
-                                        size === 'gross' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}>
-                                    Groß
-                                </button>
-                                <button onClick={() => setSize('klein')}
-                                    className={cn('flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all',
-                                        size === 'klein' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground')}>
-                                    Klein
-                                </button>
-                            </div>
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Anzahl</label>
-                            <input type="number" min="1" value={quantity} onChange={e => setQuantity(Math.max(1, Number(e.target.value) || 1))}
-                                className="mt-1 w-full h-11 px-3 rounded-xl border border-input bg-transparent text-foreground text-sm text-center focus:outline-none focus:ring-1 focus:ring-ring" />
-                        </div>
-                    </div>
-
-                    {/* Ingredients */}
-                    <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Zutaten</label>
-                        <div className="mt-1 flex flex-wrap gap-2">
-                            <button onClick={() => toggleIngredient('Alles')}
-                                className={cn('px-3 py-2 rounded-lg border text-xs font-medium transition-all',
-                                    selectedIngredients.includes('Alles') ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground')}>
-                                Alles
-                            </button>
-                            {INGREDIENTS.map(ing => (
-                                <button key={ing} onClick={() => toggleIngredient(ing)}
-                                    className={cn('px-3 py-2 rounded-lg border text-xs font-medium transition-all',
-                                        selectedIngredients.includes(ing) ? 'border-primary bg-primary/15 text-primary' : 'border-border text-muted-foreground')}>
-                                    {ing}
-                                </button>
-                            ))}
                         </div>
                     </div>
 
@@ -205,12 +263,25 @@ function OrderModal({ open, onClose, editItem, orderDate, currentUser, isManager
                         </div>
                     </div>
 
-                    {/* Price */}
+                    {/* Salad Lines */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Preis (€)</label>
-                        <input type="number" step="0.50" min="0" value={price} onChange={e => setPrice(e.target.value)}
-                            placeholder="z.B. 7.50"
-                            className="mt-1 w-full h-11 px-3 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sorten</label>
+                            <button onClick={addLine} className="text-xs text-primary font-medium flex items-center gap-1">
+                                <Plus className="w-3.5 h-3.5" />Weitere Sorte
+                            </button>
+                        </div>
+                        <div className="space-y-2.5">
+                            {lines.map((line, idx) => (
+                                <SaladLine
+                                    key={idx}
+                                    line={{ ...line, index: idx + 1 }}
+                                    onChange={(updated) => updateLine(idx, updated)}
+                                    onRemove={() => removeLine(idx)}
+                                    canRemove={lines.length > 1}
+                                />
+                            ))}
+                        </div>
                     </div>
 
                     {/* Source (Manager only) */}
@@ -246,7 +317,7 @@ function OrderModal({ open, onClose, editItem, orderDate, currentUser, isManager
                 <div className="px-5 py-4 border-t border-border shrink-0">
                     <Button onClick={() => saveMutation.mutate()} disabled={!customerName.trim() || saveMutation.isPending}
                         className="w-full h-11 text-sm font-semibold">
-                        {saveMutation.isPending ? 'Speichert…' : editItem ? 'Speichern' : 'Bestellung hinzufügen'}
+                        {saveMutation.isPending ? 'Speichert…' : editItem ? 'Speichern' : `${lines.length} Bestellung(en) speichern`}
                     </Button>
                 </div>
             </div>
@@ -276,7 +347,6 @@ function LabelView({ orders, onClose }) {
         <div className="fixed inset-0 z-50 flex flex-col">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
             <div className="relative z-10 w-full max-w-lg mx-auto my-4 bg-card border border-border rounded-2xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden">
-                {/* Header */}
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
                     <Printer className="w-5 h-5 text-primary" />
                     <h3 className="text-base font-bold text-foreground flex-1">Etiketten — Abholbestellungen</h3>
@@ -285,66 +355,58 @@ function LabelView({ orders, onClose }) {
                         <X className="w-5 h-5" />
                     </button>
                 </div>
-
-                {/* Print button */}
                 <div className="px-5 py-3 border-b border-border shrink-0">
                     <Button onClick={() => window.print()} className="w-full h-11">
                         <Printer className="w-4 h-4 mr-2" />Alle Etiketten drucken
                     </Button>
                 </div>
-
-                {/* Labels */}
                 <div className="overflow-y-auto px-5 py-4 space-y-4 print:overflow-visible print:h-auto">
                     <div className="print:hidden text-xs text-muted-foreground text-center pb-2">
                         Tipp: Im Druckdialog "Hintergrundgrafiken deaktivieren" für saubere Etiketten.
                     </div>
-                    {abholOrders.map((order, idx) => {
-                        const ings = order.ingredients || 'Alles';
-                        const ingList = ings === 'Alles' ? 'Alles' : ings.split(',').join(' · ');
-                        return (
-                            <div key={order.id} className="label-print break-after-page pb-2" style={{ pageBreakAfter: 'always' }}>
-                                <div className="border border-black p-3 bg-white text-black rounded" style={{ width: '100%', maxWidth: '62mm', margin: '0 auto' }}>
-                                    <div className="text-center font-bold text-sm mb-1.5 border-b border-black pb-1">
-                                        🥗 Wurstsalat · To-Go
-                                    </div>
-                                    <div className="space-y-0.5 text-xs font-mono">
-                                        <div className="flex justify-between">
-                                            <span className="font-bold">Name:</span>
-                                            <span className="text-right">{order.customer_name}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="font-bold">Größe:</span>
-                                            <span>{order.size === 'gross' ? 'Groß' : 'Klein'}{order.quantity > 1 ? ` ×${order.quantity}` : ''}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="font-bold">Zutaten:</span>
-                                            <span className="text-right max-w-[60%]">{ingList}</span>
-                                        </div>
-                                        {order.pickup_time && (
-                                            <div className="flex justify-between">
-                                                <span className="font-bold">Abholzeit:</span>
-                                                <span>{order.pickup_time}</span>
-                                            </div>
-                                        )}
-                                        {order.price != null && (
-                                            <div className="flex justify-between border-t border-black mt-1 pt-1">
-                                                <span className="font-bold">Preis:</span>
-                                                <span className="font-bold">{order.price.toFixed(2).replace('.', ',')} €</span>
-                                            </div>
-                                        )}
-                                        {order.notes && (
-                                            <div className="text-[10px] mt-1 italic border-t border-black/30 pt-1">
-                                                {order.notes}
-                                            </div>
-                                        )}
-                                    </div>
+                    {abholOrders.map((order, idx) => (
+                        <div key={order.id} className="label-print break-after-page pb-2" style={{ pageBreakAfter: 'always' }}>
+                            <div className="border border-black p-3 bg-white text-black rounded" style={{ width: '100%', maxWidth: '62mm', margin: '0 auto' }}>
+                                <div className="text-center font-bold text-sm mb-1.5 border-b border-black pb-1">
+                                    🥗 Wurstsalat · To-Go
                                 </div>
-                                <div className="print:hidden text-center text-[10px] text-muted-foreground mt-1">
-                                    Etikett {idx + 1} von {abholOrders.length}
+                                <div className="space-y-0.5 text-xs font-mono">
+                                    <div className="flex justify-between">
+                                        <span className="font-bold">Name:</span>
+                                        <span className="text-right">{order.customer_name}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-bold">Größe:</span>
+                                        <span>{order.size === 'gross' ? 'Groß' : 'Klein'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-bold">Zutaten:</span>
+                                        <span className="text-right max-w-[60%]">{ingsToLabel(order.ingredients)}</span>
+                                    </div>
+                                    {order.pickup_time && (
+                                        <div className="flex justify-between">
+                                            <span className="font-bold">Abholzeit:</span>
+                                            <span>{order.pickup_time}</span>
+                                        </div>
+                                    )}
+                                    {order.price != null && (
+                                        <div className="flex justify-between border-t border-black mt-1 pt-1">
+                                            <span className="font-bold">Preis:</span>
+                                            <span className="font-bold">{order.price.toFixed(2).replace('.', ',')} €</span>
+                                        </div>
+                                    )}
+                                    {order.notes && (
+                                        <div className="text-[10px] mt-1 italic border-t border-black/30 pt-1">
+                                            {order.notes}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        );
-                    })}
+                            <div className="print:hidden text-center text-[10px] text-muted-foreground mt-1">
+                                Etikett {idx + 1} von {abholOrders.length}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
@@ -381,15 +443,30 @@ export default function Wusa() {
         },
     });
 
+    // Group orders by customer_name for display
+    const groupedOrders = useMemo(() => {
+        const groups = {};
+        orders.forEach(o => {
+            const key = o.customer_name || 'Unbekannt';
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(o);
+        });
+        // Sort groups by earliest pickup_time
+        return Object.entries(groups).sort(([, a], [, b]) => {
+            const aTime = a[0]?.pickup_time || 'zzz';
+            const bTime = b[0]?.pickup_time || 'zzz';
+            return aTime.localeCompare(bTime);
+        });
+    }, [orders]);
+
     // Stats
     const stats = useMemo(() => {
-        const gross = orders.filter(o => o.size === 'gross').reduce((sum, o) => sum + (o.quantity || 1), 0);
-        const klein = orders.filter(o => o.size === 'klein').reduce((sum, o) => sum + (o.quantity || 1), 0);
+        const gross = orders.filter(o => o.size === 'gross').length;
+        const klein = orders.filter(o => o.size === 'klein').length;
         const abholung = orders.filter(o => o.pickup_type === 'abholung').length;
         const vorOrt = orders.filter(o => o.pickup_type === 'vor_ort').length;
-        const totalPrice = orders.reduce((sum, o) => sum + (o.price || 0) * (o.quantity || 1), 0);
-        return { gross, klein, abholung, vorOrt, totalPrice, total: orders.length };
-    }, [orders]);
+        return { gross, klein, abholung, vorOrt, total: orders.length, customers: groupedOrders.length };
+    }, [orders, groupedOrders]);
 
     const handleEdit = (order) => {
         setEditItem(order);
@@ -400,13 +477,6 @@ export default function Wusa() {
         setEditItem(null);
         setModalOpen(true);
     };
-
-    const sortedOrders = [...orders].sort((a, b) => {
-        if (a.pickup_time && b.pickup_time) return a.pickup_time.localeCompare(b.pickup_time);
-        if (a.pickup_time) return -1;
-        if (b.pickup_time) return 1;
-        return a.customer_name.localeCompare(b.customer_name);
-    });
 
     return (
         <div className="min-h-screen bg-background pb-28 md:pb-8">
@@ -430,12 +500,10 @@ export default function Wusa() {
                             Vorbestellungen · jeden Dienstag
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <Button variant="outline" size="sm" onClick={() => setLabelOpen(true)}
-                            disabled={orders.filter(o => o.pickup_type === 'abholung').length === 0}>
-                            <Printer className="w-4 h-4 mr-1.5" />Etiketten
-                        </Button>
-                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setLabelOpen(true)}
+                        disabled={orders.filter(o => o.pickup_type === 'abholung').length === 0}>
+                        <Printer className="w-4 h-4 mr-1.5" />Etiketten
+                    </Button>
                 </div>
 
                 {/* Date Selector */}
@@ -477,7 +545,7 @@ export default function Wusa() {
                         <Card className="bg-card border-border">
                             <CardContent className="p-2.5 text-center">
                                 <p className="text-base font-bold text-foreground leading-none">{stats.total}</p>
-                                <p className="text-[10px] text-muted-foreground mt-1">Bestellungen</p>
+                                <p className="text-[10px] text-muted-foreground mt-1">Salate</p>
                             </CardContent>
                         </Card>
                         <Card className="bg-card border-border">
@@ -506,14 +574,14 @@ export default function Wusa() {
                     <Plus className="w-4 h-4 mr-2" />Vorbestellung hinzufügen
                 </Button>
 
-                {/* Order List */}
+                {/* Order List — grouped by customer */}
                 {isLoading ? (
                     <Card className="bg-card border-border">
                         <CardContent className="p-6 text-center">
                             <Loader2 className="w-5 h-5 text-muted-foreground mx-auto animate-spin" />
                         </CardContent>
                     </Card>
-                ) : sortedOrders.length === 0 ? (
+                ) : groupedOrders.length === 0 ? (
                     <Card className="bg-card border-border">
                         <CardContent className="p-6 text-center">
                             <Utensils className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -521,78 +589,71 @@ export default function Wusa() {
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="space-y-2">
-                        {sortedOrders.map(order => {
-                            const ings = order.ingredients || 'Alles';
-                            const ingDisplay = ings === 'Alles' ? 'Alles' : ings.split(',').join(' · ');
-
+                    <div className="space-y-3">
+                        {groupedOrders.map(([customerName, custOrders]) => {
+                            const firstOrder = custOrders[0];
+                            const hasMultiple = custOrders.length > 1;
                             return (
-                                <Card key={order.id} className="border bg-card">
-                                    <CardContent className="p-3">
-                                        <div className="flex items-start gap-3">
-                                            {/* Content */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <p className="text-sm font-semibold text-foreground">{order.customer_name}</p>
-                                                    {order.quantity > 1 && (
-                                                        <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                                                            ×{order.quantity}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-muted-foreground">
-                                                    <span className="font-medium">{order.size === 'gross' ? 'Groß' : 'Klein'}</span>
-                                                    <span>·</span>
-                                                    <span>{ingDisplay}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-muted-foreground">
-                                                    {order.pickup_type === 'abholung' ? (
-                                                        <span className="flex items-center gap-1"><ShoppingBag className="w-3 h-3" />Abholung</span>
-                                                    ) : (
-                                                        <span className="flex items-center gap-1"><Utensils className="w-3 h-3" />Vor Ort</span>
-                                                    )}
-                                                    {order.pickup_time && (
-                                                        <>
-                                                            <span>·</span>
-                                                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{order.pickup_time}</span>
-                                                        </>
-                                                    )}
-                                                    {order.price != null && (
-                                                        <>
-                                                            <span>·</span>
-                                                            <span className="font-medium text-foreground">{order.price.toFixed(2).replace('.', ',')} €</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                                {order.notes && (
-                                                    <p className="text-xs text-amber-400/80 mt-1 italic">📝 {order.notes}</p>
-                                                )}
-                                                {order.phone && (
-                                                    <p className="text-[10px] text-muted-foreground/70 mt-1 flex items-center gap-1">
-                                                        <Phone className="w-2.5 h-2.5" />{order.phone}
-                                                    </p>
-                                                )}
-                                            </div>
+                                <Card key={customerName} className="border bg-card overflow-hidden">
+                                    {/* Customer header */}
+                                    <div className="flex items-center gap-2 px-3 py-2.5 bg-muted/30 border-b border-border/50">
+                                        <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                        <p className="text-sm font-semibold text-foreground flex-1 truncate">{customerName}</p>
+                                        {hasMultiple && (
+                                            <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                                                {custOrders.length} Salate
+                                            </span>
+                                        )}
+                                        {firstOrder.pickup_type === 'abholung' ? (
+                                            <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><ShoppingBag className="w-3 h-3" />Abholung</span>
+                                        ) : (
+                                            <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><Utensils className="w-3 h-3" />Vor Ort</span>
+                                        )}
+                                        {firstOrder.pickup_time && (
+                                            <span className="flex items-center gap-1 text-[10px] text-muted-foreground"><Clock className="w-3 h-3" />{firstOrder.pickup_time}</span>
+                                        )}
+                                        {firstOrder.phone && (
+                                            <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70"><Phone className="w-2.5 h-2.5" />{firstOrder.phone}</span>
+                                        )}
+                                    </div>
 
-                                            {/* Actions */}
-                                            <div className="flex flex-col gap-1 shrink-0">
-                                                <button onClick={() => handleEdit(order)}
-                                                    className="text-muted-foreground hover:text-primary p-1 transition-colors">
-                                                    <Edit2 className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button onClick={() => deleteMutation.mutate(order.id)}
-                                                    className="text-muted-foreground hover:text-destructive p-1 transition-colors">
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
+                                    {/* Salad lines */}
+                                    <div className="divide-y divide-border/50">
+                                        {custOrders.map((order, idx) => (
+                            <CardContent className="p-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
+                                            <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded',
+                                                order.size === 'gross' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400')}>
+                                                {order.size === 'gross' ? 'Groß' : 'Klein'}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">{ingsToDisplay(order.ingredients)}</span>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
+                                        {order.notes && (
+                                            <p className="text-xs text-amber-400/80 mt-1 italic">📝 {order.notes}</p>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button onClick={() => handleEdit(order)}
+                                            className="text-muted-foreground hover:text-primary p-1 transition-colors">
+                                            <Edit2 className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button onClick={() => deleteMutation.mutate(order.id)}
+                                            className="text-muted-foreground hover:text-destructive p-1 transition-colors">
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        ))}
                     </div>
-                )}
-            </div>
+                </div>
+            );
+        })}
+    </div>
+            )}
 
             {/* Modals */}
             <OrderModal
@@ -600,7 +661,6 @@ export default function Wusa() {
                 onClose={() => { setModalOpen(false); setEditItem(null); }}
                 editItem={editItem}
                 orderDate={selectedDate}
-                currentUser={null}
                 isManager={isManager}
             />
             {labelOpen && <LabelView orders={orders} onClose={() => setLabelOpen(false)} />}
