@@ -1,0 +1,69 @@
+{
+    "properties": {
+        "title": {
+            "type": "string",
+            "description": "Titel / Überschrift"
+        },
+        "body": {
+            "type": "string",
+            "description": "Längerer Text / Details"
+        },
+        "type": {
+            "type": "string",
+            "enum": ["news", "task"],
+            "default": "news"
+        },
+        "priority": {
+            "type": "string",
+            "enum": ["info", "wichtig", "dringend"],
+            "default": "info"
+        },
+        "is_active": {
+            "type": "boolean",
+            "default": true,
+            "description": "Sichtbar oder archiviert"
+        },
+        "is_completed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Erledigt-Status für Tasks"
+        },
+        "completed_by_name": {
+            "type": "string",
+            "description": "Wer hat die Aufgabe erledigt"
+        },
+        "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Wann erledigt (nur Tasks)"
+        },
+        "show_from": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Ab wann sichtbar"
+        },
+        "show_until": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Bis wann sichtbar (null = unbegrenzt)"
+        },
+        "recurrence_pattern": {
+            "type": "string",
+            "enum": ["none", "daily", "weekly", "monthly"],
+            "default": "none"
+        },
+        "recurrence_interval": {
+            "type": "number",
+            "description": "Alle N Einheiten (z.B. alle 2 Wochen = interval 2 + pattern weekly)"
+        },
+        "created_by_name": {
+            "type": "string",
+            "description": "Ersteller-Name"
+        },
+        "sort_order": {
+            "type": "number",
+            "default": 0
+        }
+    },
+    "type": "object"
+}

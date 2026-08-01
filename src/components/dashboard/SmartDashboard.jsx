@@ -8,6 +8,7 @@ import TeamNotes from '@/components/dashboard/TeamNotes';
 import ManagerDashboard from '@/components/dashboard/ManagerDashboard';
 import AlarmPanel from '@/components/dashboard/AlarmPanel';
 import ActiveClockPanel from '@/components/dashboard/ActiveClockPanel';
+import NewsPanel from '@/components/dashboard/NewsPanel';
 import ShiftSwapInboxCard from '@/components/shifts/ShiftSwapInboxCard';
 import WhatsAppMessageGenerator from '@/components/employees/WhatsAppMessageGenerator';
 import { cn } from '@/lib/utils';
@@ -488,6 +489,7 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
             )}
 
             {/* Stempeluhr — erste Priorität */}
+            <NewsPanel currentUser={currentUser} currentEmployee={currentEmployee} isManager={isManager} employees={employees} />
             {currentEmployee && <ClockCard currentEmployee={currentEmployee} />}
             <ActiveClockPanel currentEmployee={currentEmployee} employees={employees} />
 
