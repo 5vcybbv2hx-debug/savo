@@ -53,6 +53,8 @@ import Wastage from './pages/Wastage';
 import Inventory from './pages/Inventory';
 import BusinessCard from './pages/BusinessCard';
 import WeeklyTasks from './pages/WeeklyTasks';
+import Wusa from './pages/Wusa';
+import WusaPublic from './pages/WusaPublic';
 
 import Display from './pages/Display';
 import DisplayManager from './pages/DisplayManager';
@@ -111,6 +113,7 @@ const CORE_PAGES = {
     "Inventory": Inventory,
     "BusinessCard": BusinessCard,
     "WeeklyTasks": WeeklyTasks,
+    "Wusa": Wusa,
     // Hub-Seiten — mit Layout (Sidebar + Navigation)
     "TeamHub": TeamHub,
     "AccountingHub": AccountingHub,
@@ -134,6 +137,7 @@ const SPECIAL_PAGES_WITH_LAYOUT = {
 const PUBLIC_PAGES = {
     "PublicDrinkMenu": PublicDrinkMenu,
     "StorageLocationScan": StorageLocationScan,
+    "WusaPublic": WusaPublic,
     "Display": Display,
 };
 

@@ -1,0 +1,66 @@
+{
+    "properties": {
+        "customer_name": {
+            "type": "string",
+            "description": "Name des Bestellers"
+        },
+        "phone": {
+            "type": "string",
+            "description": "Telefonnummer für Rückfragen"
+        },
+        "size": {
+            "type": "string",
+            "enum": ["klein", "gross"],
+            "default": "gross"
+        },
+        "quantity": {
+            "type": "number",
+            "default": 1,
+            "description": "Anzahl Portionen"
+        },
+        "ingredients": {
+            "type": "string",
+            "description": "Zutaten als Komma-Liste: Wurst,Käse,Schwarzwurst,Paprika,Gurke,Zwiebel oder 'Alles'"
+        },
+        "pickup_type": {
+            "type": "string",
+            "enum": ["abholung", "vor_ort"],
+            "default": "abholung"
+        },
+        "pickup_time": {
+            "type": "string",
+            "description": "Gewünschte Abholzeit, z.B. 12:00"
+        },
+        "price": {
+            "type": "number",
+            "description": "Preis in Euro (manuell eingetragen)"
+        },
+        "status": {
+            "type": "string",
+            "enum": ["offen", "in_produktion", "fertig", "abgeholt", "storniert"],
+            "default": "offen"
+        },
+        "order_date": {
+            "type": "string",
+            "description": "Datum des Dienstags (yyyy-MM-dd)"
+        },
+        "source": {
+            "type": "string",
+            "enum": ["telefon", "persoenlich", "whatsapp", "online"],
+            "default": "persoenlich"
+        },
+        "notes": {
+            "type": "string",
+            "description": "Freie Notiz"
+        },
+        "created_by_name": {
+            "type": "string",
+            "description": "Wer hat die Bestellung eingetragen"
+        },
+        "is_active": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "type": "object"
+}
