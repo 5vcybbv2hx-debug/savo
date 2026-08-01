@@ -7,6 +7,7 @@ import UpcomingBirthdaysWidget from '@/components/dashboard/UpcomingBirthdaysWid
 import TeamNotes from '@/components/dashboard/TeamNotes';
 import ManagerDashboard from '@/components/dashboard/ManagerDashboard';
 import AlarmPanel from '@/components/dashboard/AlarmPanel';
+import ActiveClockPanel from '@/components/dashboard/ActiveClockPanel';
 import ShiftSwapInboxCard from '@/components/shifts/ShiftSwapInboxCard';
 import WhatsAppMessageGenerator from '@/components/employees/WhatsAppMessageGenerator';
 import { cn } from '@/lib/utils';
@@ -488,6 +489,7 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
 
             {/* Stempeluhr — erste Priorität */}
             {currentEmployee && <ClockCard currentEmployee={currentEmployee} />}
+            <ActiveClockPanel currentEmployee={currentEmployee} employees={employees} />
 
             {/* Meine Schicht */}
             {currentEmployee && (
