@@ -10,7 +10,7 @@ import {
     CalendarDays, Clock, Plane, RefreshCw, Shield,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare,
-    Banknote, BookCopy, Tv, Warehouse,
+    Banknote, BookCopy, Tv, Warehouse, Utensils,
 } from 'lucide-react';
 
 // ── SIDEBAR — aus sidebarConfig.js (Builder-sicher) ─────────────────────────
@@ -31,6 +31,7 @@ export const additionalPages = [
     { page: 'Cleaning',       name: 'Putzliste',          icon: Sparkles,      permission: 'canViewCleaning' },
     { page: 'Events',         name: 'Events',             icon: CalendarDays,  permission: 'canViewEvents' },
     { page: 'DisplayManager', name: 'TV-Display',         icon: Tv,            permission: 'isManager' },
+    { page: 'Wusa',           name: 'Wurstsalat',        icon: Utensils,      permission: 'canViewDashboard' },
 
     // Waren & Lager
     { page: 'Restock',    name: 'Auffüllen',    icon: Package,       permission: 'canViewRestock' },
