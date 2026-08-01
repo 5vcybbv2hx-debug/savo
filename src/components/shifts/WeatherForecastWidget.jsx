@@ -82,7 +82,7 @@ function getBusynessLevel(dow, averages, maxAvg) {
 }
 
 export default function WeatherForecastWidget({ isManager }) {
-  const { data: companyInfo } = useQuery({
+  const { data: companyInfoRaw } = useQuery({
     queryKey: ['company-info'],
     queryFn: async () => {
       const list = await base44.entities.CompanyInfo.list();
@@ -91,6 +91,9 @@ export default function WeatherForecastWidget({ isManager }) {
     staleTime: 30 * 60 * 1000,
     retry: 1,
   });
+  // Cache kann entweder ein einzelnes Objekt (diese Query) oder ein Array
+  // (BrandingLoader in App.jsx) sein — beide Formate tolerieren.
+  const companyInfo = Array.isArray(companyInfoRaw) ? companyInfoRaw[0] : companyInfoRaw;
 
   const { data: dowData } = useDayOfWeekAverages();
   const averages = dowData?.averages || {};

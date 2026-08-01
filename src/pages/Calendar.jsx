@@ -345,12 +345,14 @@ export default function Calendar() {
                                         <CalendarExport shifts={shifts} reservations={reservations} />
                                     </div>
                                     {permissions.isAdmin && (
-                                                                <div className="border-t border-border my-1" />
+                                        <>
+                                            <div className="border-t border-border my-1" />
                                             <p className="text-xs text-muted-foreground px-2 py-1 font-medium uppercase tracking-wide">Admin</p>
                                             <div onClick={() => setExportDropdownOpen(false)}><MonthlyStaffingCheck /></div>
                                             <div onClick={() => setExportDropdownOpen(false)}><ShiftRequirementsManager /></div>
                                             <div onClick={() => setExportDropdownOpen(false)}><DefaultShiftRulesManager /></div>
-                                                        )}
+                                        </>
+                                    )}
                                 </PopoverContent>
                             </Popover>
                         )}
