@@ -4,27 +4,39 @@
   "properties": {
     "event_name": {
       "type": "string",
-      "description": "Name der Veranstaltung"
+      "description": "Name des Events"
     },
     "event_date": {
       "type": "string",
       "format": "date",
-      "description": "Datum der Veranstaltung"
+      "description": "Startdatum des Events"
     },
     "event_end_date": {
       "type": "string",
       "format": "date",
-      "description": "Enddatum (bei mehrtägigen Events)"
+      "description": "Enddatum (optional, bei mehrt\u00e4gigen Events)"
     },
     "category": {
       "type": "string",
-      "enum": ["concert", "festival", "sports", "market", "conference", "holiday", "other"],
-      "description": "Kategorie der Veranstaltung"
+      "enum": [
+        "concert",
+        "festival",
+        "sports",
+        "market",
+        "conference",
+        "holiday",
+        "other"
+      ],
+      "description": "Event-Kategorie"
     },
     "impact_level": {
       "type": "string",
-      "enum": ["small", "medium", "large"],
-      "description": "Erwartete Auswirkung auf Bar-Traffic"
+      "enum": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "description": "Auswirkung auf den Barbetrieb"
     },
     "location": {
       "type": "string",
@@ -32,11 +44,12 @@
     },
     "description": {
       "type": "string",
-      "description": "Beschreibung / Notizen"
+      "description": "Beschreibung / Details"
     },
     "is_active": {
       "type": "boolean",
-      "description": "Aktiv"
+      "default": true,
+      "description": "Event aktiv"
     }
   },
   "required": [

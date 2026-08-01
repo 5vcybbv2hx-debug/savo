@@ -101,8 +101,6 @@ export default function StaffingAnalysis() {
     const permissions = usePermissions();
     const [period, setPeriod] = useState('90d'); // 30d | 90d | 180d | 365d
 
-    if (!permissions.isManager) return <PermissionDenied />;
-
     const days = period === '30d' ? 30 : period === '90d' ? 90 : period === '180d' ? 180 : 365;
     const startDate = subDays(new Date(), days);
 
@@ -268,6 +266,8 @@ export default function StaffingAnalysis() {
             weatherCoverage: withWeather.length,
         };
     }, [revenues, shifts, localEvents, startDate]);
+
+    if (!permissions.isManager) return <PermissionDenied />;
 
     if (isLoading) {
         return (
