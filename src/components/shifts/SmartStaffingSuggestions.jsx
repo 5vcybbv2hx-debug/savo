@@ -18,7 +18,7 @@ import { Brain, TrendingUp, TrendingDown, Users, Cloud, Sun, CloudRain, Calendar
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { isHoliday, isHolidayEve, isBridgeDay, getHolidayName, getSeason } from '@/lib/germanHolidays';
+import { isHoliday, isHolidayEve, isBridgeDay, getHolidayName, getSeason, getHolidayEveInfo } from '@/lib/germanHolidays';
 
 const BUSYNESS_LABELS = {
     1: { label: 'Ruhig', color: 'text-blue-400', bg: 'bg-blue-500/10' },
@@ -106,7 +106,8 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
             const uniqueMatches = [...new Map(allMatches.map(m => [m.id, m])).values()];
 
             const holidayName = getHolidayName(dateStr);
-            const holidayEve = isHolidayEve(dateStr);
+            const holidayEveInfo = getHolidayEveInfo(dateStr);
+            const holidayEve = holidayEveInfo != null;
             const bridgeDay = isBridgeDay(dateStr);
             const season = getSeason(dateStr);
 
@@ -120,6 +121,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                     plannedCount,
                     holidayName,
                     holidayEve,
+                    holidayEveInfo,
                     bridgeDay,
                     season,
                 });
@@ -193,10 +195,13 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
             let adjustedRecommendation = recommendation;
             let adjustedReason = reasonText;
             
-            if (holidayEve) {
-                // Partyabend — increase staffing
-                adjustedRecommendation = Math.round((recommendation || avgStaffCount || 4) + 1);
-                adjustedReason = `🌙 Partyabend (vor ${getHolidayName(format(addDays(d, 1), 'yyyy-MM-dd')) || 'Feiertag'}). ${reasonText}`;
+            if (holidayEveInfo) {
+                // Tiered: 3=Vollgas (+2), 2=Ganz ok (+1), 1=Ruhig (+0)
+                adjustedRecommendation = Math.round((recommendation || avgStaffCount || 4) + holidayEveInfo.staffBoost);
+                const evePrefix = holidayEveInfo.level === 3 ? `${holidayEveInfo.emoji} Partyabend` 
+                                : holidayEveInfo.level === 2 ? `${holidayEveInfo.emoji} Feiertagsvorabend`
+                                : `${holidayEveInfo.emoji} Vor ${holidayEveInfo.holidayName}`;
+                adjustedReason = `${evePrefix} (vor ${holidayEveInfo.holidayName}). ${reasonText}`;
             } else if (holidayName) {
                 // Holiday itself — often quieter (people stay home or away)
                 adjustedRecommendation = Math.max(2, Math.round((recommendation || avgStaffCount || 3) - 1));
@@ -232,6 +237,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                 isToday: isSameDay(d, today),
                 holidayName,
                 holidayEve,
+                holidayEveInfo,
                 bridgeDay,
                 season,
             });
@@ -290,12 +296,13 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                     <>
                                         <p className={cn(
                                             'text-sm font-bold leading-none mt-0.5',
-                                            day.holidayEve ? 'text-purple-400' :
+                                            day.holidayEveInfo?.level === 3 ? 'text-purple-400' :
+                                            day.holidayEveInfo?.level === 2 ? 'text-blue-400' :
                                             day.plannedCount > day.recommendation ? 'text-red-400' :
                                             day.plannedCount > 0 && day.plannedCount === day.recommendation ? 'text-emerald-400' :
                                             'text-amber-400'
                                         )}>
-                                            {day.holidayEve ? '🌙' : day.recommendation}
+                                            {day.holidayEveInfo ? day.holidayEveInfo.emoji : day.recommendation}
                                         </p>
                                         <p className="text-[8px] text-muted-foreground leading-none mt-0.5">
                                             {day.plannedCount > 0 ? `${day.plannedCount} geplant` : 'nicht geplant'}
@@ -345,9 +352,12 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                             <span className="text-xs font-semibold text-foreground">
                                                 {day.dayName}, {format(day.dateObj, 'dd.MM.', { locale: de })}
                                             </span>
-                                            {day.holidayEve && (
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-medium">
-                                                    🌙 Partyabend
+                                            {day.holidayEveInfo && day.holidayEveInfo.level >= 2 && (
+                                                <span className={cn(
+                                                    'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
+                                                    day.holidayEveInfo.level === 3 ? 'bg-purple-500/15 text-purple-400' : 'bg-blue-500/15 text-blue-400'
+                                                )}>
+                                                    {day.holidayEveInfo.emoji} {day.holidayEveInfo.label}
                                                 </span>
                                             )}
                                             {day.holidayName && (
