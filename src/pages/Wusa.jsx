@@ -649,7 +649,7 @@ export default function Wusa() {
                             </CardContent>
                         ))}
                     </div>
-                </div>
+                </Card>
             );
         })}
     </div>
@@ -664,6 +664,7 @@ export default function Wusa() {
                 isManager={isManager}
             />
             {labelOpen && <LabelView orders={orders} onClose={() => setLabelOpen(false)} />}
+            </div>
         </div>
     );
 }
