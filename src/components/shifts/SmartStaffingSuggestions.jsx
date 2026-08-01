@@ -18,6 +18,7 @@ import { Brain, TrendingUp, TrendingDown, Users, Cloud, Sun, CloudRain, Calendar
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { isHoliday, isHolidayEve, isBridgeDay, getHolidayName, getSeason } from '@/lib/germanHolidays';
 
 const BUSYNESS_LABELS = {
     1: { label: 'Ruhig', color: 'text-blue-400', bg: 'bg-blue-500/10' },
@@ -104,6 +105,11 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
             const allMatches = [...historicalMatches, ...recentMatches];
             const uniqueMatches = [...new Map(allMatches.map(m => [m.id, m])).values()];
 
+            const holidayName = getHolidayName(dateStr);
+            const holidayEve = isHolidayEve(dateStr);
+            const bridgeDay = isBridgeDay(dateStr);
+            const season = getSeason(dateStr);
+
             if (uniqueMatches.length === 0) {
                 days.push({
                     date: dateStr,
@@ -112,6 +118,10 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                     dow,
                     hasData: false,
                     plannedCount,
+                    holidayName,
+                    holidayEve,
+                    bridgeDay,
+                    season,
                 });
                 continue;
             }
@@ -179,6 +189,29 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
             // Adjust for weather forecast (if rainy and outdoor-heavy, reduce slightly)
             // We don't have forecast here but the WeatherForecastWidget handles that
 
+            // Holiday/season adjustments to recommendation
+            let adjustedRecommendation = recommendation;
+            let adjustedReason = reasonText;
+            
+            if (holidayEve) {
+                // Partyabend — increase staffing
+                adjustedRecommendation = Math.round((recommendation || avgStaffCount || 4) + 1);
+                adjustedReason = `🌙 Partyabend (vor ${getHolidayName(format(addDays(d, 1), 'yyyy-MM-dd')) || 'Feiertag'}). ${reasonText}`;
+            } else if (holidayName) {
+                // Holiday itself — often quieter (people stay home or away)
+                adjustedRecommendation = Math.max(2, Math.round((recommendation || avgStaffCount || 3) - 1));
+                adjustedReason = `🎉 Feiertag (${holidayName}). ${reasonText}`;
+            } else if (bridgeDay) {
+                // Bridge day — could go either way, lean slightly up
+                adjustedReason = `🔗 Brückentag. ${reasonText}`;
+            }
+            
+            // Seasonal adjustment
+            if (season === 'summer' && avgTemp && avgTemp >= 25) {
+                adjustedRecommendation = Math.round((adjustedRecommendation || avgStaffCount || 4) + 1);
+                adjustedReason = `☀️ ${avgTemp.toFixed(0)}°C Biergarten-Wetter. ${adjustedReason}`;
+            }
+
             days.push({
                 date: dateStr,
                 dateObj: new Date(d),
@@ -192,11 +225,15 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                 avgTemp,
                 avgRain,
                 avgRatio,
-                recommendation,
-                reasonText,
+                recommendation: adjustedRecommendation,
+                reasonText: adjustedReason,
                 plannedCount,
                 isPast: d < today,
                 isToday: isSameDay(d, today),
+                holidayName,
+                holidayEve,
+                bridgeDay,
+                season,
             });
         }
 
@@ -253,11 +290,12 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                     <>
                                         <p className={cn(
                                             'text-sm font-bold leading-none mt-0.5',
+                                            day.holidayEve ? 'text-purple-400' :
                                             day.plannedCount > day.recommendation ? 'text-red-400' :
                                             day.plannedCount > 0 && day.plannedCount === day.recommendation ? 'text-emerald-400' :
                                             'text-amber-400'
                                         )}>
-                                            {day.recommendation}
+                                            {day.holidayEve ? '🌙' : day.recommendation}
                                         </p>
                                         <p className="text-[8px] text-muted-foreground leading-none mt-0.5">
                                             {day.plannedCount > 0 ? `${day.plannedCount} geplant` : 'nicht geplant'}
@@ -303,9 +341,26 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                 )}>
                                     {/* Day header */}
                                     <div className="flex items-center justify-between mb-1.5">
-                                        <span className="text-xs font-semibold text-foreground">
-                                            {day.dayName}, {format(day.dateObj, 'dd.MM.', { locale: de })}
-                                        </span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-xs font-semibold text-foreground">
+                                                {day.dayName}, {format(day.dateObj, 'dd.MM.', { locale: de })}
+                                            </span>
+                                            {day.holidayEve && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-medium">
+                                                    🌙 Partyabend
+                                                </span>
+                                            )}
+                                            {day.holidayName && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400 font-medium">
+                                                    {day.holidayName}
+                                                </span>
+                                            )}
+                                            {day.bridgeDay && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-medium">
+                                                    🔗 Brückentag
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="flex items-center gap-2 text-[10px]">
                                             {/* Weather */}
                                             {day.avgTemp != null && (

@@ -103,6 +103,24 @@
         5
       ],
       "description": "Betriebsamkeit: 1=Ruhig, 2=Entspannt, 3=Normal, 4=Lebhaft, 5=Stark — manuell beim Tagesabschluss"
+    },
+    "is_holiday_eve": {
+      "type": "boolean",
+      "description": "Tag vor Feiertag — oft Partyabend (Silvester, 30.04., 24.12., etc.)"
+    },
+    "is_bridge_day": {
+      "type": "boolean",
+      "description": "Brückentag — Werktag zwischen Feiertag und Wochenende"
+    },
+    "season": {
+      "type": "string",
+      "enum": [
+        "winter",
+        "spring",
+        "summer",
+        "autumn"
+      ],
+      "description": "Jahreszeit — automatisch gesetzt für saisonale Gewichtung"
     }
   },
   "required": [
