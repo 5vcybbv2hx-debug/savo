@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import WeatherForecastWidget from '@/components/shifts/WeatherForecastWidget';
+import SmartStaffingSuggestions from '@/components/shifts/SmartStaffingSuggestions';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -258,6 +259,7 @@ export default function Calendar() {
                     ) : (
                         <>
                         <WeatherForecastWidget isManager={permissions.isManager} />
+                        <SmartStaffingSuggestions weekStart={mobileWeekStart} employees={employees} />
                         <MobileWeekView
                             shifts={shifts}
                             employees={employees}
@@ -413,6 +415,7 @@ export default function Calendar() {
                 {activeTab === 'calendar' && (
                     <>
                     <WeatherForecastWidget isManager={permissions.isManager} />
+                    <SmartStaffingSuggestions weekStart={startOfWeek(new Date(), { weekStartsOn: 1 })} employees={employees} />
                     <ShiftCalendar
                         shifts={filteredShifts}
                         allShifts={shifts}

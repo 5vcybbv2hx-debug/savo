@@ -10,6 +10,8 @@ import PermissionDenied from '@/components/auth/PermissionDenied';
 import { Input } from '@/components/ui/input';
 import { Upload, DollarSign, Users, Gift, Loader2, ChevronLeft, ChevronRight, CalendarDays, RefreshCw, CheckCircle2, TrendingDown, Info, Pencil, Check, X, ChevronDown, ChevronUp, ArrowDownToLine, MoreHorizontal, BookOpen } from 'lucide-react';
 import { format, parseISO, addDays, subDays, isToday } from 'date-fns';
+import { Activity, History } from 'lucide-react';
+import BusynessBackfill from '@/components/dailyanalysis/BusynessBackfill';
 import { de } from 'date-fns/locale';
 import PDFUploadModal from '@/components/dailyanalysis/PDFUploadModal.jsx';
 import TipCalculator from '@/components/dailyanalysis/TipCalculator.jsx';
@@ -49,6 +51,7 @@ export default function DailyAnalysis() {
     const permissions = usePermissions();
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [uploadModalOpen, setUploadModalOpen] = useState(false);
+    const [backfillOpen, setBackfillOpen] = useState(false);
     const [tipCalculatorOpen, setTipCalculatorOpen] = useState(false);
     const [reanalyzingAll, setReanalyzingAll] = useState(false);
     const [reanalyzeProgress, setReanalyzeProgress] = useState({ done: 0, total: 0, errors: [] });
@@ -605,6 +608,60 @@ export default function DailyAnalysis() {
                 </KpiCard>
             </div>
 
+            {/* Betriebsamkeit — 5 Stufen */}
+            <Card className="border-border bg-card">
+                <CardContent className="px-4 py-3">
+                    <div className="flex items-center justify-between mb-2.5">
+                        <div className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-primary" />
+                            <p className="text-sm font-semibold text-foreground">Betriebsamkeit</p>
+                        </div>
+                        <button
+                            onClick={() => setBackfillOpen(true)}
+                            className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1"
+                        >
+                            <History className="w-3 h-3" />
+                            Historie nachtragen
+                        </button>
+                    </div>
+                    <div className="flex gap-1.5">
+                        {[
+                            { level: 1, label: 'Ruhig', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30', desc: 'Kaum Gäste' },
+                            { level: 2, label: 'Entspannt', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30', desc: 'Locker' },
+                            { level: 3, label: 'Normal', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30', desc: 'Üblich' },
+                            { level: 4, label: 'Lebhaft', color: 'bg-orange-500/15 text-orange-400 border-orange-500/30', desc: 'Viel los' },
+                            { level: 5, label: 'Stark', color: 'bg-red-500/15 text-red-400 border-red-500/30', desc: 'Grenzbereich' },
+                        ].map(({ level, label, color, desc }) => {
+                            const selected = todayRevenue?.busyness_level === level;
+                            return (
+                                <button
+                                    key={level}
+                                    onClick={async () => {
+                                        try {
+                                            if (todayRevenue?.id) {
+                                                await base44.entities.DailyRevenue.update(todayRevenue.id, { busyness_level: level });
+                                            } else {
+                                                await base44.entities.DailyRevenue.create({ date: selectedDate, revenue: 0, busyness_level: level });
+                                            }
+                                            queryClient.invalidateQueries({ queryKey: ['daily-revenues'] });
+                                        } catch (e) { console.error(e); }
+                                    }}
+                                    className={cn(
+                                        'flex-1 py-2.5 rounded-xl border text-center transition-all',
+                                        selected
+                                            ? cn(color, 'border-2 scale-105 shadow-sm')
+                                            : 'border-border text-muted-foreground hover:text-foreground'
+                                    )}
+                                >
+                                    <span className="text-lg font-bold block leading-none">{level}</span>
+                                    <span className="text-[10px] font-medium block mt-0.5">{label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* Kassenbuch Transfer — prominent nach KPI-Cards */}
             {todayRevenue && (
                 <Card className={cn(
@@ -899,5 +956,7 @@ export default function DailyAnalysis() {
                 onSuccess={() => queryClient.invalidateQueries({ queryKey: ['tip-distributions'] })}
             />
         </div>
+
+        {backfillOpen && <BusynessBackfill onClose={() => setBackfillOpen(false)} />}
     );
 }

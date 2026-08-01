@@ -77,7 +77,12 @@
     },
     "local_event_impact": {
       "type": "string",
-      "enum": ["none", "small", "medium", "large"],
+      "enum": [
+        "none",
+        "small",
+        "medium",
+        "large"
+      ],
       "description": "Auswirkung externer Events auf den Tag"
     },
     "staff_count": {
@@ -87,6 +92,17 @@
     "labor_cost_total": {
       "type": "number",
       "description": "Gesamte Personalkosten des Tages (automatisch berechnet)"
+    },
+    "busyness_level": {
+      "type": "number",
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "description": "Betriebsamkeit: 1=Ruhig, 2=Entspannt, 3=Normal, 4=Lebhaft, 5=Stark — manuell beim Tagesabschluss"
     }
   },
   "required": [
