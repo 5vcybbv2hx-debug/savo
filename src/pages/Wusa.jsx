@@ -1,6 +1,6 @@
 /**
  * Wusa.jsx — Wurstsalat-Bestellverwaltung
- * Jeden Dienstag: Vorbestellungen erfassen, Status tracken, Etiketten drucken.
+ * Jeden Dienstag: Vorbestellungen erfassen und Etiketten drucken.
  */
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
@@ -8,13 +8,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, addDays, isTuesday, nextTuesday, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-    Newspaper, Plus, X, Printer, Check, Clock, Package, MapPin, Phone,
-    Trash2, Edit2, ChevronLeft, ChevronRight, Utensils, ShoppingBag,
-    Circle, CircleCheck, AlertCircle, Loader2
+    Plus, X, Printer, Clock, Phone, Trash2, Edit2, ChevronLeft, ChevronRight,
+    Utensils, ShoppingBag, Loader2
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { usePermissions } from '@/components/auth/usePermissions';
@@ -34,16 +32,6 @@ function getNextTuesdays(count = 8) {
     }
     return tuesdays;
 }
-
-const STATUS_CONFIG = {
-    offen:         { label: 'Offen',           color: 'text-blue-400',     bg: 'bg-blue-500/10 border-blue-500/30',      icon: Clock },
-    in_produktion: { label: 'In Produktion',   color: 'text-amber-400',    bg: 'bg-amber-500/10 border-amber-500/30',   icon: Loader2 },
-    fertig:        { label: 'Fertig',           color: 'text-green-400',    bg: 'bg-green-500/10 border-green-500/30',    icon: Check },
-    abgeholt:      { label: 'Abgeholt',         color: 'text-muted-foreground', bg: 'bg-muted/30 border-border',          icon: Package },
-    storniert:     { label: 'Storniert',        color: 'text-red-400',      bg: 'bg-red-500/10 border-red-500/30',       icon: X },
-};
-
-const STATUS_FLOW = ['offen', 'in_produktion', 'fertig', 'abgeholt'];
 
 // ── Order Modal ───────────────────────────────────────────────────────────────
 
@@ -95,7 +83,7 @@ function OrderModal({ open, onClose, editItem, orderDate, currentUser, isManager
                 notes: notes.trim() || null,
                 source,
                 order_date: orderDate,
-                status: editItem?.status || 'offen',
+                status: 'offen',
                 is_active: true,
                 created_by_name: editItem?.created_by_name || currentUser?.full_name || currentUser?.email || 'Mitarbeiter',
             };
@@ -269,7 +257,7 @@ function OrderModal({ open, onClose, editItem, orderDate, currentUser, isManager
 // ── Label View ────────────────────────────────────────────────────────────────
 
 function LabelView({ orders, onClose }) {
-    const abholOrders = orders.filter(o => o.pickup_type === 'abholung' && o.status !== 'storniert' && o.status !== 'abgeholt');
+    const abholOrders = orders.filter(o => o.pickup_type === 'abholung');
 
     if (abholOrders.length === 0) {
         return (
@@ -308,7 +296,7 @@ function LabelView({ orders, onClose }) {
                 {/* Labels */}
                 <div className="overflow-y-auto px-5 py-4 space-y-4 print:overflow-visible print:h-auto">
                     <div className="print:hidden text-xs text-muted-foreground text-center pb-2">
-                        Tipp: Im Druckdialog "Mehr Einstellungen" → "Hintergrundgrafiken deaktivieren" für saubere Etiketten.
+                        Tipp: Im Druckdialog "Hintergrundgrafiken deaktivieren" für saubere Etiketten.
                     </div>
                     {abholOrders.map((order, idx) => {
                         const ings = order.ingredients || 'Alles';
@@ -385,11 +373,6 @@ export default function Wusa() {
 
     const queryClient = useQueryClient();
 
-    const statusMutation = useMutation({
-        mutationFn: async ({ id, status }) => base44.entities.WusaOrder.update(id, { status }),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['wusa-orders'] }),
-    });
-
     const deleteMutation = useMutation({
         mutationFn: (id) => base44.entities.WusaOrder.update(id, { is_active: false }),
         onSuccess: () => {
@@ -400,22 +383,13 @@ export default function Wusa() {
 
     // Stats
     const stats = useMemo(() => {
-        const active = orders.filter(o => o.status !== 'storniert' && o.status !== 'abgeholt');
-        const gross = active.filter(o => o.size === 'gross').reduce((sum, o) => sum + (o.quantity || 1), 0);
-        const klein = active.filter(o => o.size === 'klein').reduce((sum, o) => sum + (o.quantity || 1), 0);
-        const abholung = active.filter(o => o.pickup_type === 'abholung').length;
-        const vorOrt = active.filter(o => o.pickup_type === 'vor_ort').length;
-        const totalPrice = active.reduce((sum, o) => sum + (o.price || 0) * (o.quantity || 1), 0);
-        return { gross, klein, abholung, vorOrt, totalPrice, total: active.length };
+        const gross = orders.filter(o => o.size === 'gross').reduce((sum, o) => sum + (o.quantity || 1), 0);
+        const klein = orders.filter(o => o.size === 'klein').reduce((sum, o) => sum + (o.quantity || 1), 0);
+        const abholung = orders.filter(o => o.pickup_type === 'abholung').length;
+        const vorOrt = orders.filter(o => o.pickup_type === 'vor_ort').length;
+        const totalPrice = orders.reduce((sum, o) => sum + (o.price || 0) * (o.quantity || 1), 0);
+        return { gross, klein, abholung, vorOrt, totalPrice, total: orders.length };
     }, [orders]);
-
-    const advanceStatus = (order) => {
-        const currentIdx = STATUS_FLOW.indexOf(order.status);
-        if (currentIdx < 0 || currentIdx >= STATUS_FLOW.length - 1) return;
-        const nextStatus = STATUS_FLOW[currentIdx + 1];
-        statusMutation.mutate({ id: order.id, status: nextStatus });
-        toast.success(`${order.customer_name}: ${STATUS_CONFIG[nextStatus].label}`);
-    };
 
     const handleEdit = (order) => {
         setEditItem(order);
@@ -428,10 +402,6 @@ export default function Wusa() {
     };
 
     const sortedOrders = [...orders].sort((a, b) => {
-        // Storniert and Abgeholt to the end
-        const statusOrder = { offen: 0, in_produktion: 1, fertig: 2, abgeholt: 3, storniert: 4 };
-        const sd = (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
-        if (sd !== 0) return sd;
         if (a.pickup_time && b.pickup_time) return a.pickup_time.localeCompare(b.pickup_time);
         if (a.pickup_time) return -1;
         if (b.pickup_time) return 1;
@@ -462,7 +432,7 @@ export default function Wusa() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <Button variant="outline" size="sm" onClick={() => setLabelOpen(true)}
-                            disabled={orders.filter(o => o.pickup_type === 'abholung' && o.status !== 'storniert' && o.status !== 'abgeholt').length === 0}>
+                            disabled={orders.filter(o => o.pickup_type === 'abholung').length === 0}>
                             <Printer className="w-4 h-4 mr-1.5" />Etiketten
                         </Button>
                     </div>
@@ -553,36 +523,17 @@ export default function Wusa() {
                 ) : (
                     <div className="space-y-2">
                         {sortedOrders.map(order => {
-                            const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.offen;
-                            const StatusIcon = cfg.icon;
-                            const canAdvance = STATUS_FLOW.indexOf(order.status) < STATUS_FLOW.length - 1 && order.status !== 'storniert';
                             const ings = order.ingredients || 'Alles';
                             const ingDisplay = ings === 'Alles' ? 'Alles' : ings.split(',').join(' · ');
 
                             return (
-                                <Card key={order.id} className={cn('border bg-card transition-all', cfg.bg)}>
+                                <Card key={order.id} className="border bg-card">
                                     <CardContent className="p-3">
                                         <div className="flex items-start gap-3">
-                                            {/* Status / Advance */}
-                                            <button
-                                                onClick={() => canAdvance && advanceStatus(order)}
-                                                disabled={!canAdvance}
-                                                className={cn(
-                                                    'mt-0.5 shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all',
-                                                    canAdvance ? 'hover:scale-110 cursor-pointer' : 'cursor-default opacity-60'
-                                                )}
-                                                title={canAdvance ? `Weiter zu: ${STATUS_CONFIG[STATUS_FLOW[STATUS_FLOW.indexOf(order.status) + 1]].label}` : cfg.label}
-                                            >
-                                                <StatusIcon className={cn('w-5 h-5', cfg.color, order.status === 'in_produktion' && 'animate-spin')} />
-                                            </button>
-
                                             {/* Content */}
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <p className="text-sm font-semibold text-foreground">{order.customer_name}</p>
-                                                    <Badge variant="outline" className={cn('text-[10px] h-5', cfg.color, 'border-current/30')}>
-                                                        {cfg.label}
-                                                    </Badge>
                                                     {order.quantity > 1 && (
                                                         <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                                                             ×{order.quantity}
