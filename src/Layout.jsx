@@ -269,10 +269,14 @@ export default function Layout({ children, currentPageName }) {
             return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
         }
         if (permissions.canViewTodos) {
-            // Barkeeper: Übersicht, Schichtplan, Aufgaben, Putzliste
-            return ['Dashboard', 'Calendar', 'Todos', 'Cleaning'];
+            // Barkeeper: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
+            return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
         }
-        // Aushilfe: Übersicht, Meine Schichten, Zeiterfassung, Schichttausch
+        // Aushilfe: Übersicht, Gäste & Tische, Schichtplan, Meine Schichten
+        if (permissions.canViewReservations) {
+            return ['Dashboard', 'GuestHub', 'Calendar', 'MyShifts'];
+        }
+        // Fallback: Übersicht, Meine Schichten, Zeiterfassung, Schichttausch
         return ['Dashboard', 'MyShifts', 'TimeManagement', 'ShiftSwaps'];
     };
 

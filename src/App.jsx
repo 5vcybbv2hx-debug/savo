@@ -26,6 +26,7 @@ import AccountingLiabilities from './pages/AccountingLiabilities';
 import TeamHub from './pages/TeamHub';
 import AccountingHub from './pages/AccountingHub';
 import BetriebHub from './pages/BetriebHub';
+import GuestHub from './pages/GuestHub';
 import KarteHub from './pages/KarteHub';
 import AccountingBank from './pages/AccountingBank';
 import BusinessCard from './pages/BusinessCard';
@@ -232,6 +233,7 @@ const AuthenticatedApp = () => {
       <Route path="/KarteHub" element={<LayoutWrapper currentPageName="KarteHub"><RoleGuard permission="canViewDrinkMenu"><KarteHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/MenuReview" element={<LayoutWrapper currentPageName="MenuReview"><RoleGuard permission="canViewDrinkMenu"><MenuReview /></RoleGuard></LayoutWrapper>} />
       <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
+      <Route path="/GuestHub" element={<LayoutWrapper currentPageName="GuestHub"><RoleGuard permission="canViewReservations"><GuestHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/Display" element={<Display />} />
       <Route path="/DisplayManager" element={<LayoutWrapper currentPageName="DisplayManager"><RoleGuard permission="isManager"><DisplayManager /></RoleGuard></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
