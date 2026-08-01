@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import WeatherForecastWidget from '@/components/shifts/WeatherForecastWidget';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -255,6 +256,8 @@ export default function Calendar() {
                             />
                         </div>
                     ) : (
+                        <>
+                        <WeatherForecastWidget isManager={permissions.isManager} />
                         <MobileWeekView
                             shifts={shifts}
                             employees={employees}
@@ -265,6 +268,7 @@ export default function Calendar() {
                             weekStart={mobileWeekStart}
                             onWeekChange={(ws) => setMobileWeekStart(ws)}
                         />
+                        </>
                     )}
                 </div>
 
@@ -341,14 +345,12 @@ export default function Calendar() {
                                         <CalendarExport shifts={shifts} reservations={reservations} />
                                     </div>
                                     {permissions.isAdmin && (
-                                        <>
-                                            <div className="border-t border-border my-1" />
+                                                                <div className="border-t border-border my-1" />
                                             <p className="text-xs text-muted-foreground px-2 py-1 font-medium uppercase tracking-wide">Admin</p>
                                             <div onClick={() => setExportDropdownOpen(false)}><MonthlyStaffingCheck /></div>
                                             <div onClick={() => setExportDropdownOpen(false)}><ShiftRequirementsManager /></div>
                                             <div onClick={() => setExportDropdownOpen(false)}><DefaultShiftRulesManager /></div>
-                                        </>
-                                    )}
+                                                        )}
                                 </PopoverContent>
                             </Popover>
                         )}
@@ -407,6 +409,8 @@ export default function Calendar() {
                 )}
 
                 {activeTab === 'calendar' && (
+                    <>
+                    <WeatherForecastWidget isManager={permissions.isManager} />
                     <ShiftCalendar
                         shifts={filteredShifts}
                         allShifts={shifts}
@@ -417,9 +421,9 @@ export default function Calendar() {
                         onAddShift={handleAddShift}
                         onSelectShift={handleSelectShift}
                         onShiftMove={handleShiftMove}
-                        selectedDate={selectedDate}
                         setSelectedDate={setSelectedDate}
                     />
+                    </>
                 )}
 
                 {activeTab === 'quick' && permissions.isManager && (
