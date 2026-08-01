@@ -29,11 +29,11 @@
     },
     "manual_labor_cost_daily": {
       "type": "number",
-      "description": "Manuelle Personalkosten Aushilfen (\u00fcberschreibt berechnete Werte)"
+      "description": "Manuelle Personalkosten Aushilfen (überschreibt berechnete Werte)"
     },
     "manual_labor_cost_fulltime": {
       "type": "number",
-      "description": "Manuelle Personalkosten Festangestellte (\u00fcberschreibt berechnete Werte)"
+      "description": "Manuelle Personalkosten Festangestellte (überschreibt berechnete Werte)"
     },
     "pdf_url": {
       "type": "string",
@@ -42,6 +42,51 @@
     "notes": {
       "type": "string",
       "description": "Notizen zum Z-Abschlag"
+    },
+    "weather_temp_max": {
+      "type": "number",
+      "description": "Höchsttemperatur (°C) — automatisch via Open-Meteo"
+    },
+    "weather_temp_mean": {
+      "type": "number",
+      "description": "Durchschnittstemperatur (°C) — automatisch via Open-Meteo"
+    },
+    "weather_precipitation": {
+      "type": "number",
+      "description": "Niederschlag (mm) — automatisch via Open-Meteo"
+    },
+    "weather_code": {
+      "type": "number",
+      "description": "WMO Weather Code — automatisch via Open-Meteo"
+    },
+    "weather_description": {
+      "type": "string",
+      "description": "Klartext Wetter (z.B. 'Sonnig', 'Regen') — automatisch"
+    },
+    "guest_count": {
+      "type": "number",
+      "description": "Geschätzte Gästeanzahl (manuell oder aus Kassenbons)"
+    },
+    "is_holiday": {
+      "type": "boolean",
+      "description": "Feiertag — automatisch gesetzt"
+    },
+    "is_school_vacation": {
+      "type": "boolean",
+      "description": "Schulferien Berlin — automatisch gesetzt"
+    },
+    "local_event_impact": {
+      "type": "string",
+      "enum": ["none", "small", "medium", "large"],
+      "description": "Auswirkung externer Events auf den Tag"
+    },
+    "staff_count": {
+      "type": "number",
+      "description": "Anzahl Mitarbeiter an diesem Tag (automatisch aus Schichten)"
+    },
+    "labor_cost_total": {
+      "type": "number",
+      "description": "Gesamte Personalkosten des Tages (automatisch berechnet)"
     }
   },
   "required": [

@@ -1,0 +1,47 @@
+{
+  "name": "LocalEvent",
+  "type": "object",
+  "properties": {
+    "event_name": {
+      "type": "string",
+      "description": "Name der Veranstaltung"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum der Veranstaltung"
+    },
+    "event_end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Enddatum (bei mehrtägigen Events)"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["concert", "festival", "sports", "market", "conference", "holiday", "other"],
+      "description": "Kategorie der Veranstaltung"
+    },
+    "impact_level": {
+      "type": "string",
+      "enum": ["small", "medium", "large"],
+      "description": "Erwartete Auswirkung auf Bar-Traffic"
+    },
+    "location": {
+      "type": "string",
+      "description": "Veranstaltungsort"
+    },
+    "description": {
+      "type": "string",
+      "description": "Beschreibung / Notizen"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Aktiv"
+    }
+  },
+  "required": [
+    "event_name",
+    "event_date",
+    "impact_level"
+  ]
+}

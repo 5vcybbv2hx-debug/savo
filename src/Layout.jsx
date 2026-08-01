@@ -240,7 +240,7 @@ export default function Layout({ children, currentPageName }) {
         },
         {
             id: 'buchhaltung', name: 'Buchhaltung',
-            pages: additionalPages.filter(p => ['AccountingDashboard','AccountingCashbook','AccountingReceipts','AccountingCreditors','AccountingExport','AccountingFixedCosts','AccountingLiabilities','DailyAnalysis'].includes(p.page))
+            pages: additionalPages.filter(p => ['AccountingDashboard','AccountingCashbook','AccountingReceipts','AccountingCreditors','AccountingExport','AccountingFixedCosts','AccountingLiabilities','DailyAnalysis','StaffingAnalysis'].includes(p.page))
         },
         {
             id: 'team', name: 'Team',

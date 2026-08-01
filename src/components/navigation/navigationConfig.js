@@ -9,7 +9,7 @@ import {
     Wine, Receipt, Euro, Settings, FileText, Wrench, HelpCircle,
     CalendarDays, Clock, Plane, RefreshCw, Shield,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
-    LayoutGrid, Database, CalendarClock, Truck, MessageSquare,
+    LayoutGrid, Database, CalendarClock, Truck, MessageSquare, Target,
     Banknote, BookCopy, Tv, Warehouse, Utensils,
 } from 'lucide-react';
 
@@ -58,6 +58,7 @@ export const additionalPages = [
     { page: 'AccountingLiabilities', name: 'Verbindlichkeiten', icon: Scale,      permission: 'canViewLiabilities' },
     { page: 'AccountingBank',        name: 'Bankkonten',        icon: Banknote,   permission: 'canViewAccounting' },
     { page: 'DailyAnalysis',         name: 'Tagesanalyse',      icon: BarChart3,  permission: 'canViewAnalytics' },
+    { page: 'StaffingAnalysis',     name: 'Personalplanung',   icon: Target,      permission: 'isManager' },
 
     // Team
     { page: 'Employees',      name: 'Mitarbeiter',     icon: Users,         permission: 'canViewEmployees' },
