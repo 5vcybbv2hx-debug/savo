@@ -45,34 +45,59 @@ function useDayOfWeekAverages() {
       const revenues = await base44.entities.DailyRevenue.list('-date', 90);
       if (!revenues || revenues.length === 0) return {};
 
-      const sums = [0,0,0,0,0,0,0];
-      const counts = [0,0,0,0,0,0,0];
+      // Revenue-based averages
+      const revSums = [0,0,0,0,0,0,0];
+      const revCounts = [0,0,0,0,0,0,0];
+      // Busyness-based averages
+      const busySums = [0,0,0,0,0,0,0];
+      const busyCounts = [0,0,0,0,0,0,0];
+
       for (const r of revenues) {
-        if (!r.date || r.revenue == null) continue;
+        if (!r.date) continue;
         const dow = new Date(r.date + 'T12:00:00').getDay();
-        sums[dow] += r.revenue;
-        counts[dow]++;
+        if (r.revenue != null) {
+          revSums[dow] += r.revenue;
+          revCounts[dow]++;
+        }
+        if (r.busyness_level != null) {
+          busySums[dow] += r.busyness_level;
+          busyCounts[dow]++;
+        }
       }
 
       const averages = {};
+      const busyness = {};
       const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
       let maxAvg = 0;
       for (let i = 0; i < 7; i++) {
-        if (counts[i] > 0) {
-          averages[dayNames[i]] = sums[i] / counts[i];
+        if (revCounts[i] > 0) {
+          averages[dayNames[i]] = revSums[i] / revCounts[i];
           if (averages[dayNames[i]] > maxAvg) maxAvg = averages[dayNames[i]];
         }
+        if (busyCounts[i] > 0) {
+          busyness[dayNames[i]] = busySums[i] / busyCounts[i];
+        }
       }
-      return { averages, maxAvg, counts };
+      return { averages, maxAvg, counts: revCounts, busyness };
     },
     staleTime: 10 * 60 * 1000,
     retry: 1,
   });
 }
 
-function getBusynessLevel(dow, averages, maxAvg) {
+function getBusynessLevel(dow, averages, maxAvg, busyness) {
   const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
   const dayName = dayNames[dow];
+
+  // Prefer busyness_level data (1-5) if available
+  if (busyness && busyness[dayName] != null) {
+    const avg = busyness[dayName];
+    if (avg >= 4) return { level: 'high', label: 'Stark', icon: TrendingUp, color: 'text-emerald-400' };
+    if (avg >= 2.5) return { level: 'medium', label: 'Mittel', icon: Minus, color: 'text-amber-400' };
+    return { level: 'low', label: 'Ruhig', icon: TrendingDown, color: 'text-muted-foreground' };
+  }
+
+  // Fall back to revenue ratio
   const avg = averages?.[dayName];
   if (avg == null || !maxAvg) return null;
   const ratio = avg / maxAvg;
@@ -174,7 +199,7 @@ export default function WeatherForecastWidget({ isManager }) {
             const Icon = WEATHER_ICONS[wInfo.icon] || Cloud;
             const isToday = day.date === format(new Date(), 'yyyy-MM-dd');
             const dayName = isToday ? 'Heute' : format(new Date(day.date + 'T12:00:00'), 'EEEEE', { locale: de });
-            const busyness = getBusynessLevel(day.dow, averages, maxAvg);
+            const busyness = getBusynessLevel(day.dow, averages, maxAvg, dowData?.busyness);
             const BusynessIcon = busyness?.icon;
 
             return (
@@ -227,7 +252,7 @@ export default function WeatherForecastWidget({ isManager }) {
         {isManager && averages && Object.keys(averages).length > 0 && (
           <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
             <span className="text-[9px] text-muted-foreground">
-              Auslastung aus Ø-Umsatz pro Wochentag (90 Tage)
+              Auslastung aus Ø Betriebsamkeit & Umsatz pro Wochentag
             </span>
             <div className="flex gap-2">
               <span className="flex items-center gap-0.5 text-[9px] text-emerald-400">
