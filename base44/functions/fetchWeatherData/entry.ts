@@ -2,16 +2,13 @@
  * fetchWeatherData — Holt historische + heutige Wetterdaten von Open-Meteo
  * und aktualisiert DailyRevenue-Einträge, die noch keine Wetterdaten haben.
  *
- * Open-Meteo Archive API (kostenlos, kein API Key):
- * https://archive-api.open-meteo.com/v1/archive
+ * Liest Location (PLZ + Stadt) dynamisch aus CompanyInfo-Stammdaten.
+ * Geocoding via Open-Meteo Geocoding API (kostenlos, kein API Key).
  *
  * Aufruf: POST /api/apps/{app_id}/functions/fetchWeatherData
  * Body: { days_back?: number }  (default: 180)
  */
 import { base44 } from 'base44';
-
-const LATITUDE = 52.52;   // Berlin
-const LONGITUDE = 13.405;
 
 // WMO Weather Code → Klartext
 const WMO_DESCRIPTIONS: Record<number, string> = {
@@ -45,22 +42,23 @@ const WMO_DESCRIPTIONS: Record<number, string> = {
   99: 'Gewitter mit starkem Hagel',
 };
 
-// Berliner Feiertage (vereinfacht — fixe + bewegliche)
+// Baden-Württemberg Feiertage (vereinfacht — fixe + bewegliche)
 function isHoliday(dateStr: string): boolean {
   const [year, month, day] = dateStr.split('-').map(Number);
-  const date = new Date(dateStr);
   const easter = computeEaster(year);
   const easterDate = new Date(easter);
   
   const holidays = [
     `${year}-01-01`, // Neujahr
-    `${year}-03-08`, // Intl. Frauentag (Berlin seit 2019)
+    `${year}-01-06`, // Heilige Drei Könige (BW)
     easterPlusDays(easterDate, -2), // Karfreitag
     easterPlusDays(easterDate, 1),  // Ostermontag
     `${year}-05-01`, // Tag der Arbeit
     easterPlusDays(easterDate, 39), // Christi Himmelfahrt
     easterPlusDays(easterDate, 50), // Pfingstmontag
+    easterPlusDays(easterDate, 60), // Fronleichnam (BW)
     `${year}-10-03`, // Tag der Deutschen Einheit
+    `${year}-11-01`, // Allerheiligen (BW)
     `${year}-12-25`, // 1. Weihnachtstag
     `${year}-12-26`, // 2. Weihnachtstag
   ];
@@ -92,27 +90,56 @@ function easterPlusDays(easter: Date, days: number): string {
   return d.toISOString().split('T')[0];
 }
 
-// Berliner Schulferien (vereinfacht — grobe Zeiträume)
+// Baden-Württemberg Schulferien (vereinfacht — grobe Zeiträume)
 function isSchoolVacation(dateStr: string): boolean {
   const [year, month, day] = dateStr.split('-').map(Number);
   const date = new Date(dateStr);
   
   const vacations: Array<[string, string]> = [
-    // Winterferien (ca. Anfang Februar)
-    [`${year}-02-01`, `${year}-02-05`],
-    // Sommerferien (ca. Mitte Juli - Ende August)
-    [`${year}-07-15`, `${year}-08-31`],
-    // Herbstferien (ca. Mitte Oktober)
-    [`${year}-10-10`, `${year}-10-25`],
+    // Winterferien (BW: selten, meist nur wenige Tage)
+    // Sommerferien (BW: ca. Ende Juli - Mitte September)
+    [`${year}-07-25`, `${year}-09-10`],
+    // Herbstferien (BW: ca. Ende Oktober - Anfang November)
+    [`${year}-10-28`, `${year}-11-08`],
     // Weihnachtsferien
     [`${year}-12-22`, `${year}-12-31`],
-    // Osterferien (ca. Mitte März - Anfang April)
-    [`${year}-03-20`, `${year}-04-05`],
-    // Pfingstferien (ca. Ende Mai)
-    [`${year}-05-23`, `${year}-06-01`],
+    [`${year + 1}-01-01`, `${year + 1}-01-07`],
+    // Osterferien (BW: ca. Mitte April)
+    [`${year}-04-10`, `${year}-04-20`],
+    // Pfingstferien (BW: ca. Mitte Juni)
+    [`${year}-06-10`, `${year}-06-25`],
   ];
   
   return vacations.some(([start, end]) => dateStr >= start && dateStr <= end);
+}
+
+// Geocoding: PLZ + Stadt → Lat/Long via Open-Meteo Geocoding API
+async function getCoordinates(postalCode: string, city: string): Promise<{ lat: number; lon: number }> {
+  // Try city name first (more reliable for German cities)
+  const query = city || postalCode;
+  const geocodeUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=de&format=json`;
+  
+  const res = await fetch(geocodeUrl);
+  if (!res.ok) throw new Error(`Geocoding API Fehler: ${res.status}`);
+  const data = await res.json();
+  
+  if (data.results && data.results.length > 0) {
+    return { lat: data.results[0].latitude, lon: data.results[0].longitude };
+  }
+  
+  // Fallback: try with postal code
+  if (postalCode) {
+    const plzUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(postalCode)}&count=1&language=de&format=json`;
+    const plzRes = await fetch(plzUrl);
+    if (plzRes.ok) {
+      const plzData = await plzRes.json();
+      if (plzData.results && plzData.results.length > 0) {
+        return { lat: plzData.results[0].latitude, lon: plzData.results[0].longitude };
+      }
+    }
+  }
+  
+  throw new Error(`Geocoding fehlgeschlagen für: ${query} (${postalCode})`);
 }
 
 export default async function fetchWeatherData(req: any) {
@@ -124,8 +151,24 @@ export default async function fetchWeatherData(req: any) {
   const startStr = startDate.toISOString().split('T')[0];
   const endStr = today.toISOString().split('T')[0];
   
-  // 1. Wetterdaten von Open-Meteo holen
-  const weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${LATITUDE}&longitude=${LONGITUDE}&start_date=${startStr}&end_date=${endStr}&daily=temperature_2m_max,temperature_2m_mean,precipitation_sum,weathercode&timezone=Europe/Berlin&format=json`;
+  // 0. Location aus CompanyInfo-Stammdaten lesen
+  const companyInfo = await base44.asServiceRole.entities.CompanyInfo.list().then((r: any) => r[0]);
+  if (!companyInfo) {
+    throw new Error('Keine CompanyInfo-Stammdaten gefunden — bitte in Einstellungen pflegen');
+  }
+  
+  const postalCode = companyInfo.postal_code;
+  const city = companyInfo.city;
+  
+  if (!postalCode && !city) {
+    throw new Error('CompanyInfo hat keine PLZ/Stadt — bitte in Einstellungen pflegen');
+  }
+  
+  // 1. Koordinaten per Geocoding ermitteln
+  const { lat, lon } = await getCoordinates(postalCode, city);
+  
+  // 2. Wetterdaten von Open-Meteo holen
+  const weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startStr}&end_date=${endStr}&daily=temperature_2m_max,temperature_2m_mean,precipitation_sum,weathercode&timezone=Europe/Berlin&format=json`;
   
   const weatherRes = await fetch(weatherUrl);
   if (!weatherRes.ok) {
@@ -148,7 +191,7 @@ export default async function fetchWeatherData(req: any) {
     }
   }
   
-  // 2. Alle DailyRevenue-Einträge holen, die noch keine Wetterdaten haben
+  // 3. Alle DailyRevenue-Einträge holen, die noch keine Wetterdaten haben
   const revenues = await base44.asServiceRole.entities.DailyRevenue.list('-date', 500);
   const needWeather = revenues.filter((r: any) => r.weather_temp_max == null && weatherMap[r.date]);
   
@@ -156,7 +199,7 @@ export default async function fetchWeatherData(req: any) {
   let skipped = 0;
   let notFound = 0;
   
-  // 3. Jeden Eintrag mit Wetterdaten anreichern
+  // 4. Jeden Eintrag mit Wetterdaten anreichern
   for (const rev of needWeather) {
     const w = weatherMap[rev.date];
     if (!w) {
@@ -176,11 +219,10 @@ export default async function fetchWeatherData(req: any) {
     updated++;
   }
   
-  // 4. Für Tage ohne DailyRevenue-Eintrag einen Weather-Only-Eintrag erstellen?
-  // Nein — Wetterdaten werden beim Erstellen des Tagesabschlusses nachgezogen.
-  
   return {
     success: true,
+    location: `${city} (${postalCode})`,
+    coordinates: { lat, lon },
     weather_days_fetched: Object.keys(weatherMap).length,
     revenue_entries_checked: revenues.length,
     entries_updated: updated,
