@@ -12,112 +12,54 @@
     },
     "priority": {
       "type": "string",
-      "enum": [
-        "niedrig",
-        "mittel",
-        "hoch",
-        "dringend"
-      ],
+      "enum": ["niedrig", "mittel", "hoch", "dringend"],
       "default": "mittel"
     },
     "status": {
       "type": "string",
-      "enum": [
-        "offen",
-        "in_bearbeitung",
-        "erledigt"
-      ],
+      "enum": ["offen", "in_bearbeitung", "erledigt"],
       "default": "offen"
     },
-    "due_date": {
-      "type": "string",
-      "format": "date"
-    },
-    "planned_date": {
-      "type": "string",
-      "format": "date",
-      "description": "Eingeplant für Datum"
-    },
-    "planned_time": {
-      "type": "string",
-      "description": "Eingeplant für Uhrzeit (HH:MM)"
-    },
-    "planned_duration": {
-      "type": "number",
-      "description": "Geplante Dauer in Minuten",
-      "default": 60
-    },
-    "assigned_to": {
-      "type": "string",
-      "description": "Zugewiesen an (Rückwärtskompatibilität)"
-    },
-    "assigned_to_names": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Alle zugewiesenen Personen"
-    },
-    "category": {
-      "type": "string",
-      "enum": [
-        "Einkauf",
-        "Reparatur",
-        "Event",
-        "Bar",
-        "Lager",
-        "Küche",
-        "Sonstiges"
-      ],
-      "default": "Sonstiges"
-    },
-    "linked_area": {
-      "type": "string"
-    },
-    "linked_event_id": {
-      "type": "string"
-    },
-    "linked_employee_id": {
-      "type": "string"
-    },
-    "linked_article_id": {
-      "type": "string"
-    },
-    "is_archived": {
-      "type": "boolean",
-      "default": false
-    },
-    "completed_by": {
-      "type": "string"
-    },
-    "completed_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "created_by": {
-      "type": "string"
-    },
-    "created_at_time": {
-      "type": "string",
-      "format": "time"
-    },
-    "sort_order": {
-      "type": "number"
-    },
+    "due_date": { "type": "string", "format": "date" },
+    "due_time": { "type": "string", "description": "Fälligkeitszeit (HH:MM)" },
+    "planned_date": { "type": "string", "format": "date", "description": "Eingeplant für Datum" },
+    "planned_time": { "type": "string", "description": "Eingeplant für Uhrzeit (HH:MM)" },
+    "planned_duration": { "type": "number", "description": "Geplante Dauer in Minuten", "default": 60 },
+    "assigned_to": { "type": "string", "description": "Zugewiesen an (Rückwärtskompatibilität)" },
+    "assigned_to_names": { "type": "array", "items": { "type": "string" }, "description": "Alle zugewiesenen Personen" },
+    "category": { "type": "string", "enum": ["Einkauf", "Reparatur", "Event", "Bar", "Lager", "Küche", "Sonstiges"], "default": "Sonstiges" },
+    "area": { "type": "string", "description": "Bereich (Legacy: Bar, WC, Kasse, etc.)" },
+    "task_type": { "type": "string", "description": "Aufgabentyp (Legacy: auffuellen, reinigung, opening, etc.)" },
+    "is_recurring": { "type": "boolean", "default": false },
+    "recurrence": { "type": "string", "description": "Wiederholungsmuster (Legacy)" },
+    "is_archived": { "type": "boolean", "default": false },
+    "linked_area": { "type": "string" },
+    "linked_event_id": { "type": "string" },
+    "linked_employee_id": { "type": "string" },
+    "linked_article_id": { "type": "string" },
+    "location_id": { "type": "string" },
+    "shift_id": { "type": "string" },
+    "template_id": { "type": "string" },
+    "requires_approval": { "type": "boolean", "default": false },
+    "approved_by": { "type": "string" },
+    "allow_comment": { "type": "boolean", "default": true },
+    "comment": { "type": "string" },
+    "visible_roles": { "type": "array", "items": { "type": "string" } },
+    "photo_url": { "type": "string", "description": "Legacy: Einzelne Foto-URL" },
+    "allow_photo": { "type": "boolean", "default": false },
+    "completed_by": { "type": "string" },
+    "completed_at": { "type": "string", "format": "date-time" },
+    "created_by": { "type": "string" },
+    "created_at_time": { "type": "string", "format": "time" },
+    "sort_order": { "type": "number" },
     "subtasks": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "done": {
-            "type": "boolean"
-          }
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "done": { "type": "boolean" }
         }
       }
     },
@@ -126,34 +68,15 @@
       "items": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "photo",
-              "sketch"
-            ]
-          },
-          "url": {
-            "type": "string"
-          },
-          "thumbnail_url": {
-            "type": "string"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "created_by": {
-            "type": "string"
-          }
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["photo", "sketch"] },
+          "url": { "type": "string" },
+          "thumbnail_url": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "created_by": { "type": "string" }
         }
       }
     }
   },
-  "required": [
-    "title"
-  ]
+  "required": ["title"]
 }
