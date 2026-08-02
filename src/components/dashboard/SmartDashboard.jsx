@@ -122,8 +122,11 @@ function ClockCard({ currentEmployee }) {
             const legalBreak = calcLegalBreak(totalMinutes);
             const breakMinutes = Math.max(actualBreakMinutes, legalBreak);
             const workedHours = Math.round(((totalMinutes - breakMinutes) / 60) * 100) / 100;
+            // paidHours = Nettostunden + Pause — Pause wird bei uns mitbezahlt.
+            // total_hours in der DB bleibt netto (ArbZG), nur die Anzeige/der Zahltag rechnet brutto.
+            const paidHours = Math.round((workedHours + breakMinutes / 60) * 100) / 100;
             const hourlyRate = currentEmployee?.hourly_rate;
-            const earned = hourlyRate ? (workedHours * hourlyRate).toFixed(2) : null;
+            const earned = hourlyRate ? (paidHours * hourlyRate).toFixed(2) : null;
 
             const clockEntryUpdate = {
                 clock_out: now.toISOString(), break_minutes: breakMinutes,
@@ -167,7 +170,7 @@ function ClockCard({ currentEmployee }) {
             return {
                 entryId, clockEntryUpdate, offline,
                 summary: {
-                    workedHours, breakMinutes, earned, hourlyRate,
+                    workedHours, paidHours, breakMinutes, earned, hourlyRate,
                     clockIn: format(new Date(entry.clock_in), 'HH:mm'),
                     clockOut: format(now, 'HH:mm'),
                     breakDetails,
@@ -308,19 +311,19 @@ function ClockCard({ currentEmployee }) {
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-muted rounded-xl p-4 text-center space-y-1">
                                 <Clock3 className="w-5 h-5 mx-auto text-blue-500" />
-                                <p className="text-2xl font-bold text-foreground">{shiftSummary.workedHours}h</p>
-                                <p className="text-xs text-muted-foreground">Gearbeitet</p>
+                                <p className="text-2xl font-bold text-foreground">{shiftSummary.paidHours}h</p>
+                                <p className="text-[11px] text-muted-foreground leading-tight">Gearbeitet (inkl. {shiftSummary.breakMinutes} Min Pause, mitbezahlt)</p>
                             </div>
                             <div className="bg-muted rounded-xl p-4 text-center space-y-1">
                                 <Coffee className="w-5 h-5 mx-auto text-amber-500" />
                                 <p className="text-2xl font-bold text-foreground">{shiftSummary.breakMinutes} Min</p>
-                                <p className="text-xs text-muted-foreground">Pause</p>
+                                <p className="text-xs text-muted-foreground">Pause (mitbezahlt)</p>
                             </div>
                             {shiftSummary.earned && (
                                 <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1 col-span-2">
                                     <Euro className="w-5 h-5 mx-auto text-emerald-500" />
                                     <p className="text-3xl font-bold text-emerald-500">{shiftSummary.earned} €</p>
-                                    <p className="text-xs text-muted-foreground">Verdient ({shiftSummary.hourlyRate} €/h)</p>
+                                    <p className="text-xs text-muted-foreground">{shiftSummary.paidHours} × {shiftSummary.hourlyRate} €/h (Pause mitbezahlt)</p>
                                 </div>
                             )}
                         </div>

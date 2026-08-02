@@ -258,8 +258,11 @@ export default function TimeTracking() {
             const breakMinutes = Math.max(actualBreakMinutes, calcLegalBreak(totalMinutes));
             const workedMinutes = totalMinutes - breakMinutes;
             const workedHours = (workedMinutes / 60).toFixed(2);
+            // paidHours = Nettostunden + Pause — Pause wird bei uns mitbezahlt.
+            // total_hours in der DB bleibt netto (ArbZG), nur Anzeige/Zahltag rechnet brutto.
+            const paidHours = ((workedMinutes + breakMinutes) / 60).toFixed(2);
             const hourlyRate = currentEmployee?.hourly_rate;
-            const earned = hourlyRate ? (workedHours * hourlyRate).toFixed(2) : null;
+            const earned = hourlyRate ? (paidHours * hourlyRate).toFixed(2) : null;
             const tempEntry = {
                 date: format(new Date(entry.clock_in), 'yyyy-MM-dd'),
                 start_time: format(new Date(entry.clock_in), 'HH:mm'),
@@ -315,7 +318,7 @@ export default function TimeTracking() {
                     : differenceInMinutes(clockOutTime, new Date(b.start)),
             }));
             setShiftSummary({
-                workedHours, workedMinutes, breakMinutes, earned, hourlyRate,
+                workedHours, workedMinutes, paidHours, breakMinutes, earned, hourlyRate,
                 clockIn: format(new Date(entry.clock_in), 'HH:mm'),
                 clockOut: format(clockOutTime, 'HH:mm'),
                 arbzgWarning: formatWarnings(warnings),
@@ -388,7 +391,8 @@ export default function TimeTracking() {
                 if (!byEmployee[key]) {
                     byEmployee[key] = { name: te.employee_name || employee?.name || 'Unbekannt', hourlyRate, hours: 0 };
                 }
-                byEmployee[key].hours += (te.total_hours || 0);
+                // Pause mitbezahlt → bezahlte Stunden = total_hours + break_minutes/60
+                byEmployee[key].hours += (te.total_hours || 0) + ((te.break_minutes || 0) / 60);
             });
             return Object.values(byEmployee).map(e => ({
                 name: e.name,
@@ -1044,23 +1048,23 @@ export default function TimeTracking() {
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-muted rounded-xl p-4 text-center space-y-1">
                                     <Clock3 className="w-5 h-5 mx-auto text-blue-500" />
-                                    <p className="text-2xl font-bold text-foreground">{shiftSummary.workedHours}h</p>
-                                    <p className="text-xs text-muted-foreground">Gearbeitet</p>
+                                    <p className="text-2xl font-bold text-foreground">{shiftSummary.paidHours}h</p>
+                                    <p className="text-[11px] text-muted-foreground leading-tight">Gearbeitet (inkl. {shiftSummary.breakMinutes} Min Pause, mitbezahlt)</p>
                                 </div>
                                 <div className="bg-muted rounded-xl p-4 text-center space-y-1">
                                     <Coffee className="w-5 h-5 mx-auto text-amber-500" />
                                     <p className="text-2xl font-bold text-foreground">{shiftSummary.breakMinutes} Min</p>
                                     <p className="text-xs text-muted-foreground">
                                         {shiftSummary.actualBreakMinutes > 0 && shiftSummary.breakMinutes === shiftSummary.actualBreakMinutes
-                                            ? 'Pause (inkl. deiner Pausen)'
-                                            : 'Pause'}
+                                            ? 'Pause (inkl. deiner Pausen, mitbezahlt)'
+                                            : 'Pause (mitbezahlt)'}
                                     </p>
                                 </div>
                                 {shiftSummary.earned && (
                                     <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1 col-span-2">
                                         <Euro className="w-5 h-5 mx-auto text-emerald-500" />
                                         <p className="text-3xl font-bold text-emerald-500">{shiftSummary.earned} €</p>
-                                        <p className="text-xs text-muted-foreground">Verdient ({shiftSummary.hourlyRate} €/h)</p>
+                                        <p className="text-xs text-muted-foreground">{shiftSummary.paidHours} × {shiftSummary.hourlyRate} €/h (Pause mitbezahlt)</p>
                                     </div>
                                 )}
                             </div>
