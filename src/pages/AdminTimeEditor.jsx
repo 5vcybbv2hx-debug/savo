@@ -390,11 +390,11 @@ export default function AdminTimeEditor() {
                                                     {entry.start_time} – {entry.end_time}
                                                 </span>
                                                 <span className="text-sm font-bold text-amber-400">
-                                                    {entry.total_hours?.toFixed(2)}h
+                                                    {(entry.total_hours + (entry.break_minutes || 0)/60).toFixed(2)}h
                                                 </span>
                                                 {entry.break_minutes > 0 && (
                                                     <span className="text-xs text-muted-foreground">
-                                                        Pause: {entry.break_minutes}min
+                                                        Pause: {entry.break_minutes}min (mitbezahlt)
                                                     </span>
                                                 )}
                                                 <Badge className={cn('text-xs', statusColors[entry.status] || 'bg-secondary text-secondary-foreground')}>
@@ -460,12 +460,12 @@ export default function AdminTimeEditor() {
                                                 </span>
                                                 {entry.total_hours != null && (
                                                     <span className="text-sm font-bold text-amber-400">
-                                                        {Number(entry.total_hours).toFixed(2)}h
+                                                        {(Number(entry.total_hours) + (entry.break_minutes || 0)/60).toFixed(2)}h
                                                     </span>
                                                 )}
                                                 {entry.break_minutes > 0 && (
                                                     <span className="text-xs text-muted-foreground">
-                                                        Pause: {entry.break_minutes}min
+                                                        Pause: {entry.break_minutes}min (mitbezahlt)
                                                     </span>
                                                 )}
                                                 <Badge className={cn('text-xs', statusColors[entry.status] || 'bg-secondary text-secondary-foreground')}>

@@ -83,7 +83,8 @@ export default function PayrollReportSender() {
                     doc.addPage();
                     y = 10;
                 }
-                doc.text(`${entry.employee_name} | ${entry.date} | ${entry.total_hours.toFixed(1)}h`, 10, y);
+                const paidHours = (entry.total_hours || 0) + (entry.break_minutes || 0) / 60;
+                doc.text(`${entry.employee_name} | ${entry.date} | ${paidHours.toFixed(1)}h (inkl. Pause)`, 10, y);
                 y += 5;
             });
 
