@@ -64,8 +64,9 @@ Deno.serve(async (req) => {
             }, 0);
 
             if (empEntries.length > 0 || empVacations.length > 0) {
-                const totalHours = empEntries.reduce((sum, e) => sum + (e.total_hours || 0), 0);
-                const approvedHours = empEntries.filter(e => e.status === 'genehmigt').reduce((sum, e) => sum + (e.total_hours || 0), 0);
+                // Pause wird bei SAVO mitbezahlt → bezahlte Stunden inkl. Pause (total_hours bleibt netto in DB)
+                const totalHours = empEntries.reduce((sum, e) => sum + (e.total_hours || 0) + (e.break_minutes || 0) / 60, 0);
+                const approvedHours = empEntries.filter(e => e.status === 'genehmigt').reduce((sum, e) => sum + (e.total_hours || 0) + (e.break_minutes || 0) / 60, 0);
 
                 const vacationDaysPerYear = emp.vacation_days_per_year || 0;
                 const allYearVacations = [];
@@ -157,7 +158,7 @@ function generatePDF(employeeData, monthName, year) {
         doc.setFontSize(9);
         doc.text(`Stundensatz: ${emp.hourly_rate.toFixed(2)} EUR | Vertragsart: ${emp.contract_type}`, 25, y);
         y += 5;
-        doc.text(`Stunden (gesamt): ${emp.totalHours.toFixed(2)}h | Stunden (genehmigt): ${emp.approvedHours.toFixed(2)}h`, 25, y);
+        doc.text(`Stunden (gesamt, inkl. Pause): ${emp.totalHours.toFixed(2)}h | Stunden (genehmigt, inkl. Pause): ${emp.approvedHours.toFixed(2)}h`, 25, y);
         y += 5;
         doc.text(`Lohnkosten: ${emp.totalCost.toFixed(2)} EUR`, 25, y);
         y += 5;
@@ -182,7 +183,7 @@ function generatePDF(employeeData, monthName, year) {
                 const date = new Date(entry.date).toLocaleDateString('de-DE');
                 const status = entry.status === 'genehmigt' ? 'Gen.' : entry.status === 'eingereicht' ? 'Eing.' : 'Entw.';
                 doc.text(date, 25, y); doc.text(entry.start_time, 55, y); doc.text(entry.end_time, 75, y);
-                doc.text(`${entry.break_minutes}m`, 95, y); doc.text(`${(entry.total_hours || 0).toFixed(2)}h`, 115, y);
+                doc.text(`${entry.break_minutes}m`, 95, y); doc.text(`${((entry.total_hours || 0) + (entry.break_minutes || 0) / 60).toFixed(2)}h`, 115, y);
                 doc.text(status, 140, y);
                 y += 5;
             });
@@ -236,7 +237,7 @@ function generateCSV(employeeData, monthName, year) {
     rows.push(['Mitarbeiter', 'MA-Nr.', 'Datum', 'Start', 'Ende', 'Pause (Min)', 'Stunden', 'Status', 'Notizen']);
     Object.values(employeeData).forEach(emp => {
         emp.entries.forEach(entry => {
-            rows.push([emp.name, emp.employee_number, entry.date, entry.start_time, entry.end_time, entry.break_minutes, (entry.total_hours || 0).toFixed(2), entry.status, entry.notes || '']);
+            rows.push([emp.name, emp.employee_number, entry.date, entry.start_time, entry.end_time, entry.break_minutes, ((entry.total_hours || 0) + (entry.break_minutes || 0) / 60).toFixed(2), entry.status, entry.notes || '']);
         });
     });
     rows.push([]);

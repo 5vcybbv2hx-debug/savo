@@ -525,8 +525,11 @@ export default function TimeTracking() {
         ? timeEntries
         : timeEntries.filter(e => e.employee_id === currentEmployee?.id);
 
-    const totalHours    = visibleEntries.reduce((s, e) => s + (e.total_hours || 0), 0);
-    const approvedHours = visibleEntries.filter(e => e.status === 'genehmigt').reduce((s, e) => s + (e.total_hours || 0), 0);
+    // Pause wird bei SAVO mitbezahlt → angezeigte/bezahlte Stunden inkl. Pause.
+    // total_hours in der DB bleibt netto (ArbZG); hier wird break_minutes/60 wieder addiert.
+    const paidHoursOf = (e) => (e.total_hours || 0) + (e.break_minutes || 0) / 60;
+    const totalHours    = visibleEntries.reduce((s, e) => s + paidHoursOf(e), 0);
+    const approvedHours = visibleEntries.filter(e => e.status === 'genehmigt').reduce((s, e) => s + paidHoursOf(e), 0);
 
     const now       = new Date();
     const todayStr  = format(now, 'yyyy-MM-dd');
@@ -534,11 +537,11 @@ export default function TimeTracking() {
     const weekEnd   = endOfWeek(now,   { weekStartsOn: 1 });
 
     const myEntries      = timeEntries.filter(e => e.employee_id === currentEmployee?.id);
-    const myMonthHours   = myEntries.reduce((s, e) => s + (e.total_hours || 0), 0);
-    const myApprovedHours = myEntries.filter(e => e.status === 'genehmigt').reduce((s, e) => s + (e.total_hours || 0), 0);
+    const myMonthHours   = myEntries.reduce((s, e) => s + paidHoursOf(e), 0);
+    const myApprovedHours = myEntries.filter(e => e.status === 'genehmigt').reduce((s, e) => s + paidHoursOf(e), 0);
 
-    const todayHours = visibleEntries.filter(e => e.date === todayStr).reduce((s, e) => s + (e.total_hours || 0), 0);
-    const weekHours  = visibleEntries.filter(e => { const d = parseISO(e.date); return d >= weekStart && d <= weekEnd; }).reduce((s, e) => s + (e.total_hours || 0), 0);
+    const todayHours = visibleEntries.filter(e => e.date === todayStr).reduce((s, e) => s + paidHoursOf(e), 0);
+    const weekHours  = visibleEntries.filter(e => { const d = parseISO(e.date); return d >= weekStart && d <= weekEnd; }).reduce((s, e) => s + paidHoursOf(e), 0);
 
     const filteredEntries = visibleEntries.filter(e => {
         const matchEmployee = !filterEmployee || e.employee_name === filterEmployee;
@@ -868,7 +871,7 @@ export default function TimeTracking() {
                 {/* ── EINTRÄGE nach Mitarbeiter ──────────────────────────────── */}
                 <div className="space-y-5">
                     {Object.entries(entriesByEmployee).map(([employeeName, entries]) => {
-                        const employeeTotal = entries.reduce((s, e) => s + (e.total_hours || 0), 0);
+                        const employeeTotal = entries.reduce((s, e) => s + paidHoursOf(e), 0);
                         const pendingCount  = entries.filter(e =>
                             (e.status === 'eingereicht' || e.employee_confirmed) && e.status !== 'genehmigt'
                         ).length;
@@ -919,8 +922,8 @@ export default function TimeTracking() {
                                                                     {entry.start_time}–{entry.end_time}
                                                                     {entry.end_time < entry.start_time && ' 🌙'}
                                                                 </span>
-                                                                {entry.break_minutes > 0 && <span>{entry.break_minutes} Min Pause</span>}
-                                                                <span className="font-semibold text-amber-400">{entry.total_hours?.toFixed(2)}h</span>
+                                                                {entry.break_minutes > 0 && <span>{entry.break_minutes} Min Pause (mitbezahlt)</span>}
+                                                                <span className="font-semibold text-amber-400">{paidHoursOf(entry).toFixed(2)}h</span>
                                                             </div>
                                                             {entry.arbzg_warning && (
                                                                 <div className="mt-1.5 px-2 py-1 bg-destructive/10 border border-destructive/20 rounded text-[10px] text-destructive flex items-center gap-1">

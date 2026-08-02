@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
 
         // Calculate summary
         const monthName = new Date(year, month - 1).toLocaleString('de-DE', { month: 'long', year: 'numeric' });
-        const totalHours = monthEntries.reduce((sum, e) => sum + (e.total_hours || 0), 0);
+        // Pause wird bei SAVO mitbezahlt → bezahlte Stunden inkl. Pause (total_hours bleibt netto in DB)
+        const totalHours = monthEntries.reduce((sum, e) => sum + (e.total_hours || 0) + (e.break_minutes || 0) / 60, 0);
         const employeeCount = new Set(monthEntries.map(e => e.employee_id)).size;
         const entryCount = monthEntries.length;
 
