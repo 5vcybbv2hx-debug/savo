@@ -54,11 +54,11 @@ Deno.serve(async (req) => {
       let laborCostFulltime = 0;
 
       for (const entry of entries) {
-        const hours = entry.total_hours || 0;
+        const paidHours = (entry.total_hours || 0) + (entry.break_minutes || 0) / 60;
         const emp = employeeMap[entry.employee_id];
         if (!emp) continue;
         const rate = emp.hourly_rate || 0;
-        const cost = hours * rate;
+        const cost = paidHours * rate;
 
         if (isDaily(emp)) {
           laborCostDaily += cost;

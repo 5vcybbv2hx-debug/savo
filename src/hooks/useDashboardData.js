@@ -112,7 +112,7 @@ export function useDashboardData({ isManager, currentEmployee }) {
         const d = parseISO(e.date);
         return d >= weekStart && d <= weekEnd;
     });
-    const hoursThisWeek = weekEntries.reduce((sum, e) => sum + (e.total_hours || 0), 0);
+    const hoursThisWeek = weekEntries.reduce((sum, e) => sum + (e.total_hours || 0) + (e.break_minutes || 0) / 60, 0);
 
     const myUpcomingShifts = shifts.filter(s => s.employee_id === currentEmployee?.id && s.date >= today);
     const approvedVacations = vacationRequests.filter(v => v.employee_id === currentEmployee?.id && v.status === 'genehmigt' && v.type === 'Urlaub');

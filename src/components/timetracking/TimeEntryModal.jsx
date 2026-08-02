@@ -196,7 +196,7 @@ export default function TimeEntryModal({ open, onClose, entry, currentEmployee, 
                     {totalHours > 0 && (
                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                             <p className="text-sm font-semibold text-amber-900">
-                                Gesamtzeit: {totalHours.toFixed(2)} Stunden
+                                Gesamtzeit: {(totalHours + (Number(formData.break_minutes) || 0) / 60).toFixed(2)}h bezahlt ({totalHours.toFixed(2)}h Netto)
                                 {formData.start_time && formData.end_time && formData.end_time < formData.start_time && (
                                     <span className="ml-2 text-xs text-amber-700">🌙 Nachtschicht (endet am Folgetag)</span>
                                 )}

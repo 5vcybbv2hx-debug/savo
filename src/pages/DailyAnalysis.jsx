@@ -544,7 +544,7 @@ export default function DailyAnalysis() {
                     value={`${dailyLaborCost.toFixed(2)} €`}
                     color="text-amber-400"
                     sub={hasManualdaily ? '✎ Manuell eingetragen' : (dailyPaidEntries.length > 0
-                        ? `${new Set(dailyPaidEntries.map(e => e.employee_id)).size} Pers. · ${dailyPaidEntries.reduce((s, e) => s + e.total_hours, 0).toFixed(1)}h${dailyRatio !== null ? ` · ${dailyRatio.toFixed(1)}%` : ''}`
+                        ? `${new Set(dailyPaidEntries.map(e => e.employee_id)).size} Pers. · ${dailyPaidEntries.reduce((s, e) => s + (e.total_hours || 0) + (e.break_minutes || 0) / 60, 0).toFixed(1)}h${dailyRatio !== null ? ` · ${dailyRatio.toFixed(1)}%` : ''}`
                         : 'Keine Zeiteinträge')}>
                     {editingManual === 'daily' ? (
                         <div className="mt-2 flex gap-1">
@@ -835,7 +835,7 @@ export default function DailyAnalysis() {
                                             <p className="text-sm font-medium text-foreground">{te.employee_name}</p>
                                             <p className="text-xs text-muted-foreground">
                                                 {te.start_time && te.end_time ? `${te.start_time} – ${te.end_time} · ` : ''}
-                                                {te.total_hours?.toFixed(2)}h{te.break_minutes ? ` · Pause ${te.break_minutes}m` : ''}
+                                                {((te.total_hours || 0) + (te.break_minutes || 0) / 60).toFixed(2)}h{te.break_minutes ? ` (inkl. ${te.break_minutes}m Pause)` : ''}
                                                 {emp?.hourly_rate ? ` · ${(((te.total_hours || 0) + (te.break_minutes || 0) / 60) * emp.hourly_rate).toFixed(2)} €` : ''}
                                             </p>
                                         </div>
@@ -888,7 +888,7 @@ export default function DailyAnalysis() {
                                     <div key={te.id} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0 opacity-70">
                                         <div>
                                             <p className="text-sm font-medium text-foreground">{te.employee_name}</p>
-                                            <p className="text-xs text-muted-foreground">{te.total_hours.toFixed(1)}h · {te._role || te._contractType}</p>
+                                            <p className="text-xs text-muted-foreground">{((te.total_hours || 0) + (te.break_minutes || 0) / 60).toFixed(1)}h · {te._role || te._contractType}</p>
                                         </div>
                                         <span className="font-bold text-blue-400">{te.cost.toFixed(2)} €</span>
                                     </div>
