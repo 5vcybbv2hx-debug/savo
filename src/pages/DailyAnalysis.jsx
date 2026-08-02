@@ -176,10 +176,12 @@ export default function DailyAnalysis() {
         return dayEntries.map(te => {
             const emp = employeeMap.get(te.employee_id);
             const hourlyRate = emp?.hourly_rate || 0;
+            // Pause wird bei SAVO mitbezahlt → bezahlte Stunden inkl. Pause
+            const paidHours = (te.total_hours || 0) + (te.break_minutes || 0) / 60;
             return {
                 ...te,
                 hourly_rate: hourlyRate,
-                cost: te.total_hours * hourlyRate,
+                cost: paidHours * hourlyRate,
                 _isDaily: emp ? isDailyPaid(emp) : false,
                 _contractType: emp?.contract_type || '',
                 _role: emp?.role || '',
@@ -833,8 +835,8 @@ export default function DailyAnalysis() {
                                             <p className="text-sm font-medium text-foreground">{te.employee_name}</p>
                                             <p className="text-xs text-muted-foreground">
                                                 {te.start_time && te.end_time ? `${te.start_time} – ${te.end_time} · ` : ''}
-                                                {te.total_hours?.toFixed(2)}h
-                                                {emp?.hourly_rate ? ` · ${(te.total_hours * emp.hourly_rate).toFixed(2)} €` : ''}
+                                                {te.total_hours?.toFixed(2)}h{te.break_minutes ? ` · Pause ${te.break_minutes}m` : ''}
+                                                {emp?.hourly_rate ? ` · ${(((te.total_hours || 0) + (te.break_minutes || 0) / 60) * emp.hourly_rate).toFixed(2)} €` : ''}
                                             </p>
                                         </div>
                                         {isApproved ? (
@@ -872,7 +874,7 @@ export default function DailyAnalysis() {
                                     <div key={te.id} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
                                         <div>
                                             <p className="text-sm font-medium text-foreground">{te.employee_name}</p>
-                                            <p className="text-xs text-muted-foreground">{te.total_hours.toFixed(1)}h × {te.hourly_rate.toFixed(2)} €</p>
+                                            <p className="text-xs text-muted-foreground">{((te.total_hours || 0) + (te.break_minutes || 0) / 60).toFixed(1)}h × {te.hourly_rate.toFixed(2)} € (Pause mitbezahlt)</p>
                                         </div>
                                         <span className="font-bold text-amber-400">{te.cost.toFixed(2)} €</span>
                                     </div>
