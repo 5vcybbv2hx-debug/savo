@@ -372,7 +372,7 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                   )}
                 </Card>
               );
-            })
+            })}
 
               {/* Abgelehnte Schichten (eingeklappt) */}
               {declinedShifts.length > 0 && (
@@ -416,7 +416,7 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
               </>
             );
           })()
-          )}
+          }
         </div>
       </DialogContent>
     </Dialog>
