@@ -141,8 +141,30 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
-          ) : availableShifts.length > 0 ? (
-            availableShifts.map(shift => {
+          ) : (() => {
+            // Split: active shifts (not declined) vs declined shifts
+            const activeShifts = availableShifts.filter(shift => {
+              const myBid = myBids.find(b => b.swap_request_id === shift.id);
+              return myBid?.status !== 'ablehnen';
+            });
+            const declinedShifts = availableShifts.filter(shift => {
+              const myBid = myBids.find(b => b.swap_request_id === shift.id);
+              return myBid?.status === 'ablehnen';
+            });
+
+            if (activeShifts.length === 0 && declinedShifts.length === 0) {
+              return (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-lg font-medium text-foreground">Keine verfügbaren Angebote</p>
+                  <p className="text-sm mt-1">Aktuell gibt es keine Schichten zum Tauschen</p>
+                </div>
+              );
+            }
+
+            return (
+              <>
+              {activeShifts.map(shift => {
               const requestingEmployee = employees.find(e => e.id === shift.requesting_employee_id);
               const shiftBids = allBids.filter(b => b.swap_request_id === shift.id);
               const sortedBids = sortBidsByTimestamp(shiftBids);
@@ -351,12 +373,49 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                 </Card>
               );
             })
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-lg font-medium text-foreground">Keine verfügbaren Angebote</p>
-              <p className="text-sm mt-1">Aktuell gibt es keine Schichten zum Tauschen</p>
-            </div>
+
+              {/* Abgelehnte Schichten (eingeklappt) */}
+              {declinedShifts.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <details className="group">
+                    <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors select-none">
+                      Abgelehnt ({declinedShifts.length}) — nur sichtbar bei Bedarf
+                    </summary>
+                    <div className="space-y-2 mt-3">
+                      {declinedShifts.map(shift => {
+                        const requestingEmployee = employees.find(e => e.id === shift.requesting_employee_id);
+                        return (
+                          <Card key={shift.id} className="p-3 opacity-50 border-l-4 border-l-red-500">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-foreground text-sm truncate">
+                                  {requestingEmployee?.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(parseISO(shift.shift_date), 'dd.MM.yyyy', { locale: de })}
+                                  {shift.shift_time ? ` • ${shift.shift_time}` : ''}
+                                </p>
+                              </div>
+                              <Button
+                                onClick={() => bidMutation.mutate({ swapRequestId: shift.id, status: 'annehmen' })}
+                                disabled={bidMutation.isPending}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-8 shrink-0"
+                              >
+                                Anders überlegen?
+                              </Button>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </details>
+                </div>
+              )}
+              </>
+            );
+          })()
           )}
         </div>
       </DialogContent>
