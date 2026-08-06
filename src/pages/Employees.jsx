@@ -133,15 +133,17 @@ export default function Employees() {
         if (!emp.email) { toast.error('Keine E-Mail hinterlegt'); return; }
         setInviting(emp.id);
         try {
-            await base44.auth.sendMagicLink({ email: emp.email });
+            const appRole = emp.role === 'Manager' ? 'admin' : 'user';
+            await base44.users.inviteUser(emp.email, appRole);
             await createNotification({
                 type: 'invite_sent', title: 'Einladung gesendet',
                 message: `${emp.name} wurde zur App eingeladen.`,
                 relatedId: emp.id,
             });
             toast.success(`Einladung an ${emp.name} gesendet`);
-        } catch {
-            toast.error('Einladung fehlgeschlagen');
+        } catch (err) {
+            const reason = err?.message || err?.error || 'Unbekannter Fehler';
+            toast.error(`Einladung fehlgeschlagen: ${reason}`);
         } finally {
             setInviting(null);
         }
