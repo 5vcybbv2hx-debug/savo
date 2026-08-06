@@ -186,9 +186,13 @@ export default function EmployeeProfile() {
 
   const handleInvite = async () => {
     try {
-      await base44.auth.sendMagicLink({ email: form.email });
+      const appRole = form.role === 'Manager' ? 'admin' : 'user';
+      await base44.users.inviteUser(form.email, appRole);
       toast.success(`Einladung an ${form.name} gesendet`);
-    } catch { toast.error('Einladung fehlgeschlagen'); }
+    } catch (err) {
+      const reason = err?.message || err?.error || 'Unbekannter Fehler';
+      toast.error(`Einladung fehlgeschlagen: ${reason}`);
+    }
   };
 
   const handleVCard = () => {
