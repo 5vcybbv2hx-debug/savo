@@ -10,7 +10,7 @@ import {
     CalendarDays, Clock, Plane, RefreshCw, Shield,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare, Target,
-    Banknote, BookCopy, Tv, Warehouse, Utensils,
+    Banknote, BookCopy, Tv, Warehouse, Utensils, Siren,
 } from 'lucide-react';
 
 // ── SIDEBAR — aus sidebarConfig.js (Builder-sicher) ─────────────────────────
@@ -80,6 +80,7 @@ export const additionalPages = [
     { page: 'ModuleCenter',     name: 'Modulcenter',      icon: LayoutGrid,   permission: 'canViewSettings' },
     { page: 'BusinessCalendar', name: 'Betriebskalender', icon: CalendarDays, permission: 'canViewSettings' },
     { page: 'DataQuality',      name: 'Datenqualität',    icon: Database,     permission: 'isManager' },
+    { page: 'Incidents',        name: 'Vorfälle',          icon: Siren,        permission: 'isManager' },
 ];
 
 // ── KOMBINIERT ────────────────────────────────────────────────────────────────

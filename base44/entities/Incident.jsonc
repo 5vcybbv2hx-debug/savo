@@ -1,0 +1,118 @@
+{
+  "name": "Incident",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "medizinisch",
+        "gewalt",
+        "feuer",
+        "ueberfall",
+        "diebstahl",
+        "drogen",
+        "arbeitsunfall"
+      ],
+      "description": "Art des Vorfalls"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aktiv",
+        "dokumentiert",
+        "abgeschlossen",
+        "archiviert"
+      ],
+      "default": "aktiv",
+      "description": "Bearbeitungsstatus"
+    },
+    "who": {
+      "type": "string",
+      "description": "Betroffene: Gast/Mitarbeiter/Unbekannt + kurze Beschreibung"
+    },
+    "what": {
+      "type": "string",
+      "description": "Was ist passiert, kurze Beschreibung"
+    },
+    "where": {
+      "type": "string",
+      "description": "Ort: Innen, Au\u00dfen/Raucherbereich, WC, Eingang, Theke, sonstiges"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "gering",
+        "mittel",
+        "schwer"
+      ],
+      "default": "mittel",
+      "description": "Schweregrad"
+    },
+    "alcohol_involved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Alkohol im Spiel"
+    },
+    "injured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Person verletzt"
+    },
+    "injury_severity": {
+      "type": "string",
+      "description": "Schwere der Verletzung (optional)"
+    },
+    "measures_taken": {
+      "type": "string",
+      "description": "Ma\u00dfnahmen: 112 gerufen, 110, Erste Hilfe, Person rausgeworfen, etc."
+    },
+    "witnesses": {
+      "type": "string",
+      "description": "Zeugen: Namen + Handynummern"
+    },
+    "police_report_number": {
+      "type": "string",
+      "description": "Aktenzeichen Polizei (optional)"
+    },
+    "hospital": {
+      "type": "string",
+      "description": "Krankenhaus falls jemand abtransportiert wurde (optional)"
+    },
+    "camera_timestamp": {
+      "type": "string",
+      "description": "Kamera-Zeitstempel f\u00fcr Band-Sicherung"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Foto-URLs"
+    },
+    "shift_staff": {
+      "type": "string",
+      "description": "Mitarbeiter auf Schicht (auto ausgef\u00fcllt)"
+    },
+    "is_training": {
+      "type": "boolean",
+      "default": false,
+      "description": "Schulungsmodus-Kennzeichnung"
+    },
+    "follow_up": {
+      "type": "string",
+      "description": "Nachbereitung: Versicherung, Anzeige, Debriefing, Hausverbot"
+    },
+    "lessons_learned": {
+      "type": "string",
+      "description": "Was k\u00f6nnen wir besser machen"
+    },
+    "incident_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp wann es passierte (nicht wann erfasst)"
+    }
+  },
+  "required": [
+    "type"
+  ]
+}

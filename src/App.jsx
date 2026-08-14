@@ -34,6 +34,8 @@ import AdminTimeEditor from './pages/AdminTimeEditor';
 import ModuleCenter from './pages/ModuleCenter';
 import DisplayManager from './pages/DisplayManager';
 import Display from './pages/Display';
+import Incidents from './pages/Incidents';
+import IncidentDetail from './pages/IncidentDetail';
 
 import BusinessCalendar from './pages/BusinessCalendar';
 import DataQuality from './pages/DataQuality';
@@ -236,6 +238,8 @@ const AuthenticatedApp = () => {
       <Route path="/GuestHub" element={<LayoutWrapper currentPageName="GuestHub"><RoleGuard permission="canViewReservations"><GuestHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/Display" element={<Display />} />
       <Route path="/DisplayManager" element={<LayoutWrapper currentPageName="DisplayManager"><RoleGuard permission="isManager"><DisplayManager /></RoleGuard></LayoutWrapper>} />
+      <Route path="/incidents" element={<LayoutWrapper currentPageName="Incidents"><RoleGuard permission="isManager"><Incidents /></RoleGuard></LayoutWrapper>} />
+      <Route path="/incidents/:id" element={<LayoutWrapper currentPageName="IncidentDetail"><RoleGuard permission="isManager"><IncidentDetail /></RoleGuard></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
 
