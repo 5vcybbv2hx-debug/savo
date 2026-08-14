@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
+// Pierres Nummer: +491737486992
 import {
     X, Phone, Car, User, Siren, ShieldAlert, Flame, AlertTriangle,
     Pill, HardHat, ChevronRight, ChevronLeft, Check
@@ -204,7 +205,6 @@ function IncidentCapture({ onClose }) {
 }
 
 export default function CallHub({ open, onClose }) {
-    const [company, setCompany] = useState(null);
     const [showMedical, setShowMedical] = useState(false);
     const [showIncident, setShowIncident] = useState(false);
 
@@ -212,10 +212,9 @@ export default function CallHub({ open, onClose }) {
         if (!open) return;
         setShowMedical(false);
         setShowIncident(false);
-        base44.entities.CompanyInfo.list().then(records => setCompany(records?.[0])).catch(() => {});
     }, [open]);
 
-    const chefPhone = company?.phone;
+    const chefPhone = '+491737486992'; // Pierre
 
     return (
         <AnimatePresence>
