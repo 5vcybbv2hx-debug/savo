@@ -223,9 +223,13 @@ export default function CallHub({ open, onClose }) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
+                    onClick={onClose}
                     className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md overflow-y-auto"
                 >
-                    <div className="min-h-full flex flex-col max-w-md mx-auto px-4 py-6">
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="min-h-full flex flex-col max-w-md mx-auto px-4 py-6"
+                    >
                         {/* Header */}
                         <div className="flex items-center justify-between mb-5">
                             <h2 className="text-lg font-bold text-white">Anrufen</h2>
@@ -298,6 +302,14 @@ export default function CallHub({ open, onClose }) {
                                 <IncidentCapture onClose={() => setShowIncident(false)} />
                             )}
                         </div>
+
+                        {/* Schließen-Button */}
+                        <button
+                            onClick={onClose}
+                            className="w-full rounded-xl bg-white/10 border border-white/20 text-white font-bold py-3.5 hover:bg-white/20 transition-all active:scale-95 mt-2"
+                        >
+                            Schließen
+                        </button>
                     </div>
                 </motion.div>
             )}
