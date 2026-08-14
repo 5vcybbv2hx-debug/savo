@@ -29,7 +29,7 @@ import { useAnalytics } from '@/components/analytics/useAnalytics';
 import DesktopQuickBar from '@/components/navigation/DesktopQuickBar';
 import { useOneSignal, oneSignalLogout } from '@/lib/useOneSignal';
 import PushPermissionPrompt from '@/components/pwa/PushPermissionPrompt';
-import EmergencyButton from '@/components/emergency/EmergencyButton';
+import CallButton from '@/components/emergency/CallButton';
 
 export default function Layout({ children, currentPageName }) {
     // ── State ────────────────────────────────────────────────────────────────
@@ -652,8 +652,8 @@ export default function Layout({ children, currentPageName }) {
                 {/* Desktop Schnellzugriff-Leiste */}
                 <DesktopQuickBar />
 
-                {/* Globaler Notfallbutton — für alle Mitarbeiter */}
-                <EmergencyButton />
+                {/* Anruf-Button — für alle Mitarbeiter */}
+                <CallButton />
 
                 {/* Main Content */}
                 <main className={`transition-all duration-300 ${sidebarCollapsed ? 'md:pl-16' : 'md:pl-72'} pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-12`}>
