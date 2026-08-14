@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils';
 import {
     Plus, Search, Phone, MessageCircle, Archive,
     ChevronRight, Users, AlertCircle, X, MoreHorizontal,
-    Mail, UserCheck, Palmtree, Clock
+    UserCheck, Palmtree, Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createNotification } from '@/utils/createNotification';
@@ -376,18 +376,18 @@ export default function Employees() {
 
                                     {/* Aktionen */}
                                     <div className="flex items-center gap-1 shrink-0">
-                                        {/* Einladungs-Status */}
+                                        {/* Keine E-Mail — Badge statt Icon */}
                                         {permissions.isManager && hasNoInvite && (
-                                            <div className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/40"
-                                                title="Keine E-Mail — kann nicht eingeladen werden">
-                                                <Mail className="w-3.5 h-3.5" />
-                                            </div>
+                                            <span className="text-[9px] font-semibold px-1.5 py-1 rounded-full bg-muted text-muted-foreground/60 border border-border shrink-0"
+                                                title="Keine E-Mail hinterlegt — kann nicht eingeladen werden">
+                                                Keine Mail
+                                            </span>
                                         )}
                                         {permissions.isManager && emp.email && (
                                             <button
                                                 onClick={e => { e.stopPropagation(); handleInvite(emp); }}
                                                 disabled={inviting === emp.id}
-                                                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10 transition-all opacity-0 group-hover:opacity-100 min-h-[44px] min-w-[44px]"
+                                                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10 transition-all min-h-[44px] min-w-[44px]"
                                                 title="App-Einladung senden">
                                                 {inviting === emp.id
                                                     ? <Clock className="w-3.5 h-3.5 animate-pulse" />
