@@ -146,7 +146,7 @@ function ScheduleCard({ schedule, rsvpData, currentEmployee, onRsvp, isManager }
     if (!schedule) return null;
 
     // ── NUR RSVPs für diesen konkreten Termin filtern ──────────────────────
-    const scheduleRsvps = rsvpData.filter(r => r.schedule_id === schedule.id);
+    const scheduleRsvps = rsvpData.filter(r => r.meeting_date === schedule.date);
     const myRsvp  = scheduleRsvps.find(r => r.employee_id === currentEmployee?.id)?.status;
     const zusagen = scheduleRsvps.filter(r => r.status === 'zusage');
     const absagen = scheduleRsvps.filter(r => r.status === 'absage');
@@ -350,7 +350,7 @@ export default function TeamMeeting() {
     const scheduleMutation = useMutation({
         mutationFn: async (data) => {
             if (currentSchedule) {
-                const oldRsvps = rsvpData.filter(r => r.schedule_id === currentSchedule.id);
+                const oldRsvps = rsvpData.filter(r => r.meeting_date === currentSchedule.date);
                 await Promise.all(oldRsvps.map(r => base44.entities.TeamMeetingRSVP.delete(r.id)));
                 return base44.entities.TeamMeetingSchedule.update(currentSchedule.id, data);
             }
@@ -368,9 +368,9 @@ export default function TeamMeeting() {
     const rsvpMutation = useMutation({
         mutationFn: async (status) => {
             const existing = rsvpData.find(r =>
-                r.employee_id === currentEmployee?.id && r.schedule_id === currentSchedule?.id
+                r.employee_id === currentEmployee?.id && r.meeting_date === currentSchedule?.date
             );
-            const payload = { employee_id: currentEmployee.id, schedule_id: currentSchedule.id, status, employee_name: currentEmployee.full_name };
+            const payload = { employee_id: currentEmployee.id, meeting_date: currentSchedule.date, status, employee_name: currentEmployee.full_name };
             return existing
                 ? base44.entities.TeamMeetingRSVP.update(existing.id, payload)
                 : base44.entities.TeamMeetingRSVP.create(payload);
