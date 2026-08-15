@@ -22,7 +22,9 @@ async function pushToEmployee(employeeId, title, message) {
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        // Kein Auth-Guard — Funktion wird von Automation aufgerufen
+        const user = await base44.auth.me();
+        if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowStr = tomorrow.toISOString().split('T')[0];

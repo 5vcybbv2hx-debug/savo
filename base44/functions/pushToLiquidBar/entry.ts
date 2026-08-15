@@ -5,6 +5,7 @@ Deno.serve(async (req) => {
     const barshift = createClientFromRequest(req);
     const user = await barshift.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     // Lade alle benötigten Daten parallel
     const [reports, timeEntries, employees] = await Promise.all([
@@ -88,8 +89,8 @@ Deno.serve(async (req) => {
     const response = await fetch("https://bar-flow-plan.base44.app/api/functions/receiveDailyRevenue", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        secret: "87b3ea5e27454880af3ea82c048fb19b", 
+      body: JSON.stringify({
+        secret: secrets.get("LIQUIDBAR_API_SECRET"),
         records: enrichedRecords
       })
     });

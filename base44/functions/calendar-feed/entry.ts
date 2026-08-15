@@ -28,9 +28,6 @@ function getHolidaysBW(year) {
     ];
 }
 
-// Kein Token-Check: Der Feed ist für angemeldete Manager gedacht.
-// Persönliche Schicht-Feeds (pro Mitarbeiter) nutzen my-shifts-calendar mit individuellem Token.
-
 // ─── ICS helpers ─────────────────────────────────────────────────────────────
 const now8601 = () => new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 const dateStr  = (d) => d.replace(/-/g, '');
@@ -51,9 +48,27 @@ function buildEvent({ uid, dtstart, dtend, summary, description, allDay = false,
 }
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
+// SECURITY: Token-basierte Authentifizierung — externe Kalender-Clients
+// (Apple/Google/Outlook) rufen diese URL ohne Auth-Header auf.
+// Das Token wird in CompanyInfo.calendar_feed_token gespeichert und vom
+// Manager in der Live-Sync-Anleitung generiert. Ohne gültiges Token → 403.
 Deno.serve(async (req) => {
     try {
+        const reqUrl = new URL(req.url);
+        const token = reqUrl.searchParams.get('token');
+
+        if (!token) {
+            return new Response('Token required. Generate one in the app under Live-Synchronisation.', { status: 401 });
+        }
+
         const base44 = createClientFromRequest(req);
+
+        // Token gegen CompanyInfo validieren
+        const companyRecords = await base44.asServiceRole.entities.CompanyInfo.list();
+        const company = companyRecords?.[0];
+        if (!company || !company.calendar_feed_token || company.calendar_feed_token !== token) {
+            return new Response('Invalid or expired token', { status: 403 });
+        }
 
         const [shifts, reservations, employees, vacations, meetings] = await Promise.all([
             base44.asServiceRole.entities.Shift.list('-date', 500),
