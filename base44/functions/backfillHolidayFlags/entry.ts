@@ -1,4 +1,6 @@
-import base44 from "@base44/base44";
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+
+// SECURITY: Nur für Admins — bulkweise Aktualisierung von DailyRevenue-Holiday-Flags.
 
 function getEasterSunday(year: number): Date {
   const a = year % 19;
@@ -45,8 +47,13 @@ function getSeason(dateStr: string): string {
   return 'winter';
 }
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: any) {
   try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+
     const allHolidays = new Set<string>();
     for (const y of [2025, 2026, 2027]) {
       for (const h of getBWHolidays(y)) allHolidays.add(h);
@@ -81,8 +88,8 @@ export default async function handler(req: any, res: any) {
         }
       }
     }
-    res.json({ success: true, updated, total: revenues.length, errors });
+    return Response.json({ success: true, updated, total: revenues.length, errors });
   } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    return Response.json({ error: e.message }, { status: 500 });
   }
 }

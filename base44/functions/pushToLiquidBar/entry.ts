@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        secret: secrets.get("LIQUIDBAR_API_SECRET"),
+        secret: "87b3ea5e27454880af3ea82c048fb19b",
         records: enrichedRecords
       })
     });

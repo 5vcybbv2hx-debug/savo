@@ -5,10 +5,9 @@
  * Liest Location (PLZ + Stadt) dynamisch aus CompanyInfo-Stammdaten.
  * Geocoding via Open-Meteo Geocoding API (kostenlos, kein API Key).
  *
- * Aufruf: POST /api/apps/{app_id}/functions/fetchWeatherData
- * Body: { days_back?: number }  (default: 180)
+ * SECURITY: Nur für Admins — ändert bulkweise DailyRevenue-Datensätze.
  */
-import { base44 } from 'base44';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 // WMO Weather Code → Klartext
 const WMO_DESCRIPTIONS: Record<number, string> = {
@@ -96,7 +95,6 @@ function isSchoolVacation(dateStr: string): boolean {
   const date = new Date(dateStr);
   
   const vacations: Array<[string, string]> = [
-    // Winterferien (BW: selten, meist nur wenige Tage)
     // Sommerferien (BW: ca. Ende Juli - Mitte September)
     [`${year}-07-25`, `${year}-09-10`],
     // Herbstferien (BW: ca. Ende Oktober - Anfang November)
@@ -115,7 +113,6 @@ function isSchoolVacation(dateStr: string): boolean {
 
 // Geocoding: PLZ + Stadt → Lat/Long via Open-Meteo Geocoding API
 async function getCoordinates(postalCode: string, city: string): Promise<{ lat: number; lon: number }> {
-  // Try city name first (more reliable for German cities)
   const query = city || postalCode;
   const geocodeUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=de&format=json`;
   
@@ -127,7 +124,6 @@ async function getCoordinates(postalCode: string, city: string): Promise<{ lat: 
     return { lat: data.results[0].latitude, lon: data.results[0].longitude };
   }
   
-  // Fallback: try with postal code
   if (postalCode) {
     const plzUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(postalCode)}&count=1&language=de&format=json`;
     const plzRes = await fetch(plzUrl);
@@ -143,90 +139,98 @@ async function getCoordinates(postalCode: string, city: string): Promise<{ lat: 
 }
 
 export default async function fetchWeatherData(req: any) {
-  const daysBack = req.body?.days_back || 180;
-  const today = new Date();
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - daysBack);
-  
-  const startStr = startDate.toISOString().split('T')[0];
-  const endStr = today.toISOString().split('T')[0];
-  
-  // 0. Location aus CompanyInfo-Stammdaten lesen
-  const companyInfo = await base44.asServiceRole.entities.CompanyInfo.list().then((r: any) => r[0]);
-  if (!companyInfo) {
-    throw new Error('Keine CompanyInfo-Stammdaten gefunden — bitte in Einstellungen pflegen');
-  }
-  
-  const postalCode = companyInfo.postal_code;
-  const city = companyInfo.city;
-  
-  if (!postalCode && !city) {
-    throw new Error('CompanyInfo hat keine PLZ/Stadt — bitte in Einstellungen pflegen');
-  }
-  
-  // 1. Koordinaten per Geocoding ermitteln
-  const { lat, lon } = await getCoordinates(postalCode, city);
-  
-  // 2. Wetterdaten von Open-Meteo holen
-  const weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startStr}&end_date=${endStr}&daily=temperature_2m_max,temperature_2m_mean,precipitation_sum,weathercode&timezone=Europe/Berlin&format=json`;
-  
-  const weatherRes = await fetch(weatherUrl);
-  if (!weatherRes.ok) {
-    throw new Error(`Open-Meteo API Fehler: ${weatherRes.status}`);
-  }
-  const weatherData = await weatherRes.json();
-  
-  // Map: date → weather data
-  const weatherMap: Record<string, any> = {};
-  if (weatherData.daily && weatherData.daily.time) {
-    for (let i = 0; i < weatherData.daily.time.length; i++) {
-      const date = weatherData.daily.time[i];
-      weatherMap[date] = {
-        temp_max: weatherData.daily.temperature_2m_max[i],
-        temp_mean: weatherData.daily.temperature_2m_mean[i],
-        precipitation: weatherData.daily.precipitation_sum[i],
-        weather_code: weatherData.daily.weathercode[i],
-        weather_description: WMO_DESCRIPTIONS[weatherData.daily.weathercode[i]] || 'Unbekannt',
-      };
-    }
-  }
-  
-  // 3. Alle DailyRevenue-Einträge holen, die noch keine Wetterdaten haben
-  const revenues = await base44.asServiceRole.entities.DailyRevenue.list('-date', 500);
-  const needWeather = revenues.filter((r: any) => r.weather_temp_max == null && weatherMap[r.date]);
-  
-  let updated = 0;
-  let skipped = 0;
-  let notFound = 0;
-  
-  // 4. Jeden Eintrag mit Wetterdaten anreichern
-  for (const rev of needWeather) {
-    const w = weatherMap[rev.date];
-    if (!w) {
-      notFound++;
-      continue;
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+    const daysBack = req.body?.days_back || 180;
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - daysBack);
+    
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = today.toISOString().split('T')[0];
+    
+    // 0. Location aus CompanyInfo-Stammdaten lesen
+    const companyInfo = await base44.asServiceRole.entities.CompanyInfo.list().then((r: any) => r[0]);
+    if (!companyInfo) {
+      throw new Error('Keine CompanyInfo-Stammdaten gefunden — bitte in Einstellungen pflegen');
     }
     
-    await base44.asServiceRole.entities.DailyRevenue.update(rev.id, {
-      weather_temp_max: w.temp_max,
-      weather_temp_mean: w.temp_mean,
-      weather_precipitation: w.precipitation,
-      weather_code: w.weather_code,
-      weather_description: w.weather_description,
-      is_holiday: isHoliday(rev.date),
-      is_school_vacation: isSchoolVacation(rev.date),
+    const postalCode = companyInfo.postal_code;
+    const city = companyInfo.city;
+    
+    if (!postalCode && !city) {
+      throw new Error('CompanyInfo hat keine PLZ/Stadt — bitte in Einstellungen pflegen');
+    }
+    
+    // 1. Koordinaten per Geocoding ermitteln
+    const { lat, lon } = await getCoordinates(postalCode, city);
+    
+    // 2. Wetterdaten von Open-Meteo holen
+    const weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startStr}&end_date=${endStr}&daily=temperature_2m_max,temperature_2m_mean,precipitation_sum,weathercode&timezone=Europe/Berlin&format=json`;
+    
+    const weatherRes = await fetch(weatherUrl);
+    if (!weatherRes.ok) {
+      throw new Error(`Open-Meteo API Fehler: ${weatherRes.status}`);
+    }
+    const weatherData = await weatherRes.json();
+    
+    const weatherMap: Record<string, any> = {};
+    if (weatherData.daily && weatherData.daily.time) {
+      for (let i = 0; i < weatherData.daily.time.length; i++) {
+        const date = weatherData.daily.time[i];
+        weatherMap[date] = {
+          temp_max: weatherData.daily.temperature_2m_max[i],
+          temp_mean: weatherData.daily.temperature_2m_mean[i],
+          precipitation: weatherData.daily.precipitation_sum[i],
+          weather_code: weatherData.daily.weathercode[i],
+          weather_description: WMO_DESCRIPTIONS[weatherData.daily.weathercode[i]] || 'Unbekannt',
+        };
+      }
+    }
+    
+    // 3. Alle DailyRevenue-Einträge holen, die noch keine Wetterdaten haben
+    const revenues = await base44.asServiceRole.entities.DailyRevenue.list('-date', 500);
+    const needWeather = revenues.filter((r: any) => r.weather_temp_max == null && weatherMap[r.date]);
+    
+    let updated = 0;
+    let skipped = 0;
+    let notFound = 0;
+    
+    // 4. Jeden Eintrag mit Wetterdaten anreichern
+    for (const rev of needWeather) {
+      const w = weatherMap[rev.date];
+      if (!w) {
+        notFound++;
+        continue;
+      }
+      
+      await base44.asServiceRole.entities.DailyRevenue.update(rev.id, {
+        weather_temp_max: w.temp_max,
+        weather_temp_mean: w.temp_mean,
+        weather_precipitation: w.precipitation,
+        weather_code: w.weather_code,
+        weather_description: w.weather_description,
+        is_holiday: isHoliday(rev.date),
+        is_school_vacation: isSchoolVacation(rev.date),
+      });
+      updated++;
+    }
+    
+    return Response.json({
+      success: true,
+      location: `${city} (${postalCode})`,
+      coordinates: { lat, lon },
+      weather_days_fetched: Object.keys(weatherMap).length,
+      revenue_entries_checked: revenues.length,
+      entries_updated: updated,
+      entries_without_weather_match: notFound,
+      date_range: `${startStr} → ${endStr}`,
     });
-    updated++;
+  } catch (error: any) {
+    return Response.json({ error: error.message }, { status: 500 });
   }
-  
-  return {
-    success: true,
-    location: `${city} (${postalCode})`,
-    coordinates: { lat, lon },
-    weather_days_fetched: Object.keys(weatherMap).length,
-    revenue_entries_checked: revenues.length,
-    entries_updated: updated,
-    entries_without_weather_match: notFound,
-    date_range: `${startStr} → ${endStr}`,
-  };
 }
