@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { UserCircle, Mail, Phone, Calendar, Lock, Shield, Trash2, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import PinManager from '@/components/employees/PinManager';
 import MyShiftsCalendarSync from '@/components/calendar/MyShiftsCalendarSync';
 import {
@@ -38,11 +39,16 @@ export default function MyProfilePage() {
 
     const deleteDataMutation = useMutation({
         mutationFn: async () => {
-            // Delete user account and all related data via backend function
-            await base44.functions.invoke('deleteMyAccount', {});
-            
-            // Logout after deletion
-            await base44.auth.logout();
+            // GDPR Art. 17 — formal deletion request with audit trail
+            await base44.functions.invoke('requestAccountDeletion', { email: currentUser.email });
+        },
+        onSuccess: () => {
+            toast.success('Lösch-Anfrage eingegangen. Sie erhalten eine Bestätigungs-E-Mail.');
+            setShowDeleteDialog(false);
+            setTimeout(() => base44.auth.logout(), 2500);
+        },
+        onError: () => {
+            toast.error('Fehler beim Senden der Lösch-Anfrage. Bitte erneut versuchen.');
         }
     });
 
@@ -173,9 +179,9 @@ export default function MyProfilePage() {
                     <CardContent className="space-y-4">
                         <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-red-800/30">
                             <div>
-                                <div className="font-medium text-foreground mb-1">Alle Daten löschen</div>
+                                <div className="font-medium text-foreground mb-1">Account löschen <span className="text-xs text-red-400 font-normal">(Art. 17 DSGVO)</span></div>
                                 <div className="text-sm text-muted-foreground">
-                                    Löscht dauerhaft Ihr Mitarbeiterprofil, alle Schichten, Zeiteinträge und zugehörige Daten
+                                    Formale Lösch-Anfrage: Ihr Profil und alle personenbezogenen Daten werden dauerhaft gelöscht.
                                 </div>
                             </div>
                             <Button
@@ -184,7 +190,7 @@ export default function MyProfilePage() {
                                 className="bg-red-600 hover:bg-red-700"
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                Daten löschen
+                                Account löschen
                             </Button>
                         </div>
                     </CardContent>
@@ -204,21 +210,22 @@ export default function MyProfilePage() {
                 <AlertDialogContent className="bg-card border-border">
                 <AlertDialogHeader>
                     <AlertDialogTitle className="text-foreground flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
-                            Alle Daten unwiderruflich löschen?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="text-foreground/80">
-                            Diese Aktion kann nicht rückgängig gemacht werden. Es werden gelöscht:
-                            <ul className="list-disc list-inside mt-2 space-y-1">
-                                <li>Ihr Mitarbeiterprofil</li>
-                                <li>Alle geplanten und vergangenen Schichten</li>
-                                <li>Alle Zeiteinträge und Stempelzeiten</li>
-                                <li>Alle zugehörigen Daten</li>
-                            </ul>
-                            <div className="mt-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg text-red-200">
-                                <strong>Warnung:</strong> Sie werden nach der Löschung automatisch abgemeldet.
-                            </div>
-                        </AlertDialogDescription>
+                        <AlertTriangle className="w-5 h-5 text-red-500" />
+                        Account löschen (Art. 17 DSGVO)?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-foreground/80">
+                        Sie beantragen die dauerhafte Löschung Ihres Accounts und aller
+                        personenbezogenen Daten nach Art. 17 DSGVO. <strong>Diese Aktion ist unwiderruflich.</strong>
+                        <ul className="list-disc list-inside mt-2 space-y-1">
+                            <li>Ihr Mitarbeiterprofil wird dauerhaft gelöscht</li>
+                            <li>Alle Schichten, Zeiteinträge und Stempelzeiten</li>
+                            <li>Alle zugehörigen personenbezogenen Daten</li>
+                        </ul>
+                        <div className="mt-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg text-red-200">
+                            <strong>Bitte beachten:</strong> Die Lösch-Anfrage wird verarbeitet. Sie erhalten eine
+                            Bestätigungs-E-Mail und werden anschließend abgemeldet.
+                        </div>
+                    </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel className="bg-muted text-foreground hover:bg-muted/80">
@@ -229,7 +236,7 @@ export default function MyProfilePage() {
                             disabled={deleteDataMutation.isPending}
                             className="bg-red-600 hover:bg-red-700 text-white"
                         >
-                            {deleteDataMutation.isPending ? 'Löscht...' : 'Ja, alle Daten löschen'}
+                            {deleteDataMutation.isPending ? 'Anfrage wird gesendet…' : 'Ja, Account löschen'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

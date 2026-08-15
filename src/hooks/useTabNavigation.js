@@ -2,11 +2,18 @@
  * useTabNavigation — Bottom-Tab-Navigation mit Stack-Erhaltung pro Tab.
  *
  * Jeder Tab hat seinen eigenen History-Stack. Beim Wechsel zwischen Tabs
- * wird die zuletzt besuchte Seite des jeweiligen Tabs wiederhergestellt.
- * Innerhalb eines Tabs kann man via Browser-Back navigieren.
+ * wird die zuletzt besuchte Seite des jeweiligen Tabs wiederhergestellt —
+ * inkl. Unterseiten (Sub-Routes), nicht nur der Tab-Root.
+ *
+ * Funktionsweise:
+ *  - lastActiveTabRef merkt sich den aktiven Tab, auch wenn man auf einer
+ *    Unterseite ist (wo die URL nicht exakt dem Tab-Root entspricht).
+ *  - Ein useEffect speichert bei jeder Navigation den aktuellen Pfad im
+ *    Stack des aktiven Tabs, sodass auch tiefe Unterseiten erhalten bleiben.
+ *  - Beim Tab-Wechsel wird zum gespeicherten Pfad des Ziel-Tabs navigiert.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -41,8 +48,11 @@ export function useTabNavigation(tabPages) {
     const navigate = useNavigate();
     const location = useLocation();
     const stacksRef = useRef(loadStacks());
+    const lastActiveTabRef = useRef(null);
 
-    // Aktiven Tab anhand der aktuellen URL bestimmen
+    // Aktiven Tab anhand der aktuellen URL bestimmen.
+    // Bei exaktem Match → Tab-Root. Auf Unterseiten → Fallback auf zuletzt
+    // bekannten Tab (lastActiveTabRef), damit Sub-Routes erhalten bleiben.
     const getActiveTab = useCallback(() => {
         const path = location.pathname;
         for (const item of tabPages) {
@@ -51,19 +61,55 @@ export function useTabNavigation(tabPages) {
                 return item.page;
             }
         }
-        return null;
+        return lastActiveTabRef.current;
+    }, [location.pathname, tabPages]);
+
+    // Bei jeder Navigation: aktiven Tab ermitteln und aktuellen Pfad im Stack
+    // speichern. Das ist entscheidend für die Erhaltung von Unterseiten.
+    useEffect(() => {
+        const exactTab = (() => {
+            const path = location.pathname;
+            for (const item of tabPages) {
+                const url = item.page === 'Dashboard' ? '/' : createPageUrl(item.page);
+                if (path === url || (item.page === 'Dashboard' && path === '/')) {
+                    return item.page;
+                }
+            }
+            return null;
+        })();
+
+        if (exactTab) {
+            lastActiveTabRef.current = exactTab;
+        }
+
+        const activeTab = exactTab || lastActiveTabRef.current;
+        if (activeTab) {
+            const stacks = stacksRef.current;
+            stacks[activeTab] = location.pathname;
+            stacksRef.current = stacks;
+            saveStacks(stacks);
+        }
     }, [location.pathname, tabPages]);
 
     /**
      * Zu einem Tab navigieren.
-     * - Wenn der Tab schon aktiv ist → keine Aktion (Stack bleibt)
-     * - Wenn der Tab einen gespeicherten Stack hat → zur letzten URL des Tabs
-     * - Sonst → zur Root-URL des Tabs
+     * - Wenn der Tab schon aktiv ist → keine Aktion.
+     * - Aktuellen Pfad im Stack des aktiven Tabs sichern.
+     * - Zum zuletzt gespeicherten Pfad des Ziel-Tabs navigieren (oder Root).
      */
     const navigateToTab = useCallback((tabPage) => {
-        const activeTab = getActiveTab();
+        const exactTab = (() => {
+            const path = location.pathname;
+            for (const item of tabPages) {
+                const url = item.page === 'Dashboard' ? '/' : createPageUrl(item.page);
+                if (path === url || (item.page === 'Dashboard' && path === '/')) {
+                    return item.page;
+                }
+            }
+            return null;
+        })();
+        const activeTab = exactTab || lastActiveTabRef.current;
 
-        // Schon aktiv — nichts tun
         if (activeTab === tabPage) return;
 
         // Aktuellen Pfad im Stack des aktiven Tabs speichern
@@ -74,6 +120,8 @@ export function useTabNavigation(tabPages) {
             saveStacks(stacks);
         }
 
+        lastActiveTabRef.current = tabPage;
+
         // Zum letzten bekannten Pfad des Ziel-Tabs navigieren
         const stacks = stacksRef.current;
         const savedPath = stacks[tabPage];
@@ -81,11 +129,12 @@ export function useTabNavigation(tabPages) {
         const targetUrl = savedPath || rootUrl;
 
         navigate(targetUrl);
-    }, [getActiveTab, location.pathname, navigate]);
+    }, [location.pathname, navigate, tabPages]);
 
     /**
      * Speichert den aktuellen Pfad im Stack des aktiven Tabs.
-     * Aufruf bei jeder Navigation innerhalb eines Tabs.
+     * Wird automatisch via useEffect aufgerufen; kann aber manuell getriggert
+     * werden (z.B. vor kritischen Navigationen).
      */
     const recordCurrentPath = useCallback(() => {
         const activeTab = getActiveTab();

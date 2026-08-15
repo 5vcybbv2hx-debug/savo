@@ -8,8 +8,7 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select } from '@/components/ui/select';
-import * as SelectPrimitive from '@radix-ui/react-select';
+import BottomSheetSelect from '@/components/ui/bottom-sheet-select';
 
 export default function WeeklySpecialGenerator({ menuItems = [] }) {
     const queryClient = useQueryClient();
@@ -173,15 +172,17 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                         Wochenspecial
                     </CardTitle>
                     <div className="flex gap-2 flex-wrap">
-                        <select
+                        <BottomSheetSelect
                             value={selectedCount}
-                            onChange={(e) => setSelectedCount(e.target.value)}
-                            className="px-3 py-1.5 text-sm bg-slate-800 border border-blue-600 text-white rounded"
-                        >
-                            <option value="3">3 Getränke</option>
-                            <option value="4">4 Getränke</option>
-                            <option value="5">5 Getränke</option>
-                        </select>
+                            onValueChange={setSelectedCount}
+                            placeholder="Anzahl"
+                            options={[
+                                { value: '3', label: '3 Getränke' },
+                                { value: '4', label: '4 Getränke' },
+                                { value: '5', label: '5 Getränke' },
+                            ]}
+                            triggerClassName="w-auto min-w-[120px] h-9 bg-slate-800 border-blue-600 text-white"
+                        />
                         <Button
                             size="sm"
                             onClick={generateRandomSelection}
@@ -279,14 +280,15 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium mb-2">Rabattmodus</label>
-                            <select
+                            <BottomSheetSelect
                                 value={editValues.discount_type}
-                                onChange={(e) => setEditValues({ ...editValues, discount_type: e.target.value })}
-                                className="w-full px-3 py-2 bg-background border border-border rounded"
-                            >
-                                <option value="percent">Prozent (%)</option>
-                                <option value="fixed">Fester Preis (€)</option>
-                            </select>
+                                onValueChange={(v) => setEditValues({ ...editValues, discount_type: v })}
+                                placeholder="Rabattmodus"
+                                options={[
+                                    { value: 'percent', label: 'Prozent (%)' },
+                                    { value: 'fixed', label: 'Fester Preis (€)' },
+                                ]}
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">
