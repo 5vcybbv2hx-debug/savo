@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { useQueryClient } from '@tanstack/react-query';
 // Pierres Nummer: +491737486992
 import {
-    X, Phone, Car, User, Siren, ShieldAlert, Flame, AlertTriangle,
+    X, Phone, Car, User, Siren, ShieldAlert, Shield, Flame, AlertTriangle,
     Pill, HardHat, ChevronRight, ChevronLeft, Check
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -266,6 +266,13 @@ export default function CallHub({ open, onClose }) {
                                 onAfter={() => setShowMedical(true)}
                             />
                             <CallRow href="tel:110" icon={ShieldAlert} label="110" subtitle="Polizei" color="blue" />
+                            <CallRow
+                                href="tel:074332640"
+                                icon={Shield}
+                                label="Polizei Balingen"
+                                subtitle="Nicht-Notfall — 07433 264-0"
+                                color="card"
+                            />
                         </div>
 
                         {/* Zone 3: Medizinischer Assistent (nach 112-Tap) */}
