@@ -10,7 +10,8 @@ const defaultPermissions = Object.fromEntries(
 );
 Object.assign(defaultPermissions, {
     role: null, employeeRole: null, employeeName: null, employeeId: null,
-    isLoading: true, isAdmin: false, isManager: false, isTerminal: false,
+    employee: null, isLoading: true, isAdmin: false, isManager: false, isTerminal: false,
+    can: () => false,
 });
 
 export function usePermissions() {

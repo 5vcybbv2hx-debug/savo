@@ -409,7 +409,7 @@ export default function Inventory() {
         });
     }, [interactedArticleIds, articleAggregates, articles]);
 
-    if (!permissions.canEditShopping) {
+    if (!permissions.canEditInventory) {
         return <PermissionDenied />;
     }
 

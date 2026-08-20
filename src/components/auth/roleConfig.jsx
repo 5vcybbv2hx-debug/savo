@@ -10,7 +10,15 @@
  *
  * Rule: every permission check in the app must trace back to this file.
  * Never hardcode role strings (e.g. 'admin', 'Manager') outside this module.
+ *
+ * ── Bridge zum neuen Permission-Registry (permissionRegistry.js) ──────────────
+ * PermissionsNew speichert granulare Rechte als Registry-Section-Keys
+ * (z.B. inventory_sessions: 'edit'). Diese Brücke leitet jeden alten canXxx-Flag
+ * aus dem Registry-System ab, WENN ein expliziter Override vorliegt. Ohne
+ * Override gilt weiterhin die alte Rollen-Matrix (kein Regress für Rollen ohne
+ * Registry-Template wie Barkeeper/Vollzeit/Aushilfe/Orga).
  */
+import { canAccessPermission } from '@/lib/permissionRegistry';
 
 // ── Role constants ────────────────────────────────────────────────────────────
 export const USER_ROLES = {
@@ -199,6 +207,122 @@ export const PERMISSION_MATRIX = {
     canExportLiabilities:        { roles: [M.MANAGER],      sensitive: true,                 terminal: false },
 };
 
+// ── Bridge-Mapping: alter canXxx-Flag → Registry-Section-Key + Level ─────────────
+// Wird nur aktiv, wenn employee.permissions den Registry-Key explizit gesetzt hat.
+// Siehe can() für die Auflösungslogik.
+const CAN_TO_REGISTRY = {
+    // Dashboard
+    canViewDashboard:            { key: 'dashboard_overview', level: 'view' },
+    canViewMeinTag:              { key: 'dashboard_overview', level: 'view' },
+    // Schichten
+    canViewShifts:               { key: 'shifts_overview',   level: 'view' },
+    canEditShifts:               { key: 'shifts_edit',       level: 'edit' },
+    canPlanShifts:               { key: 'shifts_create',      level: 'edit' },
+    canDeleteShifts:             { key: 'shifts_edit',       level: 'edit' },
+    canExportShifts:             { key: 'shifts_export',     level: 'view' },
+    canApproveShiftSwaps:        { key: 'shifts_swap',        level: 'edit' },
+    canRequestShiftSwap:         { key: 'shifts_swap',        level: 'view' },
+    canViewTeamCalendar:         { key: 'teamcalendar_view', level: 'view' },
+    canViewTeamMeeting:          { key: 'meeting_topics',     level: 'view' },
+    // Reservierungen
+    canViewReservations:         { key: 'reservations_view',   level: 'view' },
+    canCreateReservations:       { key: 'reservations_create', level: 'edit' },
+    canEditReservations:         { key: 'reservations_edit',  level: 'edit' },
+    canDeleteReservations:       { key: 'reservations_edit',   level: 'edit' },
+    // Events
+    canViewEvents:               { key: 'events_view',  level: 'view' },
+    canCreateEvents:             { key: 'events_manage', level: 'edit' },
+    canEditEvents:               { key: 'events_manage', level: 'edit' },
+    canDeleteEvents:             { key: 'events_manage', level: 'edit' },
+    canViewEventIdeas:           { key: 'events_ideas',  level: 'view' },
+    canEditEventIdeas:           { key: 'events_ideas',  level: 'edit' },
+    // Lager & Artikel
+    canViewWarehouse:            { key: 'warehouse_overview', level: 'view' },
+    canCreateArticles:           { key: 'shopping_articles',  level: 'edit' },
+    canEditArticles:             { key: 'shopping_articles',  level: 'edit' },
+    canDeleteArticles:           { key: 'shopping_articles',  level: 'edit' },
+    canChangeArticlePrices:      { key: 'shopping_articles',  level: 'edit' },
+    canViewPriceHistory:         { key: 'shopping_articles',  level: 'view' },
+    canViewInventory:            { key: 'inventory_sessions', level: 'view' },
+    canEditInventory:            { key: 'inventory_sessions', level: 'edit' },
+    // Lieferanten
+    canViewSuppliers:            { key: 'shopping_suppliers', level: 'view' },
+    canEditSuppliers:            { key: 'shopping_suppliers', level: 'edit' },
+    canLinkSuppliers:            { key: 'shopping_suppliers', level: 'edit' },
+    // Einkauf / Auffüllen
+    canViewShopping:             { key: 'shopping_list', level: 'view' },
+    canEditShopping:             { key: 'shopping_list', level: 'edit' },
+    canViewRestock:              { key: 'storage_stock', level: 'view' },
+    canEditRestock:              { key: 'storage_stock', level: 'edit' },
+    // Reinigung
+    canViewCleaning:             { key: 'cleaning_tasks', level: 'view' },
+    canEditCleaning:             { key: 'cleaning_manage', level: 'edit' },
+    canDeleteCleaning:           { key: 'cleaning_manage', level: 'edit' },
+    canManageCleaningAreas:      { key: 'cleaning_manage', level: 'edit' },
+    // Aufgaben
+    canViewTodos:                { key: 'todos_all',     level: 'view' },
+    canViewAllTodos:             { key: 'todos_all',     level: 'view' },
+    canCreateTodos:              { key: 'todos_create',  level: 'edit' },
+    canEditTodos:                { key: 'todos_create',  level: 'edit' },
+    canDeleteTodos:              { key: 'todos_create',  level: 'edit' },
+    canAssignTodos:              { key: 'todos_create',  level: 'edit' },
+    // Team-Notizen / Meeting
+    canViewTeamNotes:            { key: 'meeting_topics', level: 'view' },
+    canViewManagerNotes:         { key: 'dashboard_manager', level: 'view' },
+    canCreateTeamNotes:          { key: 'meeting_topics', level: 'edit' },
+    canEditTeamNotes:            { key: 'meeting_topics', level: 'edit' },
+    canDeleteTeamNotes:          { key: 'meeting_manage', level: 'edit' },
+    canPinTeamNotes:             { key: 'meeting_manage', level: 'edit' },
+    // Mitarbeiter
+    canViewEmployees:            { key: 'employees_list',        level: 'view' },
+    canEditEmployees:            { key: 'employees_manage',      level: 'edit' },
+    canViewEmployeeDetails:      { key: 'employees_list',        level: 'view' },
+    canEditEmployeeShortName:    { key: 'employees_manage',      level: 'edit' },
+    canEditEmployeePermissions:  { key: 'employees_permissions', level: 'edit' },
+    canViewEmployeeHistory:      { key: 'employees_list',        level: 'view' },
+    // Rezepte & Karte
+    canViewRecipes:              { key: 'recipes_view',  level: 'view' },
+    canCreateRecipes:            { key: 'recipes_manage', level: 'edit' },
+    canEditRecipes:              { key: 'recipes_manage', level: 'edit' },
+    canDeleteRecipes:            { key: 'recipes_manage', level: 'edit' },
+    canViewDrinkMenu:            { key: 'menu_view',   level: 'view' },
+    canEditDrinkMenu:            { key: 'menu_items',  level: 'edit' },
+    // Zeiterfassung
+    canViewOwnTimeEntries:       { key: 'time_own',         level: 'view' },
+    canViewVacation:             { key: 'vacation_own',    level: 'view' },
+    canViewTeamTimeEntries:      { key: 'time_team',       level: 'view' },
+    canApproveTimeEntries:       { key: 'time_approvals',  level: 'edit' },
+    canCorrectTimeEntries:       { key: 'time_corrections', level: 'edit' },
+    canClockOutOthers:           { key: 'time_clockout',    level: 'edit' },
+    canBulkClockIn:              { key: 'time_clockout',    level: 'edit' },
+    // Analytik / Berichte
+    canViewAnalytics:            { key: 'reports_analysis', level: 'view' },
+    canExportReports:            { key: 'reports_export',   level: 'view' },
+    canViewWastage:              { key: 'wastage_record',    level: 'view' },
+    canEditWastage:              { key: 'wastage_record',    level: 'edit' },
+    canViewAuditLog:             { key: 'auditlog_view',     level: 'view' },
+    canViewPriceCalculator:      { key: 'pricecalc_use',     level: 'view' },
+    // Einstellungen
+    canViewSettings:             { key: 'settings_company',     level: 'view' },
+    canEditSettings:             { key: 'settings_company',     level: 'edit' },
+    canViewOnboarding:           { key: 'employees_forms',       level: 'view' },
+    // Buchhaltung
+    canViewAccounting:             { key: 'accounting_dashboard',         level: 'view' },
+    canViewAccountingCashbook:      { key: 'accounting_cashbook_view',     level: 'view' },
+    canEditAccountingCashbook:      { key: 'accounting_cashbook_edit',     level: 'edit' },
+    canViewAccountingReceipts:     { key: 'accounting_receipts_view',     level: 'view' },
+    canUploadAccountingReceipts:   { key: 'accounting_receipts_upload',   level: 'edit' },
+    canApproveAccountingReceipts:  { key: 'accounting_receipts_approve',  level: 'edit' },
+    canViewAccountingCreditors:    { key: 'accounting_creditors_view',    level: 'view' },
+    canEditAccountingCreditors:    { key: 'accounting_creditors_edit',    level: 'edit' },
+    canViewAccountingDebitors:     { key: 'accounting_debitors_view',     level: 'view' },
+    canEditAccountingDebitors:     { key: 'accounting_debitors_edit',     level: 'edit' },
+    canExportAccounting:           { key: 'accounting_export_run',        level: 'edit' },
+    canCloseAccountingMonth:       { key: 'accounting_closing_close',     level: 'edit' },
+    canViewDatevExport:            { key: 'accounting_datev_view',        level: 'view' },
+    canViewTaxAdvisorArea:         { key: 'accounting_dashboard',         level: 'view' },
+};
+
 // ── Core permission resolver ──────────────────────────────────────────────────
 /**
  * Resolve a single permission for a given session context.
@@ -207,7 +331,8 @@ export const PERMISSION_MATRIX = {
  * @param {object} ctx            - { userRole, employeeRole, isTerminal, customPerms }
  * @returns {boolean}
  */
-export function can(permKey, { userRole, employeeRole, isTerminal = false, customPerms = {} }) {
+export function can(permKey, ctx) {
+    const { userRole, employeeRole, isTerminal = false, customPerms = {}, employee } = ctx || {};
     if (userRole === USER_ROLES.ADMIN) return true;
 
     const rule = PERMISSION_MATRIX[permKey];
@@ -219,9 +344,22 @@ export function can(permKey, { userRole, employeeRole, isTerminal = false, custo
     if (rule.adminOnly) return false;
     if (isTerminal && !rule.terminal) return false;
 
-    // Per-employee override takes precedence over role defaults
+    // 1) Legacy boolean override (canXxx: true/false direkt in employee.permissions)
     if (typeof customPerms[permKey] === 'boolean') return customPerms[permKey];
 
+    // 2) Bridge ins neue Registry-System: nur aktiv, wenn ein expliziter Override
+    //    für den zugehörigen Registry-Key vorliegt. Kein Override → alte Rollen-Matrix
+    //    (verhindert Regress für Rollen ohne Registry-Template wie Barkeeper/Vollzeit).
+    const map = CAN_TO_REGISTRY[permKey];
+    if (map && customPerms && map.key in customPerms && employee) {
+        try {
+            return canAccessPermission(employee, map.key, map.level);
+        } catch {
+            // Fällt durch zur Rollen-Matrix
+        }
+    }
+
+    // 3) Rollen-Matrix (Default)
     return rule.roles.includes(employeeRole);
 }
 

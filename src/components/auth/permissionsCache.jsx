@@ -5,6 +5,7 @@
  */
 import { base44 } from '@/api/base44Client';
 import { buildPermissions, isManagerOrAdmin, isTerminalSession, USER_ROLES } from './roleConfig';
+import { canAccessPermission } from '@/lib/permissionRegistry';
 
 let cachedPermissions = null;
 let loadingPromise    = null;
@@ -43,6 +44,7 @@ export async function loadPermissions() {
             employeeRole: employee?.role ?? null,
             isTerminal:  isTerminalSession(user),
             customPerms: employee?.permissions ?? {},
+            employee:    employee ?? null,
         };
 
         // 4. Derive all permission flags from the matrix — no ad-hoc logic
@@ -54,6 +56,7 @@ export async function loadPermissions() {
             employeeRole:  ctx.employeeRole,
             employeeName:  employee?.name ?? user.full_name,
             employeeId:    employee?.id ?? null,
+            employee:      employee ?? null,
             isLoading:     false,
             isAdmin:       user.role === USER_ROLES.ADMIN,
             isManager:     isManagerOrAdmin(user.role, ctx.employeeRole),
@@ -61,6 +64,14 @@ export async function loadPermissions() {
 
             // ── All resolved permission flags ─────────────────────────────
             ...permFlags,
+
+            // ── Neues Registry-System: direkter Zugriff ───────────────────
+            // can('inventory_sessions', 'edit') → true/false
+            can: (permKey, requiredLevel = 'view') => {
+                if (user.role === USER_ROLES.ADMIN) return true;
+                if (!employee) return false;
+                return canAccessPermission(employee, permKey, requiredLevel);
+            },
         };
 
         loadingPromise = null;
