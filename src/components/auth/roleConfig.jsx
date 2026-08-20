@@ -344,20 +344,20 @@ export function can(permKey, ctx) {
     if (rule.adminOnly) return false;
     if (isTerminal && !rule.terminal) return false;
 
-    // 1) Legacy boolean override (canXxx: true/false direkt in employee.permissions)
-    if (typeof customPerms[permKey] === 'boolean') return customPerms[permKey];
-
-    // 2) Bridge ins neue Registry-System: nur aktiv, wenn ein expliziter Override
-    //    für den zugehörigen Registry-Key vorliegt. Kein Override → alte Rollen-Matrix
-    //    (verhindert Regress für Rollen ohne Registry-Template wie Barkeeper/Vollzeit).
+    // 1) Bridge ins neue Registry-System (höchste Priorität): ein expliziter
+    //    Override für den zugehörigen Registry-Key gewinnt — auch wenn noch ein
+    //    alter canXxx-Boolean (z.B. false) im Datensatz steht.
     const map = CAN_TO_REGISTRY[permKey];
     if (map && customPerms && map.key in customPerms && employee) {
         try {
             return canAccessPermission(employee, map.key, map.level);
         } catch {
-            // Fällt durch zur Rollen-Matrix
+            // Fällt durch zu Legacy / Rollen-Matrix
         }
     }
+
+    // 2) Legacy boolean override (canXxx: true/false direkt in employee.permissions)
+    if (typeof customPerms[permKey] === 'boolean') return customPerms[permKey];
 
     // 3) Rollen-Matrix (Default)
     return rule.roles.includes(employeeRole);

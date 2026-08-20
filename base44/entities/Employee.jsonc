@@ -30,7 +30,7 @@
     },
     "calendar_token": {
       "type": "string",
-      "description": "Pers\u00f6nlicher Token f\u00fcr Kalender-Abo (ohne Login)"
+      "description": "Pers\u00f6nlicher Token f\u00fcr Kalender-Abonnement (ohne Login)"
     },
     "profile_image_url": {
       "type": "string",
@@ -50,93 +50,8 @@
     },
     "permissions": {
       "type": "object",
-      "description": "Individuelle Berechtigungen f\u00fcr den Mitarbeiter",
-      "properties": {
-        "canViewDashboard": {
-          "type": "boolean",
-          "default": true
-        },
-        "canViewShifts": {
-          "type": "boolean",
-          "default": true
-        },
-        "canEditShifts": {
-          "type": "boolean",
-          "default": false
-        },
-        "canViewReservations": {
-          "type": "boolean",
-          "default": true
-        },
-        "canEditReservations": {
-          "type": "boolean",
-          "default": true
-        },
-        "canViewShopping": {
-          "type": "boolean",
-          "default": true
-        },
-        "canEditShopping": {
-          "type": "boolean",
-          "default": true
-        },
-        "canViewRestock": {
-          "type": "boolean",
-          "default": true
-        },
-        "canEditRestock": {
-          "type": "boolean",
-          "default": true
-        },
-        "canViewCleaning": {
-          "type": "boolean",
-          "default": true
-        },
-        "canEditCleaning": {
-          "type": "boolean",
-          "default": true
-        },
-        "canViewTodos": {
-          "type": "boolean",
-          "default": true
-        },
-        "canEditTodos": {
-          "type": "boolean",
-          "default": true
-        },
-        "canViewEmployees": {
-          "type": "boolean",
-          "default": true
-        },
-        "canEditEmployees": {
-          "type": "boolean",
-          "default": false
-        },
-        "canViewAnalytics": {
-          "type": "boolean",
-          "default": false
-        },
-        "canViewPriceCalculator": {
-          "type": "boolean",
-          "default": false
-        },
-        "canClockOutOthers": {
-          "type": "boolean",
-          "default": false
-        },
-        "canViewOnboarding": {
-          "type": "boolean",
-          "default": false
-        },
-        "canViewInventory": {
-          "type": "boolean",
-          "default": false
-        },
-        "canViewWastage": {
-          "type": "boolean",
-          "default": false
-        }
-      }
+      "description": "Individuelle Berechtigungen. Neue Registry-Keys mit Level 'none'|'view'|'edit' (z.B. inventory_sessions, shopping_list). Legacy canXxx-Booleans werden noch akzeptiert.",
+      "additionalProperties": true
     },
     "contract_type": {
       "type": "string",
@@ -153,7 +68,7 @@
     },
     "monthly_salary": {
       "type": "number",
-      "description": "Festgehalt in Euro (monatlich, für Festangestellte)"
+      "description": "Festgehalt in Euro (monatlich, f\u00fcr Festangestellte)"
     },
     "vacation_days_per_year": {
       "type": "number",
