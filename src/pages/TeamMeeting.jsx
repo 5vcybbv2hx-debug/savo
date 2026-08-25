@@ -370,7 +370,7 @@ export default function TeamMeeting() {
             const existing = rsvpData.find(r =>
                 r.employee_id === currentEmployee?.id && r.meeting_date === currentSchedule?.date
             );
-            const payload = { employee_id: currentEmployee.id, meeting_date: currentSchedule.date, status, employee_name: currentEmployee.full_name };
+            const payload = { employee_id: currentEmployee.id, meeting_date: currentSchedule.date, status, employee_name: currentEmployee.name };
             return existing
                 ? base44.entities.TeamMeetingRSVP.update(existing.id, payload)
                 : base44.entities.TeamMeetingRSVP.create(payload);
@@ -383,7 +383,7 @@ export default function TeamMeeting() {
         if (!formData.topic.trim()) return;
         createMutation.mutate({
             ...formData,
-            employee_name: currentEmployee?.full_name || currentUser?.email || 'Anonym',
+            employee_name: currentEmployee?.name || currentUser?.email || 'Anonym',
             employee_id:   currentEmployee?.id || '',
             status:        'offen',
             is_archived:   false,
