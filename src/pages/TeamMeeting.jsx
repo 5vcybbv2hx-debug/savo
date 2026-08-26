@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import TeamMeetingPrintView from '@/components/team-meeting/TeamMeetingPrintView';
 import MeetingProtocolModal from '@/components/team-meeting/MeetingProtocolModal';
 import MeetingProtocolList from '@/components/team-meeting/MeetingProtocolList';
+import ProvisionalReviewPanel from '@/components/provisional/ProvisionalReviewPanel';
 
 // ── Semantic Badge helpers ────────────────────────────────────────────────────
 function PriorityBadge({ priority }) {
@@ -547,11 +548,14 @@ export default function TeamMeeting() {
 
                 {/* ── Tabs ────────────────────────────────────────────────── */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="agenda" className="text-xs gap-1.5">
                             <MessageSquare className="w-3.5 h-3.5" />
                             Agenda
                             {openCount > 0 && <span className="ml-1 bg-amber-500 text-white text-[9px] font-bold rounded-full px-1.5">{openCount}</span>}
+                        </TabsTrigger>
+                        <TabsTrigger value="schichtwünsche" className="text-xs gap-1.5">
+                            <CalendarDays className="w-3.5 h-3.5" /> Wünsche
                         </TabsTrigger>
                         <TabsTrigger value="archiv" className="text-xs gap-1.5">
                             <Archive className="w-3.5 h-3.5" /> Archiv
@@ -615,6 +619,11 @@ export default function TeamMeeting() {
                                 }
                             </div>
                         )}
+                    </TabsContent>
+
+                    {/* ── Schichtwünsche Tab ── */}
+                    <TabsContent value="schichtwünsche" className="mt-3">
+                        <ProvisionalReviewPanel />
                     </TabsContent>
 
                     {/* ── Archiv Tab ── */}

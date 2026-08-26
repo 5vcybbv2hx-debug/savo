@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { publicBase44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Search, X, ChevronDown, ChevronUp, Info, Leaf, Flame, Star } from 'lucide-react';
+import { Search, X, ChevronDown, ChevronUp, Info, Leaf, Flame, Star, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ── Allergen-Kürzel (EU-weit standardisiert) ──────────────────────────────────
@@ -249,6 +249,38 @@ export default function PublicDrinkMenu() {
         );
     };
 
+    // ── CSV Export ─────────────────────────────────────────────────────────────
+    const exportCSV = () => {
+        const headers = ['Kategorie', 'Name', 'Beschreibung', 'Preis', 'Alkoholgehalt (%)', 'Inhalt (ml)', 'Allergene', 'Verfügbar'];
+        const escapeCSV = (val) => {
+            if (val == null) return '';
+            const s = String(val);
+            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+                return '"' + s.replace(/"/g, '""') + '"';
+            }
+            return s;
+        };
+        const rows = filteredItems.map(item => [
+            escapeCSV(item.category || 'Sonstiges'),
+            escapeCSV(item.name),
+            escapeCSV(item.description),
+            escapeCSV(item.price),
+            escapeCSV(item.alcohol_content),
+            escapeCSV(item.volume_ml),
+            escapeCSV((item.allergens_list || []).join('; ')),
+            escapeCSV(item.is_available ? 'Ja' : 'Nein')
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const bom = '\uFEFF'; // UTF-8 BOM for Excel
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `getraenkekarte-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     // ── Loading & Error ────────────────────────────────────────────────────────
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center bg-background">
@@ -313,6 +345,15 @@ export default function PublicDrinkMenu() {
                             </button>
                         )}
                     </div>
+                    <button
+                        onClick={exportCSV}
+                        disabled={filteredItems.length === 0}
+                        className="h-10 px-3 rounded-xl border border-border text-xs font-medium flex items-center gap-1.5 transition-all shrink-0 hover:bg-muted disabled:opacity-40"
+                        title="Getränkekarte als CSV exportieren"
+                    >
+                        <Download className="w-4 h-4" />
+                        <span className="hidden sm:inline">CSV</span>
+                    </button>
                     <button
                         onClick={() => setShowAllergens(p => !p)}
                         className={cn(

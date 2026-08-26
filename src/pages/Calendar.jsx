@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Plus, Users, Filter, X, Download, Zap, MoreHorizontal } from 'lucide-react';
+import { Plus, Users, Filter, X, Download, Zap, MoreHorizontal, CalendarDays } from 'lucide-react';
 import { useErrorHandler } from '@/components/error/ErrorHandler';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,8 @@ import CalendarExport from '@/components/shifts/CalendarExport';
 import ShiftRequirementsManager from '@/components/shifts/ShiftRequirementsManager';
 import MonthlyStaffingCheck from '@/components/shifts/MonthlyStaffingCheck';
 import DefaultShiftRulesManager from '@/components/shifts/DefaultShiftRulesManager';
+import ProvisionalAccessManager from '@/components/provisional/ProvisionalAccessManager';
+import ProvisionalShiftEntry from '@/components/provisional/ProvisionalShiftEntry';
 import ShiftSwapManager from '@/components/shifts/ShiftSwapManager';
 import QuickScheduler from '@/components/shifts/QuickScheduler';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -86,6 +88,24 @@ export default function Calendar() {
         queryKey: ['shift-swap-requests-open'],
         queryFn: () => base44.entities.ShiftSwapRequest.list('-created_date', 100),
         staleTime: STALE.MEDIUM,
+    });
+
+    const { data: provisionalRequests = [] } = useQuery({
+        queryKey: ['provisional-shift-requests'],
+        queryFn: () => base44.entities.ProvisionalShiftRequest.list('-date', 200),
+        staleTime: STALE.MEDIUM,
+    });
+
+    const { data: provisionalAccesses = [] } = useQuery({
+        queryKey: ['provisional-accesses'],
+        queryFn: () => base44.entities.ProvisionalShiftAccess.list('-created_date', 100),
+        staleTime: STALE.MEDIUM,
+    });
+
+    const { data: currentUser } = useQuery({
+        queryKey: ['user'],
+        queryFn: () => base44.auth.me(),
+        staleTime: STALE.SLOW,
     });
 
     const createMutation = useMutation({
@@ -312,6 +332,16 @@ export default function Calendar() {
                         {permissions.isManager && (
                             <Button
                                 variant="outline"
+                                onClick={() => setActiveTab('wünsche')}
+                                className="border-amber-600/60 text-amber-500 hover:bg-amber-600/10"
+                            >
+                                <CalendarDays className="w-4 h-4 mr-2" />
+                                Schichtwünsche
+                            </Button>
+                        )}
+                        {permissions.isManager && (
+                            <Button
+                                variant="outline"
                                 onClick={() => setActiveTab('quick')}
                                 className="border-amber-600/60 text-amber-500 hover:bg-amber-600/10"
                             >
@@ -423,6 +453,7 @@ export default function Calendar() {
                         requirements={requirements}
                         vacationRequests={vacationRequests}
                         swapRequests={swapRequests}
+                        provisionalRequests={provisionalRequests}
                         onAddShift={handleAddShift}
                         onSelectShift={handleSelectShift}
                         onShiftMove={handleShiftMove}
@@ -446,6 +477,15 @@ export default function Calendar() {
                             }}
                             onMoveShift={(id, data) => updateMutation.mutate({ id, data })}
                         />
+                    </div>
+                )}
+
+                {activeTab === 'wünsche' && permissions.isManager && (
+                    <div>
+                        <button onClick={() => setActiveTab('calendar')} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4">
+                            ← Zurück zum Kalender
+                        </button>
+                        <ProvisionalAccessManager employees={employees} />
                     </div>
                 )}
 
