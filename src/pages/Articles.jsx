@@ -360,8 +360,13 @@ export default function Articles() {
     // ── CSV Export ─────────────────────────────────────────────────────────────
     const exportCSV = () => {
         const headers = [
-            'Name', 'Barcode', 'Kategorie', 'Bestand', 'Mindestbestand',
-            'Verkaufspreis', 'Einkaufspreis', 'Einheit', 'Lieferant',
+            'Name', 'Barcode', 'Hersteller', 'Kategorie',
+            'Menge pro Einheit', 'Füllmenge', 'Füllmengeneinheit',
+            'Bestand', 'Mindestbestand',
+            'Verkaufspreis', 'Einkaufspreis', 'Steuersatz (%)',
+            'Pfand', 'Pfandtyp',
+            'Lieferant', 'Lagerort', 'Regal',
+            'Allergene', 'Zusatzstoffe',
             'Aktiv', 'Notizen'
         ];
         const escape = (val) => {
@@ -372,16 +377,32 @@ export default function Articles() {
             }
             return s;
         };
+        // Primärlieferant aus supplier_details extrahieren
+        const getPrimarySupplier = (a) => {
+            const details = a.supplier_details || [];
+            const primary = details.find(s => s.is_primary) || details[0];
+            return primary?.supplier_name || '';
+        };
         const rows = filteredArticles.map(a => [
             escape(a.name),
             escape(a.barcode),
+            escape(a.manufacturer),
             escape(a.category),
+            escape(a.quantity),
+            escape(a.content_amount),
+            escape(a.content_unit),
             escape(a.current_stock),
             escape(a.min_stock),
             escape(a.sale_price),
             escape(a.purchase_price),
-            escape(a.content_unit || a.unit),
-            escape(a.supplier),
+            escape(a.tax_rate),
+            escape(a.deposit),
+            escape(a.deposit_type),
+            escape(getPrimarySupplier(a)),
+            escape(a.storage_location),
+            escape(a.shelf_id),
+            escape((a.allergens_list || []).join('; ')),
+            escape((a.additives || []).join('; ')),
             escape(a.is_active === false ? 'Nein' : 'Ja'),
             escape(a.notes)
         ]);
