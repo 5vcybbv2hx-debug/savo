@@ -11,7 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import {
     Plus, Search, Camera, Package, AlertTriangle,
-    MoreVertical,
+    MoreVertical, Download,
     EyeOff, Eye, ChevronDown
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -356,6 +356,46 @@ export default function Articles() {
         articles.filter(a => a.is_active !== false && lowStockIds.has(a.id)),
         [articles, lowStockIds]
     );
+
+    // ── CSV Export ─────────────────────────────────────────────────────────────
+    const exportCSV = () => {
+        const headers = [
+            'Name', 'Barcode', 'Kategorie', 'Bestand', 'Mindestbestand',
+            'Verkaufspreis', 'Einkaufspreis', 'Einheit', 'Lieferant',
+            'Aktiv', 'Notizen'
+        ];
+        const escape = (val) => {
+            if (val == null) return '';
+            const s = String(val);
+            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+                return '"' + s.replace(/"/g, '""') + '"';
+            }
+            return s;
+        };
+        const rows = filteredArticles.map(a => [
+            escape(a.name),
+            escape(a.barcode),
+            escape(a.category),
+            escape(a.current_stock),
+            escape(a.min_stock),
+            escape(a.sale_price),
+            escape(a.purchase_price),
+            escape(a.content_unit || a.unit),
+            escape(a.supplier),
+            escape(a.is_active === false ? 'Nein' : 'Ja'),
+            escape(a.notes)
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `artikeldatenbank-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        toast.success(`${filteredArticles.length} Artikel als CSV exportiert`);
+    };
 
     if (!permissions.canEditShopping) return <PermissionDenied />;
 
