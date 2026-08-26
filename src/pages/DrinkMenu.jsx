@@ -10,7 +10,7 @@ import {
     Plus, Wine, Search, Eye, EyeOff, Link2,
     ExternalLink, Copy, Share2, Info, BookOpen,
     MoreVertical, Printer, ChevronDown, AlertTriangle,
-    QrCode, Check
+    QrCode, Check, Download
 } from "lucide-react";
 import { ALLERGENS, ADDITIVES } from '../components/menu/AllergenSelector';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -156,6 +156,41 @@ export default function DrinkMenuPage() {
     const usedAllergens = [...new Set(filteredItems.flatMap(i => i.allergens_list || []))];
     const usedAdditives = [...new Set(filteredItems.flatMap(i => i.additives || []))];
 
+    // ── CSV Export der gefilterten Karte ────────────────────────────────────
+    const exportCSV = () => {
+        const headers = ['Kategorie', 'Name', 'Beschreibung', 'Preis', 'Größe', 'Alkoholgehalt (%)', 'Allergene', 'Zusatzstoffe', 'Verfügbar', 'Saisonal', 'Special'];
+        const escapeCSV = (val) => {
+            if (val == null) return '';
+            const s = String(val);
+            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+                return '"' + s.replace(/"/g, '""') + '"';
+            }
+            return s;
+        };
+        const rows = filteredItems.map(item => [
+            escapeCSV(item.category || 'Sonstiges'),
+            escapeCSV(item.name),
+            escapeCSV(item.description),
+            escapeCSV(item.price),
+            escapeCSV(item.size),
+            escapeCSV(item.alcohol_content),
+            escapeCSV((item.allergens_list || []).join('; ')),
+            escapeCSV((item.additives || []).join('; ')),
+            escapeCSV(item.is_available === false ? 'Nein' : 'Ja'),
+            escapeCSV(item.is_seasonal ? 'Ja' : 'Nein'),
+            escapeCSV(item.is_special ? 'Ja' : 'Nein'),
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `getraenkekarte-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8 print:p-0">
             <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 print:space-y-2">
@@ -178,6 +213,19 @@ export default function DrinkMenuPage() {
                         >
                             <ExternalLink className="w-3.5 h-3.5" />
                             <span className="hidden sm:inline text-xs">Gäste-Link</span>
+                        </Button>
+
+                        {/* CSV Export — gefilterte Karte */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 gap-1.5"
+                            onClick={exportCSV}
+                            disabled={filteredItems.length === 0}
+                            title="Getränkekarte als CSV exportieren"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline text-xs">CSV</span>
                         </Button>
 
                         {/* ··· Mehr-Menü */}
