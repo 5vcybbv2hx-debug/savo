@@ -187,25 +187,23 @@ export default function PublicDrinkMenu() {
     const [allergenFilters,  setAllergenFilters]  = useState([]);
 
     // ── Daten laden ────────────────────────────────────────────────────────────
-    const { data: allItems = [], isLoading, error } = useQuery({
-        queryKey: ['public-menu-items'],
-        queryFn: () => publicBase44.entities.MenuItem.filter({ is_available: true }, 'category', 1000),
+    const { data: menuData = {}, isLoading, error } = useQuery({
+        queryKey: ['public-menu-data'],
+        queryFn: async () => {
+            const res = await publicBase44.functions.invoke('getPublicMenu', {});
+            const data = res.data || res;
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            return data;
+        },
         staleTime: 5 * 60 * 1000,
     });
 
-    const { data: companyList = [] } = useQuery({
-        queryKey: ['public-company-info'],
-        queryFn: () => publicBase44.entities.CompanyInfo.list('created_date', 1),
-        staleTime: 10 * 60 * 1000,
-    });
+    const allItems    = menuData.items || [];
+    const companyInfo = menuData.companyInfo || {};
+    const specials    = menuData.specials || [];
 
-    const { data: specials = [] } = useQuery({
-        queryKey: ['public-specials'],
-        queryFn: () => publicBase44.entities.WeeklySpecial.filter({ is_active: true }),
-        staleTime: 5 * 60 * 1000,
-    });
-
-    const companyInfo = companyList[0] || {};
     const barName     = companyInfo.company_name || 'Getränkekarte';
     const logoUrl     = companyInfo.logo_url || null;
 
