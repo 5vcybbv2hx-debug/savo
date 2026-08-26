@@ -454,6 +454,10 @@ export default function Articles() {
                                             />
                                         </span>
                                     </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={exportCSV}>
+                                        <Download className="w-4 h-4 mr-2 text-muted-foreground" />
+                                        CSV exportieren
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => setShowInactive(s => !s)}>
                                         {showInactive
