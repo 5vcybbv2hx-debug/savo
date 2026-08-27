@@ -17,7 +17,7 @@ import {
     Plus, Search, Wine, Trash2, Edit, Settings, ShoppingCart,
     Lightbulb, CheckSquare, X, Sparkles, ChefHat, MoreVertical,
     FileText, Snowflake, GlassWater, UtensilsCrossed, StickyNote,
-    Minus, CreditCard
+    Minus, CreditCard, Download
 } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { Button } from "@/components/ui/button";
@@ -767,6 +767,10 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         className="w-full justify-start px-2 text-sm font-normal h-8"
                                         label={<><FileText className="w-4 h-4 mr-2" />PDF exportieren</>}
                                     />
+                                    <DropdownMenuItem onClick={exportCSV}>
+                                        <Download className="w-4 h-4 mr-2" />
+                                        CSV exportieren
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
