@@ -1198,15 +1198,12 @@ export default function Display() {
           <img
             src={companyLogo}
             alt="Logo"
-            style={{ height: 'clamp(32px, 4vh, 56px)', maxWidth: 'clamp(80px, 12vw, 180px)', objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7)) brightness(1.1)', opacity: 0.9 }}
+            style={{ height: 'clamp(48px, 7vh, 96px)', maxWidth: 'clamp(120px, 18vw, 280px)', objectFit: 'contain', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7)) brightness(1.1)', opacity: 0.95 }}
           />
         </div>
       )}
 
-      {/* Uhr oben rechts */}
-      <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, padding: '28px 48px' }}>
-        <Clock />
-      </div>
+      {/* Uhr entfernt — nur Logo sichtbar */}
 
       {/* Slide Content mit Crossfade + Scale */}
       <div style={{
