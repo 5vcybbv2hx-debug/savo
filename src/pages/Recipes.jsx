@@ -695,6 +695,34 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
         } catch { toast.error('Fehler beim Erstellen der Einkaufsliste'); }
     };
 
+    // ── CSV-Export ────────────────────────────────────────────────────────────
+    const exportCSV = () => {
+        const headers = ['Name', 'Kategorie', 'Typ', 'Portionen', 'Glas', 'Garnitur', 'Alkohol (%)', 'Zutaten', 'Zubereitung', 'Notizen'];
+        const rows = filteredRecipes.map(r => [
+            r.name || '',
+            r.category || '',
+            r.recipe_type || 'standard',
+            r.servings ?? '',
+            r.glass_type || '',
+            r.garnish || '',
+            r.alcohol_content ?? '',
+            (r.ingredients || []).map(i => `${i.article_name || ''} ${i.amount}${i.unit || ''}`).join('; '),
+            (r.preparation || '').replace(/\n/g, ' '),
+            (r.notes || '').replace(/\n/g, ' '),
+        ]);
+        const csv = [headers, ...rows]
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rezepte_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`${filteredRecipes.length} Rezepte exportiert`);
+    };
+
     // ── Ähnliche Rezepte ──────────────────────────────────────────────────────
     const findSimilarRecipes = recipe => {
         if (!recipe) return [];

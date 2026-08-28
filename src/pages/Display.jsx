@@ -1116,19 +1116,22 @@ export default function Display() {
   const { data, isLoading } = useQuery({
     queryKey: ['displaySlides'],
     queryFn: async () => {
-      const now = new Date().toISOString();
+      const now = new Date();
       // Logo laden — public client, kein User-Login nötig
       try {
         const companies = await base44.entities.CompanyInfo.list();
         if (companies?.[0]?.logo_url) setCompanyLogo(companies[0].logo_url);
       } catch (_) {}
       // Slides laden
+      // show_from/show_until kommen vom datetime-local Input als lokale Zeit
+      // (ohne Timezone-Suffix) — daher mit parseISO als lokal parsen und
+      // mit new Date() (ebenfalls lokal) vergleichen, nicht mit toISOString() (UTC).
       const all = await base44.entities.DisplaySlide.list();
       return (all || [])
         .filter(s => {
           if (!s.is_active) return false;
-          if (s.show_from && now < s.show_from) return false;
-          if (s.show_until && now > s.show_until) return false;
+          if (s.show_from && now < parseISO(s.show_from)) return false;
+          if (s.show_until && now > parseISO(s.show_until)) return false;
           return true;
         })
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
