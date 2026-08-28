@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
-// cache-bust: force fresh dep re-bundle (React chunks cleared)
+// cache-bust: full dep cache wipe — force fresh re-bundle
 export default defineConfig({
   logLevel: 'error', // Suppress warnings, only show errors
   resolve: {
