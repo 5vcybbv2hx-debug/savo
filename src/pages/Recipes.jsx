@@ -718,8 +718,11 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
         const a = document.createElement('a');
         a.href = url;
         a.download = `rezepte_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
         toast.success(`${filteredRecipes.length} Rezepte exportiert`);
     };
 
@@ -745,8 +748,11 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
         const a = document.createElement('a');
         a.href = url;
         a.download = `rezepte_alle_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
         toast.success(`${recipes.length} Rezepte exportiert`);
     };
 
@@ -822,11 +828,11 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         className="w-full justify-start px-2 text-sm font-normal h-8"
                                         label={<><FileText className="w-4 h-4 mr-2" />PDF exportieren</>}
                                     />
-                                    <DropdownMenuItem onClick={exportCSV}>
+                                    <DropdownMenuItem onSelect={e => { e.preventDefault(); exportCSV(); }}>
                                         <Download className="w-4 h-4 mr-2" />
                                         CSV exportieren (gefiltert)
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={exportAllCSV}>
+                                    <DropdownMenuItem onSelect={e => { e.preventDefault(); exportAllCSV(); }}>
                                         <Download className="w-4 h-4 mr-2" />
                                         CSV exportieren (alle)
                                     </DropdownMenuItem>

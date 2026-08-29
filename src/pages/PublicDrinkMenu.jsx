@@ -277,8 +277,11 @@ export default function PublicDrinkMenu() {
         const link = document.createElement('a');
         link.href = url;
         link.download = `getraenkekarte-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
         link.click();
-        URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
     };
 
     // ── Loading & Error ────────────────────────────────────────────────────────
