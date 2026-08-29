@@ -249,39 +249,16 @@ export default function PublicDrinkMenu() {
         );
     };
 
-    // ── CSV Export ─────────────────────────────────────────────────────────────
+    // ── CSV Export (via Backend-Function — robust gegen iframe/sandbox Blockaden) ─
     const exportCSV = () => {
-        const headers = ['Kategorie', 'Name', 'Beschreibung', 'Preis', 'Alkoholgehalt (%)', 'Inhalt (ml)', 'Allergene', 'Verfügbar'];
-        const escapeCSV = (val) => {
-            if (val == null) return '';
-            const s = String(val);
-            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-                return '"' + s.replace(/"/g, '""') + '"';
-            }
-            return s;
-        };
-        const rows = filteredItems.map(item => [
-            escapeCSV(item.category || 'Sonstiges'),
-            escapeCSV(item.name),
-            escapeCSV(item.description),
-            escapeCSV(item.price),
-            escapeCSV(item.alcohol_content),
-            escapeCSV(item.volume_ml),
-            escapeCSV((item.allergens_list || []).join('; ')),
-            escapeCSV(item.is_available ? 'Ja' : 'Nein')
-        ]);
-        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        const bom = '\uFEFF'; // UTF-8 BOM for Excel
-        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
+        const url = '/api/functions/exportMenuCSV';
         const link = document.createElement('a');
         link.href = url;
-        link.download = `getraenkekarte-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.download = '';
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 100);
     };
 
     // ── Loading & Error ────────────────────────────────────────────────────────
