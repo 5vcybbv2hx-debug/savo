@@ -11,6 +11,16 @@ export default defineConfig({
     // crashes caused by duplicate React instances across dep chunks.
     dedupe: ['react', 'react-dom'],
   },
+  optimizeDeps: {
+    // Force react + react-dom into a single consistent pre-bundle pass so they
+    // share one ?v= hash. Without this, partial re-bundles leave react at one
+    // ?v= and react-dom at another → two React instances → null dispatcher.
+    include: ['react', 'react-dom', 'react/jsx-runtime', 'react-dom/client'],
+    // Re-optimize deps from scratch on every server start. The dep cache had
+    // two mixed ?v= generations (stale .vite/deps) → duplicate React. This
+    // guarantees one consistent pre-bundle pass until the cache is cleaned.
+    force: true,
+  },
   plugins: [
     base44({
       // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.

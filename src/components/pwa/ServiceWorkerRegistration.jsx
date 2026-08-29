@@ -2,6 +2,26 @@ import { useEffect } from 'react';
 
 export default function ServiceWorkerRegistration() {
     useEffect(() => {
+        // In DEV: never register the SW — its cache-first handler would serve stale
+        // /node_modules/.vite/deps chunks after Vite re-bundles, causing a
+        // React/react-dom dispatcher mismatch ("null is not an object: dispatcher.useState").
+        // Also unregister any leftover SW + clear caches from a prior prod visit.
+        if (import.meta.env.DEV) {
+            (async () => {
+                try {
+                    if ('serviceWorker' in navigator) {
+                        const regs = await navigator.serviceWorker.getRegistrations();
+                        await Promise.all(regs.map(r => r.unregister()));
+                    }
+                    if (window.caches) {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(k => caches.delete(k)));
+                    }
+                } catch (_) {}
+            })();
+            return;
+        }
+
         if ('serviceWorker' in navigator) {
             // Service Worker Registration
             const registerServiceWorker = async () => {

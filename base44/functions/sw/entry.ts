@@ -55,6 +55,12 @@ Deno.serve((req) => {
             
             const { url } = event.request;
             
+            // Niemals Vite-Dev-Pfade cachen — verhindert stale /node_modules/.vite/deps
+            // chunks, die einen React/react-dom Dispatcher-Mismatch auslösen.
+            if (url.includes('/node_modules/.vite') || url.includes('/@vite') || url.includes('/@react-refresh') || url.includes('/src/')) {
+                return;
+            }
+            
             // Cache-First für statische Assets (JS, CSS, Bilder)
             if (url.includes('/assets/') || url.match(/\\.(js|css|png|jpg|jpeg|svg|woff2?)$/)) {
                 event.respondWith(
