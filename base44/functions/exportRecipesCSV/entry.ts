@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// Returns JSON {csv, filename, count} — frontend creates Blob for download.
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
