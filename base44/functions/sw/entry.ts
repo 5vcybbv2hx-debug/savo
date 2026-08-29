@@ -1,12 +1,12 @@
-const CACHE_NAME = 'barmanager-v2';
-const STATIC_CACHE = 'barmanager-static-v2';
-const DYNAMIC_CACHE = 'barmanager-dynamic-v2';
+const CACHE_NAME = 'barmanager-v3';
+const STATIC_CACHE = 'barmanager-static-v3';
+const DYNAMIC_CACHE = 'barmanager-dynamic-v3';
 
 Deno.serve((req) => {
     const swCode = `
-        const CACHE_NAME = 'barmanager-v2';
-        const STATIC_CACHE = 'barmanager-static-v2';
-        const DYNAMIC_CACHE = 'barmanager-dynamic-v2';
+        const CACHE_NAME = 'barmanager-v3';
+        const STATIC_CACHE = 'barmanager-static-v3';
+        const DYNAMIC_CACHE = 'barmanager-dynamic-v3';
         
         const urlsToCache = [
             '/',
@@ -108,44 +108,33 @@ Deno.serve((req) => {
                 return;
             }
             
-            // Cache-First für Seiten/Navigation
+            // Network-First für Seiten/Navigation — neue Publishs sofort aktiv.
+            // Cache-First hat stale HTML mit alten Asset-Hashes geliefert, die nach
+            // einem Deploy 404ten → React ohne Event-Handler → Buttons nicht klickbar.
             event.respondWith(
-                caches.match(event.request)
-                    .then((response) => {
-                        if (response) {
-                            // Update im Hintergrund
-                            fetch(event.request).then((fetchResponse) => {
-                                if (fetchResponse.status === 200) {
-                                    caches.open(STATIC_CACHE).then((cache) => {
-                                        cache.put(event.request, fetchResponse);
-                                    });
-                                }
-                            }).catch(() => {});
-                            return response;
-                        }
-                        
-                        return fetch(event.request).then((fetchResponse) => {
-                            if (fetchResponse.status === 200) {
-                                const responseClone = fetchResponse.clone();
-                                caches.open(DYNAMIC_CACHE).then((cache) => {
-                                    cache.put(event.request, responseClone);
-                                });
-                            }
-                            return fetchResponse;
-                        }).catch(() => {
-                            console.log('[SW] Network request failed:', url);
-                            return new Response(
-                                JSON.stringify({ 
-                                    error: 'Offline', 
-                                    message: 'Diese Seite ist offline nicht verfügbar' 
-                                }),
-                                { 
-                                    headers: { 'Content-Type': 'application/json' },
-                                    status: 503
-                                }
-                            );
+                fetch(event.request).then((fetchResponse) => {
+                    if (fetchResponse.status === 200) {
+                        const responseClone = fetchResponse.clone();
+                        caches.open(DYNAMIC_CACHE).then((cache) => {
+                            cache.put(event.request, responseClone);
                         });
-                    })
+                    }
+                    return fetchResponse;
+                }).catch(() => {
+                    return caches.match(event.request).then((response) => {
+                        if (response) return response;
+                        return new Response(
+                            JSON.stringify({ 
+                                error: 'Offline', 
+                                message: 'Diese Seite ist offline nicht verfügbar' 
+                            }),
+                            { 
+                                headers: { 'Content-Type': 'application/json' },
+                                status: 503
+                            }
+                        );
+                    });
+                })
             );
         });
 
