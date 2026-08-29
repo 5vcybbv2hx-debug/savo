@@ -72,7 +72,7 @@ function BrandingLoader() {
 }
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const { needsNewConsent, saveConsent, isLoading: isConsentLoading } = useConsent();
 
   // Show loading spinner while checking app public settings or auth
@@ -93,6 +93,15 @@ const AuthenticatedApp = () => {
       navigateToLogin();
       return null;
     }
+  }
+
+  // App is public (App Visibility = Public): public pages are rendered outside
+  // AuthenticatedApp in the top-level Routes. Everything inside AuthenticatedApp
+  // requires a logged-in user — redirect unauthenticated visitors to login so
+  // they never land on a blank RoleGuard screen.
+  if (!isLoadingPublicSettings && !isLoadingAuth && !isAuthenticated) {
+    navigateToLogin();
+    return null;
   }
 
   // Render the main app
