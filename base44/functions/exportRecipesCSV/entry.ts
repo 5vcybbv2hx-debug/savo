@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const url = new URL(req.url);
-        const mode = url.searchParams.get('mode') || 'all'; // 'all' or 'filtered'
+        const mode = url.searchParams.get('mode') || 'all';
 
         const recipes = await base44.asServiceRole.entities.Recipe.filter({}, '-created_date', 1000);
 
@@ -29,12 +29,10 @@ Deno.serve(async (req) => {
             ? `rezepte_gefiltert_${new Date().toISOString().slice(0, 10)}.csv`
             : `rezepte_alle_${new Date().toISOString().slice(0, 10)}.csv`;
 
-        return new Response(bom + csv, {
-            headers: {
-                'Content-Type': 'text/csv; charset=utf-8',
-                'Content-Disposition': `attachment; filename="${filename}"`,
-                'Access-Control-Allow-Origin': '*',
-            }
+        return Response.json({
+            csv: bom + csv,
+            filename,
+            count: (recipes || []).length,
         });
     } catch (error) {
         console.error('exportRecipesCSV error:', error);

@@ -249,16 +249,26 @@ export default function PublicDrinkMenu() {
         );
     };
 
-    // ── CSV Export (via Backend-Function — robust gegen iframe/sandbox Blockaden) ─
-    const exportCSV = () => {
-        const url = '/api/functions/exportMenuCSV';
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = '';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    // ── CSV Export (via Backend-Function + SDK Blob Download) ───────────────────
+    const exportCSV = async () => {
+        try {
+            const res = await publicBase44.functions.invoke('exportMenuCSV', {});
+            const data = res.data || res;
+            if (data.error) throw new Error(data.error);
+            // Blob aus CSV-String erstellen und als Download auslösen
+            const blob = new Blob([data.csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = data.filename || 'getraenkekarte.csv';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 200);
+        } catch (e) {
+            console.error('CSV export failed:', e);
+        }
     };
 
     // ── Loading & Error ────────────────────────────────────────────────────────

@@ -695,27 +695,49 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
         } catch { toast.error('Fehler beim Erstellen der Einkaufsliste'); }
     };
 
-    // ── CSV-Export (via Backend-Function) ─────────────────────────────────────
-    const exportCSV = () => {
-        const link = document.createElement('a');
-        link.href = '/api/functions/exportRecipesCSV?mode=filtered';
-        link.download = '';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success(`${filteredRecipes.length} Rezepte exportiert`);
+    // ── CSV-Export (via Backend-Function + SDK Blob Download) ──────────────────
+    const exportCSV = async () => {
+        try {
+            const res = await base44.functions.invoke('exportRecipesCSV', { mode: 'filtered' });
+            const data = res.data || res;
+            if (data.error) throw new Error(data.error);
+            const blob = new Blob([data.csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = data.filename || 'rezepte.csv';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 200);
+            toast.success(`${data.count} Rezepte exportiert`);
+        } catch (e) {
+            console.error('CSV export failed:', e);
+            toast.error('CSV-Export fehlgeschlagen');
+        }
     };
 
-    const exportAllCSV = () => {
-        const link = document.createElement('a');
-        link.href = '/api/functions/exportRecipesCSV?mode=all';
-        link.download = '';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success(`${recipes.length} Rezepte exportiert`);
+    const exportAllCSV = async () => {
+        try {
+            const res = await base44.functions.invoke('exportRecipesCSV', { mode: 'all' });
+            const data = res.data || res;
+            if (data.error) throw new Error(data.error);
+            const blob = new Blob([data.csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = data.filename || 'rezepte.csv';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 200);
+            toast.success(`${data.count} Rezepte exportiert`);
+        } catch (e) {
+            console.error('CSV export failed:', e);
+            toast.error('CSV-Export fehlgeschlagen');
+        }
     };
 
     // ── Ähnliche Rezepte ──────────────────────────────────────────────────────
