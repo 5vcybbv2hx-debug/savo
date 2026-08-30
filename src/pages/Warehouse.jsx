@@ -202,7 +202,9 @@ export default function Warehouse() {
             groups[artId].total_needed += qty;
             groups[artId].items.push(item);
         });
-        return Object.values(groups).sort((a, b) => a.article_name.localeCompare(b.article_name));
+        return Object.values(groups)
+            .filter(g => g.total_needed > 0)
+            .sort((a, b) => a.article_name.localeCompare(b.article_name));
     })();
 
     return (
