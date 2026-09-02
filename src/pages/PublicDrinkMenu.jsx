@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { publicBase44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Search, X, ChevronDown, ChevronUp, Info, Leaf, Flame, Star, Download } from 'lucide-react';
+import { Search, X, ChevronDown, ChevronUp, Info, Leaf, Flame, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ── Allergen-Kürzel (EU-weit standardisiert) ──────────────────────────────────
@@ -296,28 +296,6 @@ export default function PublicDrinkMenu() {
         );
     };
 
-    // ── CSV Export (via Backend-Function + SDK Blob Download) ───────────────────
-    const exportCSV = async () => {
-        try {
-            const res = await publicBase44.functions.invoke('exportMenuCSV', {});
-            const data = res.data || res;
-            if (data.error) throw new Error(data.error);
-            // Blob aus CSV-String erstellen und als Download auslösen
-            const blob = new Blob([data.csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = data.filename || 'getraenkekarte.csv';
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setTimeout(() => URL.revokeObjectURL(url), 200);
-        } catch (e) {
-            console.error('CSV export failed:', e);
-        }
-    };
-
     // ── Loading & Error ────────────────────────────────────────────────────────
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center bg-background">
@@ -382,15 +360,6 @@ export default function PublicDrinkMenu() {
                             </button>
                         )}
                     </div>
-                    <button
-                        onClick={exportCSV}
-                        disabled={filteredItems.length === 0}
-                        className="h-10 px-3 rounded-xl border border-border text-xs font-medium flex items-center gap-1.5 transition-all shrink-0 hover:bg-muted disabled:opacity-40"
-                        title="Getränkekarte als CSV exportieren"
-                    >
-                        <Download className="w-4 h-4" />
-                        <span className="hidden sm:inline">CSV</span>
-                    </button>
                     <button
                         onClick={() => setShowAllergens(p => !p)}
                         className={cn(
