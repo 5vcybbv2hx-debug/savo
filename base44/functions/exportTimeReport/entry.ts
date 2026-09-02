@@ -4,6 +4,7 @@ import * as XLSX from 'npm:xlsx@0.18.5';
 
 // HIGH FIX: Added admin role check — previously any authenticated user could export
 // all employee hourly rates, salary costs, and time data.
+// Pause-Deckel: max. 45 Min pro Schicht mitbezahlt (Redeploy 0f90d145)
 
 function getOpeningDays(startStr, endStr) {
     const start = new Date(startStr);

@@ -12,6 +12,7 @@ Deno.serve(async (req) => {
         if (user.role !== 'admin') {
             return Response.json({ error: 'Forbidden: Only managers can send reports' }, { status: 403 });
         }
+        // Pause-Deckel: max. 45 Min pro Schicht mitbezahlt (Redeploy 0f90d145)
 
         const body = await req.json();
         const { year, month, pdf_url } = body;
