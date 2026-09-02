@@ -934,18 +934,18 @@ function SlideQR({ slideId }) {
         import('qrcode').then((mod) => {
             const QR = mod.default || mod;
             QR.toDataURL(`${window.location.origin}/Event/${slideId}`, {
-                width: 440, margin: 1, color: { dark: '#111827', light: '#ffffff' },
+                width: 350, margin: 1, color: { dark: '#111827', light: '#ffffff' },
             }).then(d => { if (alive) setQr(d); }).catch(() => {});
         }).catch(() => {});
         return () => { alive = false; };
     }, [slideId]);
     if (!qr) return null;
     return (
-        <div style={{ position: 'absolute', right: 48, bottom: 48, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, animation: 'fadeInScale 0.8s 1.5s both' }}>
-            <div style={{ background: '#fff', padding: 16, borderRadius: 18, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
-                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 200, height: 200, display: 'block' }} />
+        <div style={{ position: 'absolute', top: 48, right: 48, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, animation: 'fadeInScale 0.8s 1.5s both' }}>
+            <div style={{ background: '#fff', padding: 12, borderRadius: 16, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
+                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 150, height: 150, display: 'block' }} />
             </div>
-            <div style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,0.9)', fontWeight: 600, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '8px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '6px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>
                 📱 Details & Kalender — einfach scannen
             </div>
         </div>
