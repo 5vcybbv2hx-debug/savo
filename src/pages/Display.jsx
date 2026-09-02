@@ -941,7 +941,7 @@ function SlideQR({ slideId }) {
     }, [slideId]);
     if (!qr) return null;
     return (
-        <div style={{ position: 'absolute', top: 64, right: 64, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, animation: 'fadeInScale 0.8s 1.5s both' }}>
+        <div style={{ position: 'absolute', top: 64, right: 64, zIndex: 2, animation: 'fadeInScale 0.8s 1.5s both' }}>
             <div style={{ background: '#fff', padding: 10, borderRadius: 14, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
                 <img src={qr} alt="QR-Code: Event-Details" style={{ width: 112, height: 112, display: 'block' }} />
             </div>
@@ -956,6 +956,8 @@ function SlideEvent({ slide, accent, theme }) {
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
   const de2 = hasEnd ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
   const ts = [slide.event_time, slide.event_end_time].filter(Boolean).join(' – ') + (slide.event_time ? ' Uhr' : '');
+  const titleLen = (slide.title || '').length;
+  const titleFont = titleLen > 16 ? 'clamp(2.8rem,5.2vw,4.5rem)' : titleLen > 11 ? 'clamp(3.4rem,6.8vw,5.6rem)' : 'clamp(4.2rem,9.2vw,7.5rem)';
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '80px 120px', textAlign: 'center', gap: 32 }}>
       <ThemeBackground theme={theme} accent={accent} />
