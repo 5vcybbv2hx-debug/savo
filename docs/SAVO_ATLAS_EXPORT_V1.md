@@ -21,15 +21,17 @@ Export-Format `SAVO_ATLAS_EXPORT` (Schema-Version 1.0) überträgt operative Tag
 | `period_from` | string (YYYY-MM-DD) | ja | User-Auswahl | Startdatum |
 | `period_to` | string (YYYY-MM-DD) | ja | User-Auswahl | Enddatum |
 
-## Summary (Komfort-Summen — Atlas muss aus Tagesdaten reproduzieren können)
+## Summary
 
 | Feld | Typ | Quelle | Bedeutung |
 |------|-----|--------|-----------|
 | `operating_days` | number | DailyRevenue.count | Anzahl Betriebstage |
 | `gross_revenue` | number | Σ DailyRevenue.revenue | Bruttoumsatz gesamt |
 | `personnel_hours` | number | Σ ClockEntry.total_hours | Gesamtstunden |
-| `personnel_cost` | number | Σ DailyRevenue.labor_cost_total | Personalkosten gesamt |
-| `keg_changes` | number | Wastage(type=Nachtwächter).count | Fasswechsel gesamt |
+| `personnel_cost` | number | siehe personnel_cost_source | Personalkosten gesamt |
+| `personnel_cost_source` | string | gemischt/derived | `"stored"` / `"calculated_from_entries"` / `"mixed"` / `"unavailable"` |
+| `keg_changes` | number | — (immer 0) | Echte Fasswechsel (keine Datenquelle in SAVO) |
+| `nightwatch_count` | number | Wastage(type=Nachtwächter).count | Bierleitungsspülungen gesamt |
 | `events` | number | Event.count | Anzahl Events |
 
 ## Day-Struktur (pro Betriebstag)
@@ -93,7 +95,8 @@ Export-Format `SAVO_ATLAS_EXPORT` (Schema-Version 1.0) überträgt operative Tag
 | Feld | Typ | Quelle | Bedeutung |
 |------|-----|--------|-----------|
 | `total_hours` | number | Σ ClockEntry.total_hours | Gesamtstunden |
-| `total_cost` | number | DailyRevenue.labor_cost_total | Personalkosten gesamt |
+| `labor_cost` | number | siehe labor_cost_source | Personalkosten |
+| `labor_cost_source` | string | derived | Herkunft der Personalkosten (siehe unten) |
 | `employees[]` | array | ClockEntry + Employee | Pro Mitarbeiter |
 | `employees[].employee_id` | string | ClockEntry.employee_id | Employee ID |
 | `employees[].name` | string | ClockEntry.employee_name | Name |
@@ -102,14 +105,41 @@ Export-Format `SAVO_ATLAS_EXPORT` (Schema-Version 1.0) überträgt operative Tag
 | `employees[].hourly_rate` | number | Employee.hourly_rate | Stundensatz |
 | `employees[].cost` | number | berechnet (hours * rate) | Kosten |
 
+#### labor_cost_source Werte
+
+| Wert | Bedeutung |
+|------|-----------|
+| `"stored"` | `DailyRevenue.labor_cost_total` vorhanden und > 0 — Wert direkt übernommen |
+| `"calculated_from_entries"` | `labor_cost_total` fehlt — Kosten aus Σ (hours × hourly_rate) berechnet |
+| `"unavailable"` | Weder gespeicherte Kosten noch berechenbare Kosten vorhanden |
+
+In der Summary kann der Wert `"mixed"` auftreten, wenn einige Tage `"stored"` und andere `"calculated_from_entries"` sind.
+
 ### beer_and_kegs
 
 | Feld | Typ | Quelle | Bedeutung |
 |------|-----|--------|-----------|
-| `keg_changes[]` | array | Wastage(type=Nachtwächter) | Fasswechsel (Bierleitungsspülung) |
-| `keg_changes[].product_name` | string | Wastage.article_name | Artikelname |
-| `keg_changes[].quantity` | number | Wastage.quantity | Menge (Verlust) |
-| `keg_changes[].unit` | string | Wastage.unit | Einheit |
+| `keg_changes[]` | array | — | **Echte Fasswechsel** — immer leer, SAVO hat keine separate Fasswechsel-Entity |
+| `nightwatch_wastage[]` | array | Wastage(type=Nachtwächter) | **Bierleitungsspülung / Schankverlust** — NICHT Fasswechsel |
+
+#### nightwatch_wastage[]
+
+| Feld | Typ | Quelle | Bedeutung |
+|------|-----|--------|-----------|
+| `source_record_id` | string | Wastage.id | Wastage-Datensatz-ID |
+| `article_id` | null | — | Wastage hat kein article_id Feld |
+| `product_name` | string | Wastage.article_name | Artikelname |
+| `quantity` | number | Wastage.quantity | Menge (Verlust) |
+| `unit` | string | Wastage.unit | Einheit |
+| `value` | null | — | Wert/Kosten — Wastage speichert keinen Preis |
+| `noted_by` | string | Wastage.noted_by | Eingetragen von |
+| `notes` | string | Wastage.notes | Notizen |
+
+#### Fachliche Abgrenzung
+
+- **Nachtwächter** = regelmäßiger Bierleitungs-/Schankverlust beim Spülen der Leitungen. Kein Fasswechsel.
+- **Fasswechsel** = tatsächliches Wechseln eines Bierfasses. SAVO hat keine Entity oder Feld, das dies erfasst.
+- `keg_changes` bleibt daher immer leer, bis SAVO eine echte Fasswechsel-Datenquelle erhält.
 
 ### events[]
 
@@ -135,7 +165,7 @@ Export-Format `SAVO_ATLAS_EXPORT` (Schema-Version 1.0) überträgt operative Tag
 | `sessions[].counted_by` | string | InventorySession.counted_by | Gezählt von |
 | `sessions[].total_items` | number | InventorySession.total_items | Anzahl Artikel |
 | `sessions[].total_difference` | number | InventorySession.total_difference | Differenz |
-| `wastage[]` | array | Wastage (ohne Nachtwächter) | Schwund |
+| `wastage[]` | array | Wastage (ohne Nachtwächter) | Schwund (Bruch, Verderb, Sonstiges) |
 | `wastage[].article_name` | string | Wastage.article_name | Artikel |
 | `wastage[].quantity` | number | Wastage.quantity | Menge |
 | `wastage[].unit` | string | Wastage.unit | Einheit |
@@ -156,13 +186,14 @@ Export-Format `SAVO_ATLAS_EXPORT` (Schema-Version 1.0) überträgt operative Tag
 4. **Employee** — Stundensätze, Rollen (hourly_rate, monthly_salary, role)
 5. **Event** — Events pro Tag
 6. **ClosingSession** — Tagesabschluss-Session-Details
-7. **Wastage** — Schwund (type ≠ Nachtwächter) + Fasswechsel (type = Nachtwächter)
+7. **Wastage** — Schwund (type ≠ Nachtwächter) + Nachtwächter (type = Nachtwächter) separat
 8. **TipDistribution** — Trinkgeldverteilung pro Tag
 9. **InventorySession** — Inventur-Sessions
 10. **SalesDataItem** — Artikelverkäufe pro Tag → revenue_by_category, transaction_count
 
 ## Nicht exportierte Daten
 
+- Echte Fasswechsel (keine Datenquelle in SAVO vorhanden)
 - Umsatz nach Verkaufsbereichen (nicht in SAVO erfasst)
 - Event-Umsatz (nicht separat zugeordnet)
 - Event-Personalstunden (nicht direkt zuordenbar)
@@ -177,7 +208,7 @@ SHA-256 über JSON-String von:
 {
   "date": "...",
   "sales": {...},
-  "personnel": { "total_hours": ..., "total_cost": ..., "employee_count": ... },
+  "personnel": { "total_hours": ..., "labor_cost": ..., "employee_count": ... },
   "beer_and_kegs": {...},
   "events": <count>,
   "notes": <count>,

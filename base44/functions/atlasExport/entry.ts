@@ -7,6 +7,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
  * 
  * Exportiert operative Tagesdaten für die Controlling-App "Atlas".
  * Reiner Lese-Export — keine Datenänderung.
+ * 
+ * Änderungen V1 (02.09.2026):
+ * - Nachtwächter getrennt von keg_changes (kein Fasswechsel, sondern Schankverlust)
+ * - labor_cost_source kennzeichnet Herkunft: stored | calculated_from_entries | unavailable
  */
 
 // ── Hilfsfunktionen ──────────────────────────────────────────────────────────
@@ -70,7 +74,7 @@ Deno.serve(async (req) => {
     if (revenueRecords.length === 0) {
       return Response.json({
         success: true,
-        preview: { operating_days: 0, gross_revenue: 0, personnel_hours: 0, personnel_cost: 0, keg_changes: 0, events: 0, warnings: ['Keine Tagesabschlüsse im gewählten Zeitraum gefunden.'] }
+        preview: { operating_days: 0, gross_revenue: 0, personnel_hours: 0, personnel_cost: 0, personnel_cost_source: 'unavailable', keg_changes: 0, nightwatch_count: 0, events: 0, warnings: ['Keine Tagesabschlüsse im gewählten Zeitraum gefunden.'] }
       });
     }
 
@@ -90,21 +94,58 @@ Deno.serve(async (req) => {
 
     // ── 3. Preview ───────────────────────────────────────────────────────────
     if (preview_only) {
-      let totalRevenue = 0, totalHours = 0, totalCost = 0, eventCount = 0, kegCount = 0;
+      let totalRevenue = 0, totalHours = 0, totalCost = 0, eventCount = 0, nightwatchCount = 0;
+      let costSource = 'unavailable';
+      let anyStored = false, anyCalculated = false;
       const warnings = [];
 
       for (const rev of revenueRecords) {
         totalRevenue += rev.revenue || 0;
-        totalCost += rev.labor_cost_total || 0;
         const dayClock = filterByDate(allClockEntries, rev.date, 'clock_in');
-        totalHours += dayClock.reduce((s, c) => s + (c.total_hours || 0), 0);
+        const dayHours = dayClock.reduce((s, c) => s + (c.total_hours || 0), 0);
+        totalHours += dayHours;
+
+        // Personalkosten-Quelle pro Tag bestimmen
+        if (rev.labor_cost_total && rev.labor_cost_total > 0) {
+          totalCost += rev.labor_cost_total;
+          anyStored = true;
+        } else {
+          // Berechnung aus ClockEntry × hourly_rate
+          let dayCalculatedCost = 0;
+          let canCalculate = false;
+          const empHours = {};
+          dayClock.forEach(ce => {
+            const empId = ce.employee_id;
+            if (!empId) return;
+            if (!empHours[empId]) empHours[empId] = 0;
+            empHours[empId] += ce.total_hours || 0;
+          });
+          for (const [empId, hours] of Object.entries(empHours)) {
+            const emp = employeeMap[empId];
+            const cost = calculateEmployeeCost(hours, emp?.hourly_rate, emp?.monthly_salary, emp?.weekly_hours);
+            if (cost !== null) { dayCalculatedCost += cost; canCalculate = true; }
+          }
+          if (canCalculate && dayCalculatedCost > 0) {
+            totalCost += Math.round(dayCalculatedCost * 100) / 100;
+            anyCalculated = true;
+          }
+        }
+
+        // Nachtwächter zählen (separat von keg_changes)
+        nightwatchCount += allWastage.filter(w => w.date === rev.date && w.type === 'Nachtwächter').length;
+
         eventCount += allEvents.filter(e => e.date === rev.date).length;
-        kegCount += allWastage.filter(w => w.date === rev.date && w.type === 'Nachtwächter').length;
 
         if (!rev.revenue || rev.revenue <= 0) warnings.push(`${rev.date}: Umsatz fehlt oder 0`);
         if (dayClock.length === 0) warnings.push(`${rev.date}: Keine Arbeitszeitdaten (ClockEntry)`);
-        if (!rev.labor_cost_total && !rev.manual_labor_cost_daily) warnings.push(`${rev.date}: Keine Personalkosten erfasst`);
+        if (!rev.labor_cost_total) warnings.push(`${rev.date}: labor_cost_total fehlt — berechnung aus entries`);
       }
+
+      // Globale Kostenquelle
+      if (anyStored && anyCalculated) costSource = 'mixed';
+      else if (anyStored) costSource = 'stored';
+      else if (anyCalculated) costSource = 'calculated_from_entries';
+      else costSource = 'unavailable';
 
       const dateCounts = {};
       revenueRecords.forEach(r => { dateCounts[r.date] = (dateCounts[r.date] || 0) + 1; });
@@ -119,7 +160,9 @@ Deno.serve(async (req) => {
           gross_revenue: Math.round(totalRevenue * 100) / 100,
           personnel_hours: Math.round(totalHours * 100) / 100,
           personnel_cost: Math.round(totalCost * 100) / 100,
-          keg_changes: kegCount,
+          personnel_cost_source: costSource,
+          keg_changes: 0,
+          nightwatch_count: nightwatchCount,
           events: eventCount,
           warnings
         }
@@ -128,7 +171,7 @@ Deno.serve(async (req) => {
 
     // ── 4. Vollständiger Export ──────────────────────────────────────────────
     const days = [];
-    let totalRevenue = 0, totalHours = 0, totalCost = 0, totalEvents = 0, totalKegChanges = 0;
+    let totalRevenue = 0, totalHours = 0, totalCost = 0, totalEvents = 0, totalKegChanges = 0, totalNightwatch = 0;
 
     for (const rev of revenueRecords) {
       const dateStr = rev.date;
@@ -147,13 +190,84 @@ Deno.serve(async (req) => {
         revenueByCategory[cat].revenue = Math.round(revenueByCategory[cat].revenue * 100) / 100;
       });
 
-      // Fasswechsel: Wastage type="Nachtwächter" als Proxy
-      const dayKegWastage = allWastage.filter(w => w.date === dateStr && w.type === 'Nachtwächter');
-      const kegChanges = dayKegWastage.map(w => ({
+      // Nachtwächter = Bierleitungsspülung / Schankverlust (NICHT Fasswechsel)
+      const dayNightwatch = allWastage.filter(w => w.date === dateStr && w.type === 'Nachtwächter');
+      const nightwatchWastage = dayNightwatch.map(w => ({
+        source_record_id: w.id,
+        article_id: null,  // Wastage hat kein article_id Feld
         product_name: w.article_name || null,
         quantity: w.quantity || null,
         unit: w.unit || null,
+        value: null,  // Wastage speichert keinen Wert/Preis
+        noted_by: w.noted_by || null,
+        notes: w.notes || null,
       }));
+
+      // Echte Fasswechsel: SAVO hat keine separate Fasswechsel-Entity
+      // → keg_changes bleibt leer
+      const kegChanges = [];
+
+      // ── Personalkosten + Quelle bestimmen ────────────────────────────────────
+      const dayClockEntries = filterByDate(allClockEntries, dateStr, 'clock_in');
+      const dayTimeEntries = filterByDate(allTimeEntries, dateStr, 'date');
+      const employeeHours = {};
+
+      dayClockEntries.forEach(ce => {
+        const empId = ce.employee_id;
+        if (!empId) return;
+        if (!employeeHours[empId]) {
+          employeeHours[empId] = { employee_id: empId, name: ce.employee_name || employeeMap[empId]?.name || 'Unbekannt', hours: 0 };
+        }
+        employeeHours[empId].hours += ce.total_hours || 0;
+      });
+
+      if (Object.keys(employeeHours).length === 0) {
+        dayTimeEntries.forEach(te => {
+          const empId = te.employee_id;
+          if (!empId) return;
+          if (!employeeHours[empId]) {
+            employeeHours[empId] = { employee_id: empId, name: te.employee_name || employeeMap[empId]?.name || 'Unbekannt', hours: 0 };
+          }
+          employeeHours[empId].hours += te.total_hours || 0;
+        });
+      }
+
+      let dayTotalHours = 0;
+      let calculatedCost = 0;
+      let canCalculateCost = false;
+      const employeeList = [];
+
+      Object.values(employeeHours).forEach(eh => {
+        const emp = employeeMap[eh.employee_id];
+        const hours = Math.round(eh.hours * 100) / 100;
+        dayTotalHours += hours;
+        const cost = calculateEmployeeCost(hours, emp?.hourly_rate, emp?.monthly_salary, emp?.weekly_hours);
+
+        if (cost !== null) { calculatedCost += cost; canCalculateCost = true; }
+
+        employeeList.push({
+          employee_id: eh.employee_id,
+          name: eh.name,
+          role: emp?.role || null,
+          hours,
+          hourly_rate: emp?.hourly_rate || null,
+          cost,
+        });
+      });
+
+      calculatedCost = Math.round(calculatedCost * 100) / 100;
+
+      // Personalkosten-Quelle bestimmen
+      let laborCost = null;
+      let laborCostSource = 'unavailable';
+
+      if (rev.labor_cost_total && rev.labor_cost_total > 0) {
+        laborCost = rev.labor_cost_total;
+        laborCostSource = 'stored';
+      } else if (canCalculateCost && calculatedCost > 0) {
+        laborCost = calculatedCost;
+        laborCostSource = 'calculated_from_entries';
+      }
 
       const dayData = {
         source_record_id: rev.id,
@@ -203,13 +317,15 @@ Deno.serve(async (req) => {
         },
 
         personnel: {
-          total_hours: null,
-          total_cost: rev.labor_cost_total || rev.manual_labor_cost_daily || null,
-          employees: [],
+          total_hours: Math.round(dayTotalHours * 100) / 100,
+          labor_cost: laborCost,
+          labor_cost_source: laborCostSource,
+          employees: employeeList,
         },
 
         beer_and_kegs: {
           keg_changes: kegChanges,
+          nightwatch_wastage: nightwatchWastage,
         },
 
         events: [],
@@ -222,52 +338,8 @@ Deno.serve(async (req) => {
         notes: [],
       };
 
-      // ── Personal pro Tag ─────────────────────────────────────────────────────
-      const dayClockEntries = filterByDate(allClockEntries, dateStr, 'clock_in');
-      const dayTimeEntries = filterByDate(allTimeEntries, dateStr, 'date');
-      const employeeHours = {};
-
-      dayClockEntries.forEach(ce => {
-        const empId = ce.employee_id;
-        if (!empId) return;
-        if (!employeeHours[empId]) {
-          employeeHours[empId] = { employee_id: empId, name: ce.employee_name || employeeMap[empId]?.name || 'Unbekannt', hours: 0 };
-        }
-        employeeHours[empId].hours += ce.total_hours || 0;
-      });
-
-      if (Object.keys(employeeHours).length === 0) {
-        dayTimeEntries.forEach(te => {
-          const empId = te.employee_id;
-          if (!empId) return;
-          if (!employeeHours[empId]) {
-            employeeHours[empId] = { employee_id: empId, name: te.employee_name || employeeMap[empId]?.name || 'Unbekannt', hours: 0 };
-          }
-          employeeHours[empId].hours += te.total_hours || 0;
-        });
-      }
-
-      let dayTotalHours = 0;
-      const employeeList = [];
-      Object.values(employeeHours).forEach(eh => {
-        const emp = employeeMap[eh.employee_id];
-        const hours = Math.round(eh.hours * 100) / 100;
-        dayTotalHours += hours;
-        const cost = calculateEmployeeCost(hours, emp?.hourly_rate, emp?.monthly_salary, emp?.weekly_hours);
-        employeeList.push({
-          employee_id: eh.employee_id,
-          name: eh.name,
-          role: emp?.role || null,
-          hours,
-          hourly_rate: emp?.hourly_rate || null,
-          cost,
-        });
-      });
-
-      dayData.personnel.total_hours = Math.round(dayTotalHours * 100) / 100;
-      dayData.personnel.employees = employeeList;
       totalHours += dayTotalHours;
-      totalCost += dayData.personnel.total_cost || 0;
+      totalCost += laborCost || 0;
 
       // ── Events ──────────────────────────────────────────────────────────────
       const dayEvents = allEvents.filter(e => e.date === dateStr);
@@ -303,7 +375,7 @@ Deno.serve(async (req) => {
         if (cs.notes) dayData.notes.push({ type: 'closing_session', text: cs.notes });
       }
 
-      // ── Wastage (Schwund, ohne Nachtwächter — die sind bei keg_changes) ──────
+      // ── Wastage (Schwund, OHNE Nachtwächter — die sind bei beer_and_kegs) ────
       const dayWastage = allWastage.filter(w => w.date === dateStr && w.type !== 'Nachtwächter');
       dayWastage.forEach(w => {
         dayData.inventory.wastage.push({
@@ -348,7 +420,7 @@ Deno.serve(async (req) => {
       const hashContent = JSON.stringify({
         date: dayData.date,
         sales: dayData.sales,
-        personnel: { total_hours: dayData.personnel.total_hours, total_cost: dayData.personnel.total_cost, employee_count: dayData.personnel.employees.length },
+        personnel: { total_hours: dayData.personnel.total_hours, labor_cost: dayData.personnel.labor_cost, employee_count: dayData.personnel.employees.length },
         beer_and_kegs: dayData.beer_and_kegs,
         events: dayData.events.length,
         notes: dayData.notes.length,
@@ -358,10 +430,22 @@ Deno.serve(async (req) => {
 
       totalRevenue += rev.revenue || 0;
       totalKegChanges += kegChanges.length;
+      totalNightwatch += nightwatchWastage.length;
       days.push(dayData);
     }
 
-    // ── 5. Summary & Export ───────────────────────────────────────────────────
+    // ── 5. Summary ─────────────────────────────────────────────────────────────
+    // Globale Kostenquelle bestimmen
+    let anyStored = false, anyCalculated = false;
+    for (const d of days) {
+      if (d.personnel.labor_cost_source === 'stored') anyStored = true;
+      if (d.personnel.labor_cost_source === 'calculated_from_entries') anyCalculated = true;
+    }
+    let summaryCostSource = 'unavailable';
+    if (anyStored && anyCalculated) summaryCostSource = 'mixed';
+    else if (anyStored) summaryCostSource = 'stored';
+    else if (anyCalculated) summaryCostSource = 'calculated_from_entries';
+
     const exportData = {
       schema_name: 'SAVO_ATLAS_EXPORT',
       schema_version: '1.0',
@@ -377,7 +461,9 @@ Deno.serve(async (req) => {
         gross_revenue: Math.round(totalRevenue * 100) / 100,
         personnel_hours: Math.round(totalHours * 100) / 100,
         personnel_cost: Math.round(totalCost * 100) / 100,
+        personnel_cost_source: summaryCostSource,
         keg_changes: totalKegChanges,
+        nightwatch_count: totalNightwatch,
         events: totalEvents,
       },
       days,
