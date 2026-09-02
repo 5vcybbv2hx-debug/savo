@@ -24,6 +24,36 @@ const ALLERGENS = {
     'Weichtiere':              { label: 'Weichtiere',       short: 'We', key: 'weichtiere'  },
 };
 
+
+// ── Zusatzstoff-Kürzel für kompakte Anzeige ──────────────────────────────────
+const ADDITIVES_SHORT = {
+    'mit Farbstoff': 'Farbstoff',
+    'mit Konservierungsstoffen': 'Konservierungsmittel',
+    'mit Antioxidationsmittel': 'Antioxidationsmittel',
+    'mit Geschmacksverstärker': 'Geschmacksverstärker',
+    'geschwefelt': 'geschwefelt',
+    'geschwärzt': 'geschwärzt',
+    'gewachst': 'gewachst',
+    'mit Phosphat': 'Phosphat',
+    'mit Süßungsmittel': 'Süßungsmittel',
+    'enthält eine Phenylalaninquelle': 'Phenylalaninquelle',
+    'koffeinhaltig': 'Koffein',
+    'chininhaltig': 'Chinin',
+};
+
+// ── Kompakte Kennzeichnungs-Chips pro Getränk (Allergene + Zusatzstoffe) ─────
+function getMarkerChips(item) {
+    const chips = [];
+    (item.allergens_list || []).forEach(label => {
+        const a = ALLERGENS[label];
+        if (a) chips.push({ key: 'alg-' + label, short: a.short, type: 'allergen' });
+    });
+    (item.additives || []).forEach(label => {
+        chips.push({ key: 'add-' + label, short: ADDITIVES_SHORT[label] || label, type: 'additive' });
+    });
+    return chips;
+}
+
 // ── Kategorie-Icons ───────────────────────────────────────────────────────────
 const CAT_ICONS = {
     'Bier': '🍺', 'Biere': '🍺', 'Weizen': '🍺', 'Fassbier': '🍺',
@@ -141,6 +171,23 @@ function ItemDetailModal({ item, onClose }) {
                             </div>
                         </div>
                     )}
+
+                    {/* Zusatzstoffe */}
+                    {(item.additives || []).length > 0 && (
+                        <div className="pt-2 border-t border-border">
+                            <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                                <Info className="w-3 h-3" /> Zusatzstoffe
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {item.additives.map(a => (
+                                    <span key={a}
+                                        className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+                                        {(ADDITIVES_SHORT[a] || a) + ' · ' + a}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -183,6 +230,7 @@ export default function PublicDrinkMenu() {
     const [searchTerm,       setSearchTerm]       = useState('');
     const [activeCategory,   setActiveCategory]   = useState('Alle');
     const [detailItem,       setDetailItem]       = useState(null);
+    const [showLegend,      setShowLegend]      = useState(false);
     const [showAllergens,    setShowAllergens]    = useState(false);
     const [allergenFilters,  setAllergenFilters]  = useState([]);
 
@@ -472,6 +520,23 @@ export default function PublicDrinkMenu() {
                                                 <span className="text-xs text-muted-foreground">{item.alcohol_content}% vol.</span>
                                             )}
                                         </div>
+                                        {(() => {
+                                            const chips = getMarkerChips(item);
+                                            return chips.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    {chips.map(c => (
+                                                        <span key={c.key} className={cn(
+                                                            'text-[10px] leading-none px-1.5 py-0.5 rounded-full border font-medium',
+                                                            c.type === 'allergen'
+                                                                ? 'bg-destructive/10 text-destructive border-destructive/20'
+                                                                : 'bg-muted text-muted-foreground border-border'
+                                                        )}>
+                                                            {c.short}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
                                         {item.description && (
                                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
                                         )}
@@ -488,6 +553,45 @@ export default function PublicDrinkMenu() {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* ── Kennzeichnungs-Legende ─────────────────────────────────── */}
+            <div className="px-4 mt-6 pb-24">
+                <button onClick={() => setShowLegend(p => !p)}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground py-2.5 rounded-xl bg-muted/50 border border-border hover:text-foreground transition-colors">
+                    <Info className="w-3 h-3" />
+                    Kennzeichnungs-Legende
+                    {showLegend ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+                {showLegend && (
+                    <div className="mt-2 p-4 rounded-xl bg-card border border-border space-y-3">
+                        <div>
+                            <p className="text-xs font-semibold text-foreground mb-1.5">Allergene (EU-Kennzeichnung)</p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {Object.entries(ALLERGENS).map(([k, v]) => (
+                                    <span key={k}
+                                        className="text-[11px] leading-none px-2 py-1 rounded-full bg-destructive/10 text-destructive border border-destructive/20">
+                                        {v.short} = {v.label}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold text-foreground mb-1.5">Zusatzstoffe</p>
+                            <div className="flex flex-wrap gap-1.5">
+                                {Object.entries(ADDITIVES_SHORT).map(([full, short]) => (
+                                    <span key={full}
+                                        className="text-[11px] leading-none px-2 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+                                        {short} = {full}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            Getränke mit Allergenen (rot) oder Zusatzstoffen (grau) tragen die Kürzel direkt am Artikel. Tippe ein Getränk an, um alle Details zu sehen.
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* ── Footer ───────────────────────────────────────────────────── */}
