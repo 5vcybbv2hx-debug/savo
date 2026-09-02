@@ -26,6 +26,15 @@
       "type": "string",
       "description": "Ausführliche Schritt-für-Schritt-Anleitung (optional, ausklappbar)"
     },
+    "instruction_images": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Bild-URLs zur Anleitung (z.B. handgezeichnete Referenzseiten), werden über der Anleitung angezeigt"
+    },
+    "author": {
+      "type": "string",
+      "description": "Wer hat diese Anleitung erstellt (z.B. Anastazija) — wird als Credit angezeigt"
+    },
     "order": {
       "type": "number",
       "description": "Sortierreihenfolge innerhalb der Kategorie"

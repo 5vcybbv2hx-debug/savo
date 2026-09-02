@@ -5,7 +5,7 @@ import { STALE } from '@/lib/queryUtils';
 import {
     CheckCircle2, Circle, Users, RotateCcw, ChevronDown, ChevronRight,
     Trophy, Plus, Pencil, Trash2, GripVertical, BookOpen, X, Check,
-    ChevronUp, Settings, Save, AlertCircle
+    ChevronUp, Settings, Save, AlertCircle, ChevronLeft, PenLine
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,79 @@ const COLOR_OPTIONS = [
 
 function getColorCfg(colorKey) {
     return COLOR_OPTIONS.find(c => c.key === colorKey) || COLOR_OPTIONS[0];
+}
+
+// ── Vollbild-Ansicht für Anleitungs-Seiten ────────────────────────────────────
+function InstructionLightbox({ lightbox, onClose, onNavigate }) {
+    const touchStartX = React.useRef(null);
+    if (!lightbox?.images?.length) return null;
+    const { images, index } = lightbox;
+
+    const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+    const handleTouchEnd = (e) => {
+        if (touchStartX.current === null) return;
+        const delta = e.changedTouches[0].clientX - touchStartX.current;
+        if (Math.abs(delta) > 50) onNavigate(delta < 0 ? 1 : -1);
+        touchStartX.current = null;
+    };
+
+    return (
+        <div
+            className="fixed inset-0 z-[60] flex flex-col bg-black/95 backdrop-blur-sm"
+            onClick={onClose}
+        >
+            {/* Kopfzeile: Seiten-Zähler + Schließen */}
+            <div className="flex items-center justify-between px-4 py-3 shrink-0" onClick={e => e.stopPropagation()}>
+                <span className="text-white/80 text-sm font-medium">{index + 1} / {images.length}</span>
+                <button onClick={onClose} className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
+
+            {/* Bild mit Swipe */}
+            <div
+                className="flex-1 flex items-center justify-center overflow-auto p-3"
+                onClick={onClose}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+            >
+                <img
+                    src={images[index]}
+                    alt={`Anleitung Seite ${index + 1}`}
+                    className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                    onClick={e => e.stopPropagation()}
+                    onDoubleClick={e => {
+                        if (e.target.requestFullscreen) e.target.requestFullscreen().catch(() => {});
+                    }}
+                />
+            </div>
+
+            {/* Blättern */}
+            {images.length > 1 && (
+                <div className="flex items-center justify-between px-4 pb-6 shrink-0" onClick={e => e.stopPropagation()}>
+                    <button
+                        onClick={() => onNavigate(-1)}
+                        disabled={index === 0}
+                        className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 transition-colors"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <div className="flex gap-1.5">
+                        {images.length <= 8 && images.map((_, i) => (
+                            <span key={i} className={cn('w-1.5 h-1.5 rounded-full transition-all', i === index ? 'bg-amber-500 scale-125' : 'bg-white/30')} />
+                        ))}
+                    </div>
+                    <button
+                        onClick={() => onNavigate(1)}
+                        disabled={index === images.length - 1}
+                        className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 transition-colors"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
 }
 
 // ── Task-Edit Modal ───────────────────────────────────────────────────────────
@@ -211,6 +284,7 @@ export default function Onboarding() {
     const [categoryModal,      setCategoryModal]      = useState(null);
     const [deleteConfirm,      setDeleteConfirm]      = useState(null);
     const [myEmployee,         setMyEmployee]         = useState(null);
+    const [lightbox,           setLightbox]           = useState(null); // { images: [], index }
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: employees = [] } = useQuery({
@@ -595,7 +669,8 @@ export default function Onboarding() {
                                                 const completed = isTaskCompleted(task.id);
                                                 const taskProgress = getTaskProgress(task.id);
                                                 const showInstructions = openInstructions.has(task.id);
-                                                const hasInstructions = task.instructions && task.instructions.trim().length > 0;
+                                                const hasImages = Array.isArray(task.instruction_images) && task.instruction_images.length > 0;
+                                                const hasInstructions = (task.instructions && task.instructions.trim().length > 0) || hasImages;
 
                                                 return (
                                                     <div key={task.id} className={cn('transition-colors', completed ? 'bg-green-500/5' : '')}>
@@ -684,8 +759,47 @@ export default function Onboarding() {
 
                                                                 {/* Anleitung Inhalt */}
                                                                 {hasInstructions && showInstructions && (
-                                                                    <div className="mt-2 px-3 py-3 rounded-xl bg-amber-500/8 border border-amber-500/20 text-xs text-foreground leading-relaxed whitespace-pre-wrap">
-                                                                        {task.instructions}
+                                                                    <div className="mt-2 space-y-2">
+                                                                        {/* Original-Seiten als Karussell */}
+                                                                        {hasImages && (
+                                                                            <div>
+                                                                                <div className="flex gap-2 overflow-x-auto pb-1.5">
+                                                                                    {task.instruction_images.map((url, imgIdx) => (
+                                                                                        <button
+                                                                                            key={imgIdx}
+                                                                                            onClick={() => setLightbox({ images: task.instruction_images, index: imgIdx })}
+                                                                                            className="shrink-0 relative group"
+                                                                                        >
+                                                                                            <img
+                                                                                                src={url}
+                                                                                                alt={`Seite ${imgIdx + 1}`}
+                                                                                                className="h-44 w-auto rounded-xl border border-amber-500/30 object-contain bg-secondary/40 shadow-sm group-hover:border-amber-500/60 transition-colors"
+                                                                                                loading="lazy"
+                                                                                            />
+                                                                                            <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/60 text-[10px] font-bold text-white">
+                                                                                                {imgIdx + 1}
+                                                                                            </span>
+                                                                                        </button>
+                                                                                    ))}
+                                                                                </div>
+                                                                                <p className="text-[10px] text-muted-foreground">
+                                                                                    Tippen zum Vergrößern · {task.instruction_images.length} {task.instruction_images.length === 1 ? 'Seite' : 'Seiten'}
+                                                                                </p>
+                                                                            </div>
+                                                                        )}
+                                                                        {/* Text-Anleitung */}
+                                                                        {task.instructions && task.instructions.trim().length > 0 && (
+                                                                            <div className="px-3 py-3 rounded-xl bg-amber-500/8 border border-amber-500/20 text-xs text-foreground leading-relaxed whitespace-pre-wrap">
+                                                                                {task.instructions}
+                                                                            </div>
+                                                                        )}
+                                                                        {/* Autor-Credit */}
+                                                                        {task.author && (
+                                                                            <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                                                <PenLine className="w-3 h-3" />
+                                                                                Anleitung von {task.author}
+                                                                            </p>
+                                                                        )}
                                                                     </div>
                                                                 )}
 
@@ -756,6 +870,18 @@ export default function Onboarding() {
                         }
                     }}
                     onClose={() => setCategoryModal(null)}
+                />
+            )}
+
+            {/* ── Vollbild-Ansicht ──────────────────────────────────────── */}
+            {lightbox && (
+                <InstructionLightbox
+                    lightbox={lightbox}
+                    onClose={() => setLightbox(null)}
+                    onNavigate={(dir) => setLightbox(lb => lb
+                        ? { ...lb, index: Math.max(0, Math.min(lb.images.length - 1, lb.index + dir)) }
+                        : lb
+                    )}
                 />
             )}
 
