@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Calendar, Download, AlertTriangle, FileJson, BarChart3, Clock, Euro, Wine, CalendarDays } from 'lucide-react';
 
 export default function AtlasExport({ base44 }) {
@@ -68,20 +69,16 @@ export default function AtlasExport({ base44 }) {
     setError(null);
     setPreview(null);
     try {
-      const res = await fetch('/api/apps/695532713e60f5ccfc3522b9/functions/atlasExport', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          period_from: periodFrom,
-          period_to: periodTo,
-          preview_only: true,
-        }),
+      const res = await base44.functions.invoke('atlasExport', {
+        period_from: periodFrom,
+        period_to: periodTo,
+        preview_only: true,
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.error) throw new Error(data.error);
       setPreview(data.preview);
     } catch (e) {
-      setError(e.message);
+      setError(e?.response?.data?.error || e.message);
     } finally {
       setLoading(false);
     }
@@ -92,16 +89,12 @@ export default function AtlasExport({ base44 }) {
     setExporting(true);
     setError(null);
     try {
-      const res = await fetch('/api/apps/695532713e60f5ccfc3522b9/functions/atlasExport', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          period_from: periodFrom,
-          period_to: periodTo,
-          preview_only: false,
-        }),
+      const res = await base44.functions.invoke('atlasExport', {
+        period_from: periodFrom,
+        period_to: periodTo,
+        preview_only: false,
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.error) throw new Error(data.error);
 
       const blob = new Blob([JSON.stringify(data.export_data, null, 2)], { type: 'application/json' });
@@ -114,7 +107,7 @@ export default function AtlasExport({ base44 }) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e) {
-      setError(e.message);
+      setError(e?.response?.data?.error || e.message);
     } finally {
       setExporting(false);
     }
