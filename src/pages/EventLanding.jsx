@@ -123,6 +123,8 @@ export default function EventLanding() {
     const { data, isLoading } = useQuery({
         queryKey: ['public-event', id],
         queryFn: async () => {
+            // SDK liefert die Antwort ggf. gewrapped (Axios-Response) —
+            // defensiv entpacken wie in PublicDrinkMenu.jsx
             const res = await publicBase44.functions.invoke('getPublicEvent', { id });
             return res.data || res;
         },
@@ -134,7 +136,7 @@ export default function EventLanding() {
 
     return (
         <div className="min-h-screen bg-background text-foreground" style={{
-            backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% -10%, hsl(var(--primary) / 0.14) 0%, transparent 60%)',
+            backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% -10%, hsl(187 92% 50% / 0.14) 0%, transparent 60%)',
         }}>
             <div className="max-w-lg mx-auto px-4 py-8 sm:py-12 space-y-6">
 
@@ -173,11 +175,11 @@ export default function EventLanding() {
                                     </span>
                                 </div>
                                 <h1 className="text-4xl sm:text-5xl font-black leading-[1.05] tracking-tight text-foreground"
-                                    style={{ textShadow: '0 2px 30px hsl(var(--primary) / 0.25)' }}>
+                                    style={{ textShadow: '0 2px 30px hsl(187 92% 50% / 0.25)' }}>
                                     {ev.title}
                                 </h1>
                                 {ev.subtitle && (
-                                    <p className="text-lg text-muted-foreground font-medium">{ev.subtitle}</p>
+                                    <p className="text-lg text-foreground/70 font-medium">{ev.subtitle}</p>
                                 )}
                                 {ev.price_info && (
                                     <p className="text-primary font-black text-xl">{ev.price_info}</p>
@@ -190,7 +192,7 @@ export default function EventLanding() {
 
                         {/* Beschreibung */}
                         {ev.description && (
-                            <div className="bg-muted border border-border rounded-2xl p-5 sm:p-6">
+                            <div className="bg-card/60 border border-border rounded-2xl p-5 sm:p-6">
                                 <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">{ev.description}</p>
                             </div>
                         )}
@@ -214,7 +216,7 @@ export default function EventLanding() {
                                 …oder zu Google Kalender hinzufügen
                             </a>
                             <Link to="/PublicDrinkMenu"
-                                className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-muted hover:bg-muted/80 border border-border text-foreground font-bold text-base transition-colors">
+                                className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-card hover:bg-accent border border-border text-foreground font-bold text-base transition-colors">
                                 <GlassWater className="w-5 h-5 text-primary" />
                                 Getränkekarte ansehen
                             </Link>
@@ -223,7 +225,7 @@ export default function EventLanding() {
                 )}
 
                 {/* Footer */}
-                <p className="text-center text-xs text-muted-foreground pt-4 pb-2">
+                <p className="text-center text-xs text-muted-foreground/60 pt-4 pb-2">
                     SAVO Lounge Club · Wir freuen uns auf dich
                 </p>
             </div>
