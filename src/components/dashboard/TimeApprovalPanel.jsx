@@ -172,8 +172,8 @@ export default function TimeApprovalPanel() {
               <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                 <span>📅 {entry.date || entry.operation_date}</span>
                 <span>⏱ {entry.start_time} – {entry.end_time}</span>
-                <span>⌚ {(entry.total_hours + (entry.break_minutes || 0)/60).toFixed(2)}h</span>
-                {entry.break_minutes > 0 && <span>☕ {entry.break_minutes}min Pause (mitbezahlt)</span>}
+                <span>⌚ {(entry.total_hours + Math.min(entry.break_minutes || 0, 45)/60).toFixed(2)}h</span>
+                {entry.break_minutes > 0 && <span>☕ {entry.break_minutes}min Pause (max. 45min mitbezahlt)</span>}
               </div>
               {entry.notes && <p className="text-xs text-muted-foreground mt-1 italic">{entry.notes}</p>}
             </div>

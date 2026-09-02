@@ -28,8 +28,8 @@ function buildDayData(rev, timeEntries, tipDistributions, employeeMap) {
         const emp = employeeMap.get(te.employee_id);
         if (!isDailyPaid(emp)) return sum;
         const rate = emp?.hourly_rate || te.hourly_rate || 0;
-        // Pause wird bei SAVO mitbezahlt → bezahlte Stunden inkl. Pause
-        const paidHours = (te.total_hours || 0) + (te.break_minutes || 0) / 60;
+        // Pause wird bei SAVO bis 45 Min pro Schicht mitbezahlt
+        const paidHours = (te.total_hours || 0) + Math.min(te.break_minutes || 0, 45) / 60;
         return sum + paidHours * rate;
     }, 0);
     const revenue = rev.revenue || 0;

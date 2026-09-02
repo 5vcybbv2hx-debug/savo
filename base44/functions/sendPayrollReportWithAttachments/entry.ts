@@ -44,20 +44,20 @@ Deno.serve(async (req) => {
         // Calculate summary
         const monthDate = new Date(year, month - 1);
         const monthName = monthDate.toLocaleString('de-DE', { month: 'long', year: 'numeric' });
-        // Pause wird bei SAVO mitbezahlt → bezahlte Stunden inkl. Pause (total_hours bleibt netto in DB)
-        const totalHours = monthEntries.reduce((sum, e) => sum + (e.total_hours || 0) + (e.break_minutes || 0) / 60, 0);
+        // Pause wird bei SAVO bis 45 Min pro Schicht mitbezahlt (total_hours bleibt netto in DB)
+        const totalHours = monthEntries.reduce((sum, e) => sum + (e.total_hours || 0) + Math.min(e.break_minutes || 0, 45) / 60, 0);
         const employeeCount = new Set(monthEntries.map(e => e.employee_id)).size;
         const entryCount = monthEntries.length;
 
         // Generate CSV
         const csvLines = [
-            ['Mitarbeiter', 'Datum', 'Startzeit', 'Endzeit', 'Stunden (inkl. Pause, mitbezahlt)', 'Status'],
+            ['Mitarbeiter', 'Datum', 'Startzeit', 'Endzeit', 'Stunden (inkl. Pause, max. 45min mitbezahlt)', 'Status'],
             ...monthEntries.map(e => [
                 e.employee_name,
                 e.date,
                 e.start_time || '',
                 e.end_time || '',
-                ((e.total_hours || 0) + (e.break_minutes || 0) / 60).toFixed(2),
+                ((e.total_hours || 0) + Math.min(e.break_minutes || 0, 45) / 60).toFixed(2),
                 e.status || ''
             ])
         ];

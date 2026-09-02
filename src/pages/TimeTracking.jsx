@@ -258,7 +258,7 @@ export default function TimeTracking() {
             const breakMinutes = Math.max(actualBreakMinutes, calcLegalBreak(totalMinutes));
             const workedMinutes = totalMinutes - breakMinutes;
             const workedHours = (workedMinutes / 60).toFixed(2);
-            // paidHours = Nettostunden + Pause — Pause wird bei uns mitbezahlt.
+            // paidHours = Nettostunden + Pause (max. 45 Min pro Schicht mitbezahlt).
             // total_hours in der DB bleibt netto (ArbZG), nur Anzeige/Zahltag rechnet brutto.
             const paidHours = ((workedMinutes + breakMinutes) / 60).toFixed(2);
             const hourlyRate = currentEmployee?.hourly_rate;
@@ -391,8 +391,8 @@ export default function TimeTracking() {
                 if (!byEmployee[key]) {
                     byEmployee[key] = { name: te.employee_name || employee?.name || 'Unbekannt', hourlyRate, hours: 0 };
                 }
-                // Pause mitbezahlt → bezahlte Stunden = total_hours + break_minutes/60
-                byEmployee[key].hours += (te.total_hours || 0) + ((te.break_minutes || 0) / 60);
+                // Pause max. 45 Min mitbezahlt → bezahlte Stunden = total_hours + min(break_minutes,45)/60
+                byEmployee[key].hours += (te.total_hours || 0) + (Math.min(te.break_minutes || 0, 45) / 60);
             });
             return Object.values(byEmployee).map(e => ({
                 name: e.name,
@@ -525,9 +525,9 @@ export default function TimeTracking() {
         ? timeEntries
         : timeEntries.filter(e => e.employee_id === currentEmployee?.id);
 
-    // Pause wird bei SAVO mitbezahlt → angezeigte/bezahlte Stunden inkl. Pause.
+    // Pause wird bei SAVO bis 45 Min pro Schicht mitbezahlt → angezeigte/bezahlte Stunden inkl. gedeckelter Pause.
     // total_hours in der DB bleibt netto (ArbZG); hier wird break_minutes/60 wieder addiert.
-    const paidHoursOf = (e) => (e.total_hours || 0) + (e.break_minutes || 0) / 60;
+    const paidHoursOf = (e) => (e.total_hours || 0) + Math.min(e.break_minutes || 0, 45) / 60;
     const totalHours    = visibleEntries.reduce((s, e) => s + paidHoursOf(e), 0);
     const approvedHours = visibleEntries.filter(e => e.status === 'genehmigt').reduce((s, e) => s + paidHoursOf(e), 0);
 
@@ -922,7 +922,7 @@ export default function TimeTracking() {
                                                                     {entry.start_time}–{entry.end_time}
                                                                     {entry.end_time < entry.start_time && ' 🌙'}
                                                                 </span>
-                                                                {entry.break_minutes > 0 && <span>{entry.break_minutes} Min Pause (mitbezahlt)</span>}
+                                                                {entry.break_minutes > 0 && <span>{entry.break_minutes} Min Pause (max. 45 Min mitbezahlt)</span>}
                                                                 <span className="font-semibold text-amber-400">{paidHoursOf(entry).toFixed(2)}h</span>
                                                             </div>
                                                             {entry.arbzg_warning && (
@@ -1052,22 +1052,22 @@ export default function TimeTracking() {
                                 <div className="bg-muted rounded-xl p-4 text-center space-y-1">
                                     <Clock3 className="w-5 h-5 mx-auto text-blue-500" />
                                     <p className="text-2xl font-bold text-foreground">{shiftSummary.paidHours}h</p>
-                                    <p className="text-[11px] text-muted-foreground leading-tight">Gearbeitet (inkl. {shiftSummary.breakMinutes} Min Pause, mitbezahlt)</p>
+                                    <p className="text-[11px] text-muted-foreground leading-tight">Gearbeitet (inkl. {shiftSummary.breakMinutes} Min Pause)</p>
                                 </div>
                                 <div className="bg-muted rounded-xl p-4 text-center space-y-1">
                                     <Coffee className="w-5 h-5 mx-auto text-amber-500" />
                                     <p className="text-2xl font-bold text-foreground">{shiftSummary.breakMinutes} Min</p>
                                     <p className="text-xs text-muted-foreground">
                                         {shiftSummary.actualBreakMinutes > 0 && shiftSummary.breakMinutes === shiftSummary.actualBreakMinutes
-                                            ? 'Pause (inkl. deiner Pausen, mitbezahlt)'
-                                            : 'Pause (mitbezahlt)'}
+                                            ? 'Pause (bis 45 Min mitbezahlt)'
+                                            : 'Pause (bis 45 Min mitbezahlt)'}
                                     </p>
                                 </div>
                                 {shiftSummary.earned && (
                                     <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1 col-span-2">
                                         <Euro className="w-5 h-5 mx-auto text-emerald-500" />
                                         <p className="text-3xl font-bold text-emerald-500">{shiftSummary.earned} €</p>
-                                        <p className="text-xs text-muted-foreground">{shiftSummary.paidHours} × {shiftSummary.hourlyRate} €/h (Pause mitbezahlt)</p>
+                                        <p className="text-xs text-muted-foreground">{shiftSummary.paidHours} × {shiftSummary.hourlyRate} €/h (Pause bis 45 Min mitbezahlt)</p>
                                     </div>
                                 )}
                             </div>
