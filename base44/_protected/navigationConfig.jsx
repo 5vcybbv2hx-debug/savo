@@ -72,6 +72,7 @@ export const additionalPages = [
     { page: 'AccountingLiabilities', name: 'Verbindlichkeiten', icon: Scale,      permission: 'canViewLiabilities' },
     { page: 'AccountingBank',        name: 'Bankkonten',        icon: Banknote,   permission: 'canViewAccounting' },
     { page: 'DailyAnalysis',         name: 'Tagesanalyse',      icon: BarChart3,  permission: 'canViewAnalytics' },
+    { page: 'AtlasExport',         name: 'Atlas Export',      icon: Database,   permission: 'canViewAnalytics' },
 
     // Team
     { page: 'Employees',      name: 'Mitarbeiter',     icon: Users,         permission: 'canViewEmployees' },
