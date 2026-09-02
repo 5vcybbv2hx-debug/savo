@@ -951,7 +951,7 @@ function SlideQR({ slideId }) {
 
 function SlideEvent({ slide, accent, theme }) {
   const titleLen = (slide.title || '').length;
-  const titleFont = titleLen > 16 ? 'clamp(2.8rem,5.2vw,4.5rem)' : titleLen > 11 ? 'clamp(3.4rem,6.8vw,5.6rem)' : 'clamp(4.2rem,9.2vw,7.5rem)';
+  const titleFont = titleLen > 16 ? 'clamp(3.4rem,6.2vw,5.4rem)' : titleLen > 11 ? 'clamp(4.1rem,8.2vw,6.7rem)' : 'clamp(5rem,11vw,9rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
   const de2 = hasEnd ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
