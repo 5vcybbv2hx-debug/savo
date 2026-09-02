@@ -956,8 +956,6 @@ function SlideEvent({ slide, accent, theme }) {
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
   const de2 = hasEnd ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
   const ts = [slide.event_time, slide.event_end_time].filter(Boolean).join(' – ') + (slide.event_time ? ' Uhr' : '');
-  const titleLen = (slide.title || '').length;
-  const titleFont = titleLen > 16 ? 'clamp(2.8rem,5.2vw,4.5rem)' : titleLen > 11 ? 'clamp(3.4rem,6.8vw,5.6rem)' : 'clamp(4.2rem,9.2vw,7.5rem)';
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '80px 120px', textAlign: 'center', gap: 32 }}>
       <ThemeBackground theme={theme} accent={accent} />
