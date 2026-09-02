@@ -945,14 +945,13 @@ function SlideQR({ slideId }) {
             <div style={{ background: '#fff', padding: 10, borderRadius: 14, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
                 <img src={qr} alt="QR-Code: Event-Details" style={{ width: 112, height: 112, display: 'block' }} />
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>
-                📱 Details & Kalender — einfach scannen
-            </div>
         </div>
     );
 }
 
 function SlideEvent({ slide, accent, theme }) {
+  const titleLen = (slide.title || '').length;
+  const titleFont = titleLen > 16 ? 'clamp(2.8rem,5.2vw,4.5rem)' : titleLen > 11 ? 'clamp(3.4rem,6.8vw,5.6rem)' : 'clamp(4.2rem,9.2vw,7.5rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
   const de2 = hasEnd ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
@@ -964,7 +963,7 @@ function SlideEvent({ slide, accent, theme }) {
       <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 1, animation: 'slideInUp 0.6s 0.1s both' }}>
         <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
       </div>
-      <div style={{ fontSize: 'clamp(4.2rem,9.2vw,7.5rem)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
+      <div style={{ fontSize: titleFont, maxWidth: '100%', overflowWrap: 'break-word', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
       {slide.subtitle && <div style={{ fontSize: '2.7rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
       {(ds || ts) && (
         <div style={{ display: 'flex', gap: 80, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.5s both' }}>
