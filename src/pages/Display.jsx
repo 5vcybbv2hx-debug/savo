@@ -918,10 +918,10 @@ function SlideAnnouncement({ slide, accent, theme }) {
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: isDiscoParty ? 'flex-end' : 'center', alignItems: 'center', height: '100%', padding: isDiscoParty ? '40px 100px 120px' : '80px 120px', textAlign: 'center', gap: 28 }}>
       <ThemeBackground theme={theme} accent={accent} prominentDisco />
-      <div style={{ fontSize: 'clamp(3rem,7vw,5.5rem)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.03em', textShadow: `0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`, animation: 'floatUp 5s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.title}</div>
-      {slide.subtitle && <div style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.85)', animation: 'floatDown 6s ease-in-out infinite', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
-      {slide.body_text && <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.65)', maxWidth: 700, position: 'relative', zIndex: 1, textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>{slide.body_text}</div>}
-      {slide.cta_text && <div style={{ background: accent.bg, color: accent.text, padding: '16px 48px', borderRadius: 16, fontWeight: 800, fontSize: '1.4rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'pulseGlow 3s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
+      <div style={{ fontSize: 'clamp(3.75rem,8.5vw,6.8rem)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.03em', textShadow: `0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`, animation: 'floatUp 5s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.title}</div>
+      {slide.subtitle && <div style={{ fontSize: '2.2rem', color: 'rgba(255,255,255,0.85)', animation: 'floatDown 6s ease-in-out infinite', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
+      {slide.body_text && <div style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.65)', maxWidth: 800, position: 'relative', zIndex: 1, textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>{slide.body_text}</div>}
+      {slide.cta_text && <div style={{ background: accent.bg, color: accent.text, padding: '20px 56px', borderRadius: 16, fontWeight: 800, fontSize: '1.75rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'pulseGlow 3s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
     </div>
   );
 }
@@ -934,18 +934,18 @@ function SlideQR({ slideId }) {
         import('qrcode').then((mod) => {
             const QR = mod.default || mod;
             QR.toDataURL(`${window.location.origin}/Event/${slideId}`, {
-                width: 320, margin: 1, color: { dark: '#111827', light: '#ffffff' },
+                width: 400, margin: 1, color: { dark: '#111827', light: '#ffffff' },
             }).then(d => { if (alive) setQr(d); }).catch(() => {});
         }).catch(() => {});
         return () => { alive = false; };
     }, [slideId]);
     if (!qr) return null;
     return (
-        <div style={{ position: 'absolute', right: 48, bottom: 48, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, animation: 'fadeInScale 0.8s 1.5s both' }}>
-            <div style={{ background: '#fff', padding: 10, borderRadius: 14, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
-                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 132, height: 132, display: 'block' }} />
+        <div style={{ position: 'absolute', right: 48, bottom: 48, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, animation: 'fadeInScale 0.8s 1.5s both' }}>
+            <div style={{ background: '#fff', padding: 12, borderRadius: 16, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
+                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 168, height: 168, display: 'block' }} />
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', fontWeight: 600, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.75)', fontWeight: 600, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '6px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>
                 📱 Details & Kalender — einfach scannen
             </div>
         </div>
@@ -961,35 +961,35 @@ function SlideEvent({ slide, accent, theme }) {
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '80px 120px', textAlign: 'center', gap: 32 }}>
       <ThemeBackground theme={theme} accent={accent} />
       <SpotlightStreak color={accent.bg} />
-      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 1, animation: 'slideInUp 0.6s 0.1s both' }}>
-        <span style={{ fontSize: '0.85rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '8px 28px', position: 'relative', zIndex: 1, animation: 'slideInUp 0.6s 0.1s both' }}>
+        <span style={{ fontSize: '1.05rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
       </div>
-      <div style={{ fontSize: 'clamp(3rem,6.5vw,5rem)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
-      {slide.subtitle && <div style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
+      <div style={{ fontSize: 'clamp(3.75rem,8vw,6.25rem)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
+      {slide.subtitle && <div style={{ fontSize: '2.2rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
       {(ds || ts) && (
-        <div style={{ display: 'flex', gap: 56, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.5s both' }}>
+        <div style={{ display: 'flex', gap: 64, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.5s both' }}>
           {ds && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Datum</div>
-              <div style={{ fontSize: 'clamp(2rem,3.6vw,3rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>
+              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Datum</div>
+              <div style={{ fontSize: 'clamp(2.5rem,4.5vw,3.75rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>
                 {ds}{de2 && <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.62em' }}> – {de2}</span>}
               </div>
             </div>
           )}
-          {ds && ts && <div style={{ width: 1, height: 84, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
+          {ds && ts && <div style={{ width: 1, height: 105, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
           {ts && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Uhrzeit</div>
-              <div style={{ fontSize: 'clamp(2rem,3.6vw,3rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{ts}</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Uhrzeit</div>
+              <div style={{ fontSize: 'clamp(2.5rem,4.5vw,3.75rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{ts}</div>
             </div>
           )}
         </div>
       )}
       {slide.location && (
-        <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '12px 28px', fontWeight: 600, fontSize: '1.25rem', color: '#fff', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.65s both' }}>📍 {slide.location}</div>
+        <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '14px 32px', fontWeight: 600, fontSize: '1.55rem', color: '#fff', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.65s both' }}>📍 {slide.location}</div>
       )}
       {slide.public_event && <SlideQR slideId={slide.id} />}
-      {slide.cta_text && <div style={{ background: accent.bg, color: accent.text, padding: '16px 48px', borderRadius: 16, fontWeight: 800, fontSize: '1.4rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
+      {slide.cta_text && <div style={{ background: accent.bg, color: accent.text, padding: '20px 56px', borderRadius: 16, fontWeight: 800, fontSize: '1.75rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
     </div>
   );
 }
@@ -1003,20 +1003,20 @@ function SlideDrinkSpecial({ slide, accent, theme }) {
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '60px 80px', textAlign: 'center', gap: 32 }}>
       <ThemeBackground theme={theme} accent={accent} />
       <ShimmerBars color={accent.bg} />
-      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 1, animation: 'fadeInScale 0.5s 0.1s both' }}>
-        <span style={{ fontSize: '0.85rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>DRINK SPECIAL</span>
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '8px 28px', position: 'relative', zIndex: 1, animation: 'fadeInScale 0.5s 0.1s both' }}>
+        <span style={{ fontSize: '1.05rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>DRINK SPECIAL</span>
       </div>
-      {slide.title && valid.length > 1 && <div style={{ fontSize: 'clamp(2.5rem,5vw,4rem)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{slide.title}</div>}
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', width: '100%', position: 'relative', zIndex: 1 }}>
+      {slide.title && valid.length > 1 && <div style={{ fontSize: 'clamp(3.1rem,6.2vw,5rem)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{slide.title}</div>}
+      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', justifyContent: 'center', width: '100%', position: 'relative', zIndex: 1 }}>
         {valid.map((d, i) => (
-          <div key={i} style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(14px)', border: `2px solid ${accent.bg}55`, borderRadius: 24, padding: '28px 36px', textAlign: 'center', minWidth: 180, flex: '1 1 180px', maxWidth: 280, animation: `bounceIn 0.7s ${0.35 + i * 0.15}s both`, boxShadow: `0 8px 32px rgba(0,0,0,0.5),0 0 24px ${accent.glow}22` }}>
-            <div style={{ fontSize: '2.8rem', marginBottom: 12, display: 'inline-block', animation: `drinkFloat ${3.5 + i * 0.5}s ${i * 0.3}s ease-in-out infinite` }}>{d.emoji || '🍹'}</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', marginBottom: 12 }}>{d.name}</div>
-            {d.price && <div style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 12, background: accent.bg, color: accent.text, fontWeight: 900, fontSize: '1.5rem', boxShadow: `0 0 20px ${accent.glow}` }}>{d.price}</div>}
+          <div key={i} style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(14px)', border: `2px solid ${accent.bg}55`, borderRadius: 24, padding: '32px 42px', textAlign: 'center', minWidth: 210, flex: '1 1 210px', maxWidth: 320, animation: `bounceIn 0.7s ${0.35 + i * 0.15}s both`, boxShadow: `0 8px 32px rgba(0,0,0,0.5),0 0 24px ${accent.glow}22` }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: 14, display: 'inline-block', animation: `drinkFloat ${3.5 + i * 0.5}s ${i * 0.3}s ease-in-out infinite` }}>{d.emoji || '🍹'}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', marginBottom: 14 }}>{d.name}</div>
+            {d.price && <div style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 12, background: accent.bg, color: accent.text, fontWeight: 900, fontSize: '1.85rem', boxShadow: `0 0 20px ${accent.glow}` }}>{d.price}</div>}
           </div>
         ))}
       </div>
-      {slide.subtitle && <div style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.65)', position: 'relative', zIndex: 1, animation: 'slideInUp 0.6s 0.9s both' }}>{slide.subtitle}</div>}
+      {slide.subtitle && <div style={{ fontSize: '1.6rem', color: 'rgba(255,255,255,0.65)', position: 'relative', zIndex: 1, animation: 'slideInUp 0.6s 0.9s both' }}>{slide.subtitle}</div>}
     </div>
   );
 }
@@ -1030,9 +1030,9 @@ function SlideCountdown({ slide, accent, theme }) {
   if (total < 0) return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 32, textAlign: 'center' }}>
       <ThemeBackground theme={theme} accent={accent} />
-      <div style={{ fontSize: '5rem', animation: 'bounceIn 0.8s both', position: 'relative', zIndex: 1 }}>🎉</div>
-      <div style={{ fontSize: '4rem', fontWeight: 900, color: accent.bg, textShadow: `0 0 60px ${accent.glow}`, animation: 'pulseGlow 2s ease-in-out infinite', position: 'relative', zIndex: 1 }}>ES IST SOWEIT!</div>
-      <div style={{ fontSize: '2rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, position: 'relative', zIndex: 1 }}>{slide.title}</div>
+      <div style={{ fontSize: '6rem', animation: 'bounceIn 0.8s both', position: 'relative', zIndex: 1 }}>🎉</div>
+      <div style={{ fontSize: '5rem', fontWeight: 900, color: accent.bg, textShadow: `0 0 60px ${accent.glow}`, animation: 'pulseGlow 2s ease-in-out infinite', position: 'relative', zIndex: 1 }}>ES IST SOWEIT!</div>
+      <div style={{ fontSize: '2.5rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, position: 'relative', zIndex: 1 }}>{slide.title}</div>
     </div>
   );
 
@@ -1042,25 +1042,25 @@ function SlideCountdown({ slide, accent, theme }) {
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 40, textAlign: 'center', padding: '60px 80px' }}>
       <ThemeBackground theme={theme} accent={accent} />
       <PulseRings color={accent.bg} />
-      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 1 }}>
-        <span style={{ fontSize: '0.85rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Countdown</span>
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '8px 28px', position: 'relative', zIndex: 1 }}>
+        <span style={{ fontSize: '1.05rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Countdown</span>
       </div>
-      <div style={{ fontSize: '3.8rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, textShadow: '0 2px 40px rgba(0,0,0,0.9)', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 1 }}>{slide.title}</div>
+      <div style={{ fontSize: '4.75rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, textShadow: '0 2px 40px rgba(0,0,0,0.9)', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 1 }}>{slide.title}</div>
       {slide.public_event && <SlideQR slideId={slide.id} />}
-      <div style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', gap: 28, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
         {units.map((u, i) => (
           <div key={i} style={{ textAlign: 'center' }}>
-            <div style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(14px)', border: `2px solid ${accent.bg}`, borderRadius: 20, padding: '24px 36px', minWidth: 130, boxShadow: `0 0 40px ${accent.glow},0 8px 32px rgba(0,0,0,0.6)`, animation: `bounceIn 0.7s ${0.4 + i * 0.12}s both`, overflow: 'hidden' }}>
-              <div key={`${i}-${u.v}`} style={{ fontSize: '5rem', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums', animation: 'numberFlip 0.35s ease-out both' }}>{String(u.v).padStart(2, '0')}</div>
-              <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.6)', marginTop: 8, fontWeight: 600 }}>{u.l}</div>
+            <div style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(14px)', border: `2px solid ${accent.bg}`, borderRadius: 20, padding: '28px 42px', minWidth: 155, boxShadow: `0 0 40px ${accent.glow},0 8px 32px rgba(0,0,0,0.6)`, animation: `bounceIn 0.7s ${0.4 + i * 0.12}s both`, overflow: 'hidden' }}>
+              <div key={`${i}-${u.v}`} style={{ fontSize: '6.25rem', fontWeight: 900, color: '#fff', lineHeight: 1, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums', animation: 'numberFlip 0.35s ease-out both' }}>{String(u.v).padStart(2, '0')}</div>
+              <div style={{ fontSize: '1.25rem', color: 'rgba(255,255,255,0.6)', marginTop: 10, fontWeight: 600 }}>{u.l}</div>
             </div>
           </div>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
-        {slide.event_date && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '10px 22px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>📅 {format(parseISO(slide.event_date), 'EEEE, d. MMMM yyyy', { locale: de })}</div>}
-        {slide.event_time && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '10px 22px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>🕐 {slide.event_time} Uhr</div>}
-        {slide.location && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '10px 22px', color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>📍 {slide.location}</div>}
+      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+        {slide.event_date && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '12px 26px', color: '#fff', fontWeight: 600, fontSize: '1.35rem' }}>📅 {format(parseISO(slide.event_date), 'EEEE, d. MMMM yyyy', { locale: de })}</div>}
+        {slide.event_time && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '12px 26px', color: '#fff', fontWeight: 600, fontSize: '1.35rem' }}>🕐 {slide.event_time} Uhr</div>}
+        {slide.location && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 10, padding: '12px 26px', color: '#fff', fontWeight: 600, fontSize: '1.35rem' }}>📍 {slide.location}</div>}
       </div>
     </div>
   );
@@ -1068,24 +1068,24 @@ function SlideCountdown({ slide, accent, theme }) {
 
 // ── QR-Code Slide ─────────────────────────────────────────────────────────────
 function SlideQRCode({ slide, accent, theme }) {
-  const qrSize = 'clamp(160px,18vw,240px)';
+  const qrSize = 'clamp(200px,22vw,300px)';
   return (
-    <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:40 }}>
+    <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:44 }}>
       <ThemeBackground theme={theme} accent={accent} />
-      <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:32 }}>
-        <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.5s 0.1s both' }}>
-          <span style={{ fontSize:'0.8rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>{slide.subtitle||'QR-Code scannen'}</span>
+      <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:36 }}>
+        <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'6px 24px',animation:'slideInUp 0.5s 0.1s both' }}>
+          <span style={{ fontSize:'1rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>{slide.subtitle||'QR-Code scannen'}</span>
         </div>
-        <div style={{ fontSize:'clamp(2rem,5vw,4.5rem)',fontWeight:900,color:'#fff',letterSpacing:'-0.03em',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`,animation:'slideInUp 0.6s 0.2s both' }}>{slide.title}</div>
+        <div style={{ fontSize:'clamp(2.5rem,6.2vw,5.6rem)',fontWeight:900,color:'#fff',letterSpacing:'-0.03em',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`,animation:'slideInUp 0.6s 0.2s both' }}>{slide.title}</div>
         <div style={{ position:'relative',animation:'bounceIn 0.8s 0.4s both' }}>
-          <div style={{ position:'absolute',inset:-8,borderRadius:20,border:`3px solid ${accent.bg}`,boxShadow:`0 0 30px ${accent.glow},0 0 60px ${accent.glow}33`,animation:'pulseGlow 3s ease-in-out infinite',pointerEvents:'none' }}/>
+          <div style={{ position:'absolute',inset:-10,borderRadius:24,border:`3px solid ${accent.bg}`,boxShadow:`0 0 30px ${accent.glow},0 0 60px ${accent.glow}33`,animation:'pulseGlow 3s ease-in-out infinite',pointerEvents:'none' }}/>
           <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(slide.body_text||MENU_URL)}&bgcolor=050508&color=ffffff&margin=12`}
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(slide.body_text||MENU_URL)}&bgcolor=050508&color=ffffff&margin=12`}
             alt="QR Code"
-            style={{ width:qrSize,height:qrSize,borderRadius:14,display:'block' }}
+            style={{ width:qrSize,height:qrSize,borderRadius:16,display:'block' }}
           />
         </div>
-        {slide.cta_text&&<div style={{ fontSize:'clamp(0.9rem,1.5vw,1.2rem)',color:'rgba(255,255,255,0.7)',fontWeight:500,animation:'slideInUp 0.6s 0.9s both' }}>{slide.cta_text}</div>}
+        {slide.cta_text&&<div style={{ fontSize:'clamp(1.1rem,1.9vw,1.5rem)',color:'rgba(255,255,255,0.7)',fontWeight:500,animation:'slideInUp 0.6s 0.9s both' }}>{slide.cta_text}</div>}
       </div>
     </div>
   );
@@ -1097,22 +1097,22 @@ function SlideTonight({ slide, accent, theme }) {
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:32 }}>
       <ThemeBackground theme={theme} accent={accent} />
       <SpotlightStreak color={accent.bg} />
-      <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:28,maxWidth:900,width:'100%' }}>
-        <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.5s 0.1s both' }}>
-          <span style={{ fontSize:'0.8rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>Heute Abend</span>
+      <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:32,maxWidth:1000,width:'100%' }}>
+        <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'6px 24px',animation:'slideInUp 0.5s 0.1s both' }}>
+          <span style={{ fontSize:'1rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>Heute Abend</span>
         </div>
-        <div style={{ fontSize:'clamp(2.5rem,6vw,5rem)',fontWeight:900,color:'#fff',letterSpacing:'-0.03em',lineHeight:1.05,animation:'slideInUp 0.6s 0.2s both',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}` }}>{slide.title}</div>
-        {slide.subtitle&&<div style={{ fontSize:'clamp(1.2rem,2.2vw,1.8rem)',color:'rgba(255,255,255,0.85)',animation:'slideInUp 0.6s 0.35s both',textShadow:'0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
+        <div style={{ fontSize:'clamp(3.1rem,7.5vw,6.25rem)',fontWeight:900,color:'#fff',letterSpacing:'-0.03em',lineHeight:1.05,animation:'slideInUp 0.6s 0.2s both',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}` }}>{slide.title}</div>
+        {slide.subtitle&&<div style={{ fontSize:'clamp(1.5rem,2.8vw,2.25rem)',color:'rgba(255,255,255,0.85)',animation:'slideInUp 0.6s 0.35s both',textShadow:'0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
         {slide.body_text&&(
-          <div style={{ display:'flex',gap:16,flexWrap:'wrap',justifyContent:'center',animation:'slideInUp 0.6s 0.5s both' }}>
+          <div style={{ display:'flex',gap:18,flexWrap:'wrap',justifyContent:'center',animation:'slideInUp 0.6s 0.5s both' }}>
             {slide.body_text.split(',').map((name,i)=>(
-              <div key={i} style={{ background:'rgba(255,255,255,0.08)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:50,padding:'12px 28px',fontWeight:700,fontSize:'clamp(1rem,1.8vw,1.3rem)',color:'#fff',animation:`bounceIn 0.6s ${0.6+i*0.12}s both` }}>
+              <div key={i} style={{ background:'rgba(255,255,255,0.08)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:50,padding:'14px 32px',fontWeight:700,fontSize:'clamp(1.25rem,2.2vw,1.6rem)',color:'#fff',animation:`bounceIn 0.6s ${0.6+i*0.12}s both` }}>
                 {name.trim()}
               </div>
             ))}
           </div>
         )}
-        {slide.event_time&&<div style={{ background:'rgba(0,0,0,0.45)',backdropFilter:'blur(8px)',border:`1px solid ${accent.bg}55`,borderRadius:10,padding:'10px 24px',fontWeight:600,fontSize:'clamp(0.9rem,1.5vw,1.2rem)',color:accent.bg,animation:'slideInUp 0.6s 0.8s both' }}>🕐 Ab {slide.event_time} Uhr</div>}
+        {slide.event_time&&<div style={{ background:'rgba(0,0,0,0.45)',backdropFilter:'blur(8px)',border:`1px solid ${accent.bg}55`,borderRadius:10,padding:'12px 28px',fontWeight:600,fontSize:'clamp(1.1rem,1.9vw,1.5rem)',color:accent.bg,animation:'slideInUp 0.6s 0.8s both' }}>🕐 Ab {slide.event_time} Uhr</div>}
       </div>
     </div>
   );
