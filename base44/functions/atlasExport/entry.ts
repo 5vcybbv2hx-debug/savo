@@ -11,6 +11,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
  * Änderungen V1 (02.09.2026):
  * - Nachtwächter getrennt von keg_changes (kein Fasswechsel, sondern Schankverlust)
  * - labor_cost_source kennzeichnet Herkunft: stored | calculated_from_entries | unavailable
+ * - Redeploy cf971f9
  */
 
 // ── Hilfsfunktionen ──────────────────────────────────────────────────────────
