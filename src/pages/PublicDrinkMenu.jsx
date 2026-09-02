@@ -24,7 +24,6 @@ const ALLERGENS = {
     'Weichtiere':              { label: 'Weichtiere',       short: 'We', key: 'weichtiere'  },
 };
 
-
 // ── Zusatzstoff-Kürzel für kompakte Anzeige ──────────────────────────────────
 const ADDITIVES_SHORT = {
     'mit Farbstoff': 'Farbstoff',
@@ -230,9 +229,9 @@ export default function PublicDrinkMenu() {
     const [searchTerm,       setSearchTerm]       = useState('');
     const [activeCategory,   setActiveCategory]   = useState('Alle');
     const [detailItem,       setDetailItem]       = useState(null);
-    const [showLegend,      setShowLegend]      = useState(false);
     const [showAllergens,    setShowAllergens]    = useState(false);
     const [allergenFilters,  setAllergenFilters]  = useState([]);
+    const [showLegend,       setShowLegend]       = useState(false);
 
     // ── Daten laden ────────────────────────────────────────────────────────────
     const { data: menuData = {}, isLoading, error } = useQuery({
