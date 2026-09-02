@@ -16,6 +16,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import PublicDrinkMenu from './pages/PublicDrinkMenu';
+import EventLanding from './pages/EventLanding';
 import AccountingDashboard from './pages/AccountingDashboard';
 import AccountingCashbook from './pages/AccountingCashbook';
 import AccountingReceipts from './pages/AccountingReceipts';
@@ -286,6 +287,7 @@ function App() {
           <Routes>
             {/* Public pages (NO auth check, rendered outside AuthenticatedApp) */}
             <Route path="/PublicDrinkMenu" element={<PublicDrinkMenu />} />
+            <Route path="/Event/:id" element={<EventLanding />} />
             <Route path="/StorageLocationScan/:id" element={<PublicPages.StorageLocationScan />} />
 
             {/* All authenticated pages */}

@@ -93,7 +93,7 @@ const EMPTY_FORM = {
   title: '', subtitle: '', body_text: '', slide_type: 'announcement',
   image_url: '', accent_color: 'amber', background_theme: 'auto', cta_text: '', event_date: '',
   event_end_date: '', event_time: '', event_end_time: '', location: '',
-  price_info: '', is_active: true, sort_order: 1,
+  price_info: '', is_active: true, sort_order: 1, public_event: false,
   show_from: '', show_until: '', duration_seconds: 8,
   drinks: [{ ...EMPTY_DRINK }],
 };
@@ -216,7 +216,7 @@ export default function DisplayManager() {
     if (s.slide_type === 'drink_special' && s.body_text) {
       try { drinks = JSON.parse(s.body_text); } catch {}
     }
-    setForm({ ...EMPTY_FORM, ...s, drinks, event_end_date: s.event_end_date || '', event_end_time: s.event_end_time || '', location: s.location || '', background_theme: s.background_theme || 'auto' });
+    setForm({ ...EMPTY_FORM, ...s, public_event: s.public_event === true, drinks, event_end_date: s.event_end_date || '', event_end_time: s.event_end_time || '', location: s.location || '', background_theme: s.background_theme || 'auto' });
     setModal({ open: true, data: s });
     setActiveTab('form');
   };
@@ -413,6 +413,25 @@ export default function DisplayManager() {
                   <div className="space-y-1.5">
                     <Label className="text-xs">📍 Ort / Location</Label>
                     <Input value={form.location} onChange={e => f('location', e.target.value)} placeholder="z.B. QUI Bar, Terrasse, Hauptsaal…" className="h-9 text-sm" />
+                  </div>
+
+                  {/* Öffentliche Event-Seite + QR-Code auf dem Display */}
+                  <div className="pt-2.5 border-t border-border/50 flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <QrCode className="w-3.5 h-3.5" /> Öffentliche Event-Seite & QR-Code
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                        Gäste scannen den QR-Code auf dem TV und sehen Titel, Datum, Ort und
+                        Beschreibung — inklusive Kalender-Speichern und Getränkekarte.
+                      </p>
+                      {form.public_event && (
+                        <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5 mt-1.5 break-all">
+                          🔗 {window.location.origin}/Event/{modal.data?.id || '… — erscheint nach dem Speichern'}
+                        </p>
+                      )}
+                    </div>
+                    <Switch checked={!!form.public_event} onCheckedChange={v => f('public_event', v)} className="mt-0.5" />
                   </div>
                 </div>
               )}

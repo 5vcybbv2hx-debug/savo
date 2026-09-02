@@ -77,6 +77,23 @@
       "type": "string",
       "description": "Uhrzeit (z.B. '20:00')"
     },
+    "public_event": {
+      "type": "boolean",
+      "default": false,
+      "description": "Öffentliche Event-Detailseite (/Event/:id) + QR-Code auf dem Display aktiviert. Nur dann ist die Slide öffentlich abrufbar (Function getPublicEvent prüft dieses Flag)."
+    },
+    "location": {
+      "type": "string",
+      "description": "Veranstaltungsort (wird auf Slide + öffentlicher Event-Seite angezeigt)"
+    },
+    "event_end_date": {
+      "type": "string",
+      "description": "Optionales Enddatum bei mehrtägigen Events"
+    },
+    "event_end_time": {
+      "type": "string",
+      "description": "Optionale Endzeit"
+    },
     "price_info": {
       "type": "string",
       "description": "Preis-Info (z.B. '4,50 \u20ac / Glas')"

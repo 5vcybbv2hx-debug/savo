@@ -926,6 +926,32 @@ function SlideAnnouncement({ slide, accent, theme }) {
   );
 }
 
+// ── QR-Code auf der Slide (nur wenn Manager "public_event" aktiviert hat) ────
+function SlideQR({ slideId }) {
+    const [qr, setQr] = useState(null);
+    useEffect(() => {
+        let alive = true;
+        import('qrcode').then((mod) => {
+            const QR = mod.default || mod;
+            QR.toDataURL(`${window.location.origin}/Event/${slideId}`, {
+                width: 320, margin: 1, color: { dark: '#111827', light: '#ffffff' },
+            }).then(d => { if (alive) setQr(d); }).catch(() => {});
+        }).catch(() => {});
+        return () => { alive = false; };
+    }, [slideId]);
+    if (!qr) return null;
+    return (
+        <div style={{ position: 'absolute', right: 48, bottom: 48, zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, animation: 'fadeInScale 0.8s 1.5s both' }}>
+            <div style={{ background: '#fff', padding: 10, borderRadius: 14, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
+                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 132, height: 132, display: 'block' }} />
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.75)', fontWeight: 600, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}>
+                📱 Details & Kalender — einfach scannen
+            </div>
+        </div>
+    );
+}
+
 function SlideEvent({ slide, accent, theme }) {
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
@@ -940,11 +966,29 @@ function SlideEvent({ slide, accent, theme }) {
       </div>
       <div style={{ fontSize: 'clamp(3rem,6.5vw,5rem)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
       {slide.subtitle && <div style={{ fontSize: '1.8rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
-        {ds && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '12px 24px', fontWeight: 600, fontSize: '1.1rem', color: '#fff', animation: 'slideInUp 0.7s 0.5s both' }}>📅 {ds}{de2 ? ` – ${de2}` : ''}</div>}
-        {ts && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '12px 24px', fontWeight: 600, fontSize: '1.1rem', color: '#fff', animation: 'slideInUp 0.7s 0.65s both' }}>🕐 {ts}</div>}
-        {slide.location && <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '12px 24px', fontWeight: 600, fontSize: '1.1rem', color: '#fff', animation: 'slideInUp 0.7s 0.8s both' }}>📍 {slide.location}</div>}
-      </div>
+      {(ds || ts) && (
+        <div style={{ display: 'flex', gap: 56, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.5s both' }}>
+          {ds && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Datum</div>
+              <div style={{ fontSize: 'clamp(2rem,3.6vw,3rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>
+                {ds}{de2 && <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.62em' }}> – {de2}</span>}
+              </div>
+            </div>
+          )}
+          {ds && ts && <div style={{ width: 1, height: 84, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
+          {ts && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Uhrzeit</div>
+              <div style={{ fontSize: 'clamp(2rem,3.6vw,3rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{ts}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {slide.location && (
+        <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '12px 28px', fontWeight: 600, fontSize: '1.25rem', color: '#fff', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.65s both' }}>📍 {slide.location}</div>
+      )}
+      {slide.public_event && <SlideQR slideId={slide.id} />}
       {slide.cta_text && <div style={{ background: accent.bg, color: accent.text, padding: '16px 48px', borderRadius: 16, fontWeight: 800, fontSize: '1.4rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
     </div>
   );
@@ -1002,6 +1046,7 @@ function SlideCountdown({ slide, accent, theme }) {
         <span style={{ fontSize: '0.85rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Countdown</span>
       </div>
       <div style={{ fontSize: '3.8rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, textShadow: '0 2px 40px rgba(0,0,0,0.9)', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 1 }}>{slide.title}</div>
+      {slide.public_event && <SlideQR slideId={slide.id} />}
       <div style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
         {units.map((u, i) => (
           <div key={i} style={{ textAlign: 'center' }}>
