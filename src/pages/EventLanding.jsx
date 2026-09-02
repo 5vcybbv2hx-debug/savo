@@ -95,21 +95,21 @@ function EventDate({ ev }) {
     } catch { return null; }
 
     return (
-        <div className="w-full bg-black/40 border border-amber-500/25 rounded-2xl p-5 sm:p-6 space-y-3">
-            <div className="flex items-center gap-2 text-amber-500 text-xs font-bold tracking-[0.18em] uppercase">
+        <div className="w-full bg-card/60 border border-primary/25 rounded-2xl p-5 sm:p-6 space-y-3">
+            <div className="flex items-center gap-2 text-primary text-xs font-bold tracking-[0.18em] uppercase">
                 <CalendarPlus className="w-4 h-4" /> Termin
             </div>
-            <p className="text-2xl sm:text-3xl font-black text-white leading-tight">
-                {startStr}{endStr && <span className="text-white/50"> — {endStr}</span>}
+            <p className="text-2xl sm:text-3xl font-black text-foreground leading-tight">
+                {startStr}{endStr && <span className="text-muted-foreground"> — {endStr}</span>}
             </p>
             {timeStr && (
-                <p className="flex items-center gap-2 text-lg sm:text-xl font-bold text-amber-400">
+                <p className="flex items-center gap-2 text-lg sm:text-xl font-bold text-primary">
                     <Clock className="w-5 h-5" /> {timeStr}
                 </p>
             )}
             {ev.location && (
-                <p className="flex items-center gap-2 text-base font-semibold text-white/80">
-                    <MapPin className="w-5 h-5 text-amber-500 shrink-0" /> {ev.location}
+                <p className="flex items-center gap-2 text-base font-semibold text-foreground/80">
+                    <MapPin className="w-5 h-5 text-primary shrink-0" /> {ev.location}
                 </p>
             )}
         </div>
@@ -135,54 +135,54 @@ export default function EventLanding() {
     const ev = data?.found ? data.event : null;
 
     return (
-        <div className="min-h-screen bg-[#0c0a09] text-white" style={{
-            backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(245,158,11,0.14) 0%, transparent 60%)',
+        <div className="min-h-screen bg-background text-foreground" style={{
+            backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% -10%, hsl(187 92% 50% / 0.14) 0%, transparent 60%)',
         }}>
             <div className="max-w-lg mx-auto px-4 py-8 sm:py-12 space-y-6">
 
                 {/* Brand */}
                 <div className="text-center">
-                    <Link to="/PublicDrinkMenu" className="inline-flex items-center gap-2 text-amber-500 hover:text-amber-400 transition-colors">
+                    <Link to="/PublicDrinkMenu" className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
                         <span className="text-lg font-black tracking-[0.28em] uppercase">SAVO Lounge Club</span>
                     </Link>
                 </div>
 
                 {isLoading ? (
-                    <div className="py-24 flex flex-col items-center gap-3 text-white/50">
-                        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+                    <div className="py-24 flex flex-col items-center gap-3 text-muted-foreground">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
                         <p className="text-sm">Event wird geladen…</p>
                     </div>
                 ) : !ev ? (
                     <div className="py-16 text-center space-y-4">
                         <p className="text-6xl">🍸</p>
-                        <p className="text-2xl font-black text-white">Event nicht gefunden</p>
-                        <p className="text-sm text-white/50">
+                        <p className="text-2xl font-black text-foreground">Event nicht gefunden</p>
+                        <p className="text-sm text-muted-foreground">
                             Dieses Event ist nicht mehr verfügbar oder wurde noch nicht freigegeben.
                         </p>
                         <Link to="/PublicDrinkMenu"
-                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 text-black font-bold text-sm hover:bg-amber-400 transition-colors">
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors">
                             <GlassWater className="w-4 h-4" /> Zur Getränkekarte
                         </Link>
                     </div>
                 ) : (
                     <>
                         {/* Event-Karte */}
-                        <div className="rounded-3xl border border-amber-500/25 bg-gradient-to-b from-amber-500/10 to-transparent overflow-hidden">
+                        <div className="rounded-3xl border border-primary/25 bg-gradient-to-b from-primary/10 to-transparent overflow-hidden">
                             <div className="px-6 sm:px-8 py-8 sm:py-10 space-y-4">
-                                <div className="inline-flex items-center px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30">
-                                    <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-amber-500">
+                                <div className="inline-flex items-center px-3 py-1 rounded-lg bg-primary/15 border border-primary/30">
+                                    <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-primary">
                                         {ev.slide_type === 'countdown' ? 'Kommt bald' : 'Event'}
                                     </span>
                                 </div>
-                                <h1 className="text-4xl sm:text-5xl font-black leading-[1.05] tracking-tight text-white"
-                                    style={{ textShadow: '0 2px 30px rgba(245,158,11,0.25)' }}>
+                                <h1 className="text-4xl sm:text-5xl font-black leading-[1.05] tracking-tight text-foreground"
+                                    style={{ textShadow: '0 2px 30px hsl(187 92% 50% / 0.25)' }}>
                                     {ev.title}
                                 </h1>
                                 {ev.subtitle && (
-                                    <p className="text-lg text-white/70 font-medium">{ev.subtitle}</p>
+                                    <p className="text-lg text-foreground/70 font-medium">{ev.subtitle}</p>
                                 )}
                                 {ev.price_info && (
-                                    <p className="text-amber-400 font-black text-xl">{ev.price_info}</p>
+                                    <p className="text-primary font-black text-xl">{ev.price_info}</p>
                                 )}
                             </div>
                         </div>
@@ -192,14 +192,14 @@ export default function EventLanding() {
 
                         {/* Beschreibung */}
                         {ev.description && (
-                            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5 sm:p-6">
-                                <p className="text-sm leading-relaxed text-white/80 whitespace-pre-wrap">{ev.description}</p>
+                            <div className="bg-card/60 border border-border rounded-2xl p-5 sm:p-6">
+                                <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">{ev.description}</p>
                             </div>
                         )}
 
                         {/* CTA */}
                         {ev.cta_text && (
-                            <div className="text-center px-4 py-4 rounded-2xl bg-amber-500 text-black font-black text-lg">
+                            <div className="text-center px-4 py-4 rounded-2xl bg-primary text-primary-foreground font-black text-lg">
                                 {ev.cta_text}
                             </div>
                         )}
@@ -207,17 +207,17 @@ export default function EventLanding() {
                         {/* Kalender + Getränke */}
                         <div className="space-y-3">
                             <button onClick={() => downloadICS(ev)}
-                                className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-black text-base transition-colors shadow-lg shadow-amber-500/20">
+                                className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-primary hover:bg-primary/90 active:bg-primary/80 text-primary-foreground font-black text-base transition-colors shadow-lg shadow-primary/20">
                                 <CalendarPlus className="w-5 h-5" />
                                 In meinem Kalender speichern
                             </button>
                             <a href={gcalUrl(ev)} target="_blank" rel="noopener noreferrer"
-                                className="block text-center text-sm text-white/60 hover:text-amber-400 transition-colors py-1">
+                                className="block text-center text-sm text-muted-foreground hover:text-primary transition-colors py-1">
                                 …oder zu Google Kalender hinzufügen
                             </a>
                             <Link to="/PublicDrinkMenu"
-                                className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/15 text-white font-bold text-base transition-colors">
-                                <GlassWater className="w-5 h-5 text-amber-500" />
+                                className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-card hover:bg-accent border border-border text-foreground font-bold text-base transition-colors">
+                                <GlassWater className="w-5 h-5 text-primary" />
                                 Getränkekarte ansehen
                             </Link>
                         </div>
@@ -225,7 +225,7 @@ export default function EventLanding() {
                 )}
 
                 {/* Footer */}
-                <p className="text-center text-xs text-white/30 pt-4 pb-2">
+                <p className="text-center text-xs text-muted-foreground/60 pt-4 pb-2">
                     SAVO Lounge Club · Wir freuen uns auf dich
                 </p>
             </div>
