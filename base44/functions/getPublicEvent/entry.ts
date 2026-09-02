@@ -3,6 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 // ── Öffentliche Event-Detailseite für Gäste ──────────────────────────────────
 // Wird von der öffentlichen EventLanding-Page (/Event/:id) aufgerufen,
 // auf die der QR-Code auf dem TV-Display verweist.
+// (Redeploy c078bf8e)
 //
 // Sicherheitsregeln:
 //   - Liefert NUR Slides mit public_event === true, is_active === true
