@@ -951,7 +951,7 @@ function SlideQR({ slideId }) {
 
 function SlideEvent({ slide, accent, theme }) {
   const titleLen = (slide.title || '').length;
-  const titleFont = titleLen > 16 ? 'clamp(3.4rem,6.2vw,5.4rem)' : titleLen > 11 ? 'clamp(4.1rem,8.2vw,6.7rem)' : 'clamp(5rem,11vw,9rem)';
+  const titleFont = titleLen > 16 ? 'clamp(4.08rem,7.44vw,6.48rem)' : titleLen > 11 ? 'clamp(4.92rem,9.84vw,8.04rem)' : 'clamp(6rem,13.2vw,10.8rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
   const de2 = hasEnd ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
@@ -1072,9 +1072,11 @@ function SlideQRCode({ slide, accent, theme }) {
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:44 }}>
       <ThemeBackground theme={theme} accent={accent} />
       <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:32 }}>
-        <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.5s 0.1s both' }}>
-          <span style={{ fontSize:'1.25rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>{slide.subtitle||'QR-Code scannen'}</span>
-        </div>
+        {slide.subtitle && (
+          <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.5s 0.1s both' }}>
+            <span style={{ fontSize:'1.25rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>{slide.subtitle}</span>
+          </div>
+        )}
         <div style={{ fontSize:'clamp(3rem,7vw,6.2rem)',fontWeight:900,color:'#fff',letterSpacing:'-0.03em',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`,animation:'slideInUp 0.6s 0.2s both' }}>{slide.title}</div>
         <div style={{ position:'relative',animation:'bounceIn 0.8s 0.4s both' }}>
           <div style={{ position:'absolute',inset:-10,borderRadius:24,border:`3px solid ${accent.bg}`,boxShadow:`0 0 30px ${accent.glow},0 0 60px ${accent.glow}33`,animation:'pulseGlow 3s ease-in-out infinite',pointerEvents:'none' }}/>
