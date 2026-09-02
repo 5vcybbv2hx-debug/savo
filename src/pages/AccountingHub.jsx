@@ -8,7 +8,7 @@ import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
 import {
     Euro, BookOpen, Receipt, TrendingDown, Download,
-    RefreshCw, BarChart2, AlertTriangle
+    RefreshCw, BarChart2, AlertTriangle, Database
 } from 'lucide-react';
 import { format, startOfMonth } from 'date-fns';
 
@@ -102,11 +102,14 @@ export default function AccountingHub() {
             </div>
 
             {/* Export */}
-            {permissions.canExportAccounting && (
+            {(permissions.canExportAccounting || permissions.canViewAnalytics) && (
                 <div className="mb-6">
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Export</p>
                     <div className="space-y-2">
-                        <NavCard icon={Download} label="DATEV Export" description="CSV & Exportdaten für den Steuerberater" page="AccountingExport" permission="canExportAccounting" />
+                        {permissions.canExportAccounting && (
+                            <NavCard icon={Download} label="DATEV Export" description="CSV & Exportdaten für den Steuerberater" page="AccountingExport" permission="canExportAccounting" />
+                        )}
+                        <NavCard icon={Database} label="Atlas Export" description="Betriebsdaten für Atlas exportieren" page="AtlasExport" permission="canViewAnalytics" />
                     </div>
                 </div>
             )}
