@@ -122,7 +122,10 @@ export default function EventLanding() {
 
     const { data, isLoading } = useQuery({
         queryKey: ['public-event', id],
-        queryFn: () => publicBase44.functions.invoke('getPublicEvent', { id }),
+        queryFn: async () => {
+            const res = await publicBase44.functions.invoke('getPublicEvent', { id });
+            return res.data || res;
+        },
         staleTime: 60 * 1000,
         retry: 1,
     });
