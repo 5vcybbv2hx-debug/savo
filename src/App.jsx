@@ -29,6 +29,7 @@ import BetriebHub from './pages/BetriebHub';
 import GuestHub from './pages/GuestHub';
 import KarteHub from './pages/KarteHub';
 import AccountingBank from './pages/AccountingBank';
+import AtlasExport from './pages/AtlasExport';
 import BusinessCard from './pages/BusinessCard';
 import AdminTimeEditor from './pages/AdminTimeEditor';
 import ModuleCenter from './pages/ModuleCenter';
@@ -237,6 +238,7 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingFixedCosts" element={<LayoutWrapper currentPageName="AccountingFixedCosts"><RoleGuard permission="canViewAccounting"><AccountingFixedCosts /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingLiabilities" element={<LayoutWrapper currentPageName="AccountingLiabilities"><RoleGuard permission="canViewLiabilities"><AccountingLiabilities /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingBank" element={<LayoutWrapper currentPageName="AccountingBank"><RoleGuard permission="canViewAccounting"><AccountingBank /></RoleGuard></LayoutWrapper>} />
+      <Route path="/AtlasExport" element={<LayoutWrapper currentPageName="AtlasExport"><RoleGuard permission="canViewAnalytics"><AtlasExport /></RoleGuard></LayoutWrapper>} />
 
       {/* Catch-all */}
       <Route path="/TeamHub" element={<LayoutWrapper currentPageName="TeamHub"><RoleGuard permission="canViewShifts"><TeamHub /></RoleGuard></LayoutWrapper>} />

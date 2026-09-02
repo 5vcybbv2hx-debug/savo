@@ -3,6 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 /**
  * SAVO Atlas Export — Backend Function
  * Schema: SAVO_ATLAS_EXPORT_V1
+ * Deployed: Atlas Export page wiring
  * 
  * Exportiert operative Tagesdaten für die Controlling-App "Atlas".
  * Reiner Lese-Export — keine Datenänderung.
