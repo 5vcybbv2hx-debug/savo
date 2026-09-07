@@ -12,9 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
-export default function ShiftRequirementsManager() {
+export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: extOnOpenChange, hideTrigger }) {
     const queryClient = useQueryClient();
-    const [modalOpen, setModalOpen] = useState(false);
+    const [intModalOpen, setIntModalOpen] = useState(false);
+    const modalOpen = extOpen !== undefined ? extOpen : intModalOpen;
+    const setModalOpen = (v) => { if (extOnOpenChange) extOnOpenChange(v); setIntModalOpen(v); };
     const [editingReq, setEditingReq] = useState(null);
     const [typesModalOpen, setTypesModalOpen] = useState(false);
     const [editingType, setEditingType] = useState(null);
@@ -182,17 +184,19 @@ export default function ShiftRequirementsManager() {
 
     return (
         <>
-            <Button 
-                variant="outline" 
-                onClick={() => {
-                    setEditingReq(null);
-                    setModalOpen(true);
-                }}
-                className="border-slate-600 hover:bg-slate-700 text-slate-300"
-            >
-                <Users className="w-4 h-4 mr-2" />
-                Soll-Besetzung
-            </Button>
+            {!hideTrigger && (
+                <Button 
+                    variant="outline" 
+                    onClick={() => {
+                        setEditingReq(null);
+                        setModalOpen(true);
+                    }}
+                    className="border-slate-600 hover:bg-slate-700 text-slate-300"
+                >
+                    <Users className="w-4 h-4 mr-2" />
+                    Soll-Besetzung
+                </Button>
+            )}
 
             <Dialog open={modalOpen} onOpenChange={(open) => {
                 setModalOpen(open);

@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Plus, Users, Filter, X, Download, Zap, MoreHorizontal, CalendarDays } from 'lucide-react';
+import { Plus, Users, Filter, X, Download, Zap, MoreHorizontal, CalendarDays, Settings2 } from 'lucide-react';
 import { useErrorHandler } from '@/components/error/ErrorHandler';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,6 +38,7 @@ export default function Calendar() {
     const [filters, setFilters] = useState({ employee: 'all', shiftType: 'all' });
     const [showFilters, setShowFilters] = useState(false);
     const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+    const [adminModal, setAdminModal] = useState(null);
     const [mobileWeekStart, setMobileWeekStart] = useState(
         () => startOfWeek(new Date(), { weekStartsOn: 1 })
     );
@@ -380,13 +381,41 @@ export default function Calendar() {
                                         <>
                                             <div className="border-t border-border my-1" />
                                             <p className="text-xs text-muted-foreground px-2 py-1 font-medium uppercase tracking-wide">Admin</p>
-                                            <div onClick={() => setExportDropdownOpen(false)}><MonthlyStaffingCheck /></div>
-                                            <div onClick={() => setExportDropdownOpen(false)}><ShiftRequirementsManager /></div>
-                                            <div onClick={() => setExportDropdownOpen(false)}><DefaultShiftRulesManager /></div>
+                                            <Button variant="ghost" size="sm" onClick={() => { setAdminModal('monthly'); setExportDropdownOpen(false); }} className="w-full justify-start text-muted-foreground hover:text-foreground">
+                                                <CalendarDays className="w-4 h-4 mr-2" />
+                                                Monatsanalyse
+                                            </Button>
+                                            <Button variant="ghost" size="sm" onClick={() => { setAdminModal('requirements'); setExportDropdownOpen(false); }} className="w-full justify-start text-muted-foreground hover:text-foreground">
+                                                <Users className="w-4 h-4 mr-2" />
+                                                Soll-Besetzung
+                                            </Button>
+                                            <Button variant="ghost" size="sm" onClick={() => { setAdminModal('rules'); setExportDropdownOpen(false); }} className="w-full justify-start text-muted-foreground hover:text-foreground">
+                                                <Settings2 className="w-4 h-4 mr-2" />
+                                                Schicht-Regeln
+                                            </Button>
                                         </>
                                     )}
                                 </PopoverContent>
                             </Popover>
+                        )}
+                        {permissions.isAdmin && (
+                            <>
+                                <ShiftRequirementsManager
+                                    open={adminModal === 'requirements'}
+                                    onOpenChange={(open) => !open && setAdminModal(null)}
+                                    hideTrigger
+                                />
+                                <MonthlyStaffingCheck
+                                    open={adminModal === 'monthly'}
+                                    onOpenChange={(open) => !open && setAdminModal(null)}
+                                    hideTrigger
+                                />
+                                <DefaultShiftRulesManager
+                                    open={adminModal === 'rules'}
+                                    onOpenChange={(open) => !open && setAdminModal(null)}
+                                    hideTrigger
+                                />
+                            </>
                         )}
                     </div>
                 </div>

@@ -8,8 +8,10 @@ import { Trash2, Plus, Settings2 } from 'lucide-react';
 
 const DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
-export default function DefaultShiftRulesManager() {
-    const [open, setOpen] = useState(false);
+export default function DefaultShiftRulesManager({ open: extOpen, onOpenChange: extOnOpenChange, hideTrigger }) {
+    const [intOpen, setIntOpen] = useState(false);
+    const open = extOpen !== undefined ? extOpen : intOpen;
+    const setOpen = (v) => { if (extOnOpenChange) extOnOpenChange(v); setIntOpen(v); };
     const [newRule, setNewRule] = useState({ employee_id: '', day_of_week: '', shift_type: '' });
     const queryClient = useQueryClient();
 
@@ -58,15 +60,17 @@ export default function DefaultShiftRulesManager() {
 
     return (
         <>
-            <Button
-                variant="outline"
-                onClick={() => setOpen(true)}
-                className="border-slate-600 text-slate-300"
-                title="Standard-Schichtregeln"
-            >
-                <Settings2 className="w-4 h-4 mr-2" />
-                Schicht-Regeln
-            </Button>
+            {!hideTrigger && (
+                <Button
+                    variant="outline"
+                    onClick={() => setOpen(true)}
+                    className="border-slate-600 text-slate-300"
+                    title="Standard-Schichtregeln"
+                >
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    Schicht-Regeln
+                </Button>
+            )}
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">

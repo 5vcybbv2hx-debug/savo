@@ -9,8 +9,10 @@ import { Card } from "@/components/ui/card";
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
-export default function MonthlyStaffingCheck() {
-    const [modalOpen, setModalOpen] = useState(false);
+export default function MonthlyStaffingCheck({ open: extOpen, onOpenChange: extOnOpenChange, hideTrigger }) {
+    const [intModalOpen, setIntModalOpen] = useState(false);
+    const modalOpen = extOpen !== undefined ? extOpen : intModalOpen;
+    const setModalOpen = (v) => { if (extOnOpenChange) extOnOpenChange(v); setIntModalOpen(v); };
     const [selectedMonth, setSelectedMonth] = useState(new Date());
 
     const { data: employees = [] } = useQuery({
@@ -50,14 +52,16 @@ export default function MonthlyStaffingCheck() {
 
     return (
         <>
-            <Button 
-                variant="outline" 
-                onClick={() => setModalOpen(true)}
-                className="border-border/70 hover:bg-secondary text-foreground/75"
-            >
-                <Calendar className="w-4 h-4 mr-2" />
-                Monatsanalyse
-            </Button>
+            {!hideTrigger && (
+                <Button 
+                    variant="outline" 
+                    onClick={() => setModalOpen(true)}
+                    className="border-border/70 hover:bg-secondary text-foreground/75"
+                >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Monatsanalyse
+                </Button>
+            )}
 
             <Dialog open={modalOpen} onOpenChange={setModalOpen}>
                 <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
