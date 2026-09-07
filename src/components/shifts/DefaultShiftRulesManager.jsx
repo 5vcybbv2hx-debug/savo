@@ -64,7 +64,7 @@ export default function DefaultShiftRulesManager({ open: extOpen, onOpenChange: 
                 <Button
                     variant="outline"
                     onClick={() => setOpen(true)}
-                    className="border-slate-600 text-slate-300"
+                    className="border-border text-muted-foreground hover:text-foreground"
                     title="Standard-Schichtregeln"
                 >
                     <Settings2 className="w-4 h-4 mr-2" />

@@ -126,14 +126,14 @@ export default function MonthlyStaffingCheck({ open: extOpen, onOpenChange: extO
                                         key={emp.id} 
                                         className={`p-4 ${
                                             emp.shiftCount < 2 
-                                                ? 'bg-red-50 border-red-200' 
-                                                : 'bg-slate-50'
+                                                ? 'bg-destructive/10 border-destructive/30' 
+                                                : 'bg-secondary/30'
                                         }`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <p className="font-medium text-slate-900">
+                                                    <p className="font-medium text-foreground">
                                                         {emp.name}
                                                     </p>
                                                     {emp.shiftCount >= 2 ? (
@@ -142,7 +142,7 @@ export default function MonthlyStaffingCheck({ open: extOpen, onOpenChange: extO
                                                         <AlertTriangle className="w-4 h-4 text-red-600" />
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-slate-600 mt-1">
+                                                <p className="text-sm text-muted-foreground mt-1">
                                                     {emp.shiftCount} {emp.shiftCount === 1 ? 'Schicht' : 'Schichten'} 
                                                     {emp.shifts.length > 0 && (
                                                         <span className="ml-2">

@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Users, Settings, Tag } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Tag } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+// Radix Select verbietet null/'' als SelectItem-Value — Sentinel für "Alle Schichten"
+const ALL_SHIFTS = '__alle__';
 
 export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: extOnOpenChange, hideTrigger }) {
     const queryClient = useQueryClient();
     const [intModalOpen, setIntModalOpen] = useState(false);
     const modalOpen = extOpen !== undefined ? extOpen : intModalOpen;
-    const setModalOpen = (v) => { if (extOnOpenChange) extOnOpenChange(v); setIntModalOpen(v); };
+    const setModalOpen = (v) => { if (extOpen !== undefined) extOnOpenChange?.(v); else setIntModalOpen(v); };
     const [editingReq, setEditingReq] = useState(null);
     const [typesModalOpen, setTypesModalOpen] = useState(false);
     const [editingType, setEditingType] = useState(null);
@@ -185,26 +186,21 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
     return (
         <>
             {!hideTrigger && (
-                <Button 
-                    variant="outline" 
+                <Button
+                    variant="outline"
                     onClick={() => {
                         setEditingReq(null);
                         setModalOpen(true);
                     }}
-                    className="border-slate-600 hover:bg-slate-700 text-slate-300"
+                    className="border-border text-muted-foreground hover:text-foreground"
                 >
                     <Users className="w-4 h-4 mr-2" />
                     Soll-Besetzung
                 </Button>
             )}
 
-            <Dialog open={modalOpen} onOpenChange={(open) => {
-                setModalOpen(open);
-                if (!open) {
-                    setEditingReq(null);
-                }
-            }}>
-                <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <div className="flex items-center justify-between">
                             <DialogTitle>Soll-Besetzung pro Schicht</DialogTitle>
@@ -215,7 +211,7 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                                     setModalOpen(false);
                                     setTimeout(() => openTypeModal(), 100);
                                 }}
-                                className="text-xs"
+                                className="text-xs h-8"
                             >
                                 <Tag className="w-3 h-3 mr-1" />
                                 Schichtarten
@@ -224,62 +220,70 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                     </DialogHeader>
 
                     {!editingReq ? (
-                        <div className="space-y-4 mt-4">
+                        <div className="space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                                Standard-Besetzung pro Wochentag und Schichtart — Grundlage für die Monatsanalyse.
+                            </p>
                             {groupedRequirements.map(({ day, requirements: dayReqs }) => (
-                                <Card key={day} className="p-4 bg-slate-50">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h4 className="font-semibold text-slate-800">{day}</h4>
+                                <Card key={day} className="p-4 bg-secondary/30 border-border">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="text-sm font-semibold text-foreground">{day}</h4>
                                         <Button
                                             variant="ghost"
                                             size="sm"
+                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                                             onClick={() => openModal(null, day)}
+                                            title={`${day}: Anforderung hinzufügen`}
                                         >
                                             <Plus className="w-4 h-4" />
                                         </Button>
                                     </div>
                                     {dayReqs.length > 0 ? (
-                                        <div className="space-y-2">
+                                        <div className="space-y-1.5">
                                             {dayReqs.map(req => (
-                                                <div key={req.id} className="flex items-center justify-between p-2 bg-white rounded border border-slate-200">
-                                                    <div className="flex items-center gap-3">
-                                                        <Users className="w-4 h-4 text-blue-500" />
-                                                        <div>
-                                                            <p className="text-sm font-medium text-slate-800">
+                                                <div key={req.id} className="flex items-center justify-between p-2.5 bg-card rounded-lg border border-border">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <Users className="w-4 h-4 text-accent shrink-0" />
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-medium text-foreground">
                                                                 {req.shift_type || 'Allgemein'}: {req.required_employees} MA
                                                             </p>
                                                             {req.notes && (
-                                                                <p className="text-xs text-slate-500">{req.notes}</p>
+                                                                <p className="text-xs text-muted-foreground truncate">{req.notes}</p>
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <div className="flex gap-1">
+                                                    <div className="flex gap-1 shrink-0">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
+                                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                                                             onClick={() => openModal(req)}
+                                                            title="Bearbeiten"
                                                         >
-                                                            <Pencil className="w-3 h-3" />
+                                                            <Pencil className="w-3.5 h-3.5" />
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="text-red-500"
+                                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                                                             onClick={() => handleDelete(req.id)}
+                                                            title="Löschen"
                                                         >
-                                                            <Trash2 className="w-3 h-3" />
+                                                            <Trash2 className="w-3.5 h-3.5" />
                                                         </Button>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-slate-500">Keine Anforderungen</p>
+                                        <p className="text-xs text-muted-foreground">Keine Anforderungen</p>
                                     )}
                                 </Card>
                             ))}
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Wochentag</Label>
                                 <Select value={formData.day_of_week} onValueChange={(v) => setFormData({ ...formData, day_of_week: v })}>
@@ -296,16 +300,19 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
 
                             <div className="space-y-2">
                                 <Label>Schichttyp (optional)</Label>
-                                <Select value={formData.shift_type || ""} onValueChange={(v) => setFormData({ ...formData, shift_type: v })}>
+                                <Select
+                                    value={formData.shift_type || ALL_SHIFTS}
+                                    onValueChange={(v) => setFormData({ ...formData, shift_type: v === ALL_SHIFTS ? '' : v })}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Alle Schichten" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={null}>Alle Schichten</SelectItem>
+                                        <SelectItem value={ALL_SHIFTS}>Alle Schichten</SelectItem>
                                         {shiftTypes.map(type => (
                                             <SelectItem key={type.id} value={type.name}>
                                                 <div className="flex items-center gap-2">
-                                                    <div 
+                                                    <div
                                                         className="w-3 h-3 rounded"
                                                         style={{ backgroundColor: getColorForOrder(type.order || 0, shiftTypes.length) }}
                                                     />
@@ -338,18 +345,18 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                                 />
                             </div>
 
-                            <div className="flex gap-2 pt-4">
-                                <Button 
-                                    type="button" 
-                                    variant="outline" 
+                            <div className="flex gap-2 pt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
                                     onClick={closeModal}
                                     className="flex-1"
                                 >
                                     Abbrechen
                                 </Button>
-                                <Button 
+                                <Button
                                     type="submit"
-                                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                    className="flex-1"
                                 >
                                     Speichern
                                 </Button>
@@ -372,19 +379,19 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                     </DialogHeader>
 
                     {!editingType ? (
-                        <div className="space-y-4 mt-4">
-                            <div className="space-y-2">
+                        <div className="space-y-3">
+                            <div className="space-y-1.5">
                                 {shiftTypes.map(type => (
-                                    <div key={type.id} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-200">
+                                    <div key={type.id} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg border border-border">
                                         <div className="flex items-center gap-3">
-                                            <div 
-                                                className="w-4 h-4 rounded"
+                                            <div
+                                                className="w-4 h-4 rounded border border-border"
                                                 style={{ backgroundColor: getColorForOrder(type.order || 0, shiftTypes.length) }}
                                             />
                                             <div>
-                                                <span className="font-medium text-slate-800">{type.name}</span>
+                                                <span className="font-medium text-foreground">{type.name}</span>
                                                 {type.start_time && (
-                                                    <p className="text-xs text-slate-500">
+                                                    <p className="text-xs text-muted-foreground">
                                                         {type.start_time}{type.end_time && ` - ${type.end_time}`}
                                                     </p>
                                                 )}
@@ -394,17 +401,18 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
+                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                                                 onClick={() => openTypeModal(type)}
                                             >
-                                                <Pencil className="w-3 h-3" />
+                                                <Pencil className="w-3.5 h-3.5" />
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-red-500"
+                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                                                 onClick={() => handleTypeDelete(type.id)}
                                             >
-                                                <Trash2 className="w-3 h-3" />
+                                                <Trash2 className="w-3.5 h-3.5" />
                                             </Button>
                                         </div>
                                     </div>
@@ -412,14 +420,14 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                             </div>
                             <Button
                                 onClick={() => openTypeModal()}
-                                className="w-full bg-amber-600 hover:bg-amber-700"
+                                className="w-full"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Neue Schichtart
                             </Button>
                         </div>
                     ) : (
-                        <form onSubmit={handleTypeSubmit} className="space-y-4 mt-4">
+                        <form onSubmit={handleTypeSubmit} className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Name *</Label>
                                 <Input
@@ -458,25 +466,25 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                                         onChange={(e) => setTypeFormData({ ...typeFormData, order: parseInt(e.target.value) || 0 })}
                                         className="flex-1"
                                     />
-                                    <div 
-                                        className="w-8 h-8 rounded border border-slate-300"
+                                    <div
+                                        className="w-8 h-8 rounded border border-border"
                                         style={{ backgroundColor: getColorForOrder(typeFormData.order, shiftTypes.length + 1) }}
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex gap-2 pt-4">
-                                <Button 
-                                    type="button" 
-                                    variant="outline" 
+                            <div className="flex gap-2 pt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
                                     onClick={closeTypeModal}
                                     className="flex-1"
                                 >
                                     Abbrechen
                                 </Button>
-                                <Button 
+                                <Button
                                     type="submit"
-                                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                    className="flex-1"
                                 >
                                     Speichern
                                 </Button>
