@@ -111,7 +111,7 @@ export default function DefaultShiftRulesManager({ open: extOpen, onOpenChange: 
                         <Button
                             onClick={handleAdd}
                             disabled={!newRule.employee_id || !newRule.day_of_week || !newRule.shift_type || createMutation.isPending}
-                            className="w-full bg-amber-600 hover:bg-amber-700"
+                            className="w-full"
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             Regel hinzufügen
@@ -136,7 +136,7 @@ export default function DefaultShiftRulesManager({ open: extOpen, onOpenChange: 
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-7 w-7 text-red-400 hover:text-red-500 hover:bg-red-500/10"
+                                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                                 onClick={() => deleteMutation.mutate(rule.id)}
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />

@@ -56,7 +56,7 @@ export default function MonthlyStaffingCheck({ open: extOpen, onOpenChange: extO
                 <Button 
                     variant="outline" 
                     onClick={() => setModalOpen(true)}
-                    className="border-border/70 hover:bg-secondary text-foreground/75"
+                    className="border-border text-muted-foreground hover:text-foreground"
                 >
                     <Calendar className="w-4 h-4 mr-2" />
                     Monatsanalyse
@@ -101,14 +101,14 @@ export default function MonthlyStaffingCheck({ open: extOpen, onOpenChange: extO
 
                         {/* Summary */}
                         {understaffed.length > 0 && (
-                            <Card className="p-4 bg-amber-50 border-amber-200">
+                            <Card className="p-4 bg-destructive/10 border-destructive/30">
                                 <div className="flex items-center gap-2">
-                                    <AlertTriangle className="w-5 h-5 text-amber-600" />
+                                    <AlertTriangle className="w-5 h-5 text-destructive" />
                                     <div>
-                                        <p className="font-medium text-amber-900">
+                                        <p className="font-medium text-foreground">
                                             {understaffed.length} Mitarbeiter unter Minimum
                                         </p>
-                                        <p className="text-sm text-amber-700">
+                                        <p className="text-sm text-muted-foreground">
                                             Mindestens 2 Schichten pro Monat erforderlich
                                         </p>
                                     </div>
@@ -137,9 +137,9 @@ export default function MonthlyStaffingCheck({ open: extOpen, onOpenChange: extO
                                                         {emp.name}
                                                     </p>
                                                     {emp.shiftCount >= 2 ? (
-                                                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
                                                     ) : (
-                                                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                                                        <AlertTriangle className="w-4 h-4 text-destructive" />
                                                     )}
                                                 </div>
                                                 <p className="text-sm text-muted-foreground mt-1">
@@ -152,12 +152,11 @@ export default function MonthlyStaffingCheck({ open: extOpen, onOpenChange: extO
                                                 </p>
                                             </div>
                                             <Badge 
+                                                variant={emp.shiftCount < 2 ? 'destructive' : 'default'}
                                                 className={
-                                                    emp.shiftCount < 2 
-                                                        ? 'bg-red-100 text-red-700' 
-                                                        : emp.shiftCount >= 8
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-blue-100 text-blue-700'
+                                                    emp.shiftCount >= 2 && emp.shiftCount < 8
+                                                        ? 'bg-primary/15 text-primary border border-primary/30'
+                                                        : ''
                                                 }
                                             >
                                                 {emp.shiftCount}
