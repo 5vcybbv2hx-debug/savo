@@ -1,0 +1,37 @@
+{
+  "name": "Push: Schicht gel\u00f6scht \u2192 Mitarbeiter",
+  "description": "Sendet Push an betroffenen Mitarbeiter wenn eine Schicht gel\u00f6scht wird.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "delete"
+      ],
+      "entity_name": "Shift"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "push_schicht_gel_scht_mitarbeiter",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onShiftDeleted",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "onShiftDeleted"
+  }
+}

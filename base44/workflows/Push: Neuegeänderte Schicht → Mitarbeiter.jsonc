@@ -1,0 +1,38 @@
+{
+  "name": "Push: Neue/ge\u00e4nderte Schicht \u2192 Mitarbeiter",
+  "description": "Sendet Push-Benachrichtigung an betroffenen Mitarbeiter wenn eine Schicht erstellt oder ge\u00e4ndert wird.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create",
+        "update"
+      ],
+      "entity_name": "Shift"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "push_neue_ge_nderte_schicht_mitarbeiter",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onShiftChanged",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "onShiftChanged"
+  }
+}

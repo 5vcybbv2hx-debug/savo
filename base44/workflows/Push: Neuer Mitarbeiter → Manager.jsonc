@@ -1,0 +1,37 @@
+{
+  "name": "Push: Neuer Mitarbeiter \u2192 Manager",
+  "description": "Sendet Push an Manager wenn ein neuer Mitarbeiter angelegt wird.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Employee"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "push_neuer_mitarbeiter_manager",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onEmployeeCreated",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "onEmployeeCreated"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "Push: Urlaubsantwort \u2192 Mitarbeiter",
+  "description": "Sendet Push-Benachrichtigung wenn ein Urlaubsantrag genehmigt oder abgelehnt wurde.",
+  "trigger": {
+    "condition": "${ (.trigger.data.status == \"genehmigt\" or .trigger.data.status == \"abgelehnt\") }",
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "update"
+      ],
+      "entity_name": "VacationRequest"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "push_urlaubsantwort_mitarbeiter",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onVacationResponse",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "onVacationResponse"
+  }
+}

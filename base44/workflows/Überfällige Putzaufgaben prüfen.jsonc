@@ -1,0 +1,44 @@
+{
+  "name": "\u00dcberf\u00e4llige Putzaufgaben pr\u00fcfen",
+  "description": "Pr\u00fcft t\u00e4glich um 10 Uhr \u00fcberf\u00e4llige Putzaufgaben und sendet Benachrichtigungen",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 * * *",
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "berf_llige_putzaufgaben_pr_fen",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkOverdueCleaningTasks",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "checkOverdueCleaningTasks"
+  }
+}
