@@ -9,6 +9,18 @@ import { haptics } from '@/components/utils/haptics';
 import { ArrowLeft, LogOut, Search, ScanLine, Settings, PanelLeftClose, PanelLeftOpen, Pin, PinOff } from 'lucide-react';
 import BarcodeScanner from '@/components/restock/BarcodeScanner';
 import { mainNavigation, additionalPages, allPages } from '@/components/navigation/navigationConfig';
+import { sidebarPages } from '@/components/navigation/sidebarConfig';
+// Kurzbeschreibungen der Hub-Bereiche für den mobilen Mehr-Drawer
+const HUB_DESCRIPTIONS = {
+    Dashboard: 'Übersicht & KPIs',
+    TeamHub: 'Mitarbeiter, Schichten & Zeit',
+    BetriebHub: 'Gäste, Aufgaben & Betrieb',
+    Warehouse: 'Bestand, Bestellung & Inventur',
+    KarteHub: 'Getränke, Rezepte & Kalkulation',
+    AccountingHub: 'Kassenbuch, Belege & Export',
+    Settings: 'App, Profil & Daten',
+};
+
 import { useActiveNavigation } from '@/components/navigation/useActiveNavigation';
 import { getTopPages } from '@/hooks/usePageTracking';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
@@ -49,6 +61,7 @@ export default function Layout({ children, currentPageName }) {
     };
     const [scannerOpen, setScannerOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [menuSearch, setMenuSearch] = useState('');
     const [currentUser, setCurrentUser] = React.useState(null);
     const [company, setCompany] = React.useState(null);
     const [mobileNavPages, setMobileNavPages] = React.useState([]);
@@ -226,32 +239,12 @@ export default function Layout({ children, currentPageName }) {
 
 
     // Drawer: strukturierte Bereiche mit Unterseiten (nicht Hub-Einträge)
-    const drawerSections = useMemo(() => [
-        {
-            id: 'betrieb', name: 'Betrieb',
-            pages: additionalPages.filter(p => ['GuestHub','Todos','WeeklyTasks','Cleaning','Maintenance','Events','DisplayManager','Wusa'].includes(p.page))
-        },
-        {
-            id: 'waren', name: 'Waren & Lager',
-            pages: additionalPages.filter(p => ['Restock','Shopping','QuickList','Articles','Storage','Inventory','Suppliers','Wastage'].includes(p.page))
-        },
-        {
-            id: 'karte', name: 'Karte & Rezepte',
-            pages: additionalPages.filter(p => ['DrinkMenu','Recipes','PriceCalculator'].includes(p.page))
-        },
-        {
-            id: 'buchhaltung', name: 'Buchhaltung',
-            pages: additionalPages.filter(p => ['AccountingDashboard','AccountingCashbook','AccountingReceipts','AccountingCreditors','AccountingExport','AccountingFixedCosts','AccountingLiabilities','DailyAnalysis','StaffingAnalysis'].includes(p.page))
-        },
-        {
-            id: 'team', name: 'Team',
-            pages: additionalPages.filter(p => ['Employees','Calendar','TeamCalendar','TimeManagement','Vacation','MyShifts','ShiftSwaps','PermissionsNew','TeamMeeting','Stationsplan'].includes(p.page))
-        },
-        {
-            id: 'sonstiges', name: 'Einstellungen & Mehr',
-            pages: additionalPages.filter(p => ['Settings','Documents','Onboarding','BusinessCard','ModuleCenter','BusinessCalendar','DataQuality','Incidents'].includes(p.page))
-        },
-    ], [additionalPages]);
+    // Menü-Suche: filtert alle Seiten nach Name (Sicherheitsnetz für Seiten außerhalb der Hubs)
+    const searchResults = useMemo(() => {
+        const q = menuSearch.trim().toLowerCase();
+        if (!q) return [];
+        return allPages.filter(p => permissions[p.permission] && p.name.toLowerCase().includes(q));
+    }, [menuSearch]);
     const getPageName = (pageName) => allPages.find(p => p.page === pageName)?.name || 'BarManager';
     const primaryPages = mainNavigation.flatMap(a => a.pages).map(p => p.page);
     const isRootPage = primaryPages.includes(currentPageName);
@@ -286,6 +279,11 @@ export default function Layout({ children, currentPageName }) {
         if (mobileNavPages.length >= 2) return mobileNavPages;
         return defaultPages.map(p => allNavPages.find(i => i.page === p)).filter(Boolean);
     })();
+
+    // Hub-Liste für den Mehr-Drawer — spiegelt die Desktop-Sidebar; bereits angeheftete Tabs entfallen
+    const hubItems = sidebarPages.filter(p =>
+        permissions[p.permission] && !currentNavItems.some(n => n.page === p.page)
+    );
 
     const { navigateToTab, getActiveTab } = useTabNavigation(currentNavItems);
 
@@ -545,97 +543,130 @@ export default function Layout({ children, currentPageName }) {
                 {/* Mehr-Drawer — alle Bereiche geordnet */}
                 <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
                     <DrawerContent className="bg-card border-border max-h-[85vh]">
-                        <DrawerHeader className="border-b border-border pb-3">
-                            <div className="flex items-center justify-between">
-                                <DrawerTitle className="text-foreground text-base">Alle Bereiche</DrawerTitle>
-                                {pinnedPages && pinnedPages.length > 0 && (
-                                    <button
-                                        onClick={() => {
-                                            setPinnedPages(null);
-                                            try { localStorage.removeItem(PINNED_KEY); } catch {}
-                                        }}
-                                        className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-destructive/10"
+                    <DrawerHeader className="border-b border-border pb-3">
+                        <div className="flex items-center justify-between">
+                            <DrawerTitle className="text-foreground text-base">Alle Bereiche</DrawerTitle>
+                            {pinnedPages && pinnedPages.length > 0 && (
+                                <button
+                                    onClick={() => {
+                                        setPinnedPages(null);
+                                        try { localStorage.removeItem(PINNED_KEY); } catch {}
+                                    }}
+                                    className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-destructive/10"
+                                >
+                                    <PinOff className="w-3 h-3" />
+                                    Pins zurücksetzen
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                            <Pin className="w-3 h-3" />
+                            {canPin ? 'Pin tippen, um einen Bereich unten in der Navigation anzuheften.' : 'Navigation voll (max. 4 Pins).'}
+                        </p>
+                    </DrawerHeader>
+
+                    {/* Suche über alle Seiten */}
+                    <div className="px-4 pt-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                            <input
+                                type="text"
+                                value={menuSearch}
+                                onChange={(e) => setMenuSearch(e.target.value)}
+                                placeholder="Seite suchen…"
+                                className="w-full pl-9 pr-3 h-10 rounded-xl bg-secondary/50 border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="overflow-y-auto px-4 pt-3 pb-6">
+                        {menuSearch.trim() ? (
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1">
+                                    {searchResults.length === 1 ? '1 Treffer' : `${searchResults.length} Treffer`}
+                                </p>
+                                {searchResults.map(item => (
+                                    <Link
+                                        key={item.page}
+                                        to={createPageUrl(item.page)}
+                                        onClick={() => { haptics.selection(); setSettingsOpen(false); }}
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary/60 active:bg-secondary transition-colors"
                                     >
-                                        <PinOff className="w-3 h-3" />
-                                        Pins zurücksetzen
-                                    </button>
+                                        <item.icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                                        <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
+                                        {isPageActive(item.page) && (
+                                            <span className="ml-auto text-[10px] text-primary font-semibold shrink-0">aktiv</span>
+                                        )}
+                                    </Link>
+                                ))}
+                                {searchResults.length === 0 && (
+                                    <p className="text-sm text-muted-foreground py-6 text-center">Keine Treffer für „{menuSearch.trim()}“</p>
                                 )}
                             </div>
-                            {pinnedPages && pinnedPages.length > 0 ? (
-                                <p className="text-[11px] text-primary mt-1 flex items-center gap-1">
-                                    <Pin className="w-3 h-3" />
-                                    {pinnedPages.length}/{MAX_PINS} Tabs angepinnt — Tippe <Pin className="w-3 h-3 inline" /> zum An-/Abheften
-                                </p>
-                            ) : (
-                                <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-                                    <Pin className="w-3 h-3" />
-                                    Tippe <Pin className="w-3 h-3 inline" /> neben einer Seite um sie in der Nav anzuheften
-                                </p>
-                            )}
-                        </DrawerHeader>
-                        <div className="overflow-y-auto">
-                            {/* Drawer-Kacheln: pro Bereich die passenden Unterseiten */}
-                            {drawerSections.map((section) => {
-                                const visibleItems = section.pages.filter(item => permissions[item.permission]);
-                                if (visibleItems.length === 0) return null;
-                                return (
-                                    <div key={section.id} className="px-4 pt-4">
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1">{section.name}</p>
-                                        <div className="grid grid-cols-3 gap-2 mb-2">
-                                            {visibleItems.map((item) => {
-                                                const pinned = isPinned(item.page);
-                                                const active = isPageActive(item.page);
-                                                return (
-                                                    <div key={item.page} className="relative">
-                                                        <Link
-                                                            to={createPageUrl(item.page)}
-                                                            onClick={() => { haptics.selection(); setSettingsOpen(false); }}
-                                                            className={cn(
-                                                                'flex flex-col items-center gap-1.5 p-3 pt-4 rounded-xl active:scale-95 transition-all text-center w-full',
-                                                                pinned
-                                                                    ? 'bg-primary/10 border border-primary/30'
-                                                                    : active
-                                                                        ? 'bg-amber-500/20 border border-amber-500/40'
-                                                                        : 'bg-secondary/40 hover:bg-secondary'
-                                                            )}
-                                                        >
-                                                            <item.icon className={cn('w-5 h-5', pinned ? 'text-primary' : active ? 'text-amber-400' : 'text-foreground')} />
-                                                            <span className={cn('text-[10px] font-medium leading-tight', pinned ? 'text-primary font-semibold' : active ? 'text-amber-400 font-bold' : 'text-foreground')}>{item.name}</span>
-                                                        </Link>
-                                                        <button
-                                                            onClick={(e) => { e.preventDefault(); haptics.selection(); togglePin(item.page); }}
-                                                            title={pinned ? 'Aus Nav entfernen' : canPin ? 'In Nav anheften' : 'Nav voll (max. 4)'}
-                                                            className={cn(
-                                                                'absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-all shadow-sm border',
-                                                                pinned
-                                                                    ? 'bg-primary text-primary-foreground border-primary'
-                                                                    : canPin
-                                                                        ? 'bg-card text-muted-foreground border-border hover:bg-primary/10 hover:text-primary hover:border-primary/50'
-                                                                        : 'bg-card text-muted-foreground/30 border-border/30 cursor-not-allowed'
-                                                            )}
-                                                        >
-                                                            <Pin className="w-2.5 h-2.5" />
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
+                        ) : (
+                            <div className="space-y-1.5">
+                                {hubItems.map(item => {
+                                    const pinned = isPinned(item.page);
+                                    const active = isPageActive(item.page);
+                                    return (
+                                        <div key={item.page} className="flex items-center gap-1.5">
+                                            <Link
+                                                to={createPageUrl(item.page)}
+                                                onClick={() => { haptics.selection(); setSettingsOpen(false); }}
+                                                className={cn(
+                                                    'flex flex-1 items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors min-w-0',
+                                                    active
+                                                        ? 'bg-primary/10 border-primary/25'
+                                                        : 'border-transparent hover:bg-secondary/50 active:bg-secondary'
+                                                )}
+                                            >
+                                                <div className={cn(
+                                                    'w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
+                                                    active ? 'bg-primary/15 text-primary' : 'bg-secondary/60 text-foreground'
+                                                )}>
+                                                    <item.icon className="w-[18px] h-[18px]" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className={cn('text-sm font-semibold', pinned || active ? 'text-primary' : 'text-foreground')}>
+                                                        {item.name}
+                                                    </p>
+                                                    <p className="text-[11px] text-muted-foreground truncate">
+                                                        {HUB_DESCRIPTIONS[item.page] || ''}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); haptics.selection(); togglePin(item.page); }}
+                                                title={pinned ? 'Aus Navigation entfernen' : canPin ? 'In Navigation anheften' : 'Navigation voll (max. 4)'}
+                                                className={cn(
+                                                    'w-8 h-8 rounded-full flex items-center justify-center shrink-0 border transition-colors',
+                                                    pinned
+                                                        ? 'bg-primary text-primary-foreground border-primary'
+                                                        : canPin
+                                                            ? 'bg-card text-muted-foreground border-border hover:text-primary hover:border-primary/50'
+                                                            : 'bg-card text-muted-foreground/30 border-border/30 cursor-not-allowed'
+                                                )}
+                                            >
+                                                <Pin className="w-3.5 h-3.5" />
+                                            </button>
                                         </div>
-                                    </div>
-                                );
-                            })}
-
-                            {/* Abmelden */}
-                            <div className="px-4 pt-3 pb-6 mt-2 border-t border-border">
-                                <button
-                                    onClick={async () => { haptics.light(); await oneSignalLogout(); base44.auth.logout(); setSettingsOpen(false); }}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-secondary/50 text-muted-foreground text-sm font-medium border border-border/50"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    Abmelden
-                                </button>
+                                    );
+                                })}
                             </div>
+                        )}
+
+                        {/* Abmelden */}
+                        <div className="pt-4 mt-4 border-t border-border">
+                            <button
+                                onClick={async () => { haptics.light(); await oneSignalLogout(); base44.auth.logout(); setSettingsOpen(false); }}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-secondary/50 text-muted-foreground text-sm font-medium border border-border/50"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Abmelden
+                            </button>
                         </div>
-                    </DrawerContent>
+                    </div>
+                </DrawerContent>
                 </Drawer>
 
                 {/* Push-Benachrichtigungen Einmal-Prompt */}
