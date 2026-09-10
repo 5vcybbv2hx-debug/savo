@@ -71,6 +71,11 @@
     "notes": {
       "type": "string"
     },
+    "notes_public": {
+      "type": "boolean",
+      "default": false,
+      "description": "Wenn true, werden die Notizen auf dem Rechnungs-PDF f\u00fcr den Empf\u00e4nger (Lieferant/Brauerei/Kunde) sichtbar angezeigt"
+    },
     "linked_event_id": {
       "type": "string"
     },

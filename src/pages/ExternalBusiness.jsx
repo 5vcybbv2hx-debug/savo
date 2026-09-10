@@ -173,6 +173,18 @@ function downloadPdf(kind, data, company) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
 
+    // Sichtbare Notizen für den Empfänger (Lieferant/Brauerei/Kunde)
+    if (data.notes_public && data.notes && data.notes.trim()) {
+        let noteY = Math.max(y + 14, 250);
+        if (noteY > 250) { /* keep within page */ }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('Notiz:', 15, noteY);
+        doc.setFont('helvetica', 'normal');
+        const noteLines = doc.splitTextToSize(data.notes.trim(), 180);
+        noteLines.slice(0, 4).forEach((l, i) => doc.text(l, 15, noteY + 5 + i * 4.5));
+    }
+
     // Footer
     const footerY = Math.max(y + 14, 258);
     if (!isInvoice && data.valid_until) {
@@ -303,6 +315,7 @@ export default function ExternalBusiness() {
             tax_rate: 19,
             description: '',
             notes: '',
+            notes_public: false,
             ...(isInvoice
                 ? { invoice_date: today(), service_date: today(), service_date_type: 'Einzel', service_date_end: '', due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'), datev_account: DEFAULT_ACCOUNT[cat] }
                 : { offer_date: today(), valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd') }),
@@ -358,6 +371,7 @@ export default function ExternalBusiness() {
             linked_event_id: record.linked_event_id || '',
             description: record.description || '',
             notes: record.notes || '',
+            notes_public: !!record.notes_public,
         };
         if (isInvoice) {
             Object.assign(data, {
@@ -408,6 +422,7 @@ export default function ExternalBusiness() {
                 amount_gross: offer.amount_gross || 0,
                 description: offer.description || '',
                 notes: offer.notes || '',
+                notes_public: !!offer.notes_public,
                 offer_id: offer.id,
                 offer_number: offer.offer_number,
                 datev_account: DEFAULT_ACCOUNT[offer.category] || '8000',
@@ -778,8 +793,22 @@ export default function ExternalBusiness() {
 
                             {/* Notizen */}
                             <div className="space-y-1.5">
-                                <Label>Notizen (intern)</Label>
+                                <div className="flex items-center justify-between">
+                                    <Label>Notizen</Label>
+                                    <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!record.notes_public}
+                                            onChange={(e) => setField('notes_public', e.target.checked)}
+                                            className="w-3.5 h-3.5 rounded border-border accent-primary"
+                                        />
+                                        Auf PDF sichtbar
+                                    </label>
+                                </div>
                                 <Input value={record.notes || ''} onChange={(e) => setField('notes', e.target.value)} placeholder="Absprachen, Ansprechpartner,…" />
+                                {record.notes_public && (
+                                    <p className="text-[10px] text-primary/80">Diese Notiz wird auf dem PDF für den Empfänger sichtbar.</p>
+                                )}
                             </div>
 
                             {/* Summen */}
