@@ -13,22 +13,38 @@
     "valid_until": {
       "type": "string",
       "format": "date",
-      "description": "Gültig bis (freibleibendes Angebot)"
+      "description": "G\u00fcltig bis (freibleibendes Angebot)"
     },
     "category": {
       "type": "string",
-      "enum": ["Externer Event", "Werbekostenzuschuss"],
-      "description": "Art des Außenauftrags"
+      "enum": [
+        "Externer Event",
+        "Werbekostenzuschuss"
+      ],
+      "description": "Art des Au\u00dfenauftrags"
     },
     "customer_name": {
       "type": "string"
     },
     "customer_address": {
-      "type": "string"
+      "type": "string",
+      "description": "Vollst\u00e4ndige Anschrift (komponiert aus Stra\u00dfe/PLZ/Ort, f\u00fcr PDF). Legacy-Feld, wird beim Speichern aus den Einzelfeldern gesetzt."
+    },
+    "customer_street": {
+      "type": "string",
+      "description": "Stra\u00dfe und Hausnummer"
+    },
+    "customer_postal_code": {
+      "type": "string",
+      "description": "Postleitzahl"
+    },
+    "customer_city": {
+      "type": "string",
+      "description": "Wohnort / Stadt"
     },
     "supplier_name": {
       "type": "string",
-      "description": "WKZ: Lieferant/Brauerei als Empfänger"
+      "description": "WKZ: Lieferant/Brauerei als Empf\u00e4nger"
     },
     "supplier_id": {
       "type": "string"
@@ -42,10 +58,18 @@
       "items": {
         "type": "object",
         "properties": {
-          "description": { "type": "string" },
-          "quantity": { "type": "number" },
-          "unit_price": { "type": "number" },
-          "total": { "type": "number" }
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
         }
       }
     },
@@ -64,7 +88,13 @@
     },
     "status": {
       "type": "string",
-      "enum": ["Entwurf", "Gesendet", "Bestätigt", "Abgelehnt", "Rechnung erstellt"],
+      "enum": [
+        "Entwurf",
+        "Gesendet",
+        "Best\u00e4tigt",
+        "Abgelehnt",
+        "Rechnung erstellt"
+      ],
       "default": "Entwurf"
     },
     "description": {
@@ -78,5 +108,9 @@
       "description": "ID der erstellten Rechnung nach Konvertierung"
     }
   },
-  "required": ["offer_date", "customer_name", "amount_gross"]
+  "required": [
+    "offer_date",
+    "customer_name",
+    "amount_gross"
+  ]
 }

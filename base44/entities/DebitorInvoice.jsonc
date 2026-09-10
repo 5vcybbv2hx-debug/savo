@@ -17,7 +17,20 @@
       "type": "string"
     },
     "customer_address": {
-      "type": "string"
+      "type": "string",
+      "description": "Vollst\u00e4ndige Anschrift (komponiert aus Stra\u00dfe/PLZ/Ort, f\u00fcr PDF). Legacy-Feld, wird beim Speichern aus den Einzelfeldern gesetzt."
+    },
+    "customer_street": {
+      "type": "string",
+      "description": "Stra\u00dfe und Hausnummer"
+    },
+    "customer_postal_code": {
+      "type": "string",
+      "description": "Postleitzahl"
+    },
+    "customer_city": {
+      "type": "string",
+      "description": "Wohnort / Stadt"
     },
     "amount_net": {
       "type": "number"
@@ -63,38 +76,53 @@
     },
     "category": {
       "type": "string",
-      "enum": ["Externer Event", "Werbekostenzuschuss"],
-      "description": "Art des Außenauftrags: Bar-Service bei externem Event oder Werbekostenzuschuss von Lieferant/Brauerei"
+      "enum": [
+        "Externer Event",
+        "Werbekostenzuschuss"
+      ],
+      "description": "Art des Au\u00dfenauftrags: Bar-Service bei externem Event oder Werbekostenzuschuss von Lieferant/Brauerei"
     },
     "doc_status": {
       "type": "string",
-      "enum": ["Entwurf", "Gesendet", "Storniert"],
+      "enum": [
+        "Entwurf",
+        "Gesendet",
+        "Storniert"
+      ],
       "default": "Entwurf",
-      "description": "Dokumentenstatus — Entwurf wird nicht in den DATEV-Export aufgenommen"
+      "description": "Dokumentenstatus \u2014 Entwurf wird nicht in den DATEV-Export aufgenommen"
     },
     "positions": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "description": { "type": "string" },
-          "quantity": { "type": "number" },
-          "unit_price": { "type": "number" },
-          "total": { "type": "number" }
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
         }
       },
       "description": "Rechnungspositionen (Beschreibung, Menge, Einzelpreis, Summe)"
     },
     "supplier_name": {
       "type": "string",
-      "description": "WKZ: Lieferant/Brauerei als Rechnungsempfänger"
+      "description": "WKZ: Lieferant/Brauerei als Rechnungsempf\u00e4nger"
     },
     "supplier_id": {
       "type": "string"
     },
     "offer_id": {
       "type": "string",
-      "description": "Verknüpfung zum Ursprungs-Angebot"
+      "description": "Verkn\u00fcpfung zum Ursprungs-Angebot"
     },
     "offer_number": {
       "type": "string"
@@ -102,11 +130,25 @@
     "service_date": {
       "type": "string",
       "format": "date",
-      "description": "Leistungsdatum (§14 UStG-Pflichtangabe)"
+      "description": "Leistungsdatum (\u00a714 UStG-Pflichtangabe) \u2014 bei Zeitraum der Start"
+    },
+    "service_date_type": {
+      "type": "string",
+      "enum": [
+        "Einzel",
+        "Zeitraum"
+      ],
+      "default": "Einzel",
+      "description": "Leistungsdatum-Typ: Einzel = ein Datum, Zeitraum = von/bis"
+    },
+    "service_date_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Leistungszeitraum Ende (nur bei service_date_type 'Zeitraum')"
     },
     "datev_account": {
       "type": "string",
-      "description": "Erlöskonto SKR03 — Standard 8000 (Events) / 8035 (WKZ)"
+      "description": "Erl\u00f6skonto SKR03 \u2014 Standard 8000 (Events) / 8035 (WKZ)"
     }
   },
   "required": [

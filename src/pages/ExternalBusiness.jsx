@@ -36,6 +36,34 @@ const today = () => format(new Date(), 'yyyy-MM-dd');
 
 const emptyPosition = () => ({ description: '', quantity: 1, unit_price: 0 });
 
+// ── Adresse: drei Einzelfelder (Straße, PLZ, Ort) ──────────────────────────
+function AddressFields({ record, setField }) {
+    return (
+        <div className="space-y-1.5">
+            <Label>Anschrift</Label>
+            <Input
+                value={record.customer_street || ''}
+                onChange={(e) => setField('customer_street', e.target.value)}
+                placeholder="Straße und Hausnummer"
+            />
+            <div className="flex gap-2">
+                <Input
+                    value={record.customer_postal_code || ''}
+                    onChange={(e) => setField('customer_postal_code', e.target.value)}
+                    placeholder="PLZ"
+                    className="w-24"
+                />
+                <Input
+                    value={record.customer_city || ''}
+                    onChange={(e) => setField('customer_city', e.target.value)}
+                    placeholder="Ort"
+                    className="flex-1"
+                />
+            </div>
+        </div>
+    );
+}
+
 // ── Nummernkreis: fortlaufend & lückenlos pro Jahr ─────────────────────────────
 async function nextNumber(records, field, prefix) {
     const year = new Date().getFullYear();
@@ -55,7 +83,12 @@ function downloadPdf(kind, data, company) {
     const recipient = isInvoice
         ? (data.category === CAT_WKZ ? data.supplier_name : data.customer_name)
         : (data.category === CAT_WKZ ? data.supplier_name : data.customer_name);
-    const address = data.customer_address || '';
+    // Adresse: bevorzugt aus Einzelfeldern, Fallback auf legacy customer_address
+    const addressLines = [
+        data.customer_street,
+        [data.customer_postal_code, data.customer_city].filter(Boolean).join(' '),
+    ].filter(Boolean);
+    const address = addressLines.length ? addressLines : (data.customer_address || '').split('\n');
 
     // Kopf
     doc.setFont('helvetica', 'bold');
@@ -78,7 +111,11 @@ function downloadPdf(kind, data, company) {
     doc.text(`Nr. ${number}`, 195, 24, { align: 'right' });
     doc.text(`Datum: ${format(parseISO(isInvoice ? data.invoice_date : data.offer_date), 'dd.MM.yyyy')}`, 195, 29, { align: 'right' });
     if (isInvoice && data.service_date) {
-        doc.text(`Leistungsdatum: ${format(parseISO(data.service_date), 'dd.MM.yyyy')}`, 195, 34, { align: 'right' });
+        if (data.service_date_type === 'Zeitraum' && data.service_date_end) {
+            doc.text(`Leistungszeitraum: ${format(parseISO(data.service_date), 'dd.MM.yyyy')} – ${format(parseISO(data.service_date_end), 'dd.MM.yyyy')}`, 195, 34, { align: 'right' });
+        } else {
+            doc.text(`Leistungsdatum: ${format(parseISO(data.service_date), 'dd.MM.yyyy')}`, 195, 34, { align: 'right' });
+        }
     }
 
     // Empfänger
@@ -86,7 +123,7 @@ function downloadPdf(kind, data, company) {
     doc.setFont('helvetica', 'bold');
     doc.text(recipient || 'Empfänger', 15, 48);
     doc.setFont('helvetica', 'normal');
-    address.split('\n').slice(0, 4).forEach((l, i) => doc.text(l, 15, 54 + i * 5));
+    (Array.isArray(address) ? address : String(address).split('\n')).slice(0, 4).forEach((l, i) => doc.text(l, 15, 54 + i * 5));
 
     // Kategorie
     doc.setFontSize(9);
@@ -256,6 +293,9 @@ export default function ExternalBusiness() {
             category: cat,
             customer_name: '',
             customer_address: '',
+            customer_street: '',
+            customer_postal_code: '',
+            customer_city: '',
             supplier_name: '',
             supplier_id: '',
             linked_event_id: '',
@@ -264,7 +304,7 @@ export default function ExternalBusiness() {
             description: '',
             notes: '',
             ...(isInvoice
-                ? { invoice_date: today(), service_date: today(), due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'), datev_account: DEFAULT_ACCOUNT[cat] }
+                ? { invoice_date: today(), service_date: today(), service_date_type: 'Einzel', service_date_end: '', due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'), datev_account: DEFAULT_ACCOUNT[cat] }
                 : { offer_date: today(), valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd') }),
         });
         setEditing(kind);
@@ -300,6 +340,7 @@ export default function ExternalBusiness() {
             .filter(p => p.description?.trim())
             .map(p => ({ ...p, quantity: Number(p.quantity) || 0, unit_price: Number(p.unit_price) || 0, total: (Number(p.quantity) || 0) * (Number(p.unit_price) || 0) }));
         if (!positions.length) { toast.error('Mindestens eine Position mit Beschreibung nötig'); return; }
+        const composedAddress = [record.customer_street, [record.customer_postal_code, record.customer_city].filter(Boolean).join(' ')].filter(Boolean).join('\n');
         const data = {
             category: record.category,
             positions,
@@ -308,7 +349,10 @@ export default function ExternalBusiness() {
             tax_amount: totals.vat,
             amount_gross: totals.gross,
             customer_name: record.category === CAT_WKZ ? (record.customer_name || '') : record.customer_name,
-            customer_address: record.customer_address || '',
+            customer_address: composedAddress || record.customer_address || '',
+            customer_street: record.customer_street || '',
+            customer_postal_code: record.customer_postal_code || '',
+            customer_city: record.customer_city || '',
             supplier_name: record.supplier_name || '',
             supplier_id: record.supplier_id || '',
             linked_event_id: record.linked_event_id || '',
@@ -319,6 +363,8 @@ export default function ExternalBusiness() {
             Object.assign(data, {
                 invoice_date: record.invoice_date,
                 service_date: record.service_date || record.invoice_date,
+                service_date_type: record.service_date_type || 'Einzel',
+                service_date_end: record.service_date_type === 'Zeitraum' ? (record.service_date_end || '') : '',
                 due_date: record.due_date,
                 datev_account: record.datev_account || DEFAULT_ACCOUNT[record.category],
                 payment_status: record.payment_status || 'offen',
@@ -349,6 +395,9 @@ export default function ExternalBusiness() {
                 category: offer.category,
                 customer_name: offer.customer_name || '',
                 customer_address: offer.customer_address || '',
+                customer_street: offer.customer_street || '',
+                customer_postal_code: offer.customer_postal_code || '',
+                customer_city: offer.customer_city || '',
                 supplier_name: offer.supplier_name || '',
                 supplier_id: offer.supplier_id || '',
                 linked_event_id: offer.linked_event_id || '',
@@ -364,6 +413,7 @@ export default function ExternalBusiness() {
                 datev_account: DEFAULT_ACCOUNT[offer.category] || '8000',
                 payment_status: 'offen',
                 doc_status: 'Entwurf',
+                service_date_type: 'Einzel',
             });
             await base44.entities.Offer.update(offer.id, {
                 status: 'Rechnung erstellt',
@@ -585,10 +635,7 @@ export default function ExternalBusiness() {
                                             <p className="text-[11px] text-muted-foreground">Keine Lieferanten angelegt — Name manuell unten bei Notizen hinterlegbar.</p>
                                         )}
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <Label>Anschrift (für PDF)</Label>
-                                        <Input value={record.customer_address || ''} onChange={(e) => setField('customer_address', e.target.value)} placeholder="Straße, PLZ Ort" />
-                                    </div>
+                                    <AddressFields record={record} setField={setField} />
                                 </>
                             ) : (
                                 <>
@@ -596,10 +643,7 @@ export default function ExternalBusiness() {
                                         <Label>Kunde / Veranstalter *</Label>
                                         <Input value={record.customer_name || ''} onChange={(e) => setField('customer_name', e.target.value)} placeholder="z.B. WKZ, Stadtfest e.V." required />
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <Label>Anschrift</Label>
-                                        <Input value={record.customer_address || ''} onChange={(e) => setField('customer_address', e.target.value)} placeholder="Straße, PLZ Ort" />
-                                    </div>
+                                    <AddressFields record={record} setField={setField} />
                                 </>
                             )}
 
@@ -676,9 +720,28 @@ export default function ExternalBusiness() {
                                             <Input type="date" value={record.invoice_date || ''} onChange={(e) => setField('invoice_date', e.target.value)} required />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label>Leistungsdatum</Label>
+                                            <Label>Leistung</Label>
+                                            <Select
+                                                value={record.service_date_type || 'Einzel'}
+                                                onValueChange={(v) => setField('service_date_type', v)}
+                                            >
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Einzel">Einzelnes Datum</SelectItem>
+                                                    <SelectItem value="Zeitraum">Zeitraum (von – bis)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label>{record.service_date_type === 'Zeitraum' ? 'Leistung von' : 'Leistungsdatum'}</Label>
                                             <Input type="date" value={record.service_date || ''} onChange={(e) => setField('service_date', e.target.value)} />
                                         </div>
+                                        {record.service_date_type === 'Zeitraum' && (
+                                            <div className="space-y-1.5">
+                                                <Label>Leistung bis</Label>
+                                                <Input type="date" value={record.service_date_end || ''} onChange={(e) => setField('service_date_end', e.target.value)} />
+                                            </div>
+                                        )}
                                         <div className="space-y-1.5">
                                             <Label>Zahlbar bis</Label>
                                             <Input type="date" value={record.due_date || ''} onChange={(e) => setField('due_date', e.target.value)} />
