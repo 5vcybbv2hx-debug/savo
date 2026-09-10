@@ -50,7 +50,7 @@ function MonthNav({ value, onChange }) {
 }
 
 // ── DATEV EXTF Buchungsstapel ─────────────────────────────────────────────────
-function buildDATEVCsv(receipts, cashbookEntries, month, beraterNr, mandantenNr) {
+function buildDATEVCsv(receipts, cashbookEntries, invoices, month, beraterNr, mandantenNr) {
     const now = new Date();
     const ts  = format(now, 'yyyyMMddHHmmssSSS');
     const [y, m] = month.split('-');
@@ -118,7 +118,27 @@ function buildDATEVCsv(receipts, cashbookEntries, month, beraterNr, mandantenNr)
         return fields.join(';');
     });
 
-    return [header, cols, ...receiptRows, ...cashRows].join('\r\n');
+    // Ausgangsrechnungen (Außenaufträge) → Erlöse (Haben-Buchungen)
+    const invoiceRows = invoices.map(r => {
+        const betrag = (r.amount_gross || 0).toFixed(2).replace('.', ',');
+        const datum  = r.invoice_date ? format(new Date(r.invoice_date), 'ddMM') : '';
+        const bu     = buKey(r.tax_rate ?? 19);
+        const konto  = r.datev_account || (r.category === 'Werbekostenzuschuss' ? '8035' : '8000');
+        const text   = `"${[r.category, r.customer_name || r.supplier_name, r.invoice_number].filter(Boolean).join(' / ')}"`;
+        const fields = Array(14).fill('');
+        fields[0]  = betrag;
+        fields[1]  = 'H';
+        fields[2]  = 'EUR';
+        fields[6]  = konto;
+        fields[7]  = sachkonto;
+        fields[8]  = bu;
+        fields[9]  = datum;
+        fields[10] = r.invoice_number || '';
+        fields[13] = text;
+        return fields.join(';');
+    });
+
+    return [header, cols, ...receiptRows, ...cashRows, ...invoiceRows].join('\r\n');
 }
 
 function downloadFile(content, filename, mime) {
@@ -152,6 +172,12 @@ export default function AccountingExport() {
         staleTime: STALE.MEDIUM,
     });
 
+    const { data: debitorInvoices = [] } = useQuery({
+        queryKey: ['external-invoices'],
+        queryFn:  () => base44.entities.DebitorInvoice.list('-invoice_date', 500),
+        staleTime: STALE.MEDIUM,
+    });
+
     // ── Filter auf gewählten Monat ────────────────────────────────────────────
     const monthReceipts = useMemo(() =>
         receipts.filter(r => r.receipt_date?.startsWith(selectedMonth)),
@@ -161,6 +187,12 @@ export default function AccountingExport() {
     const monthCashbook = useMemo(() =>
         cashbookEntries.filter(e => e.date?.startsWith(selectedMonth)),
         [cashbookEntries, selectedMonth]
+    );
+
+    // Nur gesendete, nicht stornierte Rechnungen zählen als Umsatz
+    const monthInvoices = useMemo(() =>
+        debitorInvoices.filter(r => r.invoice_date?.startsWith(selectedMonth) && r.doc_status === 'Gesendet'),
+        [debitorInvoices, selectedMonth]
     );
 
     // ── Vollständigkeitsprüfung ───────────────────────────────────────────────
@@ -177,7 +209,8 @@ export default function AccountingExport() {
     // ── Summen ────────────────────────────────────────────────────────────────
     const totalReceipts  = monthReceipts.reduce((s, r) => s + (r.amount_gross || 0), 0);
     const totalCashbook  = monthCashbook.reduce((s, e) => s + (e.amount || 0), 0);
-    const totalEntries   = monthReceipts.length + monthCashbook.length;
+    const totalInvoices = monthInvoices.reduce((s, r) => s + (r.amount_gross || 0), 0);
+    const totalEntries   = monthReceipts.length + monthCashbook.length + monthInvoices.length;
     const withImage      = monthReceipts.filter(r => r.file_url).length;
 
     const [y, m]     = selectedMonth.split('-');
@@ -192,7 +225,7 @@ export default function AccountingExport() {
         setExporting(true);
         try {
             // 1. DATEV CSV (Belege + Kassenbuch)
-            const csv = buildDATEVCsv(monthReceipts, monthCashbook, selectedMonth, beraterNr, mandantenNr);
+            const csv = buildDATEVCsv(monthReceipts, monthCashbook, monthInvoices, selectedMonth, beraterNr, mandantenNr);
             downloadFile(csv, `EXTF_Buchungsstapel_${selectedMonth}.csv`, 'text/csv;charset=utf-8');
 
             // 2. Belege als ZIP (nur wenn Bilder vorhanden)
@@ -252,7 +285,7 @@ export default function AccountingExport() {
                 <MonthNav value={selectedMonth} onChange={setSelectedMonth} />
 
                 {/* ── Monats-Übersicht ─────────────────────────────────────── */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="bg-secondary/40 rounded-xl p-3 text-center">
                         <p className="text-lg font-bold text-foreground">{monthReceipts.length}</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Belege</p>
@@ -262,7 +295,11 @@ export default function AccountingExport() {
                         <p className="text-[10px] text-muted-foreground mt-0.5">Kassenbuch</p>
                     </div>
                     <div className="bg-secondary/40 rounded-xl p-3 text-center">
-                        <p className="text-lg font-bold text-foreground">{fmt(totalReceipts + totalCashbook)} €</p>
+                        <p className="text-lg font-bold text-foreground">{monthInvoices.length}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Rechnungen</p>
+                    </div>
+                    <div className="bg-secondary/40 rounded-xl p-3 text-center">
+                        <p className="text-lg font-bold text-foreground">{fmt(totalReceipts + totalCashbook + totalInvoices)} €</p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">Gesamt</p>
                     </div>
                 </div>

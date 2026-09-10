@@ -51,6 +51,7 @@ export const additionalPages = [
 
     // Buchhaltung
     { page: 'AccountingDashboard',   name: 'Buchhaltung',       icon: Calculator, permission: 'canViewAccounting' },
+    { page: 'ExternalBusiness',    name: 'Außenaufträge',     icon: Receipt,     permission: 'canViewAccounting' },
     { page: 'AccountingCashbook',    name: 'Kassenbuch',        icon: BookCopy,   permission: 'canViewAccountingCashbook' },
     { page: 'AccountingReceipts',    name: 'Belege',            icon: Receipt,    permission: 'canViewAccountingReceipts' },
     { page: 'AccountingCreditors',   name: 'Kreditoren',        icon: CreditCard, permission: 'canViewAccountingCreditors' },

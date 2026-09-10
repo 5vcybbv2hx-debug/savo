@@ -60,6 +60,53 @@
     },
     "linked_event_id": {
       "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["Externer Event", "Werbekostenzuschuss"],
+      "description": "Art des Außenauftrags: Bar-Service bei externem Event oder Werbekostenzuschuss von Lieferant/Brauerei"
+    },
+    "doc_status": {
+      "type": "string",
+      "enum": ["Entwurf", "Gesendet", "Storniert"],
+      "default": "Entwurf",
+      "description": "Dokumentenstatus — Entwurf wird nicht in den DATEV-Export aufgenommen"
+    },
+    "positions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "quantity": { "type": "number" },
+          "unit_price": { "type": "number" },
+          "total": { "type": "number" }
+        }
+      },
+      "description": "Rechnungspositionen (Beschreibung, Menge, Einzelpreis, Summe)"
+    },
+    "supplier_name": {
+      "type": "string",
+      "description": "WKZ: Lieferant/Brauerei als Rechnungsempfänger"
+    },
+    "supplier_id": {
+      "type": "string"
+    },
+    "offer_id": {
+      "type": "string",
+      "description": "Verknüpfung zum Ursprungs-Angebot"
+    },
+    "offer_number": {
+      "type": "string"
+    },
+    "service_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Leistungsdatum (§14 UStG-Pflichtangabe)"
+    },
+    "datev_account": {
+      "type": "string",
+      "description": "Erlöskonto SKR03 — Standard 8000 (Events) / 8035 (WKZ)"
     }
   },
   "required": [

@@ -48,6 +48,15 @@ function NavCard({ icon: Icon, label, description, page, badge, badgeVariant, pe
 }
 
 export default function AccountingHub() {
+    // Offene Ausgangsrechnungen (Außenaufträge) für Badge
+    const { data: openOutInvoices = [] } = useQuery({
+        queryKey: ['external-invoices'],
+        queryFn: async () => {
+            const all = await base44.entities.DebitorInvoice.list('-invoice_date', 200);
+            return all.filter(i => i.doc_status !== 'Storniert' && i.payment_status !== 'bezahlt');
+        },
+        staleTime: 5 * 60 * 1000,
+    });
     const permissions = usePermissions();
     const thisMonth = format(startOfMonth(new Date()), 'yyyy-MM');
 
@@ -96,6 +105,7 @@ export default function AccountingHub() {
                 <div className="space-y-2">
                     <NavCard icon={Receipt}     label="Belege"             description="Rechnungen & Quittungen"       page="AccountingReceipts"    badge={receipts.length || undefined} badgeVariant="warning" permission="canViewAccountingReceipts" />
                     <NavCard icon={TrendingDown} label="Kreditoren"        description="Lieferantenrechnungen"         page="AccountingCreditors"   permission="canViewAccountingCreditors" />
+                    <NavCard icon={Receipt}  label="Außenaufträge"  description="Angebote & Rechnungen — Events, WKZ" page="ExternalBusiness" badge={openOutInvoices.length || undefined} badgeVariant="warning" permission="canViewAccounting" />
                     <NavCard icon={TrendingDown} label="Verbindlichkeiten" description="Offene Zahlungen"              page="AccountingLiabilities" badge={liabilities.length || undefined} badgeVariant="danger" permission="canViewLiabilities" />
                     <NavCard icon={RefreshCw}   label="Fixkosten"          description="Monatliche Fixkosten verwalten" page="AccountingFixedCosts"  permission="canViewAccounting" />
                 </div>

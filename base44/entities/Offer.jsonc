@@ -1,0 +1,82 @@
+{
+  "name": "Offer",
+  "type": "object",
+  "properties": {
+    "offer_number": {
+      "type": "string",
+      "description": "Fortlaufende Angebotsnummer AN-YYYY-NNN"
+    },
+    "offer_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Gültig bis (freibleibendes Angebot)"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["Externer Event", "Werbekostenzuschuss"],
+      "description": "Art des Außenauftrags"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "customer_address": {
+      "type": "string"
+    },
+    "supplier_name": {
+      "type": "string",
+      "description": "WKZ: Lieferant/Brauerei als Empfänger"
+    },
+    "supplier_id": {
+      "type": "string"
+    },
+    "linked_event_id": {
+      "type": "string",
+      "description": "Optionaler Bezug zu einem Event"
+    },
+    "positions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "quantity": { "type": "number" },
+          "unit_price": { "type": "number" },
+          "total": { "type": "number" }
+        }
+      }
+    },
+    "amount_net": {
+      "type": "number"
+    },
+    "tax_rate": {
+      "type": "number",
+      "default": 19
+    },
+    "tax_amount": {
+      "type": "number"
+    },
+    "amount_gross": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["Entwurf", "Gesendet", "Bestätigt", "Abgelehnt", "Rechnung erstellt"],
+      "default": "Entwurf"
+    },
+    "description": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "converted_invoice_id": {
+      "type": "string",
+      "description": "ID der erstellten Rechnung nach Konvertierung"
+    }
+  },
+  "required": ["offer_date", "customer_name", "amount_gross"]
+}
