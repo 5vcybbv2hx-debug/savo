@@ -75,8 +75,31 @@ async function nextNumber(records, field, prefix) {
     return `${prefix}-${year}-${String(max + 1).padStart(3, '0')}`;
 }
 
-// ── PDF: Angebot/Rechnung mit §14-UStG-Pflichtangaben ────────────────────────
-function downloadPdf(kind, data, company) {
+// ── PDF: Angebot/Rechnung im SAVO-Teal-Stil mit §14-UStG-Pflichtangaben ─────
+const TEAL = [8, 145, 178];        // #0891b2 — brand-from
+const TEAL_DARK = [14, 116, 144];  // #0e7490 — brand-via
+const TEAL_TINT = [236, 254, 255];  // #ecfeff — helles Teal
+const TEAL_LINE = [204, 234, 238]; // helle Trennlinie
+
+async function loadImageDataUrl(url) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            } catch { resolve(null); }
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+
+async function downloadPdf(kind, data, company) {
     const doc = new jsPDF('p', 'mm', 'a4');
     const isInvoice = kind === 'invoice';
     const number = isInvoice ? data.invoice_number : data.offer_number;
@@ -90,51 +113,76 @@ function downloadPdf(kind, data, company) {
     ].filter(Boolean);
     const address = addressLines.length ? addressLines : (data.customer_address || '').split('\n');
 
-    // Kopf
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text(company?.company_name || 'SAVO', 15, 18);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    const companyLines = [
-        company?.owner_name ? `Inhaber: ${company.owner_name}` : null,
-        [company?.street, [company?.postal_code, company?.city].filter(Boolean).join(' ')].filter(Boolean).join(', '),
-    ].filter(Boolean);
-    companyLines.forEach((l, i) => doc.text(l, 15, 24 + i * 4.5));
+    // Logo laden (wenn vorhanden)
+    const logoData = company?.logo_url ? await loadImageDataUrl(company.logo_url) : null;
 
-    // Titel rechts
+    // ── Kopfband (Teal) ───────────────────────────────────────────────────────
+    doc.setFillColor(...TEAL);
+    doc.rect(0, 0, 210, 32, 'F');
+
+    // Logo links im Kopfband (weiß auf Teal)
+    if (logoData) {
+        try {
+            doc.addImage(logoData, 'PNG', 15, 6, 20, 20);
+        } catch { /* Fallback Text */ }
+    }
+    // Firmenname neben Logo (weiß)
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.text(isInvoice ? 'RECHNUNG' : 'ANGEBOT', 195, 18, { align: 'right' });
+    doc.setFontSize(14);
+    doc.text(company?.company_name || 'SAVO', logoData ? 38 : 15, 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const subLine = [company?.street, [company?.postal_code, company?.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    if (subLine) doc.text(subLine, logoData ? 38 : 15, 20);
+    if (company?.owner_name) doc.text(`Inhaber: ${company.owner_name}`, logoData ? 38 : 15, 25);
+
+    // Titel rechts im Kopfband (weiß, groß)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text(isInvoice ? 'RECHNUNG' : 'ANGEBOT', 195, 14, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.text(`Nr. ${number}`, 195, 24, { align: 'right' });
-    doc.text(`Datum: ${format(parseISO(isInvoice ? data.invoice_date : data.offer_date), 'dd.MM.yyyy')}`, 195, 29, { align: 'right' });
+    doc.text(`Nr. ${number}`, 195, 20, { align: 'right' });
+    doc.text(`Datum: ${format(parseISO(isInvoice ? data.invoice_date : data.offer_date), 'dd.MM.yyyy')}`, 195, 25, { align: 'right' });
     if (isInvoice && data.service_date) {
         if (data.service_date_type === 'Zeitraum' && data.service_date_end) {
-            doc.text(`Leistungszeitraum: ${format(parseISO(data.service_date), 'dd.MM.yyyy')} – ${format(parseISO(data.service_date_end), 'dd.MM.yyyy')}`, 195, 34, { align: 'right' });
+            doc.text(`Leistung: ${format(parseISO(data.service_date), 'dd.MM.yyyy')} – ${format(parseISO(data.service_date_end), 'dd.MM.yyyy')}`, 195, 30, { align: 'right' });
         } else {
-            doc.text(`Leistungsdatum: ${format(parseISO(data.service_date), 'dd.MM.yyyy')}`, 195, 34, { align: 'right' });
+            doc.text(`Leistung: ${format(parseISO(data.service_date), 'dd.MM.yyyy')}`, 195, 30, { align: 'right' });
         }
     }
 
-    // Empfänger
-    doc.setFontSize(10);
+    // ── Empfänger-Block ──────────────────────────────────────────────────────
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(7);
+    doc.setTextColor(...TEAL_DARK);
     doc.setFont('helvetica', 'bold');
+    doc.text(isInvoice ? 'RECHNUNG AN' : 'ANGEBOT AN', 15, 42);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
     doc.text(recipient || 'Empfänger', 15, 48);
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
     (Array.isArray(address) ? address : String(address).split('\n')).slice(0, 4).forEach((l, i) => doc.text(l, 15, 54 + i * 5));
 
-    // Kategorie
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(`Betreff: ${data.category === CAT_WKZ ? 'Werbekostenzuschuss' : 'Bar-Service / Außengeschäft'}`, 15, 78);
-    doc.setTextColor(0);
+    // Kategorie-Badge (Teal-Tint)
+    const catLabel = data.category === CAT_WKZ ? 'Werbekostenzuschuss' : 'Bar-Service / Außengeschäft';
+    doc.setFillColor(...TEAL_TINT);
+    doc.roundedRect(15, 72, 90, 6, 1.5, 1.5, 'F');
+    doc.setTextColor(...TEAL_DARK);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Betreff: ${catLabel}`, 17, 76);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
 
-    // Positionen
-    let y = 88;
-    doc.setFillColor(245, 245, 245);
+    // ── Positionen-Tabelle ───────────────────────────────────────────────────
+    let y = 84;
+    // Headerzeile (Teal)
+    doc.setFillColor(...TEAL);
     doc.rect(15, y, 180, 8, 'F');
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.text('Pos', 17, y + 5.5);
@@ -143,50 +191,80 @@ function downloadPdf(kind, data, company) {
     doc.text('Preis', 158, y + 5.5, { align: 'right' });
     doc.text('Summe', 193, y + 5.5, { align: 'right' });
     y += 8;
+    doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
     (data.positions || []).forEach((p, idx) => {
         if (y > 245) { doc.addPage(); y = 20; }
-        const rowH = 6;
-        doc.text(String(idx + 1), 17, y + 5);
-        doc.text(String(p.description || '').slice(0, 60), 26, y + 5);
-        doc.text(String(p.quantity ?? 1), 138, y + 5, { align: 'right' });
-        doc.text(eur(p.unit_price), 158, y + 5, { align: 'right' });
-        doc.text(eur(p.total ?? (p.quantity * p.unit_price)), 193, y + 5, { align: 'right' });
-        y += rowH;
-        doc.setDrawColor(230);
+        // Zeilen-Hintergrund (abwechselnd)
+        if (idx % 2 === 1) {
+            doc.setFillColor(...TEAL_TINT);
+            doc.rect(15, y, 180, 6, 'F');
+        }
+        doc.text(String(idx + 1), 17, y + 4.5);
+        doc.text(String(p.description || '').slice(0, 60), 26, y + 4.5);
+        doc.text(String(p.quantity ?? 1), 138, y + 4.5, { align: 'right' });
+        doc.text(eur(p.unit_price), 158, y + 4.5, { align: 'right' });
+        doc.text(eur(p.total ?? (p.quantity * p.unit_price)), 193, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setDrawColor(...TEAL_LINE);
+        doc.setLineWidth(0.2);
         doc.line(15, y, 195, y);
-        y += 2;
+        y += 1.5;
     });
 
-    // Summen
-    y += 4;
+    // ── Summen (rechtsbündig, Teal-Akzent) ───────────────────────────────────
+    y += 3;
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
     doc.text('Netto', 150, y, { align: 'right' });
     doc.text(`${eur(data.amount_net)} EUR`, 193, y, { align: 'right' });
-    y += 6;
+    y += 5.5;
     doc.text(`USt ${data.tax_rate ?? 19}%`, 150, y, { align: 'right' });
     doc.text(`${eur(data.tax_amount)} EUR`, 193, y, { align: 'right' });
-    y += 8;
+    y += 2;
+    // Gesamtbetrag-Zeile mit Teal-Hintergrund
+    doc.setFillColor(...TEAL);
+    doc.rect(145, y, 50, 9, 'F');
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
-    doc.text(isInvoice ? 'Gesamtbetrag' : 'Gesamt (brutto)', 150, y, { align: 'right' });
-    doc.text(`${eur(data.amount_gross)} EUR`, 193, y, { align: 'right' });
+    doc.text(isInvoice ? 'Gesamt' : 'Gesamt brutto', 148, y + 6, { align: 'left' });
+    doc.text(`${eur(data.amount_gross)} EUR`, 193, y + 6, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
+    y += 9;
 
-    // Sichtbare Notizen für den Empfänger (Lieferant/Brauerei/Kunde)
+    // ── Sichtbare Notiz — direkt unter dem Rechnungsblock ─────────────────────
     if (data.notes_public && data.notes && data.notes.trim()) {
-        let noteY = Math.max(y + 14, 250);
-        if (noteY > 250) { /* keep within page */ }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.text('Notiz:', 15, noteY);
-        doc.setFont('helvetica', 'normal');
+        y += 6;
         const noteLines = doc.splitTextToSize(data.notes.trim(), 180);
-        noteLines.slice(0, 4).forEach((l, i) => doc.text(l, 15, noteY + 5 + i * 4.5));
+        const noteH = 6 + noteLines.slice(0, 5).length * 4.5 + 2;
+        // Teal-Tint Box
+        doc.setFillColor(...TEAL_TINT);
+        doc.roundedRect(15, y, 180, noteH, 1.5, 1.5, 'F');
+        doc.setDrawColor(...TEAL_LINE);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(15, y, 180, noteH, 1.5, 1.5, 'S');
+        // Label
+        doc.setTextColor(...TEAL_DARK);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.text('NOTIZ', 17, y + 4.5);
+        // Inhalt
+        doc.setTextColor(40, 40, 40);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        noteLines.slice(0, 5).forEach((l, i) => doc.text(l, 17, y + 9 + i * 4.5));
+        doc.setTextColor(0, 0, 0);
+        y += noteH + 4;
     }
 
-    // Footer
-    const footerY = Math.max(y + 14, 258);
+    // ── Footer ───────────────────────────────────────────────────────────────
+    const footerY = Math.max(y + 8, 262);
+    doc.setDrawColor(...TEAL_LINE);
+    doc.setLineWidth(0.3);
+    doc.line(15, footerY - 4, 195, footerY - 4);
     if (!isInvoice && data.valid_until) {
         doc.text(`Freibleibendes Angebot, gültig bis ${format(parseISO(data.valid_until), 'dd.MM.yyyy')}.`, 15, footerY);
     }
@@ -194,11 +272,11 @@ function downloadPdf(kind, data, company) {
         doc.text(`Zahlbar bis ${format(parseISO(data.due_date), 'dd.MM.yyyy')} ohne Abzug.`, 15, footerY);
     }
     const footer = [
-        company?.tax_id ? `Steuernummer: ${company.tax_id}` : null,
+        company?.tax_id ? `Steuernr.: ${company.tax_id}` : null,
         company?.vat_id ? `USt-IdNr.: ${company.vat_id}` : null,
         company?.iban ? `IBAN: ${company.iban}${company.bank_name ? ` (${company.bank_name})` : ''}` : null,
     ].filter(Boolean);
-    footer.forEach((l, i) => doc.text(l, 15, footerY + 6 + i * 4.5));
+    footer.forEach((l, i) => doc.text(l, 15, footerY + 5 + i * 4.5));
 
     doc.save(`${number || (isInvoice ? 'Rechnung' : 'Angebot')}.pdf`);
 }
