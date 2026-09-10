@@ -76,12 +76,18 @@ async function nextNumber(records, field, prefix) {
 }
 
 // ── PDF: Angebot/Rechnung im SAVO-Teal-Stil mit §14-UStG-Pflichtangaben ─────
-const TEAL = [8, 145, 178];        // #0891b2 — brand-from
-const TEAL_DARK = [14, 116, 144];  // #0e7490 — brand-via
-const TEAL_TINT = [236, 254, 255];  // #ecfeff — helles Teal
-const TEAL_LINE = [204, 234, 238]; // helle Trennlinie
+// ── PDF: Angebot/Rechnung — ruhiges, elegantes Layout mit §14-UStG-Pflichtangaben ─
+// Design: viel Weißraum, ein Akzentton (Teal) sparsam eingesetzt, keine Flächenfüllung
+// im Kopf. Logo wird im Originalseitenverhältnis eingepasst (nie gequetscht).
+const TEAL = [8, 145, 178];         // #0891b2 — Akzent (Linien, Titel, kleine Details)
+const TEAL_DARK = [14, 116, 144];   // #0e7490 — Labels/Kleintext in Akzentfarbe
+const GRAY = [110, 110, 116];       // sekundärer Text
+const GRAY_LIGHT = [238, 238, 240]; // Trennlinien / Notiz-Hintergrund
+const INK = [30, 30, 32];           // Haupttext (kein reines Schwarz — wirkt weicher)
 
-async function loadImageDataUrl(url) {
+// Lädt ein Bild und liefert Data-URL + Originalmaße, damit das Seitenverhältnis
+// beim Platzieren im PDF exakt erhalten bleibt (kein Verzerren/Quetschen).
+async function loadImageWithSize(url) {
     return new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -91,7 +97,11 @@ async function loadImageDataUrl(url) {
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
                 canvas.getContext('2d').drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
+                resolve({
+                    dataUrl: canvas.toDataURL('image/png'),
+                    width: img.naturalWidth,
+                    height: img.naturalHeight,
+                });
             } catch { resolve(null); }
         };
         img.onerror = () => resolve(null);
@@ -103,9 +113,7 @@ async function downloadPdf(kind, data, company) {
     const doc = new jsPDF('p', 'mm', 'a4');
     const isInvoice = kind === 'invoice';
     const number = isInvoice ? data.invoice_number : data.offer_number;
-    const recipient = isInvoice
-        ? (data.category === CAT_WKZ ? data.supplier_name : data.customer_name)
-        : (data.category === CAT_WKZ ? data.supplier_name : data.customer_name);
+    const recipient = data.category === CAT_WKZ ? data.supplier_name : data.customer_name;
     // Adresse: bevorzugt aus Einzelfeldern, Fallback auf legacy customer_address
     const addressLines = [
         data.customer_street,
@@ -113,171 +121,186 @@ async function downloadPdf(kind, data, company) {
     ].filter(Boolean);
     const address = addressLines.length ? addressLines : (data.customer_address || '').split('\n');
 
-    // Logo laden (wenn vorhanden)
-    const logoData = company?.logo_url ? await loadImageDataUrl(company.logo_url) : null;
+    const MARGIN_L = 18, MARGIN_R = 192;
 
-    // ── Kopfband (Teal) ───────────────────────────────────────────────────────
-    doc.setFillColor(...TEAL);
-    doc.rect(0, 0, 210, 32, 'F');
-
-    // Logo links im Kopfband (weiß auf Teal)
-    if (logoData) {
-        try {
-            doc.addImage(logoData, 'PNG', 15, 6, 20, 20);
-        } catch { /* Fallback Text */ }
+    // Logo laden — im Originalseitenverhältnis einpassen (max. 15mm hoch, 34mm breit)
+    const logo = company?.logo_url ? await loadImageWithSize(company.logo_url) : null;
+    let logoW = 0, logoH = 0;
+    if (logo) {
+        const ratio = logo.width / logo.height;
+        logoH = 15;
+        logoW = logoH * ratio;
+        if (logoW > 34) { logoW = 34; logoH = logoW / ratio; }
     }
-    // Firmenname neben Logo (weiß)
-    doc.setTextColor(255, 255, 255);
+
+    // ── Kopf: Logo (natürliches Format) + Firma links, Dokumenttitel rechts ────
+    if (logo) {
+        try { doc.addImage(logo.dataUrl, 'PNG', MARGIN_L, 14, logoW, logoH); } catch { /* Fallback: nur Text */ }
+    }
+    const textX = MARGIN_L + (logo ? logoW + 6 : 0);
+    doc.setTextColor(...INK);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text(company?.company_name || 'SAVO', logoData ? 38 : 15, 14);
+    doc.setFontSize(13);
+    doc.text(company?.company_name || 'SAVO', textX, 20);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...GRAY);
     const subLine = [company?.street, [company?.postal_code, company?.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-    if (subLine) doc.text(subLine, logoData ? 38 : 15, 20);
-    if (company?.owner_name) doc.text(`Inhaber: ${company.owner_name}`, logoData ? 38 : 15, 25);
+    if (subLine) doc.text(subLine, textX, 25.5);
+    if (company?.owner_name) doc.text(`Inhaber: ${company.owner_name}`, textX, 30);
 
-    // Titel rechts im Kopfband (weiß, groß)
+    // Dokumenttitel rechts — schlank, nur Textfarbe als Akzent, keine Fläche
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text(isInvoice ? 'RECHNUNG' : 'ANGEBOT', 195, 14, { align: 'right' });
+    doc.setFontSize(19);
+    doc.setTextColor(...TEAL);
+    doc.text(isInvoice ? 'RECHNUNG' : 'ANGEBOT', MARGIN_R, 20, { align: 'right' });
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(`Nr. ${number}`, 195, 20, { align: 'right' });
-    doc.text(`Datum: ${format(parseISO(isInvoice ? data.invoice_date : data.offer_date), 'dd.MM.yyyy')}`, 195, 25, { align: 'right' });
+    doc.setFontSize(8.5);
+    doc.setTextColor(...GRAY);
+    doc.text(`Nr. ${number}`, MARGIN_R, 26, { align: 'right' });
+    doc.text(`Datum: ${format(parseISO(isInvoice ? data.invoice_date : data.offer_date), 'dd.MM.yyyy')}`, MARGIN_R, 31, { align: 'right' });
     if (isInvoice && data.service_date) {
-        if (data.service_date_type === 'Zeitraum' && data.service_date_end) {
-            doc.text(`Leistung: ${format(parseISO(data.service_date), 'dd.MM.yyyy')} – ${format(parseISO(data.service_date_end), 'dd.MM.yyyy')}`, 195, 30, { align: 'right' });
-        } else {
-            doc.text(`Leistung: ${format(parseISO(data.service_date), 'dd.MM.yyyy')}`, 195, 30, { align: 'right' });
-        }
+        const leistung = (data.service_date_type === 'Zeitraum' && data.service_date_end)
+            ? `Leistung: ${format(parseISO(data.service_date), 'dd.MM.yyyy')} – ${format(parseISO(data.service_date_end), 'dd.MM.yyyy')}`
+            : `Leistung: ${format(parseISO(data.service_date), 'dd.MM.yyyy')}`;
+        doc.text(leistung, MARGIN_R, 36, { align: 'right' });
     }
+
+    // Dünne Trennlinie unter dem Kopf
+    doc.setDrawColor(...TEAL);
+    doc.setLineWidth(0.5);
+    doc.line(MARGIN_L, 41, MARGIN_R, 41);
 
     // ── Empfänger-Block ──────────────────────────────────────────────────────
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     doc.setTextColor(...TEAL_DARK);
     doc.setFont('helvetica', 'bold');
-    doc.text(isInvoice ? 'RECHNUNG AN' : 'ANGEBOT AN', 15, 42);
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    doc.text(recipient || 'Empfänger', 15, 48);
+    doc.text(isInvoice ? 'RECHNUNG AN' : 'ANGEBOT AN', MARGIN_L, 51);
+    doc.setTextColor(...INK);
+    doc.setFontSize(10.5);
+    doc.text(recipient || 'Empfänger', MARGIN_L, 57);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    (Array.isArray(address) ? address : String(address).split('\n')).slice(0, 4).forEach((l, i) => doc.text(l, 15, 54 + i * 5));
-
-    // Kategorie-Badge (Teal-Tint)
-    const catLabel = data.category === CAT_WKZ ? 'Werbekostenzuschuss' : 'Bar-Service / Außengeschäft';
-    doc.setFillColor(...TEAL_TINT);
-    doc.roundedRect(15, 72, 90, 6, 1.5, 1.5, 'F');
-    doc.setTextColor(...TEAL_DARK);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Betreff: ${catLabel}`, 17, 76);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-
-    // ── Positionen-Tabelle ───────────────────────────────────────────────────
-    let y = 84;
-    // Headerzeile (Teal)
-    doc.setFillColor(...TEAL);
-    doc.rect(15, y, 180, 8, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('Pos', 17, y + 5.5);
-    doc.text('Beschreibung', 26, y + 5.5);
-    doc.text('Anz.', 138, y + 5.5, { align: 'right' });
-    doc.text('Preis', 158, y + 5.5, { align: 'right' });
-    doc.text('Summe', 193, y + 5.5, { align: 'right' });
-    y += 8;
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-    (data.positions || []).forEach((p, idx) => {
-        if (y > 245) { doc.addPage(); y = 20; }
-        // Zeilen-Hintergrund (abwechselnd)
-        if (idx % 2 === 1) {
-            doc.setFillColor(...TEAL_TINT);
-            doc.rect(15, y, 180, 6, 'F');
-        }
-        doc.text(String(idx + 1), 17, y + 4.5);
-        doc.text(String(p.description || '').slice(0, 60), 26, y + 4.5);
-        doc.text(String(p.quantity ?? 1), 138, y + 4.5, { align: 'right' });
-        doc.text(eur(p.unit_price), 158, y + 4.5, { align: 'right' });
-        doc.text(eur(p.total ?? (p.quantity * p.unit_price)), 193, y + 4.5, { align: 'right' });
-        y += 6;
-        doc.setDrawColor(...TEAL_LINE);
-        doc.setLineWidth(0.2);
-        doc.line(15, y, 195, y);
-        y += 1.5;
+    doc.setTextColor(...GRAY);
+    let ry = 62.5;
+    (Array.isArray(address) ? address : String(address).split('\n')).slice(0, 4).forEach((l) => {
+        doc.text(l, MARGIN_L, ry);
+        ry += 5;
     });
 
-    // ── Summen (rechtsbündig, Teal-Akzent) ───────────────────────────────────
-    y += 3;
-    doc.setFontSize(9);
-    doc.setTextColor(80, 80, 80);
-    doc.text('Netto', 150, y, { align: 'right' });
-    doc.text(`${eur(data.amount_net)} EUR`, 193, y, { align: 'right' });
-    y += 5.5;
-    doc.text(`USt ${data.tax_rate ?? 19}%`, 150, y, { align: 'right' });
-    doc.text(`${eur(data.tax_amount)} EUR`, 193, y, { align: 'right' });
-    y += 2;
-    // Gesamtbetrag-Zeile mit Teal-Hintergrund
+    // Betreff — dezenter Akzentstrich statt Farbfläche
+    const catLabel = data.category === CAT_WKZ ? 'Werbekostenzuschuss' : 'Bar-Service / Außengeschäft';
+    const betreffY = ry + 4;
     doc.setFillColor(...TEAL);
-    doc.rect(145, y, 50, 9, 'F');
-    doc.setTextColor(255, 255, 255);
+    doc.rect(MARGIN_L, betreffY - 3.2, 1, 4.2, 'F');
+    doc.setFontSize(9);
+    doc.setTextColor(...GRAY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Betreff: ${catLabel}`, MARGIN_L + 4, betreffY);
+
+    // ── Positionen-Tabelle ───────────────────────────────────────────────────
+    let y = betreffY + 9;
+    // Kopfzeile: kein Flächenfüllung, nur graue Kleinschrift + dünne Teal-Unterlinie
+    doc.setTextColor(...GRAY);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text(isInvoice ? 'Gesamt' : 'Gesamt brutto', 148, y + 6, { align: 'left' });
-    doc.text(`${eur(data.amount_gross)} EUR`, 193, y + 6, { align: 'right' });
-    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(7.5);
+    doc.text('POS', MARGIN_L, y);
+    doc.text('BESCHREIBUNG', MARGIN_L + 9, y);
+    doc.text('ANZ.', 138, y, { align: 'right' });
+    doc.text('PREIS', 158, y, { align: 'right' });
+    doc.text('SUMME', MARGIN_R, y, { align: 'right' });
+    y += 2.5;
+    doc.setDrawColor(...TEAL);
+    doc.setLineWidth(0.4);
+    doc.line(MARGIN_L, y, MARGIN_R, y);
+    y += 5.5;
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    y += 9;
+    (data.positions || []).forEach((p, idx) => {
+        if (y > 248) { doc.addPage(); y = 24; }
+        // sehr helle, neutrale Zebra-Füllung (keine Farbe — nur Grauton für Lesbarkeit)
+        if (idx % 2 === 1) {
+            doc.setFillColor(249, 249, 250);
+            doc.rect(MARGIN_L, y - 4.3, MARGIN_R - MARGIN_L, 6.3, 'F');
+        }
+        doc.setTextColor(...GRAY);
+        doc.text(String(idx + 1), MARGIN_L, y);
+        doc.setTextColor(...INK);
+        doc.text(String(p.description || '').slice(0, 62), MARGIN_L + 9, y);
+        doc.text(String(p.quantity ?? 1), 138, y, { align: 'right' });
+        doc.text(eur(p.unit_price), 158, y, { align: 'right' });
+        doc.text(eur(p.total ?? (p.quantity * p.unit_price)), MARGIN_R, y, { align: 'right' });
+        y += 6.3;
+        doc.setDrawColor(...GRAY_LIGHT);
+        doc.setLineWidth(0.2);
+        doc.line(MARGIN_L, y - 3.4, MARGIN_R, y - 3.4);
+    });
 
-    // ── Sichtbare Notiz — direkt unter dem Rechnungsblock ─────────────────────
+    // ── Summen — rechtsbündig, textbasiert, ein dünner Akzentstrich vor Gesamt ─
+    y += 4;
+    doc.setFontSize(9);
+    doc.setTextColor(...GRAY);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Netto', 155, y, { align: 'right' });
+    doc.text(`${eur(data.amount_net)} EUR`, MARGIN_R, y, { align: 'right' });
+    y += 5.5;
+    doc.text(`USt ${data.tax_rate ?? 19}%`, 155, y, { align: 'right' });
+    doc.text(`${eur(data.tax_amount)} EUR`, MARGIN_R, y, { align: 'right' });
+    y += 3.5;
+    doc.setDrawColor(...TEAL);
+    doc.setLineWidth(0.5);
+    doc.line(140, y, MARGIN_R, y);
+    y += 6.5;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...INK);
+    doc.text(isInvoice ? 'Gesamt' : 'Gesamt brutto', 155, y, { align: 'right' });
+    doc.text(`${eur(data.amount_gross)} EUR`, MARGIN_R, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...INK);
+    y += 6;
+
+    // ── Sichtbare Notiz — neutrale, dezente Fläche (kein Teal) ─────────────────
     if (data.notes_public && data.notes && data.notes.trim()) {
-        y += 6;
-        const noteLines = doc.splitTextToSize(data.notes.trim(), 180);
+        y += 5;
+        const noteLines = doc.splitTextToSize(data.notes.trim(), MARGIN_R - MARGIN_L - 4);
         const noteH = 6 + noteLines.slice(0, 5).length * 4.5 + 2;
-        // Teal-Tint Box
-        doc.setFillColor(...TEAL_TINT);
-        doc.roundedRect(15, y, 180, noteH, 1.5, 1.5, 'F');
-        doc.setDrawColor(...TEAL_LINE);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(15, y, 180, noteH, 1.5, 1.5, 'S');
-        // Label
-        doc.setTextColor(...TEAL_DARK);
+        doc.setFillColor(...GRAY_LIGHT);
+        doc.roundedRect(MARGIN_L, y, MARGIN_R - MARGIN_L, noteH, 1.5, 1.5, 'F');
+        doc.setTextColor(...GRAY);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.text('NOTIZ', 17, y + 4.5);
-        // Inhalt
-        doc.setTextColor(40, 40, 40);
+        doc.setFontSize(7.5);
+        doc.text('NOTIZ', MARGIN_L + 2, y + 4.5);
+        doc.setTextColor(...INK);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
-        noteLines.slice(0, 5).forEach((l, i) => doc.text(l, 17, y + 9 + i * 4.5));
-        doc.setTextColor(0, 0, 0);
+        noteLines.slice(0, 5).forEach((l, i) => doc.text(l, MARGIN_L + 2, y + 9 + i * 4.5));
         y += noteH + 4;
     }
 
-    // ── Footer ───────────────────────────────────────────────────────────────
+    // ── Footer — dünne Trennlinie, gedämpfter Text ──────────────────────────────
     const footerY = Math.max(y + 8, 262);
-    doc.setDrawColor(...TEAL_LINE);
+    doc.setDrawColor(...GRAY_LIGHT);
     doc.setLineWidth(0.3);
-    doc.line(15, footerY - 4, 195, footerY - 4);
+    doc.line(MARGIN_L, footerY - 5, MARGIN_R, footerY - 5);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...GRAY);
     if (!isInvoice && data.valid_until) {
-        doc.text(`Freibleibendes Angebot, gültig bis ${format(parseISO(data.valid_until), 'dd.MM.yyyy')}.`, 15, footerY);
+        doc.text(`Freibleibendes Angebot, gültig bis ${format(parseISO(data.valid_until), 'dd.MM.yyyy')}.`, MARGIN_L, footerY);
     }
     if (isInvoice && data.due_date) {
-        doc.text(`Zahlbar bis ${format(parseISO(data.due_date), 'dd.MM.yyyy')} ohne Abzug.`, 15, footerY);
+        doc.text(`Zahlbar bis ${format(parseISO(data.due_date), 'dd.MM.yyyy')} ohne Abzug.`, MARGIN_L, footerY);
     }
     const footer = [
         company?.tax_id ? `Steuernr.: ${company.tax_id}` : null,
         company?.vat_id ? `USt-IdNr.: ${company.vat_id}` : null,
         company?.iban ? `IBAN: ${company.iban}${company.bank_name ? ` (${company.bank_name})` : ''}` : null,
     ].filter(Boolean);
-    footer.forEach((l, i) => doc.text(l, 15, footerY + 5 + i * 4.5));
+    footer.forEach((l, i) => doc.text(l, MARGIN_L, footerY + 5 + i * 4.3));
 
+    doc.setTextColor(...INK);
     doc.save(`${number || (isInvoice ? 'Rechnung' : 'Angebot')}.pdf`);
 }
 
