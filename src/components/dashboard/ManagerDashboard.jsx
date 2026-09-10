@@ -10,7 +10,6 @@ import {
 import { getTaskStatus } from '@/lib/maintenanceUtils';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import HolidayCreditManager from '@/components/dashboard/HolidayCreditManager';
 import TodayOverview from '@/components/dashboard/TodayOverview';
 import ShiftSwapApprovalCard from '@/components/dashboard/ShiftSwapApprovalCard';
@@ -47,13 +46,6 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
     const cleaningProgress = cleaningTasks.length > 0
         ? Math.round((cleaningTasks.filter(t => t.is_completed).length / cleaningTasks.length) * 100)
         : 0;
-
-    const stats = [
-        { title: 'Aktive Mitarbeiter', value: employees.length, icon: Users, color: 'bg-blue-600', link: 'Employees' },
-        { title: 'Schichten heute', value: todayShifts.length, icon: Calendar, color: 'bg-purple-600', link: 'Calendar' },
-        { title: 'Reservierungen', value: todayReservations.length, icon: CalendarCheck, color: 'bg-green-600', link: 'GuestHub' },
-        { title: 'Offene Aufgaben', value: openTodos.length, icon: CheckSquare, color: 'bg-orange-600', link: 'Todos', badge: urgentTodos.length > 0 ? `${urgentTodos.length} dringend` : null }
-    ];
 
     return (
         <div className="min-h-screen bg-background p-3 sm:p-8 pb-24 md:pb-0">
@@ -113,33 +105,6 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                     </>
                 )}
-
-                {/* Management Stats */}
-                <div>
-                    <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-amber-500" />
-                        Management Übersicht
-                    </h2>
-                </div>
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {stats.map((stat, idx) => (
-                        <Link to={createPageUrl(stat.link)} key={stat.title}>
-                            <Card className="bg-card border-border hover:border-primary/30 transition-all group hover:shadow-xl card-pressable animate-stagger" style={{ '--delay': `${idx * 60}ms` }}>
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className={`${stat.color} p-3 rounded-2xl shadow-lg`}>
-                                            <stat.icon className="w-6 h-6 text-white" />
-                                        </div>
-                                        {stat.badge && <Badge variant="warning" className="text-xs">{stat.badge}</Badge>}
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mb-2">{stat.title}</p>
-                                    <p className="text-3xl font-bold text-foreground num animate-pop">{stat.value}</p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    ))}
-                </div>
 
                 {/* Legal Status Panel */}
                 <LegalStatusPanel />
