@@ -236,6 +236,7 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingCashbook" element={<LayoutWrapper currentPageName="AccountingCashbook"><RoleGuard permission="canViewAccountingCashbook"><AccountingCashbook /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingReceipts" element={<LayoutWrapper currentPageName="AccountingReceipts"><RoleGuard permission="canViewAccountingReceipts"><AccountingReceipts /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingCreditors" element={<LayoutWrapper currentPageName="AccountingCreditors"><RoleGuard permission="canViewAccountingCreditors"><AccountingCreditors /></RoleGuard></LayoutWrapper>} />
+      <Route path="/ExternalBusiness" element={<LayoutWrapper currentPageName="ExternalBusiness"><RoleGuard permission="canViewAccounting"><ExternalBusiness /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingExport" element={<LayoutWrapper currentPageName="AccountingExport"><RoleGuard permission="canExportAccounting"><AccountingExport /></RoleGuard></LayoutWrapper>} />
       <Route path="/ExternalBusiness" element={<LayoutWrapper currentPageName="ExternalBusiness"><RoleGuard permission="canViewAccounting"><ExternalBusiness /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingFixedCosts" element={<LayoutWrapper currentPageName="AccountingFixedCosts"><RoleGuard permission="canViewAccounting"><AccountingFixedCosts /></RoleGuard></LayoutWrapper>} />
