@@ -94,6 +94,7 @@ export default function Restock() {
     const [toast, setToast]                       = useState(null);
     const [confirmDialog, setConfirmDialog]       = useState(null);
     const [orderNudge, setOrderNudge]             = useState({});
+    const [restockConfirm, setRestockConfirm]     = useState(null); // { item, amount }
 
     const showToast = (message, type = 'error') => setToast({ message, type });
 
@@ -244,10 +245,14 @@ export default function Restock() {
         handleScan(decodedText);
     };
 
-    const toggleComplete = async (item) => {
+    const toggleComplete = async (item, actualQty) => {
         const nowCompleted = !item.is_completed;
-        const effectiveQty = item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0;
-        updateMutation.mutate({ id: item.id, data: { ...item, is_completed: nowCompleted } });
+        const effectiveQty = actualQty != null ? actualQty
+            : (item.quantity_from_storage != null ? parseFloat(item.quantity_from_storage) : null)
+            || (item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0);
+        const updateData = { ...item, is_completed: nowCompleted };
+        if (nowCompleted && actualQty != null) updateData.quantity_from_storage = actualQty;
+        updateMutation.mutate({ id: item.id, data: updateData });
 
         if (nowCompleted) {
             // 1. current_stock reduzieren (nur wenn noch nicht über Rundgang erfolgt)
@@ -652,7 +657,16 @@ export default function Restock() {
 
                                                     {/* Abhaken */}
                                                     <button
-                                                        onClick={() => toggleComplete(item)}
+                                                        onClick={() => {
+                                                            if (!item.is_completed) {
+                                                                const defaultQty = item.quantity_from_storage != null
+                                                                    ? parseFloat(item.quantity_from_storage)
+                                                                    : (item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0);
+                                                                setRestockConfirm({ item, amount: defaultQty });
+                                                            } else {
+                                                                toggleComplete(item);
+                                                            }
+                                                        }}
                                                         className={cn(
                                                             'w-9 h-9 rounded-full border-2 flex items-center justify-center shrink-0 transition-all active:scale-90',
                                                             item.is_completed
@@ -732,6 +746,55 @@ export default function Restock() {
                 onConfirm={confirmDialog?.onConfirm}
                 onCancel={() => setConfirmDialog(null)}
             />
+
+            {/* Aufgefüllt-Bestätigung: tatsächliche Menge aus dem Keller eintragen */}
+            <Dialog open={!!restockConfirm} onOpenChange={(v) => !v && setRestockConfirm(null)}>
+                <DialogContent className="sm:max-w-sm rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-foreground">Aufgefüllt bestätigen</DialogTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Wieviel wurde aus dem Keller nach oben gebracht?
+                        </p>
+                    </DialogHeader>
+                    <div className="py-2 space-y-2">
+                        <input
+                            type="number"
+                            inputMode="numeric"
+                            min="0"
+                            value={restockConfirm?.amount ?? 0}
+                            onChange={e => setRestockConfirm(prev => prev ? ({ ...prev, amount: parseInt(e.target.value) || 0 }) : prev)}
+                            className="w-full text-center font-bold text-2xl h-14 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                            autoFocus
+                        />
+                        {restockConfirm?.item && (() => {
+                            const bedarf = restockConfirm.item.needed_quantity != null
+                                ? parseFloat(restockConfirm.item.needed_quantity)
+                                : parseFloat(restockConfirm.item.quantity) || 0;
+                            const diff = restockConfirm.amount - bedarf;
+                            return (
+                                <p className="text-xs text-muted-foreground text-center">
+                                    Bedarf: {bedarf} · {restockConfirm.item.article_name}
+                                    {diff !== 0 && diff > 0 && <span className="text-emerald-600 dark:text-emerald-400"> · +{diff} mehr</span>}
+                                    {diff < 0 && <span className="text-amber-600 dark:text-amber-400"> · {diff} weniger als Bedarf</span>}
+                                </p>
+                            );
+                        })()}
+                    </div>
+                    <DialogFooter className="flex gap-2">
+                        <Button variant="outline" onClick={() => setRestockConfirm(null)} className="flex-1">Abbrechen</Button>
+                        <Button
+                            onClick={() => {
+                                if (restockConfirm) toggleComplete(restockConfirm.item, restockConfirm.amount);
+                                setRestockConfirm(null);
+                            }}
+                            className="flex-1"
+                        >
+                            <Check className="w-4 h-4 mr-1" />
+                            Bestätigen
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

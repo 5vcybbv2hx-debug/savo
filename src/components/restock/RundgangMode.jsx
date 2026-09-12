@@ -76,6 +76,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     // ── IST-Popup State ────────────────────────────────────────────────────────
     const [istPopover, setIstPopover] = useState(null); // { slot, assignments }
     const [istValues, setIstValues] = useState({});     // { [assignmentId]: number }
+    const [restockedValues, setRestockedValues] = useState({}); // { [assignmentId]: number|string } — tatsächlich aus Keller aufgefüllt
     const [isSaving, setIsSaving] = useState(false);
 
     // ── Bereiche aufklappbar ───────────────────────────────────────────────────
@@ -179,12 +180,15 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     const handleSlotTap = (slot, slotAssignments) => {
         setIstPopover({ slot, assignments: slotAssignments });
         const vals = {};
+        const rvals = {};
         slotAssignments.forEach(a => {
             // Vorausfüllen: IST aus letztem Rundgang-Item von heute, sonst assignment.quantity
             const todayItem = restockItems.find(r => r.assignment_id === a.id && r.date === today);
             vals[a.id] = todayItem ? todayItem.quantity : (a.quantity ?? 0);
+            rvals[a.id] = todayItem?.quantity_from_storage != null ? todayItem.quantity_from_storage : '';
         });
         setIstValues(vals);
+        setRestockedValues(rvals);
     };
 
     // ── IST speichern: RestockItem erstellen/updaten + Stock sync ──────────────
@@ -215,6 +219,9 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
             const previousQty = existingItem?.quantity ?? 0;
             const delta = ist - (a.quantity ?? 0); // Differenz zum gespeicherten Fach-Bestand
 
+            const restocked = parseFloat(restockedValues[a.id]);
+            const restockedQty = !isNaN(restocked) && restocked > 0 ? restocked : null;
+
             if (existingItem) {
                 updateMutation.mutate({
                     id: existingItem.id,
@@ -222,6 +229,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                         ...existingItem,
                         quantity: ist,
                         needed_quantity: needed,
+                        quantity_from_storage: restockedQty,
                         is_completed: false,
                         stock_reduced: true, // current_stock wurde bereits beim IST-Eintrag reduziert
                     },
@@ -236,6 +244,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                     assignment_id: a.id,
                     quantity: ist,
                     needed_quantity: needed,
+                    quantity_from_storage: restockedQty,
                     area_id: slot.area_id || null,
                     restocked_by: userName,
                     date: today,
@@ -506,6 +515,28 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                             className="w-full text-center font-bold text-2xl h-14 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary focus:ring-0 transition-colors"
                                             autoFocus={istPopover.assignments.indexOf(a) === 0}
                                         />
+
+                                        {/* Aufgefüllt (aus Keller) — optional */}
+                                        <div className="space-y-1">
+                                            <label className="text-[11px] text-muted-foreground font-medium">
+                                                Aufgefüllt (aus Keller mitgebracht)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                min="0"
+                                                placeholder={hasMin ? `Bedarf: +${needed}` : '0'}
+                                                value={restockedValues[a.id] ?? ''}
+                                                onChange={e => {
+                                                    const parsed = parseInt(e.target.value);
+                                                    setRestockedValues(prev => ({
+                                                        ...prev,
+                                                        [a.id]: isNaN(parsed) ? '' : Math.max(0, parsed),
+                                                    }));
+                                                }}
+                                                className="w-full text-center font-semibold text-lg h-11 rounded-xl border border-border bg-background focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                                            />
+                                        </div>
 
                                         {/* Soll / Bedarf */}
                                         {hasMin && (
