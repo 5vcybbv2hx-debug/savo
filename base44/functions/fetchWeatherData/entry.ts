@@ -5,7 +5,8 @@
  * Liest Location (PLZ + Stadt) dynamisch aus CompanyInfo-Stammdaten.
  * Geocoding via Open-Meteo Geocoding API (kostenlos, kein API Key).
  *
- * SECURITY: Nur für Admins — ändert bulkweise DailyRevenue-Datensätze.
+ * SECURITY: Kein interaktiver Auth-Check (Automation-Zugriff via asServiceRole, analog resetDailyCleaning).
+ * Schreibt ausschließlich Wetter-/Feiertags-Flags in DailyRevenue (idempotent).
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
@@ -140,10 +141,11 @@ async function getCoordinates(postalCode: string, city: string): Promise<{ lat: 
 
 export default async function fetchWeatherData(req: any) {
   try {
+    // Hinweis: Kein interaktiver Auth-Check — die Funktion wird auch aus
+    // Superagent-Automations per curl (unauthentifiziert) aufgerufen, genau wie
+    // resetDailyCleaning / autoArchiveReservations. DB-Zugriff läuft über asServiceRole,
+    // die Funktion schreibt ausschließlich Wetterdaten in DailyRevenue (idempotent).
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     const daysBack = req.body?.days_back || 180;
     const today = new Date();
