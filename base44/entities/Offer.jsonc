@@ -13,7 +13,7 @@
     "valid_until": {
       "type": "string",
       "format": "date",
-      "description": "G\u00fcltig bis (freibleibendes Angebot)"
+      "description": "Gueltig bis (freibleibendes Angebot)"
     },
     "category": {
       "type": "string",
@@ -21,18 +21,18 @@
         "Externer Event",
         "Werbekostenzuschuss"
       ],
-      "description": "Art des Au\u00dfenauftrags"
+      "description": "Art des Aussenauftrags"
     },
     "customer_name": {
       "type": "string"
     },
     "customer_address": {
       "type": "string",
-      "description": "Vollst\u00e4ndige Anschrift (komponiert aus Stra\u00dfe/PLZ/Ort, f\u00fcr PDF). Legacy-Feld, wird beim Speichern aus den Einzelfeldern gesetzt."
+      "description": "Vollstaendige Anschrift (komponiert aus Strasse/PLZ/Ort, fuer PDF). Legacy-Feld, wird beim Speichern aus den Einzelfeldern gesetzt."
     },
     "customer_street": {
       "type": "string",
-      "description": "Stra\u00dfe und Hausnummer"
+      "description": "Strasse und Hausnummer"
     },
     "customer_postal_code": {
       "type": "string",
@@ -45,15 +45,15 @@
     "recipient_country": {
       "type": "string",
       "default": "Deutschland",
-      "description": "Land des Empf\u00e4ngers (f\u00fcr ausl\u00e4ndische Kunden/Lieferanten)"
+      "description": "Land des Empfaengers (fuer auslaendische Kunden/Lieferanten)"
     },
     "recipient_vat_id": {
       "type": "string",
-      "description": "USt-IdNr. des Empf\u00e4ngers (Pflicht bei innergemeinschaftlichen Lieferungen, \u00a714a UStG)"
+      "description": "USt-IdNr. des Empfaengers (Pflicht bei innergemeinschaftlichen Lieferungen, \u00a714a UStG)"
     },
     "supplier_name": {
       "type": "string",
-      "description": "WKZ: Lieferant/Brauerei als Empf\u00e4nger"
+      "description": "WKZ: Lieferant/Brauerei als Empfaenger"
     },
     "supplier_id": {
       "type": "string"
@@ -71,16 +71,40 @@
             "type": "string"
           },
           "quantity": {
-            "type": "number"
+            "type": "number",
+            "description": "Erwarteter Verbrauch (Kundenmenge) - Basis fuer VK-Summe"
           },
           "unit_price": {
-            "type": "number"
+            "type": "number",
+            "description": "VK je Einheit (Verkaufspreis)"
           },
           "total": {
-            "type": "number"
+            "type": "number",
+            "description": "quantity x unit_price (Umsatz erwartet)"
+          },
+          "category": {
+            "type": "string",
+            "description": "Kalkulations-Kategorie (Getraenke, Speisen, Personal, Sonstiges)"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Einheit (z.B. 30-l-Fass, Glas, Std, Person)"
+          },
+          "quantity_provided": {
+            "type": "number",
+            "description": "Bereitgestellt (Reserve-Menge, fuer Umsatz max.)"
+          },
+          "ek_per_unit": {
+            "type": "number",
+            "description": "EK je Einheit (Einkaufspreis)"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Hinweis (intern, nicht auf PDF)"
           }
         }
-      }
+      },
+      "description": "Angebotspositionen mit Kalkulation (EK/Verbrauch/Marge)"
     },
     "amount_net": {
       "type": "number"
@@ -95,12 +119,48 @@
     "amount_gross": {
       "type": "number"
     },
+    "guests": {
+      "type": "number",
+      "description": "Erwartete Gaesteanzahl (Event-Kalkulation)"
+    },
+    "event_start_time": {
+      "type": "string",
+      "description": "Ausschank Beginn (HH:MM)"
+    },
+    "event_end_time": {
+      "type": "string",
+      "description": "Ausschank Ende (HH:MM)"
+    },
+    "staff_count": {
+      "type": "number",
+      "description": "Mitarbeiter extern (fuer Kalkulation)"
+    },
+    "wareneinsatz_total": {
+      "type": "number",
+      "description": "Summe Wareneinsatz (intern, aus Positionen berechnet)"
+    },
+    "revenue_expected_total": {
+      "type": "number",
+      "description": "Summe Umsatz erwartet (intern, aus Positionen berechnet)"
+    },
+    "revenue_max_total": {
+      "type": "number",
+      "description": "Summe Umsatz max. (intern, aus Positionen berechnet)"
+    },
+    "db_expected_total": {
+      "type": "number",
+      "description": "Summe Deckungsbeitrag erwartet (intern, aus Positionen berechnet)"
+    },
+    "db_marge_total": {
+      "type": "number",
+      "description": "DB-Marge gesamt (DB / Umsatz erwartet, intern)"
+    },
     "status": {
       "type": "string",
       "enum": [
         "Entwurf",
         "Gesendet",
-        "Best\u00e4tigt",
+        "Bestaetigt",
         "Abgelehnt",
         "Rechnung erstellt"
       ],
@@ -115,7 +175,7 @@
     "notes_public": {
       "type": "boolean",
       "default": false,
-      "description": "Wenn true, werden die Notizen auf dem Angebots-PDF f\u00fcr den Empf\u00e4nger (Lieferant/Brauerei/Kunde) sichtbar angezeigt"
+      "description": "Wenn true, werden die Notizen auf dem Angebots-PDF fuer den Empfaenger sichtbar angezeigt"
     },
     "converted_invoice_id": {
       "type": "string",

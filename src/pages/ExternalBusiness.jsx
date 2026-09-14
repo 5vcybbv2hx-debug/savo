@@ -22,10 +22,11 @@ import { format, addDays, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
     Plus, Pencil, FileText, Send, CheckCircle2, Ban,
-    ArrowRightLeft, Euro, X, ReceiptText
+    ArrowRightLeft, Euro, X, ReceiptText, Calculator
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import OfferCalculation from '@/components/external/OfferCalculation';
 
 const CAT_EVENT = 'Externer Event';
 const CAT_WKZ = 'Werbekostenzuschuss';
@@ -34,7 +35,7 @@ const DEFAULT_ACCOUNT = { [CAT_EVENT]: '8000', [CAT_WKZ]: '8035' };
 const eur = n => (n ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const today = () => format(new Date(), 'yyyy-MM-dd');
 
-const emptyPosition = () => ({ description: '', quantity: 1, unit_price: 0 });
+const emptyPosition = () => ({ description: '', quantity: 1, unit_price: 0, ek_per_unit: 0, quantity_provided: 0, unit: '', category: '', notes: '' });
 
 // §19 UStG Kleinunternehmer — kein USt-Ausweis auf Rechnungen
 const isSmallBusiness = (company) => !!company?.is_small_business;
@@ -317,6 +318,29 @@ async function downloadPdf(kind, data, company) {
     doc.setTextColor(...INK);
     y += 6;
 
+    // ── Zahlungsblock (nur Rechnungen) — IBAN/BIC prominent ────────────────────
+    if (isInvoice && (company?.iban || company?.bic)) {
+        y += 3;
+        doc.setFillColor(...GRAY_LIGHT);
+        doc.roundedRect(MARGIN_L, y, MARGIN_R - MARGIN_L, 16, 1.5, 1.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...TEAL_DARK);
+        doc.text('Z A H L U N G', MARGIN_L + 3, y + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...INK);
+        let zy = y + 10;
+        if (company?.iban) {
+            doc.text(`IBAN: ${company.iban}`, MARGIN_L + 3, zy);
+            zy += 4.5;
+        }
+        if (company?.bic) {
+            doc.text(`BIC: ${company.bic}${company.bank_name ? ` — ${company.bank_name}` : ''}`, MARGIN_L + 3, zy);
+        }
+        y += 20;
+    }
+
     // ── Sichtbare Notiz — neutrale, dezente Fläche (kein Teal) ─────────────────
     if (data.notes_public && data.notes && data.notes.trim()) {
         y += 5;
@@ -358,7 +382,8 @@ async function downloadPdf(kind, data, company) {
     const footer = [
         company?.tax_id ? `Steuernr.: ${company.tax_id}` : null,
         company?.vat_id ? `USt-IdNr.: ${company.vat_id}` : null,
-        company?.iban ? `IBAN: ${company.iban}${company.bank_name ? ` (${company.bank_name})` : ''}` : null,
+        // IBAN nur im Footer bei Angeboten (Rechnungen haben den Zahlungsblock)
+        (!isInvoice && company?.iban) ? `IBAN: ${company.iban}${company.bank_name ? ` (${company.bank_name})` : ''}` : null,
     ].filter(Boolean);
     const footerOffset = smallBiz ? 8.6 : 5;
     footer.forEach((l, i) => doc.text(l, MARGIN_L, footerY + footerOffset + i * 4.3));
@@ -482,6 +507,11 @@ export default function ExternalBusiness() {
             description: '',
             notes: '',
             notes_public: false,
+            // Kalkulationsfelder (Angebote)
+            guests: null,
+            event_start_time: '',
+            event_end_time: '',
+            staff_count: null,
             ...(isInvoice
                 ? { invoice_date: today(), service_date: today(), service_date_type: 'Einzel', service_date_end: '', due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'), datev_account: DEFAULT_ACCOUNT[cat] }
                 : { offer_date: today(), valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd') }),
@@ -506,10 +536,15 @@ export default function ExternalBusiness() {
     const removePosition = (i) => setRecord(r => ({ ...r, positions: r.positions.filter((_, idx) => idx !== i) }));
 
     const totals = useMemo(() => {
-        const net = (record?.positions || []).reduce((s, p) => s + (Number(p.quantity) || 0) * (Number(p.unit_price) || 0), 0);
+        const positions = record?.positions || [];
+        const net = positions.reduce((s, p) => s + (Number(p.quantity) || 0) * (Number(p.unit_price) || 0), 0);
         const rate = Number(record?.tax_rate) || 0;
         const vat = net * rate / 100;
-        return { net, vat, gross: net + vat };
+        // Kalkulationssummen (intern)
+        const wareneinsatz = positions.reduce((s, p) => s + (Number(p.quantity) || 0) * (Number(p.ek_per_unit) || 0), 0);
+        const revenueMax = positions.reduce((s, p) => s + (Number(p.quantity_provided) || 0) * (Number(p.unit_price) || 0), 0);
+        const db = net - wareneinsatz;
+        return { net, vat, gross: net + vat, wareneinsatz, revenueExpected: net, revenueMax, db, marge: net > 0 ? db / net : 0 };
     }, [record]);
 
     const handleSubmit = async (e) => {
@@ -541,6 +576,20 @@ export default function ExternalBusiness() {
             notes: record.notes || '',
             notes_public: !!record.notes_public,
         };
+        // Kalkulationsfelder (nur fuer Angebote)
+        if (!isInvoice) {
+            Object.assign(data, {
+                guests: record.guests || null,
+                event_start_time: record.event_start_time || '',
+                event_end_time: record.event_end_time || '',
+                staff_count: record.staff_count || null,
+                wareneinsatz_total: totals.wareneinsatz,
+                revenue_expected_total: totals.revenueExpected,
+                revenue_max_total: totals.revenueMax,
+                db_expected_total: totals.db,
+                db_marge_total: totals.marge,
+            });
+        }
         if (isInvoice) {
             Object.assign(data, {
                 invoice_date: record.invoice_date,
@@ -906,50 +955,60 @@ export default function ExternalBusiness() {
                                 </Select>
                             </div>
 
-                            {/* Positionen */}
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <Label>Positionen *</Label>
-                                    <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={addPosition}>
-                                        <Plus className="w-3 h-3 mr-1" /> Position
-                                    </Button>
-                                </div>
-                                {record.positions.map((p, i) => (
-                                    <div key={i} className="flex gap-1.5 items-start">
-                                        <div className="flex-1 space-y-1.5">
-                                            <Input
-                                                value={p.description}
-                                                onChange={(e) => setPosition(i, 'description', e.target.value)}
-                                                placeholder="z.B. Bar-Service 6h inkl. 2 Barkeeper"
-                                            />
-                                            <div className="flex gap-1.5">
+                            {/* Positionen — Kalkulation fuer Angebote, einfach fuer Rechnungen */}
+                            {editing === 'offer' ? (
+                                <OfferCalculation
+                                    record={record}
+                                    setField={setField}
+                                    setPosition={setPosition}
+                                    addPosition={addPosition}
+                                    removePosition={removePosition}
+                                />
+                            ) : (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <Label>Positionen *</Label>
+                                        <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={addPosition}>
+                                            <Plus className="w-3 h-3 mr-1" /> Position
+                                        </Button>
+                                    </div>
+                                    {record.positions.map((p, i) => (
+                                        <div key={i} className="flex gap-1.5 items-start">
+                                            <div className="flex-1 space-y-1.5">
                                                 <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={p.quantity}
-                                                    onChange={(e) => setPosition(i, 'quantity', e.target.value)}
-                                                    placeholder="Anz."
-                                                    className="w-20"
+                                                    value={p.description}
+                                                    onChange={(e) => setPosition(i, 'description', e.target.value)}
+                                                    placeholder="z.B. Bar-Service 6h inkl. 2 Barkeeper"
                                                 />
-                                                <div className="relative flex-1">
-                                                    <Euro className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                                                <div className="flex gap-1.5">
                                                     <Input
                                                         type="number"
                                                         step="0.01"
-                                                        value={p.unit_price}
-                                                        onChange={(e) => setPosition(i, 'unit_price', e.target.value)}
-                                                        placeholder="Einzelpreis"
-                                                        className="pl-7"
+                                                        value={p.quantity}
+                                                        onChange={(e) => setPosition(i, 'quantity', e.target.value)}
+                                                        placeholder="Anz."
+                                                        className="w-20"
                                                     />
+                                                    <div className="relative flex-1">
+                                                        <Euro className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={p.unit_price}
+                                                            onChange={(e) => setPosition(i, 'unit_price', e.target.value)}
+                                                            placeholder="Einzelpreis"
+                                                            className="pl-7"
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <Button type="button" variant="ghost" size="sm" className="w-7 h-7 p-0 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removePosition(i)}>
+                                                <X className="w-3.5 h-3.5" />
+                                            </Button>
                                         </div>
-                                        <Button type="button" variant="ghost" size="sm" className="w-7 h-7 p-0 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removePosition(i)}>
-                                            <X className="w-3.5 h-3.5" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Datum + Steuersatz */}
                             <div className="grid grid-cols-2 gap-3">
@@ -1039,14 +1098,28 @@ export default function ExternalBusiness() {
                             {/* Summen */}
                             <div className="rounded-xl bg-secondary/40 border border-border/50 p-3.5 space-y-1 text-sm">
                                 <div className="flex justify-between text-muted-foreground">
-                                    <span>Netto</span><span>{eur(totals.net)} €</span>
+                                    <span>Netto</span><span>{eur(totals.net)} &euro;</span>
                                 </div>
                                 <div className="flex justify-between text-muted-foreground">
-                                    <span>USt {record.tax_rate} %</span><span>{eur(totals.vat)} €</span>
+                                    <span>USt {record.tax_rate} %</span><span>{eur(totals.vat)} &euro;</span>
                                 </div>
                                 <div className="flex justify-between font-bold text-foreground pt-1 border-t border-border/50">
-                                    <span>Gesamt</span><span>{eur(totals.gross)} €</span>
+                                    <span>Gesamt</span><span>{eur(totals.gross)} &euro;</span>
                                 </div>
+                                {editing === 'offer' && totals.wareneinsatz > 0 && (
+                                    <>
+                                        <div className="flex justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/30">
+                                            <span>Wareneinsatz (intern)</span>
+                                            <span>{eur(totals.wareneinsatz)} &euro;</span>
+                                        </div>
+                                        <div className="flex justify-between text-[11px]">
+                                            <span className="text-muted-foreground">Deckungsbeitrag</span>
+                                            <span className={totals.db >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}>
+                                                {eur(totals.db)} &euro; ({(totals.marge * 100).toFixed(1)}%)
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <div className="flex gap-2 pt-1">
