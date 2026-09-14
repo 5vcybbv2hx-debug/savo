@@ -36,6 +36,43 @@ const today = () => format(new Date(), 'yyyy-MM-dd');
 
 const emptyPosition = () => ({ description: '', quantity: 1, unit_price: 0 });
 
+// §19 UStG Kleinunternehmer — kein USt-Ausweis auf Rechnungen
+const isSmallBusiness = (company) => !!company?.is_small_business;
+
+// Pflichtfeld-Check vor PDF-Erstellung (§14 UStG)
+function validateForPdf(company) {
+    if (isSmallBusiness(company)) return true;
+    if (!company?.tax_id && !company?.vat_id) {
+        toast.error('Firmen-Steuernummer oder USt-IdNr. fehlt — bitte unter Einstellungen → Firmeninfo ergänzen. Ohne diese Angabe ist das PDF nicht rechtskonform (§14 UStG).');
+        return false;
+    }
+    return true;
+}
+
+// Empfänger-Ergänzung: Land + USt-IdNr. (bei EU-Kunden, §14a UStG)
+function RecipientExtraFields({ record, setField }) {
+    return (
+        <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+                <Label className="text-[11px]">Land</Label>
+                <Input
+                    value={record.recipient_country || 'Deutschland'}
+                    onChange={(e) => setField('recipient_country', e.target.value)}
+                    placeholder="Deutschland"
+                />
+            </div>
+            <div className="space-y-1.5">
+                <Label className="text-[11px]">USt-IdNr. (EU)</Label>
+                <Input
+                    value={record.recipient_vat_id || ''}
+                    onChange={(e) => setField('recipient_vat_id', e.target.value)}
+                    placeholder="z.B. ATU12345678"
+                />
+            </div>
+        </div>
+    );
+}
+
 // ── Adresse: drei Einzelfelder (Straße, PLZ, Ort) ──────────────────────────
 function AddressFields({ record, setField }) {
     return (
@@ -110,6 +147,7 @@ async function loadImageWithSize(url) {
 }
 
 async function downloadPdf(kind, data, company) {
+    if (!validateForPdf(company)) return;
     const doc = new jsPDF('p', 'mm', 'a4');
     const isInvoice = kind === 'invoice';
     const number = isInvoice ? data.invoice_number : data.offer_number;
@@ -153,7 +191,10 @@ async function downloadPdf(kind, data, company) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(19);
     doc.setTextColor(...TEAL);
-    doc.text(isInvoice ? 'RECHNUNG' : 'ANGEBOT', MARGIN_R, 20, { align: 'right' });
+    const docTitle = isInvoice
+        ? (data.category === CAT_WKZ ? 'GUTSCHRIFT' : (data.storno_reference ? 'STORNORECHNUNG' : 'RECHNUNG'))
+        : 'ANGEBOT';
+    doc.text(docTitle, MARGIN_R, 20, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(...GRAY);
@@ -183,10 +224,19 @@ async function downloadPdf(kind, data, company) {
     doc.setFontSize(9);
     doc.setTextColor(...GRAY);
     let ry = 62.5;
-    (Array.isArray(address) ? address : String(address).split('\n')).slice(0, 4).forEach((l) => {
+    const addrLines = Array.isArray(address) ? address : String(address).split('\n');
+    addrLines.slice(0, 4).forEach((l) => {
         doc.text(l, MARGIN_L, ry);
         ry += 5;
     });
+    if (data.recipient_country && data.recipient_country !== 'Deutschland') {
+        doc.text(data.recipient_country, MARGIN_L, ry);
+        ry += 5;
+    }
+    if (data.recipient_vat_id) {
+        doc.text(`USt-IdNr.: ${data.recipient_vat_id}`, MARGIN_L, ry);
+        ry += 5;
+    }
 
     // Betreff — dezenter Akzentstrich statt Farbfläche
     const catLabel = data.category === CAT_WKZ ? 'Werbekostenzuschuss' : 'Bar-Service / Außengeschäft';
@@ -237,25 +287,30 @@ async function downloadPdf(kind, data, company) {
         doc.line(MARGIN_L, y - 3.4, MARGIN_R, y - 3.4);
     });
 
-    // ── Summen — rechtsbündig, textbasiert, ein dünner Akzentstrich vor Gesamt ─
+    // ── Summen — bei Kleinunternehmern (§19 UStG) kein USt-Ausweis ──────────
     y += 4;
-    doc.setFontSize(9);
-    doc.setTextColor(...GRAY);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Netto', 155, y, { align: 'right' });
-    doc.text(`${eur(data.amount_net)} EUR`, MARGIN_R, y, { align: 'right' });
-    y += 5.5;
-    doc.text(`USt ${data.tax_rate ?? 19}%`, 155, y, { align: 'right' });
-    doc.text(`${eur(data.tax_amount)} EUR`, MARGIN_R, y, { align: 'right' });
-    y += 3.5;
-    doc.setDrawColor(...TEAL);
-    doc.setLineWidth(0.5);
-    doc.line(140, y, MARGIN_R, y);
-    y += 6.5;
+    const smallBiz = isSmallBusiness(company);
+    if (!smallBiz) {
+        doc.setFontSize(9);
+        doc.setTextColor(...GRAY);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Netto', 155, y, { align: 'right' });
+        doc.text(`${eur(data.amount_net)} EUR`, MARGIN_R, y, { align: 'right' });
+        y += 5.5;
+        doc.text(`USt ${data.tax_rate ?? 19}%`, 155, y, { align: 'right' });
+        doc.text(`${eur(data.tax_amount)} EUR`, MARGIN_R, y, { align: 'right' });
+        y += 3.5;
+        doc.setDrawColor(...TEAL);
+        doc.setLineWidth(0.5);
+        doc.line(140, y, MARGIN_R, y);
+        y += 6.5;
+    } else {
+        y += 4;
+    }
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(...INK);
-    doc.text(isInvoice ? 'Gesamt' : 'Gesamt brutto', 155, y, { align: 'right' });
+    doc.text(smallBiz ? 'Gesamt (netto)' : (isInvoice ? 'Gesamt' : 'Gesamt brutto'), 155, y, { align: 'right' });
     doc.text(`${eur(data.amount_gross)} EUR`, MARGIN_R, y, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
@@ -290,15 +345,23 @@ async function downloadPdf(kind, data, company) {
     if (!isInvoice && data.valid_until) {
         doc.text(`Freibleibendes Angebot, gültig bis ${format(parseISO(data.valid_until), 'dd.MM.yyyy')}.`, MARGIN_L, footerY);
     }
-    if (isInvoice && data.due_date) {
+    if (isInvoice && data.storno_reference) {
+        doc.text(`Stornorechnung zu Rechnung ${data.storno_reference}.`, MARGIN_L, footerY);
+    } else if (isInvoice && data.due_date) {
         doc.text(`Zahlbar bis ${format(parseISO(data.due_date), 'dd.MM.yyyy')} ohne Abzug.`, MARGIN_L, footerY);
+    }
+    if (smallBiz) {
+        doc.setFontSize(8);
+        doc.setTextColor(...GRAY);
+        doc.text('Gemäß §19 UStG wird kein Umsatzsteuer ausgewiesen.', MARGIN_L, footerY + 4.3);
     }
     const footer = [
         company?.tax_id ? `Steuernr.: ${company.tax_id}` : null,
         company?.vat_id ? `USt-IdNr.: ${company.vat_id}` : null,
         company?.iban ? `IBAN: ${company.iban}${company.bank_name ? ` (${company.bank_name})` : ''}` : null,
     ].filter(Boolean);
-    footer.forEach((l, i) => doc.text(l, MARGIN_L, footerY + 5 + i * 4.3));
+    const footerOffset = smallBiz ? 8.6 : 5;
+    footer.forEach((l, i) => doc.text(l, MARGIN_L, footerY + footerOffset + i * 4.3));
 
     doc.setTextColor(...INK);
     doc.save(`${number || (isInvoice ? 'Rechnung' : 'Angebot')}.pdf`);
@@ -409,6 +472,8 @@ export default function ExternalBusiness() {
             customer_street: '',
             customer_postal_code: '',
             customer_city: '',
+            recipient_vat_id: '',
+            recipient_country: 'Deutschland',
             supplier_name: '',
             supplier_id: '',
             linked_event_id: '',
@@ -467,6 +532,8 @@ export default function ExternalBusiness() {
             customer_street: record.customer_street || '',
             customer_postal_code: record.customer_postal_code || '',
             customer_city: record.customer_city || '',
+            recipient_vat_id: record.recipient_vat_id || '',
+            recipient_country: record.recipient_country || 'Deutschland',
             supplier_name: record.supplier_name || '',
             supplier_id: record.supplier_id || '',
             linked_event_id: record.linked_event_id || '',
@@ -513,6 +580,8 @@ export default function ExternalBusiness() {
                 customer_street: offer.customer_street || '',
                 customer_postal_code: offer.customer_postal_code || '',
                 customer_city: offer.customer_city || '',
+                recipient_vat_id: offer.recipient_vat_id || '',
+                recipient_country: offer.recipient_country || 'Deutschland',
                 supplier_name: offer.supplier_name || '',
                 supplier_id: offer.supplier_id || '',
                 linked_event_id: offer.linked_event_id || '',
@@ -544,6 +613,59 @@ export default function ExternalBusiness() {
         onError: (e) => toast.error('Konvertierung fehlgeschlagen: ' + e.message),
     });
 
+    // ── Stornorechnung erzeugen (§14a Abs. 3 UStG) ──────────────────────────
+    const stornoInvoice = useMutation({
+        mutationFn: async (original) => {
+            const stornoNumber = await nextNumber(invoices, 'invoice_number', 'ST');
+            const storno = await base44.entities.DebitorInvoice.create({
+                invoice_number: stornoNumber,
+                invoice_date: today(),
+                service_date: today(),
+                due_date: today(),
+                category: original.category,
+                customer_name: original.customer_name || '',
+                customer_address: original.customer_address || '',
+                customer_street: original.customer_street || '',
+                customer_postal_code: original.customer_postal_code || '',
+                customer_city: original.customer_city || '',
+                recipient_vat_id: original.recipient_vat_id || '',
+                recipient_country: original.recipient_country || 'Deutschland',
+                supplier_name: original.supplier_name || '',
+                supplier_id: original.supplier_id || '',
+                linked_event_id: original.linked_event_id || '',
+                positions: (original.positions || []).map(p => ({
+                    description: p.description || '',
+                    quantity: Number(p.quantity) || 0,
+                    unit_price: -(Number(p.unit_price) || 0),
+                    total: -((Number(p.quantity) || 0) * (Number(p.unit_price) || 0)),
+                })),
+                tax_rate: original.tax_rate || 19,
+                amount_net: -(original.amount_net || 0),
+                tax_amount: -(original.tax_amount || 0),
+                amount_gross: -(original.amount_gross || 0),
+                description: `Stornorechnung zu ${original.invoice_number}`,
+                notes: original.notes || '',
+                notes_public: !!original.notes_public,
+                storno_reference: original.invoice_number,
+                datev_account: original.datev_account || DEFAULT_ACCOUNT[original.category],
+                payment_status: 'bezahlt',
+                paid_date: today(),
+                paid_amount: -(original.amount_gross || 0),
+                doc_status: 'Gesendet',
+                service_date_type: 'Einzel',
+            });
+            await base44.entities.DebitorInvoice.update(original.id, {
+                doc_status: 'Storniert',
+            });
+            return storno;
+        },
+        onSuccess: (storno) => {
+            invalidate();
+            toast.success(`Stornorechnung ${storno.invoice_number} erstellt — PDF herunterladen und an Empfänger senden.`);
+        },
+        onError: (e) => toast.error('Stornierung fehlgeschlagen: ' + e.message),
+    });
+
     // ── Render ──────────────────────────────────────────────────────────────
     if (!permissions.canViewAccounting) {
         return <PermissionDenied message="Kein Zugriff auf Außenaufträge." />;
@@ -566,8 +688,8 @@ export default function ExternalBusiness() {
                         <CheckCircle2 className="w-3 h-3" /> Bezahlt
                     </Button>
                 )}
-                {r.doc_status !== 'Gesendet' && (
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => { if (confirm(`Rechnung ${r.invoice_number} stornieren?`)) updateInvoice.mutate({ id: r.id, data: { doc_status: 'Storniert' } }); }}>
+                {r.doc_status !== 'Gesendet' && !r.storno_reference && (
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" title="Stornorechnung erzeugen" onClick={() => { if (confirm(`Rechnung ${r.invoice_number} stornieren?\n\nEs wird eine Stornorechnung mit eigenem Nummernkreis (ST-…) erstellt und die Originalrechnung als storniert markiert.`)) stornoInvoice.mutate(r); }}>
                         <Ban className="w-3.5 h-3.5" />
                     </Button>
                 )}
@@ -752,6 +874,7 @@ export default function ExternalBusiness() {
                                         )}
                                     </div>
                                     <AddressFields record={record} setField={setField} />
+                                    <RecipientExtraFields record={record} setField={setField} />
                                 </>
                             ) : (
                                 <>
@@ -760,6 +883,7 @@ export default function ExternalBusiness() {
                                         <Input value={record.customer_name || ''} onChange={(e) => setField('customer_name', e.target.value)} placeholder="z.B. WKZ, Stadtfest e.V." required />
                                     </div>
                                     <AddressFields record={record} setField={setField} />
+                                    <RecipientExtraFields record={record} setField={setField} />
                                 </>
                             )}
 

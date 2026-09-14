@@ -55,6 +55,11 @@
       "type": "string",
       "description": "USt-IdNr."
     },
+    "is_small_business": {
+      "type": "boolean",
+      "default": false,
+      "description": "Kleinunternehmer nach \u00a719 UStG \u2014 kein Umsatzsteuer-Ausweis auf Rechnungen"
+    },
     "bank_name": {
       "type": "string",
       "description": "Kreditinstitut"

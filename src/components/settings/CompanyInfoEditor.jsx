@@ -56,6 +56,7 @@ export default function CompanyInfoEditor() {
                 logo_url:                  company.logo_url                  || '',
                 tax_id:                    company.tax_id                    || '',
                 vat_id:                    company.vat_id                    || '',
+                is_small_business:         company.is_small_business         ?? false,
                 bank_name:                 company.bank_name                 || '',
                 iban:                      company.iban                      || '',
                 bic:                       company.bic                       || '',
@@ -361,6 +362,18 @@ export default function CompanyInfoEditor() {
                                     <Input value={form.vat_id} onChange={e => set('vat_id', e.target.value)} placeholder="DE123456789" />
                                 </div>
                             </div>
+                            <label className="flex items-center gap-2.5 cursor-pointer mt-1">
+                                <input
+                                    type="checkbox"
+                                    checked={!!form.is_small_business}
+                                    onChange={e => set('is_small_business', e.target.checked)}
+                                    className="w-4 h-4 rounded border-border accent-primary"
+                                />
+                                <div>
+                                    <span className="text-sm font-medium text-foreground">Kleinunternehmer (§19 UStG)</span>
+                                    <p className="text-xs text-muted-foreground">Kein USt-Ausweis auf Rechnungen — Umsatz unter €22.000/Jahr</p>
+                                </div>
+                            </label>
                             <div>
                                 <Label className="text-xs text-muted-foreground mb-1 block">Kreditinstitut</Label>
                                 <Input value={form.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="Sparkasse Berlin" />

@@ -42,6 +42,15 @@
       "type": "string",
       "description": "Wohnort / Stadt"
     },
+    "recipient_country": {
+      "type": "string",
+      "default": "Deutschland",
+      "description": "Land des Empf\u00e4ngers (f\u00fcr ausl\u00e4ndische Kunden/Lieferanten)"
+    },
+    "recipient_vat_id": {
+      "type": "string",
+      "description": "USt-IdNr. des Empf\u00e4ngers (Pflicht bei innergemeinschaftlichen Lieferungen, \u00a714a UStG)"
+    },
     "supplier_name": {
       "type": "string",
       "description": "WKZ: Lieferant/Brauerei als Empf\u00e4nger"
