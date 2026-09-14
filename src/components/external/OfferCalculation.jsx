@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, X, Calculator, TrendingUp, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ArticleSearchInput from '@/components/external/ArticleSearchInput';
 
 const eur = n => (n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pct = n => (n || 0).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -117,11 +118,16 @@ export default function OfferCalculation({ record, setField, setPosition, addPos
                         <div key={i} className="rounded-lg border border-border/60 bg-secondary/20 p-2.5 space-y-2">
                             {/* Zeile 1: Beschreibung + Kategorie + Einheit */}
                             <div className="flex gap-1.5 items-start">
-                                <Input
+                                <ArticleSearchInput
                                     value={p.description || ''}
-                                    onChange={(e) => setPosition(i, 'description', e.target.value)}
-                                    placeholder="z.B. Chiemseer Hell"
-                                    className="h-8 text-sm flex-1"
+                                    onChange={(v) => setPosition(i, 'description', v)}
+                                    onSelect={(article) => {
+                                        // EK automatisch aus Artikeldaten fuellen
+                                        if (article.purchase_price != null) {
+                                            setPosition(i, 'ek_per_unit', article.purchase_price);
+                                        }
+                                    }}
+                                    placeholder="Artikel suchen…"
                                 />
                                 <Button type="button" variant="ghost" size="sm" className="w-7 h-8 p-0 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removePosition(i)}>
                                     <X className="w-3.5 h-3.5" />
