@@ -353,8 +353,8 @@ async function downloadPdf(kind, data, company) {
         y += 15;
     }
 
-    // ── Zahlungsblock (nur Rechnungen) — IBAN/BIC prominent ────────────────────
-    if (isInvoice && (company?.iban || company?.bic)) {
+    // ── Zahlungsblock — IBAN/BIC prominent (Angebot + Rechnung identisch) ──────
+    if (company?.iban || company?.bic) {
         y += 3;
         doc.setFillColor(...GRAY_LIGHT);
         doc.roundedRect(MARGIN_L, y, MARGIN_R - MARGIN_L, 16, 1.5, 1.5, 'F');
@@ -417,8 +417,6 @@ async function downloadPdf(kind, data, company) {
     const footer = [
         company?.tax_id ? `Steuernr.: ${company.tax_id}` : null,
         company?.vat_id ? `USt-IdNr.: ${company.vat_id}` : null,
-        // IBAN nur im Footer bei Angeboten (Rechnungen haben den Zahlungsblock)
-        (!isInvoice && company?.iban) ? `IBAN: ${company.iban}${company.bank_name ? ` (${company.bank_name})` : ''}` : null,
     ].filter(Boolean);
     const footerOffset = smallBiz ? 8.6 : 5;
     footer.forEach((l, i) => doc.text(l, MARGIN_L, footerY + footerOffset + i * 4.3));
