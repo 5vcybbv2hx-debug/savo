@@ -10,7 +10,7 @@ import { format, addDays, addWeeks, addMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
     Newspaper, CheckCircle2, Circle, X, Plus, Megaphone,
-    ListTodo, AlertCircle, Info, Trash2, Repeat, Clock
+    ListTodo, AlertCircle, Info, Trash2, Repeat, Pencil
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -388,8 +388,9 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
                                             {isManager && (
                                                 <div className="flex items-center gap-1 shrink-0">
                                                     <button onClick={() => handleEdit(item)}
+                        title="Bearbeiten"
                                                         className="text-muted-foreground hover:text-primary p-1 transition-colors">
-                                                        <Clock className="w-3.5 h-3.5" />
+                                                        <Pencil className="w-3.5 h-3.5" />
                                                     </button>
                                                     <button onClick={() => deleteMutation.mutate(item.id)}
                                                         className="text-muted-foreground hover:text-destructive p-1 transition-colors">
