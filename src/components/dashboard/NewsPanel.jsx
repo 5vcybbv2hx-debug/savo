@@ -10,11 +10,12 @@ import { format, addDays, addWeeks, addMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
     Newspaper, CheckCircle2, Circle, X, Plus, Megaphone,
-    ListTodo, AlertCircle, Info, Trash2, Repeat, Pencil
+    ListTodo, AlertCircle, Info, Trash2, Repeat, Pencil, Settings2, RotateCcw
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { STALE } from '@/lib/queryUtils';
@@ -228,6 +229,7 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
     const queryClient = useQueryClient();
     const [editorOpen, setEditorOpen] = useState(false);
     const [editItem, setEditItem] = useState(null);
+    const [manageOpen, setManageOpen] = useState(false);
 
     const { data: newsItems = [] } = useQuery({
         queryKey: ['news-items'],
@@ -285,6 +287,14 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
         },
     });
 
+    const reactivateMutation = useMutation({
+        mutationFn: (id) => base44.entities.NewsItem.update(id, { is_active: true, is_completed: false, completed_at: null }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['news-items'] });
+            toast.success('Reaktiviert');
+        },
+    });
+
     const handleComplete = (item) => {
         const name = currentEmployee?.name || currentUser?.full_name || currentUser?.email || 'Mitarbeiter';
         completeTaskMutation.mutate({ item, completerName: name });
@@ -321,10 +331,17 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
                             </p>
                         </div>
                         {isManager && (
-                            <button onClick={handleCreate}
-                                className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-primary/10">
-                                <Plus className="w-3.5 h-3.5" />Neu
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button onClick={() => setManageOpen(true)}
+                                    title="Alle verwalten (auch unsichtbare)"
+                                    className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-secondary">
+                                    <Settings2 className="w-3.5 h-3.5" />Verwalten
+                                </button>
+                                <button onClick={handleCreate}
+                                    className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-primary/10">
+                                    <Plus className="w-3.5 h-3.5" />Neu
+                                </button>
+                            </div>
                         )}
                     </div>
 
@@ -407,8 +424,93 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
                 </CardContent>
             </Card>
 
-            {/* Editor Modal */}
+            {/* Verwalten Sheet — alle Items inkl. unsichtbare/erledigte */}
+            <Sheet open={manageOpen} onOpenChange={setManageOpen}>
+                <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] flex flex-col">
+                    <SheetHeader className="border-b border-border pb-3">
+                        <SheetTitle className="text-foreground flex items-center gap-2">
+                            <Settings2 className="w-4 h-4 text-primary" />
+                            Alle News & Aufgaben verwalten
+                        </SheetTitle>
+                        <p className="text-xs text-muted-foreground">
+                            {newsItems.length} Einträge gesamt · {visibleItems.length} sichtbar · {newsItems.length - visibleItems.length} unsichtbar/erledigt
+                        </p>
+                    </SheetHeader>
+                    <div className="overflow-y-auto px-4 py-3 space-y-1.5">
+                        {newsItems.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-6">Keine Einträge vorhanden</p>
+                        ) : (
+                            newsItems.map(item => {
+                                const now = new Date();
+                                const isVisible = isItemVisible(item, now);
+                                const isCompleted = !!item.is_completed;
+                                const isInactive = !item.is_active;
+                                const isFuture = item.show_from && new Date(item.show_from) > now;
+                                const cfg = PRIORITY_CONFIG[item.priority] || PRIORITY_CONFIG.info;
+                                const isTask = item.type === 'task';
+                                const Icon = isTask ? ListTodo : Megaphone;
+
+                                let statusBadge;
+                                if (isInactive) statusBadge = <span className="text-[9px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Inaktiv</span>;
+                                else if (isCompleted) statusBadge = <span className="text-[9px] font-semibold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">Erledigt</span>;
+                                else if (isFuture) statusBadge = <span className="text-[9px] font-semibold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">Geplant</span>;
+                                else if (isVisible) statusBadge = <span className="text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Sichtbar</span>;
+
+                                return (
+                                    <div key={item.id}
+                                        className={cn(
+                                            'rounded-lg border px-3 py-2.5 flex items-start gap-2.5',
+                                            isInactive || isCompleted ? 'opacity-60 border-border bg-muted/30' : cn('border-border', cfg.bg)
+                                        )}>
+                                        <div className={cn('mt-0.5 shrink-0 w-7 h-7 rounded-lg flex items-center justify-center', cfg.bg)}>
+                                            <Icon className={cn('w-4 h-4', cfg.color)} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <p className={cn('text-sm font-medium', isCompleted && 'line-through text-muted-foreground', !isCompleted && !isInactive && 'text-foreground', isInactive && 'text-muted-foreground')}>
+                                                    {item.title}
+                                                </p>
+                                                {statusBadge}
+                                            </div>
+                                            {item.body && (
+                                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.body}</p>
+                                            )}
+                                            <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                                                {item.type === 'task' ? 'Aufgabe' : 'News'}
+                                                {item.created_by_name ? ` · von ${item.created_by_name}` : ''}
+                                                {item.show_from ? ` · ab ${format(new Date(item.show_from), 'dd.MM.yy HH:mm', { locale: de })}` : ''}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            {(isInactive || isCompleted) && (
+                                                <button onClick={() => reactivateMutation.mutate(item.id)}
+                                                    title="Reaktivieren"
+                                                    className="text-muted-foreground hover:text-green-400 p-1 transition-colors">
+                                                    <RotateCcw className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                            <button onClick={() => { setEditItem(item); setEditorOpen(true); setManageOpen(false); }}
+                                                title="Bearbeiten"
+                                                className="text-muted-foreground hover:text-primary p-1 transition-colors">
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button onClick={() => deleteMutation.mutate(item.id)}
+                                                title="Entfernen"
+                                                className="text-muted-foreground hover:text-destructive p-1 transition-colors">
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
+
+            {/* Editor Modal — key erzwingt Neumont bei Edit-Wechsel */}
             <NewsEditor
+                key={editItem?.id || 'new'}
                 open={editorOpen}
                 onClose={() => { setEditorOpen(false); setEditItem(null); }}
                 editItem={editItem}
