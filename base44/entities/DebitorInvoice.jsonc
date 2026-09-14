@@ -115,7 +115,12 @@
             "type": "string"
           },
           "quantity": {
-            "type": "number"
+            "type": "number",
+            "description": "Soll-Menge (laut Angebot)"
+          },
+          "actual_quantity": {
+            "type": "number",
+            "description": "Tats\u00e4chlich verbrauchte/gelieferte Menge (Ist-Verbrauch)"
           },
           "unit_price": {
             "type": "number"
@@ -125,7 +130,19 @@
           }
         }
       },
-      "description": "Rechnungspositionen (Beschreibung, Menge, Einzelpreis, Summe)"
+      "description": "Rechnungspositionen (Beschreibung, Soll- und Ist-Menge, Einzelpreis, Summe)"
+    },
+    "staff_hours": {
+      "type": "number",
+      "description": "Tats\u00e4chliche Arbeitsstunden des Personals vor Ort"
+    },
+    "staff_hourly_rate": {
+      "type": "number",
+      "description": "Stundensatz f\u00fcr Personal (\u20ac/Std) \u2014 wird mit staff_hours multipliziert"
+    },
+    "staff_cost_total": {
+      "type": "number",
+      "description": "Personalkosten gesamt (staff_hours \u00d7 staff_hourly_rate), intern berechnet"
     },
     "supplier_name": {
       "type": "string",

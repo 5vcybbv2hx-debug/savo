@@ -22,7 +22,7 @@ import { format, addDays, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
     Plus, Pencil, FileText, Send, CheckCircle2, Ban,
-    ArrowRightLeft, Euro, X, ReceiptText, Calculator
+    ArrowRightLeft, Euro, X, ReceiptText, Calculator, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -35,7 +35,7 @@ const DEFAULT_ACCOUNT = { [CAT_EVENT]: '8000', [CAT_WKZ]: '8035' };
 const eur = n => (n ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const today = () => format(new Date(), 'yyyy-MM-dd');
 
-const emptyPosition = () => ({ description: '', quantity: 1, unit_price: 0, ek_per_unit: 0, quantity_provided: 0, unit: '', category: '', notes: '' });
+const emptyPosition = () => ({ description: '', quantity: 1, actual_quantity: null, unit_price: 0, ek_per_unit: 0, quantity_provided: 0, unit: '', category: '', notes: '' });
 
 // §19 UStG Kleinunternehmer — kein USt-Ausweis auf Rechnungen
 const isSmallBusiness = (company) => !!company?.is_small_business;
@@ -252,13 +252,20 @@ async function downloadPdf(kind, data, company) {
     // ── Positionen-Tabelle ───────────────────────────────────────────────────
     let y = betreffY + 9;
     // Kopfzeile: kein Flächenfüllung, nur graue Kleinschrift + dünne Teal-Unterlinie
+    const hasActual = isInvoice && (data.positions || []).some(p => p.actual_quantity != null);
     doc.setTextColor(...GRAY);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.text('POS', MARGIN_L, y);
     doc.text('BESCHREIBUNG', MARGIN_L + 9, y);
-    doc.text('ANZ.', 138, y, { align: 'right' });
-    doc.text('PREIS', 158, y, { align: 'right' });
+    if (hasActual) {
+        doc.text('SOLL', 128, y, { align: 'right' });
+        doc.text('IST', 142, y, { align: 'right' });
+        doc.text('PREIS', 162, y, { align: 'right' });
+    } else {
+        doc.text('ANZ.', 138, y, { align: 'right' });
+        doc.text('PREIS', 158, y, { align: 'right' });
+    }
     doc.text('SUMME', MARGIN_R, y, { align: 'right' });
     y += 2.5;
     doc.setDrawColor(...TEAL);
@@ -279,8 +286,16 @@ async function downloadPdf(kind, data, company) {
         doc.text(String(idx + 1), MARGIN_L, y);
         doc.setTextColor(...INK);
         doc.text(String(p.description || '').slice(0, 62), MARGIN_L + 9, y);
-        doc.text(String(p.quantity ?? 1), 138, y, { align: 'right' });
-        doc.text(eur(p.unit_price), 158, y, { align: 'right' });
+        if (hasActual) {
+            doc.text(String(p.quantity ?? 1), 128, y, { align: 'right' });
+            doc.setTextColor(...TEAL_DARK);
+            doc.text(p.actual_quantity != null ? String(p.actual_quantity) : '—', 142, y, { align: 'right' });
+            doc.setTextColor(...INK);
+            doc.text(eur(p.unit_price), 162, y, { align: 'right' });
+        } else {
+            doc.text(String(p.quantity ?? 1), 138, y, { align: 'right' });
+            doc.text(eur(p.unit_price), 158, y, { align: 'right' });
+        }
         doc.text(eur(p.total ?? (p.quantity * p.unit_price)), MARGIN_R, y, { align: 'right' });
         y += 6.3;
         doc.setDrawColor(...GRAY_LIGHT);
@@ -317,6 +332,26 @@ async function downloadPdf(kind, data, company) {
     doc.setFontSize(9);
     doc.setTextColor(...INK);
     y += 6;
+
+    // ── Personal-Block (nur Rechnungen) — Arbeitsstunden × Stundensatz ────────
+    if (isInvoice && (Number(data.staff_hours) || 0) > 0 && (Number(data.staff_hourly_rate) || 0) > 0) {
+        y += 3;
+        doc.setFillColor(...GRAY_LIGHT);
+        doc.roundedRect(MARGIN_L, y, MARGIN_R - MARGIN_L, 11, 1.5, 1.5, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...TEAL_DARK);
+        doc.text('PERSONAL VOR ORT', MARGIN_L + 3, y + 4.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...INK);
+        doc.text(
+            `${Number(data.staff_hours).toLocaleString('de-DE', { minimumFractionDigits: 1 })} Std × ${eur(data.staff_hourly_rate)} €/Std`,
+            MARGIN_L + 3, y + 8.5
+        );
+        doc.text(`${eur(data.staff_cost_total)} EUR`, MARGIN_R - 3, y + 8.5, { align: 'right' });
+        y += 15;
+    }
 
     // ── Zahlungsblock (nur Rechnungen) — IBAN/BIC prominent ────────────────────
     if (isInvoice && (company?.iban || company?.bic)) {
@@ -544,7 +579,9 @@ export default function ExternalBusiness() {
         const wareneinsatz = positions.reduce((s, p) => s + (Number(p.quantity) || 0) * (Number(p.ek_per_unit) || 0), 0);
         const revenueMax = positions.reduce((s, p) => s + (Number(p.quantity_provided) || 0) * (Number(p.unit_price) || 0), 0);
         const db = net - wareneinsatz;
-        return { net, vat, gross: net + vat, wareneinsatz, revenueExpected: net, revenueMax, db, marge: net > 0 ? db / net : 0 };
+        // Personalkosten (Rechnung)
+        const staffCost = (Number(record?.staff_hours) || 0) * (Number(record?.staff_hourly_rate) || 0);
+        return { net, vat, gross: net + vat, wareneinsatz, revenueExpected: net, revenueMax, db, marge: net > 0 ? db / net : 0, staffCost };
     }, [record]);
 
     const handleSubmit = async (e) => {
@@ -552,7 +589,13 @@ export default function ExternalBusiness() {
         const isInvoice = editing === 'invoice';
         const positions = record.positions
             .filter(p => p.description?.trim())
-            .map(p => ({ ...p, quantity: Number(p.quantity) || 0, unit_price: Number(p.unit_price) || 0, total: (Number(p.quantity) || 0) * (Number(p.unit_price) || 0) }));
+            .map(p => ({
+                ...p,
+                quantity: Number(p.quantity) || 0,
+                actual_quantity: p.actual_quantity != null && p.actual_quantity !== '' ? Number(p.actual_quantity) : null,
+                unit_price: Number(p.unit_price) || 0,
+                total: (Number(p.quantity) || 0) * (Number(p.unit_price) || 0),
+            }));
         if (!positions.length) { toast.error('Mindestens eine Position mit Beschreibung nötig'); return; }
         const composedAddress = [record.customer_street, [record.customer_postal_code, record.customer_city].filter(Boolean).join(' ')].filter(Boolean).join('\n');
         const data = {
@@ -600,6 +643,9 @@ export default function ExternalBusiness() {
                 datev_account: record.datev_account || DEFAULT_ACCOUNT[record.category],
                 payment_status: record.payment_status || 'offen',
                 doc_status: record.doc_status || 'Entwurf',
+                staff_hours: record.staff_hours != null && record.staff_hours !== '' ? Number(record.staff_hours) : null,
+                staff_hourly_rate: record.staff_hourly_rate != null && record.staff_hourly_rate !== '' ? Number(record.staff_hourly_rate) : null,
+                staff_cost_total: totals.staffCost || null,
             });
             if (!record.id) data.invoice_number = await nextNumber(invoices, 'invoice_number', 'RE');
             saveInvoice.mutate({ id: record.id, data });
@@ -986,8 +1032,18 @@ export default function ExternalBusiness() {
                                                         step="0.01"
                                                         value={p.quantity}
                                                         onChange={(e) => setPosition(i, 'quantity', e.target.value)}
-                                                        placeholder="Anz."
+                                                        placeholder="Soll"
                                                         className="w-20"
+                                                        title="Soll-Menge (laut Angebot)"
+                                                    />
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={p.actual_quantity ?? ''}
+                                                        onChange={(e) => setPosition(i, 'actual_quantity', e.target.value)}
+                                                        placeholder="Ist"
+                                                        className="w-20"
+                                                        title="Tatsächlich verbrauchte/gelieferte Menge"
                                                     />
                                                     <div className="relative flex-1">
                                                         <Euro className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
@@ -1007,6 +1063,47 @@ export default function ExternalBusiness() {
                                             </Button>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {/* Personal-Block (nur Rechnungen) — Arbeitsstunden × Stundensatz */}
+                            {editing === 'invoice' && (
+                                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2.5">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+                                        <Users className="w-3.5 h-3.5" />
+                                        PERSONAL VOR ORT
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] text-muted-foreground">Arbeitsstunden</Label>
+                                            <Input
+                                                type="number"
+                                                step="0.25"
+                                                value={record.staff_hours ?? ''}
+                                                onChange={(e) => setField('staff_hours', e.target.value ? Number(e.target.value) : null)}
+                                                placeholder="z.B. 12"
+                                                className="h-8 text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] text-muted-foreground">Stundensatz (€/Std)</Label>
+                                            <Input
+                                                type="number"
+                                                step="0.5"
+                                                value={record.staff_hourly_rate ?? ''}
+                                                onChange={(e) => setField('staff_hourly_rate', e.target.value ? Number(e.target.value) : null)}
+                                                placeholder="z.B. 18"
+                                                className="h-8 text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    {(Number(record.staff_hours) || 0) > 0 && (Number(record.staff_hourly_rate) || 0) > 0 && (
+                                        <p className="text-[11px] text-muted-foreground text-right">
+                                            Personalkosten gesamt: <span className="font-semibold text-foreground">
+                                                {eur((Number(record.staff_hours) || 0) * (Number(record.staff_hourly_rate) || 0))} €
+                                            </span>
+                                        </p>
+                                    )}
                                 </div>
                             )}
 
@@ -1106,6 +1203,12 @@ export default function ExternalBusiness() {
                                 <div className="flex justify-between font-bold text-foreground pt-1 border-t border-border/50">
                                     <span>Gesamt</span><span>{eur(totals.gross)} &euro;</span>
                                 </div>
+                                {editing === 'invoice' && totals.staffCost > 0 && (
+                                    <div className="flex justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/30">
+                                        <span>Personalkosten (intern)</span>
+                                        <span>{eur(totals.staffCost)} &euro;</span>
+                                    </div>
+                                )}
                                 {editing === 'offer' && totals.wareneinsatz > 0 && (
                                     <>
                                         <div className="flex justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/30">
