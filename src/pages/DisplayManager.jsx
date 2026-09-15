@@ -19,11 +19,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, ChevronDown, ChevronUp, GripVertical, QrCode, X, Copy, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, ChevronDown, ChevronUp, GripVertical, QrCode, X, Copy, Check, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import DrinkEmojiPicker from '@/components/emoji/DrinkEmojiPicker';
+import InstagramExportDialog from '@/components/display/InstagramExportDialog';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
 import { isAfter, parseISO } from 'date-fns';
@@ -109,6 +110,7 @@ export default function DisplayManager() {
   const [activeTab, setActiveTab]       = useState('form');
   const [showQR, setShowQR]             = useState(false);
   const [qrCopied, setQrCopied]         = useState(false);
+  const [igExport, setIgExport]         = useState(null);
 
   const MENU_URL = `${window.location.origin}/PublicDrinkMenu`;
 
@@ -320,6 +322,9 @@ export default function DisplayManager() {
                                 className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                                 {s.is_active ? <Eye className="w-4 h-4 text-primary" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                               </button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" title="Instagram-Export" onClick={() => setIgExport(s)}>
+                                <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
+                              </Button>
                               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(s)}>
                                 <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                               </Button>
@@ -669,6 +674,13 @@ export default function DisplayManager() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Instagram Export Dialog ── */}
+      <InstagramExportDialog
+        open={!!igExport}
+        onOpenChange={(o) => !o && setIgExport(null)}
+        slide={igExport}
+      />
     </div>
   );
 }
