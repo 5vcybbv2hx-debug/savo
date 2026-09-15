@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { publicBase44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Search, X, ChevronDown, ChevronUp, Info, Leaf, Flame, Star } from 'lucide-react';
+import { Search, X, ChevronDown, ChevronUp, Info, Leaf, Flame, Star, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ── Allergen-Kürzel (EU-weit standardisiert) ──────────────────────────────────
@@ -74,6 +74,10 @@ const getCatIcon = (cat) => {
     return '🍾';
 };
 
+// ── Wochentage (JS-Konvention: 0=So, 1=Mo, 2=Di, ... 6=Sa) ──────────────────
+const WEEKDAY_SHORT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const WEEKDAY_FULL = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+
 // ── Preis formatieren ─────────────────────────────────────────────────────────
 const formatPrice = (p) => {
     if (!p && p !== 0) return null;
@@ -135,6 +139,11 @@ function ItemDetailModal({ item, onClose }) {
                         {item.is_seasonal && (
                             <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 font-medium">
                                 <Leaf className="w-3 h-3" /> Saisonal
+                            </span>
+                        )}
+                        {item.available_weekdays?.length > 0 && (
+                            <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
+                                <CalendarDays className="w-3 h-3" /> Nur {item.available_weekdays.map(d => WEEKDAY_SHORT[d]).join(' · ')}
                             </span>
                         )}
                         {item.alcohol_content && (
@@ -248,6 +257,20 @@ export default function PublicDrinkMenu() {
     });
 
     const allItems    = menuData.items || [];
+    const todayWeekday = new Date().getDay();
+
+    // Artikel mit Wochentag-Einschraenkung (available_weekdays):
+    // heute verfuegbar -> normale Kartenliste; heute NICHT verfuegbar -> Teaser-Banner
+    const { todaysItems, offDayItems } = useMemo(() => {
+        const on = [], off = [];
+        allItems.forEach(item => {
+            const days = item.available_weekdays;
+            if (!days || days.length === 0) { on.push(item); return; }
+            if (days.includes(todayWeekday)) on.push(item);
+            else off.push(item);
+        });
+        return { todaysItems: on, offDayItems: off };
+    }, [allItems, todayWeekday]);
     const companyInfo = menuData.companyInfo || {};
     const specials    = menuData.specials || [];
 
@@ -256,13 +279,13 @@ export default function PublicDrinkMenu() {
 
     // ── Kategorien ─────────────────────────────────────────────────────────────
     const categories = useMemo(() => {
-        const cats = [...new Set(allItems.map(i => i.category || 'Sonstiges'))];
+        const cats = [...new Set(todaysItems.map(i => i.category || 'Sonstiges'))];
         return ['Alle', ...cats];
-    }, [allItems]);
+    }, [todaysItems]);
 
     // ── Gefilterte Items ───────────────────────────────────────────────────────
     const filteredItems = useMemo(() => {
-        let items = allItems;
+        let items = todaysItems;
         if (activeCategory !== 'Alle') items = items.filter(i => (i.category || 'Sonstiges') === activeCategory);
         if (searchTerm.trim()) {
             const q = searchTerm.toLowerCase();
@@ -433,6 +456,32 @@ export default function PublicDrinkMenu() {
                 </div>
             )}
 
+            {/* ── Wochentags-Angebot: heute nicht verfuegbare Artikel (Teaser) ── */}
+            {offDayItems.length > 0 && activeCategory === 'Alle' && !searchTerm && (
+                <div className="mx-4 mt-4 mb-2 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                        <CalendarDays className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-bold text-primary uppercase tracking-wide">Wochentags-Angebot</span>
+                    </div>
+                    <div className="space-y-1.5">
+                        {offDayItems.map(item => (
+                            <div key={item.id} className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <span className="text-sm font-semibold text-foreground">{item.name}</span>
+                                    {item.description && (
+                                        <span className="text-xs text-muted-foreground ml-2 line-clamp-1">{item.description}</span>
+                                    )}
+                                </div>
+                                <span className="text-xs font-bold text-primary shrink-0 whitespace-nowrap">
+                                    {item.available_weekdays.map(d => WEEKDAY_SHORT[d]).join(' · ')}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">Bestellung direkt bei der Bedienung.</p>
+                </div>
+            )}
+
             {/* ── Keine Ergebnisse ─────────────────────────────────────────── */}
             {filteredItems.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-20 text-center px-6">
@@ -481,6 +530,11 @@ export default function PublicDrinkMenu() {
                                             <span className="text-sm font-semibold text-foreground truncate">{item.name}</span>
                                             {item.is_special && <Star className="w-3 h-3 text-amber-400 shrink-0" />}
                                             {item.is_seasonal && <Leaf className="w-3 h-3 text-green-400 shrink-0" />}
+                                            {item.available_weekdays?.length > 0 && (
+                                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/15 text-primary shrink-0">
+                                                    Nur {item.available_weekdays.map(d => WEEKDAY_SHORT[d]).join(' · ')}
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             {item.size && <span className="text-xs text-muted-foreground">{item.size}</span>}

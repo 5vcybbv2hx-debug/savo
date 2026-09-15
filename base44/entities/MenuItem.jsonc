@@ -95,6 +95,13 @@
       "type": "string",
       "description": "Varianten-Name (z.B. 'mit Cola') wenn aus Rezept-Mischvariante erstellt"
     },
+    "available_weekdays": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "Wochentage, an denen dieser Artikel angeboten wird (JS-Konvention: 0=Sonntag, 1=Montag, 2=Dienstag, ... 6=Samstag). Leer/null = taeglich verfuegbar. Guests order at the waiter; items not available today are shown as a teaser banner."
+    },
     "last_reviewed_date": {
       "type": "string",
       "format": "date-time",
