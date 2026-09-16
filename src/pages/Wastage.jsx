@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
-import { format } from 'date-fns';
+import { format, parseISO, endOfMonth } from 'date-fns';
 import { Trash2, Camera, Plus, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -56,8 +56,13 @@ export default function Wastage() {
     const { data: wastageItems = [] } = useQuery({
         queryKey: ['wastage-items', filterMonth],
         queryFn: async () => {
-            const items = await base44.entities.Wastage.filter({ date: filterMonth }, '-created_date', 300);
-            return items;
+            // ACHTUNG: Base44-Filter ist exakter Gleichheitsvergleich — {date: '2026-09'}
+            // trifft NIE auf '2026-09-16' (Regression seit 24.06., Commit 3ed78259).
+            // Bewaehrtes Muster wie AdminTimeEditor/TimeEntry: laden + clientseitig filtern.
+            const start = `${filterMonth}-01`;
+            const end = format(endOfMonth(parseISO(start)), 'yyyy-MM-dd');
+            const all = await base44.entities.Wastage.list('-date', 1000);
+            return all.filter(i => i.date >= start && i.date <= end);
         },
         staleTime: STALE.MEDIUM,
     });
