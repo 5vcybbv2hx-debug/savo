@@ -415,7 +415,8 @@ async function downloadPdf(kind, data, company) {
         doc.text('Gemäß §19 UStG wird kein Umsatzsteuer ausgewiesen.', MARGIN_L, footerY + 4.3);
     }
     const footer = [
-        company?.tax_id ? `Steuernr.: ${company.tax_id}` : null,
+        company?.tax_id ? `Steuernummer: ${company.tax_id}` : null,
+        company?.tax_office ? `Finanzamt: ${company.tax_office}` : null,
         company?.vat_id ? `USt-IdNr.: ${company.vat_id}` : null,
     ].filter(Boolean);
     const footerOffset = smallBiz ? 8.6 : 5;

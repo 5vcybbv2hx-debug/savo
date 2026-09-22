@@ -55,6 +55,7 @@ export default function CompanyInfoEditor() {
                 description:               company.description               || '',
                 logo_url:                  company.logo_url                  || '',
                 tax_id:                    company.tax_id                    || '',
+                tax_office:                company.tax_office                || '',
                 vat_id:                    company.vat_id                    || '',
                 is_small_business:         company.is_small_business         ?? false,
                 bank_name:                 company.bank_name                 || '',
@@ -358,8 +359,13 @@ export default function CompanyInfoEditor() {
                                     <Input value={form.tax_id} onChange={e => set('tax_id', e.target.value)} placeholder="12/345/67890" />
                                 </div>
                                 <div>
-                                    <Label className="text-xs text-muted-foreground mb-1 block">USt-IdNr.</Label>
-                                    <Input value={form.vat_id} onChange={e => set('vat_id', e.target.value)} placeholder="DE123456789" />
+                                    <Label className="text-xs text-muted-foreground mb-1 block">Finanzamt</Label>
+                                    <Input value={form.tax_office} onChange={e => set('tax_office', e.target.value)} placeholder="z.B. Finanzamt Balingen" />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-muted-foreground mb-1 block">USt-IdNr. (§27a UStG)</Label>
+                                    <Input value={form.vat_id} onChange={e => set('vat_id', e.target.value)} placeholder="Nur bei bestätigter USt-IdNr. — leer lassen, falls keine vorliegt" />
+                                    <p className="text-[10px] text-muted-foreground mt-1">Nur eintragen, wenn eine bestätigte Umsatzsteuer-Identifikationsnummer vorliegt.</p>
                                 </div>
                             </div>
                             <label className="flex items-center gap-2.5 cursor-pointer mt-1">

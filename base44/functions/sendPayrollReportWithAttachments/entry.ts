@@ -147,10 +147,11 @@ Deno.serve(async (req) => {
             ${company.email ? `<p><span class="footer-contact">✉</span> ${company.email}</p>` : ''}
             ${company.website ? `<p><span class="footer-contact">🌐</span> ${company.website}</p>` : ''}
             
-            ${company.vat_id || company.tax_id ? `
+            ${company.vat_id || company.tax_id || company.tax_office ? `
             <div class="footer-divider"></div>
             ${company.vat_id ? `<p>USt-IdNr.: ${company.vat_id}</p>` : ''}
             ${company.tax_id ? `<p>Steuernummer: ${company.tax_id}</p>` : ''}
+            ${company.tax_office ? `<p>Finanzamt: ${company.tax_office}</p>` : ''}
             ` : ''}
         </div>
     </div>
