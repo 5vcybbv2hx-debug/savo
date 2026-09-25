@@ -1,0 +1,41 @@
+{
+  "name": "ExternalJobConsumption",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "ID des zugeh\u00f6rigen ExternalJob"
+    },
+    "article_id": {
+      "type": "string",
+      "description": "Referenz auf Article (lesend)"
+    },
+    "article_name": {
+      "type": "string",
+      "description": "Artikelname (Snapshot)"
+    },
+    "delivered_qty": {
+      "type": "number",
+      "description": "Gelieferte Menge (voller Beh\u00e4lter/Einheiten)"
+    },
+    "returned_empty_qty": {
+      "type": "number",
+      "description": "Leergut zur\u00fcck (unge\u00f6ffnete/volle Einheiten werden als Leergut zur\u00fcckgenommen)"
+    },
+    "consumed_qty": {
+      "type": "number",
+      "description": "Verbrauchte Menge (berechnet = delivered - returned_empty). Feld wird gespeichert."
+    },
+    "price_per_unit": {
+      "type": "number",
+      "description": "Preis pro verbrauchter Einheit in Euro"
+    },
+    "line_total": {
+      "type": "number",
+      "description": "Zeilensumme (consumed_qty \u00d7 price_per_unit), gespeichert"
+    }
+  },
+  "required": [
+    "job_id"
+  ]
+}

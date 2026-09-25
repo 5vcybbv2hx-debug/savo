@@ -1,0 +1,37 @@
+{
+  "name": "ExternalJobLine",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "ID des zugeh\u00f6rigen ExternalJob"
+    },
+    "article_id": {
+      "type": "string",
+      "description": "Referenz auf Article (lesend aus bestehender Article-Entity)"
+    },
+    "article_name": {
+      "type": "string",
+      "description": "Artikelname (Snapshot)"
+    },
+    "planned_qty": {
+      "type": "number",
+      "description": "Geplante Menge"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Einheit (z.B. Flasche, Kiste, Fass)"
+    },
+    "price_per_unit": {
+      "type": "number",
+      "description": "Preis pro Einheit in Euro"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notiz zur Position"
+    }
+  },
+  "required": [
+    "job_id"
+  ]
+}

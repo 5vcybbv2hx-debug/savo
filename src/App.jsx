@@ -43,6 +43,7 @@ import IncidentDetail from './pages/IncidentDetail';
 import BusinessCalendar from './pages/BusinessCalendar';
 import DataQuality from './pages/DataQuality';
 import MenuReview from './pages/MenuReview';
+import ExternalJobs from './pages/ExternalJobs';
 
 const { Pages, CorePages, SpecialPagesWithLayout, PublicPages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -244,6 +245,7 @@ const AuthenticatedApp = () => {
       <Route path="/AtlasExport" element={<LayoutWrapper currentPageName="AtlasExport"><RoleGuard permission="canViewAnalytics"><AtlasExport /></RoleGuard></LayoutWrapper>} />
 
       {/* Catch-all */}
+      <Route path="/ExternalJobs" element={<LayoutWrapper currentPageName="ExternalJobs"><RoleGuard permission="canViewEvents"><ExternalJobs /></RoleGuard></LayoutWrapper>} />
       <Route path="/TeamHub" element={<LayoutWrapper currentPageName="TeamHub"><RoleGuard permission="canViewShifts"><TeamHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingHub" element={<LayoutWrapper currentPageName="AccountingHub"><RoleGuard permission="canViewAccounting"><AccountingHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/KarteHub" element={<LayoutWrapper currentPageName="KarteHub"><RoleGuard permission="canViewDrinkMenu"><KarteHub /></RoleGuard></LayoutWrapper>} />

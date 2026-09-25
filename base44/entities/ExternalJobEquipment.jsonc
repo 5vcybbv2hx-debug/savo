@@ -1,0 +1,31 @@
+{
+  "name": "ExternalJobEquipment",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "ID des zugeh\u00f6rigen ExternalJob"
+    },
+    "item_name": {
+      "type": "string",
+      "description": "Bezeichnung des Zubeh\u00f6r-Teils (z.B. Zapfanlage, Gl\u00e4ser, K\u00fchlschrank)"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Menge"
+    },
+    "is_checked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Abgehakt? (mitgenommen/verpackt)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notiz zum Zubeh\u00f6r-Teil"
+    }
+  },
+  "required": [
+    "job_id",
+    "item_name"
+  ]
+}

@@ -20,6 +20,7 @@ export const PAGE_PERMISSIONS = {
     Shopping:                'canViewShopping',
     QuickList:               'canViewShopping',
     Events:                  'canViewEvents',
+    ExternalJobs:            'canViewEvents',
 
     // ── Lager ──────────────────────────────────────────────────────────────────
     Articles:                'canViewWarehouse',

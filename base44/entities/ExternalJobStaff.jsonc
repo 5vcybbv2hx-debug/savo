@@ -1,0 +1,41 @@
+{
+  "name": "ExternalJobStaff",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "ID des zugeh\u00f6rigen ExternalJob"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "Referenz auf Employee (lesend aus bestehender Employee-Entity)"
+    },
+    "employee_name": {
+      "type": "string",
+      "description": "Mitarbeitername (Snapshot)"
+    },
+    "role_on_event": {
+      "type": "string",
+      "description": "Rolle beim Einsatz (z.B. Barkeeper, Service, Aufbau)"
+    },
+    "planned_arrival": {
+      "type": "string",
+      "description": "Geplante Ankunft (HH:MM)"
+    },
+    "planned_departure": {
+      "type": "string",
+      "description": "Geplantes Ende (HH:MM)"
+    },
+    "actual_hours": {
+      "type": "number",
+      "description": "Tats\u00e4chliche Arbeitsstunden (optional, nachtr\u00e4glich erfasst)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notiz zur Personalzuordnung"
+    }
+  },
+  "required": [
+    "job_id"
+  ]
+}

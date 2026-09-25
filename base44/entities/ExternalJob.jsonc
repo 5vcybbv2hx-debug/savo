@@ -1,0 +1,91 @@
+{
+  "name": "ExternalJob",
+  "type": "object",
+  "properties": {
+    "customer_name": {
+      "type": "string",
+      "description": "Kunde / Veranstalter"
+    },
+    "customer_contact": {
+      "type": "string",
+      "description": "Ansprechpartner beim Kunden"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Telefonnummer des Kunden"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "E-Mail-Adresse des Kunden"
+    },
+    "event_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum der Veranstaltung"
+    },
+    "event_name": {
+      "type": "string",
+      "description": "Bezeichnung der Veranstaltung (z.B. Geburtstag, Firmenfeier)"
+    },
+    "location": {
+      "type": "string",
+      "description": "Veranstaltungsort / Adresse"
+    },
+    "setup_time": {
+      "type": "string",
+      "description": "Aufbauzeit (HH:MM)"
+    },
+    "teardown_time": {
+      "type": "string",
+      "description": "Abbauzeit (HH:MM)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "anfrage",
+        "angebot",
+        "auftrag",
+        "durchgefuehrt",
+        "abgerechnet",
+        "storniert"
+      ],
+      "default": "anfrage",
+      "description": "Status des Au\u00dfeneinsatzes"
+    },
+    "pricing_model": {
+      "type": "string",
+      "enum": [
+        "pauschal",
+        "kommission",
+        "verbrauchsabrechnung"
+      ],
+      "default": "pauschal",
+      "description": "Preismodell: pauschal = Festpreis, kommission = pro Einheit gem\u00e4\u00df Planung, verbrauchsabrechnung = Abrechnung nach tats\u00e4chlichem Verbrauch"
+    },
+    "offer_number": {
+      "type": "string",
+      "description": "Angebotsnummer (fortlaufend)"
+    },
+    "offer_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Angebotsdatum"
+    },
+    "fixed_price": {
+      "type": "number",
+      "description": "Festpreis (Pauschale) in Euro"
+    },
+    "deposit_amount": {
+      "type": "number",
+      "description": "Anzahlung in Euro"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Allgemeine Notizen zum Einsatz"
+    }
+  },
+  "required": [
+    "customer_name",
+    "event_date"
+  ]
+}
