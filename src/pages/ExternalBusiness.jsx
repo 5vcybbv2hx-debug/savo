@@ -550,7 +550,7 @@ export default function ExternalBusiness() {
             staff_count: null,
             ...(isInvoice
                 ? { invoice_date: today(), service_date: today(), service_date_type: 'Einzel', service_date_end: '', due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'), datev_account: DEFAULT_ACCOUNT[cat] }
-                : { offer_date: today(), valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd') }),
+                : { offer_date: today(), valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd'), service_date: today(), service_date_type: 'Einzel', service_date_end: '' }),
         });
         setEditing(kind);
     };
@@ -655,6 +655,9 @@ export default function ExternalBusiness() {
                 offer_date: record.offer_date,
                 valid_until: record.valid_until,
                 status: record.status || 'Entwurf',
+                service_date: record.service_date || record.offer_date,
+                service_date_type: record.service_date_type || 'Einzel',
+                service_date_end: record.service_date_type === 'Zeitraum' ? (record.service_date_end || '') : '',
             });
             if (!record.id) data.offer_number = await nextNumber(offers, 'offer_number', 'AN');
             saveOffer.mutate({ id: record.id, data });
@@ -695,7 +698,9 @@ export default function ExternalBusiness() {
             const invoice = await base44.entities.DebitorInvoice.create({
                 invoice_number: invoiceNumber,
                 invoice_date: today(),
-                service_date: today(),
+                service_date: offer.service_date || today(),
+                service_date_type: offer.service_date_type || 'Einzel',
+                service_date_end: offer.service_date_type === 'Zeitraum' ? (offer.service_date_end || '') : '',
                 due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'),
                 category: offer.category,
                 customer_name: offer.customer_name || '',
