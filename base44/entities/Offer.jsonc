@@ -51,6 +51,25 @@
       "type": "string",
       "description": "USt-IdNr. des Empfaengers (Pflicht bei innergemeinschaftlichen Lieferungen, \u00a714a UStG)"
     },
+    "service_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Leistungsdatum (\u00a714 UStG-Pflichtangabe) \u2014 bei Zeitraum der Start"
+    },
+    "service_date_type": {
+      "type": "string",
+      "enum": [
+        "Einzel",
+        "Zeitraum"
+      ],
+      "default": "Einzel",
+      "description": "Leistungsdatum-Typ: Einzel = ein Datum, Zeitraum = von/bis"
+    },
+    "service_date_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Leistungszeitraum Ende (nur bei service_date_type 'Zeitraum')"
+    },
     "supplier_name": {
       "type": "string",
       "description": "WKZ: Lieferant/Brauerei als Empfaenger"
