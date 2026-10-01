@@ -51,8 +51,11 @@ function validateForPdf(company) {
     return true;
 }
 
-// Empfänger-Ergänzung: Land + USt-IdNr. (bei EU-Kunden, §14a UStG)
-function RecipientExtraFields({ record, setField }) {
+// Empfänger-Ergänzung: Land + Steuernummer.
+// Die Steuernummer wird automatisch aus den Firmendaten (CompanyInfo) vorbelegt,
+// kann aber pro Rechnung/Angebot überschrieben werden.
+function RecipientExtraFields({ record, setField, company }) {
+    const companyTaxId = company?.tax_id || '';
     return (
         <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
@@ -66,9 +69,9 @@ function RecipientExtraFields({ record, setField }) {
             <div className="space-y-1.5">
                 <Label className="text-[11px]">Steuernummer</Label>
                 <Input
-                    value={record.recipient_vat_id || ''}
+                    value={record.recipient_vat_id || companyTaxId}
                     onChange={(e) => setField('recipient_vat_id', e.target.value)}
-                    placeholder="z.B. DE123456789"
+                    placeholder={companyTaxId || 'z.B. DE123456789'}
                 />
             </div>
         </div>
@@ -1009,7 +1012,7 @@ export default function ExternalBusiness() {
                                         )}
                                     </div>
                                     <AddressFields record={record} setField={setField} />
-                                    <RecipientExtraFields record={record} setField={setField} />
+                                    <RecipientExtraFields record={record} setField={setField} company={company} />
                                 </>
                             ) : (
                                 <>
@@ -1018,7 +1021,7 @@ export default function ExternalBusiness() {
                                         <Input value={record.customer_name || ''} onChange={(e) => setField('customer_name', e.target.value)} placeholder="z.B. WKZ, Stadtfest e.V." required />
                                     </div>
                                     <AddressFields record={record} setField={setField} />
-                                    <RecipientExtraFields record={record} setField={setField} />
+                                    <RecipientExtraFields record={record} setField={setField} company={company} />
                                 </>
                             )}
 
