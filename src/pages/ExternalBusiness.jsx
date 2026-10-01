@@ -1188,44 +1188,43 @@ export default function ExternalBusiness() {
                                         </div>
                                     </>
                                 ) : (
-                                                                <>
-                                                                    <div className="space-y-1.5">
-                                                                        <Label>Angebotsdatum *</Label>
-                                                                        <Input type="date" value={record.offer_date || ''} onChange={(e) => setField('offer_date', e.target.value)} required />
-                                                                    </div>
-                                                                    <div className="space-y-1.5">
-                                                                        <Label>Gültig bis</Label>
-                                                                        <Input type="date" value={record.valid_until || ''} onChange={(e) => setField('valid_until', e.target.value)} />
-                                                                    </div>
-                                                                </>
-                                                            )}
-
-                                                            {/* Leistungszeitraum — auch für Angebote (§14 UStG-Pflichtangabe) */}
-                                                            <div className="space-y-1.5">
-                                                                <Label>Leistung</Label>
-                                                                <Select
-                                                                    value={record.service_date_type || 'Einzel'}
-                                                                    onValueChange={(v) => setField('service_date_type', v)}
-                                                                >
-                                                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                                                    <SelectContent>
-                                                                        <SelectItem value="Einzel">Einzelnes Datum</SelectItem>
-                                                                        <SelectItem value="Zeitraum">Zeitraum (von – bis)</SelectItem>
-                                                                    </SelectContent>
-                                                                </Select>
-                                                            </div>
-                                                            <div className="space-y-1.5">
-                                                                <Label>{record.service_date_type === 'Zeitraum' ? 'Leistung von' : 'Leistungsdatum'}</Label>
-                                                                <Input type="date" value={record.service_date || ''} onChange={(e) => setField('service_date', e.target.value)} />
-                                                            </div>
-                                                            {record.service_date_type === 'Zeitraum' && (
+                                                                    <>
+                                                                        <div className="space-y-1.5">
+                                                                            <Label>Angebotsdatum *</Label>
+                                                                            <Input type="date" value={record.offer_date || ''} onChange={(e) => setField('offer_date', e.target.value)} required />
+                                                                        </div>
+                                                                        <div className="space-y-1.5">
+                                                                            <Label>Gültig bis</Label>
+                                                                            <Input type="date" value={record.valid_until || ''} onChange={(e) => setField('valid_until', e.target.value)} />
+                                                                        </div>
+                                                                        {/* Leistungszeitraum — auch für Angebote (§14 UStG-Pflichtangabe) */}
+                                                                        <div className="space-y-1.5">
+                                                                            <Label>Leistung</Label>
+                                                                            <Select
+                                                                                value={record.service_date_type || 'Einzel'}
+                                                                                onValueChange={(v) => setField('service_date_type', v)}
+                                                                            >
+                                                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                                                <SelectContent>
+                                                                                    <SelectItem value="Einzel">Einzelnes Datum</SelectItem>
+                                                                                    <SelectItem value="Zeitraum">Zeitraum (von – bis)</SelectItem>
+                                                                                </SelectContent>
+                                                                            </Select>
+                                                                        </div>
+                                                                        <div className="space-y-1.5">
+                                                                            <Label>{record.service_date_type === 'Zeitraum' ? 'Leistung von' : 'Leistungsdatum'}</Label>
+                                                                            <Input type="date" value={record.service_date || ''} onChange={(e) => setField('service_date', e.target.value)} />
+                                                                        </div>
+                                                                        {record.service_date_type === 'Zeitraum' && (
+                                                                            <div className="space-y-1.5">
+                                                                                <Label>Leistung bis</Label>
+                                                                                <Input type="date" value={record.service_date_end || ''} onChange={(e) => setField('service_date_end', e.target.value)} />
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                )}
                                                                 <div className="space-y-1.5">
-                                                                    <Label>Leistung bis</Label>
-                                                                    <Input type="date" value={record.service_date_end || ''} onChange={(e) => setField('service_date_end', e.target.value)} />
-                                                                </div>
-                                                            )}
-                                <div className="space-y-1.5">
-                                    <Label>Umsatzsteuer</Label>
+                                                                    <Label>Umsatzsteuer</Label>
                                     <Select value={String(record.tax_rate)} onValueChange={(v) => setField('tax_rate', Number(v))}>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                         <SelectContent>
