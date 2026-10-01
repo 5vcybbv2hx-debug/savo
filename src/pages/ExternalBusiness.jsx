@@ -64,11 +64,11 @@ function RecipientExtraFields({ record, setField }) {
                 />
             </div>
             <div className="space-y-1.5">
-                <Label className="text-[11px]">USt-IdNr. (EU)</Label>
+                <Label className="text-[11px]">Steuernummer</Label>
                 <Input
                     value={record.recipient_vat_id || ''}
                     onChange={(e) => setField('recipient_vat_id', e.target.value)}
-                    placeholder="z.B. ATU12345678"
+                    placeholder="z.B. DE123456789"
                 />
             </div>
         </div>
@@ -236,7 +236,7 @@ async function downloadPdf(kind, data, company) {
         ry += 5;
     }
     if (data.recipient_vat_id) {
-        doc.text(`USt-IdNr.: ${data.recipient_vat_id}`, MARGIN_L, ry);
+        doc.text(`Steuernummer: ${data.recipient_vat_id}`, MARGIN_L, ry);
         ry += 5;
     }
 
