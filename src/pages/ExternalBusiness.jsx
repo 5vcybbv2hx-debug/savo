@@ -844,7 +844,7 @@ export default function ExternalBusiness() {
                         <Send className="w-3 h-3" /> Gesendet
                     </Button>
                 )}
-                {r.status === 'Gesendet' && (
+                {['Gesendet', 'Bestaetigt', 'Bestätigt', 'Angenommen'].includes(r.status) && (
                     <Button size="sm" className="h-7 text-[11px] gap-1" onClick={() => setConfirmOffer(r)}>
                         <ArrowRightLeft className="w-3 h-3" /> Zur Rechnung
                     </Button>
