@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import OfferCalculation from '@/components/external/OfferCalculation';
+import ConsumptionConfirmModal, { confirmedQuantity } from '@/components/external/ConsumptionConfirmModal';
 
 const CAT_EVENT = 'Externer Event';
 const CAT_WKZ = 'Werbekostenzuschuss';
@@ -453,6 +454,7 @@ export default function ExternalBusiness() {
     const [tab, setTab] = useState('invoices');
     const [editing, setEditing] = useState(null);   // 'offer' | 'invoice' | null
     const [record, setRecord] = useState(null);
+    const [confirmOffer, setConfirmOffer] = useState(null); // Offer, dessen Verbrauch bestätigt werden muss
 
     // ── Daten ───────────────────────────────────────────────────────────────
     const { data: invoices = [] } = useQuery({
@@ -659,9 +661,36 @@ export default function ExternalBusiness() {
         }
     };
 
-    // ── Angebot → Rechnung ──────────────────────────────────────────────────
+    // ── Angebot → Rechnung (mit Bestätigung des tatsächlichen Verbrauchs) ────
+    // rows enthält je Position die kategorie-spezifisch bestätigten Werte aus dem
+    // ConsumptionConfirmModal. Rechnungspositionen nutzen die BESTÄTIGTEN Mengen,
+    // Summen werden neu berechnet, actual_quantity + Wareneinsatz/DB aktualisiert.
     const convertOffer = useMutation({
-        mutationFn: async (offer) => {
+        mutationFn: async ({ offer, rows }) => {
+            const srcPositions = (offer.positions || []).filter(p => p.description?.trim());
+
+            // Bestätigte Mengen pro Position inkl. Zeilensumme
+            const confirmedPositions = srcPositions.map((p, i) => {
+                const qty = confirmedQuantity(p, rows?.[i]);
+                const unit_price = Number(p.unit_price) || 0;
+                return {
+                    ...p,
+                    quantity: qty,
+                    actual_quantity: qty,
+                    unit_price,
+                    total: qty * unit_price,
+                };
+            });
+
+            const rate = Number(offer.tax_rate) || 0;
+            const net = confirmedPositions.reduce((s, p) => s + p.total, 0);
+            const vat = net * rate / 100;
+            const gross = net + vat;
+
+            // Wareneinsatz + Deckungsbeitrag auf Basis der BESTÄTIGTEN Mengen
+            const wareneinsatz = confirmedPositions.reduce((s, p) => s + (p.quantity || 0) * (Number(p.ek_per_unit) || 0), 0);
+            const db = net - wareneinsatz;
+
             const invoiceNumber = await nextNumber(invoices, 'invoice_number', 'RE');
             const invoice = await base44.entities.DebitorInvoice.create({
                 invoice_number: invoiceNumber,
@@ -679,11 +708,11 @@ export default function ExternalBusiness() {
                 supplier_name: offer.supplier_name || '',
                 supplier_id: offer.supplier_id || '',
                 linked_event_id: offer.linked_event_id || '',
-                positions: offer.positions || [],
-                tax_rate: offer.tax_rate || 19,
-                amount_net: offer.amount_net || 0,
-                tax_amount: offer.tax_amount || 0,
-                amount_gross: offer.amount_gross || 0,
+                positions: confirmedPositions,
+                tax_rate: rate,
+                amount_net: net,
+                tax_amount: vat,
+                amount_gross: gross,
                 description: offer.description || '',
                 notes: offer.notes || '',
                 notes_public: !!offer.notes_public,
@@ -697,11 +726,18 @@ export default function ExternalBusiness() {
             await base44.entities.Offer.update(offer.id, {
                 status: 'Rechnung erstellt',
                 converted_invoice_id: invoice.id,
+                // Wareneinsatz auf Basis der bestätigten Mengen neu berechnen
+                wareneinsatz_total: wareneinsatz,
+                revenue_expected_total: net,
+                db_expected_total: db,
+                db_marge_total: net > 0 ? db / net : 0,
+                positions: confirmedPositions,
             });
             return invoice;
         },
         onSuccess: (inv) => {
             invalidate();
+            setConfirmOffer(null);
             toast.success(`Rechnung ${inv.invoice_number} erstellt — jetzt PDF erzeugen und senden`);
         },
         onError: (e) => toast.error('Konvertierung fehlgeschlagen: ' + e.message),
@@ -804,7 +840,7 @@ export default function ExternalBusiness() {
                     </Button>
                 )}
                 {r.status === 'Gesendet' && (
-                    <Button size="sm" className="h-7 text-[11px] gap-1" onClick={() => { if (confirm('Rechnung aus diesem Angebot erstellen?')) convertOffer.mutate(r); }}>
+                    <Button size="sm" className="h-7 text-[11px] gap-1" onClick={() => setConfirmOffer(r)}>
                         <ArrowRightLeft className="w-3 h-3" /> Zur Rechnung
                     </Button>
                 )}
@@ -1241,6 +1277,15 @@ export default function ExternalBusiness() {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* ── Verbrauchs-Bestätigung vor Rechnungserstellung ─────────────── */}
+            <ConsumptionConfirmModal
+                offer={confirmOffer}
+                open={!!confirmOffer}
+                onClose={() => { if (!convertOffer.isPending) setConfirmOffer(null); }}
+                onConfirm={(rows) => convertOffer.mutate({ offer: confirmOffer, rows })}
+                isPending={convertOffer.isPending}
+            />
         </div>
     );
 }
