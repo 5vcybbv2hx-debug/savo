@@ -91,7 +91,7 @@ export function useDashboardData({ isManager, currentEmployee }) {
 
     // Derived values
     const todayShifts = shifts.filter(s => s.date === today);
-    const todayEvents = events.filter(e => e.date === today && e.status !== 'abgesagt');
+    const todayEvents = events.filter(e => e.date === today && e.status !== 'Abgesagt');
     const todayReservations = reservations.filter(r => r.date === today && r.status !== 'storniert');
     const upcomingEvents = events.filter(e => new Date(e.date) > new Date());
     const openTodos = todos.filter(t => t.status !== 'erledigt');

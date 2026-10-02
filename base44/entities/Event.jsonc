@@ -34,11 +34,10 @@
     "status": {
       "type": "string",
       "enum": [
-        "geplant",
-        "bestätigt",
-        "abgesagt"
+        "Best\u00e4tigt",
+        "Abgesagt"
       ],
-      "default": "geplant",
+      "default": "Best\u00e4tigt",
       "description": "Status"
     },
     "description": {
@@ -47,11 +46,11 @@
     },
     "expected_guests": {
       "type": "number",
-      "description": "Erwartete Gästeanzahl"
+      "description": "Erwartete G\u00e4steanzahl"
     },
     "actual_guests": {
       "type": "number",
-      "description": "Tatsächliche Gästeanzahl"
+      "description": "Tats\u00e4chliche G\u00e4steanzahl"
     },
     "entry_fee": {
       "type": "number",
@@ -63,7 +62,7 @@
     },
     "artist_name": {
       "type": "string",
-      "description": "Künstler / DJ"
+      "description": "K\u00fcnstler / DJ"
     },
     "responsible_person": {
       "type": "string",

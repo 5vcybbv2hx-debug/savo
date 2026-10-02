@@ -22,7 +22,7 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
     const today = format(new Date(), 'yyyy-MM-dd');
 
     const todayShifts = shifts.filter(s => s.date === today);
-    const todayEvents = events.filter(e => e.date === today && e.status !== 'abgesagt');
+    const todayEvents = events.filter(e => e.date === today && e.status !== 'Abgesagt');
     const todayReservations = reservations.filter(r => r.date === today && r.status !== 'storniert');
     const openTodos = todos.filter(t => t.status !== 'erledigt');
     const urgentTodos = openTodos.filter(t => t.priority === 'dringend' || t.priority === 'hoch');

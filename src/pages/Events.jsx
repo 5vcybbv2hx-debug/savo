@@ -33,9 +33,8 @@ const eventTypeColors = {
 };
 
 const statusColors = {
-    'geplant': 'bg-yellow-100 text-yellow-700',
-    'bestätigt': 'bg-green-100 text-green-700',
-    'abgesagt': 'bg-red-100 text-red-700'
+    'Bestätigt': 'bg-green-100 text-green-700',
+    'Abgesagt': 'bg-red-100 text-red-700'
 };
 
 const formatDateWithDay = (dateStr) => {
@@ -69,7 +68,7 @@ export default function Events() {
         budget: '',
         actual_guests: '',
         notes: '',
-        status: 'geplant'
+        status: 'Bestätigt'
     });
 
     const { data: allEvents = [] } = useQuery({
@@ -112,7 +111,7 @@ export default function Events() {
                 event_time:       event.start_time || '',
                 price_info:       event.entry_fee ? `Eintritt: ${event.entry_fee} €` : 'Eintritt frei',
                 cta_text:         `event:${eventId}`,
-                is_active:        event.status !== 'abgesagt',
+                is_active:        event.status !== 'Abgesagt',
                 show_from:        event.date || '',
                 show_until:       event.date || '',
                 sort_order:       existingSlide ? existingSlide.sort_order : maxOrder + 10,
@@ -217,7 +216,7 @@ export default function Events() {
                 budget: event.budget || '',
                 actual_guests: event.actual_guests || '',
                 notes: event.notes || '',
-                status: event.status || 'geplant'
+                status: event.status || 'Bestätigt'
             });
         } else {
             setSelectedEvent(null);
@@ -235,7 +234,7 @@ export default function Events() {
                 budget: '',
                 actual_guests: '',
                 notes: '',
-                status: 'geplant'
+                status: 'Bestätigt'
             });
         }
         setModalOpen(true);
@@ -250,7 +249,7 @@ export default function Events() {
         e.preventDefault();
         
         // Confirm if changing to "abgesagt"
-        if (selectedEvent && selectedEvent.status !== 'abgesagt' && formData.status === 'abgesagt') {
+        if (selectedEvent && selectedEvent.status !== 'Abgesagt' && formData.status === 'Abgesagt') {
             setConfirmDialog({
                 type: 'cancel',
                 message: 'Event wirklich absagen? Diese Aktion kann nicht rückgängig gemacht werden.',
@@ -310,7 +309,7 @@ export default function Events() {
             budget: '',
             actual_guests: '',
             notes: idea.notes || `Umgewandelt von Idee: ${idea.title}`,
-            status: 'geplant'
+            status: 'Bestätigt'
         });
     };
 
@@ -397,8 +396,8 @@ export default function Events() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="alle">Alle Status</SelectItem>
-                                            <SelectItem value="geplant">Geplant</SelectItem>
-                                            <SelectItem value="bestätigt">Bestätigt</SelectItem>
+                                            <SelectItem value="Bestätigt">Bestätigt</SelectItem>
+                                            <SelectItem value="Abgesagt">Abgesagt</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -594,9 +593,8 @@ export default function Events() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="geplant">Geplant</SelectItem>
-                                            <SelectItem value="bestätigt">Bestätigt</SelectItem>
-                                            <SelectItem value="abgesagt">Abgesagt</SelectItem>
+                                            <SelectItem value="Bestätigt">Bestätigt</SelectItem>
+                                            <SelectItem value="Abgesagt">Abgesagt</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
