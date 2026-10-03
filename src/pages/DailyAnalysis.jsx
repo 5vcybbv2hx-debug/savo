@@ -19,6 +19,7 @@ import DailyRevenueList from '@/components/dailyanalysis/DailyRevenueList.jsx';
 import InsightsPanel from '@/components/dailyanalysis/InsightsPanel.jsx';
 import PeriodAnalysis from '@/components/dailyanalysis/PeriodAnalysis.jsx';
 import { cn } from '@/lib/utils';
+import { getSchoolVacation } from '@/lib/schoolVacations';
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
@@ -320,6 +321,56 @@ export default function DailyAnalysis() {
 
     const staffCount = new Set(todayTimeEntriesWithRates.map(te => te.employee_id)).size;
 
+    // ── Auto-Vorausfüllen von is_vacation aus BW-Schulferien ──────────────────────
+    // Beim Öffnen eines Tages: wenn eine Schulferienspanne vorliegt und die
+    // DailyRevenue noch keinen is_vacation-Wert hat, wird er automatisch gesetzt.
+    // Editierbar: bei Abweichung kann der Wert jederzeit überschrieben werden.
+    const schoolVacationForSelected = useMemo(() => getSchoolVacation(selectedDate), [selectedDate]);
+    const [vacationOverride, setVacationOverride] = useState(null);
+
+    React.useEffect(() => {
+        // Reset des manuellen Overrides beim Datumswechsel
+        setVacationOverride(null);
+    }, [selectedDate]);
+
+    const isVacationActual = vacationOverride ?? todayRevenue?.is_vacation;
+    const shouldPreFillVacation = schoolVacationForSelected && (todayRevenue?.is_vacation == null);
+
+    // Auto-Vorausfüllen beim Öffnen eines Tages ohne is_vacation-Wert
+    React.useEffect(() => {
+        let cancelled = false;
+        const autoFillVacation = async () => {
+            if (!schoolVacationForSelected) return;
+            // Nur auffüllen, wenn die DailyRevenue existiert und is_vacation noch nicht gesetzt ist
+            if (!todayRevenue?.id) return;
+            if (todayRevenue?.is_vacation != null) return;
+            try {
+                await base44.entities.DailyRevenue.update(todayRevenue.id, { is_vacation: true });
+                if (!cancelled) queryClient.invalidateQueries({ queryKey: ['daily-revenues'] });
+            } catch (e) {
+                console.error('[DailyAnalysis] Auto-Fill is_vacation fehlgeschlagen:', e);
+            }
+        };
+        autoFillVacation();
+        return () => { cancelled = true; };
+    }, [todayRevenue?.id, schoolVacationForSelected]);
+
+    // Toggle is_vacation (manuell überschreibbar)
+    const toggleVacation = async () => {
+        const next = !isVacationActual;
+        setVacationOverride(next);
+        try {
+            if (todayRevenue?.id) {
+                await base44.entities.DailyRevenue.update(todayRevenue.id, { is_vacation: next });
+            } else {
+                await base44.entities.DailyRevenue.create({ date: selectedDate, revenue: 0, is_vacation: next });
+            }
+            queryClient.invalidateQueries({ queryKey: ['daily-revenues'] });
+        } catch (e) {
+            console.error('[DailyAnalysis] Toggle is_vacation fehlgeschlagen:', e);
+        }
+    };
+
     const handleReanalyzeAll = async () => {
         const withPDF = dailyRevenues.filter(r => r.pdf_url);
         if (withPDF.length === 0) { alert('Keine Einträge mit PDF vorhanden.'); return; }
@@ -618,13 +669,31 @@ export default function DailyAnalysis() {
                             <Activity className="w-4 h-4 text-primary" />
                             <p className="text-sm font-semibold text-foreground">Betriebsamkeit</p>
                         </div>
-                        <button
-                            onClick={() => setBackfillOpen(true)}
-                            className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1"
-                        >
-                            <History className="w-3 h-3" />
-                            Historie nachtragen
-                        </button>
+                        <div className="flex items-center gap-3">
+                            {/* Schulferien-Indikator — automatisch aus BW-Ferien vorbefüllt, editierbar */}
+                            {schoolVacationForSelected && (
+                                <button
+                                    onClick={toggleVacation}
+                                    className="flex items-center gap-1.5 text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors"
+                                    title="Schulferien BW — automatisch vorbefüllt. Klick zum Überschreiben."
+                                >
+                                    <span className={cn(
+                                        'w-3.5 h-3.5 rounded border flex items-center justify-center transition-all',
+                                        isVacationActual ? 'bg-cyan-500 border-cyan-500 text-white' : 'border-cyan-500/40 text-transparent'
+                                    )}>
+                                        {isVacationActual && <Check className="w-2.5 h-2.5" />}
+                                    </span>
+                                    🏫 {schoolVacationForSelected.name}
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setBackfillOpen(true)}
+                                className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1"
+                            >
+                                <History className="w-3 h-3" />
+                                Historie nachtragen
+                            </button>
+                        </div>
                     </div>
                     <div className="flex gap-1.5">
                         {[

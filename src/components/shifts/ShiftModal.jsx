@@ -500,6 +500,26 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                 </div>
                                 <span className="font-medium">{formData.employee_name}</span>
                             </div>
+
+                            {/* Verfügbarkeits-Warnung beim Bearbeiten (analog zur Neuanlage) */}
+                            {formData.employee_id && formData.date && (() => {
+                                const onVacation = isEmployeeOnVacation(vacations, formData.employee_id, formData.date);
+                                const unavailable = isEmployeeUnavailable(unavailabilities, formData.employee_id, formData.date);
+                                if (!onVacation && !unavailable) return null;
+                                return (
+                                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
+                                        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                                        <div className="text-xs space-y-0.5">
+                                            <p className="font-medium">
+                                                {formData.employee_name} ist an diesem Tag nicht verfügbar:
+                                            </p>
+                                            <p className="text-[11px] opacity-90">
+                                                {onVacation ? 'Genehmigter Urlaub' : 'Unverfügbarkeits-Anfrage'} — speichern erlaubt, bitte double-check.
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     )}
 
