@@ -392,6 +392,31 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                 </div>
                             </div>
 
+                            {/* Verfügbarkeits-Warnung für ausgewählte Mitarbeiter */}
+                            {selectedEmployees.length > 0 && (() => {
+                                const shiftDate = formData.date || selectedDate || new Date().toISOString().split('T')[0];
+                                const unavailableSelected = selectedEmployees.filter(sel => {
+                                    const emp = employees.find(e => e.id === sel.employee_id);
+                                    if (!emp) return false;
+                                    return isEmployeeOnVacation(vacations, emp.id, shiftDate) ||
+                                           isEmployeeUnavailable(unavailabilities, emp.id, shiftDate);
+                                });
+                                if (unavailableSelected.length === 0) return null;
+                                return (
+                                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
+                                        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                                        <div className="text-xs space-y-0.5">
+                                            <p className="font-medium">
+                                                {unavailableSelected.length} Mitarbeiter an diesem Tag nicht verfügbar:
+                                            </p>
+                                            <p className="text-[11px] opacity-90">
+                                                {unavailableSelected.map(sel => employees.find(e => e.id === sel.employee_id)?.name).filter(Boolean).join(', ')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                             {selectedEmployees.length > 0 && shiftTypes.length > 0 && (
                                 <div className="space-y-2">
                                     <Label className="flex items-center gap-2">

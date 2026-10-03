@@ -14,11 +14,13 @@ import { ChevronLeft, ChevronRight, X, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import useStaffingFactors, { isEmployeeOnVacation, isEmployeeUnavailable } from '@/hooks/useStaffingFactors';
 
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
 export default function QuickScheduler({ employees, shiftTypes, shifts, onCreateShift, onDeleteShift, onMoveShift }) {
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+    const { vacations, unavailabilities } = useStaffingFactors();
 
     const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -118,6 +120,17 @@ export default function QuickScheduler({ employees, shiftTypes, shifts, onCreate
         if (conflict) {
             const ok = window.confirm(
                 `${employee.name} ist am ${formatDateForWarning(dateStr)} bereits für "${conflict.shift_type}" eingeplant.\n\nTrotzdem zusätzlich einplanen?`
+            );
+            if (!ok) return;
+        }
+
+        // Verfügbarkeits-Warnung (Urlaub / Unverfügbarkeit)
+        const onVacation = isEmployeeOnVacation(vacations, employee.id, dateStr);
+        const unavailable = isEmployeeUnavailable(unavailabilities, employee.id, dateStr);
+        if (onVacation || unavailable) {
+            const reason = onVacation ? 'im Urlaub' : 'nicht verfügbar';
+            const ok = window.confirm(
+                `${employee.name} ist am ${formatDateForWarning(dateStr)} ${reason}.\n\nTrotzdem einplanen?`
             );
             if (!ok) return;
         }
