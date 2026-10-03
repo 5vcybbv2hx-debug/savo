@@ -221,6 +221,23 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                         : matchingEvents.some(e => e.impact_level === 'medium') ? '🟡' : '🟢';
                     eventReason = `${eventEmoji} ${eventNames} (${totalEventStaffAdj > 0 ? '+' : ''}${totalEventStaffAdj} Personal)`;
                 }
+                // Auch ohne historische Daten: Event-/Reservierungs-/Schulferien-Badge
+                let baseRec = eventRec;
+                let baseReason = eventReason;
+                if (ownEventBoost > 0) {
+                    baseRec = Math.max(2, Math.round((baseRec || 3) + ownEventBoost));
+                    baseReason = `${ownEventBadges.join(' · ')}. ${baseReason}`;
+                }
+                if (reservationBoost > 0) {
+                    baseRec = Math.round((baseRec || 3) + 1);
+                    baseReason = `${reservationBadge} → +1. ${baseReason}`;
+                }
+                if (schoolVacation) {
+                    baseReason = `🏫 ${schoolVacation.name}. ${baseReason}`;
+                }
+                const baseShortage = (baseRec != null && availableCount < baseRec)
+                    ? `Nur ${availableCount} verfügbar, Empfehlung ist ${baseRec}` : '';
+
                 days.push({
                     date: dateStr,
                     dateObj: new Date(d),
@@ -234,8 +251,17 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                     bridgeDay,
                     season,
                     localEvents: matchingEvents,
-                    recommendation: eventRec,
-                    reasonText: eventReason,
+                    ownEvents: dayEvents,
+                    ownEventBoost,
+                    reservationCount: dayReservations.length,
+                    reservationGuests,
+                    reservationBoost,
+                    availableCount,
+                    unavailableCount: unavailableIds.size,
+                    shortageWarning: baseShortage,
+                    schoolVacation,
+                    recommendation: baseRec,
+                    reasonText: baseReason,
                 });
                 continue;
             }
@@ -394,6 +420,30 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                     : matchingEvents.some(e => e.impact_level === 'medium') ? '🟡' : '🟢';
                 adjustedReason = `${eventEmoji} ${eventNames}${totalEventStaffAdj !== 0 ? ` (${totalEventStaffAdj > 0 ? '+' : ''}${totalEventStaffAdj} Personal)` : ''}. ${adjustedReason}`;
             }
+
+            // ── 1. Eigene bestätigte Events → Personal-Boost ──
+            if (ownEventBoost > 0) {
+                adjustedRecommendation = Math.max(2, Math.round((adjustedRecommendation || avgStaffCount || 4) + ownEventBoost));
+                adjustedReason = `${ownEventBadges.join(' · ')}. ${adjustedReason}`;
+            }
+
+            // ── 2. Reservierungen → ab Schwelle +1 ──
+            if (reservationBoost > 0 && reservationGuests > 0) {
+                adjustedRecommendation = Math.round((adjustedRecommendation || avgStaffCount || 4) + 1);
+                adjustedReason = `${reservationBadge} → +1. ${adjustedReason}`;
+            } else if (reservationBadge) {
+                adjustedReason = `${reservationBadge} (unter Schwelle). ${adjustedReason}`;
+            }
+
+            // Schulferien-Badge (KEIN Boost — nur Anzeige)
+            if (schoolVacation) {
+                adjustedReason = `🏫 ${schoolVacation.name}. ${adjustedReason}`;
+            }
+
+            // Verfügbarkeits-Warnung: wenn weniger verfügbar als Empfehlung
+            const shortageWarning = (adjustedRecommendation != null && availableCount < adjustedRecommendation)
+                ? `Nur ${availableCount} verfügbar, Empfehlung ist ${adjustedRecommendation}`
+                : '';
             
             // Seasonal adjustment
             if (season === 'summer' && avgTemp && avgTemp >= 25) {
@@ -425,11 +475,20 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                 bridgeDay,
                 season,
                 localEvents: matchingEvents || [],
+                ownEvents: dayEvents,
+                ownEventBoost,
+                reservationCount: dayReservations.length,
+                reservationGuests,
+                reservationBoost,
+                availableCount,
+                unavailableCount: unavailableIds.size,
+                shortageWarning,
+                schoolVacation,
             });
         }
 
         return days;
-    }, [revenues, allShifts, localEvents, weekStart]);
+    }, [revenues, allShifts, localEvents, weekStart, confirmedEvents, reservations, vacations, unavailabilities, totalEmployees]);
 
     // Only show if we have enough data
     const daysWithData = suggestions.filter(s => s.hasData);
