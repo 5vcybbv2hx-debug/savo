@@ -381,14 +381,36 @@ function QuickTile({ page, icon: Icon, label, badge, badgeVariant = 'primary' })
 
 function SectionHeader({ label, to, linkLabel = 'Alle' }) {
     return (
-        <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{label}</p>
+        <div className="flex items-center justify-between mb-1.5">
+            <p className="text-[10px] font-semibold text-muted-foreground/90 uppercase tracking-wider">{label}</p>
             {to && (
-                <Link to={createPageUrl(to)} className="flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground">
+                <Link to={createPageUrl(to)} className="flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
                     {linkLabel} <ChevronRight className="w-3 h-3" />
                 </Link>
             )}
         </div>
+    );
+}
+
+// ── Kompakte Einzeiler-Sektion ────────────────────────────────────────────────
+// Verdichtete Navigationszeile: Icon + Label + Anzahl + "Alle"-Link.
+// Ersetzt fette Karten-Sektionen (Waren & Lager, Events, Reservierungen, Team).
+function CompactRow({ to, icon: Icon, label, count, countLabel }) {
+    return (
+        <Link to={createPageUrl(to)} className="card-pressable">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border/50 bg-card hover:bg-accent/40 transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground flex-1 truncate">{label}</span>
+                {count != null && count > 0 && (
+                    <Badge variant="outline" className="text-[10px] font-semibold bg-muted text-muted-foreground border-border/50 shrink-0">
+                        {count} {countLabel}
+                    </Badge>
+                )}
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            </div>
+        </Link>
     );
 }
 
@@ -420,11 +442,11 @@ function TodoWidget({ todos }) {
         },
     });
 
-    const visible = todos.slice(0, 5);
+    const visible = todos.slice(0, 3);
 
     return (
         <div>
-            <SectionHeader label={`Meine Aufgaben (${todos.length})`} to="Todos" />
+            <SectionHeader label={`Meine Aufgaben`} to="Todos" />
             <div className="space-y-2">
                 {visible.map(t => {
                     const done = completing.has(t.id);
@@ -460,9 +482,9 @@ function TodoWidget({ todos }) {
                         </Card>
                     );
                 })}
-                {todos.length > 5 && (
-                    <Link to={createPageUrl('Todos')} className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground">
-                        +{todos.length - 5} weitere <ChevronRight className="w-3 h-3" />
+                {todos.length > 3 && (
+                    <Link to={createPageUrl('Todos')} className="flex items-center justify-center gap-1 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                        Alle ({todos.length}) anzeigen <ChevronRight className="w-3 h-3" />
                     </Link>
                 )}
             </div>
@@ -532,31 +554,18 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                 <TodoWidget todos={myTodos} />
             )}
 
-            {/* Schnellzugriff Waren & Lager — nur für Manager/Berechtigung */}
-            {(permissions.canViewWarehouse || permissions.canViewShopping || permissions.canViewRestock) && (
-                <div>
-                    <SectionHeader label="Waren & Lager" to="Warehouse" linkLabel="Übersicht" />
-                    <div className="grid grid-cols-3 gap-2">
-                        {permissions.canViewRestock && (
-                            <QuickTile page="Restock"   icon={RefreshCw}      label="Auffüllen"    badge={openRestockCount}  badgeVariant="warning" />
-                        )}
-                        {permissions.canViewShopping && (
-                            <QuickTile page="Shopping"  icon={ShoppingCart}   label="Bestellungen" badge={openOrdersCount}   badgeVariant="primary" />
-                        )}
-                        {permissions.canViewShopping && (
-                            <QuickTile page="QuickList" icon={ShoppingBasket} label="Einkaufsliste" badge={openQuickListCount} badgeVariant="primary" />
-                        )}
-                    </div>
-                    {lowStockCount > 0 && (
-                        <Link to={createPageUrl('Articles')}>
-                            <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg border border-amber-500/25 bg-amber-500/5">
-                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                <p className="text-xs text-amber-400">{lowStockCount} Artikel unter Mindestbestand</p>
-                                <ChevronRight className="w-3 h-3 text-amber-400 ml-auto shrink-0" />
-                            </div>
-                        </Link>
-                    )}
-                </div>
+            {/* Waren & Lager — kompakte Einzeiler, nur bei offenen Items */}
+            {permissions.canViewRestock && openRestockCount > 0 && (
+                <CompactRow to="Restock" icon={RefreshCw} label="Auffüllliste" count={openRestockCount} countLabel="offen" />
+            )}
+            {permissions.canViewShopping && openOrdersCount > 0 && (
+                <CompactRow to="Shopping" icon={ShoppingCart} label="Bestellungen" count={openOrdersCount} countLabel="offen" />
+            )}
+            {permissions.canViewShopping && openQuickListCount > 0 && (
+                <CompactRow to="QuickList" icon={ShoppingBasket} label="Einkaufsliste" count={openQuickListCount} countLabel="offen" />
+            )}
+            {lowStockCount > 0 && (
+                <CompactRow to="Articles" icon={AlertTriangle} label="Niedriger Bestand" count={lowStockCount} countLabel="Artikel" />
             )}
 
             {/* Geburtstage */}
