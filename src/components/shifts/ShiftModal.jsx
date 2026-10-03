@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import ShiftSwapRequestModal from './ShiftSwapRequestModal';
 import { useState as useSwapState } from 'react';
+import useStaffingFactors, { isEmployeeOnVacation, isEmployeeUnavailable } from '@/hooks/useStaffingFactors';
 
 function ShiftSwapInline({ shift, onClose }) {
     const [open, setOpen] = useSwapState(false);
@@ -42,6 +43,7 @@ function ShiftSwapInline({ shift, onClose }) {
 import { haptics } from "@/components/utils/haptics";
 
 export default function ShiftModal({ open, onClose, shift, employees, selectedDate, onSave, onDelete, existingShifts = [] }) {
+    const { vacations, unavailabilities } = useStaffingFactors();
     const { data: shiftTypesRaw = [] } = useQuery({
         queryKey: ['shift-types'],
         queryFn: () => base44.entities.ShiftType.filter({ is_active: true }, 'order')

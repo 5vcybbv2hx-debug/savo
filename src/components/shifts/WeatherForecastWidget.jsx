@@ -15,6 +15,8 @@ import { de } from 'date-fns/locale';
 import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, CloudDrizzle, Thermometer, Droplets, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import useStaffingFactors, { getReservationsForDate, getReservationGuests } from '@/hooks/useStaffingFactors';
+import { getSchoolVacation } from '@/lib/schoolVacations';
 
 // ── Weather Code → Icon ──────────────────────────────────────────────────────
 const WEATHER_ICONS = {
@@ -107,6 +109,7 @@ function getBusynessLevel(dow, averages, maxAvg, busyness) {
 }
 
 export default function WeatherForecastWidget({ isManager }) {
+  const { events: confirmedEvents, reservations } = useStaffingFactors();
   const { data: companyInfoRaw } = useQuery({
     queryKey: ['company-info'],
     queryFn: async () => {
@@ -241,6 +244,22 @@ export default function WeatherForecastWidget({ isManager }) {
                   <span className={cn('flex items-center gap-0.5 text-[8px] font-medium mt-0.5', busyness.color)}>
                     <BusynessIcon className="w-2.5 h-2.5" />
                     {busyness.label}
+                  </span>
+                )}
+
+                {confirmedEvents.filter(e => e.date === day.date).length > 0 && (
+                  <span className="text-[10px] leading-none mt-0.5" title="Bestätigtes Event">
+                    🎤
+                  </span>
+                )}
+                {getReservationsForDate(reservations, day.date).length > 0 && (
+                  <span className="text-[8px] text-emerald-400 leading-none mt-0.5" title="Reservierungen">
+                    🍽️ {getReservationGuests(reservations, day.date)}P
+                  </span>
+                )}
+                {getSchoolVacation(day.date) && (
+                  <span className="text-[8px] text-cyan-400 leading-none mt-0.5" title={getSchoolVacation(day.date).name}>
+                    🏫 {getSchoolVacation(day.date).name}
                   </span>
                 )}
               </div>
