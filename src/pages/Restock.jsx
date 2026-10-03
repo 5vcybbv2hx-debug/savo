@@ -95,6 +95,7 @@ export default function Restock() {
     const [toast, setToast]                       = useState(null);
     const [confirmDialog, setConfirmDialog]       = useState(null);
     const [orderNudge, setOrderNudge]             = useState({});
+    const [scanOpen, setScanOpen]                 = useState(true); // initial offen; wird je nach offenen Items justiert
 
     const showToast = (message, type = 'error') => setToast({ message, type });
 
@@ -463,6 +464,11 @@ export default function Restock() {
     const openCount      = todayItems.filter(i => !i.is_completed).length;
     const completedCount = todayItems.filter(i => i.is_completed).length;
 
+    // Scan-Leiste automatisch öffnen, wenn keine offenen Items mehr vorhanden sind
+    useEffect(() => {
+        if (openCount === 0) setScanOpen(true);
+    }, [openCount]);
+
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
@@ -623,14 +629,14 @@ export default function Restock() {
                                         </span>
                                     </div>
 
-                                    <div className="space-y-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                         {items.map(item => (
                                             <Card key={item.id} className={cn(
                                                 'overflow-hidden border transition-all',
                                                 recentIds.includes(item.id) && 'ring-2 ring-primary/40',
                                                 item.is_completed && 'opacity-60'
                                             )}>
-                                                <div className="flex items-center gap-3 px-4 py-3">
+                                                <div className="flex items-center gap-3 px-3 py-3">
                                                     {/* Artikel-Bild */}
                                                     {item.article_image_url
                                                         ? <img src={item.article_image_url} alt=""
@@ -640,7 +646,7 @@ export default function Restock() {
                                                           </div>
                                                     }
 
-                                                    {/* Info */}
+                                                    {/* Info — Name 1 Zeile + EINE Meta-Zeile */}
                                                     <div className="flex-1 min-w-0">
                                                         <p className={cn(
                                                             'text-sm font-semibold truncate',
@@ -648,67 +654,72 @@ export default function Restock() {
                                                         )}>
                                                             {item.article_name}
                                                         </p>
-                                                        <div className="flex items-center gap-2 mt-0.5">
-                                                            <span className="text-xs text-muted-foreground">
-                                                                {item.needed_quantity != null ? item.needed_quantity : item.quantity} Stück · {item.time || ''}
-                                                            </span>
-                                                            {item.area_name && (
-                                                                <span className="text-xs text-muted-foreground/60 truncate max-w-[100px]">
-                                                                    · {item.area_name}
-                                                                </span>
-                                                            )}
-                                                            {item.restocked_by && (
-                                                                <span className="text-xs text-muted-foreground/60 truncate max-w-[100px]">
-                                                                    · {item.restocked_by.split(' ')[0]}
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                                            {item.needed_quantity != null ? item.needed_quantity : item.quantity} Stück
+                                                            <span className="mx-1 text-muted-foreground/40">·</span>
+                                                            {item.time || '–'}
+                                                            {item.area_name ? <><span className="mx-1 text-muted-foreground/40">·</span>{item.area_name}</> : null}
+                                                        </p>
                                                     </div>
 
-                                                    {/* Abhaken */}
+                                                    {/* Hauptaktion: großer Abhaken-Kreis (48px) */}
                                                     <button
                                                         onClick={() => toggleComplete(item)}
                                                         className={cn(
-                                                            'w-9 h-9 rounded-full border-2 flex items-center justify-center shrink-0 transition-all active:scale-90',
+                                                            'w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0 transition-all active:scale-90',
                                                             item.is_completed
                                                                 ? 'border-green-500 bg-green-500'
                                                                 : 'border-border hover:border-primary'
                                                         )}
+                                                        aria-label={item.is_completed ? 'Wieder öffnen' : 'Als erledigt markieren'}
                                                     >
-                                                        {item.is_completed && <Check className="w-4 h-4 text-white" />}
+                                                        {item.is_completed && <Check className="w-5 h-5 text-white" />}
                                                     </button>
 
-                                                    {/* Löschen */}
-                                                    <button
-                                                        onClick={() => handleDelete(item.id)}
-                                                        className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:scale-90 transition-all shrink-0"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    {/* Overflow-Menü: Löschen (Papierkorb raus aus der Zeile) */}
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <button
+                                                                type="button"
+                                                                className="w-9 h-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 active:scale-90 transition-all shrink-0"
+                                                                onClick={e => e.stopPropagation()}
+                                                                aria-label="Aktionen"
+                                                            >
+                                                                <MoreVertical className="w-4 h-4" />
+                                                            </button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-44">
+                                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDelete(item.id)}>
+                                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                                Löschen
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
                                                 </div>
 
-                                                {/* Order Nudge */}
+                                                {/* Order Nudge — schmaler Streifen, EINZEILIG */}
                                                 {orderNudge[item.id] && (() => {
                                                     const s = getOrderSuggestion(item);
                                                     return (
-                                                        <div className="flex items-center gap-3 px-4 py-3 border-t border-primary/20 bg-primary/5 animate-in slide-in-from-top-2 duration-200">
-                                                            <ShoppingCart className="w-4 h-4 text-primary shrink-0" />
-                                                            <p className="text-xs text-muted-foreground flex-1">
+                                                        <div className="flex items-center gap-2 px-3 py-2 border-t border-primary/20 bg-primary/5 animate-in slide-in-from-top-2 duration-200">
+                                                            <ShoppingCart className="w-3.5 h-3.5 text-primary shrink-0" />
+                                                            <p className="text-xs text-muted-foreground flex-1 min-w-0 truncate">
                                                                 {s.wasRounded
-                                                                    ? <>In Bestellliste aufnehmen? <span className="text-foreground font-medium">{s.suggestedQty}× {s.defaultOpt?.packaging_type}</span> deckt die {s.bottleNeed} benötigten Flaschen ({s.packagingLabel}).</>
+                                                                    ? <>In Bestellliste? <span className="text-foreground font-medium">{s.suggestedQty}× {s.defaultOpt?.packaging_type}</span></>
                                                                     : 'In Bestellliste aufnehmen?'}
                                                             </p>
                                                             <Button
                                                                 size="sm"
                                                                 onClick={() => addToOrder(item)}
-                                                                className="h-8 text-xs gap-1"
+                                                                className="h-8 text-xs gap-1 shrink-0"
                                                             >
                                                                 <Plus className="w-3 h-3" />
                                                                 Hinzufügen
                                                             </Button>
                                                             <button
                                                                 onClick={() => setOrderNudge(prev => ({ ...prev, [item.id]: false }))}
-                                                                className="text-muted-foreground/60 hover:text-muted-foreground"
+                                                                className="text-muted-foreground/60 hover:text-muted-foreground shrink-0"
+                                                                aria-label="Schließen"
                                                             >
                                                                 <X className="w-3.5 h-3.5" />
                                                             </button>

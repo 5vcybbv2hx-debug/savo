@@ -204,31 +204,7 @@ export default function DrinkMenuPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        {/* Gäste-Link — immer sichtbar */}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 gap-1.5 border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
-                            onClick={() => setShowMenuQR(true)}
-                        >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline text-xs">Gäste-Link</span>
-                        </Button>
-
-                        {/* CSV Export — gefilterte Karte */}
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-9 gap-1.5"
-                            onClick={exportCSV}
-                            disabled={filteredItems.length === 0}
-                            title="Getränkekarte als CSV exportieren"
-                        >
-                            <Download className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline text-xs">CSV</span>
-                        </Button>
-
-                        {/* ··· Mehr-Menü */}
+                        {/* ··· Mehr-Menü — alle Sekundäraktionen einklappen */}
                         {canEdit && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -237,6 +213,11 @@ export default function DrinkMenuPage() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-52">
+                                    {/* Gast-Link + QR */}
+                                    <DropdownMenuItem onClick={() => setShowMenuQR(true)}>
+                                        <QrCode className="w-4 h-4 mr-2" />
+                                        Gäste-Link / QR-Code
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={async () => {
                                         await copyToClipboard(getGuestMenuLink());
                                         setGuestLinkCopied(true);
@@ -250,11 +231,22 @@ export default function DrinkMenuPage() {
                                         Link teilen
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
+                                    {/* CSV Export — gefilterte Karte */}
+                                    <DropdownMenuItem onClick={exportCSV} disabled={filteredItems.length === 0}>
+                                        <Download className="w-4 h-4 mr-2" />
+                                        CSV exportieren
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => { const s=document.createElement('style'); s.id='__pf__'; s.textContent='@media print{@page{size:A4 portrait;margin:10mm}}'; document.head.appendChild(s); window.print(); setTimeout(()=>{const e=document.getElementById('__pf__');if(e)e.remove();},3000); }}>
                                         <Printer className="w-4 h-4 mr-2" />
                                         Drucken
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <a href="/MenuReview" className="flex items-center gap-2 cursor-pointer">
+                                            <Eye className="w-4 h-4" />
+                                            Karte-Review
+                                        </a>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
                                         <a href="/Recipes" className="flex items-center gap-2 cursor-pointer">
                                             <BookOpen className="w-4 h-4" />
@@ -262,24 +254,22 @@ export default function DrinkMenuPage() {
                                         </a>
                                     </DropdownMenuItem>
                                     {permissions.isAdmin && (
-                                        <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => setSpecialsOpen(true)}>
-                                                <Wine className="w-4 h-4 mr-2" />
-                                                Weekly Specials
-                                            </DropdownMenuItem>
-                                        </>
+                                        <DropdownMenuItem onClick={() => setSpecialsOpen(true)}>
+                                            <Wine className="w-4 h-4 mr-2" />
+                                            Weekly Specials
+                                        </DropdownMenuItem>
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
 
-                        {/* Neues Getränk */}
+                        {/* EINE primäre Aktion: Getränk hinzufügen */}
                         {canEdit && (
                             <Button size="sm" onClick={openNew}
                                 className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
                                 <Plus className="w-4 h-4" />
-                                <span className="hidden sm:inline">Neu</span>
+                                <span className="hidden sm:inline">Getränk</span>
+                                <span className="sm:hidden">Neu</span>
                             </Button>
                         )}
                     </div>
@@ -433,47 +423,31 @@ export default function DrinkMenuPage() {
                                                         </p>
                                                     )}
 
-                                                    {/* Badges + Infos */}
-                                                    <div className="flex flex-wrap items-center gap-1 mt-1">
+                                                    {/* Badges — leise, nur Status/Größe. Allergene/Zusatzstoffe nur im Detail-Modal */}
+                                                    <div className="flex flex-wrap items-center gap-1 mt-1.5">
                                                         {/* Größe / Volumen */}
                                                         {item.size && (
-                                                            <span className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded border border-border/50">
+                                                            <span className="text-[10px] text-muted-foreground/70">
                                                                 {item.size}
                                                             </span>
                                                         )}
 
                                                         {/* Status-Badges */}
                                                         {isUnavailable && (
-                                                            <span className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded border border-border/50">
+                                                            <span className="text-[10px] text-muted-foreground/70">
                                                                 nicht verfügbar
                                                             </span>
                                                         )}
                                                         {item.is_seasonal && (
-                                                            <span className="text-[10px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20">
+                                                            <span className="text-[10px] text-green-400/80">
                                                                 saisonal
                                                             </span>
                                                         )}
                                                         {item.is_special && (
-                                                            <span className="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                                            <span className="text-[10px] text-amber-400/80">
                                                                 special
                                                             </span>
                                                         )}
-
-                                                        {/* Allergene */}
-                                                        {(item.allergens_list || []).map((a, i) => (
-                                                            <span key={a}
-                                                                className="text-[10px] font-mono text-red-400 bg-red-500/8 px-1 py-0.5 rounded border border-red-500/20">
-                                                                {String.fromCharCode(65 + usedAllergens.indexOf(a))}
-                                                            </span>
-                                                        ))}
-
-                                                        {/* Zusatzstoffe */}
-                                                        {(item.additives || []).map((d, i) => (
-                                                            <span key={d}
-                                                                className="text-[10px] font-mono text-blue-400 bg-blue-500/8 px-1 py-0.5 rounded border border-blue-500/20">
-                                                                {usedAdditives.indexOf(d) + 1}
-                                                            </span>
-                                                        ))}
 
                                                         {/* Low-Stock Warnung */}
                                                         {isLowStock && (
