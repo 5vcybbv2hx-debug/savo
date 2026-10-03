@@ -576,7 +576,10 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                                 <div className="w-6 h-6 rounded bg-primary/15 flex items-center justify-center">
                                                     <span className="text-[11px] font-bold text-foreground">{day.recommendation}</span>
                                                 </div>
-                                                <span className="text-[9px] text-muted-foreground max-w-[120px] leading-tight">{day.reasonText}</span>
+                                                <span className="text-[9px] text-muted-foreground max-w-[120px] leading-tight">
+                                                    {day.reasonText}
+                                                    {day.shortageWarning && <span className="text-red-400 font-medium"> ({day.shortageWarning})</span>}
+                                                </span>
                                             </div>
                                         ) : (
                                             <span className="text-[10px] text-muted-foreground/50">Keine historischen Daten</span>
@@ -621,6 +624,21 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                             {day.bridgeDay && (
                                                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-medium">
                                                     🔗 Brückentag
+                                                </span>
+                                            )}
+                                            {day.ownEventBoost > 0 && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-medium">
+                                                    🎤 +{day.ownEventBoost}
+                                                </span>
+                                            )}
+                                            {day.reservationCount > 0 && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">
+                                                    🍽️ {day.reservationCount}·{day.reservationGuests}P
+                                                </span>
+                                            )}
+                                            {day.schoolVacation && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 font-medium">
+                                                    🏫 {day.schoolVacation.name}
                                                 </span>
                                             )}
                                         </div>
@@ -673,6 +691,15 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-[10px] text-muted-foreground leading-tight">
                                                     {day.reasonText}
+                                                </p>
+                                                {day.shortageWarning && (
+                                                    <p className="text-[10px] text-red-400 font-medium leading-tight mt-0.5 flex items-center gap-0.5">
+                                                        <AlertCircle className="w-2.5 h-2.5 shrink-0" />
+                                                        {day.shortageWarning}
+                                                    </p>
+                                                )}
+                                                <p className="text-[9px] text-muted-foreground/70 leading-tight mt-0.5">
+                                                    Verfügbar: {day.availableCount} von {day.availableCount + day.unavailableCount}
                                                 </p>
                                             </div>
                                             {day.plannedCount > 0 && (
