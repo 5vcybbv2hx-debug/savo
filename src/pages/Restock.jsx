@@ -10,8 +10,9 @@ import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
 import {
     Scan, Camera, Check, Trash2, CheckCheck, Plus, X,
-    ShoppingCart, AlertCircle, ChevronRight, PackageCheck
+    ShoppingCart, AlertCircle, ChevronRight, PackageCheck, MoreVertical
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import QuantityInputModal from '../components/restock/QuantityInputModal';
 import RundgangMode from '../components/restock/RundgangMode';
 import { Button } from "@/components/ui/button";
@@ -491,75 +492,86 @@ export default function Restock() {
                     </Button>
                 </div>
 
-                {/* ── Scan-/Such-Leiste ─────────────────────────────────── */}
-                <Card className="p-4 border-border/60">
-                    <form onSubmit={handleBarcodeSubmit} className="space-y-3">
-                        <div className="flex gap-2">
-                            <Input
-                                ref={barcodeInputRef}
-                                type="text"
-                                inputMode="text"
-                                value={barcode}
-                                onChange={e => { setBarcode(e.target.value); setSelectedArticle(''); }}
-                                placeholder="Barcode scannen oder Artikel suchen..."
-                                className="flex-1 h-11 text-base"
-                                autoComplete="off"
-                            />
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-11 w-11 shrink-0"
-                                onClick={() => setScannerOpen(true)}
-                            >
-                                <Camera className="w-5 h-5" />
-                            </Button>
-                        </div>
-
-                        {/* Artikel-Vorschläge */}
-                        {barcode.trim().length >= 2 && searchMatches.length > 0 && (
-                            <div className="rounded-lg border border-border bg-popover overflow-hidden">
-                                {searchMatches.slice(0, 5).map(article => (
-                                    <button
-                                        key={article.id}
-                                        type="button"
-                                        onClick={() => { setSelectedArticle(article.id); setBarcode(article.name); }}
-                                        className={cn(
-                                            'w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent transition-colors border-b border-border/40 last:border-0',
-                                            selectedArticle === article.id && 'bg-accent'
-                                        )}
-                                    >
-                                        {article.image_url
-                                            ? <img src={article.image_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
-                                            : <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
-                                                <Scan className="w-4 h-4 text-muted-foreground" />
-                                              </div>
-                                        }
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-foreground truncate">{article.name}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {article.category || 'Sonstiges'}{article.barcode ? ` · ${article.barcode}` : ''}
-                                            </p>
-                                        </div>
-                                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                                    </button>
-                                ))}
+                {/* ── Scan-/Such-Leiste (einklappbar; automatisch offen bei leerer Liste) ── */}
+                <Card className="border-border/50 overflow-hidden">
+                    <button
+                        type="button"
+                        onClick={() => setScanOpen(s => !s)}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors"
+                    >
+                        <Scan className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-sm font-medium text-foreground flex-1 text-left">Artikel scannen / suchen</span>
+                        <ChevronRight className={cn('w-4 h-4 text-muted-foreground transition-transform', scanOpen && 'rotate-90')} />
+                    </button>
+                    {scanOpen && (
+                        <form onSubmit={handleBarcodeSubmit} className="px-4 pb-4 space-y-3 border-t border-border/40 pt-3">
+                            <div className="flex gap-2">
+                                <Input
+                                    ref={barcodeInputRef}
+                                    type="text"
+                                    inputMode="text"
+                                    value={barcode}
+                                    onChange={e => { setBarcode(e.target.value); setSelectedArticle(''); }}
+                                    placeholder="Barcode scannen oder Artikel suchen..."
+                                    className="flex-1 h-11 text-base"
+                                    autoComplete="off"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-11 w-11 shrink-0"
+                                    onClick={() => setScannerOpen(true)}
+                                >
+                                    <Camera className="w-5 h-5" />
+                                </Button>
                             </div>
-                        )}
 
-                        {barcode.trim().length >= 2 && searchMatches.length === 0 && (
-                            <p className="text-xs text-muted-foreground px-1">Kein Artikel gefunden</p>
-                        )}
+                            {/* Artikel-Vorschläge */}
+                            {barcode.trim().length >= 2 && searchMatches.length > 0 && (
+                                <div className="rounded-lg border border-border bg-popover overflow-hidden">
+                                    {searchMatches.slice(0, 5).map(article => (
+                                        <button
+                                            key={article.id}
+                                            type="button"
+                                            onClick={() => { setSelectedArticle(article.id); setBarcode(article.name); }}
+                                            className={cn(
+                                                'w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent transition-colors border-b border-border/40 last:border-0',
+                                                selectedArticle === article.id && 'bg-accent'
+                                            )}
+                                        >
+                                            {article.image_url
+                                                ? <img src={article.image_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
+                                                : <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
+                                                    <Scan className="w-4 h-4 text-muted-foreground" />
+                                                  </div>
+                                            }
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-foreground truncate">{article.name}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {article.category || 'Sonstiges'}{article.barcode ? ` · ${article.barcode}` : ''}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
 
-                        <Button
-                            type="submit"
-                            disabled={!barcode.trim() && !selectedArticle}
-                            className="w-full h-11 font-semibold"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Zur Liste hinzufügen
-                        </Button>
-                    </form>
+                            {barcode.trim().length >= 2 && searchMatches.length === 0 && (
+                                <p className="text-xs text-muted-foreground px-1">Kein Artikel gefunden</p>
+                            )}
+
+                            <Button
+                                type="submit"
+                                disabled={!barcode.trim() && !selectedArticle}
+                                className="w-full h-11 font-semibold"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Zur Liste hinzufügen
+                            </Button>
+                        </form>
+                    )}
                 </Card>
 
                 {/* ── Bereich → Möbel → Fach → Artikel Baum ─────────────── */}

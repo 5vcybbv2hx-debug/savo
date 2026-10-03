@@ -350,33 +350,6 @@ function ClockCard({ currentEmployee }) {
     );
 }
 
-// ── Schnell-Kachel ────────────────────────────────────────────────────────────
-
-function QuickTile({ page, icon: Icon, label, badge, badgeVariant = 'primary' }) {
-    const variants = {
-        primary:     'bg-primary/15 text-primary',
-        warning:     'bg-amber-500/15 text-amber-400',
-        danger:      'bg-destructive/15 text-destructive',
-    };
-    return (
-        <Link to={createPageUrl(page)}>
-            <Card className="bg-card border-border hover:bg-accent/40 active:scale-95 transition-all h-full">
-                <CardContent className="p-4 flex flex-col items-center text-center gap-2 relative">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <p className="text-xs font-semibold text-foreground leading-tight">{label}</p>
-                    {badge != null && badge > 0 && (
-                        <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', variants[badgeVariant])}>
-                            {badge}
-                        </span>
-                    )}
-                </CardContent>
-            </Card>
-        </Link>
-    );
-}
-
 // ── Section Header ────────────────────────────────────────────────────────────
 
 function SectionHeader({ label, to, linkLabel = 'Alle' }) {
@@ -573,77 +546,20 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                 <UpcomingBirthdaysWidget employees={employees} />
             )}
 
-            {/* Events heute */}
+            {/* Events heute — kompakter Einzeiler */}
             {todayEvents.length > 0 && (
-                <div>
-                    <SectionHeader label="Events heute" to="Events" />
-                    {todayEvents.map(e => (
-                        <Card key={e.id} className="border-purple-500/30 bg-purple-500/5 mb-2">
-                            <CardContent className="p-3">
-                                <p className="text-sm font-semibold text-foreground">{e.title}</p>
-                                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                    {e.start_time && <span>{e.start_time}</span>}
-                                    {e.expected_guests && <span>{e.expected_guests} Gäste</span>}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                <CompactRow to="Events" icon={Sparkles} label="Events heute" count={todayEvents.length} countLabel="Event" />
             )}
 
-            {/* Reservierungen */}
+            {/* Reservierungen — kompakter Einzeiler */}
             {todayReservations.length > 0 && (
-                <div>
-                    <SectionHeader label={`Reservierungen (${todayReservations.length})`} to="GuestHub" linkLabel="GuestHub" />
-                    <div className="space-y-2">
-                        {todayReservations.slice(0, 3).map(r => (
-                            <Card key={r.id} className="bg-card border-border">
-                                <CardContent className="p-3 flex items-center gap-3">
-                                    <CalendarCheck className="w-4 h-4 text-green-400 shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-foreground truncate">{r.customer_name}</p>
-                                        <p className="text-xs text-muted-foreground">{r.time} · {r.guests} Gäste</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
+                <CompactRow to="GuestHub" icon={CalendarCheck} label="Reservierungen heute" count={todayReservations.length} countLabel="Buchung" />
             )}
 
-            {/* Team heute */}
-            <div>
-                <SectionHeader label={`Team heute (${todayShifts.length})`} to="Calendar" linkLabel="Schichtplan" />
-                {todayShifts.length === 0 ? (
-                    <Card className="bg-card border-border">
-                        <CardContent className="p-3 text-center">
-                            <p className="text-sm text-muted-foreground">Keine Schichten heute</p>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                        {todayShifts.map(s => {
-                            const emp = employees.find(e => e.id === s.employee_id);
-                            const isMe = s.employee_id === currentEmployee?.id;
-                            return (
-                                <Card key={s.id} className={cn('border', isMe ? 'border-primary/30 bg-primary/5' : 'bg-card border-border')}>
-                                    <CardContent className="p-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                                                style={{ backgroundColor: s.color || emp?.color || '#64748b' }}>
-                                                {s.employee_name?.charAt(0)}
-                                            </div>
-                                            <p className="text-xs font-medium text-foreground truncate">{s.employee_name}</p>
-                                        </div>
-                                        <p className="text-[10px] text-muted-foreground">{s.start_time}–{s.end_time}</p>
-                                        {s.shift_type && <p className="text-[10px] text-primary mt-0.5">{s.shift_type}</p>}
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+            {/* Team heute — kompakter Einzeiler */}
+            {todayShifts.length > 0 && (
+                <CompactRow to="Calendar" icon={Users} label="Team heute" count={todayShifts.length} countLabel="Schicht" />
+            )}
         </div>
     );
 }
