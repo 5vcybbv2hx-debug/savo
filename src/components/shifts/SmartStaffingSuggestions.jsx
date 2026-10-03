@@ -19,6 +19,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isHoliday, isHolidayEve, isBridgeDay, getHolidayName, getSeason, getHolidayEveInfo } from '@/lib/germanHolidays';
+import useStaffingFactors, {
+    getEventStaffBoost, getReservationsForDate, getReservationGuests,
+    getUnavailableEmployeeIds,
+} from '@/hooks/useStaffingFactors';
+import { getSchoolVacation } from '@/lib/schoolVacations';
+
+// Tunable Konstanten für Event-/Reservierungs-Boost (leicht anpassbar)
+const EVENT_BOOST = {
+    SMALL_MAX: 40,    // < 40 Gäste → +1
+    MEDIUM_MAX: 100,  // 40–100 Gäste → +2
+    // > 100 Gäste → +3
+};
+const RESERVATION_BOOST_THRESHOLD = 30; // ab 30 Reservierungs-Personen → +1
 
 const BUSYNESS_LABELS = {
     1: { label: 'Ruhig', color: 'text-blue-400', bg: 'bg-blue-500/10' },
@@ -90,6 +103,10 @@ function localEventMatchesDate(event, dateStr) {
 
 export default function SmartStaffingSuggestions({ weekStart, employees }) {
     const [expanded, setExpanded] = useState(false);
+
+    // 4 Faktoren: Events, Reservierungen, Urlaub, Unverfügbarkeit (zentraler Hook)
+    const { events: confirmedEvents, reservations, vacations, unavailabilities } = useStaffingFactors();
+    const totalEmployees = employees?.length || 0;
 
     // Fetch all DailyRevenue + Shifts (cached for 10min)
     const { data: revenues = [] } = useQuery({
@@ -166,11 +183,33 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
             const holidayEve = holidayEveInfo != null;
             const bridgeDay = isBridgeDay(dateStr);
             const season = getSeason(dateStr);
+            const schoolVacation = getSchoolVacation(dateStr);
 
             // Local Events für dieses Datum (inkl. jährlicher Wiederholung)
             const matchingEvents = localEvents.filter(e => localEventMatchesDate(e, dateStr));
             const totalEventStaffAdj = matchingEvents.reduce((sum, e) => sum + (e.staff_adjustment || 0), 0);
             const eventNames = matchingEvents.map(e => e.event_name).join(', ');
+
+            // ── 1. Eigene bestätigte Events (Event-Entity) ──
+            const dayEvents = confirmedEvents.filter(e => e.date === dateStr);
+            const ownEventBoost = getEventStaffBoost(confirmedEvents, dateStr);
+            const ownEventBadges = dayEvents.map(e => {
+                const guests = e.expected_guests || 0;
+                const boost = guests < EVENT_BOOST.SMALL_MAX ? 1 : guests <= EVENT_BOOST.MEDIUM_MAX ? 2 : 3;
+                return `🎤 ${e.title}${e.start_time ? ` ab ${e.start_time}` : ''}, ~${guests} Gäste → +${boost}`;
+            });
+
+            // ── 2. Reservierungen als Frühindikator ──
+            const dayReservations = getReservationsForDate(reservations, dateStr);
+            const reservationGuests = getReservationGuests(reservations, dateStr);
+            const reservationBoost = reservationGuests >= RESERVATION_BOOST_THRESHOLD ? 1 : 0;
+            const reservationBadge = dayReservations.length > 0
+                ? `🍽️ ${dayReservations.length} Reservierungen (${reservationGuests} Personen)`
+                : '';
+
+            // ── 3. Verfügbarkeit als Grenze ──
+            const unavailableIds = getUnavailableEmployeeIds(vacations, unavailabilities, dateStr);
+            const availableCount = Math.max(0, totalEmployees - unavailableIds.size);
 
             if (uniqueMatches.length === 0) {
                 // Auch ohne historische Daten: Event-basierte Empfehlung
