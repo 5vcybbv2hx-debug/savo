@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Wine, Boxes, Clock, RefreshCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import BankAccountSelect, { defaultBankAccountId } from '@/components/external/BankAccountSelect';
 
 const eur = n => (n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -49,11 +50,12 @@ function CategoryIcon({ category }) {
     return <Wine className="w-3.5 h-3.5" />;
 }
 
-export default function ConsumptionConfirmModal({ offer, open, onClose, onConfirm, isPending }) {
+export default function ConsumptionConfirmModal({ offer, open, onClose, onConfirm, isPending, bankAccounts, company }) {
     const positions = useMemo(() => (offer?.positions || []).filter(p => p.description?.trim()), [offer]);
 
     // Edit-State pro Position (Kategorie-abhängige Felder)
     const [rows, setRows] = useState(null);
+    const [bankAccountId, setBankAccountId] = useState('');
     React.useEffect(() => {
         if (open) {
             const init = {};
@@ -65,6 +67,7 @@ export default function ConsumptionConfirmModal({ offer, open, onClose, onConfir
                 };
             });
             setRows(init);
+            setBankAccountId(defaultBankAccountId(bankAccounts, company));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, offer?.id]);
@@ -224,6 +227,14 @@ export default function ConsumptionConfirmModal({ offer, open, onClose, onConfir
                     })}
                 </div>
 
+                {/* Bankkonto-Auswahl für den Zahlungseingang */}
+                <BankAccountSelect
+                    value={bankAccountId}
+                    onChange={setBankAccountId}
+                    bankAccounts={bankAccounts}
+                    company={company}
+                />
+
                 {/* Live-Zwischensumme */}
                 <div className="rounded-xl bg-secondary/40 border border-border/50 p-3.5 space-y-1 text-sm">
                     <div className="flex justify-between text-muted-foreground">
@@ -243,7 +254,7 @@ export default function ConsumptionConfirmModal({ offer, open, onClose, onConfir
                     </Button>
                     <Button
                         className={cn('flex-1 bg-primary text-primary-foreground')}
-                        onClick={() => onConfirm(rows)}
+                        onClick={() => onConfirm(rows, bankAccountId)}
                         disabled={isPending}
                     >
                         {isPending ? 'Wird erstellt…' : 'Verbrauch bestätigen & Rechnung erstellen'}

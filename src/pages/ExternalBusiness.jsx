@@ -28,6 +28,8 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import OfferCalculation from '@/components/external/OfferCalculation';
 import ConsumptionConfirmModal, { confirmedQuantity } from '@/components/external/ConsumptionConfirmModal';
+import BankAccountSelect, { defaultBankAccountId, ibanLast4 } from '@/components/external/BankAccountSelect';
+import { Landmark } from 'lucide-react';
 
 const CAT_EVENT = 'Externer Event';
 const CAT_WKZ = 'Werbekostenzuschuss';
@@ -358,7 +360,26 @@ async function downloadPdf(kind, data, company) {
     }
 
     // ── Zahlungsblock — IBAN/BIC prominent (Angebot + Rechnung identisch) ──────
-    if (company?.iban || company?.bic) {
+    // Quelle: Rechnungs-Snapshot → bank_account_id nachladen → Fallback company.iban
+    let payIban = data.iban_snapshot || '';
+    let payBic = data.bic_snapshot || '';
+    let payBankName = data.bank_name_snapshot || '';
+    if (!payIban && data.bank_account_id) {
+        try {
+            const acc = await base44.entities.BankAccount.get(data.bank_account_id);
+            if (acc) {
+                payIban = acc.iban || '';
+                payBic = acc.bic || '';
+                payBankName = acc.bank_name || '';
+            }
+        } catch { /* Fallback auf company.iban unten */ }
+    }
+    if (!payIban && !payBic) {
+        payIban = company?.iban || '';
+        payBic = company?.bic || '';
+        payBankName = company?.bank_name || '';
+    }
+    if (payIban || payBic) {
         y += 3;
         doc.setFillColor(...GRAY_LIGHT);
         doc.roundedRect(MARGIN_L, y, MARGIN_R - MARGIN_L, 16, 1.5, 1.5, 'F');
@@ -370,12 +391,12 @@ async function downloadPdf(kind, data, company) {
         doc.setFontSize(9);
         doc.setTextColor(...INK);
         let zy = y + 10;
-        if (company?.iban) {
-            doc.text(`IBAN: ${company.iban}`, MARGIN_L + 3, zy);
+        if (payIban) {
+            doc.text(`IBAN: ${payIban}`, MARGIN_L + 3, zy);
             zy += 4.5;
         }
-        if (company?.bic) {
-            doc.text(`BIC: ${company.bic}${company.bank_name ? ` — ${company.bank_name}` : ''}`, MARGIN_L + 3, zy);
+        if (payBic) {
+            doc.text(`BIC: ${payBic}${payBankName ? ` — ${payBankName}` : ''}`, MARGIN_L + 3, zy);
         }
         y += 20;
     }
@@ -486,6 +507,11 @@ export default function ExternalBusiness() {
         staleTime: STALE.LONG,
     });
     const company = companyList[0];
+    const { data: bankAccounts = [] } = useQuery({
+        queryKey: ['bank-accounts'],
+        queryFn: () => base44.entities.BankAccount.list(),
+        staleTime: STALE.LONG,
+    });
 
     // ── Kennzahlen ──────────────────────────────────────────────────────────
     const openInvoices = useMemo(() =>
@@ -552,7 +578,7 @@ export default function ExternalBusiness() {
             event_end_time: '',
             staff_count: null,
             ...(isInvoice
-                ? { invoice_date: today(), service_date: today(), service_date_type: 'Einzel', service_date_end: '', due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'), datev_account: DEFAULT_ACCOUNT[cat] }
+                ? { invoice_date: today(), service_date: today(), service_date_type: 'Einzel', service_date_end: '', due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'), datev_account: DEFAULT_ACCOUNT[cat], bank_account_id: defaultBankAccountId(bankAccounts, company) }
                 : { offer_date: today(), valid_until: format(addDays(new Date(), 30), 'yyyy-MM-dd'), service_date: today(), service_date_type: 'Einzel', service_date_end: '' }),
         });
         setEditing(kind);
@@ -638,6 +664,9 @@ export default function ExternalBusiness() {
             });
         }
         if (isInvoice) {
+            // Bankkonto-Snapshot zum Rechnungszeitpunkt (historisch korrekt)
+            const effectiveBankId = record.bank_account_id || defaultBankAccountId(bankAccounts, company);
+            const bankAcc = effectiveBankId ? bankAccounts.find(a => a.id === effectiveBankId) : null;
             Object.assign(data, {
                 invoice_date: record.invoice_date,
                 service_date: record.service_date || record.invoice_date,
@@ -650,6 +679,10 @@ export default function ExternalBusiness() {
                 staff_hours: record.staff_hours != null && record.staff_hours !== '' ? Number(record.staff_hours) : null,
                 staff_hourly_rate: record.staff_hourly_rate != null && record.staff_hourly_rate !== '' ? Number(record.staff_hourly_rate) : null,
                 staff_cost_total: totals.staffCost || null,
+                bank_account_id: effectiveBankId || '',
+                bank_name_snapshot: bankAcc?.bank_name || '',
+                iban_snapshot: bankAcc?.iban || '',
+                bic_snapshot: bankAcc?.bic || '',
             });
             if (!record.id) data.invoice_number = await nextNumber(invoices, 'invoice_number', 'RE');
             saveInvoice.mutate({ id: record.id, data });
@@ -672,7 +705,7 @@ export default function ExternalBusiness() {
     // ConsumptionConfirmModal. Rechnungspositionen nutzen die BESTÄTIGTEN Mengen,
     // Summen werden neu berechnet, actual_quantity + Wareneinsatz/DB aktualisiert.
     const convertOffer = useMutation({
-        mutationFn: async ({ offer, rows }) => {
+        mutationFn: async ({ offer, rows, bankAccount }) => {
             const srcPositions = (offer.positions || []).filter(p => p.description?.trim());
 
             // Bestätigte Mengen pro Position inkl. Zeilensumme
@@ -730,6 +763,10 @@ export default function ExternalBusiness() {
                 payment_status: 'offen',
                 doc_status: 'Entwurf',
                 service_date_type: 'Einzel',
+                bank_account_id: bankAccount?.id || '',
+                bank_name_snapshot: bankAccount?.bank_name || '',
+                iban_snapshot: bankAccount?.iban || '',
+                bic_snapshot: bankAccount?.bic || '',
             });
             await base44.entities.Offer.update(offer.id, {
                 status: 'Rechnung erstellt',
@@ -859,6 +896,14 @@ export default function ExternalBusiness() {
         );
     };
 
+    // Konto-Anzeige für Rechnungsliste (Name + letzte 4 IBAN-Stellen)
+    const invoiceAccountLabel = (r) => {
+        const acc = r.bank_account_id ? bankAccounts.find(a => a.id === r.bank_account_id) : null;
+        const name = r.bank_name_snapshot || acc?.name || '';
+        const iban = r.iban_snapshot || acc?.iban || '';
+        return name ? `${name}${iban ? ` · ${ibanLast4(iban)}` : ''}` : '';
+    };
+
     const list = tab === 'invoices' ? invoices : offers;
 
     return (
@@ -946,6 +991,12 @@ export default function ExternalBusiness() {
                                     {r.positions && r.positions.length > 0 && (
                                         <p className="text-[11px] text-muted-foreground truncate">
                                             {r.positions.map(p => p.description).filter(Boolean).join(' · ')}
+                                        </p>
+                                    )}
+                                    {isInvoice && invoiceAccountLabel(r) && (
+                                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                            <Landmark className="w-2.5 h-2.5 shrink-0" />
+                                            <span className="truncate">{invoiceAccountLabel(r)}</span>
                                         </p>
                                     )}
                                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/30">
@@ -1150,6 +1201,16 @@ export default function ExternalBusiness() {
                                 </div>
                             )}
 
+                            {/* Bankkonto-Auswahl (nur Rechnungen) */}
+                            {editing === 'invoice' && (
+                                <BankAccountSelect
+                                    value={record.bank_account_id ?? ''}
+                                    onChange={(v) => setField('bank_account_id', v)}
+                                    bankAccounts={bankAccounts}
+                                    company={company}
+                                />
+                            )}
+
                             {/* Datum + Steuersatz */}
                             <div className="grid grid-cols-2 gap-3">
                                 {editing === 'invoice' ? (
@@ -1314,8 +1375,13 @@ export default function ExternalBusiness() {
             <ConsumptionConfirmModal
                 offer={confirmOffer}
                 open={!!confirmOffer}
+                bankAccounts={bankAccounts}
+                company={company}
                 onClose={() => { if (!convertOffer.isPending) setConfirmOffer(null); }}
-                onConfirm={(rows) => convertOffer.mutate({ offer: confirmOffer, rows })}
+                onConfirm={(rows, bankAccountId) => {
+                    const acc = bankAccountId ? bankAccounts.find(a => a.id === bankAccountId) : null;
+                    convertOffer.mutate({ offer: confirmOffer, rows, bankAccountId, bankAccount: acc });
+                }}
                 isPending={convertOffer.isPending}
             />
         </div>
