@@ -8,7 +8,7 @@ import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
 import {
     Euro, BookOpen, Receipt, TrendingDown, Download,
-    RefreshCw, BarChart2, AlertTriangle, Database
+    RefreshCw, BarChart2, AlertTriangle, Database, Banknote
 } from 'lucide-react';
 import { format, startOfMonth } from 'date-fns';
 
@@ -96,6 +96,7 @@ export default function AccountingHub() {
                     <NavCard icon={Euro}        label="Übersicht"      description="Dashboard & Kennzahlen"            page="AccountingDashboard"  permission="canViewAccounting" />
                     <NavCard icon={BarChart2}   label="Tagesabschluss" description="Umsatz erfassen & abschließen"     page="DailyAnalysis"        permission="canViewAnalytics" />
                     <NavCard icon={BookOpen}    label="Kassenbuch"     description="Einnahmen & Ausgaben"              page="AccountingCashbook"   permission="canViewAccountingCashbook" />
+                    <NavCard icon={Banknote}   label="Bankkonten"    description="Konten & Umsätze verwalten"        page="AccountingBank"       permission="canViewAccounting" />
                 </div>
             </div>
 
