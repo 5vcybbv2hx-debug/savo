@@ -184,6 +184,22 @@
     "storno_reference": {
       "type": "string",
       "description": "Bei Stornorechnungen: Nummer der urspr\u00fcnglichen Rechnung (ST-Nummernkreis verweist zur\u00fcck)"
+    },
+    "bank_account_id": {
+      "type": "string",
+      "description": "Verweis auf BankAccount \u2014 gew\u00e4hltes Konto f\u00fcr den Zahlungseingang dieser Rechnung"
+    },
+    "bank_name_snapshot": {
+      "type": "string",
+      "description": "Snapshot des Kreditinstitut-Namens zum Rechnungszeitpunkt (historisch korrekt auch bei sp\u00e4terer Kontobearbeitung)"
+    },
+    "iban_snapshot": {
+      "type": "string",
+      "description": "Snapshot der IBAN zum Rechnungszeitpunkt"
+    },
+    "bic_snapshot": {
+      "type": "string",
+      "description": "Snapshot der BIC zum Rechnungszeitpunkt"
     }
   },
   "required": [
