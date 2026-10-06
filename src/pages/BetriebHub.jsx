@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
-import { MapPin, CheckSquare, ListChecks, Brush, Star, Tv, Utensils, Truck } from 'lucide-react';
+import { MapPin, CheckSquare, ListChecks, Brush, Star, Utensils, Truck } from 'lucide-react';
 import { format } from 'date-fns';
 
 function StatBadge({ count, variant = 'default' }) {
@@ -107,17 +107,6 @@ export default function BetriebHub() {
                 </div>
             )}
 
-            {/* Marketing & Display */}
-            {permissions.isManager && (
-                <div className="mb-6">
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Marketing & Display</p>
-                    <div className="space-y-2">
-                        <NavCard icon={Tv} label="Events & TV-Display"
-                            description="Events verwalten & TV-Slideshow"
-                            page="Events" permission="canViewEvents" />
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
