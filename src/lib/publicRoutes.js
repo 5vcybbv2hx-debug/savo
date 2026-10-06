@@ -6,6 +6,15 @@
  */
 
 /**
+ * Öffentliche Getränkekarte — jetzt auf der separaten SAVO Lounge Website.
+ * Diese URL ist die Single Source of Truth für alle Gäste-Links, QR-Codes
+ * und TV-Display-Verweise. Alte /PublicDrinkMenu-Pfade leiten per Redirect
+ * hierher weiter (siehe src/App.jsx), damit bereits gedruckte QR-Codes
+ * weiterhin funktionieren.
+ */
+export const PUBLIC_DRINK_MENU_URL = 'https://savo-lounge-live.base44.app/getraenke';
+
+/**
  * Basis-URL der App (sicherheitshalber vollständig)
  * In Produktionsumgebung ändert sich der Origin je nach Deployment
  */
@@ -21,7 +30,7 @@ function getBaseURL() {
  * Keine Authentifizierung erforderlich
  */
 export function getPublicDrinkMenuURL() {
-  return `${getBaseURL()}/PublicDrinkMenu`;
+  return PUBLIC_DRINK_MENU_URL;
 }
 
 /**
@@ -80,7 +89,6 @@ export async function shareLink(url, title = 'BarManager Link') {
  */
 export function isPublicRoute(pathname) {
   const publicRoutes = [
-    '/PublicDrinkMenu',
     '/PublicWeeklySpecialDisplay',
     '/StorageLocationScan',
   ];

@@ -1,19 +1,17 @@
+import { PUBLIC_DRINK_MENU_URL } from './publicRoutes';
 import { createPageUrl } from '@/utils';
 
 /**
  * Öffentlicher Gäste-Link zur Getränkekarte.
- * Zeigt auf die PublicDrinkMenu-Seite — kein Login nötig.
+ * Zeigt auf die separate SAVO Lounge Website — kein Login nötig.
  * Optional: ?table=5 für Tischnummer.
  */
 export function getMenuUrl(tableNumber = null) {
-    const base = `${window.location.origin}${createPageUrl('PublicDrinkMenu')}`;
-    return tableNumber ? `${base}?table=${encodeURIComponent(tableNumber)}` : base;
+    return tableNumber ? `${PUBLIC_DRINK_MENU_URL}?table=${encodeURIComponent(tableNumber)}` : PUBLIC_DRINK_MENU_URL;
 }
 
 // Rückwärtskompatibilität
-export const MENU_URL = typeof window !== 'undefined'
-    ? `${window.location.origin}${createPageUrl('PublicDrinkMenu')}`
-    : '/PublicDrinkMenu';
+export const MENU_URL = PUBLIC_DRINK_MENU_URL;
 
 export function getGuestMenuLink(tableNumber = null) {
     return getMenuUrl(tableNumber);

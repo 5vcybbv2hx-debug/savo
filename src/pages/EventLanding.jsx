@@ -215,11 +215,11 @@ export default function EventLanding() {
                                 className="block text-center text-sm text-muted-foreground hover:text-primary transition-colors py-1">
                                 …oder zu Google Kalender hinzufügen
                             </a>
-                            <Link to="/PublicDrinkMenu"
+                            <a href="https://savo-lounge-live.base44.app/getraenke" target="_blank" rel="noopener noreferrer"
                                 className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-card hover:bg-accent border border-border text-foreground font-bold text-base transition-colors">
                                 <GlassWater className="w-5 h-5 text-primary" />
                                 Getränkekarte ansehen
-                            </Link>
+                            </a>
                         </div>
                     </>
                 )}

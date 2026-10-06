@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, QrCode } from 'lucide-react';
 import QRCode from 'qrcode';
 import JSZip from 'jszip';
+import { PUBLIC_DRINK_MENU_URL } from '@/lib/publicRoutes';
 
 export default function TableQRGenerator() {
     const [tableCount, setTableCount] = useState(10);
@@ -14,7 +15,7 @@ export default function TableQRGenerator() {
 
     const generateQRCode = async (tableNumber) => {
         const appId = window.location.hostname.split('--')[1]?.split('.')[0] || window.location.hostname.split('.')[0];
-        const url = `https://bar-shift-pro-fc3522b9.base44.app/PublicDrinkMenu?table=${tableNumber}`;
+        const url = `${PUBLIC_DRINK_MENU_URL}?table=${tableNumber}`;
         const qrCodeDataUrl = await QRCode.toDataURL(url, {
             width: 800,
             margin: 2,

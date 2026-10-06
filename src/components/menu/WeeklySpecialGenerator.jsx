@@ -195,7 +195,7 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                         <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open('/PublicDrinkMenu', '_blank')}
+                            onClick={() => window.open('https://savo-lounge-live.base44.app/getraenke', '_blank')}
                             className="border-blue-600 text-blue-400 hover:bg-blue-600/10"
                         >
                             <ExternalLink className="w-4 h-4 mr-2" />

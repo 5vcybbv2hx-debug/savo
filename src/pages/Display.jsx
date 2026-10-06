@@ -52,7 +52,7 @@ const KEYFRAMES = `
   @keyframes loadSpin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes crossFadeIn { from{opacity:0;transform:scale(1.03)} to{opacity:1;transform:scale(1)} }
 `;
-const MENU_URL = 'https://bar-shift-pro-fc3522b9.base44.app/PublicDrinkMenu';
+const MENU_URL = 'https://savo-lounge-live.base44.app/getraenke';
 
 
 function injectKeyframes() {

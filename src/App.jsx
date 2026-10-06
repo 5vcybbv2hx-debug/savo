@@ -15,7 +15,6 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'r
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import PublicDrinkMenu from './pages/PublicDrinkMenu';
 import EventLanding from './pages/EventLanding';
 import AccountingDashboard from './pages/AccountingDashboard';
 import AccountingCashbook from './pages/AccountingCashbook';
@@ -282,6 +281,16 @@ const DisplayFullscreen = () => {
   return <Display />;
 };
 
+// Redirect-Komponente für alte /PublicDrinkMenu-Links (bereits gedruckte QR-Codes).
+// Leitet inkl. Query-String auf die neue SAVO Lounge Website weiter.
+function PublicDrinkMenuRedirect() {
+  useEffect(() => {
+    const qs = window.location.search || '';
+    window.location.replace(`https://savo-lounge-live.base44.app/getraenke${qs}`);
+  }, []);
+  return null;
+}
+
 function App() {
 
   return (
@@ -291,7 +300,9 @@ function App() {
           <NavigationTracker />
           <Routes>
             {/* Public pages (NO auth check, rendered outside AuthenticatedApp) */}
-            <Route path="/PublicDrinkMenu" element={<PublicDrinkMenu />} />
+            {/* /PublicDrinkMenu wurde auf die neue SAVO Lounge Website umgestellt.
+                Redirect (inkl. Query-Params) erhält bereits gedruckte QR-Codes. */}
+            <Route path="/PublicDrinkMenu" element={<PublicDrinkMenuRedirect />} />
             <Route path="/Event/:id" element={<EventLanding />} />
             <Route path="/StorageLocationScan/:id" element={<PublicPages.StorageLocationScan />} />
 

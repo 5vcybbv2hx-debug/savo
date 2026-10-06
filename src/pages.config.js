@@ -27,7 +27,6 @@ import Notifications from './pages/Notifications';
 import Onboarding from './pages/Onboarding';
 import PermissionsNew from './pages/PermissionsNew';
 import PriceCalculator from './pages/PriceCalculator';
-import PublicDrinkMenu from './pages/PublicDrinkMenu';
 import QuickList from './pages/QuickList';
 import Recipes from './pages/Recipes';
 import Restock from './pages/Restock';
@@ -134,7 +133,6 @@ const SPECIAL_PAGES_WITH_LAYOUT = {
 
 // Public pages: NO layout wrapper (echte öffentliche Seiten ohne Auth/Sidebar)
 const PUBLIC_PAGES = {
-    "PublicDrinkMenu": PublicDrinkMenu,
     "StorageLocationScan": StorageLocationScan,
     "WusaPublic": WusaPublic,
     "Display": Display,

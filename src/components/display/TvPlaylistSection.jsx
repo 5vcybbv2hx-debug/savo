@@ -117,7 +117,7 @@ export default function TvPlaylistSection() {
   const [qrCopied, setQrCopied]         = useState(false);
   const [igExport, setIgExport]         = useState(null);
 
-  const MENU_URL = `${window.location.origin}/PublicDrinkMenu`;
+  const MENU_URL = 'https://savo-lounge-live.base44.app/getraenke';
 
   const { data: slides = [], isLoading } = useQuery({
     queryKey: ['display-slides-all'],
