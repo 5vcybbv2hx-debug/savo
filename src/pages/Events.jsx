@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
-import { Plus, Calendar as CalendarIcon, Trash2, Edit, Search, Lightbulb, MapPin } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Trash2, Edit, Search, Lightbulb, MapPin, ChevronDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -20,8 +20,8 @@ import SavedFilters from '@/components/filters/SavedFilters';
 import { usePermissions } from '@/components/auth/usePermissions';
 import EventArchive from '@/components/events/EventArchive';
 import EventIdeas from '@/components/events/EventIdeas';
-import CalendarSubscribe from '@/components/events/CalendarSubscribe';
 import LocalEventsTab from '@/components/events/LocalEventsTab';
+import TvPlaylistSection from '@/components/display/TvPlaylistSection';
 
 const eventTypeColors = {
     'Party': 'bg-purple-100 text-purple-700 border-purple-200',
@@ -42,18 +42,34 @@ const formatDateWithDay = (dateStr) => {
     return format(date, 'EEEE, dd. MMMM yyyy', { locale: de });
 };
 
+// Sticky Section-Header
+function SectionHeader({ icon: Icon, title, count, children }) {
+    return (
+        <div className="sticky top-16 md:top-0 z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2.5 mb-4 bg-background/95 backdrop-blur-xl border-b border-border/50">
+            <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                    {Icon && <Icon className="w-4 h-4 text-primary shrink-0" />}
+                    {title}
+                    {count !== undefined && (
+                        <span className="text-xs font-normal text-muted-foreground">({count})</span>
+                    )}
+                </h2>
+                {children}
+            </div>
+        </div>
+    );
+}
+
 export default function Events() {
     const queryClient = useQueryClient();
     const permissions = usePermissions();
     const canEdit = permissions.canEditEvents;
-    const [activeTab, setActiveTab] = useState('upcoming');
-    const [showLocalEvents, setShowLocalEvents] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState('alle');
     const [statusFilter, setStatusFilter] = useState('alle');
-    const [confirmDialog, setConfirmDialog] = useState(null); // { type: 'delete'|'cancel', id, onConfirm }
+    const [confirmDialog, setConfirmDialog] = useState(null);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -97,7 +113,6 @@ export default function Events() {
     // ── Event → DisplaySlide Sync ────────────────────────────────────────────
     const syncEventToDisplay = async (event, eventId) => {
         try {
-            // Existierende Slide für dieses Event suchen (via cta_text als Event-ID-Tag)
             const allSlides = await base44.entities.DisplaySlide.list('sort_order', 200);
             const existingSlide = allSlides.find(s => s.cta_text === `event:${eventId}`);
             const maxOrder = allSlides.reduce((m, s) => Math.max(m, s.sort_order || 0), 0);
@@ -255,7 +270,6 @@ export default function Events() {
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Confirm if changing to "abgesagt"
         if (selectedEvent && selectedEvent.status !== 'Abgesagt' && formData.status === 'Abgesagt') {
             setConfirmDialog({
                 type: 'cancel',
@@ -272,7 +286,6 @@ export default function Events() {
             return;
         }
         
-        // Zahlenfelder korrekt konvertieren
         const cleanData = {
             ...formData,
             expected_guests: formData.expected_guests !== '' ? Number(formData.expected_guests) : null,
@@ -300,7 +313,6 @@ export default function Events() {
     };
 
     const handleConvertIdeaToEvent = (idea) => {
-        setActiveTab('upcoming');
         openModal(null);
         setFormData({
             title: idea.title,
@@ -343,207 +355,237 @@ export default function Events() {
                             {upcomingEvents.length} kommend · {archiveEvents.length} archiviert · {allIdeas.length} Ideen
                         </p>
                     </div>
-                </div>
-
-                {/* Action Bar */}
-                <div className="flex flex-wrap gap-2 mb-6">
                     {canEdit && (
-                    <Button 
-                        size="sm"
-                        onClick={() => { setActiveTab('upcoming'); openModal(); }}
-                        className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 shadow-lg shadow-amber-500/20 text-xs h-9"
-                    >
-                        <Plus className="w-4 h-4 mr-1" />
-                        <span className="hidden sm:inline">Event</span>
-                        <span className="sm:hidden">+</span>
-                    </Button>
+                        <Button 
+                            size="sm"
+                            onClick={() => openModal()}
+                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 shadow-lg shadow-amber-500/20 text-xs h-9"
+                        >
+                            <Plus className="w-4 h-4 mr-1" />
+                            <span>Event</span>
+                        </Button>
                     )}
-                    <div className="text-xs text-muted-foreground p-2">
-                        iCal-Export wird in Kürze verfügbar.
-                    </div>
                 </div>
 
-                {/* Tabs */}
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className="bg-card border-border border w-full grid grid-cols-4 h-auto">
-                        <TabsTrigger value="upcoming" className="text-xs sm:text-sm">Kommend</TabsTrigger>
-                        <TabsTrigger value="archive" className="text-xs sm:text-sm">Archiv</TabsTrigger>
-                        <TabsTrigger value="umgebung" className="text-xs sm:text-sm flex items-center gap-1"><MapPin className="w-3 h-3" /></TabsTrigger>
-                        <TabsTrigger value="ideas" className="text-xs sm:text-sm flex items-center gap-1"><Lightbulb className="w-3 h-3" /></TabsTrigger>
-                    </TabsList>
+                {/* ── Abschnitt 1: Kommende Events ─────────────────────────────── */}
+                <section className="mb-8">
+                    <SectionHeader icon={CalendarIcon} title="Kommende Events" count={upcomingEvents.length} />
 
-                    {/* Upcoming Events Tab */}
-                    <TabsContent value="upcoming" className="space-y-4">
-                        <Card className="p-4 bg-card border-border">
-                            <div className="space-y-3">
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <Input
-                                            placeholder="Event suchen..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="pl-9 bg-background border-border"
-                                        />
-                                    </div>
-                                    <Select value={typeFilter} onValueChange={setTypeFilter}>
-                                        <SelectTrigger className="w-full sm:w-40 bg-background border-border">
-                                            <SelectValue placeholder="Typ" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="alle">Alle Typen</SelectItem>
-                                            <SelectItem value="Party">Party</SelectItem>
-                                            <SelectItem value="Livemusik">Livemusik</SelectItem>
-                                            <SelectItem value="Special Event">Special Event</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                        <SelectTrigger className="w-full sm:w-40 bg-background border-border">
-                                            <SelectValue placeholder="Status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="alle">Alle Status</SelectItem>
-                                            <SelectItem value="Bestätigt">Bestätigt</SelectItem>
-                                            <SelectItem value="Abgesagt">Abgesagt</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                    {/* Filter */}
+                    <Card className="p-4 bg-card border-border mb-4">
+                        <div className="space-y-3">
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Event suchen..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-9 bg-background border-border"
+                                    />
                                 </div>
-                                <SavedFilters
-                                    storageKey="events_saved_filters"
-                                    currentFilters={{ searchTerm, typeFilter, statusFilter }}
-                                    onApplyFilter={(filters) => {
-                                        setSearchTerm(filters.searchTerm || '');
-                                        setTypeFilter(filters.typeFilter || 'alle');
-                                        setStatusFilter(filters.statusFilter || 'alle');
-                                    }}
-                                />
+                                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                                    <SelectTrigger className="w-full sm:w-40 bg-background border-border">
+                                        <SelectValue placeholder="Typ" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="alle">Alle Typen</SelectItem>
+                                        <SelectItem value="Party">Party</SelectItem>
+                                        <SelectItem value="Livemusik">Livemusik</SelectItem>
+                                        <SelectItem value="Special Event">Special Event</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                    <SelectTrigger className="w-full sm:w-40 bg-background border-border">
+                                        <SelectValue placeholder="Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="alle">Alle Status</SelectItem>
+                                        <SelectItem value="Bestätigt">Bestätigt</SelectItem>
+                                        <SelectItem value="Abgesagt">Abgesagt</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        </Card>
+                            <SavedFilters
+                                storageKey="events_saved_filters"
+                                currentFilters={{ searchTerm, typeFilter, statusFilter }}
+                                onApplyFilter={(filters) => {
+                                    setSearchTerm(filters.searchTerm || '');
+                                    setTypeFilter(filters.typeFilter || 'alle');
+                                    setStatusFilter(filters.statusFilter || 'alle');
+                                }}
+                            />
+                        </div>
+                    </Card>
 
-                        {sortedEvents.length > 0 ? (
-                            <div className="space-y-3">
-                                {sortedEvents.map((event, idx) => (
-                                    <Card 
-                                        key={event.id}
-                                        style={{ '--delay': `${idx*50}ms` }}
-                                        className={cn("p-5 bg-card border-border animate-stagger transition-colors", canEdit && "hover:bg-accent/5 cursor-pointer")}
-                                        onClick={() => canEdit && openModal(event)}
-                                    >
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                                    <CalendarIcon className="w-5 h-5 text-amber-400" />
-                                                    <h3 className="font-semibold text-foreground text-lg">{event.title}</h3>
-                                                    <Badge className={eventTypeColors[event.event_type]}>
-                                                        {event.event_type}
-                                                    </Badge>
-                                                    <Badge className={statusColors[event.status]}>
-                                                        {event.status}
-                                                    </Badge>
+                    {sortedEvents.length > 0 ? (
+                        <div className="space-y-3">
+                            {sortedEvents.map((event, idx) => (
+                                <Card 
+                                    key={event.id}
+                                    style={{ '--delay': `${idx*50}ms` }}
+                                    className={cn("p-5 bg-card border-border animate-stagger transition-colors", canEdit && "hover:bg-accent/5 cursor-pointer")}
+                                    onClick={() => canEdit && openModal(event)}
+                                >
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                                <CalendarIcon className="w-5 h-5 text-amber-400" />
+                                                <h3 className="font-semibold text-foreground text-lg">{event.title}</h3>
+                                                <Badge className={eventTypeColors[event.event_type]}>
+                                                    {event.event_type}
+                                                </Badge>
+                                                <Badge className={statusColors[event.status]}>
+                                                    {event.status}
+                                                </Badge>
+                                            </div>
+                                            
+                                            {event.description && (
+                                                <p className="text-sm text-muted-foreground mb-3">{event.description}</p>
+                                            )}
+                                            
+                                            <div className="flex flex-wrap items-center gap-4 text-sm">
+                                                <div className="flex items-center gap-2 text-foreground">
+                                                    <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                                                    <span>{formatDateWithDay(event.date)}</span>
                                                 </div>
                                                 
-                                                {event.description && (
-                                                    <p className="text-sm text-muted-foreground mb-3">{event.description}</p>
+                                                {event.start_time && (
+                                                    <div className="flex items-center gap-2 text-foreground">
+                                                        <span>🕐</span>
+                                                        <span>{event.start_time}{event.end_time && ` - ${event.end_time}`}</span>
+                                                    </div>
                                                 )}
                                                 
-                                                <div className="flex flex-wrap items-center gap-4 text-sm">
+                                                {event.expected_guests && (
                                                     <div className="flex items-center gap-2 text-foreground">
-                                                        <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                                                        <span>{formatDateWithDay(event.date)}</span>
+                                                        <span>👥</span>
+                                                        <span>{event.expected_guests} Gäste</span>
                                                     </div>
-                                                    
-                                                    {event.start_time && (
-                                                        <div className="flex items-center gap-2 text-foreground">
-                                                            <span>🕐</span>
-                                                            <span>{event.start_time}{event.end_time && ` - ${event.end_time}`}</span>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {event.expected_guests && (
-                                                        <div className="flex items-center gap-2 text-foreground">
-                                                            <span>👥</span>
-                                                            <span>{event.expected_guests} Gäste</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                
-                                                {event.notes && (
-                                                    <p className="text-xs text-muted-foreground mt-2 italic">{event.notes}</p>
                                                 )}
                                             </div>
                                             
-                                            {canEdit && (
-                                            <div className="flex gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        openModal(event);
-                                                    }}
-                                                    className="h-8 w-8 text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDelete(event.id);
-                                                    }}
-                                                    className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
+                                            {event.notes && (
+                                                <p className="text-xs text-muted-foreground mt-2 italic">{event.notes}</p>
                                             )}
                                         </div>
-                                    </Card>
-                                ))}
+                                        
+                                        {canEdit && (
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openModal(event);
+                                                }}
+                                                className="h-8 w-8 text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDelete(event.id);
+                                                }}
+                                                className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                        )}
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <Card className="p-12 bg-card border-border">
+                            <div className="text-center text-muted-foreground">
+                                <CalendarIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                                <p className="text-lg font-medium">Keine Events gefunden</p>
+                                <p className="text-sm mt-1">
+                                    {searchTerm || typeFilter !== 'alle' || statusFilter !== 'alle' 
+                                        ? 'Versuche andere Filter' 
+                                        : 'Füge dein erstes Event hinzu'}
+                                </p>
                             </div>
-                        ) : (
-                            <Card className="p-12 bg-card border-border">
-                                <div className="text-center text-muted-foreground">
-                                    <CalendarIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                                    <p className="text-lg font-medium">Keine Events gefunden</p>
-                                    <p className="text-sm mt-1">
-                                        {searchTerm || typeFilter !== 'alle' || statusFilter !== 'alle' 
-                                            ? 'Versuche andere Filter' 
-                                            : 'Füge dein erstes Event hinzu'}
-                                    </p>
-                                </div>
-                            </Card>
-                        )}
-                    </TabsContent>
+                        </Card>
+                    )}
+                </section>
 
-                    {/* Archive Tab */}
-                    <TabsContent value="archive" className="space-y-4">
-                        <EventArchive
-                            events={sortedArchiveEvents}
-                            onEdit={canEdit ? openModal : null}
-                            onDelete={canEdit ? handleDelete : null}
-                            canEdit={canEdit}
-                        />
-                    </TabsContent>
+                {/* ── Abschnitt 2: TV-Playlist ────────────────────────────────── */}
+                <section className="mb-8">
+                    <TvPlaylistSection />
+                </section>
 
-                    {/* Ideas Tab */}
-                    <TabsContent value="ideas" className="space-y-4">
-                        <EventIdeas
-                            ideas={allIdeas}
-                            onAdd={canEdit ? (data) => createIdeaMutation.mutate(data) : null}
-                            onEdit={canEdit ? ({ id, data }) => updateIdeaMutation.mutate({ id, data }) : null}
-                            onDelete={canEdit ? (id) => deleteIdeaMutation.mutate(id) : null}
-                            onConvertToEvent={canEdit ? handleConvertIdeaToEvent : null}
-                            canEdit={canEdit}
-                        />
-                    </TabsContent>
+                {/* ── Abschnitte 3-5: Archiv, Umgebung, Ideen (Accordion) ──────── */}
+                <Accordion type="multiple" defaultValue={[]} className="space-y-3">
+                    {/* Archiv */}
+                    <Card className="bg-card border-border overflow-hidden">
+                        <AccordionItem value="archiv" className="border-b-0">
+                            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                                    <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                                    Archiv
+                                    <Badge className="bg-muted text-muted-foreground border border-border text-[10px] h-5 px-1.5">
+                                        {archiveEvents.length}
+                                    </Badge>
+                                </span>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 pb-4">
+                                <EventArchive
+                                    events={sortedArchiveEvents}
+                                    onEdit={canEdit ? openModal : null}
+                                    onDelete={canEdit ? handleDelete : null}
+                                    canEdit={canEdit}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Card>
 
-                    {/* Umgebung Tab — lokale Events / Veranstaltungen in der Nähe */}
-                    <TabsContent value="umgebung" className="space-y-4">
-                        <LocalEventsTab />
-                    </TabsContent>
-                </Tabs>
+                    {/* Umgebung */}
+                    <Card className="bg-card border-border overflow-hidden">
+                        <AccordionItem value="umgebung" className="border-b-0">
+                            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                                    Umgebung
+                                    <span className="text-[11px] text-muted-foreground font-normal">lokale Events</span>
+                                </span>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 pb-4">
+                                <LocalEventsTab />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Card>
+
+                    {/* Ideen */}
+                    <Card className="bg-card border-border overflow-hidden">
+                        <AccordionItem value="ideen" className="border-b-0">
+                            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                                    <Lightbulb className="w-4 h-4 text-muted-foreground" />
+                                    Ideen
+                                    <Badge className="bg-muted text-muted-foreground border border-border text-[10px] h-5 px-1.5">
+                                        {allIdeas.length}
+                                    </Badge>
+                                </span>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 pb-4">
+                                <EventIdeas
+                                    ideas={allIdeas}
+                                    onAdd={canEdit ? (data) => createIdeaMutation.mutate(data) : null}
+                                    onEdit={canEdit ? ({ id, data }) => updateIdeaMutation.mutate({ id, data }) : null}
+                                    onDelete={canEdit ? (id) => deleteIdeaMutation.mutate(id) : null}
+                                    onConvertToEvent={canEdit ? handleConvertIdeaToEvent : null}
+                                    canEdit={canEdit}
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Card>
+                </Accordion>
 
                 {/* Event Modal — only accessible when canEdit */}
                 <Dialog open={modalOpen && canEdit} onOpenChange={closeModal}>

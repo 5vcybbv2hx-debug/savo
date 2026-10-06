@@ -57,7 +57,7 @@ import Wusa from './pages/Wusa';
 import WusaPublic from './pages/WusaPublic';
 
 import Display from './pages/Display';
-import DisplayManager from './pages/DisplayManager';
+// DisplayManager wurde in Events (TvPlaylistSection) integriert — Route leitet weiter
 
 // Special pages (manual imports — non-standard routing)
 import CleaningChecklist from './pages/CleaningChecklist';
@@ -119,7 +119,6 @@ const CORE_PAGES = {
     "AccountingHub": AccountingHub,
     "BetriebHub": BetriebHub,
     "KarteHub": KarteHub,
-    "DisplayManager": DisplayManager,
 };
 
 // Special pages: with Layout wrapper

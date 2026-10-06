@@ -112,9 +112,9 @@ export default function BetriebHub() {
                 <div className="mb-6">
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Marketing & Display</p>
                     <div className="space-y-2">
-                        <NavCard icon={Tv} label="TV-Display"
-                            description="Slideshow für Bar-TV verwalten"
-                            page="DisplayManager" permission="isManager" />
+                        <NavCard icon={Tv} label="Events & TV-Display"
+                            description="Events verwalten & TV-Slideshow"
+                            page="Events" permission="canViewEvents" />
                     </div>
                 </div>
             )}
