@@ -12,8 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Clock, ChevronLeft, ChevronRight, Users, CalendarDays,
-    MoreVertical, Calendar
+    MoreVertical, Calendar, RepeatIcon
 } from 'lucide-react';
+import ShiftSwapSection from '@/components/shifts/ShiftSwapSection';
 import {
     format, startOfWeek, endOfWeek, addDays, startOfMonth, endOfMonth,
     isSameDay, parseISO, isAfter, isBefore, addMonths, subMonths
@@ -102,7 +103,7 @@ function NextShiftHero({ shifts }) {
 }
 
 // ── Schicht-Zeile ─────────────────────────────────────────────────────────────
-function ShiftRow({ shift, highlight = false }) {
+function ShiftRow({ shift, highlight = false, onSwap }) {
     const hours = shiftDurationHours(shift.start_time, shift.end_time);
     return (
         <div className={cn(
@@ -125,12 +126,21 @@ function ShiftRow({ shift, highlight = false }) {
                     {shift.notes ? ` · ${shift.notes}` : ''}
                 </p>
             </div>
+            {onSwap && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); onSwap(shift); }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/25 hover:bg-amber-500/25 transition-all text-xs font-semibold shrink-0 min-h-[32px]"
+                >
+                    <RepeatIcon className="w-3.5 h-3.5" />
+                    Tauschen
+                </button>
+            )}
         </div>
     );
 }
 
 // ── Tab: Diese Woche ──────────────────────────────────────────────────────────
-function WeekTab({ shifts }) {
+function WeekTab({ shifts, onSwap }) {
     const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
     const today = new Date();
 
@@ -211,7 +221,7 @@ function WeekTab({ shifts }) {
                             {dayShifts.length > 0 && (
                                 <div className="p-2 space-y-1.5 bg-background">
                                     {dayShifts.map(shift => (
-                                        <ShiftRow key={shift.id} shift={shift} highlight={isToday} />
+                                        <ShiftRow key={shift.id} shift={shift} highlight={isToday} onSwap={onSwap} />
                                     ))}
                                 </div>
                             )}
@@ -224,7 +234,7 @@ function WeekTab({ shifts }) {
 }
 
 // ── Tab: Monat ────────────────────────────────────────────────────────────────
-function MonthTab({ shifts }) {
+function MonthTab({ shifts, onSwap }) {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const today = new Date();
 
@@ -362,6 +372,15 @@ function MonthTab({ shifts }) {
                                             {shift.shift_type && ` · ${shift.shift_type}`}
                                         </p>
                                     </div>
+                                    {onSwap && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onSwap(shift); }}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/25 hover:bg-amber-500/25 transition-all text-xs font-semibold shrink-0 min-h-[32px]"
+                                        >
+                                            <RepeatIcon className="w-3.5 h-3.5" />
+                                            Tauschen
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}
