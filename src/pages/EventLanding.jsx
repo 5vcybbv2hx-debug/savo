@@ -11,7 +11,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { publicBase44 } from '@/api/base44Client';
-import { format, parseISO, addDays } from 'date-fns';
+import { format, parseISO, addDays, addHours } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { CalendarPlus, MapPin, Clock, GlassWater, Loader2, Home } from 'lucide-react';
 
@@ -23,7 +23,7 @@ const buildICS = (ev) => {
     const startBase = parseISO(ev.event_date + (allDay ? 'T00:00:00' : 'T' + ev.event_time + ':00'));
     const endBase = ev.event_end_date
         ? parseISO(ev.event_end_date + (allDay ? 'T00:00:00' : 'T' + (ev.event_end_time || ev.event_time) + ':00'))
-        : startBase;
+        : (allDay ? startBase : addHours(startBase, 4));
 
     const start = allDay
         ? format(startBase, 'yyyyMMdd')
@@ -73,7 +73,7 @@ const gcalUrl = (ev) => {
         const s = parseISO(ev.event_date + (allDay ? 'T00:00:00' : 'T' + ev.event_time + ':00'));
         const e = ev.event_end_date
             ? parseISO(ev.event_end_date + (allDay ? 'T00:00:00' : 'T' + (ev.event_end_time || ev.event_time) + ':00'))
-            : s;
+            : (allDay ? s : addHours(s, 4));
         const f = (d) => allDay ? format(d, 'yyyyMMdd') : format(d, "yyyyMMdd'T'HHmmss");
         params.set('dates', `${f(s)}/${f(allDay ? addDays(e, 1) : e)}`);
     }
@@ -198,7 +198,7 @@ export default function EventLanding() {
                         )}
 
                         {/* CTA */}
-                        {ev.cta_text && (
+                        {ev.cta_text && !ev.cta_text.startsWith('event:') && (
                             <div className="text-center px-4 py-4 rounded-2xl bg-primary text-primary-foreground font-black text-lg">
                                 {ev.cta_text}
                             </div>

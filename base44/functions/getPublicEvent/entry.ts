@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
                 event_time: slide.event_time || '',
                 event_end_time: slide.event_end_time || '',
                 location: slide.location || '',
-                cta_text: slide.cta_text || '',
+                cta_text: (slide.cta_text && !slide.cta_text.startsWith('event:')) ? slide.cta_text : '',
                 price_info: slide.price_info || '',
             },
         });

@@ -62,7 +62,7 @@ Deno.serve(async (req: Request) => {
                 event_time: s.event_time || '',
                 event_end_time: s.event_end_time || '',
                 location: s.location || '',
-                cta_text: s.cta_text || '',
+                cta_text: (s.cta_text && !s.cta_text.startsWith('event:')) ? s.cta_text : '',
                 price_info: s.price_info || '',
             }))
             // Chronologisch sortiert (aufsteigend nach event_date)
