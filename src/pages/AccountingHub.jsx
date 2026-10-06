@@ -8,7 +8,7 @@ import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
 import {
     Euro, BookOpen, Receipt, TrendingDown, Download,
-    RefreshCw, BarChart2, AlertTriangle, Database, Banknote
+    RefreshCw, BarChart2, AlertTriangle, Database, Banknote, Scale
 } from 'lucide-react';
 import { format, startOfMonth } from 'date-fns';
 
@@ -105,9 +105,8 @@ export default function AccountingHub() {
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Belege & Kosten</p>
                 <div className="space-y-2">
                     <NavCard icon={Receipt}     label="Belege"             description="Rechnungen & Quittungen"       page="AccountingReceipts"    badge={receipts.length || undefined} badgeVariant="warning" permission="canViewAccountingReceipts" />
-                    <NavCard icon={TrendingDown} label="Kreditoren"        description="Lieferantenrechnungen"         page="AccountingCreditors"   permission="canViewAccountingCreditors" />
+                    <NavCard icon={Scale}       label="Offene Posten"       description="Kreditoren & Verbindlichkeiten" page="AccountingPayables"    badge={(liabilities.length + (permissions.canViewAccountingCreditors ? openOutInvoices.length : 0)) || undefined} badgeVariant="danger" permission="canViewAccountingCreditors" />
                     <NavCard icon={Receipt}  label="Außenaufträge"  description="Angebote & Rechnungen — Events, WKZ" page="ExternalBusiness" badge={openOutInvoices.length || undefined} badgeVariant="warning" permission="canViewAccounting" />
-                    <NavCard icon={TrendingDown} label="Verbindlichkeiten" description="Offene Zahlungen"              page="AccountingLiabilities" badge={liabilities.length || undefined} badgeVariant="danger" permission="canViewLiabilities" />
                     <NavCard icon={RefreshCw}   label="Fixkosten"          description="Monatliche Fixkosten verwalten" page="AccountingFixedCosts"  permission="canViewAccounting" />
                 </div>
             </div>

@@ -19,11 +19,11 @@ import EventLanding from './pages/EventLanding';
 import AccountingDashboard from './pages/AccountingDashboard';
 import AccountingCashbook from './pages/AccountingCashbook';
 import AccountingReceipts from './pages/AccountingReceipts';
-import AccountingCreditors from './pages/AccountingCreditors';
+import AccountingPayables from './pages/AccountingPayables';
 import AccountingExport from './pages/AccountingExport';
 import ExternalBusiness from './pages/ExternalBusiness';
 import AccountingFixedCosts from './pages/AccountingFixedCosts';
-import AccountingLiabilities from './pages/AccountingLiabilities';
+
 import TeamHub from './pages/TeamHub';
 import AccountingHub from './pages/AccountingHub';
 import BetriebHub from './pages/BetriebHub';
@@ -236,11 +236,12 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingDashboard" element={<LayoutWrapper currentPageName="AccountingDashboard"><RoleGuard permission="canViewAccounting"><AccountingDashboard /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingCashbook" element={<LayoutWrapper currentPageName="AccountingCashbook"><RoleGuard permission="canViewAccountingCashbook"><AccountingCashbook /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingReceipts" element={<LayoutWrapper currentPageName="AccountingReceipts"><RoleGuard permission="canViewAccountingReceipts"><AccountingReceipts /></RoleGuard></LayoutWrapper>} />
-      <Route path="/AccountingCreditors" element={<LayoutWrapper currentPageName="AccountingCreditors"><RoleGuard permission="canViewAccountingCreditors"><AccountingCreditors /></RoleGuard></LayoutWrapper>} />
+      <Route path="/AccountingPayables" element={<LayoutWrapper currentPageName="AccountingPayables"><RoleGuard permission="canViewAccountingCreditors"><AccountingPayables /></RoleGuard></LayoutWrapper>} />
+      <Route path="/AccountingCreditors" element={<Navigate to="/AccountingPayables" replace />} />
       <Route path="/ExternalBusiness" element={<LayoutWrapper currentPageName="ExternalBusiness"><RoleGuard permission="canViewAccounting"><ExternalBusiness /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingExport" element={<LayoutWrapper currentPageName="AccountingExport"><RoleGuard permission="canExportAccounting"><AccountingExport /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingFixedCosts" element={<LayoutWrapper currentPageName="AccountingFixedCosts"><RoleGuard permission="canViewAccounting"><AccountingFixedCosts /></RoleGuard></LayoutWrapper>} />
-      <Route path="/AccountingLiabilities" element={<LayoutWrapper currentPageName="AccountingLiabilities"><RoleGuard permission="canViewLiabilities"><AccountingLiabilities /></RoleGuard></LayoutWrapper>} />
+      <Route path="/AccountingLiabilities" element={<Navigate to="/AccountingPayables" replace />} />
       <Route path="/AccountingBank" element={<LayoutWrapper currentPageName="AccountingBank"><RoleGuard permission="canViewAccounting"><AccountingBank /></RoleGuard></LayoutWrapper>} />
       <Route path="/AtlasExport" element={<LayoutWrapper currentPageName="AtlasExport"><RoleGuard permission="canViewAnalytics"><AtlasExport /></RoleGuard></LayoutWrapper>} />
 
@@ -254,6 +255,7 @@ const AuthenticatedApp = () => {
       <Route path="/GuestHub" element={<LayoutWrapper currentPageName="GuestHub"><RoleGuard permission="canViewReservations"><GuestHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/Display" element={<Display />} />
       <Route path="/DisplayManager" element={<Navigate to="/Events" replace />} />
+      <Route path="/ShiftSwaps" element={<Navigate to="/MyShifts" replace />} />
       <Route path="/incidents" element={<LayoutWrapper currentPageName="Incidents"><RoleGuard permission="isManager"><Incidents /></RoleGuard></LayoutWrapper>} />
       <Route path="/incidents/:id" element={<LayoutWrapper currentPageName="IncidentDetail"><RoleGuard permission="isManager"><IncidentDetail /></RoleGuard></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />

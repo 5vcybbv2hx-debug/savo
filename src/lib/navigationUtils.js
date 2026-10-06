@@ -8,7 +8,6 @@
 export const ROUTES = {
   // Core
   DASHBOARD: '/',
-  STORAGE: '/Storage',
   SHOPPING: '/Shopping',
   TODOS: '/Todos',
   CALENDAR: '/Calendar',
@@ -22,7 +21,7 @@ export const ROUTES = {
   
   // Time & Shifts
   SHIFTS: '/Shifts',
-  SHIFT_SWAPS: '/ShiftSwaps',
+  SHIFT_SWAPS: '/MyShifts',
   TIME_TRACKING: '/TimeTracking',
   VACATION: '/Vacation',
   
@@ -68,12 +67,11 @@ export function createPageUrl(pageName) {
  */
 export const BREADCRUMB_PATHS = {
   '/': 'Dashboard',
-  '/Storage': 'Lager',
   '/Shopping': 'Einkaufen',
   '/Todos': 'Aufgaben',
   '/Employees': 'Mitarbeiter',
   '/Shifts': 'Schichten',
-  '/ShiftSwaps': 'Schichtwechsel',
+  '/MyShifts': 'Meine Schichten',
   '/Settings': 'Einstellungen',
   '/DrinkMenu': 'Getränkekarte',
   '/Articles': 'Artikel',
@@ -130,7 +128,7 @@ export const NAVIGATION_ITEMS = [
     section: 'Core',
     items: [
       { name: 'Dashboard', path: ROUTES.DASHBOARD, icon: 'Home' },
-      { name: 'Storage', path: ROUTES.STORAGE, icon: 'Package' },
+
       { name: 'Shopping', path: ROUTES.SHOPPING, icon: 'ShoppingCart' },
       { name: 'Todos', path: ROUTES.TODOS, icon: 'CheckSquare' },
     ],

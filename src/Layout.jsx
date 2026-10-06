@@ -267,7 +267,7 @@ export default function Layout({ children, currentPageName }) {
             return ['Dashboard', 'GuestHub', 'MyShifts', 'TimeManagement'];
         }
         // Fallback (ohne Reservierungs-Recht)
-        return ['Dashboard', 'MyShifts', 'TimeManagement', 'ShiftSwaps'];
+        return ['Dashboard', 'MyShifts', 'TimeManagement', 'Calendar'];
     };
 
     const defaultPages = getRoleDefaultTabs();

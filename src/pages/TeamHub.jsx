@@ -7,7 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
 import {
-    Users, Calendar, Clock, Shield, ArrowLeftRight,
+    Users, Calendar, Clock, Shield,
     Palmtree, Video, Trophy, ListChecks, MapPin, HelpCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -51,14 +51,6 @@ export default function TeamHub() {
     const permissions = usePermissions();
     const today = format(new Date(), 'yyyy-MM-dd');
 
-    // Offene Schichttausch-Anfragen
-    const { data: swapRequests = [] } = useQuery({
-        queryKey: ['shift-swaps-open'],
-        queryFn: () => base44.entities.ShiftSwapRequest.filter({ status: 'offen' }, '-created_date', 50),
-        staleTime: STALE.MEDIUM,
-        enabled: permissions.canRequestShiftSwap,
-    });
-
     // Mitarbeiter-Count
     const { data: employees = [] } = useQuery({
         queryKey: ['employees-count'],
@@ -99,9 +91,8 @@ export default function TeamHub() {
             <div className="mb-6">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Mein Bereich</p>
                 <div className="space-y-2">
-                    <NavCard icon={Clock}         label="Meine Schichten"  description="Eigene Schichten & Verfügbarkeit" page="MyShifts"       permission="canViewShifts" />
+                    <NavCard icon={Clock}         label="Meine Schichten"  description="Eigene Schichten & Tauschanfragen" page="MyShifts"       permission="canViewShifts" />
                     <NavCard icon={Clock}         label="Zeiterfassung"    description="Arbeitsstunden & Übersicht"        page="TimeManagement" permission="canViewOwnTimeEntries" />
-                    <NavCard icon={ArrowLeftRight} label="Schichttausch"   description="Anfragen senden & verwalten"      page="ShiftSwaps"    badge={swapRequests.length || undefined} permission="canRequestShiftSwap" />
                     <NavCard icon={Palmtree}      label="Urlaub"           description="Urlaubsanträge & Planung"          page="Vacation"      badge={vacationRequests.length || undefined} permission="canViewVacation" />
                 </div>
             </div>

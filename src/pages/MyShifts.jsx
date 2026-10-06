@@ -15,6 +15,7 @@ import {
     MoreVertical, Calendar, RepeatIcon
 } from 'lucide-react';
 import ShiftSwapSection from '@/components/shifts/ShiftSwapSection';
+import ShiftSwapRequestModal from '@/components/shifts/ShiftSwapRequestModal';
 import {
     format, startOfWeek, endOfWeek, addDays, startOfMonth, endOfMonth,
     isSameDay, parseISO, isAfter, isBefore, addMonths, subMonths
@@ -503,6 +504,13 @@ function TeamTab({ myEmployeeId }) {
 export default function MyShiftsPage() {
     const { data: employee } = useCurrentEmployee();
     const [syncOpen, setSyncOpen] = useState(false);
+    const [swapShift, setSwapShift] = useState(null);
+    const [swapModalOpen, setSwapModalOpen] = useState(false);
+
+    const handleSwapShift = (shift) => {
+        setSwapShift(shift);
+        setSwapModalOpen(true);
+    };
 
     const { data: shifts = [], isLoading } = useQuery({
         queryKey: ['my-shifts', employee?.id],
@@ -573,17 +581,33 @@ export default function MyShiftsPage() {
 
                     <div className="mt-4">
                         <TabsContent value="week">
-                            <WeekTab shifts={shifts} />
+                            <WeekTab shifts={shifts} onSwap={handleSwapShift} />
                         </TabsContent>
                         <TabsContent value="month">
-                            <MonthTab shifts={shifts} />
+                            <MonthTab shifts={shifts} onSwap={handleSwapShift} />
                         </TabsContent>
                         <TabsContent value="team">
                             <TeamTab myEmployeeId={employee.id} />
                         </TabsContent>
                     </div>
                 </Tabs>
+
+                {/* ── Tauschanfragen (aufklappbar) ─────────────────────── */}
+                <ShiftSwapSection />
             </div>
+
+            {/* ── Tauschanfrage Modal (von Schicht-Liste aus) ──────────────── */}
+            {swapShift && (
+                <ShiftSwapRequestModal
+                    shift={swapShift}
+                    open={swapModalOpen}
+                    onOpenChange={setSwapModalOpen}
+                    onSuccess={() => {
+                        setSwapModalOpen(false);
+                        setSwapShift(null);
+                    }}
+                />
+            )}
 
             {/* ── Kalender-Sync Dialog ──────────────────────────────────── */}
             <Dialog open={syncOpen} onOpenChange={setSyncOpen}>

@@ -6,7 +6,7 @@ import { usePermissions } from '@/components/auth/usePermissions';
 // Import existing page components
 import MyProfilePage from './MyProfile';
 import VacationPage from './Vacation';
-import ShiftSwapsPage from './ShiftSwaps';
+import ShiftSwapSection from '@/components/shifts/ShiftSwapSection';
 import DigitalBusinessCard from '@/components/company/DigitalBusinessCard';
 import UnavailabilityList from '@/components/availability/UnavailabilityList';
 import NotificationSettingsPage from './NotificationSettings';
@@ -72,7 +72,9 @@ export default function MyAreaPage() {
                     </TabsContent>
 
                     <TabsContent value="swaps" className="space-y-0">
-                        <ShiftSwapsPage />
+                        <div className="p-4 sm:p-6 rounded-lg bg-card border border-border">
+                            <ShiftSwapSection />
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="notifications" className="space-y-0">

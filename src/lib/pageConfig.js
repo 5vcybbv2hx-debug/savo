@@ -132,14 +132,7 @@ export const PAGE_REGISTRY = {
     section: 'lager',
     permission: 'canViewSuppliers',
   },
-  storage: {
-    path: 'Storage',
-    displayName: 'Lagerplätze',
-    shortName: 'Lager',
-    icon: Package,
-    section: 'lager',
-    permission: 'canViewWarehouse',
-  },
+
 
   // Karte & Rezepte
   drinkMenu: {
@@ -208,14 +201,7 @@ export const PAGE_REGISTRY = {
     section: 'team',
     permission: 'canViewOwnTimeEntries',
   },
-  shiftSwaps: {
-    path: 'ShiftSwaps',
-    displayName: 'Schichttausch',
-    shortName: 'Tausch',
-    icon: ArrowLeftRight,
-    section: 'team',
-    permission: 'canRequestShiftSwap',
-  },
+
   permissions: {
     path: 'Permissions',
     displayName: 'Berechtigungen',
@@ -333,9 +319,9 @@ export const PAGE_REGISTRY = {
     permission: 'canViewAccountingReceipts',
   },
   accountingCreditors: {
-    path: 'AccountingCreditors',
-    displayName: 'Kreditoren',
-    shortName: 'Kreditoren',
+    path: 'AccountingPayables',
+    displayName: 'Offene Posten',
+    shortName: 'Posten',
     icon: TrendingDown,
     section: 'accounting',
     permission: 'canViewAccountingCreditors',
@@ -383,7 +369,7 @@ export const NAVIGATION_GROUPS = [
   {
     id: 'lager',
     groupName: 'Lager',
-    pages: ['articles', 'warehouse', 'inventory', 'wastage', 'suppliers', 'storage'],
+    pages: ['articles', 'warehouse', 'inventory', 'wastage', 'suppliers'],
   },
   {
     id: 'karte',
@@ -393,7 +379,7 @@ export const NAVIGATION_GROUPS = [
   {
     id: 'team',
     groupName: 'Team',
-    pages: ['employees', 'calendar', 'teamCalendar', 'timeManagement', 'vacation', 'shiftSwaps', 'permissions', 'teamMeeting'],
+    pages: ['employees', 'calendar', 'teamCalendar', 'timeManagement', 'vacation', 'permissions', 'teamMeeting'],
   },
   {
     id: 'accounting',

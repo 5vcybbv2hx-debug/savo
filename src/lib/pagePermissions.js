@@ -41,6 +41,7 @@ export const PAGE_PERMISSIONS = {
     AccountingCashbook:      'canViewAccountingCashbook',
     AccountingReceipts:      'canViewAccountingReceipts',
     AccountingCreditors:     'canViewAccountingCreditors',
+    AccountingPayables:      'canViewAccountingCreditors',
     AccountingDebitors:      'canViewAccountingDebitors',
     AccountingExport:        'canExportAccounting',
     AccountingMonthlyClosing:'canCloseAccountingMonth',

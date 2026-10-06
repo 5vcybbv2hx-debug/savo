@@ -52,7 +52,7 @@ const MODULE_REGISTRY = [
         page: 'Calendar',
         requires: ['mitarbeiter'],
         dependents: ['zeiterfassung'],
-        subpages: ['TeamCalendar', 'ShiftSwaps', 'ShiftAnalytics', 'MyShifts'],
+        subpages: ['TeamCalendar', 'ShiftAnalytics', 'MyShifts'],
     },
     {
         id: 'zeiterfassung',
@@ -155,7 +155,7 @@ const MODULE_REGISTRY = [
         category: 'lager',
         page: 'Articles',
         dependents: ['rezepte', 'kalkulation', 'auffuellen', 'menu', 'lieferanten'],
-        subpages: ['Inventory', 'Storage', 'Warehouse', 'Wastage'],
+        subpages: ['Inventory', 'Warehouse', 'Wastage'],
     },
     {
         id: 'auffuellen',

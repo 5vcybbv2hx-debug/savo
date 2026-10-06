@@ -32,7 +32,7 @@ import Recipes from './pages/Recipes';
 import Restock from './pages/Restock';
 import GuestHub from './pages/GuestHub';
 import Settings from './pages/Settings';
-import ShiftSwaps from './pages/ShiftSwaps';
+
 import Shopping from './pages/Shopping';
 import Suppliers from './pages/Suppliers';
 import TeamCalendar from './pages/TeamCalendar';
@@ -41,7 +41,7 @@ import TimeManagement from './pages/TimeManagement';
 import TimeTracking from './pages/TimeTracking';
 import Todos from './pages/Todos';
 import Vacation from './pages/Vacation';
-import Storage from './pages/Storage';
+
 import StorageLocationScan from './pages/StorageLocationScan';
 import TeamHub from './pages/TeamHub';
 import AccountingHub from './pages/AccountingHub';
@@ -97,7 +97,6 @@ const CORE_PAGES = {
     "Restock": Restock,
     "GuestHub": GuestHub,
     "Settings": Settings,
-    "ShiftSwaps": ShiftSwaps,
     "Shopping": Shopping,
     "Suppliers": Suppliers,
     "TeamCalendar": TeamCalendar,
@@ -106,7 +105,6 @@ const CORE_PAGES = {
     "TimeTracking": TimeTracking,
     "Todos": Todos,
     "Vacation": Vacation,
-    "Storage": Storage,
     "Warehouse": Warehouse,
     "Wastage": Wastage,
     "Inventory": Inventory,

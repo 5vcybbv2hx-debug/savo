@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import {
     BookOpen, Receipt, TrendingDown, Download,
     RefreshCw, AlertTriangle, CheckCircle2, ChevronRight,
-    Euro, ArrowDownUp, Wallet
+    Euro, ArrowDownUp
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, isAfter, subMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -150,13 +150,13 @@ export default function AccountingDashboard() {
             list.push({
                 type: 'error',
                 label: `${stats.overdueCreditors} überfällige Kreditorenrechnung${stats.overdueCreditors > 1 ? 'en' : ''} · ${fmt(stats.overdueCreditorAmount)} €`,
-                href: '/AccountingCreditors',
+                href: '/AccountingPayables',
             });
         if (stats.overdueLiabilities > 0)
             list.push({
                 type: 'error',
                 label: `${stats.overdueLiabilities} überfällige Verbindlichkeit${stats.overdueLiabilities > 1 ? 'en' : ''}`,
-                href: '/AccountingLiabilities',
+                href: '/AccountingPayables',
             });
         return list;
     }, [stats]);
@@ -169,7 +169,7 @@ export default function AccountingDashboard() {
     const QUICK_LINKS = [
         { label: 'Belege',          icon: Receipt,      href: '/AccountingReceipts',   color: 'text-blue-400',   bg: 'bg-blue-500/10'   },
         { label: 'Kassenbuch',      icon: BookOpen,     href: '/AccountingCashbook',   color: 'text-amber-400',  bg: 'bg-amber-500/10'  },
-        { label: 'Kreditoren',      icon: TrendingDown, href: '/AccountingCreditors',  color: 'text-red-400',    bg: 'bg-red-500/10'    },
+        { label: 'Offene Posten',   icon: TrendingDown, href: '/AccountingPayables',   color: 'text-red-400',    bg: 'bg-red-500/10'    },
         { label: 'Export',          icon: Download,     href: '/AccountingExport',     color: 'text-purple-400', bg: 'bg-purple-500/10' },
     ];
 
@@ -277,7 +277,7 @@ export default function AccountingDashboard() {
                 <div className="space-y-1">
                     {[
                         { label: 'Fixkosten',         icon: RefreshCw,   href: '/AccountingFixedCosts',    color: 'text-orange-400' },
-                        { label: 'Verbindlichkeiten', icon: Wallet,      href: '/AccountingLiabilities',   color: 'text-rose-400'   },
+
                         { label: 'Tagesabschluss',    icon: ArrowDownUp, href: '/DailyAnalysis',           color: 'text-cyan-400'   },
                     ].map(item => (
                         <Link key={item.href} to={item.href}>
