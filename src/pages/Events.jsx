@@ -101,6 +101,13 @@ export default function Events() {
             const allSlides = await base44.entities.DisplaySlide.list('sort_order', 200);
             const existingSlide = allSlides.find(s => s.cta_text === `event:${eventId}`);
             const maxOrder = allSlides.reduce((m, s) => Math.max(m, s.sort_order || 0), 0);
+            // show_from/show_until: bei UPDATE die bestehenden Werte erhalten
+            // (sonst kollabiert das Sichtbarkeitsfenster auf den Event-Tag und die
+            // öffentliche Website blendet das Event bis zum Event-Tag aus).
+            // Bei CREATE: show_from leer (sofort sichtbar), show_until = event.date
+            // (am Event-Tag noch sichtbar, danach automatisch weg).
+            const show_from  = existingSlide ? (existingSlide.show_from || '') : '';
+            const show_until = existingSlide ? (existingSlide.show_until || '') : (event.date || '');
             const payload = {
                 title:            event.title,
                 subtitle:         event.artist_name ? `mit ${event.artist_name}` : (event.event_type || 'Event'),
@@ -112,8 +119,8 @@ export default function Events() {
                 price_info:       event.entry_fee ? `Eintritt: ${event.entry_fee} €` : 'Eintritt frei',
                 cta_text:         `event:${eventId}`,
                 is_active:        event.status !== 'Abgesagt',
-                show_from:        event.date || '',
-                show_until:       event.date || '',
+                show_from,
+                show_until,
                 sort_order:       existingSlide ? existingSlide.sort_order : maxOrder + 10,
             };
             if (existingSlide) {
