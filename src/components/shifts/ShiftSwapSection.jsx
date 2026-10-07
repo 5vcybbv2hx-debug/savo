@@ -70,7 +70,9 @@ export default function ShiftSwapSection({ myShifts = [] }) {
     });
 
     const { data: shifts = [] } = useQuery({
-        queryKey: ['shifts'],
+        // Eigener Key — ['shifts'] würde den Schichtplan-Cache (Calendar.jsx) überschreiben,
+        // da hier nur heute..+60Tage geladen werden (fetchUntilDateCovered).
+        queryKey: ['shifts', 'swap-section'],
         queryFn: async () => {
             const from = format(new Date(), 'yyyy-MM-dd');
             const to = format(addDays(new Date(), 60), 'yyyy-MM-dd');
