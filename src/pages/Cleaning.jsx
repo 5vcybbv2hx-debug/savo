@@ -8,8 +8,9 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
     Plus, Sparkles, FileText, Cloud, CloudOff, CheckCircle2,
-    Circle, ChevronRight, RefreshCw, Trash2, Archive
+    Circle, ChevronRight, RefreshCw, Trash2, Archive, Check
 } from 'lucide-react';
+import SwipeRow from '@/components/ui/SwipeRow';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import AreasManager from '@/components/cleaning/AreasManager';
 import PinVerification from '@/components/terminal/PinVerification';
 import { usePermissions } from '@/components/auth/usePermissions';
@@ -111,6 +113,21 @@ export default function Cleaning() {
     const completedCount = tasks.filter(t => t.is_completed).length;
     const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
+    // Aufgaben nach Bereich gruppieren (für Bulk-Button je Bereich)
+    const groupedTasks = useMemo(() => {
+        const groups = {};
+        filteredTasks.forEach(t => {
+            if (!groups[t.area]) groups[t.area] = [];
+            groups[t.area].push(t);
+        });
+        return Object.keys(groups).sort().map(area => ({
+            area,
+            tasks: groups[area],
+            open: groups[area].filter(t => !t.is_completed),
+            done: groups[area].filter(t => t.is_completed),
+        }));
+    }, [filteredTasks]);
+
     const updateMutation = useMutation({
         mutationFn: async ({ id, data }) => {
             if (!navigator.onLine) {
@@ -149,6 +166,23 @@ export default function Cleaning() {
                 }
             });
         }
+    };
+
+    const handleBulkComplete = (areaTasks) => {
+        const openTasks = areaTasks.filter(t => !t.is_completed);
+        if (openTasks.length === 0) return;
+        const displayName = getUserDisplayName({ employeeName: permissions.employeeName, user });
+        openTasks.forEach(task => {
+            updateMutation.mutate({
+                id: task.id,
+                data: {
+                    is_completed: true,
+                    completed_by: displayName,
+                    completed_at: new Date().toISOString()
+                }
+            });
+        });
+        toast.success(`${openTasks.length} Aufgabe${openTasks.length === 1 ? '' : 'n'} erledigt`);
     };
 
     const handlePinVerified = async (pin) => {
@@ -291,44 +325,87 @@ export default function Cleaning() {
                     </div>
                 )}
 
-                {/* ── Aufgabenliste ─────────────────────────────────────── */}
-                <div className="space-y-2">
+                {/* ── Aufgabenliste (nach Bereich gruppiert) ─────────────── */}
+                <div className="space-y-4">
                     {filteredTasks.length === 0 && (
                         <div className="text-center py-12 text-muted-foreground">
                             <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" />
                             <p className="font-medium">Keine Aufgaben in diesem Bereich</p>
                         </div>
                     )}
-                    {filteredTasks.map(task => (
-                        <button
-                            key={task.id}
-                            onClick={() => handleComplete(task)}
-                            className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all active:scale-[0.98] text-left ${
-                                task.is_completed
-                                    ? 'bg-muted/50 border-border/50 opacity-60'
-                                    : 'bg-card border-border hover:border-primary/40 shadow-sm'
-                            }`}
-                        >
-                            <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                                task.is_completed
-                                    ? 'bg-emerald-500 border-emerald-500'
-                                    : 'border-border'
-                            }`}>
-                                {task.is_completed && <CheckCircle2 className="w-4 h-4 text-white" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className={`font-medium text-sm leading-tight ${task.is_completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                                    {task.title}
-                                </p>
-                                {task.is_completed && task.completed_by && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">✓ {task.completed_by}</p>
-                                )}
-                                {!task.is_completed && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">{task.area} · {task.frequency}</p>
+                    {groupedTasks.map(group => (
+                        <div key={group.area}>
+                            {/* Bereichs-Header mit Bulk-Button */}
+                            <div className="flex items-center justify-between mb-2 px-1">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-semibold text-sm text-foreground">{group.area}</h3>
+                                    <Badge variant="outline" className={cn(
+                                        "text-xs",
+                                        group.done.length === group.tasks.length
+                                            ? "border-emerald-500 text-emerald-500"
+                                            : "border-border/70 text-muted-foreground"
+                                    )}>
+                                        {group.done.length}/{group.tasks.length}
+                                    </Badge>
+                                </div>
+                                {group.open.length > 0 && (
+                                    <button
+                                        onClick={() => handleBulkComplete(group.tasks)}
+                                        className="text-[10px] font-medium text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
+                                        title="Alle offenen Aufgaben dieses Bereichs als erledigt markieren"
+                                    >
+                                        Alle erledigen
+                                    </button>
                                 )}
                             </div>
-                            {!task.is_completed && <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
-                        </button>
+
+                            {/* Aufgaben-Zeilen */}
+                            <div className="space-y-2">
+                                {group.open.map(task => (
+                                    <SwipeRow
+                                        key={task.id}
+                                        onSwipe={() => handleComplete(task)}
+                                        revealColor="bg-emerald-600"
+                                        revealIcon={Check}
+                                        disabled={permissions.isTerminal}
+                                        contentClassName="rounded-xl"
+                                    >
+                                        <button
+                                            onClick={() => handleComplete(task)}
+                                            className="w-full flex items-center gap-3 p-4 rounded-xl border transition-all active:scale-[0.98] text-left bg-card border-border hover:border-primary/40 shadow-sm"
+                                        >
+                                            <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all border-border" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm leading-tight text-foreground">
+                                                    {task.title}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-0.5">{task.area} · {task.frequency}</p>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                        </button>
+                                    </SwipeRow>
+                                ))}
+                                {group.done.map(task => (
+                                    <button
+                                        key={task.id}
+                                        onClick={() => handleComplete(task)}
+                                        className="w-full flex items-center gap-3 p-4 rounded-xl border transition-all active:scale-[0.98] text-left bg-muted/50 border-border/50 opacity-60"
+                                    >
+                                        <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all bg-emerald-500 border-emerald-500">
+                                            <CheckCircle2 className="w-4 h-4 text-white" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm leading-tight line-through text-muted-foreground">
+                                                {task.title}
+                                            </p>
+                                            {task.completed_by && (
+                                                <p className="text-xs text-muted-foreground mt-0.5">✓ {task.completed_by}</p>
+                                            )}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </div>
 
