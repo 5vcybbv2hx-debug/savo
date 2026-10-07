@@ -61,7 +61,6 @@ export const PAGE_PERMISSIONS = {
     Permissions:             'canEditEmployeePermissions',
     PermissionsNew:          'canEditEmployeePermissions',
     TeamMeeting:             'canViewTeamMeeting',
-    WorldCupSchedule:        'canViewTeamMeeting',
     Stationsplan:            'canViewShifts',
 
     // ── Analytik ───────────────────────────────────────────────────────────────

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { getHolidaysBW, getHolidayName } from './getHolidays';
 import { usePermissions } from '@/components/auth/usePermissions';
 
-export default function ShiftCalendar({ shifts, allShifts, employees, requirements = [], vacationRequests = [], unavailabilityRequests = [], provisionalRequests = [], swapRequests = [], wcMatches = [], onAddShift, onSelectShift, onShiftMove, selectedDate, setSelectedDate, onNavigate }) {
+export default function ShiftCalendar({ shifts, allShifts, employees, requirements = [], vacationRequests = [], unavailabilityRequests = [], provisionalRequests = [], swapRequests = [], onAddShift, onSelectShift, onShiftMove, selectedDate, setSelectedDate, onNavigate }) {
     const permissions = usePermissions();
     const queryClient = useQueryClient();
     const [viewMode, setViewMode] = useState('week');
@@ -255,20 +255,6 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                     <div className="w-3 h-3 rounded bg-secondary opacity-50"></div>
                     <span className="text-muted-foreground">Abgelehnt</span>
                 </div>
-                {wcMatches.length > 0 && <>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded bg-green-600/80"></div>
-                        <span className="text-muted-foreground">⚽ WM</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded bg-orange-500/90"></div>
-                        <span className="text-muted-foreground">⭐ Topspiel</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded bg-yellow-400/90"></div>
-                        <span className="text-muted-foreground">🇩🇪 Deutschland</span>
-                    </div>
-                </>}
             </div>
 
             {/* Weekday Headers */}
@@ -301,7 +287,6 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                     const holidayName = getHolidayName(day, holidays);
                     const birthdays = getBirthdaysForDay(day);
                     const unavailables = getUnavailableForDay(day);
-                    const dayWcMatches = wcMatches.filter(m => m.kickoff_time?.slice(0, 10) === dateStr);
                     const daySwapRequests = swapRequests.filter(r =>
                         r.shift_date === dateStr &&
                         (r.status === 'offen' || r.status === 'ausstehend')
@@ -369,26 +354,8 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                                 </div>
                             )}
                             
-                            {/* WM-Spiele Badges */}
-                            {dayWcMatches.length > 0 && (
-                                <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-0.5 px-1 pb-1">
-                                    {dayWcMatches.map(m => (
-                                        <div key={m.id} className={cn(
-                                            "text-[9px] font-semibold px-1.5 py-0.5 rounded truncate leading-tight",
-                                            m.is_germany_game
-                                                ? "bg-yellow-400/90 text-black"
-                                                : m.is_top_game
-                                                ? "bg-orange-500/90 text-foreground"
-                                                : "bg-green-600/80 text-foreground"
-                                        )}>
-                                            {m.is_germany_game ? '🇩🇪' : m.is_top_game ? '⭐' : '⚽'} {m.home_team} – {m.away_team}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
                             {/* Content Area */}
-                            <div className={`p-1.5 h-full flex flex-col gap-0.5 overflow-y-auto max-h-[400px] ${(holidayName || birthdays.length > 0) ? 'pt-9' : 'pt-8'} ${dayWcMatches.length > 0 ? 'pb-7' : ''}`}>
+                            <div className={`p-1.5 h-full flex flex-col gap-0.5 overflow-y-auto max-h-[400px] ${(holidayName || birthdays.length > 0) ? 'pt-9' : 'pt-8'}`}>
                                 {/* Confirmed Shifts */}
                                 {dayShifts.map((shift) => (
                                     <div

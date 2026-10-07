@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Clock, User, Umbrella, Star, CalendarCheck, Calendar, AlertCircle, Trophy } from 'lucide-react';
+import { Clock, User, Umbrella, Star, CalendarCheck, Calendar, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function Section({ icon: Icon, title, color, children }) {
@@ -64,8 +64,6 @@ export default function DayDetailModal({
                 </DialogHeader>
 
                 <div className="space-y-6 pt-2">
-                    {/* WM-Spiele */}
-
                     {/* Feiertage */}
                     {dayHolidays.length > 0 && (
                         <Section icon={Star} title="Feiertage" color="text-rose-400">

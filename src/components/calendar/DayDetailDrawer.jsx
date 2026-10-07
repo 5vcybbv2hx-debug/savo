@@ -53,8 +53,6 @@ export default function DayDetailDrawer({
                 </DrawerHeader>
 
                 <div className="overflow-y-auto p-4 space-y-5 pb-8">
-                    {/* WM-Spiele */}
-
                     {isEmpty && (
                         <p className="text-sm text-muted-foreground text-center py-6">Keine Einträge für diesen Tag.</p>
                     )}
