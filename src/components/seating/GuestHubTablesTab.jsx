@@ -13,10 +13,13 @@ import { STATUS_CONFIG, RES_STATUS_CONFIG, getEffectiveTableColor, getEffectiveT
 export default function GuestHubTablesTab({
     tableWithStatus, stats, guestFilter, suggested, permissions,
     planView, setPlanView,
+    highlightedTableNumbers = [],
     onTableSelect, onTableNewReservation, onCreateTable, onEditTable
 }) {
     const getDayRes = (tableId) =>
         tableWithStatus.find(ts => ts.table.id === tableId)?.dayReservations || [];
+
+    const isHighlighted = (table) => highlightedTableNumbers.includes(table.table_number);
 
     const hasNotes = (tableId) =>
         getDayRes(tableId).some(r => r.notes && r.notes.trim());
@@ -114,7 +117,8 @@ export default function GuestHubTablesTab({
                                 className={cn(
                                     'rounded-2xl border-2 p-3 text-left transition-all active:scale-95 min-h-[96px] flex flex-col justify-between relative',
                                     effColor,
-                                    suggested.some(s => s.id === table.id) && 'ring-2 ring-amber-400 ring-offset-1 ring-offset-background'
+                                    suggested.some(s => s.id === table.id) && 'ring-2 ring-amber-400 ring-offset-1 ring-offset-background',
+                                    isHighlighted(table) && 'ring-2 ring-amber-500 ring-offset-1 ring-offset-background'
                                 )}>
 
                                 <div className="flex items-start justify-between gap-1">
@@ -168,7 +172,10 @@ export default function GuestHubTablesTab({
                         return (
                             <button key={table.id}
                                 onClick={() => handleTableClick(table, status)}
-                                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-border bg-card hover:bg-accent/30 active:scale-[0.99] transition-all min-h-[60px] text-left">
+                                className={cn(
+                                    'w-full flex items-center gap-3 p-3.5 rounded-2xl border bg-card hover:bg-accent/30 active:scale-[0.99] transition-all min-h-[60px] text-left',
+                                    isHighlighted(table) ? 'border-amber-500/50 ring-1 ring-amber-500/30' : 'border-border'
+                                )}>
 
                                 {/* Tisch-Nummer */}
                                 <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0', effColor)}>

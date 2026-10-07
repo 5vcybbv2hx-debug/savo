@@ -1,17 +1,17 @@
 /**
- * GuestHub — Unified Reservations + Table Plan page.
- * 3 main tabs: Heute / Reservierungen / Tischplan
- * No sub-tabs, no view toggles, all data directly visible.
+ * GuestHub — "Ein Tag, ein Blick"
+ * Eine Seite, eine Datumszeile steuert Reservierungs-Zeitstrahl UND Tischplan.
+ * Keine Tabs mehr. Archiv = altes Datum wählen.
  */
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
-import { format, subDays, addDays, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-    Plus, Search, Download, Clock, Grid2x2, X, Settings,
-    ChevronLeft, ChevronRight, Users, AlertCircle
+    Plus, Search, Download, X, Settings,
+    ChevronLeft, ChevronRight, Users, Clock, MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,8 +22,7 @@ import ReservationModal from '@/components/reservations/ReservationModal';
 import { useReservationLifecycle } from '@/features/reservations/hooks/useReservationLifecycle';
 import {
     useReservations, useArchivedReservations,
-    useCreateReservation, useUpdateReservation, useDeleteReservation,
-    RES_KEYS
+    useCreateReservation, useUpdateReservation, useDeleteReservation
 } from '@/features/reservations/hooks/useReservations';
 import { getTableStatus, getReservationTables } from '@/components/seating/QuickReservationSheet';
 import QuickReservationSheet from '@/components/seating/QuickReservationSheet';
@@ -31,18 +30,26 @@ import TableModal from '@/components/seating/TableModal';
 import RoomManager from '@/components/seating/RoomManager';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LoadingState, EmptyState, ErrorState, ListSkeleton } from '@/components/ui/StateDisplay';
-import GuestHubTodayTab from '@/components/reservations/GuestHubTodayTab';
 import GuestHubTablesTab from '@/components/seating/GuestHubTablesTab';
+import { getTableDisplayName } from '@/components/tables/TableNameDisplay';
 
+// Filter-Chips für den Zeitstrahl (alte Status-Filter-Logik, ohne Archiv-Tab)
 const STATUS_FILTERS = [
     { value: 'alle',       label: 'Alle' },
-    { value: 'vorgemerkt', label: 'Vorgemerkt' },
+    { value: 'vorgemerkt', label: 'Offen' },
     { value: 'bestätigt',  label: 'Bestätigt' },
     { value: 'erschienen', label: 'Erschienen' },
-    { value: 'no-show',    label: 'No-Show' },
     { value: 'storniert',  label: 'Storniert' },
-    { value: 'archiv',     label: 'Archiv' },
 ];
+
+// Status-Badge-Farben für den Zeitstrahl
+const STATUS_BADGE = {
+    'bestätigt':  'bg-green-500/15 text-green-400 border-green-500/30',
+    'vorgemerkt': 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    'erschienen': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+    'no-show':    'bg-muted text-muted-foreground border-border',
+    'storniert':  'bg-muted text-muted-foreground border-border',
+};
 
 function suggestTables(tables, reservations, guestCount, date, time) {
     const available = tables.filter(t => {
@@ -65,22 +72,22 @@ function addDaysHelper(dateStr, days) {
 export default function GuestHub() {
     const permissions = usePermissions();
 
-    // Main tab state
-    const [tab, setTab] = useState('today');
-
-    // Reservations tab state
+    // ── State ──────────────────────────────────────────────────────────────
     const [statusFilter, setStatusFilter] = useState('alle');
     const [searchTerm, setSearchTerm] = useState('');
     const [resModalOpen, setResModalOpen] = useState(false);
     const [selectedRes, setSelectedRes] = useState(null);
+    const [highlightedRes, setHighlightedRes] = useState(null);
 
-    // Table plan tab state
+    // Tischplan
     const [selectedTable, setSelectedTable] = useState(null);
     const [showTableModal, setShowTableModal] = useState(null);
     const [showRooms, setShowRooms] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [planView, setPlanView] = useState('plan');
     const [guestFilter, setGuestFilter] = useState('');
+
+    // Zentrale Datumsquelle — steuert Zeitstrahl UND Tischplan
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
     const [filterTime, setFilterTime] = useState(() => {
         const n = new Date();
@@ -91,7 +98,7 @@ export default function GuestHub() {
     const { data: activeReservations = [], isLoading: activeLoading, isError: reservationsError } = useReservations();
     const { data: archivedReservations = [] } = useArchivedReservations();
     const allReservations = useMemo(() => [...activeReservations, ...archivedReservations], [activeReservations, archivedReservations]);
-    
+
     useReservationLifecycle(activeReservations);
 
     const { data: tables = [] } = useQuery({
@@ -125,13 +132,9 @@ export default function GuestHub() {
         setResModalOpen(false);
     };
 
-    const handleArchive = (id, isArchived) =>
-        updateMutation.mutate({ id, data: { is_archived: !isArchived } });
-
     const handleConfirm = (id) =>
         updateMutation.mutate({ id, data: { status: 'bestätigt' } });
 
-    // Tisch-Klick bei freiem Tisch → neue Reservierung mit vorausgewähltem Tisch
     const handleTableNewReservation = (table) => {
         setSelectedRes({ table: table.table_number, guests: table.capacity });
         setResModalOpen(true);
@@ -140,60 +143,28 @@ export default function GuestHub() {
     const handleCancel = (id) =>
         updateMutation.mutate({ id, data: { status: 'storniert' } });
 
-    // ── Filtered data ────────────────────────────────────────────────────────
+    // ── Reservierungen des gewählten Tages (chronologisch) ───────────────────
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayReservations = useMemo(() =>
-        activeReservations
-            .filter(r => r.date === todayStr && r.status !== 'storniert')
+
+    const dayReservations = useMemo(() =>
+        allReservations
+            .filter(r => r.date === filterDate)
             .sort((a, b) => (a.time || '').localeCompare(b.time || '')),
-        [activeReservations, todayStr]
+        [allReservations, filterDate]
     );
 
-    const { reservations: filteredReservations } = useMemo(() => {
+    const filteredReservations = useMemo(() => {
         const search = searchTerm.toLowerCase();
-        const isArchiveView = statusFilter === 'archiv';
-
-        const matches = (r) => {
-            // Archiv-Tab: nur archivierte Einträge anzeigen
-            if (isArchiveView) return r.is_archived === true;
-            // Alle anderen Tabs: niemals archivierte anzeigen
-            if (r.is_archived) return false;
-            // Vergangene Reservierungen (vor heute) ausblenden — gehören ins Archiv
-            if (r.date < todayStr) return false;
-            // Suchfilter
+        return dayReservations.filter(r => {
+            // Zukünftiges Datum: archivierte Einträge ausblenden
+            if (r.is_archived && filterDate >= todayStr) return false;
             if (search && !r.customer_name?.toLowerCase().includes(search) && !r.phone?.toLowerCase().includes(search)) return false;
-            // Statusfilter
             if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
             return true;
-        };
+        });
+    }, [dayReservations, searchTerm, statusFilter, filterDate, todayStr]);
 
-        const all = allReservations.filter(matches)
-            .sort((a, b) => a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? ''));
-
-        return { reservations: all };
-    }, [allReservations, searchTerm, statusFilter, todayStr]);
-
-    // Weiterblättern (Prev/Next) im Reservierungs-Modal — folgt der Liste des
-    // gerade aktiven Tabs (Heute-Tab: nach Uhrzeit sortiert; sonst: Gesamtliste
-    // nach Datum+Uhrzeit sortiert, wie auf dem Bildschirm sichtbar).
-    const reservationNavList = tab === 'today' ? todayReservations : filteredReservations;
-
-    const handleNavigateReservation = (direction) => {
-        if (!selectedRes?.id) return;
-        const idx = reservationNavList.findIndex(r => r.id === selectedRes.id);
-        if (idx === -1) return;
-        const nextIdx = direction === 'next' ? idx + 1 : idx - 1;
-        if (nextIdx < 0 || nextIdx >= reservationNavList.length) return;
-        setSelectedRes(reservationNavList[nextIdx]);
-    };
-
-    const reservationNavPosition = (() => {
-        if (!selectedRes?.id) return null;
-        const idx = reservationNavList.findIndex(r => r.id === selectedRes.id);
-        if (idx === -1) return null;
-        return { index: idx, total: reservationNavList.length, hasPrev: idx > 0, hasNext: idx < reservationNavList.length - 1 };
-    })();
-
+    // ── Tischplan-Daten (für filterDate) ─────────────────────────────────────
     const filteredTables = useMemo(() => {
         let list = selectedRoom ? tables.filter(t => t.room === selectedRoom) : tables;
         if (guestFilter) list = list.filter(t => t.capacity >= Number(guestFilter));
@@ -231,9 +202,49 @@ export default function GuestHub() {
         soon: tableWithStatus.filter(t => t.status === 'soon').length,
     }), [tableWithStatus]);
 
+    // KPI-Zeile: X Gäste · Y frei · Z reserviert · N offen
+    const kpi = useMemo(() => {
+        const active = dayReservations.filter(r => r.status !== 'storniert');
+        const guests = active.reduce((s, r) => s + (Number(r.guests) || 0), 0);
+        const offen = dayReservations.filter(r => r.status === 'vorgemerkt').length;
+        return { guests, frei: stats.free, reserviert: stats.reserved, offen };
+    }, [dayReservations, stats]);
+
     const suggested = guestFilter
         ? suggestTables(tables, allReservations, Number(guestFilter), filterDate, filterTime)
         : [];
+
+    // Hervorgehobene Tische der im Zeitstrahl angetippten Reservierung
+    const highlightedTableNumbers = useMemo(
+        () => highlightedRes ? getReservationTables(highlightedRes) : [],
+        [highlightedRes]
+    );
+
+    // ── Navigation im Reservierungs-Modal (folgt dem Zeitstrahl des Tages) ──
+    const reservationNavList = filteredReservations;
+
+    const handleNavigateReservation = (direction) => {
+        if (!selectedRes?.id) return;
+        const idx = reservationNavList.findIndex(r => r.id === selectedRes.id);
+        if (idx === -1) return;
+        const nextIdx = direction === 'next' ? idx + 1 : idx - 1;
+        if (nextIdx < 0 || nextIdx >= reservationNavList.length) return;
+        setSelectedRes(reservationNavList[nextIdx]);
+    };
+
+    const reservationNavPosition = (() => {
+        if (!selectedRes?.id) return null;
+        const idx = reservationNavList.findIndex(r => r.id === selectedRes.id);
+        if (idx === -1) return null;
+        return { index: idx, total: reservationNavList.length, hasPrev: idx > 0, hasNext: idx < reservationNavList.length - 1 };
+    })();
+
+    // Reservierung antippen → Modal öffnen UND Tische im Plan hervorheben
+    const openReservation = (res) => {
+        setHighlightedRes(res);
+        setSelectedRes(res);
+        setResModalOpen(true);
+    };
 
     const handleExport = () => {
         const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bar Manager//Reservierungen//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Bar Reservierungen','X-WR-TIMEZONE:Europe/Berlin'];
@@ -265,43 +276,28 @@ export default function GuestHub() {
         </div>
     );
 
+    const isToday = filterDate === todayStr;
+
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
             <div className="max-w-2xl mx-auto">
 
-                {/* ── Sticky header ──────────────────────────────────────── */}
+                {/* ── Sticky header: Titel + Neu + Datumszeile ───────────── */}
                 <div className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b border-border">
                     <div className="flex items-center justify-between gap-2 px-4 py-3">
                         <div>
                             <h1 className="text-lg font-bold text-foreground">Gäste & Tische</h1>
                             <p className="text-xs text-muted-foreground">
-                                {todayReservations.length} heute · {stats.free} Tische frei
+                                {format(parseISO(filterDate), "EEEE, d. MMMM", { locale: de })}
                             </p>
                         </div>
                         <div className="flex gap-1.5">
-                            {tab === 'reservations' && permissions.canEditReservations && (
-                                <>
-                                    <Button variant="outline" size="icon" onClick={handleExport} className="h-9 w-9">
-                                        <Download className="w-4 h-4" />
-                                    </Button>
-                                    <Button onClick={() => { setSelectedRes(null); setResModalOpen(true); }}
-                                        className="h-9 gap-1 text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
-                                        <Plus className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Reservierung</span>
-                                    </Button>
-                                </>
+                            {permissions.canEditReservations && (
+                                <Button variant="outline" size="icon" onClick={handleExport} className="h-9 w-9">
+                                    <Download className="w-4 h-4" />
+                                </Button>
                             )}
-                            {tab === 'tables' && permissions.isManager && (
-                                <>
-                                    <Button variant="outline" size="sm" onClick={() => setShowRooms(true)} className="h-9 gap-1 text-xs">
-                                        <Settings className="w-3.5 h-3.5" /><span className="hidden sm:inline">Räume</span>
-                                    </Button>
-                                    <Button size="sm" onClick={() => setShowTableModal({})} className="h-9 gap-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
-                                        <Plus className="w-3.5 h-3.5" /><span className="hidden sm:inline">Tisch</span>
-                                    </Button>
-                                </>
-                            )}
-                            {tab === 'today' && permissions.canEditReservations && (
+                            {permissions.canEditReservations && (
                                 <Button onClick={() => { setSelectedRes(null); setResModalOpen(true); }}
                                     className="h-9 gap-1 text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
                                     <Plus className="w-4 h-4" />
@@ -311,194 +307,216 @@ export default function GuestHub() {
                         </div>
                     </div>
 
-                    {/* Main tabs */}
-                    <div className="flex border-t border-border">
-                        {[
-                            { id: 'today', label: 'Heute', icon: Clock },
-                            { id: 'reservations', label: 'Reservierungen', icon: Users },
-                            { id: 'tables', label: 'Tischplan', icon: Grid2x2 },
-                        ].map(({ id, label, icon: Icon }) => (
-                            <button key={id} onClick={() => setTab(id)}
-                                className={cn('flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-medium transition-colors border-b-2',
-                                    tab === id ? 'text-foreground border-b-foreground' : 'text-muted-foreground hover:text-foreground border-b-transparent')}>
-                                <Icon className="w-4 h-4" />
-                                <span className="hidden sm:inline">{label}</span>
+                    {/* Zentrale Datumszeile — steuert alle Sektionen */}
+                    <div className="flex items-center gap-2 px-4 pb-3">
+                        <button onClick={() => setFilterDate(addDaysHelper(filterDate, -1))}
+                            className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
+                            className="h-9 px-3 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-center flex-1" />
+                        <button onClick={() => setFilterDate(addDaysHelper(filterDate, 1))}
+                            className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                        {!isToday && (
+                            <button onClick={() => setFilterDate(todayStr)}
+                                className="h-9 px-3 text-xs rounded-lg border border-input text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
+                                Heute
                             </button>
-                        ))}
+                        )}
+                    </div>
+                </div>
+
+                <div className="px-4 py-4 space-y-5">
+
+                    {/* ── KPI-Zeile ──────────────────────────────────────────── */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-semibold">
+                            <Users className="w-3.5 h-3.5" />{kpi.guests} Gäste
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 font-semibold">
+                            {kpi.frei} frei
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 font-semibold">
+                            {kpi.reserviert} reserviert
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-semibold">
+                            {kpi.offen} offen
+                        </span>
                     </div>
 
-                    {/* Table plan header controls */}
-                    {tab === 'tables' && (
-                        <div className="border-t border-border/50 space-y-2 px-4 pt-3 pb-3">
-                            {/* Date nav row */}
-                            <div className="flex items-center gap-2">
-                                <button onClick={() => setFilterDate(addDaysHelper(filterDate, -1))}
-                                    className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
-                                    className="h-9 px-3 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-center flex-1" />
-                                <button onClick={() => setFilterDate(addDaysHelper(filterDate, 1))}
-                                    className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                                {filterDate !== todayStr && (
-                                    <button onClick={() => setFilterDate(todayStr)}
-                                        className="h-9 px-3 text-xs rounded-lg border border-input text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
-                                        Heute
-                                    </button>
-                                )}
+                    {/* ── Reservierungen als Zeitstrahl ─────────────────────── */}
+                    <section className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                            <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                                <Clock className="w-4 h-4" />Reservierungen
+                            </h2>
+                            <div className="relative flex-1 max-w-[200px]">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                                <Input
+                                    placeholder="Name oder Telefon…"
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    className="pl-8 h-9 bg-card border-border text-sm"
+                                />
                             </div>
+                        </div>
 
-                            {/* Time + guests row */}
-                            <div className="flex items-center gap-2">
-                                <input type="time" value={filterTime} onChange={e => setFilterTime(e.target.value)}
-                                    className="h-9 px-3 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none w-24 shrink-0" />
-                                <div className="relative shrink-0">
-                                    <Users className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                                    <input type="number" value={guestFilter} min="1" max="20" onChange={e => setGuestFilter(e.target.value)}
-                                        placeholder="Personen" className="h-9 pl-7 pr-3 w-20 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-                                </div>
-                                {guestFilter && (
-                                    <button onClick={() => setGuestFilter('')} className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
+                        {/* Filter-Chips */}
+                        <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1">
+                            {STATUS_FILTERS.map(f => (
+                                <button
+                                    key={f.value}
+                                    onClick={() => setStatusFilter(f.value)}
+                                    className={cn(
+                                        'text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap transition-all',
+                                        statusFilter === f.value
+                                            ? 'bg-foreground text-background border-foreground'
+                                            : 'border-border text-muted-foreground hover:text-foreground'
+                                    )}
+                                >
+                                    {f.label}
+                                </button>
+                            ))}
+                        </div>
 
-                            {/* Room filter row */}
-                            {rooms.length > 0 && (
-                                <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1">
-                                    <button onClick={() => setSelectedRoom(null)} 
-                                        className={cn('text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap',
-                                            !selectedRoom ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:text-foreground')}>
-                                        Alle
-                                    </button>
-                                    {rooms.map(room => (
-                                        <button key={room.id} onClick={() => setSelectedRoom(room.name)} 
-                                            className={cn('text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap',
-                                                selectedRoom === room.name ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:text-foreground')}>
-                                            {room.name}
+                        {/* Chronologische Liste */}
+                        {filteredReservations.length === 0 ? (
+                            <EmptyState
+                                title={searchTerm || statusFilter !== 'alle' ? 'Keine Ergebnisse' : 'Keine Reservierungen'}
+                                description={searchTerm || statusFilter !== 'alle'
+                                    ? 'Versuchen Sie andere Filter.'
+                                    : isToday ? 'Erstellen Sie eine neue Reservierung.' : 'Keine Reservierungen an diesem Tag.'}
+                            />
+                        ) : (
+                            <div className="space-y-2">
+                                {filteredReservations.map((res, idx) => {
+                                    const tbl = tables.find(t => t.id === res.table || t.table_number === res.table);
+                                    const isHighlighted = highlightedRes?.id === res.id;
+                                    return (
+                                        <button
+                                            key={res.id}
+                                            onClick={() => openReservation(res)}
+                                            className={cn(
+                                                'w-full flex items-center gap-3 p-3 rounded-xl border bg-card text-left transition-all card-pressable animate-stagger',
+                                                isHighlighted
+                                                    ? 'border-amber-500/50 ring-1 ring-amber-500/30'
+                                                    : 'border-border hover:bg-accent/50'
+                                            )}
+                                            style={{ '--delay': `${idx * 40}ms` }}
+                                        >
+                                            <span className="text-sm font-bold tabular-nums shrink-0 w-12 text-foreground">
+                                                {res.time || '–'}
+                                            </span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-foreground truncate">{res.customer_name}</p>
+                                                <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+                                                    <span className="flex items-center gap-0.5">
+                                                        <Users className="w-3 h-3" />{res.guests} Pers.
+                                                    </span>
+                                                    {tbl ? (
+                                                        <span className="flex items-center gap-0.5">
+                                                            <MapPin className="w-3 h-3" />{getTableDisplayName(tbl)}
+                                                        </span>
+                                                    ) : res.table ? (
+                                                        <span className="flex items-center gap-0.5">
+                                                            <MapPin className="w-3 h-3" />Tisch {res.table}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-amber-500">kein Tisch</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className={cn(
+                                                'text-[11px] px-2 py-1 rounded-full border font-medium shrink-0',
+                                                STATUS_BADGE[res.status] || 'bg-muted text-muted-foreground border-border'
+                                            )}>
+                                                {res.status}
+                                            </span>
                                         </button>
-                                    ))}
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </section>
+
+                    {/* ── Tischplan ─────────────────────────────────────────── */}
+                    <section className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between gap-2">
+                            <h2 className="text-sm font-semibold text-foreground">Tischplan</h2>
+                            {permissions.isManager && (
+                                <div className="flex gap-1.5">
+                                    <Button variant="outline" size="sm" onClick={() => setShowRooms(true)} className="h-8 gap-1 text-xs">
+                                        <Settings className="w-3.5 h-3.5" /><span className="hidden sm:inline">Räume</span>
+                                    </Button>
+                                    <Button size="sm" onClick={() => setShowTableModal({})} className="h-8 gap-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                                        <Plus className="w-3.5 h-3.5" /><span className="hidden sm:inline">Tisch</span>
+                                    </Button>
                                 </div>
                             )}
                         </div>
-                    )}
-                </div>
 
-                <div className="px-4 py-4 space-y-4">
-
-                    {/* ── TODAY TAB ──────────────────────────────────────── */}
-                    {tab === 'today' && (
-                        <GuestHubTodayTab
-                            todayReservations={todayReservations}
-                            tables={tables}
-                            stats={stats}
-                            permissions={permissions}
-                            onAddReservation={() => { setSelectedRes(null); setResModalOpen(true); }}
-                            onEditReservation={(res) => { setSelectedRes(res); setResModalOpen(true); }}
-                        />
-                    )}
-
-                    {/* ── RESERVATIONS TAB ───────────────────────────────── */}
-                    {tab === 'reservations' && (
-                        <div className="space-y-4">
-                            {/* Search field */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                                <Input
-                                    placeholder="Name oder Telefon..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="pl-9 h-10 bg-card border-border"
-                                />
+                        {/* Highlight-Hinweis */}
+                        {highlightedRes && (
+                            <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                                <p className="text-xs text-amber-500 truncate">
+                                    Tische für <strong>{highlightedRes.customer_name}</strong> ({highlightedRes.time}) hervorgehoben
+                                </p>
+                                <button onClick={() => setHighlightedRes(null)} className="text-amber-500 hover:text-foreground shrink-0">
+                                    <X className="w-4 h-4" />
+                                </button>
                             </div>
+                        )}
 
-                            {/* Status filter chips */}
+                        {/* Zeit + Personen + Raum-Filter */}
+                        <div className="flex items-center gap-2">
+                            <input type="time" value={filterTime} onChange={e => setFilterTime(e.target.value)}
+                                className="h-9 px-3 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none w-24 shrink-0" />
+                            <div className="relative shrink-0">
+                                <Users className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                                <input type="number" value={guestFilter} min="1" max="20" onChange={e => setGuestFilter(e.target.value)}
+                                    placeholder="Personen" className="h-9 pl-7 pr-3 w-20 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                            </div>
+                            {guestFilter && (
+                                <button onClick={() => setGuestFilter('')} className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        {rooms.length > 0 && (
                             <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1">
-                                {STATUS_FILTERS.map(f => (
-                                    <button
-                                        key={f.value}
-                                        onClick={() => setStatusFilter(f.value)}
-                                        className={cn(
-                                            'text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap transition-all',
-                                            statusFilter === f.value
-                                                ? 'bg-foreground text-background border-foreground'
-                                                : 'border-border text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        {f.label}
+                                <button onClick={() => setSelectedRoom(null)}
+                                    className={cn('text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap',
+                                        !selectedRoom ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:text-foreground')}>
+                                    Alle
+                                </button>
+                                {rooms.map(room => (
+                                    <button key={room.id} onClick={() => setSelectedRoom(room.name)}
+                                        className={cn('text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap',
+                                            selectedRoom === room.name ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:text-foreground')}>
+                                        {room.name}
                                     </button>
                                 ))}
                             </div>
+                        )}
 
-                            {/* Reservations list */}
-                            {activeLoading ? (
-                                <LoadingState />
-                            ) : filteredReservations.length === 0 ? (
-                                <EmptyState 
-                                    title={searchTerm || statusFilter !== 'alle' ? 'Keine Ergebnisse' : 'Keine Reservierungen'}
-                                    description={searchTerm || statusFilter !== 'alle' ? 'Versuchen Sie andere Filter.' : 'Erstellen Sie eine neue Reservierung.'}
-                                />
-                            ) : (
-                                <div className="space-y-3">
-                                    {filteredReservations.map((res, idx) => (
-                                        <div
-                                            key={res.id}
-                                            onClick={() => { setSelectedRes(res); setResModalOpen(true); }}
-                                            className="p-4 rounded-xl border border-border bg-card hover:bg-accent/50 cursor-pointer transition-all card-pressable animate-stagger"
-                                            style={{ '--delay': `${idx * 45}ms` }}
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm font-semibold text-foreground">
-                                                            {res.customer_name}
-                                                        </span>
-                                                        <span className="text-xs px-2 py-1 rounded-full bg-secondary text-muted-foreground">
-                                                            {format(parseISO(res.date), 'dd.MM.')} · {res.time || '–'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground mt-1">
-                                                        {res.guests} Personen{res.table && ` · Tisch ${res.table}`}
-                                                    </div>
-                                                </div>
-                                                <span className={cn(
-                                                    'text-xs px-2 py-1 rounded-full font-medium shrink-0',
-                                                    res.status === 'vorgemerkt' ? 'bg-blue-500/15 text-blue-400' :
-                                                    res.status === 'bestätigt' ? 'bg-yellow-500/15 text-yellow-400' :
-                                                    res.status === 'erschienen' ? 'bg-green-500/15 text-green-400' :
-                                                    res.status === 'no-show' ? 'bg-red-500/15 text-red-400' :
-                                                    'bg-secondary text-muted-foreground'
-                                                )}>
-                                                    {res.status === 'vorgemerkt' ? '🔵' : 
-                                                     res.status === 'bestätigt' ? '🟡' :
-                                                     res.status === 'erschienen' ? '🟢' :
-                                                     res.status === 'no-show' ? '🔴' : '⚪'}
-                                                    {' '}{res.status}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* ── TABLE PLAN TAB ─────────────────────────────────── */}
-                    {tab === 'tables' && (
                         <GuestHubTablesTab
                             tableWithStatus={tableWithStatus}
                             stats={stats}
                             guestFilter={guestFilter}
                             suggested={suggested}
                             permissions={permissions}
+                            planView={planView}
+                            setPlanView={setPlanView}
+                            highlightedTableNumbers={highlightedTableNumbers}
                             onTableSelect={setSelectedTable}
+                            onTableNewReservation={handleTableNewReservation}
                             onCreateTable={(t) => setShowTableModal(t)}
                             onEditTable={(t) => setShowTableModal(t)}
                         />
-                    )}
+                    </section>
                 </div>
             </div>
 
