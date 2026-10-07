@@ -6,8 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { haptics } from '@/components/utils/haptics';
-import { ArrowLeft, LogOut, Search, ScanLine, Settings, PanelLeftClose, PanelLeftOpen, Pin, PinOff } from 'lucide-react';
-import BarcodeScanner from '@/components/restock/BarcodeScanner';
+import { ArrowLeft, LogOut, Search, Settings, PanelLeftClose, PanelLeftOpen, Pin, PinOff } from 'lucide-react';
 import { mainNavigation, additionalPages, allPages } from '@/components/navigation/navigationConfig';
 import { sidebarPages } from '@/components/navigation/sidebarConfig';
 // Kurzbeschreibungen der Hub-Bereiche für den mobilen Mehr-Drawer
@@ -58,7 +57,6 @@ export default function Layout({ children, currentPageName }) {
             return next;
         });
     };
-    const [scannerOpen, setScannerOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [menuSearch, setMenuSearch] = useState('');
     const [currentUser, setCurrentUser] = React.useState(null);
@@ -123,30 +121,6 @@ export default function Layout({ children, currentPageName }) {
     });
 
     // ── Handlers ─────────────────────────────────────────────────────────────
-    const handleScan = (code) => {
-        setScannerOpen(false);
-
-        // 1. Vollständige URL vom Lagerplatz-Etikett (z.B. https://…/StorageLocationScan/abc123)
-        try {
-            const url = new URL(code);
-            const storageMatch = url.pathname.match(/\/StorageLocationScan\/(.+)/);
-            if (storageMatch) {
-                navigate(`/StorageLocationScan/${storageMatch[1]}`);
-                return;
-            }
-        } catch (_) {
-            // kein gültiger URL — weiter mit Barcode-Logik
-        }
-
-        // 2. Rohe ID (UUID-Format oder Länge > 20) → Lagerplatz
-        const isStorageQR = /^[a-f0-9]{8}-[a-f0-9]{4}/.test(code) || code.length > 20;
-        if (isStorageQR) {
-            navigate(`/StorageLocationScan/${code}`);
-        } else {
-            navigate(createPageUrl('Shopping') + `?scan=${code}`);
-        }
-    };
-
     const handleRefresh = async () => {
         // Only refetch queries that are currently active (mounted on screen).
         // invalidateQueries() with no args marks ALL queries stale and refetches
@@ -331,13 +305,6 @@ export default function Layout({ children, currentPageName }) {
                         >
                             <Search className="w-5 h-5" />
                         </button>
-                        <button
-                            onClick={() => setScannerOpen(true)}
-                            className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-accent/50 active:bg-accent text-muted-foreground hover:text-foreground transition-all"
-                            title="Scannen"
-                        >
-                            <ScanLine className="w-5 h-5" />
-                        </button>
                         {/* Hinweis: 'Mehr'-Drawer ist über den Mehr-Tab in der Bottom-Nav erreichbar
                             — zusätzlicher Zahnrad-Button hier war redundant und wurde entfernt */}
                     </div>
@@ -345,15 +312,6 @@ export default function Layout({ children, currentPageName }) {
 
                 {/* Global Search */}
                 <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-
-                {/* Barcode Scanner */}
-                <BarcodeScanner
-                    open={scannerOpen}
-                    onClose={() => setScannerOpen(false)}
-                    onScan={handleScan}
-                    title="Artikel scannen"
-                    mode="default"
-                />
 
                 {/* Desktop Sidebar */}
                 <aside className={`hidden md:flex md:flex-col md:fixed md:inset-y-0 transition-all duration-300 ${sidebarCollapsed ? 'md:w-16' : 'md:w-72'}`}>
