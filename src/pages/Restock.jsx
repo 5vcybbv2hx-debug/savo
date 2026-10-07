@@ -15,6 +15,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import QuantityInputModal from '../components/restock/QuantityInputModal';
 import RundgangMode from '../components/restock/RundgangMode';
+import KellerTab from '../components/storage/KellerTab';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -98,6 +99,7 @@ export default function Restock() {
     const [scanOpen, setScanOpen]                 = useState(true); // initial offen; wird je nach offenen Items justiert
 
     const showToast = (message, type = 'error') => setToast({ message, type });
+    const [mode, setMode] = useState('auffüllliste'); // 'auffüllliste' | 'keller'
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: restockItems = [] } = useQuery({
@@ -481,23 +483,25 @@ export default function Restock() {
                     <div>
                         <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                             <Scan className="w-5 h-5 text-primary" />
-                            Auffüllliste
+                            {mode === 'auffüllliste' ? 'Auffüllliste' : 'Keller-Entnahme'}
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            {openCount} offen · {completedCount} erledigt
+                            {mode === 'auffüllliste' ? `${openCount} offen · ${completedCount} erledigt` : 'Artikel aus Keller holen'}
                         </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(createPageUrl('Warehouse') + '?tab=keller')}
-                        className="gap-1.5 shrink-0"
-                    >
-                        <PackageCheck className="w-4 h-4" />
-                        Keller
-                    </Button>
+                    <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
+                        <button
+                            onClick={() => setMode('auffüllliste')}
+                            className={cn('px-3 h-8 text-xs font-medium transition-colors', mode === 'auffüllliste' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground')}
+                        >Auffüllliste</button>
+                        <button
+                            onClick={() => setMode('keller')}
+                            className={cn('px-3 h-8 text-xs font-medium transition-colors', mode === 'keller' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:text-foreground')}
+                        >Keller</button>
+                    </div>
                 </div>
 
+                {mode === 'auffüllliste' && (<>
                 {/* ── Scan-/Such-Leiste (einklappbar; automatisch offen bei leerer Liste) ── */}
                 <Card className="border-border/50 overflow-hidden">
                     <button
@@ -734,6 +738,8 @@ export default function Restock() {
                         </div>
                     )}
                 </div>
+            </>)}
+            {mode === 'keller' && <KellerTab />}
             </div>
 
             {/* ── Modals ────────────────────────────────────────────────── */}

@@ -105,7 +105,9 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
             setSelectedEmployees([]);
             setIsRecurring(false);
         } else if (selectedDate) {
-            const defaultType = shiftTypes[0];
+            const defaultType = preselectedShiftType
+                ? shiftTypes.find(t => t.name === preselectedShiftType) || shiftTypes[0]
+                : shiftTypes[0];
             const endDate = addWeeks(selectedDate, 4);
             setFormData({
                 employee_id: '',
@@ -116,7 +118,22 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                 shift_type: defaultType?.name || '',
                 notes: ''
             });
-            setSelectedEmployees([]);
+            // Wenn ein Mitarbeiter übergeben wurde, direkt vorauswählen (nur bei Neuanlage)
+            if (preselectedEmployeeId) {
+                const emp = employees.find(e => e.id === preselectedEmployeeId);
+                if (emp) {
+                    setSelectedEmployees([{
+                        employee_id: emp.id,
+                        shift_type: defaultType?.name || '',
+                        start_time: defaultType?.start_time || '16:00',
+                        end_time: defaultType?.end_time || '03:00',
+                    }]);
+                } else {
+                    setSelectedEmployees([]);
+                }
+            } else {
+                setSelectedEmployees([]);
+            }
             setIsRecurring(false);
             setRecurringData({
                 pattern: 'weekly',
@@ -124,7 +141,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                 weekdays: [new Date(selectedDate).getDay()]
             });
         }
-    }, [shift, selectedDate, open, shiftTypes]);
+    }, [shift, selectedDate, open, shiftTypes, preselectedEmployeeId, preselectedShiftType]);
 
     const getDefaultShiftForEmployee = (employeeId) => {
         if (formData.date) {

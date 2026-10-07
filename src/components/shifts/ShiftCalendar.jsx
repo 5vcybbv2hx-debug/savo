@@ -500,7 +500,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                                         className="w-full h-6 rounded-none bg-background/90 hover:bg-amber-600 text-muted-foreground hover:text-foreground border-t border-border"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onAddShift(day);
+                                            onAddShift(day, null, null);
                                         }}
                                     >
                                         <Plus className="w-3 h-3 mr-1" />

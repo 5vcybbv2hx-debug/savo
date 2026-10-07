@@ -99,7 +99,7 @@ function SwipeableShiftCard({ shift, onOpen, onDelete, canEdit }) {
     );
 }
 
-export default function MobileWeekView({ shifts = [], employees = [], isLoading, onAddShift, onSaveShift, onDeleteShift, weekStart: weekStartProp, onWeekChange }) {
+export default function MobileWeekView({ shifts = [], employees = [], isLoading, onAddShift, onSelectShift, onSaveShift, onDeleteShift, weekStart: weekStartProp, onWeekChange }) {
     const permissions = usePermissions();
     const [weekStart, setWeekStart] = useState(() => weekStartProp || startOfWeek(new Date(), { weekStartsOn: 1 }));
     const [bottomSheet, setBottomSheet] = useState(null); // shift or null
@@ -248,7 +248,7 @@ export default function MobileWeekView({ shifts = [], employees = [], isLoading,
                                     ))
                                 ) : permissions.canEditShifts ? (
                                     <button
-                                        onClick={() => { haptics.light(); onAddShift(day); }}
+                                        onClick={() => { haptics.light(); onAddShift(day, null, null); }}
                                         className="w-full h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-accent/50 transition-colors"
                                     >
                                         <Plus className="w-4 h-4" />
@@ -261,7 +261,7 @@ export default function MobileWeekView({ shifts = [], employees = [], isLoading,
                             {/* Add button */}
                             {permissions.canEditShifts && (
                                 <button
-                                    onClick={() => { haptics.light(); onAddShift(day); }}
+                                    onClick={() => { haptics.light(); onAddShift(day, null, null); }}
                                     className="w-full h-10 flex items-center justify-center border-t border-border text-muted-foreground hover:text-primary hover:bg-accent transition-colors"
                                 >
                                     <Plus className="w-4 h-4" />
@@ -277,7 +277,7 @@ export default function MobileWeekView({ shifts = [], employees = [], isLoading,
                 shift={bottomSheet?.shift}
                 open={!!bottomSheet}
                 onClose={() => setBottomSheet(null)}
-                onEdit={(shift) => { setBottomSheet(null); onAddShift(null, shift); }}
+                onEdit={(shift) => { setBottomSheet(null); onSelectShift(shift); }}
                 onDelete={(id) => { setBottomSheet(null); onDeleteShift(id); }}
                 canEdit={permissions.canEditShifts}
             />

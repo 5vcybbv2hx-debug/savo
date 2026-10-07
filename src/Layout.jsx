@@ -23,6 +23,7 @@ import { useActiveNavigation } from '@/components/navigation/useActiveNavigation
 import { getTopPages } from '@/hooks/usePageTracking';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import ClockChip from '@/components/navigation/ClockChip';
 import { useSwapInboxCount } from '@/components/shifts/ShiftSwapInboxCard';
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from 'react';
@@ -319,6 +320,7 @@ export default function Layout({ children, currentPageName }) {
                         <h1 className="text-lg font-bold text-foreground flex-1">
                             {getPageName(currentPageName)}
                         </h1>
+                        {currentUser && <ClockChip />}
                         {currentUser && (
                             <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} employeeId={permissions.employeeId} />
                         )}

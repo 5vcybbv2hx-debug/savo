@@ -35,6 +35,8 @@ export default function Calendar() {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedShift, setSelectedShift] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
+    const [preselectedEmployeeId, setPreselectedEmployeeId] = useState(null);
+    const [preselectedShiftType, setPreselectedShiftType] = useState(null);
     const [filters, setFilters] = useState({ employee: 'all', shiftType: 'all' });
     const [showFilters, setShowFilters] = useState(false);
     const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
@@ -159,15 +161,19 @@ export default function Calendar() {
         }
     });
 
-    const handleAddShift = (date, shift = null) => {
-        setSelectedShift(shift || null);
+    const handleAddShift = (date, employeeId = null, shiftType = null) => {
+        setSelectedShift(null);
         setSelectedDate(date);
+        setPreselectedEmployeeId(employeeId);
+        setPreselectedShiftType(shiftType);
         setModalOpen(true);
     };
 
     const handleSelectShift = (shift) => {
         setSelectedShift(shift);
         setSelectedDate(null);
+        setPreselectedEmployeeId(null);
+        setPreselectedShiftType(null);
         setModalOpen(true);
     };
 
@@ -286,6 +292,7 @@ export default function Calendar() {
                             employees={employees}
                             isLoading={shiftsLoading}
                             onAddShift={handleAddShift}
+                            onSelectShift={handleSelectShift}
                             onSaveShift={handleSave}
                             onDeleteShift={handleDelete}
                             weekStart={mobileWeekStart}
@@ -304,6 +311,8 @@ export default function Calendar() {
                     existingShifts={shifts}
                     onSave={handleSave}
                     onDelete={handleDelete}
+                    preselectedEmployeeId={preselectedEmployeeId}
+                    preselectedShiftType={preselectedShiftType}
                 />
             </div>
         );
@@ -591,6 +600,8 @@ export default function Calendar() {
                     existingShifts={shifts}
                     onSave={handleSave}
                     onDelete={handleDelete}
+                    preselectedEmployeeId={preselectedEmployeeId}
+                    preselectedShiftType={preselectedShiftType}
                 />
             </div>
         </div>

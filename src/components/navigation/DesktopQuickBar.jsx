@@ -6,6 +6,7 @@ import { usePermissions } from '@/components/auth/usePermissions';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
 import { createPageUrl } from '@/utils';
+import ClockChip from '@/components/navigation/ClockChip';
 
 // Nur Unterseiten — Hub-Einträge sind über die Sidebar direkt erreichbar
 const ALL_NAV_PAGES = additionalPages;
@@ -58,6 +59,7 @@ export default function DesktopQuickBar() {
             style={{ left: sidebarWidth }}
         >
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest mr-3 shrink-0">Schnellzugriff</span>
+            <ClockChip />
             {quickPages.map(item => {
                 const isActive = location.pathname === `/${item.page}` || location.pathname === '/';
                 return (
