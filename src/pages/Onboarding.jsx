@@ -10,6 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/components/auth/usePermissions';
+import {
+    Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from '@/components/ui/select';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
 import {
@@ -134,15 +137,16 @@ function TaskEditModal({ task, categories, onSave, onClose }) {
                     {/* Kategorie */}
                     <div>
                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">Kategorie</label>
-                        <select
-                            value={category}
-                            onChange={e => setCategory(e.target.value)}
-                            className="w-full h-10 px-3 rounded-xl border border-border bg-secondary/30 text-sm text-foreground"
-                        >
-                            {categories.map(cat => (
-                                <option key={cat.name} value={cat.name}>{cat.icon} {cat.name}</option>
-                            ))}
-                        </select>
+                        <Select value={category} onValueChange={setCategory}>
+                            <SelectTrigger className="w-full h-10">
+                                <SelectValue placeholder="Kategorie wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.map(cat => (
+                                    <SelectItem key={cat.name} value={cat.name}>{cat.icon} {cat.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Titel */}

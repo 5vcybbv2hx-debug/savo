@@ -120,6 +120,15 @@ button, a, [role="button"], .icon {
   overscroll-behavior-y: contain;
 }
 
+/* Prevent iOS WebView page bouncing on scrollable panels */
+.overflow-y-auto,
+.overflow-auto,
+.overflow-y-scroll,
+.overflow-scroll,
+[data-radix-scroll-area-viewport] {
+  overscroll-behavior-y: contain;
+}
+
 /* ── Focus Ring ──────────────────────────────────────────────── */
 /* Keyboard-visible, touch-invisible */
 @media (pointer: fine) {

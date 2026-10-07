@@ -19,6 +19,9 @@ import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import {
+    Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 
 // ── Fallback-Bereiche (nur für Ersteinrichtung) ───────────────────────────────
@@ -424,16 +427,20 @@ export default function Stationsplan() {
                     onChange={e => { setSelectedDate(e.target.value); setSelectedShiftId(''); setAssignments({}); setSelectedEmpId(null); }}
                     className="h-9 rounded-lg border border-input bg-card px-3 text-sm text-foreground min-h-[44px]"
                 />
-                <select
-                    value={selectedShiftId}
-                    onChange={e => setSelectedShiftId(e.target.value)}
-                    className="h-9 rounded-lg border border-input bg-card px-3 text-sm text-foreground flex-1 min-w-[180px] min-h-[44px]"
+                <Select
+                    value={selectedShiftId || '__all__'}
+                    onValueChange={(val) => setSelectedShiftId(val === '__all__' ? '' : val)}
                 >
-                    <option value="">Alle Schichten ({shiftsForDay.length} MA)</option>
-                    {shiftOptions.map(s => (
-                        <option key={s.id} value={s.id}>{s.shift_type || 'Schicht'} – {s.start_time}–{s.end_time}</option>
-                    ))}
-                </select>
+                    <SelectTrigger className="h-9 min-h-[44px] flex-1 min-w-[180px]">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="__all__">Alle Schichten ({shiftsForDay.length} MA)</SelectItem>
+                        {shiftOptions.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.shift_type || 'Schicht'} – {s.start_time}–{s.end_time}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                 <div className="flex bg-secondary rounded-xl p-1 gap-0.5 ml-auto">
                     {[['bereiche', <LayoutGrid className="w-3.5 h-3.5" />, 'Bereiche'], ['mitarbeiter', <List className="w-3.5 h-3.5" />, 'Mitarbeiter']].map(([v, icon, label]) => (
                         <button key={v} onClick={() => setView(v)}
@@ -594,30 +601,45 @@ export default function Stationsplan() {
                                                 </div>
                                             </div>
                                             <div className="flex flex-wrap gap-2 flex-1">
-                                                <select value={asgn.area || ''}
-                                                    onChange={e => setAssignments(prev => ({ ...prev, [emp.employee_id]: { ...(prev[emp.employee_id] || {}), area: e.target.value } }))}
-                                                    className="h-9 rounded-lg border border-input bg-background px-2 text-sm text-foreground flex-1 min-w-[110px] min-h-[44px]"
+                                                <Select
+                                                    value={asgn.area || '__none__'}
+                                                    onValueChange={(val) => setAssignments(prev => ({ ...prev, [emp.employee_id]: { ...(prev[emp.employee_id] || {}), area: val === '__none__' ? '' : val } }))}
                                                 >
-                                                    <option value="">Kein Bereich</option>
-                                                    {areas.map(a => <option key={a.id || a.name} value={a.name}>{a.name}</option>)}
-                                                </select>
-                                                <select value={asgn.role || ''}
-                                                    onChange={e => setAssignments(prev => ({ ...prev, [emp.employee_id]: { ...(prev[emp.employee_id] || {}), role: e.target.value } }))}
-                                                    className="h-9 rounded-lg border border-input bg-background px-2 text-sm text-foreground flex-1 min-w-[100px] min-h-[44px]"
+                                                    <SelectTrigger className="h-9 min-h-[44px] flex-1 min-w-[110px]">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="__none__">Kein Bereich</SelectItem>
+                                                        {areas.map(a => <SelectItem key={a.id || a.name} value={a.name}>{a.name}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={asgn.role || '__none__'}
+                                                    onValueChange={(val) => setAssignments(prev => ({ ...prev, [emp.employee_id]: { ...(prev[emp.employee_id] || {}), role: val === '__none__' ? '' : val } }))}
                                                 >
-                                                    <option value="">Keine Rolle</option>
-                                                    {(asgn.area
-                                                        ? areas.find(a => a.name === asgn.area)?.roles
-                                                        : areas.flatMap(a => a.roles || []).filter((v, i, arr) => arr.indexOf(v) === i)
-                                                    )?.map(r => <option key={r} value={r}>{r}</option>)}
-                                                </select>
-                                                <select value={asgn.secondary_role || ''}
-                                                    onChange={e => setAssignments(prev => ({ ...prev, [emp.employee_id]: { ...(prev[emp.employee_id] || {}), secondary_role: e.target.value } }))}
-                                                    className="h-9 rounded-lg border border-input bg-background px-2 text-sm text-foreground flex-1 min-w-[110px] min-h-[44px]"
+                                                    <SelectTrigger className="h-9 min-h-[44px] flex-1 min-w-[100px]">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="__none__">Keine Rolle</SelectItem>
+                                                        {(asgn.area
+                                                            ? areas.find(a => a.name === asgn.area)?.roles
+                                                            : areas.flatMap(a => a.roles || []).filter((v, i, arr) => arr.indexOf(v) === i)
+                                                        )?.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={asgn.secondary_role || '__none__'}
+                                                    onValueChange={(val) => setAssignments(prev => ({ ...prev, [emp.employee_id]: { ...(prev[emp.employee_id] || {}), secondary_role: val === '__none__' ? '' : val } }))}
                                                 >
-                                                    <option value="">Zusatzrolle</option>
-                                                    {['Service', 'Theke', 'Spülen', 'Nachschub', 'Türe'].map(r => <option key={r} value={r}>{r}</option>)}
-                                                </select>
+                                                    <SelectTrigger className="h-9 min-h-[44px] flex-1 min-w-[110px]">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="__none__">Zusatzrolle</SelectItem>
+                                                        {['Service', 'Theke', 'Spülen', 'Nachschub', 'Türe'].map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
                                                 <input type="text" placeholder="Notiz..."
                                                     value={note}
                                                     onChange={e => setNotes(prev => ({ ...prev, [emp.employee_id]: e.target.value }))}
