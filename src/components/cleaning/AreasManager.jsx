@@ -14,9 +14,12 @@ const DEFAULT_COLORS = [
     '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'
 ];
 
-export default function AreasManager({ trigger }) {
+export default function AreasManager({ trigger, open: openProp, onOpenChange }) {
     const queryClient = useQueryClient();
-    const [modalOpen, setModalOpen] = useState(false);
+    const isControlled = openProp !== undefined;
+    const [internalOpen, setInternalOpen] = useState(false);
+    const modalOpen = isControlled ? openProp : internalOpen;
+    const setModalOpen = isControlled ? onOpenChange : setInternalOpen;
     const [editingArea, setEditingArea] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
@@ -93,10 +96,12 @@ export default function AreasManager({ trigger }) {
 
     return (
         <>
-            <Button variant="outline" onClick={() => setModalOpen(true)} className="gap-2">
-                <Settings className="w-4 h-4" />
-                Bereiche verwalten
-            </Button>
+            {!isControlled && (
+                <Button variant="outline" onClick={() => setModalOpen(true)} className="gap-2">
+                    <Settings className="w-4 h-4" />
+                    Bereiche verwalten
+                </Button>
+            )}
 
             <Dialog open={modalOpen} onOpenChange={setModalOpen}>
                 <DialogContent className="sm:max-w-lg">

@@ -7,13 +7,17 @@ import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-    Plus, Sparkles, FileText, Cloud, CloudOff, CheckCircle2,
+    Plus, Sparkles, FileText, MoreVertical, Settings, CheckCircle2,
     Circle, ChevronRight, RefreshCw, Trash2, Archive, Check
 } from 'lucide-react';
 import SwipeRow from '@/components/ui/SwipeRow';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+    DropdownMenuItem, DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,6 +46,7 @@ export default function Cleaning() {
     });
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingUpdates, setPendingUpdates] = useState([]);
+    const [areasOpen, setAreasOpen] = useState(false);
 
     useEffect(() => {
         const saved = localStorage.getItem('cleaning_pending_updates');
@@ -252,48 +257,49 @@ export default function Cleaning() {
                             {format(new Date(), "EEEE, d. MMMM", { locale: de })}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
-                        {isOnline
-                            ? <Cloud className="w-4 h-4 text-emerald-500" />
-                            : <CloudOff className="w-4 h-4 text-amber-500" />}
-                        {(permissions.isManager || permissions.isAdmin) && (
-                            <AreasManager />
-                        )}
-                        {(permissions.isManager || permissions.isAdmin) && (
-                            <Button size="sm" variant="outline" onClick={() => setReportsModalOpen(true)} className="h-9 gap-1">
-                                <FileText className="w-4 h-4" /> Berichte
-                            </Button>
-                        )}
-                        {(permissions.isManager || permissions.isAdmin) && (
-                            <Button size="sm" variant="outline" onClick={() => setModalOpen(true)} className="h-9 gap-1">
-                                <Plus className="w-4 h-4" /> Aufgabe
-                            </Button>
-                        )}
-                        {(permissions.isManager || permissions.isAdmin) && (
-                            <Button size="sm" variant="destructive" onClick={() => setEndDayDialogOpen(true)} className="h-9 gap-1">
-                                <Archive className="w-4 h-4" /> Tag beenden
-                            </Button>
-                        )}
-                    </div>
+                    {(permissions.isManager || permissions.isAdmin) && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="ghost" className="h-9 w-9 p-0">
+                                    <MoreVertical className="w-4 h-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setModalOpen(true)}>
+                                    <Plus className="w-4 h-4 mr-2" /> Aufgabe anlegen
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setAreasOpen(true)}>
+                                    <Settings className="w-4 h-4 mr-2" /> Bereiche verwalten
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setReportsModalOpen(true)}>
+                                    <FileText className="w-4 h-4 mr-2" /> Berichte
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    onClick={() => setEndDayDialogOpen(true)}
+                                    className="text-destructive focus:text-destructive"
+                                >
+                                    <Archive className="w-4 h-4 mr-2" /> Tag beenden
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                    <AreasManager open={areasOpen} onOpenChange={setAreasOpen} />
                 </div>
 
                 {/* ── Fortschritt ─────────────────────────────────────── */}
-                <div className="rounded-xl border bg-card p-4 mb-5 shadow-sm">
-                    <div className="flex items-end justify-between mb-2">
-                        <div>
-                            <span className="text-3xl font-bold text-foreground">{completedCount}</span>
-                            <span className="text-lg text-muted-foreground">/{tasks.length}</span>
-                            <p className="text-xs text-muted-foreground mt-0.5">Aufgaben erledigt</p>
-                        </div>
-                        <div className="text-right">
-                            <span className={`text-2xl font-bold ${progress === 100 ? 'text-emerald-500' : progress >= 50 ? 'text-primary' : 'text-muted-foreground'}`}>
-                                {progress}%
-                            </span>
-                        </div>
+                <div className="rounded-xl border bg-card p-3 mb-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-medium text-foreground">
+                            {completedCount}/{tasks.length} erledigt
+                        </span>
+                        <span className={`text-sm font-bold ${progress === 100 ? 'text-emerald-500' : progress >= 50 ? 'text-primary' : 'text-muted-foreground'}`}>
+                            {progress}%
+                        </span>
                     </div>
-                    <Progress value={progress} className="h-3 rounded-full" />
+                    <Progress value={progress} className="h-2 rounded-full" />
                     {progress === 100 && (
-                        <p className="text-xs text-emerald-500 mt-2 font-medium flex items-center gap-1">
+                        <p className="text-xs text-emerald-500 mt-1.5 font-medium flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Alles erledigt — super gemacht!
                         </p>
                     )}
