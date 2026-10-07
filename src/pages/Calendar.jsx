@@ -1,15 +1,15 @@
-import React, { useState, useCallback } from 'react';
-import WeatherForecastWidget from '@/components/shifts/WeatherForecastWidget';
-import SmartStaffingSuggestions from '@/components/shifts/SmartStaffingSuggestions';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
-import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Plus, Users, Filter, X, Download, Zap, MoreHorizontal, CalendarDays, Settings2 } from 'lucide-react';
+import { Plus, Users, Filter, X, Zap, CalendarDays } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import TeamMonthView from '@/components/calendar/TeamMonthView';
+import WeekContextBar from '@/components/calendar/WeekContextBar';
+import CalendarMoreMenu from '@/components/calendar/CalendarMoreMenu';
 import { useErrorHandler } from '@/components/error/ErrorHandler';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import ShiftCalendar from '@/components/shifts/ShiftCalendar';
 import ShiftModal from '@/components/shifts/ShiftModal';
 import MobileWeekView from '@/components/shifts/MobileWeekView';
-import CalendarExport from '@/components/shifts/CalendarExport';
 import ShiftRequirementsManager from '@/components/shifts/ShiftRequirementsManager';
 import MonthlyStaffingCheck from '@/components/shifts/MonthlyStaffingCheck';
 import DefaultShiftRulesManager from '@/components/shifts/DefaultShiftRulesManager';
@@ -25,7 +24,6 @@ import ProvisionalAccessManager from '@/components/provisional/ProvisionalAccess
 import ProvisionalShiftEntry from '@/components/provisional/ProvisionalShiftEntry';
 import ShiftSwapManager from '@/components/shifts/ShiftSwapManager';
 import QuickScheduler from '@/components/shifts/QuickScheduler';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -42,7 +40,6 @@ export default function Calendar() {
     const [preselectedShiftType, setPreselectedShiftType] = useState(null);
     const [filters, setFilters] = useState({ employee: 'all', shiftType: 'all' });
     const [showFilters, setShowFilters] = useState(false);
-    const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
     const [adminModal, setAdminModal] = useState(null);
     const [mobileWeekStart, setMobileWeekStart] = useState(
         () => startOfWeek(new Date(), { weekStartsOn: 1 })
@@ -79,10 +76,6 @@ export default function Calendar() {
         staleTime: STALE.SLOW,
     });
 
-    // Einheitliche Schicht-Query für Desktop & Mobile — verhindert, dass Änderungen aus
-    // Quick-Einplanung, Schichttausch, Direkttausch o.ä. auf der jeweils anderen Ansicht
-    // nicht ankommen (beide Plattformen nutzten vorher unterschiedliche Query-Keys für
-    // identische Daten).
     const { data: shifts = [], isLoading: shiftsLoading } = useQuery({
         queryKey: ['shifts'],
         queryFn: () => base44.entities.Shift.list('date', 2000),
@@ -257,13 +250,103 @@ export default function Calendar() {
         }
     };
 
+    // ── Shared Filter Card (mobile + desktop) ───────────────────────────────
+    const filterCard = showFilters && (
+        <Card className="p-4 bg-card border-border mb-3">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    Filter
+                </h3>
+                {(filters.employee !== 'all' || filters.shiftType !== 'all') && (
+                    <Button variant="ghost" size="sm" onClick={() => setFilters({ employee: 'all', shiftType: 'all' })} className="text-muted-foreground hover:text-foreground">
+                        <X className="w-4 h-4 mr-1" />
+                        Zurücksetzen
+                    </Button>
+                )}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Mitarbeiter</label>
+                    <select
+                        value={filters.employee}
+                        onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
+                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-amber-600"
+                    >
+                        <option value="all">Alle Mitarbeiter</option>
+                        {employees.map(emp => (
+                            <option key={emp.id} value={emp.id}>{emp.name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Schichttyp</label>
+                    <select
+                        value={filters.shiftType}
+                        onChange={(e) => setFilters({ ...filters, shiftType: e.target.value })}
+                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-amber-600"
+                    >
+                        <option value="all">Alle Schichttypen</option>
+                        <option value="Aufmachen">Aufmachen</option>
+                        <option value="Frühschicht">Frühschicht</option>
+                        <option value="Spätschicht">Spätschicht</option>
+                        <option value="Sonderschicht">Sonderschicht</option>
+                    </select>
+                </div>
+            </div>
+            {(filters.employee !== 'all' || filters.shiftType !== 'all') && (
+                <div className="mt-4 text-sm text-muted-foreground">
+                    {filteredShifts.length} Schicht{filteredShifts.length !== 1 ? 'en' : ''} gefunden
+                </div>
+            )}
+        </Card>
+    );
+
+    // ── Shared Admin Modals ───────────────────────────────────────────────────
+    const adminModals = permissions.isAdmin && (
+        <>
+            <ShiftRequirementsManager
+                open={adminModal === 'requirements'}
+                onOpenChange={(open) => !open && setAdminModal(null)}
+                hideTrigger
+            />
+            <MonthlyStaffingCheck
+                open={adminModal === 'monthly'}
+                onOpenChange={(open) => !open && setAdminModal(null)}
+                hideTrigger
+            />
+            <DefaultShiftRulesManager
+                open={adminModal === 'rules'}
+                onOpenChange={(open) => !open && setAdminModal(null)}
+                hideTrigger
+            />
+        </>
+    );
+
+    // ── Shared ShiftModal ────────────────────────────────────────────────────
+    const shiftModal = (
+        <ShiftModal
+            open={modalOpen}
+            onClose={() => { setModalOpen(false); setSelectedShift(null); }}
+            shift={selectedShift}
+            employees={employees}
+            selectedDate={selectedDate}
+            existingShifts={shifts}
+            onSave={handleSave}
+            onDelete={handleDelete}
+            preselectedEmployeeId={preselectedEmployeeId}
+            preselectedShiftType={preselectedShiftType}
+        />
+    );
+
     // ─── Mobile layout ───────────────────────────────────────────────────────
     if (isMobile) {
         return (
             <div className="min-h-screen bg-background flex flex-col">
+                {/* Kompakter Header: ViewSwitch + Neue Schicht + MoreMenu */}
                 <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card">
                     {ViewSwitch}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+                    <div className="flex items-center gap-2">
                         {permissions.canEditShifts && (
                             <Button
                                 size="sm"
@@ -274,18 +357,30 @@ export default function Calendar() {
                                 Schicht
                             </Button>
                         )}
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setActiveMobileTab('quick')}
-                            className="border-amber-600/50 text-amber-500 hover:bg-amber-600/10 flex-shrink-0 h-9"
-                        >
-                            <Zap className="w-4 h-4 mr-1" />
-                            Schnellplanung
-                        </Button>
+                        <CalendarMoreMenu
+                            permissions={permissions}
+                            shifts={shifts}
+                            reservations={reservations}
+                            onToggleFilters={() => setShowFilters(!showFilters)}
+                            onQuickPlan={() => setActiveMobileTab('quick')}
+                            onWishes={() => setActiveMobileTab('wünsche')}
+                            onBackup={handleBackup}
+                            onAdminModal={setAdminModal}
+                        />
                     </div>
                 </div>
 
+                {/* Tausch-Manager — kompakt, nur bei offenen Anträgen */}
+                <div className="px-3 pt-2">
+                    <ShiftSwapManager compact />
+                </div>
+
+                {/* Filter-Karte (einklappbar) */}
+                <div className="px-3">
+                    {filterCard}
+                </div>
+
+                {/* Content */}
                 <div className="flex-1 overflow-hidden">
                     {view === 'monat' && canMonth ? (
                         <div className="overflow-y-auto h-full">
@@ -316,37 +411,49 @@ export default function Calendar() {
                                 onMoveShift={(id, data) => updateMutation.mutate({ id, data })}
                             />
                         </div>
+                    ) : activeMobileTab === 'wünsche' && permissions.isManager ? (
+                        <div className="p-4 overflow-y-auto h-full">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                                    <CalendarDays className="w-4 h-4 text-amber-400" />
+                                    Schichtwünsche
+                                </h2>
+                                <button
+                                    onClick={() => setActiveMobileTab('calendar')}
+                                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                                >
+                                    ← Kalender
+                                </button>
+                            </div>
+                            <ProvisionalAccessManager employees={employees} />
+                        </div>
                     ) : (
                         <>
-                        <WeatherForecastWidget isManager={permissions.isManager} />
-                        <SmartStaffingSuggestions weekStart={mobileWeekStart} employees={employees} isManager={permissions.isManager || permissions.isAdmin} />
-                        <MobileWeekView
-                            shifts={shifts}
-                            employees={employees}
-                            isLoading={shiftsLoading}
-                            onAddShift={handleAddShift}
-                            onSelectShift={handleSelectShift}
-                            onSaveShift={handleSave}
-                            onDeleteShift={handleDelete}
-                            weekStart={mobileWeekStart}
-                            onWeekChange={(ws) => setMobileWeekStart(ws)}
-                        />
+                            <div className="px-3 pt-2">
+                                <WeekContextBar
+                                    weekStart={mobileWeekStart}
+                                    shifts={shifts}
+                                    employees={employees}
+                                    isManager={permissions.isManager || permissions.isAdmin}
+                                />
+                            </div>
+                            <MobileWeekView
+                                shifts={shifts}
+                                employees={employees}
+                                isLoading={shiftsLoading}
+                                onAddShift={handleAddShift}
+                                onSelectShift={handleSelectShift}
+                                onSaveShift={handleSave}
+                                onDeleteShift={handleDelete}
+                                weekStart={mobileWeekStart}
+                                onWeekChange={(ws) => setMobileWeekStart(ws)}
+                            />
                         </>
                     )}
                 </div>
 
-                <ShiftModal
-                    open={modalOpen}
-                    onClose={() => { setModalOpen(false); setSelectedShift(null); }}
-                    shift={selectedShift}
-                    employees={employees}
-                    selectedDate={selectedDate}
-                    existingShifts={shifts}
-                    onSave={handleSave}
-                    onDelete={handleDelete}
-                    preselectedEmployeeId={preselectedEmployeeId}
-                    preselectedShiftType={preselectedShiftType}
-                />
+                {adminModals}
+                {shiftModal}
             </div>
         );
     }
@@ -363,6 +470,9 @@ export default function Calendar() {
                         </div>
                         {ViewSwitch}
                     </div>
+                    <div className="mb-3">
+                        <ShiftSwapManager compact />
+                    </div>
                     <TeamMonthView />
                 </div>
             </div>
@@ -373,169 +483,55 @@ export default function Calendar() {
     return (
         <div className="min-h-screen bg-background">
             <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-                <div className="flex flex-col gap-3 mb-6 sm:mb-8">
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Schichtplan</h1>
-                        <p className="text-muted-foreground text-sm mt-1">Verwalte die Arbeitszeiten deines Teams</p>
-                    </div>
-                    {ViewSwitch}
-                    <div className="flex gap-2 flex-wrap items-center">
-                        <ShiftSwapManager />
-
-                        <Button
-                            variant={showFilters ? "secondary" : "outline"}
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="border-border text-muted-foreground hover:text-foreground"
-                        >
-                            <Filter className="w-4 h-4 mr-2" />
-                            Filter
-                        </Button>
-
-                        {permissions.isManager && (
-                            <Button
-                                variant="outline"
-                                onClick={() => setActiveTab('wünsche')}
-                                className="border-amber-600/60 text-amber-500 hover:bg-amber-600/10"
-                            >
-                                <CalendarDays className="w-4 h-4 mr-2" />
-                                Schichtwünsche
-                            </Button>
-                        )}
-                        {permissions.isManager && (
-                            <Button
-                                variant="outline"
-                                onClick={() => setActiveTab('quick')}
-                                className="border-amber-600/60 text-amber-500 hover:bg-amber-600/10"
-                            >
-                                <Zap className="w-4 h-4 mr-2" />
-                                Schnellplanung
-                            </Button>
-                        )}
-
-                        {permissions.canEditShifts && (
-                            <Button
-                                onClick={() => handleAddShift(new Date())}
-                                className="bg-amber-600 hover:bg-amber-700"
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Neue Schicht
-                            </Button>
-                        )}
-
-                        {(permissions.isManager || permissions.isAdmin) && (
-                            <Popover open={exportDropdownOpen} onOpenChange={setExportDropdownOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className="border-border text-muted-foreground hover:text-foreground" title="Mehr Optionen">
-                                        <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 p-2 space-y-1" align="end">
-                                    <p className="text-xs text-muted-foreground px-2 py-1 font-medium uppercase tracking-wide">Export</p>
-                                    <Button variant="ghost" size="sm" onClick={() => { handleBackup(); setExportDropdownOpen(false); }} className="w-full justify-start text-muted-foreground hover:text-foreground">
-                                        <Download className="w-4 h-4 mr-2" />
-                                        JSON Backup
-                                    </Button>
-                                    <div onClick={() => setExportDropdownOpen(false)}>
-                                        <CalendarExport shifts={shifts} reservations={reservations} />
-                                    </div>
-                                    {permissions.isAdmin && (
-                                        <>
-                                            <div className="border-t border-border my-1" />
-                                            <p className="text-xs text-muted-foreground px-2 py-1 font-medium uppercase tracking-wide">Admin</p>
-                                            <Button variant="ghost" size="sm" onClick={() => { setAdminModal('monthly'); setExportDropdownOpen(false); }} className="w-full justify-start text-muted-foreground hover:text-foreground">
-                                                <CalendarDays className="w-4 h-4 mr-2" />
-                                                Monatsanalyse
-                                            </Button>
-                                            <Button variant="ghost" size="sm" onClick={() => { setAdminModal('requirements'); setExportDropdownOpen(false); }} className="w-full justify-start text-muted-foreground hover:text-foreground">
-                                                <Users className="w-4 h-4 mr-2" />
-                                                Soll-Besetzung
-                                            </Button>
-                                            <Button variant="ghost" size="sm" onClick={() => { setAdminModal('rules'); setExportDropdownOpen(false); }} className="w-full justify-start text-muted-foreground hover:text-foreground">
-                                                <Settings2 className="w-4 h-4 mr-2" />
-                                                Schicht-Regeln
-                                            </Button>
-                                        </>
-                                    )}
-                                </PopoverContent>
-                            </Popover>
-                        )}
-                        {permissions.isAdmin && (
-                            <>
-                                <ShiftRequirementsManager
-                                    open={adminModal === 'requirements'}
-                                    onOpenChange={(open) => !open && setAdminModal(null)}
-                                    hideTrigger
-                                />
-                                <MonthlyStaffingCheck
-                                    open={adminModal === 'monthly'}
-                                    onOpenChange={(open) => !open && setAdminModal(null)}
-                                    hideTrigger
-                                />
-                                <DefaultShiftRulesManager
-                                    open={adminModal === 'rules'}
-                                    onOpenChange={(open) => !open && setAdminModal(null)}
-                                    hideTrigger
-                                />
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {showFilters && (
-                    <Card className="p-4 bg-card border-border mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-foreground flex items-center gap-2">
-                                <Filter className="w-4 h-4" />
-                                Filter
-                            </h3>
-                            {(filters.employee !== 'all' || filters.shiftType !== 'all') && (
-                                <Button variant="ghost" size="sm" onClick={() => setFilters({ employee: 'all', shiftType: 'all' })} className="text-muted-foreground hover:text-foreground">
-                                    <X className="w-4 h-4 mr-1" />
-                                    Zurücksetzen
+                {/* Header — nur Titel + Neue Schicht + MoreMenu */}
+                <div className="flex flex-col gap-3 mb-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Schichtplan</h1>
+                            <p className="text-muted-foreground text-sm mt-1">Verwalte die Arbeitszeiten deines Teams</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {permissions.canEditShifts && (
+                                <Button
+                                    onClick={() => handleAddShift(new Date())}
+                                    className="bg-amber-600 hover:bg-amber-700"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Neue Schicht
                                 </Button>
                             )}
+                            <CalendarMoreMenu
+                                permissions={permissions}
+                                shifts={shifts}
+                                reservations={reservations}
+                                onToggleFilters={() => setShowFilters(!showFilters)}
+                                onQuickPlan={() => setActiveTab('quick')}
+                                onWishes={() => setActiveTab('wünsche')}
+                                onBackup={handleBackup}
+                                onAdminModal={setAdminModal}
+                            />
                         </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-sm text-muted-foreground mb-2 block">Mitarbeiter</label>
-                                <select
-                                    value={filters.employee}
-                                    onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
-                                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-amber-600"
-                                >
-                                    <option value="all">Alle Mitarbeiter</option>
-                                    {employees.map(emp => (
-                                        <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-sm text-muted-foreground mb-2 block">Schichttyp</label>
-                                <select
-                                    value={filters.shiftType}
-                                    onChange={(e) => setFilters({ ...filters, shiftType: e.target.value })}
-                                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-amber-600"
-                                >
-                                    <option value="all">Alle Schichttypen</option>
-                                    <option value="Aufmachen">Aufmachen</option>
-                                    <option value="Frühschicht">Frühschicht</option>
-                                    <option value="Spätschicht">Spätschicht</option>
-                                    <option value="Sonderschicht">Sonderschicht</option>
-                                </select>
-                            </div>
-                        </div>
-                        {(filters.employee !== 'all' || filters.shiftType !== 'all') && (
-                            <div className="mt-4 text-sm text-muted-foreground">
-                                {filteredShifts.length} Schicht{filteredShifts.length !== 1 ? 'en' : ''} gefunden
-                            </div>
-                        )}
-                    </Card>
-                )}
+                    </div>
+                    {ViewSwitch}
+                </div>
 
+                {/* Tausch-Manager — kompakt, nur bei offenen Anträgen */}
+                <div className="mb-3">
+                    <ShiftSwapManager compact />
+                </div>
+
+                {/* Filter-Karte (einklappbar) */}
+                {filterCard}
+
+                {/* Kalender-Content */}
                 {activeTab === 'calendar' && (
                     <>
-                    <WeatherForecastWidget isManager={permissions.isManager} />
-                    <SmartStaffingSuggestions weekStart={startOfWeek(new Date(), { weekStartsOn: 1 })} employees={employees} isManager={permissions.isManager || permissions.isAdmin} />
+                    <WeekContextBar
+                        weekStart={startOfWeek(new Date(), { weekStartsOn: 1 })}
+                        shifts={shifts}
+                        employees={employees}
+                        isManager={permissions.isManager || permissions.isAdmin}
+                    />
                     <ShiftCalendar
                         shifts={filteredShifts}
                         allShifts={shifts}
@@ -643,18 +639,8 @@ export default function Calendar() {
                     </Card>
                 )}
 
-                <ShiftModal
-                    open={modalOpen}
-                    onClose={() => { setModalOpen(false); setSelectedShift(null); }}
-                    shift={selectedShift}
-                    employees={employees}
-                    selectedDate={selectedDate}
-                    existingShifts={shifts}
-                    onSave={handleSave}
-                    onDelete={handleDelete}
-                    preselectedEmployeeId={preselectedEmployeeId}
-                    preselectedShiftType={preselectedShiftType}
-                />
+                {adminModals}
+                {shiftModal}
             </div>
         </div>
     );

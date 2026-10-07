@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { queueMutation } from '@/components/utils/offlineSync';
 import { notifyEmployee, invalidateAllSwapQueries } from '@/lib/shiftSwapHelpers';
 
-export default function ShiftSwapManager() {
+export default function ShiftSwapManager({ compact = false }) {
     const permissions = usePermissions();
     const queryClient = useQueryClient();
     const [modalOpen, setModalOpen] = useState(false);
@@ -223,19 +223,32 @@ export default function ShiftSwapManager() {
         return null;
     }
 
+    // Compact mode: unsichtbar wenn keine offenen Anträge, sonst kompakte Einzeile
+    if (compact && pendingRequests.length === 0) return null;
+
     return (
         <>
-            <Button 
-                variant="outline" 
-                onClick={() => setModalOpen(true)}
-                className="border-slate-600 hover:bg-slate-700 text-slate-300 relative"
-            >
-                <RepeatIcon className="w-4 h-4 mr-2" />
-                Tauschanfragen
-                {pendingRequests.length > 0 && (
-                    <Badge className="ml-2 bg-red-500 text-white">{pendingRequests.length}</Badge>
-                )}
-            </Button>
+            {compact ? (
+                <button
+                    onClick={() => setModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition-colors"
+                >
+                    <RepeatIcon className="w-3.5 h-3.5" />
+                    {pendingRequests.length} Tauschanträge — prüfen
+                </button>
+            ) : (
+                <Button
+                    variant="outline"
+                    onClick={() => setModalOpen(true)}
+                    className="border-slate-600 hover:bg-slate-700 text-slate-300 relative"
+                >
+                    <RepeatIcon className="w-4 h-4 mr-2" />
+                    Tauschanfragen
+                    {pendingRequests.length > 0 && (
+                        <Badge className="ml-2 bg-red-500 text-white">{pendingRequests.length}</Badge>
+                    )}
+                </Button>
+            )}
 
             <Dialog open={modalOpen} onOpenChange={setModalOpen}>
                 <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">

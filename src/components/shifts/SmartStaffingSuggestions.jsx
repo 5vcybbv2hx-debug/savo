@@ -9,7 +9,7 @@
  *
  * Wird aktiv, sobald genügend historische Daten vorhanden sind (≥30 Tage).
  */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { format, addDays, subDays, startOfWeek, endOfWeek, getDay, isSameDay, parseISO, differenceInCalendarDays } from 'date-fns';
@@ -102,8 +102,8 @@ function localEventMatchesDate(event, dateStr) {
     return false;
 }
 
-export default function SmartStaffingSuggestions({ weekStart, employees, isManager = false }) {
-    const [expanded, setExpanded] = useState(false);
+export default function SmartStaffingSuggestions({ weekStart, employees, isManager = false, defaultExpanded = false, onSuggestions, hidden = false }) {
+    const [expanded, setExpanded] = useState(defaultExpanded);
     // Finanzielle Kennzahlen (€, Personalquote, Ø-Umsatz) nur für Manager/Admin
     const canSeeFinancials = !!isManager;
 
@@ -493,6 +493,19 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
         return days;
     }, [revenues, allShifts, localEvents, weekStart, confirmedEvents, reservations, vacations, unavailabilities, totalEmployees]);
 
+    // Expose computed suggestions to parent (WeekContextBar compact chips).
+    // Ref-basierter Ansatz: feuert nur bei echten Content-Änderungen, nicht bei
+    // jeder neuen Array-Referenz (verhindert Infinite-Loop mit weekStart-Dates).
+    const prevSuggestionsKey = useRef('');
+    useEffect(() => {
+        if (!onSuggestions) return;
+        const key = suggestions.map(s => `${s.date}:${s.recommendation ?? 'null'}`).join('|');
+        if (key !== prevSuggestionsKey.current) {
+            prevSuggestionsKey.current = key;
+            onSuggestions(suggestions);
+        }
+    });
+
     // Only show if we have enough data
     const daysWithData = suggestions.filter(s => s.hasData);
     const hasEnoughData = revenues.length >= 14;
@@ -500,6 +513,8 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
     if (!hasEnoughData || daysWithData.length === 0) {
         return null;
     }
+
+    if (hidden) return null;
 
     const upcomingDays = suggestions.filter(s => !s.isPast);
 
