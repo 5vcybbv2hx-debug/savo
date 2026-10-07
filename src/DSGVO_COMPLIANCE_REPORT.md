@@ -37,7 +37,7 @@ Die App erfasst sensible Personaldaten und verarbeitet diese, enthält aber erhe
 ### 3. **Keine Datenschutz-Consents dokumentiert**
 **Status:** ✅ BEHOBEN
 - **Implementiert:**
-  - `DataProtection.jsx` mit Privacy Center
+  - `LegalTabContent.jsx` (Rechtliches-Tab) mit Privacy Center
   - Datenschutzhinweise beim Onboarding
   - Consent-UI-Komponenten (`DataMinimizationNotice.jsx`)
 - **TODO:** Datenschutzerklärung & Consent-Dokumentation in Betrieb einrichten
@@ -114,7 +114,7 @@ Die App erfasst sensible Personaldaten und verarbeitet diese, enthält aber erhe
 ### 11. **Mobile Datenschutz-UX**
 **Status:** ✅ GELÖST
 - **Implementiert:**
-  - `DataProtection.jsx` mobil-optimiert
+  - `LegalTabContent.jsx` (Rechtliches-Tab) mobil-optimiert
   - Privacy-Panel im Profil-Menü einbindbar
   - Klare, lesbare Texte für mobile Geräte
   - Keine horizontalen Scrolls
@@ -135,7 +135,7 @@ Die App erfasst sensible Personaldaten und verarbeitet diese, enthält aber erhe
 | Datei | Zweck | DSGVO-Nutzen |
 |-------|-------|--------------|
 | `PrivacyCenter.jsx` | Zentrum für DSGVO-Anfragen | Art. 15-22 DSGVO |
-| `DataProtection.jsx` | Datenschutz-Seite mit Admin-Tools | Transparenz + Compliance |
+| `LegalTabContent.jsx` | Datenschutz-Tab (Rechtliches) mit Admin-Tools | Transparenz + Compliance |
 | `EmployeeFormDataMinimized.jsx` | Formulare mit Datenschutztransparenz | Datenminimierung |
 | `DataMinimizationNotice.jsx` | Reusable UI-Komponenten | Transparenz |
 
@@ -225,7 +225,7 @@ Die App erfasst sensible Personaldaten und verarbeitet diese, enthält aber erhe
 ## 📞 KONTAKT & SUPPORT
 
 **Bei Datenschutz-Fragen:**
-- [ ] In der App: DataProtection > "Kontaktieren"
+- [ ] In der App: Rechtliches-Tab > "Kontaktieren"
 - [ ] Per Email: datenschutz@[domain.de]
 - [ ] Datenschutz-Beauftragte: [Name/Email]
 

@@ -6,7 +6,6 @@
  * THE ONLY EDITABLE VALUE: mainPage
  */
 // Core pages (auto-generated alphabetically)
-import ArticleEdit from './pages/ArticleEdit';
 import Articles from './pages/Articles';
 import Calendar from './pages/Calendar';
 import Cleaning from './pages/Cleaning';
@@ -19,7 +18,6 @@ import Events from './pages/Events';
 import Maintenance from './pages/Maintenance';
 import MyArea from './pages/MyArea';
 import MyShifts from './pages/MyShifts';
-import Notifications from './pages/Notifications';
 import Onboarding from './pages/Onboarding';
 import PermissionsNew from './pages/PermissionsNew';
 import PriceCalculator from './pages/PriceCalculator';
@@ -43,7 +41,6 @@ import Wastage from './pages/Wastage';
 import Inventory from './pages/Inventory';
 import BusinessCard from './pages/BusinessCard';
 import Wusa from './pages/Wusa';
-import WusaPublic from './pages/WusaPublic';
 
 import Display from './pages/Display';
 // DisplayManager wurde in Events (TvPlaylistSection) integriert — Route leitet weiter
@@ -52,13 +49,11 @@ import Display from './pages/Display';
 import CleaningChecklist from './pages/CleaningChecklist';
 import EmployeeProfile from './pages/EmployeeProfile';
 import Stationsplan from './pages/Stationsplan';
-import DataProtection from './pages/DataProtection';
 
 import __Layout from './Layout.jsx';
 
 // Page categories for layout and navigation
 const CORE_PAGES = {
-    "ArticleEdit": ArticleEdit,
     "Articles": Articles,
     "Calendar": Calendar,
     "Cleaning": Cleaning,
@@ -71,7 +66,6 @@ const CORE_PAGES = {
     "Maintenance": Maintenance,
     "MyArea": MyArea,
     "MyShifts": MyShifts,
-    "Notifications": Notifications,
     "Onboarding": Onboarding,
     "PermissionsNew": PermissionsNew,
     "PriceCalculator": PriceCalculator,
@@ -100,13 +94,11 @@ const SPECIAL_PAGES_WITH_LAYOUT = {
     "CleaningChecklist": CleaningChecklist,
     "EmployeeProfile": EmployeeProfile,
     "Stationsplan": Stationsplan,
-    "DataProtection": DataProtection,
 };
 
 // Public pages: NO layout wrapper (echte öffentliche Seiten ohne Auth/Sidebar)
 const PUBLIC_PAGES = {
     "StorageLocationScan": StorageLocationScan,
-    "WusaPublic": WusaPublic,
     "Display": Display,
 };
 
