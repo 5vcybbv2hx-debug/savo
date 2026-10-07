@@ -200,7 +200,7 @@ export default function Notifications() {
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
-                                onClick={() => navigate(createPageUrl('NotificationSettings'))}
+                                onClick={() => navigate(createPageUrl('MyArea') + '?tab=benachrichtigungen')}
                                 variant="outline"
                                 size="sm"
                                 className="gap-2"

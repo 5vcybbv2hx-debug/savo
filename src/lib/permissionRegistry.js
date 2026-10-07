@@ -258,7 +258,7 @@ export const PERMISSION_REGISTRY = {
   // 6. URLAUB / VACATION
   // ────────────────────────────────────────────────────────────────
   vacation: {
-    pageKey: 'Vacation',
+    pageKey: 'MyArea',
     displayName: 'Urlaub',
     description: 'Urlaubsanträge stellen und verwalten (nur Vollzeit)',
     category: 'HR',

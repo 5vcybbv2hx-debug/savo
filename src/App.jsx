@@ -36,7 +36,6 @@ import Display from './pages/Display';
 import Incidents from './pages/Incidents';
 import IncidentDetail from './pages/IncidentDetail';
 
-import BusinessCalendar from './pages/BusinessCalendar';
 import DataQuality from './pages/DataQuality';
 import MenuReview from './pages/MenuReview';
 import ExternalJobs from './pages/ExternalJobs';
@@ -219,14 +218,6 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
 
-      {/* Betriebskalender & Sondertage */}
-      <Route path="/BusinessCalendar" element={
-        <LayoutWrapper currentPageName="BusinessCalendar">
-          <RoleGuard permission="canViewSettings">
-            <BusinessCalendar />
-          </RoleGuard>
-        </LayoutWrapper>
-      } />
 
       {/* Buchhaltungsmodul — nur für Manager */}
       <Route path="/AccountingDashboard" element={<LayoutWrapper currentPageName="AccountingDashboard"><RoleGuard permission="canViewAccounting"><AccountingDashboard /></RoleGuard></LayoutWrapper>} />

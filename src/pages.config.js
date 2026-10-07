@@ -19,9 +19,7 @@ import Events from './pages/Events';
 import Maintenance from './pages/Maintenance';
 import More from './pages/More';
 import MyArea from './pages/MyArea';
-import MyProfile from './pages/MyProfile';
 import MyShifts from './pages/MyShifts';
-import NotificationSettings from './pages/NotificationSettings';
 import Notifications from './pages/Notifications';
 import Onboarding from './pages/Onboarding';
 import PermissionsNew from './pages/PermissionsNew';
@@ -38,7 +36,6 @@ import TeamCalendar from './pages/TeamCalendar';
 import TeamMeeting from './pages/TeamMeeting';
 import TimeTracking from './pages/TimeTracking';
 import Todos from './pages/Todos';
-import Vacation from './pages/Vacation';
 
 import StorageLocationScan from './pages/StorageLocationScan';
 import TeamHub from './pages/TeamHub';
@@ -80,9 +77,7 @@ const CORE_PAGES = {
     "Maintenance": Maintenance,
     "More": More,
     "MyArea": MyArea,
-    "MyProfile": MyProfile,
     "MyShifts": MyShifts,
-    "NotificationSettings": NotificationSettings,
     "Notifications": Notifications,
     "Onboarding": Onboarding,
     "PermissionsNew": PermissionsNew,
@@ -98,7 +93,6 @@ const CORE_PAGES = {
     "TeamMeeting": TeamMeeting,
     "TimeTracking": TimeTracking,
     "Todos": Todos,
-    "Vacation": Vacation,
     "Warehouse": Warehouse,
     "Wastage": Wastage,
     "Inventory": Inventory,

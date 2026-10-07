@@ -1,21 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Umbrella, RepeatIcon, QrCode, Bell, Clock } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 
 // Import existing page components
-import MyProfilePage from './MyProfile';
-import VacationPage from './Vacation';
+import MyProfilePage from '@/components/profile/MyProfile';
+import VacationPage from '@/components/profile/Vacation';
 import ShiftSwapSection from '@/components/shifts/ShiftSwapSection';
 import DigitalBusinessCard from '@/components/company/DigitalBusinessCard';
 import UnavailabilityList from '@/components/availability/UnavailabilityList';
-import NotificationSettingsPage from './NotificationSettings';
+import NotificationSettingsPage from '@/components/profile/NotificationSettings';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
 export default function MyAreaPage() {
     const permissions = usePermissions();
     const [activeTab, setActiveTab] = useState('profile');
+    const [searchParams] = useSearchParams();
+
+    // URL-Tab-Parameter auslesen (?tab=profil|urlaub|tauschen|visitenkarte|verfuegbarkeiten|benachrichtigungen)
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab) {
+            const tabMap = {
+                profil: 'profile',
+                urlaub: 'vacation',
+                tauschen: 'swaps',
+                visitenkarte: 'card',
+                verfuegbarkeiten: 'termine',
+                benachrichtigungen: 'notifications',
+            };
+            if (tabMap[tab]) setActiveTab(tabMap[tab]);
+        }
+    }, [searchParams]);
 
     const { data: companyInfo } = useQuery({
         queryKey: ['company-info'],
@@ -24,6 +42,12 @@ export default function MyAreaPage() {
             return infos[0] || null;
         }
     });
+
+    // Tab-Sichtbarkeit nach Permission
+    const showVacationTab = permissions.canViewVacation;
+    const showSwapsTab = permissions.canViewShifts;
+    const visibleTabCount = 4 + (showVacationTab ? 1 : 0) + (showSwapsTab ? 1 : 0);
+    const gridColsClass = { 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6' }[visibleTabCount] || 'grid-cols-6';
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
@@ -36,19 +60,23 @@ export default function MyAreaPage() {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-                    <TabsList className="grid w-full grid-cols-6 bg-card border border-border h-auto p-1">
+                    <TabsList className={`grid w-full ${gridColsClass} bg-card border border-border h-auto p-1`}>
                         <TabsTrigger value="profile" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
                             <User className="w-5 h-5 sm:w-4 sm:h-4" />
                             <span className="hidden sm:inline">Profil</span>
                         </TabsTrigger>
-                        <TabsTrigger value="vacation" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
-                            <Umbrella className="w-5 h-5 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline">Urlaub</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="swaps" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
-                            <RepeatIcon className="w-5 h-5 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline">Tausch</span>
-                        </TabsTrigger>
+                        {showVacationTab && (
+                            <TabsTrigger value="vacation" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
+                                <Umbrella className="w-5 h-5 sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Urlaub</span>
+                            </TabsTrigger>
+                        )}
+                        {showSwapsTab && (
+                            <TabsTrigger value="swaps" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
+                                <RepeatIcon className="w-5 h-5 sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Tausch</span>
+                            </TabsTrigger>
+                        )}
                         <TabsTrigger value="notifications" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
                             <Bell className="w-5 h-5 sm:w-4 sm:h-4" />
                             <span className="hidden sm:inline">Info</span>

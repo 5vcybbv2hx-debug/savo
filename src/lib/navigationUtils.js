@@ -16,14 +16,12 @@ export const ROUTES = {
   // Employee
   EMPLOYEES: '/Employees',
   EMPLOYEE_PROFILE: (id) => `/EmployeeProfile/${id}`,
-  MY_PROFILE: '/MyProfile',
   MY_SHIFTS: '/MyShifts',
   
   // Time & Shifts
   SHIFTS: '/Shifts',
   SHIFT_SWAPS: '/MyShifts',
   TIME_TRACKING: '/TimeTracking',
-  VACATION: '/Vacation',
   
   // Operations
   DRINK_MENU: '/DrinkMenu',

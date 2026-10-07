@@ -10,7 +10,7 @@ import {
     CalendarDays, Clock, Plane, RefreshCw, Shield,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare, Target,
-    Banknote, BookCopy, Warehouse, Utensils, Siren,
+    Banknote, BookCopy, Warehouse, Utensils, Siren, User,
 } from 'lucide-react';
 
 // ── SIDEBAR — aus sidebarConfig.js (Builder-sicher) ─────────────────────────
@@ -64,7 +64,7 @@ export const additionalPages = [
     { page: 'Calendar',       name: 'Schichtplan',     icon: Calendar,      permission: 'canViewShifts' },
     { page: 'TeamCalendar',   name: 'Teamkalender',    icon: CalendarDays,  permission: 'canViewTeamCalendar' },
     { page: 'TimeManagement', name: 'Zeiterfassung',   icon: Clock,         permission: 'canViewOwnTimeEntries' },
-    { page: 'Vacation',       name: 'Urlaub',          icon: Plane,         permission: 'canViewVacation' },
+    { page: 'MyArea',         name: 'Mein Bereich',     icon: User,           permission: 'canViewDashboard' },
     { page: 'MyShifts',       name: 'Meine Schichten', icon: CalendarClock, permission: 'canViewShifts' },
     { page: 'PermissionsNew', name: 'Berechtigungen',  icon: Shield,        permission: 'canEditEmployeePermissions' },
     { page: 'TeamMeeting',    name: 'Teamsitzung',     icon: MessageSquare, permission: 'canViewTeamMeeting' },
@@ -75,7 +75,6 @@ export const additionalPages = [
     { page: 'Documents',        name: 'Dokumente',       icon: FileText,     permission: 'canViewSettings' },
     { page: 'BusinessCard',     name: 'Visitenkarte',     icon: CreditCard,   permission: 'canViewDashboard' },
     { page: 'ModuleCenter',     name: 'Modulcenter',      icon: LayoutGrid,   permission: 'canViewSettings' },
-    { page: 'BusinessCalendar', name: 'Betriebskalender', icon: CalendarDays, permission: 'canViewSettings' },
     { page: 'DataQuality',      name: 'Datenqualität',    icon: Database,     permission: 'isManager' },
     { page: 'Incidents',        name: 'Vorfälle',          icon: Siren,        permission: 'isManager' },
 ];

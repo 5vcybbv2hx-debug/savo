@@ -133,7 +133,7 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                         </Link>
                     )}
                     {pendingVacationRequests.length > 0 && (
-                        <Link to={createPageUrl('Vacation')}>
+                        <Link to={createPageUrl('MyArea') + '?tab=urlaub'}>
                             <Card className="bg-blue-900/20 border-blue-800/30 hover:bg-blue-900/30 transition-colors">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-3">

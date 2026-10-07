@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
-import { Plus, Calendar as CalendarIcon, Trash2, Edit, Search, Lightbulb, MapPin, ChevronDown } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Trash2, Edit, Search, Lightbulb, MapPin, ChevronDown, CalendarDays } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ import EventArchive from '@/components/events/EventArchive';
 import EventIdeas from '@/components/events/EventIdeas';
 import LocalEventsTab from '@/components/events/LocalEventsTab';
 import TvPlaylistSection from '@/components/display/TvPlaylistSection';
+import BusinessCalendar from '@/components/calendar/BusinessCalendar';
 
 const eventTypeColors = {
     'Party': 'bg-purple-100 text-purple-700 border-purple-200',
@@ -519,6 +520,14 @@ export default function Events() {
                 <section className="mb-8">
                     <TvPlaylistSection />
                 </section>
+
+                {/* ── Abschnitt 3: Betriebskalender (nur Manager) ─────────────── */}
+                {permissions.isManager && (
+                    <section className="mb-8">
+                        <SectionHeader icon={CalendarDays} title="Betriebskalender" />
+                        <BusinessCalendar />
+                    </section>
+                )}
 
                 {/* ── Abschnitte 3-5: Archiv, Umgebung, Ideen (Accordion) ──────── */}
                 <Accordion type="multiple" defaultValue={[]} className="space-y-3">

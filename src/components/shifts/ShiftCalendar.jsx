@@ -464,7 +464,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                                 {/* Vacations */}
                                 {dayVacations.length > 0 && (
                                     <Link
-                                        to={createPageUrl('Vacation')}
+                                        to={createPageUrl('MyArea') + '?tab=urlaub'}
                                         onClick={(e) => e.stopPropagation()}
                                         className="px-1.5 py-0.5 bg-amber-600/20 border border-amber-600/30 rounded text-[9px] text-amber-400 flex items-center gap-1 hover:bg-amber-600/30 transition-colors font-medium flex-shrink-0"
                                     >

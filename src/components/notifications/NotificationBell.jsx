@@ -139,7 +139,7 @@ export default function NotificationBell({ userEmail, userRole = 'user', employe
                                 Alle gelesen
                             </Button>
                         )}
-                        <Link to={createPageUrl('NotificationSettings')}>
+                        <Link to={createPageUrl('MyArea') + '?tab=benachrichtigungen'}>
                             <Button
                                 variant="ghost"
                                 size="sm"
