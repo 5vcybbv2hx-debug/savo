@@ -61,7 +61,6 @@ export const additionalPages = [
     // Team
     { page: 'Employees',      name: 'Mitarbeiter',     icon: Users,         permission: 'canViewEmployees' },
     { page: 'Calendar',       name: 'Schichtplan',     icon: Calendar,      permission: 'canViewShifts' },
-    { page: 'TeamCalendar',   name: 'Teamkalender',    icon: CalendarDays,  permission: 'canViewTeamCalendar' },
     { page: 'TimeManagement', name: 'Zeiterfassung',   icon: Clock,         permission: 'canViewOwnTimeEntries' },
     { page: 'MyArea',         name: 'Mein Bereich',     icon: User,           permission: 'canViewDashboard' },
     { page: 'MyShifts',       name: 'Meine Schichten', icon: CalendarClock, permission: 'canViewShifts' },
