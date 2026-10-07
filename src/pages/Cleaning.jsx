@@ -241,7 +241,7 @@ export default function Cleaning() {
     if (tasksError) return <ErrorState title="Putzaufgaben konnten nicht geladen werden" onRetry={() => queryClient.invalidateQueries({ queryKey: ['cleaning'] })} />;
 
     return (
-        <div className="min-h-screen bg-background pb-32 md:pb-8 animate-page-enter">
+        <div className="min-h-screen bg-background pb-8 animate-page-enter">
             <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
 
                 {/* ── Header ─────────────────────────────────────────── */}
@@ -252,7 +252,7 @@ export default function Cleaning() {
                             {format(new Date(), "EEEE, d. MMMM", { locale: de })}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
                         {isOnline
                             ? <Cloud className="w-4 h-4 text-emerald-500" />
                             : <CloudOff className="w-4 h-4 text-amber-500" />}
@@ -260,8 +260,18 @@ export default function Cleaning() {
                             <AreasManager />
                         )}
                         {(permissions.isManager || permissions.isAdmin) && (
+                            <Button size="sm" variant="outline" onClick={() => setReportsModalOpen(true)} className="h-9 gap-1">
+                                <FileText className="w-4 h-4" /> Berichte
+                            </Button>
+                        )}
+                        {(permissions.isManager || permissions.isAdmin) && (
                             <Button size="sm" variant="outline" onClick={() => setModalOpen(true)} className="h-9 gap-1">
                                 <Plus className="w-4 h-4" /> Aufgabe
+                            </Button>
+                        )}
+                        {(permissions.isManager || permissions.isAdmin) && (
+                            <Button size="sm" variant="destructive" onClick={() => setEndDayDialogOpen(true)} className="h-9 gap-1">
+                                <Archive className="w-4 h-4" /> Tag beenden
                             </Button>
                         )}
                     </div>
@@ -496,29 +506,6 @@ export default function Cleaning() {
                 </Dialog>
             </div>
 
-            {/* ── Fixierter "Tag beenden"-Button ───────────────────────── */}
-            {(permissions.isManager || permissions.isAdmin) && (
-                <div className="fixed bottom-[6.5rem] md:bottom-6 left-0 right-0 px-4 flex justify-center gap-2 pointer-events-none z-40">
-                    <div className="flex items-center gap-2 pointer-events-auto">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-10 gap-1 shadow-lg bg-card"
-                            onClick={() => setReportsModalOpen(true)}
-                        >
-                            <FileText className="w-4 h-4" /> Berichte
-                        </Button>
-                        <Button
-                            size="default"
-                            className="h-12 px-6 gap-2 shadow-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold rounded-2xl"
-                            onClick={() => setEndDayDialogOpen(true)}
-                        >
-                            <Archive className="w-4 h-4" />
-                            Tag beenden
-                        </Button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
