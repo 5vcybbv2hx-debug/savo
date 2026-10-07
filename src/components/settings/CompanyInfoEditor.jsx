@@ -291,7 +291,7 @@ export default function CompanyInfoEditor() {
                                         </div>
                                         <button
                                             onClick={() => set('logo_url', '')}
-                                            className="absolute top-2 right-2 w-7 h-7 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="absolute top-2 right-2 w-7 h-7 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity"
                                             title="Logo entfernen"
                                         >
                                             <X className="w-3.5 h-3.5" />

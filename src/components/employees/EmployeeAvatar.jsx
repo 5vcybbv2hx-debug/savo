@@ -80,7 +80,7 @@ export default function EmployeeAvatar({
       {avatar}
       {/* Overlay */}
       <div className={cn(
-        'absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity',
+        'absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity',
         sizeMap[size] || sizeMap.md
       )}>
         <Camera className="w-6 h-6 text-white" />

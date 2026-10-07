@@ -81,7 +81,7 @@ function SlotRow({ slot, canEdit, onEdit, onDelete, onPrintLabel, onMoveUp, onMo
         </Badge>
       )}
       {canEdit && (
-        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-0.5 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
           <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
             title="Etikett drucken"
             onClick={() => onPrintLabel(slot)}>

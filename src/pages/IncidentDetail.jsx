@@ -218,7 +218,7 @@ export default function IncidentDetail() {
                             <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-muted group">
                                 <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
                                 <button onClick={() => removePhoto(idx)}
-                                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Trash2 className="w-3 h-3" />
                                 </button>
                             </div>

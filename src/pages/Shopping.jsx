@@ -32,6 +32,7 @@ import KanbanScanModal from '../components/shopping/KanbanScanModal';
 import SmartCombobox from '@/components/ui/SmartCombobox';
 import ArticlePickerSheet from '../components/shopping/ArticlePickerSheet';
 import BulkWareneingangSheet from '../components/shopping/BulkWareneingangSheet';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -777,6 +778,11 @@ export default function Shopping() {
 
     return (
         <div className={cn('min-h-screen bg-background', selectMode ? 'pb-32 md:pb-32' : 'pb-24 md:pb-8')}>
+            <PullToRefresh onRefresh={async () => {
+                await queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+                await queryClient.invalidateQueries({ queryKey: ['articles'] });
+                await queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+            }}>
             <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
 
                 {/* ── Header ────────────────────────────────────────────── */}
@@ -1082,10 +1088,10 @@ export default function Shopping() {
                         ))
                     )}
                 </div>
+                </div>
+                </PullToRefresh>
 
-            </div>
-
-            {/* ── Bulk-Löschen Toolbar (Select-Modus) ──────────────────── */}
+                {/* ── Bulk-Löschen Toolbar (Select-Modus) ──────────────────── */}
             {selectMode && (
                 <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-card/95 backdrop-blur-sm px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                     <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">

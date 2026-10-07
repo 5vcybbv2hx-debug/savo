@@ -171,7 +171,7 @@ export default function OpeningHoursManager() {
                                                                 e.stopPropagation();
                                                                 handleDelete(dayHour.id);
                                                             }}
-                                                            className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
@@ -226,7 +226,7 @@ export default function OpeningHoursManager() {
                                                                 e.stopPropagation();
                                                                 handleDelete(special.id);
                                                             }}
-                                                            className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>

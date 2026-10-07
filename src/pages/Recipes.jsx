@@ -301,7 +301,7 @@ function RecipeCard({ recipe, articles, permissions, onSelect, isSelected, onCli
                         'absolute top-3 right-3 w-5 h-5 rounded border-2 flex items-center justify-center transition-all',
                         isSelected
                             ? 'bg-amber-500 border-amber-500'
-                            : 'border-border opacity-0 group-hover:opacity-100 bg-card'
+                            : 'border-border opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 bg-card'
                     )}>
                     {isSelected && <CheckSquare className="w-3 h-3 text-white" />}
                 </button>

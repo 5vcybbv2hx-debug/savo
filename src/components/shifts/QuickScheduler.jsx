@@ -242,7 +242,7 @@ export default function QuickScheduler({ employees, shiftTypes, shifts, onCreate
                                                                                 <span className="truncate flex-1">{emp?.short_name || shift.employee_name?.split(' ')[0]}</span>
                                                                                 <button
                                                                                     onClick={() => onDeleteShift(shift.id)}
-                                                                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/20"
+                                                                                    className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/20"
                                                                                 >
                                                                                     <X className="w-2.5 h-2.5" />
                                                                                 </button>

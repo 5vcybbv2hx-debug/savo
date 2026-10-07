@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import QuickInput from '@/components/quicklist/QuickInput';
 import QuickListRow from '@/components/quicklist/QuickListRow';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 
 export default function QuickList() {
     const queryClient = useQueryClient();
@@ -233,6 +234,10 @@ export default function QuickList() {
     );
 
     return (
+        <PullToRefresh onRefresh={async () => {
+            await queryClient.invalidateQueries({ queryKey: ['quicklist-items'] });
+            await queryClient.invalidateQueries({ queryKey: ['articles'] });
+        }}>
         <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8">
             {/* Header */}
             <div className="flex items-start justify-between gap-3 mb-3">
@@ -370,5 +375,6 @@ export default function QuickList() {
                 </AlertDialogContent>
             </AlertDialog>
         </div>
+        </PullToRefresh>
     );
 }

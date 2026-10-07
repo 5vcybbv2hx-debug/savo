@@ -26,6 +26,7 @@ import TodoCard from '@/components/todos/TodoCard';
 import TodoModal from '@/components/todos/TodoModal';
 import { cn } from '@/lib/utils';
 import { getUserDisplayName } from '@/lib/userDisplayName';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 
 const PRIORITY_ORDER = { dringend: 0, hoch: 1, mittel: 2, niedrig: 3 };
 
@@ -369,6 +370,12 @@ export default function Todos() {
 
     return (
         <div className="min-h-screen bg-background pb-28 md:pb-8">
+            <PullToRefresh onRefresh={async () => {
+                await queryClient.invalidateQueries({ queryKey: ['todos'] });
+                await queryClient.invalidateQueries({ queryKey: ['todos-archived'] });
+                await queryClient.invalidateQueries({ queryKey: ['employees'] });
+                await queryClient.invalidateQueries({ queryKey: ['todo-categories'] });
+            }}>
             <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
 
                 {/* ── Header ─────────────────────────────────────────────── */}
@@ -964,6 +971,7 @@ export default function Todos() {
                     currentUser={user}
                 />
             </div>
+            </PullToRefresh>
         </div>
     );
 }

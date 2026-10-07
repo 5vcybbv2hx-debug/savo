@@ -661,7 +661,7 @@ export default function AccountingFixedCosts() {
                                         <p className="text-sm font-bold text-foreground">{fmt(exp.amount_gross)} €</p>
                                         <button
                                             onClick={e => { e.stopPropagation(); setDeleteTarget(exp.id); }}
-                                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
+                                            className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
                                     </div>

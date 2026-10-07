@@ -26,7 +26,7 @@ export default function AttachmentGallery({ attachments = [], onDelete = null, r
                                 alt={att.type === 'sketch' ? 'Skizze' : 'Foto'}
                                 className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100">
                                 <button
                                     onClick={() => setPreviewUrl(att.url)}
                                     className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-slate-900 transition-all"

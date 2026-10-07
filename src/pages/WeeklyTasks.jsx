@@ -794,7 +794,7 @@ export default function WeeklyTasks() {
                                                </span>
                                            </div>
                                        ) : (
-                                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                           <div className="absolute inset-0 flex items-center justify-center opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity">
                                                <Plus className="w-4 h-4 text-muted-foreground/50" />
                                            </div>
                                        )}
@@ -1093,7 +1093,7 @@ export default function WeeklyTasks() {
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <Plus className="w-4 h-4 text-muted-foreground/50" />
                                                     </div>
                                                 )}

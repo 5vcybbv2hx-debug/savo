@@ -380,7 +380,7 @@ export default function DrinkMenuPage() {
                                                                     <DropdownMenuTrigger asChild
                                                                         onClick={e => e.stopPropagation()}>
                                                                         <Button variant="ghost" size="icon"
-                                                                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                                                                            className="h-7 w-7 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
                                                                             <MoreVertical className="w-3.5 h-3.5" />
                                                                         </Button>
                                                                     </DropdownMenuTrigger>

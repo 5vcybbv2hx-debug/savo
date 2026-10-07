@@ -195,7 +195,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                                     <p className="text-sm font-medium text-foreground truncate">{template.name}</p>
                                     <p className="text-xs text-muted-foreground">{count} Artikel</p>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-1 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => openEdit(template)} className="p-1 text-foreground0 hover:text-foreground/75">
                                         <Pencil className="w-3.5 h-3.5" />
                                     </button>

@@ -493,7 +493,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
 
                             {/* Hover Add Button */}
                             {permissions.canEditShifts && (
-                                <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="absolute inset-x-0 bottom-0 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Button
                                         variant="ghost"
                                         size="sm"

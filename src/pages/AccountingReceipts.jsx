@@ -168,7 +168,7 @@ function ReceiptCard({ receipt, onEdit, onDelete }) {
 
             {/* Löschen */}
             <button onClick={e => { e.stopPropagation(); onDelete(); }}
-                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1 min-w-[28px] min-h-[28px] flex items-center justify-center shrink-0">
+                className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1 min-w-[28px] min-h-[28px] flex items-center justify-center shrink-0">
                 <Trash2 className="w-3 h-3" />
             </button>
         </div>
