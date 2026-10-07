@@ -7,6 +7,9 @@ import { STALE } from '@/lib/queryUtils';
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Plus, Users, Filter, X, Download, Zap, MoreHorizontal, CalendarDays, Settings2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import TeamMonthView from '@/components/calendar/TeamMonthView';
 import { useErrorHandler } from '@/components/error/ErrorHandler';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -43,6 +46,31 @@ export default function Calendar() {
     const [adminModal, setAdminModal] = useState(null);
     const [mobileWeekStart, setMobileWeekStart] = useState(
         () => startOfWeek(new Date(), { weekStartsOn: 1 })
+    );
+
+    // Woche/Monat-View — Monat nur für Rollen mit canViewTeamCalendar
+    const [searchParams, setSearchParams] = useSearchParams();
+    const canMonth = permissions.canViewTeamCalendar;
+    const view = (canMonth && searchParams.get('view') === 'monat') ? 'monat' : 'woche';
+    const setView = (v) => {
+        if (v === 'monat') setSearchParams({ view: 'monat' }, { replace: true });
+        else setSearchParams({}, { replace: true });
+    };
+    const ViewSwitch = (
+        <div className="flex gap-1 p-1 bg-card border border-border rounded-xl w-fit">
+            <button onClick={() => setView('woche')}
+                className={cn('px-4 py-1.5 text-xs font-semibold rounded-lg transition-all',
+                    view === 'woche' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
+                Woche
+            </button>
+            {canMonth && (
+                <button onClick={() => setView('monat')}
+                    className={cn('px-4 py-1.5 text-xs font-semibold rounded-lg transition-all',
+                        view === 'monat' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>
+                    Monat
+                </button>
+            )}
+        </div>
     );
 
     const { data: employees = [] } = useQuery({
@@ -234,6 +262,7 @@ export default function Calendar() {
         return (
             <div className="min-h-screen bg-background flex flex-col">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card">
+                    {ViewSwitch}
                     <div className="flex items-center gap-2 overflow-x-auto pb-0.5 no-scrollbar">
                         {permissions.canEditShifts && (
                             <Button
@@ -258,7 +287,11 @@ export default function Calendar() {
                 </div>
 
                 <div className="flex-1 overflow-hidden">
-                    {activeMobileTab === 'quick' ? (
+                    {view === 'monat' && canMonth ? (
+                        <div className="overflow-y-auto h-full">
+                            <TeamMonthView />
+                        </div>
+                    ) : activeMobileTab === 'quick' ? (
                         <div className="p-4 overflow-y-auto h-full">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -286,7 +319,7 @@ export default function Calendar() {
                     ) : (
                         <>
                         <WeatherForecastWidget isManager={permissions.isManager} />
-                        <SmartStaffingSuggestions weekStart={mobileWeekStart} employees={employees} />
+                        <SmartStaffingSuggestions weekStart={mobileWeekStart} employees={employees} isManager={permissions.isManager || permissions.isAdmin} />
                         <MobileWeekView
                             shifts={shifts}
                             employees={employees}
@@ -318,6 +351,24 @@ export default function Calendar() {
         );
     }
 
+    // ─── Monat-View (Desktop) — Teamkalender 1:1 ─────────────────────────────
+    if (view === 'monat' && canMonth) {
+        return (
+            <div className="min-h-screen bg-background">
+                <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+                    <div className="flex flex-col gap-3 mb-6 sm:mb-8">
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Schichtplan</h1>
+                            <p className="text-muted-foreground text-sm mt-1">Verwalte die Arbeitszeiten deines Teams</p>
+                        </div>
+                        {ViewSwitch}
+                    </div>
+                    <TeamMonthView />
+                </div>
+            </div>
+        );
+    }
+
     // ─── Desktop layout ──────────────────────────────────────────────────────
     return (
         <div className="min-h-screen bg-background">
@@ -327,6 +378,7 @@ export default function Calendar() {
                         <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Schichtplan</h1>
                         <p className="text-muted-foreground text-sm mt-1">Verwalte die Arbeitszeiten deines Teams</p>
                     </div>
+                    {ViewSwitch}
                     <div className="flex gap-2 flex-wrap items-center">
                         <ShiftSwapManager />
 
@@ -483,7 +535,7 @@ export default function Calendar() {
                 {activeTab === 'calendar' && (
                     <>
                     <WeatherForecastWidget isManager={permissions.isManager} />
-                    <SmartStaffingSuggestions weekStart={startOfWeek(new Date(), { weekStartsOn: 1 })} employees={employees} />
+                    <SmartStaffingSuggestions weekStart={startOfWeek(new Date(), { weekStartsOn: 1 })} employees={employees} isManager={permissions.isManager || permissions.isAdmin} />
                     <ShiftCalendar
                         shifts={filteredShifts}
                         allShifts={shifts}

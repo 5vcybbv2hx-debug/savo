@@ -9,7 +9,7 @@ import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import { Input } from '@/components/ui/input';
 import { Upload, DollarSign, Users, Gift, Loader2, ChevronLeft, ChevronRight, CalendarDays, RefreshCw, CheckCircle2, TrendingDown, Info, Pencil, Check, X, ChevronDown, ChevronUp, ArrowDownToLine, MoreHorizontal, BookOpen } from 'lucide-react';
-import { format, parseISO, addDays, subDays, isToday } from 'date-fns';
+import { format, parseISO, addDays, subDays, isToday, getDay } from 'date-fns';
 import { Activity, History } from 'lucide-react';
 import BusynessBackfill from '@/components/dailyanalysis/BusynessBackfill';
 import { de } from 'date-fns/locale';
@@ -23,6 +23,8 @@ import { getSchoolVacation } from '@/lib/schoolVacations';
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+
+const BUSYNESS_LABELS = { 1: 'Ruhig', 2: 'Entspannt', 3: 'Normal', 4: 'Lebhaft', 5: 'Stark' };
 
 // An employee is "daily-paid" (Aushilfe) if their role is Aushilfe OR they have an hourly_rate but no monthly contract
 const isDailyPaid = (employee) => {
@@ -135,6 +137,12 @@ export default function DailyAnalysis() {
         staleTime: 2 * 60 * 1000,
     });
 
+    const { data: shifts = [] } = useQuery({
+        queryKey: ['shifts'],
+        queryFn: () => base44.entities.Shift.list('date', 2000),
+        staleTime: 5 * 60 * 1000,
+    });
+
     const getOperatingDate = (timeEntry) => {
         const startHour = parseInt(timeEntry.start_time.split(':')[0]);
         if (startHour < 9) {
@@ -146,6 +154,41 @@ export default function DailyAnalysis() {
     };
 
     const todayRevenue = dailyRevenues.find(dr => dr.date === selectedDate);
+
+    // Smart-Engine-Empfehlung für dieses Datum (kosmetisch — gleiche historische
+    // Basis wie SmartStaffingSuggestions: gleicher Wochentag ±14 Tage Vorjahr).
+    const smartRecommendation = useMemo(() => {
+        if (!dailyRevenues.length || !shifts.length || !selectedDate) return null;
+        const target = parseISO(selectedDate + 'T12:00:00');
+        const dow = getDay(target);
+        const monthDay = format(target, 'MM-dd');
+        const today = new Date();
+        const historicalMatches = dailyRevenues.filter(r => {
+            if (!r.date) return false;
+            const rDate = parseISO(r.date + 'T12:00:00');
+            if (getDay(rDate) !== dow) return false;
+            const rMonthDay = format(rDate, 'MM-dd');
+            const dayDiff = Math.abs(
+                (parseInt(monthDay.slice(0, 2)) * 31 + parseInt(monthDay.slice(3, 5))) -
+                (parseInt(rMonthDay.slice(0, 2)) * 31 + parseInt(rMonthDay.slice(3, 5)))
+            );
+            return dayDiff <= 14 && rDate < today;
+        });
+        const recentMatches = dailyRevenues.filter(r => {
+            if (!r.date) return false;
+            const rDate = parseISO(r.date + 'T12:00:00');
+            if (getDay(rDate) !== dow) return false;
+            const diff = (today - rDate) / 86400000;
+            return diff >= 7 && diff <= 56;
+        });
+        const allMatches = [...historicalMatches, ...recentMatches];
+        const uniqueMatches = [...new Map(allMatches.map(m => [m.id, m])).values()];
+        const staffCounts = uniqueMatches.map(r => shifts.filter(s => s.date === r.date).length).filter(c => c > 0);
+        if (staffCounts.length === 0) return null;
+        const avg = staffCounts.reduce((a, b) => a + b, 0) / staffCounts.length;
+        return Math.round(avg);
+    }, [dailyRevenues, shifts, selectedDate]);
+
     const todayTipDistribution = tipDistributions.find(td => td.date === selectedDate);
     const todaySalesReport = salesReports.find(sr => sr.report_date === selectedDate && sr.processing_status === 'completed');
     const employeeMap = useMemo(() => new Map(employees.map(emp => [emp.id, emp])), [employees]);
@@ -544,6 +587,20 @@ export default function DailyAnalysis() {
                 dailyTimeEntriesCount={todayTimeEntriesWithRates.length}
                 hasRevenue={!!todayRevenue}
             />}
+
+            {/* Kosmetische Feedback-Zeile — Smart-Empfehlung vs. getippte Betriebsamkeit */}
+            {viewMode === 'tag' && todayRevenue && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/20 text-xs text-muted-foreground">
+                    <Activity className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span>
+                        Empfehlung war <strong className="text-foreground">{smartRecommendation != null ? `${smartRecommendation} Personen` : '—'}</strong>
+                        {' · '}
+                        getippt <strong className="text-foreground">{todayRevenue.busyness_level ?? '—'}</strong>
+                        {' · '}
+                        Betriebsamkeit <strong className="text-foreground">{todayRevenue.busyness_level ? BUSYNESS_LABELS[todayRevenue.busyness_level] : '—'}</strong>
+                    </span>
+                </div>
+            )}
 
             {viewMode === 'tag' && (
             <div className="space-y-4">

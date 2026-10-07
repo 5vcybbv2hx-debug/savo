@@ -14,10 +14,11 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { format, addDays, subDays, startOfWeek, endOfWeek, getDay, isSameDay, parseISO, differenceInCalendarDays } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Brain, TrendingUp, TrendingDown, Users, Cloud, Sun, CloudRain, Calendar, AlertCircle, Lightbulb, ChevronDown, ChevronUp, History } from 'lucide-react';
+import { Brain, TrendingUp, TrendingDown, Users, Cloud, Sun, CloudRain, Calendar, AlertCircle, Lightbulb, ChevronDown, ChevronUp, History, HelpCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 import { isHoliday, isHolidayEve, isBridgeDay, getHolidayName, getSeason, getHolidayEveInfo } from '@/lib/germanHolidays';
 import useStaffingFactors, {
     getEventStaffBoost, getReservationsForDate, getReservationGuests,
@@ -101,8 +102,10 @@ function localEventMatchesDate(event, dateStr) {
     return false;
 }
 
-export default function SmartStaffingSuggestions({ weekStart, employees }) {
+export default function SmartStaffingSuggestions({ weekStart, employees, isManager = false }) {
     const [expanded, setExpanded] = useState(false);
+    // Finanzielle Kennzahlen (€, Personalquote, Ø-Umsatz) nur für Manager/Admin
+    const canSeeFinancials = !!isManager;
 
     // 4 Faktoren: Events, Reservierungen, Urlaub, Unverfügbarkeit (zentraler Hook)
     const { events: confirmedEvents, reservations, vacations, unavailabilities } = useStaffingFactors();
@@ -524,6 +527,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
 
                 {/* Compact preview — always visible */}
                 {!expanded && (
+                    <>
                     <div className="flex gap-1.5 mt-2.5 overflow-x-auto no-scrollbar">
                         {upcomingDays.slice(0, 7).map(day => (
                             <div
@@ -558,6 +562,13 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                             </div>
                         ))}
                     </div>
+                    {canSeeFinancials && (
+                        <Link to="/StaffingAnalysis" className="mt-2 inline-flex items-center gap-1 text-[10px] text-primary hover:underline">
+                            <HelpCircle className="w-3 h-3" />
+                            Warum? Personalplanungs-Analyse
+                        </Link>
+                    )}
+                    </>
                 )}
 
                 {/* Expanded view — detailed per-day analysis */}
@@ -660,7 +671,8 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                         </div>
                                     </div>
 
-                                    {/* Stats row */}
+                                    {/* Stats row — nur für Manager (finanzielle Kennzahlen) */}
+                                    {canSeeFinancials && (
                                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground mb-1.5">
                                         {day.avgRevenue > 0 && (
                                             <span>Ø {day.avgRevenue.toFixed(0)}€</span>
@@ -673,6 +685,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                         )}
                                         <span className="text-muted-foreground/50">n={day.sampleSize}</span>
                                     </div>
+                                    )}
 
                                     {/* Recommendation */}
                                     {day.recommendation != null && (
@@ -689,9 +702,11 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                                                 </span>
                                             </div>
                                             <div className="flex-1 min-w-0">
+                                                {canSeeFinancials && (
                                                 <p className="text-[10px] text-muted-foreground leading-tight">
                                                     {day.reasonText}
                                                 </p>
+                                                )}
                                                 {day.shortageWarning && (
                                                     <p className="text-[10px] text-red-400 font-medium leading-tight mt-0.5 flex items-center gap-0.5">
                                                         <AlertCircle className="w-2.5 h-2.5 shrink-0" />
@@ -723,6 +738,12 @@ export default function SmartStaffingSuggestions({ weekStart, employees }) {
                             <span className="flex items-center gap-1"><History className="w-2.5 h-2.5" />Vergleich auf Basis historischer Daten</span>
                             <span>n = Stichprobengröße</span>
                         </div>
+                        {canSeeFinancials && (
+                            <Link to="/StaffingAnalysis" className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline pt-1">
+                                <HelpCircle className="w-3 h-3" />
+                                Warum? Zur Personalplanungs-Analyse
+                            </Link>
+                        )}
                     </div>
                 )}
             </CardContent>

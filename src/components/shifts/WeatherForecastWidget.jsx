@@ -87,7 +87,7 @@ function useDayOfWeekAverages() {
   });
 }
 
-function getBusynessLevel(dow, averages, maxAvg, busyness) {
+function getBusynessLevel(dow, averages, maxAvg, busyness, allowRevenueFallback = true) {
   const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
   const dayName = dayNames[dow];
 
@@ -99,7 +99,8 @@ function getBusynessLevel(dow, averages, maxAvg, busyness) {
     return { level: 'low', label: 'Ruhig', icon: TrendingDown, color: 'text-muted-foreground' };
   }
 
-  // Fall back to revenue ratio
+  // Fall back to revenue ratio — nur für Manager (sonst keine Umsatz-Kennzahl)
+  if (!allowRevenueFallback) return null;
   const avg = averages?.[dayName];
   if (avg == null || !maxAvg) return null;
   const ratio = avg / maxAvg;
@@ -202,7 +203,7 @@ export default function WeatherForecastWidget({ isManager }) {
             const Icon = WEATHER_ICONS[wInfo.icon] || Cloud;
             const isToday = day.date === format(new Date(), 'yyyy-MM-dd');
             const dayName = isToday ? 'Heute' : format(new Date(day.date + 'T12:00:00'), 'EEEEE', { locale: de });
-            const busyness = getBusynessLevel(day.dow, averages, maxAvg, dowData?.busyness);
+            const busyness = getBusynessLevel(day.dow, averages, maxAvg, dowData?.busyness, !!isManager);
             const BusynessIcon = busyness?.icon;
 
             return (

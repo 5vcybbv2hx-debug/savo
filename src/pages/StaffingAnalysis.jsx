@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { STALE } from '@/lib/queryUtils';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
+import { Link } from 'react-router-dom';
 import { format, parseISO, subDays, eachDayOfInterval, isSameDay, getDay, getISOWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
@@ -283,14 +284,19 @@ export default function StaffingAnalysis() {
         <div className="min-h-screen bg-background pb-28 md:pb-8">
             <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
                 {/* Header */}
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                        Personalplanungs-Analyse
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        Datenbasierte Optimierung für nächstes Jahr
-                    </p>
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                            Personalplanungs-Analyse
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                            Datenbasierte Optimierung für nächstes Jahr
+                        </p>
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                        <Link to="/Calendar">In den Plan springen</Link>
+                    </Button>
                 </div>
 
                 {/* Period Selector */}

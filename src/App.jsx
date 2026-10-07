@@ -37,6 +37,7 @@ import Incidents from './pages/Incidents';
 import IncidentDetail from './pages/IncidentDetail';
 
 import DataQuality from './pages/DataQuality';
+import StaffingAnalysis from './pages/StaffingAnalysis';
 import MenuReview from './pages/MenuReview';
 import ExternalJobs from './pages/ExternalJobs';
 
@@ -214,6 +215,15 @@ const AuthenticatedApp = () => {
         <LayoutWrapper currentPageName="DataQuality">
           <RoleGuard permission="isManager">
             <DataQuality />
+          </RoleGuard>
+        </LayoutWrapper>
+      } />
+
+      {/* Personalplanungs-Analyse — Manager-only (Warum?-Link aus SmartStaffingSuggestions) */}
+      <Route path="/StaffingAnalysis" element={
+        <LayoutWrapper currentPageName="StaffingAnalysis">
+          <RoleGuard permission="isManager">
+            <StaffingAnalysis />
           </RoleGuard>
         </LayoutWrapper>
       } />
