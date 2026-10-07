@@ -108,7 +108,7 @@ function SaladLine({ line, onChange, onRemove, canRemove }) {
 
 // ── Order Modal ───────────────────────────────────────────────────────────────
 
-function OrderModal({ open, onClose, editItem, orderDate, isManager }) {
+function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPrint }) {
     const queryClient = useQueryClient();
 
     const [customerName, setCustomerName] = useState('');
@@ -119,6 +119,7 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager }) {
     const [source, setSource] = useState('persoenlich');
     // Multiple salad lines
     const [lines, setLines] = useState([{ size: 'gross', ingredients: ['Alles'] }]);
+    const [printAfterSave, setPrintAfterSave] = useState(false);
 
     // Reset when modal opens
     useEffect(() => {
@@ -190,15 +191,31 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager }) {
             }
             return Promise.all(creates.map(p => base44.entities.WusaOrder.create(p)));
         },
-        onSuccess: () => {
+        onSuccess: async (result) => {
             queryClient.invalidateQueries({ queryKey: ['wusa-orders'] });
             toast.success(editItem ? 'Bestellung aktualisiert' : `${lines.length} Bestellung(en) hinzugefügt`);
+            if (printAfterSave && onSaveAndPrint) {
+                // Refresh orders then open label view for just this order
+                const fresh = await base44.entities.WusaOrder.filter({ order_date: orderDate, is_active: true });
+                const savedNames = editItem
+                    ? [editItem.customer_name]
+                    : lines.map(l => customerName.trim());
+                const labelOrders = fresh.filter(o => savedNames.includes(o.customer_name));
+                onSaveAndPrint(labelOrders);
+            }
+            setPrintAfterSave(false);
             onClose();
         },
         onError: (err) => toast.error('Fehler: ' + (err.message || 'Speichern fehlgeschlagen')),
     });
 
     if (!open) return null;
+
+    const handleSaveAndPrint = () => {
+        if (!customerName.trim()) return;
+        setPrintAfterSave(true);
+        saveMutation.mutate();
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center">
@@ -314,11 +331,19 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager }) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-5 py-4 border-t border-border shrink-0">
+                <div className="px-5 py-4 border-t border-border shrink-0 space-y-2">
                     <Button onClick={() => saveMutation.mutate()} disabled={!customerName.trim() || saveMutation.isPending}
                         className="w-full h-11 text-sm font-semibold">
                         {saveMutation.isPending ? 'Speichert…' : editItem ? 'Speichern' : `${lines.length} Bestellung(en) speichern`}
                     </Button>
+                    {!editItem && (
+                        <Button onClick={handleSaveAndPrint} disabled={!customerName.trim() || saveMutation.isPending}
+                            variant="outline"
+                            className="w-full h-11 text-sm font-semibold gap-2 border-primary/40 text-primary hover:bg-primary/5">
+                            <Printer className="w-4 h-4" />
+                            {saveMutation.isPending ? 'Speichert…' : 'Speichern & Etikett drucken'}
+                        </Button>
+                    )}
                 </div>
             </div>
         </div>
@@ -422,6 +447,7 @@ export default function Wusa() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editItem, setEditItem] = useState(null);
     const [labelOpen, setLabelOpen] = useState(false);
+    const [labelOrders, setLabelOrders] = useState([]);
 
     const tuesdays = useMemo(() => getNextTuesdays(8), []);
     const dateIndex = tuesdays.findIndex(d => format(d, 'yyyy-MM-dd') === selectedDate);
@@ -500,7 +526,7 @@ export default function Wusa() {
                             Vorbestellungen · jeden Dienstag
                         </p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setLabelOpen(true)}
+                    <Button variant="outline" size="sm" onClick={() => { setLabelOrders([]); setLabelOpen(true); }}
                         disabled={orders.filter(o => o.pickup_type === 'abholung').length === 0}>
                         <Printer className="w-4 h-4 mr-1.5" />Etiketten
                     </Button>
@@ -662,8 +688,12 @@ export default function Wusa() {
                 editItem={editItem}
                 orderDate={selectedDate}
                 isManager={isManager}
+                onSaveAndPrint={(savedOrders) => {
+                    setLabelOrders(savedOrders);
+                    setLabelOpen(true);
+                }}
             />
-            {labelOpen && <LabelView orders={orders} onClose={() => setLabelOpen(false)} />}
+            {labelOpen && <LabelView orders={labelOrders.length > 0 ? labelOrders : orders} onClose={() => { setLabelOpen(false); setLabelOrders([]); }} />}
             </div>
         </div>
     );

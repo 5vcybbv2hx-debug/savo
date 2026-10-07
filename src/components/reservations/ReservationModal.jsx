@@ -116,12 +116,21 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                 recurring_end_date: ''
             });
         } else {
+            // Smart Vorbelegung: Datum = heute, Uhrzeit = nächste halbe Stunde
+            const now = new Date();
+            const minutes = now.getMinutes();
+            const rounded = minutes <= 30 ? 30 : 60;
+            now.setMinutes(rounded, 0, 0);
+            if (rounded === 60) now.setHours(now.getHours() + 1);
+            const pad = (n) => String(n).padStart(2, '0');
+            const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            const todayStr = format(now, 'yyyy-MM-dd');
             setFormData({
                 customer_name: '',
                 phone: '',
                 email: '',
-                date: '',
-                time: '19:00',
+                date: todayStr,
+                time: defaultTime,
                 guests: 2,
                 tables: [],
                 table: '',

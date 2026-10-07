@@ -979,24 +979,14 @@ export default function Shopping() {
                     })}
                 </div>
 
-                {/* ── Wareneingang starten Banner (nur Tab Bestellt) ────── */}
+                {/* ── Bulk-Wareneingang als primäre Aktion (nur Tab Bestellt) ─ */}
                 {activeTab === 'bestellt' && filteredItems.length > 0 && permissions.canEditShopping && (
-                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-amber-500/25 bg-amber-500/5">
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">
-                                {filteredItems.length} Artikel erwartet
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                {supplierFilter !== 'alle' ? `Von ${supplierFilter}` : 'Von allen Lieferanten'} · Alle auf einmal quittieren
-                            </p>
-                        </div>
-                        <Button
-                            onClick={() => setBulkWareneingangOpen(true)}
-                            className="h-10 shrink-0 gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
-                            <ClipboardList className="w-4 h-4" />
-                            Wareneingang
-                        </Button>
-                    </div>
+                    <Button
+                        onClick={() => setBulkWareneingangOpen(true)}
+                        className="w-full h-12 gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm shadow-md">
+                        <ClipboardList className="w-5 h-5" />
+                        Alle wie bestellt übernehmen ({filteredItems.length} Artikel)
+                    </Button>
                 )}
 
                 {/* ── EAN / Schnellsuche (nur Tab Offen) ───────────────── */}

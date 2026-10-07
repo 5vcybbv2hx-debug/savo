@@ -9,7 +9,7 @@
  *
  * Wird als aufklappbarer Abschnitt in MyShifts.jsx gerendert.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -41,7 +41,7 @@ import {
 export default function ShiftSwapSection({ myShifts = [] }) {
     const permissions = usePermissions();
     const queryClient = useQueryClient();
-    const [expanded, setExpanded] = useState(false);
+    const [expanded, setExpanded] = useState(false); // wird unten ggf. auf true gesetzt wenn offene Anfragen existieren
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [selectedShift, setSelectedShift] = useState(null);
@@ -189,7 +189,14 @@ export default function ShiftSwapSection({ myShifts = [] }) {
         }
         const newEmployeeId = bidEmployeeId || request.target_employee_id;
         const newEmployeeName = bidEmployeeName || request.target_employee_name;
-        setConfirmDialog({ type: 'approve', request, bidId: newEmployeeId, bidName: newEmployeeName });
+        // Direkt ausführen ohne Bestätigungsdialog — Toast gibt Feedback
+        approveMutation.mutate({
+            requestId: request.id,
+            shiftId: request.shift_id,
+            newEmployeeId,
+            newEmployeeName,
+            request,
+        });
     };
 
     const handleReject = (request) => {
@@ -214,6 +221,11 @@ export default function ShiftSwapSection({ myShifts = [] }) {
 
     const isOpenStatus = (r) => r.status === 'offen' || r.status === 'ausstehend' || r.status === 'angenommen';
     const pendingRequests = swapRequests.filter(r => isOpenStatus(r));
+
+    // Auto-Aufklappen wenn offene Anfragen existieren
+    useEffect(() => {
+        if (pendingRequests.length > 0) setExpanded(true);
+    }, [pendingRequests.length]);
 
     const myUpcomingShifts = shifts
         .filter(s =>

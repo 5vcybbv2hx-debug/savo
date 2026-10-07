@@ -42,7 +42,7 @@ function ShiftSwapInline({ shift, onClose }) {
 }
 import { haptics } from "@/components/utils/haptics";
 
-export default function ShiftModal({ open, onClose, shift, employees, selectedDate, onSave, onDelete, existingShifts = [] }) {
+export default function ShiftModal({ open, onClose, shift, employees, selectedDate, onSave, onDelete, existingShifts = [], preselectedEmployeeId, preselectedShiftType }) {
     const { vacations, unavailabilities } = useStaffingFactors();
     const { data: shiftTypesRaw = [] } = useQuery({
         queryKey: ['shift-types'],

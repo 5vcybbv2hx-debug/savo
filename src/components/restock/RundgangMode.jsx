@@ -191,8 +191,21 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         setRestockedValues(rvals);
     };
 
+    // ── Flache Slot-Liste (für "Weiter zum nächsten Fach") ─────────────────────
+    const flatSlots = useMemo(() => {
+        const list = [];
+        restockAreas.forEach(area => {
+            (furnitureByArea[area.id] || []).forEach(fur => {
+                (slotsByFurniture[fur.id] || [])
+                    .filter(s => (assignmentsBySlot[s.id] || []).length > 0)
+                    .forEach(slot => list.push(slot));
+            });
+        });
+        return list;
+    }, [restockAreas, furnitureByArea, slotsByFurniture, assignmentsBySlot]);
+
     // ── IST speichern: RestockItem erstellen/updaten + Stock sync ──────────────
-    const handleSaveIst = async () => {
+    const handleSaveIst = async (advanceToNext = false) => {
         if (!istPopover || isSaving) return;
         setIsSaving(true);
 
@@ -266,8 +279,32 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         qc.invalidateQueries({ queryKey: ['restock-items'] });
 
         setIsSaving(false);
-        setIstPopover(null);
-        showToast('Bestand gespeichert ✓', 'success');
+
+        // Weiter zum nächsten offenen Fach (falls gewünscht und verfügbar)
+        if (advanceToNext) {
+            const currentIdx = flatSlots.findIndex(s => s.id === slot.id);
+            const nextSlot = flatSlots.slice(currentIdx + 1).find(s => !isSlotDone(s.id));
+            if (nextSlot) {
+                const nextAssignments = assignmentsBySlot[nextSlot.id] || [];
+                setIstPopover({ slot: nextSlot, assignments: nextAssignments });
+                const vals = {};
+                const rvals = {};
+                nextAssignments.forEach(a => {
+                    const todayItem = restockItems.find(r => r.assignment_id === a.id && r.date === today);
+                    vals[a.id] = todayItem ? todayItem.quantity : (a.quantity ?? 0);
+                    rvals[a.id] = todayItem?.quantity_from_storage != null ? todayItem.quantity_from_storage : '';
+                });
+                setIstValues(vals);
+                setRestockedValues(rvals);
+                showToast('Bestand gespeichert ✓ → nächstes Fach', 'success');
+            } else {
+                setIstPopover(null);
+                showToast('Bestand gespeichert ✓ — Rundgang komplett!', 'success');
+            }
+        } else {
+            setIstPopover(null);
+            showToast('Bestand gespeichert ✓', 'success');
+        }
 
         // Abschluss prüfen
         setTimeout(() => {
@@ -498,23 +535,41 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                             )}
                                         </div>
 
-                                        {/* Großes IST-Input */}
-                                        <input
-                                            type="number"
-                                            inputMode="numeric"
-                                            min="0"
-                                            max={hasMin ? a.min_stock : undefined}
-                                            value={val}
-                                            onChange={e => {
-                                                const parsed = parseInt(e.target.value);
-                                                setIstValues(prev => ({
-                                                    ...prev,
-                                                    [a.id]: isNaN(parsed) ? 0 : Math.max(0, parsed),
-                                                }));
-                                            }}
-                                            className="w-full text-center font-bold text-2xl h-14 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary focus:ring-0 transition-colors"
-                                            autoFocus={istPopover.assignments.indexOf(a) === 0}
-                                        />
+                                        {/* Großes IST-Input mit ±-Stepper */}
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIstValues(prev => ({ ...prev, [a.id]: Math.max(0, (prev[a.id] ?? 0) - 1) }))}
+                                                className="w-12 h-14 flex items-center justify-center rounded-xl border-2 border-border bg-card text-2xl font-bold text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95 shrink-0"
+                                            >−</button>
+                                            <input
+                                                type="number"
+                                                inputMode="numeric"
+                                                min="0"
+                                                max={hasMin ? a.min_stock : undefined}
+                                                value={val}
+                                                onChange={e => {
+                                                    const parsed = parseInt(e.target.value);
+                                                    setIstValues(prev => ({
+                                                        ...prev,
+                                                        [a.id]: isNaN(parsed) ? 0 : Math.max(0, parsed),
+                                                    }));
+                                                }}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleSaveIst(true);
+                                                    }
+                                                }}
+                                                className="flex-1 text-center font-bold text-2xl h-14 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                                                autoFocus={istPopover.assignments.indexOf(a) === 0}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setIstValues(prev => ({ ...prev, [a.id]: Math.max(0, (prev[a.id] ?? 0) + 1) }))}
+                                                className="w-12 h-14 flex items-center justify-center rounded-xl border-2 border-border bg-card text-2xl font-bold text-muted-foreground hover:text-primary hover:border-primary transition-colors active:scale-95 shrink-0"
+                                            >+</button>
+                                        </div>
 
                                         {/* Aufgefüllt (aus Keller) — optional */}
                                         <div className="space-y-1">
@@ -555,10 +610,10 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                         </div>
 
                         {/* Speichern Button */}
-                        <div className="px-4 pb-6 pt-3 border-t border-border/40">
+                        <div className="px-4 pb-6 pt-3 border-t border-border/40 space-y-2">
                             <Button
                                 className="w-full h-12 text-base font-semibold"
-                                onClick={handleSaveIst}
+                                onClick={() => handleSaveIst(true)}
                                 disabled={isSaving}
                             >
                                 {isSaving ? (
@@ -566,7 +621,15 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                         <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                                         Speichern…
                                     </span>
-                                ) : 'Bestand speichern'}
+                                ) : 'Bestand speichern → nächstes Fach'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full h-10 text-sm"
+                                onClick={() => handleSaveIst(false)}
+                                disabled={isSaving}
+                            >
+                                Speichern & schließen
                             </Button>
                         </div>
                     </div>

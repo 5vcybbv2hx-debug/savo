@@ -74,10 +74,24 @@ export default function CleaningList({ tasks, areas, onComplete, onReset, userNa
                                     {completedCount}/{areaTasks.length}
                                 </Badge>
                             </div>
-                            <span className="text-xs text-muted-foreground">
-                                {Math.round(progress)}%
-                            </span>
-                        </div>
+                            <div className="flex items-center gap-2">
+                                {areaTasks.filter(t => !t.is_completed).length > 0 && (
+                                    <button
+                                        onClick={() => {
+                                            const openTasks = areaTasks.filter(t => !t.is_completed);
+                                            openTasks.forEach(task => onComplete(task));
+                                        }}
+                                        className="text-[10px] font-medium text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-lg hover:bg-primary/5"
+                                        title="Alle offenen Aufgaben dieses Bereichs als erledigt markieren"
+                                    >
+                                        Alle erledigen
+                                    </button>
+                                )}
+                                <span className="text-xs text-muted-foreground">
+                                    {Math.round(progress)}%
+                                </span>
+                            </div>
+                            </div>
 
                         {/* Progress Bar */}
                         <div className="h-1 bg-border">
