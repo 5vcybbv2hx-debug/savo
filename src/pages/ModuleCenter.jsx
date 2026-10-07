@@ -118,12 +118,12 @@ const MODULE_REGISTRY = [
     {
         id: 'reinigung',
         name: 'Reinigung & Hygiene',
-        description: 'Putzlisten, Bereiche, Wochenaufgaben, Checklisten',
+        description: 'Putzlisten, Bereiche, Checklisten',
         icon: Brush,
         color: 'bg-teal-600',
         category: 'betrieb',
         page: 'Cleaning',
-        subpages: ['CleaningChecklist', 'WeeklyTasks'],
+        subpages: ['CleaningChecklist'],
     },
     {
         id: 'wartung',

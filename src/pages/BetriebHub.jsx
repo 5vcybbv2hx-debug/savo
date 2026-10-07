@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
-import { MapPin, CheckSquare, ListChecks, Brush, Star, Utensils, Truck, Wrench } from 'lucide-react';
+import { MapPin, CheckSquare, Brush, Star, Utensils, Truck, Wrench } from 'lucide-react';
 import { format } from 'date-fns';
 
 function StatBadge({ count, variant = 'default' }) {
@@ -83,7 +83,6 @@ export default function BetriebHub() {
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Aufgaben</p>
                 <div className="space-y-2">
                     <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"            page="Todos"       badge={todos.filter(t => t.status !== 'erledigt').length || undefined} permission="canViewTodos" />
-                    <NavCard icon={ListChecks}  label="Wochenaufgaben" description="Wiederkehrende Wochenplanung"     page="WeeklyTasks" permission="canViewTodos" />
                     <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste"  page="Cleaning"    permission="canViewCleaning" />
                     <NavCard icon={Wrench}      label="Wartung & Reparaturen" description="Wartungs- & Reparaturaufträge"     page="Maintenance" permission="canViewTodos" />
                 </div>

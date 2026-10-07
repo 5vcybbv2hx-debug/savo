@@ -28,7 +28,6 @@ export const additionalPages = [
     // Betrieb
     { page: 'GuestHub',       name: 'Gäste & Tische',    icon: Users,         permission: 'canViewReservations' },
     { page: 'Todos',          name: 'Aufgaben',           icon: ClipboardList, permission: 'canViewTodos' },
-    { page: 'WeeklyTasks',    name: 'Wochenaufgaben',     icon: ListChecks,    permission: 'canViewSettings' },
     { page: 'Cleaning',       name: 'Putzliste',          icon: Sparkles,      permission: 'canViewCleaning' },
     { page: 'Events',         name: 'Events',             icon: CalendarDays,  permission: 'canViewEvents' },
     { page: 'Wusa',           name: 'Wurstsalat',        icon: Utensils,      permission: 'canViewDashboard' },

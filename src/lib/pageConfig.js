@@ -15,7 +15,7 @@ import {
   CheckSquare, MapPin, ShoppingCart, RefreshCw,
   Settings, FileText, BarChart2, Trash2, ClipboardList,
   ArrowLeftRight, Star, Brush, FolderOpen, Wrench,
-  Palmtree, ListChecks, Video, Euro, Receipt, TrendingDown, Download
+  Palmtree, Video, Euro, Receipt, TrendingDown, Download
 } from 'lucide-react';
 
 /**
@@ -63,14 +63,6 @@ export const PAGE_REGISTRY = {
     displayName: 'Putzliste',
     shortName: 'Putzen',
     icon: Brush,
-    section: 'betrieb',
-    permission: 'canViewCleaning',
-  },
-  weeklyTasks: {
-    path: 'WeeklyTasks',
-    displayName: 'Wochenaufgaben',
-    shortName: 'Wochenaufgaben',
-    icon: ListChecks,
     section: 'betrieb',
     permission: 'canViewCleaning',
   },

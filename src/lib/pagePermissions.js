@@ -87,5 +87,4 @@ export const PAGE_PERMISSIONS = {
 
     // ── Betriebsinternes ──────────────────────────────────────────────────────
     OperatorDashboard:       'isAdmin',
-    WeeklyTasks:             'canViewSettings',
 };

@@ -43,7 +43,6 @@ import Warehouse from './pages/Warehouse';
 import Wastage from './pages/Wastage';
 import Inventory from './pages/Inventory';
 import BusinessCard from './pages/BusinessCard';
-import WeeklyTasks from './pages/WeeklyTasks';
 import Wusa from './pages/Wusa';
 import WusaPublic from './pages/WusaPublic';
 
@@ -92,7 +91,6 @@ const CORE_PAGES = {
     "Wastage": Wastage,
     "Inventory": Inventory,
     "BusinessCard": BusinessCard,
-    "WeeklyTasks": WeeklyTasks,
     "Wusa": Wusa,
     // Hub-Seiten — mit Layout (Sidebar + Navigation)
     "TeamHub": TeamHub,
