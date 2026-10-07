@@ -24,6 +24,8 @@ import { Badge } from '@/components/ui/badge';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle
 } from '@/components/ui/dialog';
+import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DraggableItem, DroppableColumn } from '@/components/weekly-tasks/DndWrappers';
 
 // ── Konstanten ────────────────────────────────────────────────────────────────
 const SLOT_H = 80; // px pro Stunde (20px pro 15min-Slot)
@@ -199,6 +201,13 @@ export default function WeeklyTasks() {
     const [resizePreview, setResizePreview] = useState(null); // { id, duration }
     const [showStats,     setShowStats]     = useState(false);
 
+    // ── DnD Sensors (Touch + Mouse)
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+    );
+    const lastPointerY = useRef(0);
+
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: todos = [] } = useQuery({
         queryKey: ['todos'],
@@ -255,21 +264,54 @@ export default function WeeklyTasks() {
         updateTodo.mutate({ id: todo.id, data: { planned_date: null, planned_time: null } });
     };
 
-    // ── Drag & Drop Handler ───────────────────────────────────────────────────
-    const handleDragStart = (e, todo) => {
-        setDraggedTodo(todo);
-        setDraggedItem({ type: 'todo', item: todo });
-        e.dataTransfer.effectAllowed = 'move';
+    // ── DnD Handlers (@dnd-kit) ────────────────────────────────────────────────
+    const handleDndDragStart = (event) => {
+        const data = event.active.data.current;
+        if (data?.type === 'todo') {
+            setDraggedTodo(data.item);
+            setDraggedItem({ type: 'todo', item: data.item });
+        } else if (data?.type === 'appointment') {
+            setDraggedItem({ type: 'appointment', item: data.item });
+        } else if (data?.type === 'planned-todo') {
+            setDraggedItem({ type: 'planned-todo', item: data.item });
+        }
     };
 
-    const handleDragStartAppointment = (e, appt) => {
-        setDraggedItem({ type: 'appointment', item: appt });
-        e.dataTransfer.effectAllowed = 'move';
-    };
+    const handleDndDragEnd = (event) => {
+        const { active, over } = event;
+        setDraggedTodo(null);
+        setDraggedItem(null);
+        setDragOverSlot(null);
+        if (!over) return;
 
-    const handleDragStartPlannedTodo = (e, todo) => {
-        setDraggedItem({ type: 'planned-todo', item: todo });
-        e.dataTransfer.effectAllowed = 'move';
+        const data = active.data.current;
+        const dateStr = over.id;
+        const date = weekDays.find(d => format(d, 'yyyy-MM-dd') === dateStr);
+        if (!date) return;
+
+        // Compute time from pointer Y position relative to the column rect
+        const colRect = over.rect?.current;
+        if (!colRect) return;
+        const pyInCol = Math.max(0, lastPointerY.current - colRect.top);
+        const rawMin = hourStart * 60 + Math.floor((pyInCol / SLOT_H) * 60);
+        const snapped = snapTo15(Math.max(hourStart * 60, Math.min(hourEnd * 60, rawMin)));
+        const newTime = minutesToTime(snapped);
+        const newDate = format(date, 'yyyy-MM-dd');
+
+        if (data?.type === 'appointment') {
+            updateAppointment.mutate({ id: data.item.id, data: {
+                date: newDate, start_time: newTime,
+                end_time: minutesToTime(snapped + (data.item.duration || 60)),
+            }});
+        } else if (data?.type === 'planned-todo') {
+            updateTodo.mutate({ id: data.item.id, data: {
+                planned_date: newDate, planned_time: newTime,
+            }});
+        } else if (data?.type === 'todo') {
+            updateTodo.mutate({ id: data.item.id, data: {
+                planned_date: newDate, planned_time: newTime, planned_duration: 60,
+            }});
+        }
     };
 
     const handleDragEnd = () => {
@@ -557,6 +599,19 @@ export default function WeeklyTasks() {
         setActiveDayIdx(0);
     }, [weekStart]);
 
+    // Track pointer Y for DnD drop position computation
+    useEffect(() => {
+        const handlePointerMove = (e) => {
+            lastPointerY.current = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
+        };
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('touchmove', handlePointerMove, { passive: true });
+        return () => {
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('touchmove', handlePointerMove);
+        };
+    }, []);
+
     // ── Guard (nach allen Hooks!) ─────────────────────────────────────────────
     if (!permissions.isManager && !permissions.isAdmin) {
         return <PermissionDenied message="Diese Ansicht ist nur für Manager verfügbar." />;
@@ -567,6 +622,7 @@ export default function WeeklyTasks() {
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
+        <DndContext sensors={sensors} onDragStart={handleDndDragStart} onDragEnd={handleDndDragEnd}>
         <div className="min-h-screen bg-background flex flex-col">
 
             {/* ── Top-Bar ─────────────────────────────────────────────────── */}
@@ -1647,6 +1703,7 @@ export default function WeeklyTasks() {
                 </DialogContent>
             </Dialog>
         </div>
+        </DndContext>
     );
 }
 

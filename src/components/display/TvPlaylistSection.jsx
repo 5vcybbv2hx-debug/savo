@@ -10,7 +10,9 @@
  * den Slide-Editor bearbeitbar (nur aktivieren/deaktivieren, Reihenfolge, löschen).
  */
 import { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import SortableSlideCard from '@/components/display/SortableSlideCard';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -117,6 +119,12 @@ export default function TvPlaylistSection() {
   const [qrCopied, setQrCopied]         = useState(false);
   const [igExport, setIgExport]         = useState(null);
 
+  // ── DnD Sensors (Touch + Mouse)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+
   const MENU_URL = 'https://savo-lounge-live.base44.app/getraenke';
 
   const { data: slides = [], isLoading } = useQuery({
@@ -184,27 +192,30 @@ export default function TvPlaylistSection() {
     },
   });
 
-  const handleDragEnd = (result) => {
-    const { source, destination } = result;
-    if (!destination) return;
-    if (source.index === destination.index) return;
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
     const sorted = [...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0));
-    const moving = sorted[source.index];
+    const oldIndex = sorted.findIndex(s => s.id === active.id);
+    const newIndex = sorted.findIndex(s => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
 
-    if (source.index < destination.index) {
-      const updates = sorted.slice(source.index + 1, destination.index + 1).map((s, i, arr) => ({
+    const moving = sorted[oldIndex];
+
+    if (oldIndex < newIndex) {
+      const updates = sorted.slice(oldIndex + 1, newIndex + 1).map((s, i, arr) => ({
         id: s.id,
         sort_order: (arr[i-1]?.sort_order || (moving.sort_order || 0))
       }));
-      updates.push({ id: moving.id, sort_order: sorted[destination.index].sort_order });
+      updates.push({ id: moving.id, sort_order: sorted[newIndex].sort_order });
       reorderMut.mutate(updates);
     } else {
-      const updates = sorted.slice(destination.index, source.index).map((s) => ({
+      const updates = sorted.slice(newIndex, oldIndex).map((s) => ({
         id: s.id,
         sort_order: (s.sort_order || 0) + 1
       }));
-      updates.push({ id: moving.id, sort_order: sorted[destination.index].sort_order });
+      updates.push({ id: moving.id, sort_order: sorted[newIndex].sort_order });
       reorderMut.mutate(updates);
     }
   };
@@ -290,73 +301,25 @@ export default function TvPlaylistSection() {
           <Button size="sm" variant="outline" onClick={openAdd} className="mt-3">Erste Slide anlegen</Button>
         </div>
       ) : (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="slides" direction="vertical">
-            {(provided, snapshot) => (
-              <div ref={provided.innerRef} {...provided.droppableProps} className={cn('space-y-2', snapshot.isDraggingOver && 'bg-primary/5 rounded-lg p-2')}>
-                {[...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).map((s, i) => {
-                  const eventSynced = isEventSlide(s);
-                  return (
-                    <Draggable key={s.id} draggableId={s.id} index={i}>
-                      {(provided, snapshot) => (
-                        <div ref={provided.innerRef} {...provided.draggableProps} className={cn(snapshot.isDragging && 'opacity-50')}>
-                          <Card className={cn('border-border/60 transition-opacity', !s.is_active && 'opacity-50', eventSynced && 'border-primary/30 bg-primary/5')}>
-                            <CardContent className="p-3 flex items-center gap-3">
-                              <div {...provided.dragHandleProps} className="shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing transition-colors">
-                                <GripVertical className="w-4 h-4" />
-                              </div>
-                              <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-base"
-                                style={{ background: (ACCENT_COLORS.find(c => c.value === s.accent_color)?.hex || '#f59e0b') + '22' }}>
-                                {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.split(' ')[0] || '📢'}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="text-sm font-semibold text-foreground truncate">{s.title}</p>
-                                  <Badge className={cn('text-[10px] h-4 px-1.5 border', TYPE_COLORS[s.slide_type])}>
-                                    {SLIDE_TYPES.find(t => t.value === s.slide_type)?.label.replace(/^.+? /, '') || s.slide_type}
-                                  </Badge>
-                                  {eventSynced && (
-                                    <Badge className="text-[10px] h-4 px-1.5 border border-primary/30 bg-primary/10 text-primary flex items-center gap-0.5">
-                                      <RefreshCw className="w-2.5 h-2.5" />
-                                      Aus Events
-                                    </Badge>
-                                  )}
-                                  <span className="text-[10px] text-muted-foreground">#{s.sort_order}</span>
-                                </div>
-                                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                                  {s.subtitle || s.location || s.price_info || `${s.duration_seconds || 8}s`}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <button onClick={() => toggleMut.mutate({ id: s.id, is_active: !s.is_active })}
-                                  className="p-1.5 rounded-lg hover:bg-muted transition-colors" title={s.is_active ? 'Deaktivieren' : 'Aktivieren'}>
-                                  {s.is_active ? <Eye className="w-4 h-4 text-primary" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-                                </button>
-                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Instagram-Export" onClick={() => setIgExport(s)}>
-                                  <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
-                                </Button>
-                                {/* Event-Slides: nicht über den Slide-Editor bearbeitbar */}
-                                {!eventSynced && (
-                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(s)} title="Bearbeiten">
-                                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                                  </Button>
-                                )}
-                                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDeleteTarget(s)} title="Löschen">
-                                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      )}
-                    </Draggable>
-                  );
-                })}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={[...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).map(s => s.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2">
+              {[...slides].sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).map((s) => (
+                <SortableSlideCard
+                  key={s.id}
+                  slide={s}
+                  onToggle={(id, is_active) => toggleMut.mutate({ id, is_active })}
+                  onEdit={openEdit}
+                  onDelete={setDeleteTarget}
+                  onExport={setIgExport}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* ── Slide Modal ────────────────────────────────────────────────────────── */}
