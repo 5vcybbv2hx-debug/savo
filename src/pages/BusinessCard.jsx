@@ -49,9 +49,9 @@ export default function BusinessCardPage() {
                             Zeig deinen Gästen den QR-Code zum Abscannen
                         </p>
                     </div>
-                    {/* Direktlink zu Einstellungen → Firmendaten */}
+                    {/* Direktlink zu Rechtliches-Tab → Firmendaten bearbeiten */}
                     <a
-                        href="/Settings"
+                        href="/MyArea?tab=rechtliches"
                         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-lg px-3 py-2 min-h-[44px]"
                         title="Firmendaten bearbeiten"
                     >

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Umbrella, RepeatIcon, QrCode, Bell, Clock } from 'lucide-react';
+import { User, Umbrella, RepeatIcon, QrCode, Bell, Clock, Scale } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 
 // Import existing page components
@@ -11,6 +11,7 @@ import ShiftSwapSection from '@/components/shifts/ShiftSwapSection';
 import DigitalBusinessCard from '@/components/company/DigitalBusinessCard';
 import UnavailabilityList from '@/components/availability/UnavailabilityList';
 import NotificationSettingsPage from '@/components/profile/NotificationSettings';
+import LegalTabContent from '@/components/legal/LegalTabContent';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
@@ -18,9 +19,9 @@ export default function MyAreaPage() {
     const permissions = usePermissions();
     const [activeTab, setActiveTab] = useState('profile');
     const [searchParams, setSearchParams] = useSearchParams();
-    const reverseTabMap = { profile: 'profil', vacation: 'urlaub', swaps: 'tauschen', card: 'visitenkarte', termine: 'verfuegbarkeiten', notifications: 'benachrichtigungen' };
+    const reverseTabMap = { profile: 'profil', vacation: 'urlaub', swaps: 'tauschen', card: 'visitenkarte', termine: 'verfuegbarkeiten', notifications: 'benachrichtigungen', legal: 'rechtliches' };
 
-    // URL-Tab-Parameter auslesen (?tab=profil|urlaub|tauschen|visitenkarte|verfuegbarkeiten|benachrichtigungen)
+    // URL-Tab-Parameter auslesen (?tab=profil|urlaub|tauschen|visitenkarte|verfuegbarkeiten|benachrichtigungen|rechtliches)
     useEffect(() => {
         const tab = searchParams.get('tab');
         if (tab) {
@@ -31,6 +32,7 @@ export default function MyAreaPage() {
                 visitenkarte: 'card',
                 verfuegbarkeiten: 'termine',
                 benachrichtigungen: 'notifications',
+                rechtliches: 'legal',
             };
             if (tabMap[tab]) setActiveTab(tabMap[tab]);
         }
@@ -47,8 +49,9 @@ export default function MyAreaPage() {
     // Tab-Sichtbarkeit nach Permission
     const showVacationTab = permissions.canViewVacation;
     const showSwapsTab = permissions.canViewShifts;
-    const visibleTabCount = 4 + (showVacationTab ? 1 : 0) + (showSwapsTab ? 1 : 0);
-    const gridColsClass = { 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6' }[visibleTabCount] || 'grid-cols-6';
+    const showLegalTab = permissions.canViewSettings;
+    const visibleTabCount = 4 + (showVacationTab ? 1 : 0) + (showSwapsTab ? 1 : 0) + (showLegalTab ? 1 : 0);
+    const gridColsClass = { 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6', 7: 'grid-cols-7' }[visibleTabCount] || 'grid-cols-7';
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
@@ -90,6 +93,12 @@ export default function MyAreaPage() {
                             <QrCode className="w-5 h-5 sm:w-4 sm:h-4" />
                             <span className="hidden sm:inline">Karte</span>
                         </TabsTrigger>
+                        {showLegalTab && (
+                            <TabsTrigger value="legal" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
+                                <Scale className="w-5 h-5 sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Recht</span>
+                            </TabsTrigger>
+                        )}
                     </TabsList>
 
                     <TabsContent value="profile" className="space-y-0">
@@ -120,6 +129,10 @@ export default function MyAreaPage() {
                         <div className="p-4 sm:p-6 rounded-lg bg-card border border-border">
                             <DigitalBusinessCard companyInfo={companyInfo} />
                         </div>
+                    </TabsContent>
+
+                    <TabsContent value="legal" className="space-y-0">
+                        <LegalTabContent />
                     </TabsContent>
                 </Tabs>
             </div>
