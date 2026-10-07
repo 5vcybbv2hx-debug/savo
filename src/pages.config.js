@@ -28,7 +28,6 @@ import QuickList from './pages/QuickList';
 import Recipes from './pages/Recipes';
 import Restock from './pages/Restock';
 import GuestHub from './pages/GuestHub';
-import Settings from './pages/Settings';
 
 import Shopping from './pages/Shopping';
 import Suppliers from './pages/Suppliers';
@@ -56,9 +55,6 @@ import CleaningChecklist from './pages/CleaningChecklist';
 import EmployeeProfile from './pages/EmployeeProfile';
 import Stationsplan from './pages/Stationsplan';
 import DataProtection from './pages/DataProtection';
-import Impressum from './pages/Impressum';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import AGB from './pages/AGB';
 
 import __Layout from './Layout.jsx';
 
@@ -86,7 +82,6 @@ const CORE_PAGES = {
     "Recipes": Recipes,
     "Restock": Restock,
     "GuestHub": GuestHub,
-    "Settings": Settings,
     "Shopping": Shopping,
     "Suppliers": Suppliers,
     "TeamCalendar": TeamCalendar,
@@ -110,9 +105,6 @@ const SPECIAL_PAGES_WITH_LAYOUT = {
     "EmployeeProfile": EmployeeProfile,
     "Stationsplan": Stationsplan,
     "DataProtection": DataProtection,
-    "Impressum": Impressum,
-    "PrivacyPolicy": PrivacyPolicy,
-    "AGB": AGB,
 };
 
 // Public pages: NO layout wrapper (echte öffentliche Seiten ohne Auth/Sidebar)

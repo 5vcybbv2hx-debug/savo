@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import SwipeRow from '@/components/ui/SwipeRow';
 import TaskManager from './TaskManager';
 import ReportProblemButton from './ReportProblemButton';
 {/* bulk-complete v2 */}
@@ -107,50 +108,53 @@ export default function CleaningList({ tasks, areas, onComplete, onReset, userNa
                          <div className="divide-y divide-border">
                              {/* Open Tasks Section */}
                              {areaTasks
-                             .filter(t => !t.is_completed)
-                             .map((task) => (
-                             <div 
-                                 key={task.id}
-                                 className="px-4 py-4 bg-card hover:bg-accent/30 transition-colors border-l-2 border-amber-500"
-                             >
-                                 <div className="flex items-center gap-3">
-                                     <button
-                                         onClick={() => onComplete(task)}
-                                         className={cn(
-                                             "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
-                                             "border-amber-500 hover:bg-amber-500/20 hover:border-amber-400"
-                                         )}
-                                     >
-                                     </button>
+                              .filter(t => !t.is_completed)
+                              .map((task) => (
+                              <SwipeRow
+                                  key={task.id}
+                                  onSwipe={() => onComplete(task)}
+                                  revealColor="bg-emerald-600"
+                                  revealIcon={Check}
+                                  contentClassName="px-4 py-4 bg-card hover:bg-accent/30 border-l-2 border-amber-500"
+                              >
+                                  <div className="flex items-center gap-3">
+                                      <button
+                                          onClick={() => onComplete(task)}
+                                          className={cn(
+                                              "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
+                                              "border-amber-500 hover:bg-amber-500/20 hover:border-amber-400"
+                                          )}
+                                      >
+                                      </button>
 
-                                     <div className="flex-1 min-w-0">
-                                         <p className="text-sm font-semibold text-foreground">
-                                            {task.title}
-                                         </p>
-                                            <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                               <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-400">
-                                                   {frequencyLabels[task.frequency]}
-                                               </span>
-                                               {task.due_date && (
-                                                   <span className="text-[10px] text-amber-500 font-medium">
-                                                       📅 {format(new Date(task.due_date), 'dd.MM.yyyy', { locale: de })}
-                                                   </span>
-                                               )}
-                                               {task.due_weekdays && task.due_weekdays.length > 0 && (
-                                                   <span className="text-[10px] text-amber-300 font-medium">
-                                                       📆 {task.due_weekdays.map(d => d.slice(0,2)).join(', ')}
-                                                   </span>
-                                               )}
-                                            </div>
-                                            </div>
+                                      <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-semibold text-foreground">
+                                             {task.title}
+                                          </p>
+                                             <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                                <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-400">
+                                                    {frequencyLabels[task.frequency]}
+                                                </span>
+                                                {task.due_date && (
+                                                    <span className="text-[10px] text-amber-500 font-medium">
+                                                        📅 {format(new Date(task.due_date), 'dd.MM.yyyy', { locale: de })}
+                                                    </span>
+                                                )}
+                                                {task.due_weekdays && task.due_weekdays.length > 0 && (
+                                                    <span className="text-[10px] text-amber-300 font-medium">
+                                                        📆 {task.due_weekdays.map(d => d.slice(0,2)).join(', ')}
+                                                    </span>
+                                                )}
+                                             </div>
+                                             </div>
 
-                                            <div className="flex items-center gap-1">
-                                            <ReportProblemButton task={task} userName={userName} />
-                                            <TaskManager task={task} areas={areas} />
-                                            </div>
-                                            </div>
-                                            </div>
-                                            ))}
+                                             <div className="flex items-center gap-1">
+                                             <ReportProblemButton task={task} userName={userName} />
+                                             <TaskManager task={task} areas={areas} />
+                                             </div>
+                                             </div>
+                              </SwipeRow>
+                                             ))}
 
                                             {/* Completed Tasks Section */}
                                             {areaTasks

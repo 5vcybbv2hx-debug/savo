@@ -8,7 +8,7 @@ import { useErrorHandler } from '@/components/error/ErrorHandler';
 import {
     Plus, CheckSquare, Tag, Search, X, ListChecks, Wrench,
     Trash2, Archive, CheckCheck, Square, FolderInput, ChevronDown, ChevronRight,
-    Calendar, User2, CalendarDays, Send
+    Calendar, User2, CalendarDays, Send, Check
 } from 'lucide-react';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { toast } from 'sonner';
@@ -27,6 +27,7 @@ import TodoModal from '@/components/todos/TodoModal';
 import { cn } from '@/lib/utils';
 import { getUserDisplayName } from '@/lib/userDisplayName';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import SwipeRow from '@/components/ui/SwipeRow';
 
 const PRIORITY_ORDER = { dringend: 0, hoch: 1, mittel: 2, niedrig: 3 };
 
@@ -828,7 +829,16 @@ export default function Todos() {
                                                                 : <Square className="w-5 h-5 text-muted-foreground" />}
                                                         </button>
                                                     )}
-                                                    <div className="flex-1 min-w-0">
+                                                    <SwipeRow
+                                                        className="flex-1 min-w-0"
+                                                        onSwipe={() => handleStatusChange(todo, 'erledigt')}
+                                                        onSwipeAlt={() => deleteMutation.mutate(todo.id)}
+                                                        revealColor="bg-emerald-600"
+                                                        revealIcon={Check}
+                                                        revealColorAlt="bg-destructive"
+                                                        revealIconAlt={Trash2}
+                                                        disabled={selectMode || todo.status === 'erledigt'}
+                                                    >
                                                         <TodoCard
                                                             todo={todo}
                                                             employees={employees}
@@ -842,7 +852,7 @@ export default function Todos() {
                                                             allTodos={categoryTodos}
                                                             idx={todoIdx}
                                                         />
-                                                    </div>
+                                                    </SwipeRow>
                                                 </div>
                                             ))}
                                         </div>

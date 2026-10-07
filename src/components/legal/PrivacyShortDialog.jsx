@@ -56,7 +56,7 @@ export default function PrivacyShortDialog({ open, onAccept, onDecline, isLoadin
               variant="outline"
               className="w-full"
             >
-              <Link to="/LegalPrivacy" className="flex items-center gap-2">
+              <Link to="/MyArea?tab=rechtliches" className="flex items-center gap-2">
                 <ExternalLink className="w-4 h-4" />
                 Datenschutzerklärung ansehen
               </Link>

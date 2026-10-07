@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
-import { haptics } from '@/components/utils/haptics';
+import { useState } from 'react';
 import { Check, MoreVertical, Zap, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import SwipeRow from '@/components/ui/SwipeRow';
 import {
     DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
@@ -18,6 +18,7 @@ const UNIT_OPTIONS = ['Stück', 'Flaschen', 'Liter', 'ml', 'kg', 'g', 'Kisten', 
  *  - round checkbox toggle
  *  - inline quantity edit (tap quantity → input, Enter saves)
  *  - ··· menu with Bearbeiten (dialog) + Löschen
+ *  - swipe-to-delete (touch) via SwipeRow
  */
 export default function QuickListRow({ item, onToggle, onUpdate, onDelete }) {
     const [editOpen, setEditOpen] = useState(false);
@@ -27,33 +28,6 @@ export default function QuickListRow({ item, onToggle, onUpdate, onDelete }) {
     const [editNotes, setEditNotes] = useState(item.notes || '');
     const [qtyEditing, setQtyEditing] = useState(false);
     const [qtyValue, setQtyValue] = useState(item.quantity);
-
-    // ── Swipe-to-delete (touch)
-    const touchStartX = useRef(0);
-    const touchStartY = useRef(0);
-    const [swipeOffset, setSwipeOffset] = useState(0);
-    const SWIPE_THRESHOLD = 120;
-
-    const handleTouchStart = (e) => {
-        touchStartX.current = e.touches[0].clientX;
-        touchStartY.current = e.touches[0].clientY;
-        setSwipeOffset(0);
-    };
-
-    const handleTouchMove = (e) => {
-        const dx = touchStartX.current - e.touches[0].clientX;
-        const dy = Math.abs(touchStartY.current - e.touches[0].clientY);
-        if (dy > 20) return;
-        if (dx > 0) setSwipeOffset(Math.min(dx, SWIPE_THRESHOLD + 20));
-    };
-
-    const handleTouchEnd = () => {
-        if (swipeOffset >= SWIPE_THRESHOLD) {
-            haptics.medium();
-            onDelete(item.id);
-        }
-        setSwipeOffset(0);
-    };
 
     const openEdit = () => {
         setEditName(item.item_name);
@@ -88,25 +62,16 @@ export default function QuickListRow({ item, onToggle, onUpdate, onDelete }) {
 
     return (
         <>
-            <div className="relative overflow-hidden rounded-xl">
-                {swipeOffset > 20 && (
-                    <div
-                        className="absolute inset-y-0 right-0 flex items-center justify-center bg-destructive rounded-xl transition-all"
-                        style={{ width: `${Math.min(swipeOffset, SWIPE_THRESHOLD + 20)}px` }}
-                    >
-                        <Trash2 className="w-5 h-5 text-white" />
-                    </div>
+            <SwipeRow
+                onSwipe={() => onDelete(item.id)}
+                revealColor="bg-destructive"
+                revealIcon={Trash2}
+                className="rounded-xl"
+                contentClassName={cn(
+                    'flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50',
+                    item.is_completed && 'opacity-50'
                 )}
-                <div
-                    className={cn(
-                        'flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 transition-transform will-change-transform',
-                        item.is_completed && 'opacity-50'
-                    )}
-                    style={{ transform: `translateX(-${swipeOffset}px)` }}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                >
+            >
                 {/* Checkbox */}
                 <button
                     onClick={() => onToggle(item)}
@@ -198,8 +163,7 @@ export default function QuickListRow({ item, onToggle, onUpdate, onDelete }) {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-            </div>
-            </div>
+            </SwipeRow>
 
             {/* Edit Dialog */}
             <Dialog open={editOpen} onOpenChange={setEditOpen}>

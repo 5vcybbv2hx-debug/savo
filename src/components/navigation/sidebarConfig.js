@@ -14,5 +14,5 @@ export const sidebarPages = [
     { page: 'Warehouse',    name: 'Waren & Lager',   icon: Warehouse,       permission: 'canViewWarehouse' },
     { page: 'DrinkMenu',           name: 'Karte',           icon: Wine,            permission: 'canViewDrinkMenu' },
     { page: 'AccountingDashboard', name: 'Buchhaltung',     icon: Calculator,      permission: 'canViewAccounting' },
-    { page: 'Settings',     name: 'Einstellungen',   icon: Settings,        permission: 'canViewSettings' },
+    { page: 'MyArea',      name: 'Einstellungen',   icon: Settings,        permission: 'canViewSettings' },
 ];

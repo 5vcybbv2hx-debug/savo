@@ -74,7 +74,6 @@ export const PAGE_PERMISSIONS = {
     ShiftAnalytics:          'canViewAnalytics',
 
     // ── Einstellungen ──────────────────────────────────────────────────────────
-    Settings:                'canViewSettings',
     CompanySettings:         'canEditCompanySettings',
     Documents:               'canViewSettings',
     Maintenance:             'canViewSettings',

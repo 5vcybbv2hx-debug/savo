@@ -39,8 +39,7 @@ export const ROUTES = {
   WASTAGE: '/Wastage',
   INVENTORY: '/Inventory',
   
-  // Settings
-  SETTINGS: '/Settings',
+  // Settings (migriert nach MyArea → Einstellungen-Tab)
   PERMISSIONS: '/Permissions',
   
   // Public
@@ -70,7 +69,7 @@ export const BREADCRUMB_PATHS = {
   '/Employees': 'Mitarbeiter',
   '/Shifts': 'Schichten',
   '/MyShifts': 'Meine Schichten',
-  '/Settings': 'Einstellungen',
+  '/MyArea': 'Mein Bereich',
   '/DrinkMenu': 'Getränkekarte',
   '/Articles': 'Artikel',
   '/Reservations': 'Reservierungen',
@@ -150,7 +149,6 @@ export const NAVIGATION_ITEMS = [
   {
     section: 'Settings',
     items: [
-      { name: 'Settings', path: ROUTES.SETTINGS, icon: 'Settings' },
       { name: 'Company', path: ROUTES.COMPANY_SETTINGS, icon: 'Building' },
     ],
   },

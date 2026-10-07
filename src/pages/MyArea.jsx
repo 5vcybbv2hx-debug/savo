@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Umbrella, RepeatIcon, QrCode, Bell, Clock, Scale } from 'lucide-react';
+import { User, Umbrella, RepeatIcon, QrCode, Bell, Clock, Scale, Settings } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 
 // Import existing page components
@@ -12,6 +12,7 @@ import DigitalBusinessCard from '@/components/company/DigitalBusinessCard';
 import UnavailabilityList from '@/components/availability/UnavailabilityList';
 import NotificationSettingsPage from '@/components/profile/NotificationSettings';
 import LegalTabContent from '@/components/legal/LegalTabContent';
+import SettingsTabContent from '@/components/settings/SettingsTabContent';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
@@ -19,7 +20,7 @@ export default function MyAreaPage() {
     const permissions = usePermissions();
     const [activeTab, setActiveTab] = useState('profile');
     const [searchParams, setSearchParams] = useSearchParams();
-    const reverseTabMap = { profile: 'profil', vacation: 'urlaub', swaps: 'tauschen', card: 'visitenkarte', termine: 'verfuegbarkeiten', notifications: 'benachrichtigungen', legal: 'rechtliches' };
+    const reverseTabMap = { profile: 'profil', vacation: 'urlaub', swaps: 'tauschen', card: 'visitenkarte', termine: 'verfuegbarkeiten', notifications: 'benachrichtigungen', legal: 'rechtliches', settings: 'einstellungen' };
 
     // URL-Tab-Parameter auslesen (?tab=profil|urlaub|tauschen|visitenkarte|verfuegbarkeiten|benachrichtigungen|rechtliches)
     useEffect(() => {
@@ -33,6 +34,7 @@ export default function MyAreaPage() {
                 verfuegbarkeiten: 'termine',
                 benachrichtigungen: 'notifications',
                 rechtliches: 'legal',
+                einstellungen: 'settings',
             };
             if (tabMap[tab]) setActiveTab(tabMap[tab]);
         }
@@ -50,8 +52,9 @@ export default function MyAreaPage() {
     const showVacationTab = permissions.canViewVacation;
     const showSwapsTab = permissions.canViewShifts;
     const showLegalTab = permissions.canViewSettings;
-    const visibleTabCount = 4 + (showVacationTab ? 1 : 0) + (showSwapsTab ? 1 : 0) + (showLegalTab ? 1 : 0);
-    const gridColsClass = { 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6', 7: 'grid-cols-7' }[visibleTabCount] || 'grid-cols-7';
+    const showSettingsTab = permissions.canViewSettings;
+    const visibleTabCount = 4 + (showVacationTab ? 1 : 0) + (showSwapsTab ? 1 : 0) + (showLegalTab ? 1 : 0) + (showSettingsTab ? 1 : 0);
+    const gridColsClass = { 4: 'grid-cols-4', 5: 'grid-cols-5', 6: 'grid-cols-6', 7: 'grid-cols-7', 8: 'grid-cols-8' }[visibleTabCount] || 'grid-cols-8';
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
@@ -99,6 +102,12 @@ export default function MyAreaPage() {
                                 <span className="hidden sm:inline">Recht</span>
                             </TabsTrigger>
                         )}
+                        {showSettingsTab && (
+                            <TabsTrigger value="settings" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
+                                <Settings className="w-5 h-5 sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Einstell.</span>
+                            </TabsTrigger>
+                        )}
                     </TabsList>
 
                     <TabsContent value="profile" className="space-y-0">
@@ -133,6 +142,10 @@ export default function MyAreaPage() {
 
                     <TabsContent value="legal" className="space-y-0">
                         <LegalTabContent />
+                    </TabsContent>
+
+                    <TabsContent value="settings" className="space-y-0">
+                        <SettingsTabContent />
                     </TabsContent>
                 </Tabs>
             </div>

@@ -127,7 +127,7 @@ export default function LegalStatusPanel() {
               {companyInfo ? 'Angaben bearbeiten' : 'Angaben hinzufügen'}
             </Button>
             {companyInfo && (
-              <Link to="/Settings" className="flex">
+              <Link to="/MyArea?tab=einstellungen" className="flex">
                 <Button variant="outline" size="sm" className="w-full">
                   In Einstellungen anpassen
                 </Button>

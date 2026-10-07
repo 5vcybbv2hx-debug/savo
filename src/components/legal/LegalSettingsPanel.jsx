@@ -139,37 +139,6 @@ export default function LegalSettingsPanel() {
         </Dialog>
       </div>
 
-      {/* Full Page Links */}
-      <div className="space-y-2 pt-4 border-t border-border/50">
-        <p className="text-xs text-muted-foreground font-medium">Vollständige Seiten:</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = '/PrivacyPolicy'}
-            className="text-xs h-9"
-          >
-            → Datenschutz
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = '/Impressum'}
-            className="text-xs h-9"
-          >
-            → Impressum
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = '/AGB'}
-            className="text-xs h-9"
-          >
-            → AGB
-          </Button>
-        </div>
-      </div>
-
       {/* Admin: Audit Log */}
       {(permissions.isAdmin || permissions.isManager) && (
         <div className="pt-6 border-t border-border/50 space-y-3">
