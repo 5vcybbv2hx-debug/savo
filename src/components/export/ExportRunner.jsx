@@ -73,10 +73,7 @@ const ALL_ENTITIES = [
     { key: 'ShiftRequirement', label: 'Schichtanforderungen', module: 'shifts' },
     { key: 'OnboardingTask', label: 'Onboarding-Aufgaben', module: 'employees' },
     { key: 'OnboardingProgress', label: 'Onboarding-Fortschritt', module: 'employees' },
-    { key: 'ClosingTask', label: 'Abschlussaufgaben', module: 'tasks' },
-    { key: 'OpeningTask', label: 'Öffnungsaufgaben', module: 'tasks' },
     { key: 'ClosingSession', label: 'Abschlusssitzungen', module: 'tasks' },
-    { key: 'OpeningSession', label: 'Eröffnungssitzungen', module: 'tasks' },
     { key: 'Location', label: 'Standorte', module: 'settings' },
     { key: 'PriceHistory', label: 'Preishistorie', module: 'articles' },
 ];

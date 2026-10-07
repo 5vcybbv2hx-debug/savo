@@ -17,7 +17,6 @@ import DrinkMenu from './pages/DrinkMenu';
 import Employees from './pages/Employees';
 import Events from './pages/Events';
 import Maintenance from './pages/Maintenance';
-import More from './pages/More';
 import MyArea from './pages/MyArea';
 import MyShifts from './pages/MyShifts';
 import Notifications from './pages/Notifications';
@@ -70,7 +69,6 @@ const CORE_PAGES = {
     "Employees": Employees,
     "Events": Events,
     "Maintenance": Maintenance,
-    "More": More,
     "MyArea": MyArea,
     "MyShifts": MyShifts,
     "Notifications": Notifications,
