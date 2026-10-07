@@ -16,8 +16,6 @@ const HUB_DESCRIPTIONS = {
     TeamHub: 'Mitarbeiter, Schichten & Zeit',
     BetriebHub: 'Gäste, Aufgaben & Betrieb',
     Warehouse: 'Bestand, Bestellung & Inventur',
-    KarteHub: 'Getränke, Rezepte & Kalkulation',
-    AccountingHub: 'Kassenbuch, Belege & Export',
     Settings: 'App, Profil & Daten',
 };
 

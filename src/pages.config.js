@@ -16,7 +16,6 @@ import Documents from './pages/Documents';
 import DrinkMenu from './pages/DrinkMenu';
 import Employees from './pages/Employees';
 import Events from './pages/Events';
-import Home from './pages/Home';
 import Maintenance from './pages/Maintenance';
 import More from './pages/More';
 import MyArea from './pages/MyArea';
@@ -37,16 +36,13 @@ import Shopping from './pages/Shopping';
 import Suppliers from './pages/Suppliers';
 import TeamCalendar from './pages/TeamCalendar';
 import TeamMeeting from './pages/TeamMeeting';
-import TimeManagement from './pages/TimeManagement';
 import TimeTracking from './pages/TimeTracking';
 import Todos from './pages/Todos';
 import Vacation from './pages/Vacation';
 
 import StorageLocationScan from './pages/StorageLocationScan';
 import TeamHub from './pages/TeamHub';
-import AccountingHub from './pages/AccountingHub';
 import BetriebHub from './pages/BetriebHub';
-import KarteHub from './pages/KarteHub';
 import Warehouse from './pages/Warehouse';
 import Wastage from './pages/Wastage';
 import Inventory from './pages/Inventory';
@@ -81,7 +77,6 @@ const CORE_PAGES = {
     "DrinkMenu": DrinkMenu,
     "Employees": Employees,
     "Events": Events,
-    "Home": Home,
     "Maintenance": Maintenance,
     "More": More,
     "MyArea": MyArea,
@@ -101,7 +96,6 @@ const CORE_PAGES = {
     "Suppliers": Suppliers,
     "TeamCalendar": TeamCalendar,
     "TeamMeeting": TeamMeeting,
-    "TimeManagement": TimeManagement,
     "TimeTracking": TimeTracking,
     "Todos": Todos,
     "Vacation": Vacation,
@@ -113,9 +107,7 @@ const CORE_PAGES = {
     "Wusa": Wusa,
     // Hub-Seiten — mit Layout (Sidebar + Navigation)
     "TeamHub": TeamHub,
-    "AccountingHub": AccountingHub,
     "BetriebHub": BetriebHub,
-    "KarteHub": KarteHub,
 };
 
 // Special pages: with Layout wrapper

@@ -215,7 +215,7 @@ function ClockEntryEditModal({ entry, employees, onSave, onClose }) {
     );
 }
 
-// ── Main Page ────────────────────────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function AdminTimeEditor() {
     const permissions = usePermissions();
     const queryClient = useQueryClient();

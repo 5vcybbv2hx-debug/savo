@@ -25,14 +25,10 @@ import ExternalBusiness from './pages/ExternalBusiness';
 import AccountingFixedCosts from './pages/AccountingFixedCosts';
 
 import TeamHub from './pages/TeamHub';
-import AccountingHub from './pages/AccountingHub';
 import BetriebHub from './pages/BetriebHub';
 import GuestHub from './pages/GuestHub';
-import KarteHub from './pages/KarteHub';
 import AccountingBank from './pages/AccountingBank';
-import AtlasExport from './pages/AtlasExport';
 import BusinessCard from './pages/BusinessCard';
-import AdminTimeEditor from './pages/AdminTimeEditor';
 import ModuleCenter from './pages/ModuleCenter';
 // DisplayManager wurde in die Events-Seite integriert (TvPlaylistSection).
 // Route /DisplayManager leitet auf /Events weiter.
@@ -194,11 +190,11 @@ const AuthenticatedApp = () => {
       {/* Redirect old SeatingChart route to GuestHub */}
       <Route path="/SeatingChart" element={<Navigate to="/GuestHub" replace />} />
 
-      {/* Admin Zeit-Editor */}
-      <Route path="/AdminTimeEditor" element={
-        <LayoutWrapper currentPageName="AdminTimeEditor">
-          <RoleGuard permission="canViewSettings">
-            <AdminTimeEditor />
+      {/* Zeiterfassung — /TimeManagement und /TimeTracking rendern beide TimeTracking */}
+      <Route path="/TimeManagement" element={
+        <LayoutWrapper currentPageName="TimeManagement">
+          <RoleGuard permission="canViewOwnTimeEntries">
+            <Pages.TimeTracking />
           </RoleGuard>
         </LayoutWrapper>
       } />
@@ -243,13 +239,11 @@ const AuthenticatedApp = () => {
       <Route path="/AccountingFixedCosts" element={<LayoutWrapper currentPageName="AccountingFixedCosts"><RoleGuard permission="canViewAccounting"><AccountingFixedCosts /></RoleGuard></LayoutWrapper>} />
       <Route path="/AccountingLiabilities" element={<Navigate to="/AccountingPayables" replace />} />
       <Route path="/AccountingBank" element={<LayoutWrapper currentPageName="AccountingBank"><RoleGuard permission="canViewAccounting"><AccountingBank /></RoleGuard></LayoutWrapper>} />
-      <Route path="/AtlasExport" element={<LayoutWrapper currentPageName="AtlasExport"><RoleGuard permission="canViewAnalytics"><AtlasExport /></RoleGuard></LayoutWrapper>} />
 
       {/* Catch-all */}
       <Route path="/ExternalJobs" element={<LayoutWrapper currentPageName="ExternalJobs"><RoleGuard permission="canViewEvents"><ExternalJobs /></RoleGuard></LayoutWrapper>} />
       <Route path="/TeamHub" element={<LayoutWrapper currentPageName="TeamHub"><RoleGuard permission="canViewShifts"><TeamHub /></RoleGuard></LayoutWrapper>} />
-      <Route path="/AccountingHub" element={<LayoutWrapper currentPageName="AccountingHub"><RoleGuard permission="canViewAccounting"><AccountingHub /></RoleGuard></LayoutWrapper>} />
-      <Route path="/KarteHub" element={<LayoutWrapper currentPageName="KarteHub"><RoleGuard permission="canViewDrinkMenu"><KarteHub /></RoleGuard></LayoutWrapper>} />
+
       <Route path="/MenuReview" element={<LayoutWrapper currentPageName="MenuReview"><RoleGuard permission="canViewDrinkMenu"><MenuReview /></RoleGuard></LayoutWrapper>} />
       <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/GuestHub" element={<LayoutWrapper currentPageName="GuestHub"><RoleGuard permission="canViewReservations"><GuestHub /></RoleGuard></LayoutWrapper>} />

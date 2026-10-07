@@ -31,6 +31,10 @@ import PayrollReportSender from '@/components/reports/PayrollReportSender';
 import { validateArbZG, formatWarnings } from '@/components/timetracking/ArbZGValidator';
 import { fetchUntilDateCovered } from '@/lib/adaptiveFetch';
 import { calcTotalBreakMinutes, calcLegalBreak } from '@/lib/timeTrackingHelpers';
+import PermissionDenied from '@/components/auth/PermissionDenied';
+import HolidayCreditManager from '@/components/dashboard/HolidayCreditManager';
+import AdminTimeEditor from '@/components/time/AdminTimeEditor';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const statusConfig = {
     'entwurf':     { label: 'Entwurf',     color: 'bg-slate-500/15 text-muted-foreground/50 dark:text-muted-foreground', icon: FileText },
@@ -558,8 +562,13 @@ export default function TimeTracking() {
 
     const employeeNames = [...new Set(visibleEntries.map(e => e.employee_name))].sort();
 
+    // ── Permission Guard (aus TimeManagement-Wrapper übernommen) ──────────────
+    if (!permissions.canViewOwnTimeEntries && !permissions.isTerminal) {
+        return <PermissionDenied message="Du hast keine Berechtigung für die Zeiterfassung." />;
+    }
+
     // ── Render ─────────────────────────────────────────────────────────────────
-    return (
+    const trackingContent = (
         <div className="min-h-screen bg-background animate-page-enter">
             <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
 
@@ -1150,4 +1159,25 @@ export default function TimeTracking() {
             </Sheet>
         </div>
     );
+
+    // ── Manager: Tabs (Erfassung + Verwaltung mit AdminTimeEditor) ──────────────
+    if (permissions.isManager) {
+        return (
+            <div className="min-h-screen bg-background">
+                <div className="max-w-6xl mx-auto px-4 pt-4 flex items-center justify-end gap-2">
+                    <HolidayCreditManager />
+                </div>
+                <Tabs defaultValue="erfassung" className="max-w-6xl mx-auto px-4">
+                    <TabsList className="grid grid-cols-2 max-w-md mx-auto mb-4">
+                        <TabsTrigger value="erfassung">Erfassung</TabsTrigger>
+                        <TabsTrigger value="verwaltung">Verwaltung</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="erfassung">{trackingContent}</TabsContent>
+                    <TabsContent value="verwaltung"><AdminTimeEditor /></TabsContent>
+                </Tabs>
+            </div>
+        );
+    }
+
+    return trackingContent;
 }

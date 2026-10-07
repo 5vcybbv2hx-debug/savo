@@ -18,12 +18,13 @@ import { Button } from '@/components/ui/button';
 import {
     Download, FileText, Archive, CheckCircle2,
     ChevronLeft, ChevronRight, AlertTriangle,
-    ChevronDown, BookOpen, Receipt, Package
+    ChevronDown, BookOpen, Receipt, Package, FileJson
 } from 'lucide-react';
 import { format, subMonths, addMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import AtlasExportSection from '@/components/accounting/AtlasExport';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt = n => (n ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -437,6 +438,17 @@ export default function AccountingExport() {
                         Keine Buchungen im gewählten Monat
                     </p>
                 )}
+
+                {/* ── Atlas Export (JSON für Controlling-App) ─────────────────── */}
+                <details className="border border-border/50 rounded-xl overflow-hidden">
+                    <summary className="px-4 py-3 bg-card hover:bg-accent/20 cursor-pointer text-sm font-semibold text-foreground list-none flex items-center gap-2">
+                        <FileJson className="w-4 h-4 text-primary" />
+                        Atlas Export — operative Daten als JSON
+                    </summary>
+                    <div className="p-4 bg-card border-t border-border/40">
+                        <AtlasExportSection base44={base44} />
+                    </div>
+                </details>
 
             </div>
         </div>

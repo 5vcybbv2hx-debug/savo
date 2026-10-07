@@ -12,7 +12,7 @@ export const sidebarPages = [
     { page: 'TeamHub',      name: 'Team',            icon: Users,           permission: 'canViewShifts' },
     { page: 'BetriebHub',   name: 'Betrieb',         icon: Store,           permission: 'canViewReservations' },
     { page: 'Warehouse',    name: 'Waren & Lager',   icon: Warehouse,       permission: 'canViewWarehouse' },
-    { page: 'KarteHub',     name: 'Karte',           icon: Wine,            permission: 'canViewDrinkMenu' },
-    { page: 'AccountingHub',name: 'Buchhaltung',     icon: Calculator,      permission: 'canViewAccounting' },
+    { page: 'DrinkMenu',           name: 'Karte',           icon: Wine,            permission: 'canViewDrinkMenu' },
+    { page: 'AccountingDashboard', name: 'Buchhaltung',     icon: Calculator,      permission: 'canViewAccounting' },
     { page: 'Settings',     name: 'Einstellungen',   icon: Settings,        permission: 'canViewSettings' },
 ];

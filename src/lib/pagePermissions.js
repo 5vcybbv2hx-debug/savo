@@ -83,7 +83,6 @@ export const PAGE_PERMISSIONS = {
     BusinessCalendar:        'canViewSettings',
     DataQuality:             'isManager',
     DataExport:              'canViewSettings',
-    AdminTimeEditor:         'canViewSettings',
     Onboarding:              'canViewOnboarding',
     AuditLog:                'canViewAuditLog',
 

@@ -167,9 +167,6 @@ export default function MenuReview() {
                 <Button className="w-full mt-2" onClick={() => navigate(createPageUrl('DrinkMenu'))}>
                     Zur Getränkekarte
                 </Button>
-                <Button variant="ghost" className="w-full" onClick={() => navigate(createPageUrl('KarteHub'))}>
-                    Zurück zur Übersicht
-                </Button>
             </div>
         );
     }
@@ -207,7 +204,7 @@ export default function MenuReview() {
                         <h1 className="text-lg font-bold text-foreground">Karten-Review</h1>
                         <p className="text-xs text-muted-foreground">Karte durchgehen wie beim Neudruck</p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => navigate(createPageUrl('KarteHub'))}>
+                    <Button variant="ghost" size="icon" onClick={() => navigate(createPageUrl('DrinkMenu'))}>
                         <X className="w-5 h-5" />
                     </Button>
                 </div>
