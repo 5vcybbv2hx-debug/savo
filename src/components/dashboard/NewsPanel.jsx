@@ -295,6 +295,33 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
         },
     });
 
+    const convertToTodoMutation = useMutation({
+        mutationFn: async (item) => {
+            const priorityMap = { dringend: 'dringend', wichtig: 'hoch', info: 'mittel' };
+            await base44.entities.TodoItem.create({
+                title: item.title,
+                description: item.body || '',
+                category: 'Sonstiges',
+                status: 'offen',
+                priority: priorityMap[item.priority] || 'mittel',
+            });
+            const completedAt = new Date();
+            const nextDate = getNextOccurrence(item, completedAt);
+            const updateData = {
+                is_completed: true,
+                completed_by_name: currentEmployee?.name || currentUser?.full_name || currentUser?.email || 'Mitarbeiter',
+                completed_at: completedAt.toISOString(),
+            };
+            if (nextDate) updateData.show_from = nextDate.toISOString();
+            return base44.entities.NewsItem.update(item.id, updateData);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['news-items'] });
+            queryClient.invalidateQueries({ queryKey: ['todos'] });
+            toast.success('Als Todo übernommen ✓');
+        },
+    });
+
     const handleComplete = (item) => {
         const name = currentEmployee?.name || currentUser?.full_name || currentUser?.email || 'Mitarbeiter';
         completeTaskMutation.mutate({ item, completerName: name });
@@ -398,6 +425,16 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
                                                 )}
                                                 {item.created_by_name && (
                                                     <p className="text-[10px] text-muted-foreground/70 mt-1">von {item.created_by_name}</p>
+                                                )}
+                                                {isTask && (
+                                                    <button
+                                                        onClick={() => convertToTodoMutation.mutate(item)}
+                                                        disabled={convertToTodoMutation.isPending}
+                                                        className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                                                    >
+                                                        <ListTodo className="w-3 h-3" />
+                                                        In meine Todos übernehmen
+                                                    </button>
                                                 )}
                                             </div>
 

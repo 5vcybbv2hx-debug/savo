@@ -8,7 +8,7 @@
  * - Inaktive ausblendbar
  */
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -241,7 +241,8 @@ export default function Suppliers() {
 
     const [modalOpen,        setModalOpen]        = useState(false);
     const [selectedSupplier, setSelectedSupplier] = useState(null);
-    const [activeFilter,     setActiveFilter]     = useState('Alle');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [activeFilter,     setActiveFilter]     = useState(searchParams.get('filter') || 'Alle');
     const [searchTerm,       setSearchTerm]       = useState('');
     const [showInactive,     setShowInactive]     = useState(false);
     const [deactivateTarget, setDeactivateTarget] = useState(null);
@@ -446,7 +447,7 @@ export default function Suppliers() {
                 {/* ── Typ-Chips ──────────────────────────────────────────── */}
                 <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
                     {filterTabs.map(tab => (
-                        <button key={tab} onClick={() => setActiveFilter(tab)}
+                        <button key={tab} onClick={() => { setActiveFilter(tab); setSearchParams({ filter: tab }); }}
                             className={cn(
                                 'shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
                                 activeFilter === tab

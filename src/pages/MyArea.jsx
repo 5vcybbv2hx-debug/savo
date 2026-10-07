@@ -17,7 +17,8 @@ import { base44 } from '@/api/base44Client';
 export default function MyAreaPage() {
     const permissions = usePermissions();
     const [activeTab, setActiveTab] = useState('profile');
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const reverseTabMap = { profile: 'profil', vacation: 'urlaub', swaps: 'tauschen', card: 'visitenkarte', termine: 'verfuegbarkeiten', notifications: 'benachrichtigungen' };
 
     // URL-Tab-Parameter auslesen (?tab=profil|urlaub|tauschen|visitenkarte|verfuegbarkeiten|benachrichtigungen)
     useEffect(() => {
@@ -59,7 +60,7 @@ export default function MyAreaPage() {
                 </div>
 
                 {/* Tabs */}
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+                <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchParams({ tab: reverseTabMap[v] || v }); }} className="space-y-4 sm:space-y-6">
                     <TabsList className={`grid w-full ${gridColsClass} bg-card border border-border h-auto p-1`}>
                         <TabsTrigger value="profile" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
                             <User className="w-5 h-5 sm:w-4 sm:h-4" />

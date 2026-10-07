@@ -135,7 +135,6 @@ export default function GuestHub() {
     const handleTableNewReservation = (table) => {
         setSelectedRes({ table: table.table_number, guests: table.capacity });
         setResModalOpen(true);
-        setTab('today'); // kurz auf Heute wechseln damit Modal sichtbar
     };
 
     const handleCancel = (id) =>

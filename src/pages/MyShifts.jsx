@@ -4,6 +4,9 @@
  * Kalender-Sync im ··· Menü (kein eigener Tab)
  */
 import React, { useState, useMemo } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { usePermissions } from '@/components/auth/usePermissions';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -12,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Clock, ChevronLeft, ChevronRight, Users, CalendarDays,
-    MoreVertical, Calendar, RepeatIcon
+    MoreVertical, Calendar, RepeatIcon, Umbrella
 } from 'lucide-react';
 import ShiftSwapSection from '@/components/shifts/ShiftSwapSection';
 import ShiftSwapRequestModal from '@/components/shifts/ShiftSwapRequestModal';
@@ -503,6 +506,9 @@ function TeamTab({ myEmployeeId }) {
 // ── Haupt-Komponente ──────────────────────────────────────────────────────────
 export default function MyShiftsPage() {
     const { data: employee } = useCurrentEmployee();
+    const permissions = usePermissions();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'week';
     const [syncOpen, setSyncOpen] = useState(false);
     const [swapShift, setSwapShift] = useState(null);
     const [swapModalOpen, setSwapModalOpen] = useState(false);
@@ -555,6 +561,16 @@ export default function MyShiftsPage() {
                     </Button>
                 </div>
 
+                {/* ── Urlaub-Direktlink ─────────────────────────────────── */}
+                {permissions.canViewVacation && (
+                    <div className="flex justify-end -mt-1">
+                        <Link to={createPageUrl('MyArea') + '?tab=urlaub'} className="text-xs text-amber-500/80 hover:text-amber-500 transition-colors flex items-center gap-1">
+                            <Umbrella className="w-3 h-3" />
+                            Urlaub beantragen
+                        </Link>
+                    </div>
+                )}
+
                 {/* ── Nächste Schicht Hero ──────────────────────────────── */}
                 {isLoading ? (
                     <div className="rounded-2xl bg-card border border-border p-5 animate-pulse h-24" />
@@ -563,7 +579,7 @@ export default function MyShiftsPage() {
                 )}
 
                 {/* ── Tabs ──────────────────────────────────────────────── */}
-                <Tabs defaultValue="week">
+                <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
                     <TabsList className="grid grid-cols-3 w-full bg-secondary/50 border border-border/50">
                         <TabsTrigger value="week"
                             className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 text-xs">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -71,6 +71,17 @@ export default function Events() {
     const [typeFilter, setTypeFilter] = useState('alle');
     const [statusFilter, setStatusFilter] = useState('alle');
     const [confirmDialog, setConfirmDialog] = useState(null);
+    const [activeSection, setActiveSection] = useState('section-events');
+
+    useEffect(() => {
+        const sectionIds = ['section-events', 'section-tv', ...(permissions.isManager ? ['section-calendar'] : []), 'section-archive'];
+        const observer = new IntersectionObserver(
+            (entries) => { entries.forEach(entry => { if (entry.isIntersecting) setActiveSection(entry.target.id); }); },
+            { rootMargin: '-20% 0px -60% 0px' }
+        );
+        sectionIds.forEach(id => { const el = document.getElementById(id); if (el) observer.observe(el); });
+        return () => observer.disconnect();
+    }, [permissions.isManager]);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -368,8 +379,31 @@ export default function Events() {
                     )}
                 </div>
 
+                {/* ── Sticky Pill-Navigation ───────────────────────────────────── */}
+                <div className="sticky top-14 md:top-0 z-30 -mx-3 sm:-mx-4 mb-4 bg-background/95 backdrop-blur-xl border-b border-border/50">
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-nowrap px-3 sm:px-4 py-2">
+                        {[
+                            { id: 'section-events', label: 'Events & TV' },
+                            { id: 'section-tv', label: 'TV-Playlist' },
+                            ...(permissions.isManager ? [{ id: 'section-calendar', label: 'Betriebskalender' }] : []),
+                            { id: 'section-archive', label: 'Archiv & Ideen' },
+                        ].map(pill => (
+                            <button key={pill.id}
+                                onClick={() => document.getElementById(pill.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                                className={cn(
+                                    'shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
+                                    activeSection === pill.id
+                                        ? 'bg-primary border-primary text-primary-foreground'
+                                        : 'border-border text-muted-foreground hover:text-foreground bg-card'
+                                )}>
+                                {pill.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* ── Abschnitt 1: Kommende Events ─────────────────────────────── */}
-                <section className="mb-8">
+                <section id="section-events" className="mb-8">
                     <SectionHeader icon={CalendarIcon} title="Kommende Events" count={upcomingEvents.length} />
 
                     {/* Filter */}
@@ -517,20 +551,20 @@ export default function Events() {
                 </section>
 
                 {/* ── Abschnitt 2: TV-Playlist ────────────────────────────────── */}
-                <section className="mb-8">
+                <section id="section-tv" className="mb-8">
                     <TvPlaylistSection />
                 </section>
 
                 {/* ── Abschnitt 3: Betriebskalender (nur Manager) ─────────────── */}
                 {permissions.isManager && (
-                    <section className="mb-8">
+                    <section id="section-calendar" className="mb-8">
                         <SectionHeader icon={CalendarDays} title="Betriebskalender" />
                         <BusinessCalendar />
                     </section>
                 )}
 
                 {/* ── Abschnitte 3-5: Archiv, Umgebung, Ideen (Accordion) ──────── */}
-                <Accordion type="multiple" defaultValue={[]} className="space-y-3">
+                <Accordion id="section-archive" type="multiple" defaultValue={[]} className="space-y-3">
                     {/* Archiv */}
                     <Card className="bg-card border-border overflow-hidden">
                         <AccordionItem value="archiv" className="border-b-0">

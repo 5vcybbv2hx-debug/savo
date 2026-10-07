@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PERMISSION_REGISTRY, STANDARD_ROLES, PERMISSION_LEVELS } from '@/lib/permissionRegistry';
@@ -102,6 +102,7 @@ export default function PermissionsNew() {
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sheetOpen, setSheetOpen] = useState(false);
   const [advancedMode, setAdvancedMode] = useState(false);
   const [expandedCats, setExpandedCats] = useState({});
@@ -114,11 +115,20 @@ export default function PermissionsNew() {
     queryFn: () => base44.entities.Employee.filter({ is_active: true }),
   });
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 200);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
   const filteredEmployees = useMemo(
-    () => employees.filter(e =>
-      e.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    [employees, searchQuery]
+    () => {
+      const q = debouncedSearch.toLowerCase();
+      return employees.filter(e =>
+        e.name?.toLowerCase().includes(q) ||
+        e.email?.toLowerCase().includes(q)
+      );
+    },
+    [employees, debouncedSearch]
   );
 
   // ──── Mutation ────────────────────────────────────────────────────────────────

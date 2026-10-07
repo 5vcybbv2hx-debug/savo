@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -47,6 +48,7 @@ const statusConfig = {
 export default function TimeTracking() {
     const queryClient = useQueryClient();
     const permissions = usePermissions();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { data: currentEmployee, isLoading: isLoadingEmployee } = useCurrentEmployee();
 
     const [modalOpen, setModalOpen] = useState(false);
@@ -1167,7 +1169,7 @@ export default function TimeTracking() {
                 <div className="max-w-6xl mx-auto px-4 pt-4 flex items-center justify-end gap-2">
                     <HolidayCreditManager />
                 </div>
-                <Tabs defaultValue="erfassung" className="max-w-6xl mx-auto px-4">
+                <Tabs value={searchParams.get('tab') || 'erfassung'} onValueChange={(v) => setSearchParams({ tab: v })} className="max-w-6xl mx-auto px-4">
                     <TabsList className="grid grid-cols-2 max-w-md mx-auto mb-4">
                         <TabsTrigger value="erfassung">Erfassung</TabsTrigger>
                         <TabsTrigger value="verwaltung">Verwaltung</TabsTrigger>

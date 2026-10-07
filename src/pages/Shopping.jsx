@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
@@ -370,13 +371,15 @@ export default function Shopping() {
     const [wareneingangItem,     setWareneingangItem]     = useState(null);
     const [closeOrderConfirm,    setCloseOrderConfirm]    = useState(false);
     const [markBestelltConfirm,  setMarkBestelltConfirm]  = useState(null); // Array von Items
-    const [activeTab,            setActiveTab]            = useState('offen');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [activeTab,            setActiveTab]            = useState(searchParams.get('tab') || 'offen');
     const [bulkWareneingangOpen, setBulkWareneingangOpen] = useState(false);
     const [quickAddSheet,        setQuickAddSheet]        = useState(null); // { article, existingItem } | null
     const [quickAddQty,          setQuickAddQty]          = useState(1);
     const [formData, setFormData] = useState({
         item_name: '', category: '', quantity: '', unit: '', status: 'offen', notes: ''
     });
+    const handleTabChange = (tab) => { setActiveTab(tab); setSearchParams({ tab }); };
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: items = [] } = useQuery({
@@ -523,7 +526,7 @@ export default function Shopping() {
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         toast.success(`${itemsToMark.length} Artikel als bestellt markiert`);
         setMarkBestelltConfirm(null);
-        if (activeTab === 'offen') setActiveTab('bestellt');
+        if (activeTab === 'offen') handleTabChange('bestellt');
     };
 
     // Bulk-Wareneingang (mehrere Artikel auf einmal)
@@ -558,7 +561,7 @@ export default function Shopping() {
         queryClient.invalidateQueries({ queryKey: ['articles'] });
         setBulkWareneingangOpen(false);
         toast.success(`${results.length} Artikel quittiert`);
-        setActiveTab('erhalten');
+        handleTabChange('erhalten');
     };
 
     // Wareneingang quittieren
@@ -601,7 +604,7 @@ export default function Shopping() {
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         setWareneingangItem(null);
         toast.success('Wareneingang quittiert');
-        setActiveTab('erhalten');
+        handleTabChange('erhalten');
     };
 
     // Bestellung abschließen (alle "erhalten" Items)
@@ -617,7 +620,7 @@ export default function Shopping() {
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         setCloseOrderConfirm(false);
         toast.success(`Bestellung abgeschlossen — ${receivedAll.length} Artikel archiviert`);
-        setActiveTab('abgeschlossen');
+        handleTabChange('abgeschlossen');
     };
 
     const handleArticleAdd = (itemData) => {
@@ -957,7 +960,7 @@ export default function Shopping() {
                         const count = counts[tab.id];
                         return (
                             <button key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => handleTabChange(tab.id)}
                                 className={cn(
                                     'flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-full text-xs font-semibold border transition-all',
                                     activeTab === tab.id
