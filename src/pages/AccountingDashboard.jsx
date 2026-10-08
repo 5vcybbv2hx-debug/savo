@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import {
     BookOpen, Receipt, TrendingDown, Download,
     RefreshCw, AlertTriangle, CheckCircle2, ChevronRight,
-    Euro, ArrowDownUp
+    Euro, ArrowDownUp, ReceiptText
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, isAfter, subMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -276,8 +276,8 @@ export default function AccountingDashboard() {
                 {/* ── Weitere Bereiche — kompakt ───────────────────────────── */}
                 <div className="space-y-1">
                     {[
+                        { label: 'Außenaufträge',     icon: ReceiptText, href: '/ExternalBusiness',        color: 'text-indigo-400' },
                         { label: 'Fixkosten',         icon: RefreshCw,   href: '/AccountingFixedCosts',    color: 'text-orange-400' },
-
                         { label: 'Tagesabschluss',    icon: ArrowDownUp, href: '/DailyAnalysis',           color: 'text-cyan-400'   },
                     ].map(item => (
                         <Link key={item.href} to={item.href}>
