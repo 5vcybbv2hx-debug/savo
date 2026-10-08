@@ -3,7 +3,7 @@
  * Eine Seite, eine Datumszeile steuert Reservierungs-Zeitstrahl UND Tischplan.
  * Keine Tabs mehr. Archiv = altes Datum wählen.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { haptics } from '@/components/utils/haptics';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import ReservationModal from '@/components/reservations/ReservationModal';
@@ -93,6 +94,23 @@ export default function GuestHub() {
         const n = new Date();
         return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
     });
+
+    // ── Touch: horizontaler Swipe blättert durchs zentrale Datum ──────────────
+    const touchStartX = useRef(0);
+    const touchStartY = useRef(0);
+    const handleSwipeStart = (e) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+    };
+    const handleSwipeEnd = (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        const dy = e.changedTouches[0].clientY - touchStartY.current;
+        // Nur bei eindeutig horizontaler Dominanz auslösen — schützt Tischplan & Vertikal-Scroll
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+            haptics.selection();
+            setFilterDate(addDaysHelper(filterDate, dx < 0 ? 1 : -1));
+        }
+    };
 
     // ── Data queries ─────────────────────────────────────────────────────────
     const { data: activeReservations = [], isLoading: activeLoading, isError: reservationsError } = useReservations();
@@ -328,7 +346,11 @@ export default function GuestHub() {
                     </div>
                 </div>
 
-                <div className="px-4 py-4 space-y-5">
+                <div
+                    className="px-4 py-4 space-y-5"
+                    onTouchStart={handleSwipeStart}
+                    onTouchEnd={handleSwipeEnd}
+                >
 
                     {/* ── KPI-Zeile ──────────────────────────────────────────── */}
                     <div className="flex flex-wrap items-center gap-2 text-xs">

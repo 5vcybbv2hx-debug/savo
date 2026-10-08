@@ -64,8 +64,11 @@ export default function QuickListRow({ item, onToggle, onUpdate, onDelete }) {
         <>
             <SwipeRow
                 onSwipe={() => onDelete(item.id)}
+                onSwipeRight={() => onToggle(item)}
                 revealColor="bg-destructive"
                 revealIcon={Trash2}
+                revealColorRight="bg-green-600"
+                revealIconRight={Check}
                 className="rounded-xl"
                 contentClassName={cn(
                     'flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50',

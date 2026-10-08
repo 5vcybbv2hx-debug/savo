@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { STALE } from '@/lib/queryUtils';
+import SwipeRow from '@/components/ui/SwipeRow';
+import { haptics } from '@/components/utils/haptics';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -469,6 +471,19 @@ export default function Wusa() {
         },
     });
 
+    // Status weiterschalten per Swipe: offen → bereit → abgeholt
+    const statusMutation = useMutation({
+        mutationFn: ({ id, status }) => base44.entities.WusaOrder.update(id, { status }),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['wusa-orders'] }),
+    });
+
+    const cycleStatus = (order) => {
+        const next = order.status === 'offen' ? 'bereit' : order.status === 'bereit' ? 'abgeholt' : 'abgeholt';
+        statusMutation.mutate({ id: order.id, status: next });
+        haptics.medium();
+        toast.success(next === 'bereit' ? 'Status: Bereit' : 'Status: Abgeholt');
+    };
+
     // Group orders by customer_name for display
     const groupedOrders = useMemo(() => {
         const groups = {};
@@ -644,37 +659,52 @@ export default function Wusa() {
                                     </div>
 
                                     {/* Salad lines */}
-                                    <div className="divide-y divide-border/50">
+                                    <div>
                                         {custOrders.map((order, idx) => (
-                            <CardContent className="p-3">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
-                                            <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded',
-                                                order.size === 'gross' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400')}>
-                                                {order.size === 'gross' ? 'Groß' : 'Klein'}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">{ingsToDisplay(order.ingredients)}</span>
-                                        </div>
-                                        {order.notes && (
-                                            <p className="text-xs text-amber-400/80 mt-1 italic">📝 {order.notes}</p>
-                                        )}
+                                            <SwipeRow
+                                                key={order.id}
+                                                onSwipeRight={() => cycleStatus(order)}
+                                                revealColorRight="bg-blue-600"
+                                                revealIconRight={ChevronRight}
+                                                className="border-b border-border/50 last:border-0"
+                                                contentClassName="bg-card"
+                                            >
+                                                <CardContent className="p-3">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
+                                                                <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded',
+                                                                    order.size === 'gross' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400')}>
+                                                                    {order.size === 'gross' ? 'Groß' : 'Klein'}
+                                                                </span>
+                                                                {order.status && order.status !== 'offen' && (
+                                                                    <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded',
+                                                                        order.status === 'bereit' ? 'bg-amber-500/10 text-amber-400' : 'bg-green-500/10 text-green-400')}>
+                                                                        {order.status === 'bereit' ? 'Bereit' : 'Abgeholt'}
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-xs text-muted-foreground">{ingsToDisplay(order.ingredients)}</span>
+                                                            </div>
+                                                            {order.notes && (
+                                                                <p className="text-xs text-amber-400/80 mt-1 italic">📝 {order.notes}</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-1 shrink-0">
+                                                            <button onClick={() => handleEdit(order)}
+                                                                className="text-muted-foreground hover:text-primary p-1 transition-colors">
+                                                                <Edit2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                            <button onClick={() => deleteMutation.mutate(order.id)}
+                                                                className="text-muted-foreground hover:text-destructive p-1 transition-colors">
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </CardContent>
+                                            </SwipeRow>
+                                        ))}
                                     </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                        <button onClick={() => handleEdit(order)}
-                                            className="text-muted-foreground hover:text-primary p-1 transition-colors">
-                                            <Edit2 className="w-3.5 h-3.5" />
-                                        </button>
-                                        <button onClick={() => deleteMutation.mutate(order.id)}
-                                            className="text-muted-foreground hover:text-destructive p-1 transition-colors">
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        ))}
-                    </div>
                 </Card>
             );
         })}

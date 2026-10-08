@@ -4,7 +4,7 @@
  * Alle Sub-Komponenten (UnifiedCalendarView, DayDetailDrawer, EventDetailsModal,
  * ShiftSwapRequestModal, TeamCalendarExport, getHolidaysBW) bleiben unverändert.
  */
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -15,6 +15,7 @@ import ShiftSwapRequestModal from '@/components/shifts/ShiftSwapRequestModal';
 import TeamCalendarExport from '@/components/calendar/TeamCalendarExport';
 import { getHolidaysBW } from '@/components/shifts/getHolidays';
 import DayDetailDrawer from '@/components/calendar/DayDetailDrawer';
+import { haptics } from '@/components/utils/haptics';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 
 export default function TeamMonthView() {
@@ -27,6 +28,22 @@ export default function TeamMonthView() {
     const [selectedDay,       setSelectedDay]       = useState(null);
     const [showDayDrawer,     setShowDayDrawer]     = useState(false);
     const [viewMonth,         setViewMonth]         = useState(new Date());
+
+    // ── Touch: horizontaler Swipe blättert durch die Monate ──────────────────
+    const touchStartX = useRef(0);
+    const touchStartY = useRef(0);
+    const handleSwipeStart = (e) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+    };
+    const handleSwipeEnd = (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        const dy = e.changedTouches[0].clientY - touchStartY.current;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+            haptics.selection();
+            setViewMonth(prev => dx < 0 ? addMonths(prev, 1) : subMonths(prev, 1));
+        }
+    };
 
     // Datumsbereich: einen Monat vor/nach dem sichtbaren Monat
     const shiftFrom = format(subMonths(startOfMonth(viewMonth), 1), 'yyyy-MM-dd');
@@ -93,6 +110,10 @@ export default function TeamMonthView() {
             </div>
 
             {/* Kalender */}
+            <div
+                onTouchStart={handleSwipeStart}
+                onTouchEnd={handleSwipeEnd}
+            >
             <UnifiedCalendarView
                 onDayClick={handleDayClick}
                 shifts={shifts}
@@ -111,6 +132,7 @@ export default function TeamMonthView() {
                 onSearchChange={setSearchQuery}
                 onNavigate={date => setViewMonth(date)}
             />
+            </div>
 
             {/* Modals */}
             <EventDetailsModal

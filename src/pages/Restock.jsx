@@ -22,6 +22,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import BarcodeScanner from '../components/restock/BarcodeScanner';
+import SwipeRow from '@/components/ui/SwipeRow';
 
 // ── Inline Toast ──────────────────────────────────────────────────────────────
 function Toast({ message, type = 'error', onDismiss }) {
@@ -635,11 +636,18 @@ export default function Restock() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                         {items.map(item => (
-                                            <Card key={item.id} className={cn(
-                                                'overflow-hidden border transition-all',
-                                                recentIds.includes(item.id) && 'ring-2 ring-primary/40',
-                                                item.is_completed && 'opacity-60'
-                                            )}>
+                                            <SwipeRow
+                                                key={item.id}
+                                                onSwipeRight={() => toggleComplete(item)}
+                                                revealColorRight="bg-green-600"
+                                                revealIconRight={Check}
+                                                className={cn(
+                                                    'rounded-xl',
+                                                    recentIds.includes(item.id) && 'ring-2 ring-primary/40',
+                                                    item.is_completed && 'opacity-60'
+                                                )}
+                                            >
+                                            <Card className="overflow-hidden border bg-card">
                                                 <div className="flex items-center gap-3 px-3 py-3">
                                                     {/* Artikel-Bild */}
                                                     {item.article_image_url
@@ -731,6 +739,7 @@ export default function Restock() {
                                                     );
                                                 })()}
                                             </Card>
+                                            </SwipeRow>
                                         ))}
                                     </div>
                                 </div>
