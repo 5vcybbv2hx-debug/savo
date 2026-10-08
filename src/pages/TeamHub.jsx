@@ -81,8 +81,7 @@ export default function TeamHub() {
             <div className="mb-6">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Planung</p>
                 <div className="space-y-2">
-                    <NavCard icon={Calendar}      label="Schichtplan"     description="Wochenansicht, Schichten planen"    page="Calendar"      permission="canViewShifts" />
-                    <NavCard icon={ListChecks}    label="Teamkalender"    description="Alle Schichten im Überblick"        page="TeamCalendar"  permission="canViewTeamCalendar" />
+                    <NavCard icon={Calendar}      label="Schichtplan"     description="Woche & Monat, Schichten planen"    page="Calendar"      permission="canViewShifts" />
                     <NavCard icon={MapPin}        label="Stationsplan"    description="Bereiche & Stationen zuweisen"      page="Stationsplan"  permission="canViewShifts" />
                 </div>
             </div>
