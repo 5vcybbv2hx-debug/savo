@@ -231,6 +231,10 @@ export default function Layout({ children, currentPageName }) {
             // Admin/Manager: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
             return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
         }
+        // Aushilfe: Stempeln über ClockChip im Header; Putzliste + Stationsplan = tägliche Werkzeuge
+        if (permissions.employeeRole === 'Aushilfe') {
+            return ['Dashboard', 'MyShifts', 'Cleaning', 'Stationsplan'];
+        }
         if (permissions.canViewReservations && permissions.canViewTodos) {
             // Vollzeit/Barkeeper: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
             return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];

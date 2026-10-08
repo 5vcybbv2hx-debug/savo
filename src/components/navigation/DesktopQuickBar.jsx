@@ -4,8 +4,11 @@ import { getTopPages } from '@/hooks/usePageTracking';
 import { additionalPages } from './navigationConfig';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { createPageUrl } from '@/utils';
+import { format } from 'date-fns';
+import { BarChart3 } from 'lucide-react';
 import ClockChip from '@/components/navigation/ClockChip';
 
 // Nur Unterseiten — Hub-Einträge sind über die Sidebar direkt erreichbar
@@ -51,6 +54,16 @@ export default function DesktopQuickBar() {
         }).catch(() => {});
     }, [location.pathname]);
 
+    // Tagesabschluss-Status für Manager (canViewAnalytics)
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const { data: todayRevenue = [] } = useQuery({
+        queryKey: ['daily-revenue-today', today],
+        queryFn: () => base44.entities.DailyRevenue.filter({ date: today }),
+        staleTime: 60000,
+        enabled: permissions.canViewAnalytics,
+    });
+    const dailyClosingDone = todayRevenue.length > 0;
+
     if (quickPages.length < 3) return null;
 
     return (
@@ -60,6 +73,23 @@ export default function DesktopQuickBar() {
         >
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest mr-3 shrink-0">Schnellzugriff</span>
             <ClockChip />
+            {permissions.canViewAnalytics && (
+                <Link
+                    to={createPageUrl('DailyAnalysis')}
+                    title={dailyClosingDone ? 'Tagesabschluss erledigt' : 'Tagesabschluss — noch offen'}
+                    className={cn(
+                        'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all relative',
+                        dailyClosingDone
+                            ? 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
+                            : 'text-amber-400 hover:bg-amber-500/10'
+                    )}
+                >
+                    <BarChart3 className="w-3.5 h-3.5 shrink-0" />
+                    {!dailyClosingDone && (
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 animate-pulse-dot" />
+                    )}
+                </Link>
+            )}
             {quickPages.map(item => {
                 const isActive = location.pathname === `/${item.page}` || location.pathname === '/';
                 return (

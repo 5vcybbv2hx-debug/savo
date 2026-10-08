@@ -24,7 +24,7 @@ import {
     Users, Calendar, LogIn, LogOut, Wrench, TrendingDown,
     ShoppingCart, FileText, Package, RefreshCw, AlertTriangle,
     ChevronRight, Timer, ShoppingBasket, Pause, Play, Coffee,
-    Euro, Clock3
+    Euro, Clock3, BarChart3
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -334,7 +334,7 @@ function TodoWidget({ todos }) {
     );
 }
 
-function TodayTab({ currentUser, currentEmployee, permissions, employees, todayEvents, todayReservations, todayShifts, myTodos, isManager, lowStockCount, openOrdersCount, openQuickListCount, openRestockCount }) {
+function TodayTab({ currentUser, currentEmployee, permissions, employees, todayEvents, todayReservations, todayShifts, myTodos, isManager, lowStockCount, openOrdersCount, openQuickListCount, openRestockCount, dailyClosingDone }) {
 
     const myShift = todayShifts.find(s => s.employee_id === currentEmployee?.id);
     const birthdaysToday = employees.filter(e => e.birthday?.slice(5) === format(new Date(), 'MM-dd'));
@@ -359,6 +359,34 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
             <NewsPanel currentUser={currentUser} currentEmployee={currentEmployee} isManager={isManager} employees={employees} />
             {currentEmployee && <ClockCard currentEmployee={currentEmployee} />}
             <ActiveClockPanel currentEmployee={currentEmployee} employees={employees} />
+
+            {/* Tagesabschluss — Kurzweg für Manager (canViewAnalytics) */}
+            {permissions.canViewAnalytics && (
+                <Link to={createPageUrl('DailyAnalysis')}>
+                    <Card className={cn(
+                        'border card-pressable transition-colors',
+                        dailyClosingDone
+                            ? 'bg-card border-border/50 opacity-60'
+                            : 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/15'
+                    )}>
+                        <CardContent className="p-3 flex items-center gap-3">
+                            <div className={cn(
+                                'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                                dailyClosingDone ? 'bg-muted text-muted-foreground' : 'bg-amber-500/20 text-amber-400'
+                            )}>
+                                <BarChart3 className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-foreground">Tagesabschluss</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {dailyClosingDone ? 'Erledigt ✓' : 'Heute noch offen'}
+                                </p>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                        </CardContent>
+                    </Card>
+                </Link>
+            )}
 
             {/* Meine Schicht */}
             {currentEmployee && (
@@ -519,6 +547,16 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
         enabled: permissions.canViewRestock,
     });
 
+    // Tagesabschluss-Status: DailyRevenue-Eintrag für heute vorhanden?
+    const { data: todayRevenue = [] } = useQuery({
+        queryKey: ['daily-revenue-today', today],
+        queryFn: () => base44.entities.DailyRevenue.filter({ date: today }),
+        staleTime: STALE.MEDIUM,
+        refetchInterval: false,
+        enabled: permissions.canViewAnalytics,
+    });
+    const dailyClosingDone = todayRevenue.length > 0;
+
     // Business calendar
     const { data: businessCalendarDays = [] } = useQuery({
         queryKey: ['business-calendar-today'],
@@ -657,6 +695,7 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
                         openOrdersCount={openOrdersCount}
                         openQuickListCount={openQuickCount}
                         openRestockCount={openRestockCount}
+                        dailyClosingDone={dailyClosingDone}
                     />
                 )}
 

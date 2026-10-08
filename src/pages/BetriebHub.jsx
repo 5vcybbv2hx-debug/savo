@@ -61,6 +61,15 @@ export default function BetriebHub() {
         staleTime: STALE.MEDIUM,
     });
 
+    // Offene Putzaufgaben (is_active && nicht erledigt) — Badge auf Putzliste-Karte
+    const { data: cleaningTasks = [] } = useQuery({
+        queryKey: ['cleaning-tasks-open'],
+        queryFn: () => base44.entities.CleaningTask.filter({ is_active: true }, 'area', 200),
+        staleTime: STALE.MEDIUM,
+        enabled: permissions.canViewCleaning,
+    });
+    const openCleaningCount = cleaningTasks.filter(t => !t.is_completed).length;
+
     return (
         <div className="max-w-2xl mx-auto px-4 py-6 pb-32 md:pb-8">
             <div className="mb-6">
@@ -83,7 +92,7 @@ export default function BetriebHub() {
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Aufgaben</p>
                 <div className="space-y-2">
                     <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"            page="Todos"       badge={todos.filter(t => t.status !== 'erledigt').length || undefined} permission="canViewTodos" />
-                    <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste"  page="Cleaning"    permission="canViewCleaning" />
+                    <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste"  page="Cleaning"    badge={openCleaningCount || undefined} badgeVariant="warning" permission="canViewCleaning" />
                     <NavCard icon={Wrench}      label="Wartung & Reparaturen" description="Wartungs- & Reparaturaufträge"     page="Maintenance" permission="canViewTodos" />
                 </div>
             </div>

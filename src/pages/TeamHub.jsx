@@ -6,6 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { cn } from '@/lib/utils';
+import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
+import { useSwapInboxCount } from '@/components/shifts/ShiftSwapInboxCard';
 import {
     Users, Calendar, Clock, Shield,
     Palmtree, Video, Trophy, ListChecks, MapPin, HelpCircle
@@ -51,6 +53,10 @@ export default function TeamHub() {
     const permissions = usePermissions();
     const today = format(new Date(), 'yyyy-MM-dd');
 
+    // Schichttausch-Posteingang-Zähler (gleiche Query wie Layout.jsx — wird geshared)
+    const { data: currentEmployee } = useCurrentEmployee();
+    const swapInboxCount = useSwapInboxCount(currentEmployee || null);
+
     // Mitarbeiter-Count
     const { data: employees = [] } = useQuery({
         queryKey: ['employees-count'],
@@ -90,7 +96,7 @@ export default function TeamHub() {
             <div className="mb-6">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Mein Bereich</p>
                 <div className="space-y-2">
-                    <NavCard icon={Clock}         label="Meine Schichten"  description="Eigene Schichten & Tauschanfragen" page="MyShifts"       permission="canViewShifts" />
+                    <NavCard icon={Clock}         label="Meine Schichten"  description="Eigene Schichten & Tauschanfragen" page="MyShifts"       badge={swapInboxCount || undefined} badgeVariant="warning" permission="canViewShifts" />
                     <NavCard icon={Clock}         label="Zeiterfassung"    description="Arbeitsstunden & Übersicht"        page="TimeManagement" permission="canViewOwnTimeEntries" />
                     <NavCard icon={Palmtree}      label="Urlaub"           description="Urlaubsanträge & Planung"          page="Vacation"      badge={vacationRequests.length || undefined} permission="canViewVacation" />
                 </div>
