@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const ORDER_DEADLINE = new Date('2026-10-11T23:00:00+02:00');
+const ORDER_DEADLINE = new Date('2026-10-12T21:00:00+02:00');
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 const ITEMS = [
     { key: 'zshirt', label: 'Z-Shirt', sizeField: 'tshirt_size', emoji: '👕' },
