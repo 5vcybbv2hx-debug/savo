@@ -9,6 +9,7 @@ import ManagerDashboard from '@/components/dashboard/ManagerDashboard';
 import AlarmPanel from '@/components/dashboard/AlarmPanel';
 import ActiveClockPanel from '@/components/dashboard/ActiveClockPanel';
 import NewsPanel from '@/components/dashboard/NewsPanel';
+import ClothingOrderCard from '@/components/dashboard/ClothingOrderCard';
 import ShiftSwapInboxCard from '@/components/shifts/ShiftSwapInboxCard';
 import WhatsAppMessageGenerator from '@/components/employees/WhatsAppMessageGenerator';
 import { cn } from '@/lib/utils';
@@ -354,6 +355,9 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                     </Card>
                 </Link>
             )}
+
+            {/* Klamotten-Bestellaktion — zeitlich begrenzt */}
+            <ClothingOrderCard currentEmployee={currentEmployee} isManager={isManager} />
 
             {/* Stempeluhr — erste Priorität */}
             <NewsPanel currentUser={currentUser} currentEmployee={currentEmployee} isManager={isManager} employees={employees} />

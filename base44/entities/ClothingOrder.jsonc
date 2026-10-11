@@ -1,0 +1,40 @@
+{
+  "name": "ClothingOrder",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "Employee-Entity-ID des Bestellers"
+    },
+    "employee_name": {
+      "type": "string",
+      "description": "Anzeigename des Bestellers"
+    },
+    "item": {
+      "type": "string",
+      "enum": [
+        "zshirt",
+        "pulli"
+      ],
+      "description": "Bestellter Artikel: Z-Shirt oder Pulli"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "XS",
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL",
+        "XXXL"
+      ],
+      "description": "Konfektionsgr\u00f6\u00dfe"
+    }
+  },
+  "required": [
+    "employee_id",
+    "item",
+    "size"
+  ]
+}
