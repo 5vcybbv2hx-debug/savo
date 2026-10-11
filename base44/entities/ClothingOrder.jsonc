@@ -30,6 +30,10 @@
         "XXXL"
       ],
       "description": "Konfektionsgr\u00f6\u00dfe"
+    },
+    "quantity": {
+      "type": "integer",
+      "description": "Bestellmenge (1-5)"
     }
   },
   "required": [
