@@ -1,39 +1,52 @@
 /**
- * ClothingOrderCard — Bestell-Aktion für Arbeitskleidung auf dem Dashboard.
- * Zwei Direkt-Buttons (Z-Shirt / Pulli), die Größe kommt automatisch aus
- * der Personalakte (Employee.tshirt_size / pullover_size). Wunschmenge 1-5
- * per Stepper. Countdown bis 12.10.2026 21:00 Uhr; danach blendet sich die
- * Karte für Mitarbeiter selbst ab, Manager sehen die finale Zusammenfassung.
+ * ClothingOrderCard — Wiederverwendbare Bestell-Runden für Arbeitskleidung.
+ * Konfiguration kommt aus der ClothingRound-Entity (Deadline, Artikel, Aktiv-Status).
+ * Manager starten eine neue Runde direkt in der Karte; Mitarbeiter sehen die aktive
+ * Runde mit Countdown. Nach Deadline: Mitarbeiter sehen nichts mehr, Manager sehen
+ * die Zusammenfassung und können die Runde abschließen. Bestellungen tragen eine
+ * round_id; alte Runden bleiben als Historie erhalten.
  */
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Shirt, CheckCircle2, Timer, Users, Pencil, Minus, Plus } from 'lucide-react';
+import { Shirt, CheckCircle2, Timer, Users, Pencil, Minus, Plus, CalendarClock, Check } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const ORDER_DEADLINE = new Date('2026-10-12T21:00:00+02:00');
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 const MAX_QTY = 5;
-const ITEMS = [
+const ITEM_CATALOG = [
     { key: 'zshirt', label: 'Z-Shirt', sizeField: 'tshirt_size', emoji: '👕' },
     { key: 'pulli', label: 'Pulli', sizeField: 'pullover_size', emoji: '🧥' },
 ];
 
-function useCountdown(deadline) {
+function useNow() {
     const [now, setNow] = useState(() => new Date());
     useEffect(() => {
         const t = setInterval(() => setNow(new Date()), 30000);
         return () => clearInterval(t);
     }, []);
-    const remaining = deadline.getTime() - now.getTime();
-    return {
-        expired: remaining <= 0,
-        hours: Math.max(0, Math.floor(remaining / (1000 * 60 * 60))),
-        minutes: Math.max(0, Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))),
-    };
+    return now;
+}
+
+function parseItems(raw) {
+    try {
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr)
+            ? ITEM_CATALOG.filter(i => arr.includes(i.key))
+            : null;
+    } catch {
+        return null;
+    }
+}
+
+function defaultDeadlineLocal() {
+    const d = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    d.setHours(21, 0, 0, 0);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function QtyStepper({ value, onChange }) {
@@ -64,9 +77,22 @@ function QtyStepper({ value, onChange }) {
 
 export default function ClothingOrderCard({ currentEmployee, isManager }) {
     const queryClient = useQueryClient();
-    const { expired, hours, minutes } = useCountdown(ORDER_DEADLINE);
+    const now = useNow();
     const [pickers, setPickers] = useState({});
     const [quantities, setQuantities] = useState({});
+    const [showNewRound, setShowNewRound] = useState(false);
+    const [newDeadline, setNewDeadline] = useState(defaultDeadlineLocal());
+    const [newName, setNewName] = useState('');
+    const [newItems, setNewItems] = useState({ zshirt: true, pulli: true });
+
+    const { data: rounds = [] } = useQuery({
+        queryKey: ['clothingRounds'],
+        queryFn: () => base44.entities.ClothingRound.filter({}),
+        refetchInterval: 60000,
+    });
+    const activeRound = [...rounds]
+        .filter(r => r.is_active)
+        .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))[0] || null;
 
     const { data: allOrders = [] } = useQuery({
         queryKey: ['clothingOrders'],
@@ -74,7 +100,11 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
         refetchInterval: 60000,
     });
 
-    const myOrders = allOrders.filter(o => o.employee_id === currentEmployee?.id);
+    const roundOrders = activeRound
+        ? allOrders.filter(o => o.round_id === activeRound.id)
+        : [];
+
+    const myOrders = roundOrders.filter(o => o.employee_id === currentEmployee?.id);
     const myOrderFor = (item) => myOrders.find(o => o.item === item);
     const qtyFor = (item, existing) => quantities[item] ?? existing?.quantity ?? 1;
 
@@ -89,6 +119,7 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
                 item,
                 size,
                 quantity,
+                round_id: activeRound.id,
             });
         },
         onSuccess: (data, vars) => {
@@ -96,26 +127,157 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
             setPickers(p => ({ ...p, [vars.item]: false }));
             toast.success(vars.existingId
                 ? 'Bestellung aktualisiert'
-                : `${ITEMS.find(i => i.key === vars.item)?.label || 'Bestellung'}: ${vars.quantity}× Größe ${vars.size} bestellt 🎉`);
+                : `${ITEM_CATALOG.find(i => i.key === vars.item)?.label || 'Bestellung'}: ${vars.quantity}× Größe ${vars.size} bestellt 🎉`);
         },
         onError: (error) => toast.error('Bestellung fehlgeschlagen: ' + error.message),
     });
 
-    if (expired && !isManager) return null;
+    const startRoundMutation = useMutation({
+        mutationFn: async ({ name, deadline, items }) => base44.entities.ClothingRound.create({
+            round_name: name || `Bestellung bis ${new Date(deadline).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`,
+            deadline: new Date(deadline).toISOString(),
+            is_active: true,
+            items: JSON.stringify(items),
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['clothingRounds'] });
+            setShowNewRound(false);
+            setNewDeadline(defaultDeadlineLocal());
+            setNewName('');
+            toast.success('Bestellrunde gestartet 🎽');
+        },
+        onError: (error) => toast.error('Runde konnte nicht gestartet werden: ' + error.message),
+    });
+
+    const closeRoundMutation = useMutation({
+        mutationFn: () => base44.entities.ClothingRound.update(activeRound.id, { is_active: false }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['clothingRounds'] });
+            toast.success('Runde abgeschlossen');
+        },
+        onError: (error) => toast.error('Abschließen fehlgeschlagen: ' + error.message),
+    });
+
     if (!currentEmployee) return null;
+    if (!activeRound && !isManager) return null;
+
+    // Keine aktive Runde: Manager kann neue Runde starten
+    if (!activeRound && isManager) {
+        return (
+            <Card className="border-border/60">
+                <CardContent className="pt-4 pb-4">
+                    {showNewRound ? (
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <Shirt className="w-5 h-5 text-primary shrink-0" />
+                                <p className="font-semibold text-foreground">Neue Klamotten-Bestellrunde</p>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-muted-foreground">Name (optional)</label>
+                                <input
+                                    type="text"
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    placeholder="z.B. Frühjahr 2027"
+                                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-muted-foreground">Bestell-Deadline (Standard: in 3 Tagen, 21:00 Uhr)</label>
+                                <input
+                                    type="datetime-local"
+                                    value={newDeadline}
+                                    onChange={(e) => setNewDeadline(e.target.value)}
+                                    className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-muted-foreground">Artikel</label>
+                                <div className="flex gap-2">
+                                    {ITEM_CATALOG.map(({ key, label, emoji }) => (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            onClick={() => setNewItems(s => ({ ...s, [key]: !s[key] }))}
+                                            className={cn(
+                                                'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-colors',
+                                                newItems[key]
+                                                    ? 'bg-primary/15 border-primary/50 text-foreground'
+                                                    : 'border-border text-muted-foreground'
+                                            )}
+                                        >
+                                            <span>{emoji}</span> {label}
+                                            {newItems[key] && <Check className="w-3.5 h-3.5 text-primary" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                                <Button
+                                    size="sm"
+                                    onClick={() => {
+                                        const items = ITEM_CATALOG.filter(i => newItems[i.key]).map(i => i.key);
+                                        if (items.length === 0) { toast.error('Mindestens einen Artikel auswählen'); return; }
+                                        if (!newDeadline) { toast.error('Deadline angeben'); return; }
+                                        startRoundMutation.mutate({ name: newName.trim(), deadline: newDeadline, items });
+                                    }}
+                                    disabled={startRoundMutation.isPending}
+                                >
+                                    {startRoundMutation.isPending ? '…' : 'Runde starten'}
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => setShowNewRound(false)}>Abbrechen</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setShowNewRound(true)}
+                            className="w-full flex items-center justify-between gap-2 text-left"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Shirt className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">Klamotten-Bestellung — keine aktive Runde</span>
+                            </span>
+                            <span className="text-xs font-medium text-primary flex items-center gap-1">
+                                <CalendarClock className="w-3.5 h-3.5" /> Neue Runde starten
+                            </span>
+                        </button>
+                    )}
+                </CardContent>
+            </Card>
+        );
+    }
+
+    const deadline = new Date(activeRound.deadline);
+    const remaining = deadline.getTime() - now.getTime();
+    const expired = remaining <= 0;
+    const hours = Math.max(0, Math.floor(remaining / (1000 * 60 * 60)));
+    const minutes = Math.max(0, Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60)));
+    const items = parseItems(activeRound.items) || ITEM_CATALOG;
+
+    if (expired && !isManager) return null;
 
     if (expired && isManager) {
         return (
             <Card className="border-primary/30 bg-primary/5">
-                <CardContent className="pt-4 pb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Shirt className="w-4 h-4 text-primary" />
-                        <p className="text-sm font-semibold text-foreground">
-                            Klamotten-Bestellung — abgeschlossen
-                        </p>
+                <CardContent className="pt-4 pb-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <Shirt className="w-4 h-4 text-primary" />
+                            <p className="text-sm font-semibold text-foreground">
+                                {activeRound.round_name || 'Klamotten-Bestellung'} — abgeschlossen
+                            </p>
+                        </div>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => closeRoundMutation.mutate()}
+                            disabled={closeRoundMutation.isPending}
+                        >
+                            {closeRoundMutation.isPending ? '…' : 'Runde abschließen'}
+                        </Button>
                     </div>
-                    {ITEMS.map(({ key, label }) => {
-                        const ofItem = allOrders.filter(o => o.item === key);
+                    {items.map(({ key, label }) => {
+                        const ofItem = roundOrders.filter(o => o.item === key);
                         const bySize = {};
                         let total = 0;
                         ofItem.forEach(o => {
@@ -162,7 +324,7 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
                     </div>
                 </div>
 
-                {ITEMS.map(({ key, label, sizeField, emoji }) => {
+                {items.map(({ key, label, sizeField, emoji }) => {
                     const existing = myOrderFor(key);
                     const profileSize = currentEmployee?.[sizeField];
                     const effectiveSize = existing?.size || profileSize;
@@ -252,12 +414,12 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
                     );
                 })}
 
-                {isManager && allOrders.length > 0 && (
+                {isManager && roundOrders.length > 0 && (
                     <div className="pt-2 border-t border-border/60 flex items-start gap-2 text-xs text-muted-foreground">
                         <Users className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                         <span>
-                            {ITEMS.map(({ key, label }) => {
-                                const names = allOrders.filter(o => o.item === key).map(o => `${o.employee_name || '?'} (${o.quantity || 1}× ${o.size})`);
+                            {items.map(({ key, label }) => {
+                                const names = roundOrders.filter(o => o.item === key).map(o => `${o.employee_name || '?'} (${o.quantity || 1}× ${o.size})`);
                                 return names.length ? `${label}: ${names.join(', ')}` : null;
                             }).filter(Boolean).join(' · ')}
                         </span>

@@ -1,0 +1,22 @@
+{
+  "name": "ClothingRound",
+  "type": "object",
+  "properties": {
+    "round_name": {
+      "type": "string",
+      "description": "Anzeigename der Bestellrunde"
+    },
+    "deadline": {
+      "type": "string",
+      "description": "ISO-Datum der Bestell-Deadline"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Aktive Runde, deren Karte auf dem Dashboard angezeigt wird"
+    },
+    "items": {
+      "type": "string",
+      "description": "JSON-Array der angebotenen Artikel-Keys, z.B. [\"zshirt\",\"pulli\"]"
+    }
+  }
+}

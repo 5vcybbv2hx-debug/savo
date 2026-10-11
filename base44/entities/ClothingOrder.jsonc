@@ -34,6 +34,10 @@
     "quantity": {
       "type": "integer",
       "description": "Bestellmenge (1-5)"
+    },
+    "round_id": {
+      "type": "string",
+      "description": "ID der ClothingRound, zu der die Bestellung geh\u00f6rt"
     }
   },
   "required": [
