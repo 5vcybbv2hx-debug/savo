@@ -10,7 +10,7 @@ import {
     CalendarDays, Clock, Plane, RefreshCw, Shield,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare, Target,
-    Banknote, BookCopy, Warehouse, Utensils, Siren, User,
+    Banknote, BookCopy, Warehouse, Utensils, Siren, User, TrendingUp,
 } from 'lucide-react';
 
 // ── SIDEBAR — aus sidebarConfig.js (Builder-sicher) ─────────────────────────
@@ -56,6 +56,7 @@ export const additionalPages = [
     { page: 'AccountingFixedCosts',  name: 'Fixkosten',         icon: Euro,       permission: 'canViewAccounting' },
     { page: 'AccountingBank',        name: 'Bankkonten',        icon: Banknote,   permission: 'canViewAccounting' },
     { page: 'DailyAnalysis',         name: 'Tagesanalyse',      icon: BarChart3,  permission: 'canViewAnalytics' },
+    { page: 'RevenueHistory',        name: 'Umsatz-Historie',   icon: TrendingUp, permission: 'isManager' },
     { page: 'StaffingAnalysis',     name: 'Personalplanung',   icon: Target,      permission: 'isManager' },
 
     // Team

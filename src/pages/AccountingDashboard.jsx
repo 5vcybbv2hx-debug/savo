@@ -17,7 +17,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    BookOpen, Receipt, TrendingDown, Download,
+    BookOpen, Receipt, TrendingDown, Download, TrendingUp,
     RefreshCw, AlertTriangle, CheckCircle2, ChevronRight,
     Euro, ArrowDownUp, ReceiptText
 } from 'lucide-react';
@@ -279,6 +279,7 @@ export default function AccountingDashboard() {
                         { label: 'Außenaufträge',     icon: ReceiptText, href: '/ExternalBusiness',        color: 'text-indigo-400' },
                         { label: 'Fixkosten',         icon: RefreshCw,   href: '/AccountingFixedCosts',    color: 'text-orange-400' },
                         { label: 'Tagesabschluss',    icon: ArrowDownUp, href: '/DailyAnalysis',           color: 'text-cyan-400'   },
+                        { label: 'Umsatz-Historie', icon: TrendingUp, href: '/RevenueHistory', color: 'text-emerald-400' },
                     ].map(item => (
                         <Link key={item.href} to={item.href}>
                             <div className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-border/40 bg-card hover:border-border hover:bg-accent/10 transition-all cursor-pointer group">

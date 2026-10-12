@@ -38,6 +38,7 @@ import IncidentDetail from './pages/IncidentDetail';
 
 import DataQuality from './pages/DataQuality';
 import StaffingAnalysis from './pages/StaffingAnalysis';
+import RevenueHistory from './pages/RevenueHistory';
 import MenuReview from './pages/MenuReview';
 import ExternalJobs from './pages/ExternalJobs';
 
@@ -228,6 +229,15 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
 
+
+      {/* Umsatz-Historie — Mehrjahresauswertung inkl. Z-Abschlags-Import */}
+      <Route path="/RevenueHistory" element={
+        <LayoutWrapper currentPageName="RevenueHistory">
+          <RoleGuard permission="isManager">
+            <RevenueHistory />
+          </RoleGuard>
+        </LayoutWrapper>
+      } />
 
       {/* Buchhaltungsmodul — nur für Manager */}
       <Route path="/AccountingDashboard" element={<LayoutWrapper currentPageName="AccountingDashboard"><RoleGuard permission="canViewAccounting"><AccountingDashboard /></RoleGuard></LayoutWrapper>} />

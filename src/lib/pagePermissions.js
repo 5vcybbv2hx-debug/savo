@@ -65,6 +65,7 @@ export const PAGE_PERMISSIONS = {
 
     // ── Analytik ───────────────────────────────────────────────────────────────
     DailyAnalysis:           'canViewAnalytics',
+    RevenueHistory:          'isManager',
     Reports:                 'canViewAnalytics',
     LazyReports:             'canViewAnalytics',
     SalesAnalysis:           'canViewAnalytics',
