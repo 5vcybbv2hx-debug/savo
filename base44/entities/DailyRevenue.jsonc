@@ -29,11 +29,11 @@
     },
     "manual_labor_cost_daily": {
       "type": "number",
-      "description": "Manuelle Personalkosten Aushilfen (überschreibt berechnete Werte)"
+      "description": "Manuelle Personalkosten Aushilfen (\u00fcberschreibt berechnete Werte)"
     },
     "manual_labor_cost_fulltime": {
       "type": "number",
-      "description": "Manuelle Personalkosten Festangestellte (überschreibt berechnete Werte)"
+      "description": "Manuelle Personalkosten Festangestellte (\u00fcberschreibt berechnete Werte)"
     },
     "pdf_url": {
       "type": "string",
@@ -45,31 +45,31 @@
     },
     "weather_temp_max": {
       "type": "number",
-      "description": "Höchsttemperatur (°C) — automatisch via Open-Meteo"
+      "description": "H\u00f6chsttemperatur (\u00b0C) \u2014 automatisch via Open-Meteo"
     },
     "weather_temp_mean": {
       "type": "number",
-      "description": "Durchschnittstemperatur (°C) — automatisch via Open-Meteo"
+      "description": "Durchschnittstemperatur (\u00b0C) \u2014 automatisch via Open-Meteo"
     },
     "weather_precipitation": {
       "type": "number",
-      "description": "Niederschlag (mm) — automatisch via Open-Meteo"
+      "description": "Niederschlag (mm) \u2014 automatisch via Open-Meteo"
     },
     "weather_code": {
       "type": "number",
-      "description": "WMO Weather Code — automatisch via Open-Meteo"
+      "description": "WMO Weather Code \u2014 automatisch via Open-Meteo"
     },
     "weather_description": {
       "type": "string",
-      "description": "Klartext Wetter (z.B. 'Sonnig', 'Regen') — automatisch"
+      "description": "Klartext Wetter (z.B. 'Sonnig', 'Regen') \u2014 automatisch"
     },
     "is_holiday": {
       "type": "boolean",
-      "description": "Feiertag — automatisch gesetzt"
+      "description": "Feiertag \u2014 automatisch gesetzt"
     },
     "is_school_vacation": {
       "type": "boolean",
-      "description": "Schulferien Berlin — automatisch gesetzt"
+      "description": "Schulferien Berlin \u2014 automatisch gesetzt"
     },
     "local_event_impact": {
       "type": "string",
@@ -98,15 +98,15 @@
         4,
         5
       ],
-      "description": "Betriebsamkeit: 1=Ruhig, 2=Entspannt, 3=Normal, 4=Lebhaft, 5=Stark — manuell beim Tagesabschluss"
+      "description": "Betriebsamkeit: 1=Ruhig, 2=Entspannt, 3=Normal, 4=Lebhaft, 5=Stark \u2014 manuell beim Tagesabschluss"
     },
     "is_holiday_eve": {
       "type": "boolean",
-      "description": "Tag vor Feiertag — oft Partyabend (Silvester, 30.04., 24.12., etc.)"
+      "description": "Tag vor Feiertag \u2014 oft Partyabend (Silvester, 30.04., 24.12., etc.)"
     },
     "is_bridge_day": {
       "type": "boolean",
-      "description": "Brückentag — Werktag zwischen Feiertag und Wochenende"
+      "description": "Br\u00fcckentag \u2014 Werktag zwischen Feiertag und Wochenende"
     },
     "season": {
       "type": "string",
@@ -116,11 +116,20 @@
         "summer",
         "autumn"
       ],
-      "description": "Jahreszeit — automatisch gesetzt für saisonale Gewichtung"
+      "description": "Jahreszeit \u2014 automatisch gesetzt f\u00fcr saisonale Gewichtung"
     },
     "holiday_name": {
       "type": "string",
       "description": "Name des Feiertags (automatisch gesetzt, z.B. 'Silvester', 'Karfreitag')"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "tagesabschluss",
+        "zabschlag_import",
+        "manual"
+      ],
+      "description": "Herkunft des Eintrags: tagesabschluss (regul\u00e4rer Tagesabschluss in der App), zabschlag_import (automatischer Import der Z-Abschlags-Historie), manual (manuell nachgetragen)"
     }
   },
   "required": [
