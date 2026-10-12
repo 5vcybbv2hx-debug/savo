@@ -236,8 +236,9 @@ export default function Layout({ children, currentPageName }) {
             return ['Dashboard', 'MyShifts', 'Cleaning', 'Stationsplan'];
         }
         if (permissions.canViewReservations && permissions.canViewTodos) {
-            // Vollzeit/Barkeeper: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
-            return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
+            // Vollzeit/Barkeeper: Putzliste direkt als Tab (täglicher Standardweg),
+            // Schichtplan bleibt über TeamHub/Mehr erreichbar; Auto-Pinning passt sich an
+            return ['Dashboard', 'GuestHub', 'Cleaning', 'Todos'];
         }
         if (permissions.canViewReservations) {
             // Aushilfe/Orga: sehen Gäste & Tische, aber keine Aufgaben
