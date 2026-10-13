@@ -1,0 +1,58 @@
+<mjml>
+  <mj-head>
+    <mj-title>Bar-Briefing: Schichtplan-Check</mj-title>
+    <mj-preview>Schichten, Putzlisten und To-Dos, ohne Zettelwirtschaft.</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="'Wix Madefor Text', Helvetica, Arial, sans-serif" />
+      <mj-section background-color="#f8f6f4" padding="0 36px" />
+      <mj-column padding="0" />
+      <mj-text color="#0f0e0e" font-size="15px" line-height="1.6" padding="0" />
+      <mj-button background-color="#ff773c" color="#000000" border-radius="6px" font-size="15px" font-weight="700" inner-padding="14px 28px" padding="0" align="left" />
+      <mj-image padding="0" />
+      <mj-divider border-color="#e5e7eb" border-width="1px" padding="0" />
+      <mj-class name="h" font-family="Dazzed, Helvetica, Arial, sans-serif" font-weight="700" />
+      <mj-class name="label" font-size="11px" letter-spacing="2px" text-transform="uppercase" font-weight="700" color="#ff773c" />
+      <mj-class name="muted" color="#5d5d5d" />
+    </mj-attributes>
+    <mj-style>
+      @media (max-width:480px) { .hero-h div { font-size:32px !important; line-height:1.12 !important; } .offer-h div { font-size:48px !important; } }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#ffffff" width="600px">
+    <mj-wrapper padding="28px 12px" background-color="#ffffff">
+      <mj-section background-color="#ff773c" padding="24px 36px" border-radius="6px 6px 0 0">
+        <mj-column>
+          <mj-image src="https://media.base44.com/images/public/695532713e60f5ccfc3522b9/a9822a3a2_applogo.png" alt="SAVO" width="40px" align="center" padding="0 0 12px" />
+          <mj-text align="center" font-size="12px" letter-spacing="4px" font-weight="700" text-transform="uppercase" color="#000000">SAVO</mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section padding="0"><mj-column><mj-image src="https://media.base44.com/images/public/695532713e60f5ccfc3522b9/d99081b52_generated_b0df9236.png" alt="" width="600px" /></mj-column></mj-section>
+      <mj-section padding="44px 36px 24px">
+        <mj-column>
+          <mj-text mj-class="label" padding="0 0 14px">SAVO Einladungen</mj-text>
+          <mj-text mj-class="h" css-class="hero-h" font-size="40px" line-height="1.1" padding="0 0 16px">Bar-Briefing: Schichtplan-Check</mj-text>
+          <mj-text mj-class="muted" font-size="16px">SAVO bringt Schichtpläne, Putzlisten und To-Dos für deine Bar an einem Ort. Weniger Suche, mehr Zeit für Gäste.</mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section padding="0 36px 32px">
+        <mj-group background-color="#f9ece5">
+          <mj-column border-left="3px solid #ff773c" padding="18px 20px">
+            <mj-text mj-class="label" padding="0 0 6px">Wann</mj-text>
+            <mj-text mj-class="h" font-size="17px" line-height="1.35">{{event_date}}</mj-text>
+          </mj-column>
+          <mj-column padding="18px 20px">
+            <mj-text mj-class="label" padding="0 0 6px">Wo</mj-text>
+            <mj-text mj-class="h" font-size="17px" line-height="1.35">{{event_location}}</mj-text>
+          </mj-column>
+        </mj-group>
+      </mj-section>
+      <mj-section padding="0 36px 40px"><mj-column><mj-button href="{{cta_url}}" align="left">Jetzt ausprobieren</mj-button></mj-column></mj-section>
+      <mj-section background-color="#ff773c" padding="26px 36px 30px" border-radius="0 0 6px 6px">
+        <mj-column>
+          <mj-text mj-class="h" align="center" font-size="17px" color="#000000" padding="0 0 8px">SAVO</mj-text>
+          <mj-text align="center" font-size="12px" color="#000000"><a href="{{unsubscribe_url}}" style="color:#000000;text-decoration:underline;">Abmelden</a></mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+  </mj-body>
+</mjml>
