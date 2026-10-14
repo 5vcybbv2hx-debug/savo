@@ -41,6 +41,13 @@ const STATUS_LABEL = {
     'eingelöst': 'Eingelöst',
     'ungültig': 'Ungültig',
 };
+const PAYMENT_LABEL = {
+    'bar': 'Bar',
+    'ec': 'EC',
+    'ueberweisung': 'Überweisung',
+    'bar_ec': 'Bar/EC',
+    'rabatt_ueberweisung': 'Rabatt/Überw.',
+};
 
 const FILTERS = [
     { key: 'offen', label: 'Offen', match: (v) => v.status === 'offen' || v.status === 'teilweise_eingelöst' },
@@ -283,9 +290,9 @@ export default function Vouchers() {
                                         </div>
                                     </div>
                                     {v.payment_method && (
-                                        <p className="text-[11px] text-muted-foreground mt-1.5">
-                                            Zahlung: {v.payment_method === 'bar' ? 'Bar' : 'EC'}
-                                        </p>
+                                        <span className="inline-block text-[10px] text-muted-foreground bg-muted/40 border border-border/50 rounded px-1.5 py-0.5 mt-1.5">
+                                            {PAYMENT_LABEL[v.payment_method] || v.payment_method}
+                                        </span>
                                     )}
                                     {canRedeem && (
                                         <Button
