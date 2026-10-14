@@ -1,0 +1,56 @@
+{
+  "name": "Voucher",
+  "type": "object",
+  "properties": {
+    "voucher_number": {
+      "type": "number",
+      "description": "Kassen-Gutscheinnummer"
+    },
+    "issue_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Ausstellungsdatum"
+    },
+    "original_value": {
+      "type": "number",
+      "description": "Urspr\u00fcnglicher Gutscheinwert in Euro"
+    },
+    "remaining_value": {
+      "type": "number",
+      "description": "Aktueller Restbetrag in Euro"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "bar",
+        "ec"
+      ],
+      "description": "Zahlungsart bei Ausstellung"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "offen",
+        "teilweise_eingel\u00f6st",
+        "eingel\u00f6st",
+        "ung\u00fcltig"
+      ],
+      "description": "Status des Gutscheins"
+    },
+    "source": {
+      "type": "string",
+      "description": "Herkunft: kassen_import_2026_10, manual, flatpay_import"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen"
+    }
+  },
+  "required": [
+    "voucher_number",
+    "issue_date",
+    "original_value",
+    "remaining_value",
+    "status"
+  ]
+}

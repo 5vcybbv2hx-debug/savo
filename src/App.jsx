@@ -41,6 +41,7 @@ import StaffingAnalysis from './pages/StaffingAnalysis';
 import RevenueHistory from './pages/RevenueHistory';
 import MenuReview from './pages/MenuReview';
 import ExternalJobs from './pages/ExternalJobs';
+import Vouchers from './pages/Vouchers';
 
 const { Pages, CorePages, SpecialPagesWithLayout, PublicPages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -235,6 +236,15 @@ const AuthenticatedApp = () => {
         <LayoutWrapper currentPageName="RevenueHistory">
           <RoleGuard permission="isManager">
             <RevenueHistory />
+          </RoleGuard>
+        </LayoutWrapper>
+      } />
+
+      {/* Gutscheine — Gutschein-Workflow (Migration Gastware-Kasse → flatpay) */}
+      <Route path="/Vouchers" element={
+        <LayoutWrapper currentPageName="Vouchers">
+          <RoleGuard permission="isManager">
+            <Vouchers />
           </RoleGuard>
         </LayoutWrapper>
       } />

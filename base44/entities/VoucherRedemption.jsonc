@@ -1,0 +1,32 @@
+{
+  "name": "VoucherRedemption",
+  "type": "object",
+  "properties": {
+    "voucher_id": {
+      "type": "string",
+      "description": "Verweist auf Voucher.id"
+    },
+    "redemption_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum der Einl\u00f6sung"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Eingel\u00f6ster Betrag in Euro"
+    },
+    "redeemed_by_name": {
+      "type": "string",
+      "description": "Name des Mitarbeiters, der eingel\u00f6st hat"
+    },
+    "reference": {
+      "type": "string",
+      "description": "Optional, z.B. Kassen-Rechnungsnummer"
+    }
+  },
+  "required": [
+    "voucher_id",
+    "redemption_date",
+    "amount"
+  ]
+}
