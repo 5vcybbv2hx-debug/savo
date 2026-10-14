@@ -38,8 +38,15 @@ const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 
 const MONTHS_FULL = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli',
     'August', 'September', 'Oktober', 'November', 'Dezember'];
 
-// Jahre mit weniger als 12 erfassten Monaten sind unvollständig (gekennzeichnet)
-const isYearComplete = (days) => days >= 350;
+const YEAR_COLORS = {
+    '2018': '#a78bfa', '2019': '#f472b6', '2020': '#fb923c', '2021': '#facc15',
+    '2022': '#4ade80', '2023': '#22d3ee', '2024': '#60a5fa', '2025': '#f87171',
+    '2026': '#e879f9'
+};
+const yearColor = (y) => YEAR_COLORS[y] || 'hsl(var(--primary))';
+
+// Jahre mit weniger als 12 abgedeckten Monaten sind unvollständig (gekennzeichnet)
+const isYearComplete = (coveredMonths) => coveredMonths === 12;
 
 export default function RevenueHistory() {
     const queryClient = useQueryClient();
@@ -48,14 +55,14 @@ export default function RevenueHistory() {
     const [form, setForm] = useState({ date: '', revenue: '', revenue_cash: '', revenue_ec: '' });
     const [formError, setFormError] = useState(null);
 
-    // Komplette Historie laden (2021 bis heute), adaptiv paginiert
+    // Komplette Historie laden (2018 bis heute), adaptiv paginiert
     const { data: records = [], isLoading, error } = useQuery({
         queryKey: ['revenue-history-full'],
         queryFn: async () => {
             const today = new Date().toISOString().slice(0, 10);
             return await fetchUntilDateCovered(
                 (limit) => base44.entities.DailyRevenue.list('-date', limit),
-                '2021-01-01',
+                '2018-01-01',
                 today
             );
         },
@@ -85,6 +92,8 @@ export default function RevenueHistory() {
     // ── Ableitungen ──────────────────────────────────────────────────────
     const derived = useMemo(() => {
         const valid = records.filter(r => r.date);
+        // Tageswerte (ohne Monatsabschläge) für Wochentagsprofil, Rekordtag und Tageszählung
+        const dailyOnly = valid.filter(r => r.source !== 'monatsabschlag_import');
 
         // Jahr → Monat → Einträge
         const yearMap = new Map();
@@ -104,7 +113,7 @@ export default function RevenueHistory() {
             const days = months.reduce((s, m) => s + m.length, 0);
             const total = months.reduce((s, m) => s + m.reduce((s2, r) => s2 + (r.revenue || 0), 0), 0);
             const coveredMonths = months.filter(m => m.length > 0).length;
-            return { year: y, total, days, coveredMonths, complete: isYearComplete(days) };
+            return { year: y, total, days, coveredMonths, complete: isYearComplete(coveredMonths) };
         });
 
         // Monatsverlauf pro Jahr (12 Summen)
@@ -131,10 +140,10 @@ export default function RevenueHistory() {
             }
         }
 
-        // Wochentagsprofil (alle Jahre)
+        // Wochentagsprofil (nur Tageswerte)
         const dow = [0, 0, 0, 0, 0, 0, 0];
         const dowCount = [0, 0, 0, 0, 0, 0, 0];
-        for (const r of valid) {
+        for (const r of dailyOnly) {
             const d = new Date(r.date.slice(0, 10) + 'T12:00:00');
             if (isNaN(d)) continue;
             dow[d.getDay()] += r.revenue || 0;
@@ -142,9 +151,9 @@ export default function RevenueHistory() {
         }
         const dowAvg = dow.map((s, i) => dowCount[i] ? Math.round(s / dowCount[i]) : 0);
 
-        // Rekordtag
+        // Rekordtag (nur Tageswerte)
         let best = null;
-        for (const r of valid) {
+        for (const r of dailyOnly) {
             if (!best || (r.revenue || 0) > (best.revenue || 0)) best = r;
         }
 
@@ -152,14 +161,19 @@ export default function RevenueHistory() {
         const barAll = valid.reduce((s, r) => s + (r.revenue_cash || 0), 0);
         const ecAll = valid.reduce((s, r) => s + (r.revenue_ec || 0), 0);
 
-        return { years, yearly, monthly, missingMonths, dowAvg, best, totalAll, barAll, ecAll, count: valid.length };
+        return { years, yearly, monthly, missingMonths, dowAvg, best, totalAll, barAll, ecAll, count: dailyOnly.length };
     }, [records]);
 
-    // Default: die 3 neuesten Jahre im Monatsvergleich
+    // Default: die 4 neuesten Jahre, die als vollständig oder laufend gelten
     const activeYears = useMemo(() => {
         if (chartYears) return chartYears;
-        return derived.years.slice(-3);
-    }, [chartYears, derived.years]);
+        const now = new Date();
+        const currentYearStr = String(now.getFullYear());
+        const candidates = derived.yearly
+            .filter(y => y.complete || y.year === currentYearStr)
+            .map(y => y.year);
+        return (candidates.length >= 1 ? candidates : derived.years).slice(-4);
+    }, [chartYears, derived.yearly, derived.years]);
 
     const lineData = useMemo(() => {
         return MONTHS.map((label, i) => {
@@ -349,8 +363,8 @@ export default function RevenueHistory() {
                                 contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
                             <Bar dataKey="total" radius={[4, 4, 0, 0]} maxBarSize={56}>
                                 {derived.yearly.map((y) => (
-                                    <Cell key={y.year} fill="hsl(var(--primary))"
-                                        opacity={y.complete ? 1 : 0.45} />
+                                    <Cell key={y.year} fill={yearColor(y.year)}
+                                        opacity={y.complete ? 1 : 0.55} />
                                 ))}
                                 <LabelList dataKey="total" position="top"
                                     formatter={(v) => fmtEUR(v)}
@@ -359,14 +373,7 @@ export default function RevenueHistory() {
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded-sm bg-primary inline-block" /> vollständig erfasst
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                        <span className="w-3 h-3 rounded-sm bg-primary/45 inline-block" /> Teiljahr (Lücken)
-                    </span>
-                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">kräftig = volles Jahr, blass = Teiljahr</p>
             </Card>
 
             {/* ── Monatsverlauf ── */}
@@ -376,15 +383,14 @@ export default function RevenueHistory() {
                     <div className="flex flex-wrap gap-1.5">
                         {derived.years.map((y, i) => {
                             const active = activeYears.includes(y);
+                            const color = yearColor(y);
                             return (
                                 <button key={y}
                                     onClick={() => toggleYear(y)}
-                                    className={cn(
-                                        'px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all',
-                                        active
-                                            ? 'border-primary text-primary-foreground bg-primary'
-                                            : 'border-border text-muted-foreground hover:border-primary/40'
-                                    )}>
+                                    style={active
+                                        ? { backgroundColor: color, borderColor: color, color: '#1a1a1a' }
+                                        : { borderColor: `${color}66`, color: 'hsl(var(--muted-foreground))' }}
+                                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all">
                                     {y}
                                 </button>
                             );
@@ -403,8 +409,8 @@ export default function RevenueHistory() {
                                 contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
                             {activeYears.map((y, i) => (
                                 <Line key={y} type="monotone" dataKey={y} name={y}
-                                    stroke={`hsl(var(--primary) / ${0.9 - 0.25 * (activeYears.length - 1 - i)})`}
-                                    strokeWidth={i === activeYears.length - 1 ? 2.5 : 1.75}
+                                    stroke={yearColor(y)}
+                                    strokeWidth={i === activeYears.length - 1 ? 3 : 2.25}
                                     dot={false} connectNulls={false} />
                             ))}
                         </LineChart>
@@ -446,6 +452,9 @@ export default function RevenueHistory() {
                                 </span>
                             ))}
                         </div>
+                        <p className="text-[11px] text-muted-foreground mt-2.5">
+                            Feb 2023 und Feb 2024: Betriebsurlaub, Jun/Jul 2024: Umzug
+                        </p>
                     </>
                 )}
                 <div className="flex items-start gap-1.5 mt-3 text-[11px] text-muted-foreground">
