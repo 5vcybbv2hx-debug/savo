@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import HolidayCreditManager from '@/components/dashboard/HolidayCreditManager';
 import TodayOverview from '@/components/dashboard/TodayOverview';
 import ShiftSwapApprovalCard from '@/components/dashboard/ShiftSwapApprovalCard';
+import TodayBriefCard from '@/components/dashboard/TodayBriefCard';
 import TeamMeetingReminder from '@/components/dashboard/TeamMeetingReminder';
 import LegalStatusPanel from '@/components/legal/LegalStatusPanel';
 import TeamNotes from '@/components/dashboard/TeamNotes';
@@ -108,6 +109,9 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
 
                 {/* Legal Status Panel */}
                 <LegalStatusPanel />
+
+                {/* Heute-Brief — kompakter Tages-Brief für den Manager */}
+                <TodayBriefCard />
 
                 {/* Team Meeting Reminder */}
                 <TeamMeetingReminder />
