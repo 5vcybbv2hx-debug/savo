@@ -48,11 +48,8 @@ export default function Calendar() {
     // Woche/Monat-View — Monat nur für Rollen mit canViewTeamCalendar
     const [searchParams, setSearchParams] = useSearchParams();
     const canMonth = permissions.canViewTeamCalendar;
-    const view = (canMonth && searchParams.get('view') === 'monat') ? 'monat' : 'woche';
-    const setView = (v) => {
-        if (v === 'monat') setSearchParams({ view: 'monat' }, { replace: true });
-        else setSearchParams({}, { replace: true });
-    };
+    const view = canMonth && searchParams.get('view') !== 'woche' ? 'monat' : 'woche';
+    const setView = (v) => setSearchParams({ view: v === 'monat' ? 'monat' : 'woche' }, { replace: true });
     const ViewSwitch = (
         <div className="flex gap-1 p-1 bg-card border border-border rounded-xl w-fit">
             <button onClick={() => setView('woche')}
