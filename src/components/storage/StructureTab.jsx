@@ -161,7 +161,12 @@ export default function StructureTab({ permissions }) {
       map[s.furniture_id].push(s);
     });
     Object.values(map).forEach(arr =>
-      arr.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || ''))
+      arr.sort((a, b) =>
+        ((a.grid_row ?? 0) - (b.grid_row ?? 0)) ||
+        ((a.grid_col ?? 0) - (b.grid_col ?? 0)) ||
+        ((a.sort_order ?? 0) - (b.sort_order ?? 0)) ||
+        (a.name || '').localeCompare(b.name || '')
+      )
     );
     return map;
   }, [slots]);
