@@ -1,32 +1,38 @@
 /**
- * TodayBriefCard — kompakter Tages-Brief fürs Manager-Dashboard.
- * Stellt alles Wichtige für heute aus BESTEHENDEN Daten zusammen:
- * Schichten, Wetter, Events/Feiertage, gestriger Tagesabschluss, offene Aufgaben.
- * Kein Tippen, kein Pflegen — nur Lese-Anzeige.
+ * TodayBriefCard — 3-Taben-Tagesbrief "Gestern / Heute / Morgen".
+ * Kompakter Planer + Rückblick fürs Manager-Dashboard (Mobile-First).
+ * Default-Tab: Heute. Morgen-Tab ist der wichtigste (Planer für den nächsten Tag).
  *
  * Selbst-contained: holt alle Daten per React Query (placeholderData, nie initialData).
  * Leere Daten werden niemals als Fehler gezeigt.
+ * Wetter heute+morgen aus EINEM Open-Meteo-Call (forecast_days=2).
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { format, subDays } from 'date-fns';
+import { format, subDays, addDays, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
     CalendarDays, CloudRain, Cloud, Sun, CloudSnow, CloudLightning,
-    CloudFog, CloudDrizzle, PartyPopper, Receipt, ClipboardList, Sparkles, AlertTriangle, ChevronRight
+    CloudFog, CloudDrizzle, PartyPopper, Receipt, ClipboardList, ChevronRight,
+    TrendingUp, Moon,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { isHoliday, getHolidayName, getHolidayEveInfo } from '@/lib/germanHolidays';
+import { isHoliday, isHolidayEve, getHolidayName, getHolidayEveInfo } from '@/lib/germanHolidays';
 
 const TODAY = format(new Date(), 'yyyy-MM-dd');
 const YESTERDAY = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-const TODAY_WEEKDAY = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'][new Date().getDay()];
+const TOMORROW = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+const WEEKDAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+const TODAY_WEEKDAY = WEEKDAYS[new Date().getDay()];
+const TOMORROW_WEEKDAY = WEEKDAYS[(new Date().getDay() + 1) % 7];
+const NINETY_DAYS_AGO = format(subDays(new Date(), 90), 'yyyy-MM-dd');
 
 const eur = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 });
+const eur0 = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 
 // ── Weather code → icon + label (Open-Meteo WMO codes) ───────────────────────
 function getWeatherInfo(code) {
@@ -44,11 +50,13 @@ function getWeatherInfo(code) {
 }
 
 // ── Queries ──────────────────────────────────────────────────────────────────
-function useTodayShifts() {
+
+/** Schichten für ein beliebiges Datum (heute oder morgen). */
+function useDayShifts(dateStr) {
     return useQuery({
-        queryKey: ['today-brief-shifts', TODAY],
+        queryKey: ['brief-shifts', dateStr],
         queryFn: async () => {
-            const items = await base44.entities.Shift.filter({ date: TODAY });
+            const items = await base44.entities.Shift.filter({ date: dateStr });
             return (items || [])
                 .slice()
                 .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
@@ -58,7 +66,8 @@ function useTodayShifts() {
     });
 }
 
-function useTodayWeather() {
+/** Wetter heute + morgen aus einem Open-Meteo-Call (forecast_days=2). */
+function useWeather() {
     const { data: companyInfoRaw } = useQuery({
         queryKey: ['company-info'],
         queryFn: async () => {
@@ -71,7 +80,7 @@ function useTodayWeather() {
     const companyInfo = Array.isArray(companyInfoRaw) ? companyInfoRaw[0] : companyInfoRaw;
 
     return useQuery({
-        queryKey: ['today-brief-weather', companyInfo?.postal_code, companyInfo?.city],
+        queryKey: ['brief-weather', companyInfo?.postal_code, companyInfo?.city],
         queryFn: async () => {
             if (!companyInfo?.city && !companyInfo?.postal_code) return null;
             const query = companyInfo.city || companyInfo.postal_code;
@@ -84,19 +93,22 @@ function useTodayWeather() {
             const wRes = await fetch(
                 `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
                 `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum` +
-                `&timezone=Europe/Berlin&forecast_days=1`
+                `&timezone=Europe/Berlin&forecast_days=2`
             );
             if (!wRes.ok) return null;
             const wData = await wRes.json();
             if (!wData.daily?.time?.length) return null;
-            const i = wData.daily.time.indexOf(TODAY);
-            const idx = i >= 0 ? i : 0;
-            return {
-                code: wData.daily.weather_code[idx],
-                tempMax: Math.round(wData.daily.temperature_2m_max[idx]),
-                tempMin: Math.round(wData.daily.temperature_2m_min[idx]),
-                precip: wData.daily.precipitation_sum[idx]?.toFixed(1),
+            const pick = (dateStr) => {
+                const idx = wData.daily.time.indexOf(dateStr);
+                if (idx < 0) return null;
+                return {
+                    code: wData.daily.weather_code[idx],
+                    tempMax: Math.round(wData.daily.temperature_2m_max[idx]),
+                    tempMin: Math.round(wData.daily.temperature_2m_min[idx]),
+                    precip: wData.daily.precipitation_sum[idx]?.toFixed(1),
+                };
             };
+            return { today: pick(TODAY), tomorrow: pick(TOMORROW) };
         },
         enabled: companyInfo !== undefined,
         staleTime: 30 * 60 * 1000,
@@ -105,9 +117,10 @@ function useTodayWeather() {
     });
 }
 
-function useTodayEvents() {
+/** Events/Feiertage für ein beliebiges Datum. */
+function useDayEvents(dateStr) {
     return useQuery({
-        queryKey: ['today-brief-events', TODAY],
+        queryKey: ['brief-events', dateStr],
         queryFn: async () => {
             const items = await base44.entities.LocalEvent.filter({ is_active: true });
             return (items || []).filter(e => {
@@ -115,7 +128,7 @@ function useTodayEvents() {
                 const start = e.event_date;
                 const end = e.event_end_date || e.event_date;
                 if (!start) return false;
-                return TODAY >= start && TODAY <= end;
+                return dateStr >= start && dateStr <= end;
             });
         },
         staleTime: 5 * 60 * 1000,
@@ -123,9 +136,10 @@ function useTodayEvents() {
     });
 }
 
+/** Gestriger Tagesabschluss (einzelner Record). */
 function useYesterdayRevenue() {
     return useQuery({
-        queryKey: ['today-brief-revenue', YESTERDAY],
+        queryKey: ['brief-revenue', YESTERDAY],
         queryFn: async () => {
             const items = await base44.entities.DailyRevenue.filter({ date: YESTERDAY });
             return (items || [])[0] || null;
@@ -135,9 +149,23 @@ function useYesterdayRevenue() {
     });
 }
 
+/** DailyRevenue der letzten 90 Tage — Basis für die Wochen-Tages-Referenz. */
+function useRevenueLast90Days() {
+    return useQuery({
+        queryKey: ['brief-revenue-90d'],
+        queryFn: async () => {
+            const items = await base44.entities.DailyRevenue.filter({ date: { $gte: NINETY_DAYS_AGO } });
+            return items || [];
+        },
+        staleTime: 5 * 60 * 1000,
+        placeholderData: [],
+    });
+}
+
+/** Offene Auffüll-Positionen heute. */
 function useOpenRestockCount() {
     return useQuery({
-        queryKey: ['today-brief-restock', TODAY],
+        queryKey: ['brief-restock', TODAY],
         queryFn: async () => {
             const items = await base44.entities.RestockItem.filter({ date: TODAY });
             return (items || []).filter(r => r.is_completed !== true).length;
@@ -147,9 +175,10 @@ function useOpenRestockCount() {
     });
 }
 
+/** Putzliste-Fortschritt heute. */
 function useCleaningTodayProgress() {
     return useQuery({
-        queryKey: ['today-brief-cleaning', TODAY_WEEKDAY],
+        queryKey: ['brief-cleaning', TODAY_WEEKDAY],
         queryFn: async () => {
             const items = await base44.entities.CleaningTask.filter({ is_active: true });
             const tasks = (items || []).filter(t => {
@@ -168,6 +197,24 @@ function useCleaningTodayProgress() {
     });
 }
 
+// ── Hilfsfunktionen ─────────────────────────────────────────────────────────
+
+/** Ø-Umsatz + Ø-Betriebsamkeit für einen Wochentag aus den 90-Tage-Daten. */
+function computeWeekdayAverage(records, weekdayName) {
+    const matching = records.filter(r => {
+        if (!r.date) return false;
+        try {
+            return WEEKDAYS[parseISO(r.date).getDay()] === weekdayName;
+        } catch { return false; }
+    });
+    if (matching.length < 3) return null;
+    const revs = matching.filter(r => r.revenue != null);
+    const avgRev = revs.length ? revs.reduce((s, r) => s + r.revenue, 0) / revs.length : null;
+    const busy = matching.filter(r => r.busyness_level != null);
+    const avgBusy = busy.length ? busy.reduce((s, r) => s + r.busyness_level, 0) / busy.length : null;
+    return { avgRev, avgBusy, count: matching.length };
+}
+
 // ── Row component ───────────────────────────────────────────────────────────
 function BriefRow({ icon: Icon, label, children, accent }) {
     return (
@@ -181,106 +228,213 @@ function BriefRow({ icon: Icon, label, children, accent }) {
     );
 }
 
-export default function TodayBriefCard() {
-    const { data: shifts = [] } = useTodayShifts();
-    const { data: weather } = useTodayWeather();
-    const { data: events = [] } = useTodayEvents();
-    const { data: yesterdayRev } = useYesterdayRevenue();
-    const openRestock = useOpenRestockCount().data ?? 0;
-    const cleaning = useCleaningTodayProgress().data ?? { done: 0, total: 0 };
-
-    const holidayName = getHolidayName(TODAY);
-    const holidayEve = getHolidayEveInfo(TODAY);
-    const isTodayHoliday = isHoliday(TODAY);
-
-    // ── Shifts ──────────────────────────────────────────────────────────────
-    const shiftsContent = shifts.length === 0
-        ? <span className="text-muted-foreground">Keine Schichten geplant</span>
-        : (
-            <div className="flex flex-wrap gap-x-3 gap-y-1">
-                {shifts.map(s => {
-                    const hasNote = s.notes && s.notes.trim().length > 0;
-                    return (
-                        <span key={s.id} className={cn('inline-flex items-center gap-1', hasNote && 'text-amber-400')}>
-                            {s.employee_name || '—'}
-                            <span className="text-muted-foreground">
-                                {s.start_time || '?'}-{s.end_time || '?'}
-                            </span>
+/** Schichten-Block (heute oder morgen identisch). */
+function ShiftsRow({ shifts }) {
+    if (shifts.length === 0) {
+        return <span className="text-muted-foreground">Keine Schichten geplant</span>;
+    }
+    return (
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {shifts.map(s => {
+                const hasNote = s.notes && s.notes.trim().length > 0;
+                return (
+                    <span key={s.id} className={cn('inline-flex items-center gap-1', hasNote && 'text-amber-400')}>
+                        {s.employee_name || '—'}
+                        <span className="text-muted-foreground">
+                            {s.start_time || '?'}-{s.end_time || '?'}
                         </span>
-                    );
-                })}
-            </div>
-        );
+                    </span>
+                );
+            })}
+        </div>
+    );
+}
 
-    // ── Events ───────────────────────────────────────────────────────────────
-    const eventParts = [];
-    if (isTodayHoliday && holidayName) eventParts.push(`🎉 ${holidayName}`);
-    if (holidayEve) eventParts.push(`${holidayEve.emoji} ${holidayEve.label} (${holidayEve.holidayName})`);
+/** Events-Block für ein Datum (inkl. Feiertag/Vorabend). */
+function EventsRowContent({ dateStr, events }) {
+    const holidayName = getHolidayName(dateStr);
+    const holidayEve = getHolidayEveInfo(dateStr);
+    const dayIsHoliday = isHoliday(dateStr);
+    const dayIsHolidayEve = isHolidayEve(dateStr);
+
+    const parts = [];
+    if (dayIsHoliday && holidayName) parts.push(`🎉 ${holidayName}`);
+    if (dayIsHolidayEve && holidayEve) parts.push(`${holidayEve.emoji} ${holidayEve.label} (${holidayEve.holidayName})`);
     events.forEach(e => {
         let label = e.event_name || 'Event';
         if (e.staff_adjustment) label += ` (Personal ${e.staff_adjustment > 0 ? '+' : ''}${e.staff_adjustment})`;
-        eventParts.push(label);
+        parts.push(label);
     });
-    const eventsContent = eventParts.length === 0
-        ? <span className="text-muted-foreground">Keine Events</span>
-        : <span>{eventParts.join(' · ')}</span>;
+    if (parts.length === 0) return <span className="text-muted-foreground">Keine Events</span>;
+    return <span>{parts.join(' · ')}</span>;
+}
 
-    // ── Yesterday ───────────────────────────────────────────────────────────
-    const yesterdayContent = !yesterdayRev
-        ? <span className="text-amber-400">Tagesabschluss gestern fehlt</span>
-        : (
-            <span>
-                {yesterdayRev.revenue != null ? eur.format(yesterdayRev.revenue) : '—'}
-                {yesterdayRev.source === 'tagesabschluss' && <span className="text-emerald-400"> · Tagesabschluss ✓</span>}
-                {yesterdayRev.busyness_level != null && (
-                    <span className="text-muted-foreground"> · Betriebsamkeit {yesterdayRev.busyness_level}/5</span>
+// ── Hauptkomponente ─────────────────────────────────────────────────────────
+export default function TodayBriefCard() {
+    const [tab, setTab] = useState('heute'); // 'gestern' | 'heute' | 'morgen'
+
+    // Daten für alle Tabs (Hooks immer aufrufen)
+    const todayShifts = useDayShifts(TODAY).data ?? [];
+    const tomorrowShifts = useDayShifts(TOMORROW).data ?? [];
+    const { data: weather } = useWeather();
+    const todayEvents = useDayEvents(TODAY).data ?? [];
+    const tomorrowEvents = useDayEvents(TOMORROW).data ?? [];
+    const { data: yesterdayRev } = useYesterdayRevenue();
+    const revenue90d = useRevenueLast90Days().data ?? [];
+    const openRestock = useOpenRestockCount().data ?? 0;
+    const cleaning = useCleaningTodayProgress().data ?? { done: 0, total: 0 };
+
+    // Header-Datum je Tab
+    const headerDate = tab === 'gestern' ? YESTERDAY : tab === 'morgen' ? TOMORROW : TODAY;
+    const headerPrefix = tab === 'gestern' ? 'Gestern' : tab === 'morgen' ? 'Morgen' : 'Heute';
+    const headerLabel = `${headerPrefix}, ${format(parseISO(headerDate), 'EEEE', { locale: de })}, ${format(parseISO(headerDate), 'dd.MM.')}`;
+
+    const tomorrowWeather = weather?.tomorrow;
+    const todayWeather = weather?.today;
+    const weekdayAvg = computeWeekdayAverage(revenue90d, TOMORROW_WEEKDAY);
+
+    // ── Tab-GESTERN ──────────────────────────────────────────────────────────
+    const renderGestern = () => (
+        <div className="divide-y divide-border/40">
+            <BriefRow icon={Receipt} label="Umsatz">
+                {!yesterdayRev
+                    ? <span className="text-amber-400">Tagesabschluss fehlt</span>
+                    : <span>
+                        {yesterdayRev.revenue != null ? eur.format(yesterdayRev.revenue) : '—'}
+                        {yesterdayRev.source === 'tagesabschluss'
+                            && <span className="text-emerald-400"> · Tagesabschluss ✓</span>}
+                    </span>}
+            </BriefRow>
+            {yesterdayRev?.busyness_level != null && (
+                <BriefRow icon={TrendingUp} label="Betriebsamkeit">
+                    {yesterdayRev.busyness_level}/5
+                </BriefRow>
+            )}
+        </div>
+    );
+
+    // ── Tab-HEUTE ────────────────────────────────────────────────────────────
+    const renderHeute = () => {
+        // Events heute
+        const eventsContent = <EventsRowContent dateStr={TODAY} events={todayEvents} />;
+
+        // Offene Aufgaben
+        const openParts = [];
+        if (openRestock > 0) {
+            openParts.push(
+                <Link key="restock" to={createPageUrl('Restock')} className="text-primary hover:underline inline-flex items-center gap-0.5">
+                    {openRestock} offene Auffüll-Positionen <ChevronRight className="w-3 h-3" />
+                </Link>
+            );
+        }
+        if (cleaning.total > 0) {
+            openParts.push(
+                <Link key="cleaning" to={createPageUrl('Cleaning')} className="hover:underline inline-flex items-center gap-0.5">
+                    Putzliste {cleaning.done}/{cleaning.total}
+                </Link>
+            );
+        }
+        const openContent = openParts.length === 0
+            ? <span className="text-emerald-400">Alles erledigt ✓</span>
+            : <span className="flex flex-wrap gap-x-3 gap-y-1">{openParts.map((p, i) => <React.Fragment key={i}>{p}{i < openParts.length - 1 && <span className="text-muted-foreground">·</span>}</React.Fragment>)}</span>;
+
+        return (
+            <div className="divide-y divide-border/40">
+                <BriefRow icon={CalendarDays} label="Schichten"><ShiftsRow shifts={todayShifts} /></BriefRow>
+                {todayWeather && (
+                    <BriefRow icon={getWeatherInfo(todayWeather.code).icon} label="Wetter">
+                        {todayWeather.tempMax}°C, {getWeatherInfo(todayWeather.code).label}
+                        {todayWeather.precip > 0 && <span className="text-blue-400"> · {todayWeather.precip}mm</span>}
+                    </BriefRow>
                 )}
-            </span>
+                <BriefRow icon={PartyPopper} label="Events & Feiertage">{eventsContent}</BriefRow>
+                <BriefRow icon={ClipboardList} label="Offen">{openContent}</BriefRow>
+            </div>
         );
+    };
 
-    // ── Open tasks ───────────────────────────────────────────────────────────
-    const openParts = [];
-    if (openRestock > 0) {
-        openParts.push(
-            <Link key="restock" to={createPageUrl('Restock')} className="text-primary hover:underline inline-flex items-center gap-0.5">
-                {openRestock} offene Auffüll-Positionen <ChevronRight className="w-3 h-3" />
-            </Link>
+    // ── Tab-MORGEN ───────────────────────────────────────────────────────────
+    const renderMorgen = () => {
+        const holidayName = getHolidayName(TOMORROW);
+        const isTomorrowHoliday = isHoliday(TOMORROW);
+        const isTomorrowHolidayEve = isHolidayEve(TOMORROW);
+        const holidayEveInfo = getHolidayEveInfo(TOMORROW);
+
+        return (
+            <div className="divide-y divide-border/40">
+                <BriefRow icon={CalendarDays} label="Schichten"><ShiftsRow shifts={tomorrowShifts} /></BriefRow>
+                {tomorrowWeather && (
+                    <BriefRow icon={getWeatherInfo(tomorrowWeather.code).icon} label="Wetter">
+                        {tomorrowWeather.tempMax}°C, {getWeatherInfo(tomorrowWeather.code).label}
+                        {tomorrowWeather.precip > 0 && <span className="text-blue-400"> · {tomorrowWeather.precip}mm</span>}
+                    </BriefRow>
+                )}
+                {(isTomorrowHoliday || isTomorrowHolidayEve) && (
+                    <BriefRow icon={PartyPopper} label="Feiertag" accent="text-amber-400">
+                        <div className="flex flex-col gap-0.5">
+                            {isTomorrowHoliday && holidayName && (
+                                <span className="font-semibold text-amber-400">Feiertag: {holidayName}</span>
+                            )}
+                            {isTomorrowHolidayEve && holidayEveInfo && (
+                                <span className="text-amber-400">
+                                    Feiertags-Vorabend → Partyabend-Potenzial ({holidayEveInfo.holidayName})
+                                </span>
+                            )}
+                        </div>
+                    </BriefRow>
+                )}
+                <BriefRow icon={PartyPopper} label="Events">
+                    <EventsRowContent dateStr={TOMORROW} events={tomorrowEvents} />
+                </BriefRow>
+                {weekdayAvg && (
+                    <BriefRow icon={TrendingUp} label={`Ø letzter ${TOMORROW_WEEKDAY}`}>
+                        {weekdayAvg.avgRev != null ? eur0.format(weekdayAvg.avgRev) : '—'}
+                        {weekdayAvg.avgBusy != null && (
+                            <span className="text-muted-foreground"> · Betriebsamkeit Ø {weekdayAvg.avgBusy.toFixed(1)}</span>
+                        )}
+                    </BriefRow>
+                )}
+            </div>
         );
-    }
-    if (cleaning.total > 0) {
-        openParts.push(
-            <Link key="cleaning" to={createPageUrl('Cleaning')} className="hover:underline inline-flex items-center gap-0.5">
-                Putzliste {cleaning.done}/{cleaning.total}
-            </Link>
-        );
-    }
-    const openContent = openParts.length === 0
-        ? <span className="text-emerald-400">Alles erledigt ✓</span>
-        : <span className="flex flex-wrap gap-x-3 gap-y-1">{openParts.map((p, i) => <React.Fragment key={i}>{p}{i < openParts.length - 1 && <span className="text-muted-foreground">·</span>}</React.Fragment>)}</span>;
+    };
+
+    const tabs = [
+        { key: 'gestern', label: 'Gestern' },
+        { key: 'heute', label: 'Heute' },
+        { key: 'morgen', label: 'Morgen' },
+    ];
 
     return (
         <Card className="bg-card border-border shadow-lg">
             <CardContent className="p-4">
                 {/* Header */}
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                     <CalendarDays className="w-5 h-5 text-primary" />
-                    <h2 className="text-base font-bold text-foreground">
-                        Heute, {format(new Date(), 'EEEE', { locale: de })}, {format(new Date(), 'dd.MM.')}
-                    </h2>
+                    <h2 className="text-base font-bold text-foreground">{headerLabel}</h2>
                 </div>
 
-                <div className="divide-y divide-border/40">
-                    <BriefRow icon={CalendarDays} label="Schichten">{shiftsContent}</BriefRow>
-                    {weather && (
-                        <BriefRow icon={getWeatherInfo(weather.code).icon} label="Wetter">
-                            {weather.tempMax}°C, {getWeatherInfo(weather.code).label}
-                            {weather.precip > 0 && <span className="text-blue-400"> · {weather.precip}mm</span>}
-                        </BriefRow>
-                    )}
-                    <BriefRow icon={PartyPopper} label="Events & Feiertage">{eventsContent}</BriefRow>
-                    <BriefRow icon={Receipt} label="Gestern">{yesterdayContent}</BriefRow>
-                    <BriefRow icon={ClipboardList} label="Offen">{openContent}</BriefRow>
+                {/* Segmented Control */}
+                <div className="flex gap-1 p-0.5 mb-3 rounded-lg bg-secondary/60">
+                    {tabs.map(t => (
+                        <button
+                            key={t.key}
+                            onClick={() => setTab(t.key)}
+                            className={cn(
+                                'flex-1 py-1.5 text-xs font-semibold rounded-md transition-all',
+                                tab === t.key
+                                    ? 'bg-primary text-primary-foreground shadow'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            )}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
                 </div>
+
+                {/* Tab-Inhalt */}
+                {tab === 'gestern' && renderGestern()}
+                {tab === 'heute' && renderHeute()}
+                {tab === 'morgen' && renderMorgen()}
             </CardContent>
         </Card>
     );
