@@ -75,6 +75,14 @@ function SaladLine({ line, onChange, onRemove, canRemove }) {
                 )}
             </div>
 
+            {/* Name (optional) */}
+            <input
+                value={line.salad_name || ''}
+                onChange={e => onChange({ ...line, salad_name: e.target.value })}
+                placeholder="Name (für wen?)"
+                className="w-full h-9 px-3 rounded-lg border border-input bg-transparent text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+
             {/* Size */}
             <div className="flex gap-2">
                 <button onClick={() => onChange({ ...line, size: 'gross' })}
@@ -136,15 +144,15 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
             const ings = editItem.ingredients === 'Alles' || !editItem.ingredients
                 ? ['Alles']
                 : editItem.ingredients.split(',').map(s => s.trim());
-            setLines([{ size: editItem.size || 'gross', ingredients: ings }]);
+            setLines([{ size: editItem.size || 'gross', ingredients: ings, salad_name: editItem.salad_name || '' }]);
         } else {
             setCustomerName(''); setPhone(''); setPickupType('abholung');
             setPickupTime(''); setNotes(''); setSource('persoenlich');
-            setLines([{ size: 'gross', ingredients: ['Alles'] }]);
+            setLines([{ size: 'gross', ingredients: ['Alles'], salad_name: '' }]);
         }
     }, [open, editItem]);
 
-    const addLine = () => setLines(prev => [...prev, { size: 'gross', ingredients: ['Alles'] }]);
+    const addLine = () => setLines(prev => [...prev, { size: 'gross', ingredients: ['Alles'], salad_name: '' }]);
     const removeLine = (idx) => setLines(prev => prev.filter((_, i) => i !== idx));
     const updateLine = (idx, line) => setLines(prev => prev.map((l, i) => i === idx ? line : l));
 
@@ -175,6 +183,7 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
                     size: lines[0].size,
                     quantity: 1,
                     ingredients: ingredientsString(lines[0].ingredients),
+                    salad_name: lines[0].salad_name?.trim() || null,
                     price: editItem.price ?? null,
                 });
             }
@@ -186,6 +195,7 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
                 size: line.size,
                 quantity: 1,
                 ingredients: ingredientsString(line.ingredients),
+                salad_name: line.salad_name?.trim() || null,
             }));
 
             if (editItem) {
@@ -406,6 +416,12 @@ function LabelView({ orders, onClose }) {
                                         <span className="font-bold">Größe:</span>
                                         <span>{order.size === 'gross' ? 'Groß' : 'Klein'}</span>
                                     </div>
+                                    {order.salad_name && (
+                                        <div className="flex justify-between border-b border-black pb-0.5">
+                                            <span className="font-bold">Für:</span>
+                                            <span className="text-right font-bold">{order.salad_name}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between">
                                         <span className="font-bold">Zutaten:</span>
                                         <span className="text-right max-w-[60%]">{ingsToLabel(order.ingredients)}</span>
@@ -673,7 +689,9 @@ export default function Wusa() {
                                                     <div className="flex items-start gap-3">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className="text-xs font-semibold text-muted-foreground">#{idx + 1}</span>
+                                                                <span className="text-xs font-semibold text-muted-foreground">
+                                                                    #{idx + 1}{order.salad_name ? ` · ${order.salad_name}` : ''}
+                                                                </span>
                                                                 <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded',
                                                                     order.size === 'gross' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400')}>
                                                                     {order.size === 'gross' ? 'Groß' : 'Klein'}
