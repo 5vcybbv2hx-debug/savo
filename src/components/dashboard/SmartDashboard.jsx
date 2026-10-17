@@ -63,6 +63,10 @@ function ClockCard({ currentEmployee }) {
     const queryClient = useQueryClient();
     const { active, clockIn, clockOut, isClockingIn, isClockingOut, elapsed, shiftSummary, setShiftSummary } = useClockInOut(currentEmployee);
 
+    // Doppeltipp zum Stempeln (Mobile-only via onTouchEnd) — 3s Eingabesperre nach Aktion
+    const lastTapRef = useRef(0);
+    const lockUntilRef = useRef(0);
+
     if (!currentEmployee) return null;
 
     const isOnBreak = active?.status === 'on_break';
@@ -88,9 +92,6 @@ function ClockCard({ currentEmployee }) {
         queryClient.invalidateQueries({ queryKey: ['clock-entries'] });
     };
 
-    // Doppeltipp zum Stempeln (Mobile-only via onTouchEnd) — 3s Eingabesperre nach Aktion
-    const lastTapRef = useRef(0);
-    const lockUntilRef = useRef(0);
     const handleCardDoubleTap = () => {
         const now = Date.now();
         if (now < lockUntilRef.current) return;       // Sperre aktiv
