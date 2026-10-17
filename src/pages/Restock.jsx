@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { cn } from "@/lib/utils";
 import BarcodeScanner from '../components/restock/BarcodeScanner';
 import SwipeRow from '@/components/ui/SwipeRow';
+import { haptics } from '@/components/utils/haptics';
 
 // ── Inline Toast ──────────────────────────────────────────────────────────────
 function Toast({ message, type = 'error', onDismiss }) {
@@ -251,6 +252,7 @@ export default function Restock() {
 
     const toggleComplete = async (item) => {
         const nowCompleted = !item.is_completed;
+        if (nowCompleted) haptics.light();
         const effectiveQty = item.quantity_from_storage != null
             ? parseFloat(item.quantity_from_storage)
             : (item.needed_quantity != null ? parseFloat(item.needed_quantity) : parseFloat(item.quantity) || 0);

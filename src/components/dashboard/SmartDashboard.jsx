@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -36,6 +36,7 @@ import { calcTotalBreakMinutes, calcLegalBreak } from '@/lib/timeTrackingHelpers
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useClockInOut } from '@/hooks/useClockInOut';
 import { STALE } from '@/lib/queryUtils';
+import { haptics } from '@/components/utils/haptics';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -87,16 +88,34 @@ function ClockCard({ currentEmployee }) {
         queryClient.invalidateQueries({ queryKey: ['clock-entries'] });
     };
 
+    // Doppeltipp zum Stempeln (Mobile-only via onTouchEnd) — 3s Eingabesperre nach Aktion
+    const lastTapRef = useRef(0);
+    const lockUntilRef = useRef(0);
+    const handleCardDoubleTap = () => {
+        const now = Date.now();
+        if (now < lockUntilRef.current) return;       // Sperre aktiv
+        if (isClockingIn || isClockingOut) return;     // Mutation läuft
+        if (isOnBreak) return;                          // Pause → kein Stempeln per Doppeltipp
+        const sinceLast = now - lastTapRef.current;
+        lastTapRef.current = now;
+        if (sinceLast > 0 && sinceLast < 300) {
+            if (active) clockOut(active.id);
+            else clockIn();
+            lockUntilRef.current = now + 3000;
+            lastTapRef.current = 0;
+        }
+    };
+
     const completedBreaks = (active?.breaks || []).filter(b => b && b.start && b.end);
     const totalBreakMin = calcTotalBreakMinutes(active?.breaks);
 
     return (
         <>
         <Card className={cn(
-            'border transition-colors',
+            'border transition-colors select-none',
             isOnBreak ? 'border-amber-500/40 bg-amber-500/5' : active ? 'border-green-500/40 bg-green-500/5' : 'border-border bg-card'
         )}>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-4 space-y-3" onTouchEnd={handleCardDoubleTap}>
                 <div className="flex items-center gap-4">
                     <div className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-sm"
                         style={{ backgroundColor: currentEmployee.color || '#64748b' }}>
@@ -124,22 +143,23 @@ function ClockCard({ currentEmployee }) {
                             </>
                         )}
                     </div>
-                    {/* Buttons */}
+                    {/* Buttons — stopPropagation verhindert Doppel-Tipp auf Karten-Ebene */}
+                    <div className="shrink-0" onTouchEnd={e => e.stopPropagation()}>
                     {!active ? (
                         <Button size="sm"
                             onClick={() => clockIn()}
                             disabled={isClockingIn}
-                            className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5 shrink-0">
+                            className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5">
                             <LogIn className="w-4 h-4" />Ein
                         </Button>
                     ) : isOnBreak ? (
                         <Button size="sm"
                             onClick={handleEndBreak}
-                            className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5 shrink-0">
+                            className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5">
                             <Play className="w-4 h-4" />Beenden
                         </Button>
                     ) : (
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex gap-2">
                             <Button size="sm" variant="outline"
                                 onClick={handleStartBreak}
                                 className="h-10 px-3 border-amber-500/50 text-amber-500 hover:bg-amber-500/10 gap-1.5">
@@ -153,7 +173,13 @@ function ClockCard({ currentEmployee }) {
                             </Button>
                         </div>
                     )}
+                    </div>
                 </div>
+
+                {/* Dezenter Hinweis: Doppeltipp zum Stempeln */}
+                <p className="text-center text-[10px] text-muted-foreground/50 pt-1">
+                    Doppeltipp auf die Karte zum Stempeln
+                </p>
 
                 {/* Pause-Verlauf */}
                 {completedBreaks.length > 0 && (

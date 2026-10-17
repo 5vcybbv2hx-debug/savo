@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { queueMutation } from '@/components/utils/offlineSync';
 import { isActiveEntry, formatDuration, calcWorkMinutes } from '@/lib/nightUtils';
 import { calcTotalBreakMinutes, calcLegalBreak } from '@/lib/timeTrackingHelpers';
+import { haptics } from '@/components/utils/haptics';
 
 export function useClockInOut(currentEmployee) {
     const queryClient = useQueryClient();
@@ -62,7 +63,8 @@ export function useClockInOut(currentEmployee) {
             }
         },
         onSuccess: (result) => {
-            if (!result || result.skipped) return;
+            if (!result || result.skipped) { haptics.error(); return; }
+            haptics.success();
             if (result.offline) {
                 queryClient.setQueryData(['clock-entries', currentEmployee?.id], (old = []) => [...old, result.entry]);
                 toast.success('Eingestempelt (offline) ⚡ — wird synchronisiert sobald wieder online');
@@ -70,6 +72,7 @@ export function useClockInOut(currentEmployee) {
                 queryClient.invalidateQueries({ queryKey: ['clock-entries'] });
             }
         },
+        onError: () => { haptics.error(); toast.error('Einstempeln fehlgeschlagen'); },
     });
 
     const clockOutMutation = useMutation({
@@ -148,7 +151,9 @@ export function useClockInOut(currentEmployee) {
                 queryClient.invalidateQueries({ queryKey: ['time-entries-dashboard'] });
             }
             setShiftSummary(summary);
+            haptics.success();
         },
+        onError: () => { haptics.error(); toast.error('Ausstempeln fehlgeschlagen'); },
     });
 
     return {

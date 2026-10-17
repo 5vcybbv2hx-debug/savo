@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';
@@ -28,6 +28,8 @@ import PinVerification from '@/components/terminal/PinVerification';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { getUserDisplayName } from '@/lib/userDisplayName';
 import { toast } from 'sonner';
+import { useShake } from '@/hooks/useShake';
+import { haptics } from '@/components/utils/haptics';
 
 export default function Cleaning() {
     const queryClient = useQueryClient();
@@ -156,18 +158,42 @@ export default function Cleaning() {
         }
     });
 
+    // Shake-to-Undo: letzter abgehakter Putzauftrag (max 1 Eintrag)
+    const lastUndoRef = useRef(null);
+    const undoLast = useCallback(() => {
+        const entry = lastUndoRef.current;
+        if (!entry) return;
+        updateMutation.mutate({ id: entry.id, data: entry.prevData });
+        lastUndoRef.current = null;
+        toast.success('Rückgängig gemacht');
+        haptics.medium();
+    }, [updateMutation]);
+    useShake(undoLast);
+
     const handleComplete = (task) => {
         if (permissions.isTerminal && !task.is_completed) {
             setSelectedTask(task);
             setPinModalOpen(true);
         } else {
             const displayName = getUserDisplayName({ employeeName: permissions.employeeName, user });
+            const willComplete = !task.is_completed;
+            if (willComplete) {
+                haptics.light();
+                lastUndoRef.current = {
+                    id: task.id,
+                    prevData: {
+                        is_completed: task.is_completed,
+                        completed_by: task.completed_by || null,
+                        completed_at: task.completed_at || null,
+                    },
+                };
+            }
             updateMutation.mutate({
                 id: task.id,
                 data: {
-                    is_completed: !task.is_completed,
-                    completed_by: task.is_completed ? null : displayName,
-                    completed_at: task.is_completed ? null : new Date().toISOString()
+                    is_completed: willComplete,
+                    completed_by: willComplete ? displayName : null,
+                    completed_at: willComplete ? new Date().toISOString() : null
                 }
             });
         }
@@ -192,7 +218,7 @@ export default function Cleaning() {
 
     const handlePinVerified = async (pin) => {
         const employee = employees.find(e => e.pin === pin);
-        if (!employee) { toast.error('Falsche PIN — bitte nochmal versuchen'); return; }
+        if (!employee) { haptics.error(); toast.error('Falsche PIN — bitte nochmal versuchen'); return; }
         const displayName = employee.name.split(' ').reverse().join(', ');
         await updateMutation.mutateAsync({
             id: selectedTask.id,
@@ -380,9 +406,9 @@ export default function Cleaning() {
                                 {group.open.map(task => (
                                     <SwipeRow
                                         key={task.id}
-                                        onSwipe={() => handleComplete(task)}
-                                        revealColor="bg-emerald-600"
-                                        revealIcon={Check}
+                                        onSwipeRight={() => handleComplete(task)}
+                                        revealColorRight="bg-emerald-600"
+                                        revealIconRight={Check}
                                         disabled={permissions.isTerminal}
                                         contentClassName="rounded-xl"
                                     >

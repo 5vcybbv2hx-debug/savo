@@ -7,6 +7,7 @@ import { Inbox, Minus, Plus, Square, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sendPushNotification } from '@/lib/pushService';
 import { transferKellerToTheke, reduceCurrentStock } from '@/lib/stockSync';
+import { haptics } from '@/components/utils/haptics';
 
 /**
  * Keller-Entnahme — reine Extraktion aus Warehouse.jsx.
@@ -199,12 +200,12 @@ export default function KellerTab() {
 
                                     {/* Erledigt-Button — automatisch "Zu wenig" wenn Menge < Bedarf */}
                                     <button
-                                        onClick={() => completeArticleMutation.mutate({
+                                        onClick={() => { haptics.light(); completeArticleMutation.mutate({
                                             itemsToComplete: group.items,
                                             actualQty: qty,
                                             totalNeeded: group.total_needed,
                                             articleName: group.article_name,
-                                        })}
+                                        }); }}
                                         className={cn(
                                             'ml-auto w-12 h-10 flex items-center justify-center rounded-lg border-2 transition-all active:scale-95 shrink-0',
                                             missing > 0

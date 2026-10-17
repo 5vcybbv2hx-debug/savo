@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import { format, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Plus, Users, Filter, X, Zap, CalendarDays } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { Plus, Users, Filter, X, Zap, CalendarDays, Edit2, ArrowLeftRight, Trash2, Info } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
+import { useLongPress } from '@/hooks/useLongPress';
+import SheetMenu from '@/components/ui/SheetMenu';
 import TeamMonthView from '@/components/calendar/TeamMonthView';
 import WeekContextBar from '@/components/calendar/WeekContextBar';
 import CalendarMoreMenu from '@/components/calendar/CalendarMoreMenu';
@@ -44,6 +47,12 @@ export default function Calendar() {
     const [mobileWeekStart, setMobileWeekStart] = useState(
         () => startOfWeek(new Date(), { weekStartsOn: 1 })
     );
+    const navigate = useNavigate();
+
+    // Langdruck-Kontextmenü für Schicht-Einträge (Desktop-Liste)
+    const [contextShift, setContextShift] = useState(null);
+    const contextShiftRef = useRef(null);
+    const longPressHandlers = useLongPress(() => setContextShift(contextShiftRef.current));
 
     // Woche/Monat-View — Monat nur für Rollen mit canViewTeamCalendar
     const [searchParams, setSearchParams] = useSearchParams();
@@ -593,7 +602,10 @@ export default function Calendar() {
                                     return (
                                         <div
                                             key={shift.id}
-                                            onClick={() => permissions.canEditShifts && handleSelectShift(shift)}
+                                            onTouchStart={(e) => { contextShiftRef.current = shift; longPressHandlers.onTouchStart(e); }}
+                                            onTouchMove={longPressHandlers.onTouchMove}
+                                            onTouchEnd={longPressHandlers.onTouchEnd}
+                                            onClick={() => { if (longPressHandlers.didFire()) return; permissions.canEditShifts && handleSelectShift(shift); }}
                                             className={`flex items-center gap-3 p-3 rounded-lg bg-muted transition-colors border border-border ${permissions.canEditShifts ? 'cursor-pointer hover:bg-accent hover:border-amber-600' : 'cursor-default'}`}
                                         >
                                             <div
@@ -638,6 +650,17 @@ export default function Calendar() {
 
                 {adminModals}
                 {shiftModal}
+                <SheetMenu
+                    open={!!contextShift}
+                    onOpenChange={(o) => !o && setContextShift(null)}
+                    title={contextShift ? `${contextShift.employee_name} · ${contextShift.start_time}–${contextShift.end_time}` : ''}
+                    items={contextShift ? [
+                        { icon: Edit2, label: 'Bearbeiten', onClick: () => handleSelectShift(contextShift) },
+                        { icon: ArrowLeftRight, label: 'Tauschen', onClick: () => navigate(createPageUrl('MyShifts')) },
+                        { icon: Info, label: 'Details', onClick: () => handleSelectShift(contextShift) },
+                        { icon: Trash2, label: 'Löschen', variant: 'destructive', onClick: () => handleDelete(contextShift.id) },
+                    ] : []}
+                />
             </div>
         </div>
     );

@@ -9,7 +9,7 @@
  *  - Urlaubs-/Abwesenheits-Indikator pro Karte
  *  - Ehemalige bleibt aufklappbar
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -32,12 +32,14 @@ import { cn } from '@/lib/utils';
 import {
     Plus, Search, Phone, MessageCircle, Archive,
     ChevronRight, Users, AlertCircle, X, MoreHorizontal,
-    UserCheck, Palmtree, Clock
+    UserCheck, Palmtree, Clock, Edit2, Info
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createNotification } from '@/utils/createNotification';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useLongPress } from '@/hooks/useLongPress';
+import SheetMenu from '@/components/ui/SheetMenu';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const ROLE_COLORS = {
@@ -73,6 +75,10 @@ export default function Employees() {
     const [showInactive, setShowInactive] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [inviting,     setInviting]     = useState(null);
+    // Langdruck-Kontextmenü für Mitarbeiter-Karten
+    const [contextEmp, setContextEmp] = useState(null);
+    const contextEmpRef = useRef(null);
+    const longPressHandlers = useLongPress(() => setContextEmp(contextEmpRef.current));
 
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: employees = [], isLoading } = useQuery({
@@ -325,7 +331,10 @@ export default function Employees() {
 
                             return (
                                 <div key={emp.id}
-                                    onClick={() => navigate(`/EmployeeProfile/${emp.id}`)}
+                                    onTouchStart={(e) => { contextEmpRef.current = emp; longPressHandlers.onTouchStart(e); }}
+                                    onTouchMove={longPressHandlers.onTouchMove}
+                                    onTouchEnd={longPressHandlers.onTouchEnd}
+                                    onClick={() => { if (longPressHandlers.didFire()) return; navigate(`/EmployeeProfile/${emp.id}`); }}
                                     className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-border/50 bg-card hover:border-border cursor-pointer transition-all group min-h-[64px]">
 
                                     {/* Avatar */}
