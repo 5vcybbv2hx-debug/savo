@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { sendPushNotification } from '@/lib/pushService';
 import { transferKellerToTheke, reduceCurrentStock } from '@/lib/stockSync';
 import KellerTab from '@/components/storage/KellerTab';
+import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
 
 function StatBadge({ count, variant = 'default' }) {
     if (!count) return null;
@@ -69,6 +70,14 @@ export default function Warehouse() {
     useEffect(() => {
         if (searchParams.get('tab') === 'keller') setActiveTab('keller');
     }, [searchParams]);
+
+    // Wisch-Navigation zwischen Tabs (nur Mobile, nur wenn Keller-Tab sichtbar)
+    const canSwipe = permissions.canViewRestock;
+    const swipeHandlers = useSwipeNavigation({
+        onLeft: () => { if (canSwipe && activeTab === 'bereiche') setActiveTab('keller'); },
+        onRight: () => { if (activeTab === 'keller') setActiveTab('bereiche'); },
+        enabled: canSwipe,
+    });
 
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -130,7 +139,7 @@ export default function Warehouse() {
     const openRestockCount = openRestockItems.length;
 
     return (
-        <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8">
+        <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8" {...swipeHandlers}>
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-xl font-bold text-foreground">Waren & Lager</h1>

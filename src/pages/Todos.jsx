@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
@@ -8,7 +8,7 @@ import { useErrorHandler } from '@/components/error/ErrorHandler';
 import {
     Plus, CheckSquare, Tag, Search, X, ListChecks, Wrench,
     Trash2, Archive, CheckCheck, Square, FolderInput, ChevronDown, ChevronRight,
-    Calendar, User2, CalendarDays, Send, Check
+    Calendar, User2, CalendarDays, Send, Check, Edit2
 } from 'lucide-react';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { toast } from 'sonner';
@@ -28,6 +28,8 @@ import { cn } from '@/lib/utils';
 import { getUserDisplayName } from '@/lib/userDisplayName';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import SwipeRow from '@/components/ui/SwipeRow';
+import { useShake } from '@/hooks/useShake';
+import { haptics } from '@/components/utils/haptics';
 
 const PRIORITY_ORDER = { dringend: 0, hoch: 1, mittel: 2, niedrig: 3 };
 
@@ -159,11 +161,33 @@ export default function Todos() {
     const handleQuickUpdate = (todo, changes) =>
         updateMutation.mutate({ id: todo.id, data: changes });
 
+    // Shake-to-Undo: letzter abgeschlossener Todo (max 1 Eintrag)
+    const lastUndoRef = useRef(null);
+    const undoLast = useCallback(() => {
+        const entry = lastUndoRef.current;
+        if (!entry) return;
+        updateMutation.mutate({ id: entry.id, data: entry.prevData });
+        lastUndoRef.current = null;
+        toast.success('Rückgängig gemacht');
+        haptics.medium();
+    }, [updateMutation]);
+    useShake(undoLast, { enabled: !selectMode });
+
     const handleStatusChange = (todo, newStatus) => {
         const updates = { status: newStatus };
         if (newStatus === 'erledigt') {
             updates.completed_by = getUserDisplayName({ employeeName: permissions.employeeName, user });
             updates.completed_at = new Date().toISOString();
+            haptics.light();
+            // Undo-Eintrag: vorherigen Status wiederherstellen
+            lastUndoRef.current = {
+                id: todo.id,
+                prevData: {
+                    status: todo.status,
+                    completed_by: todo.completed_by || null,
+                    completed_at: todo.completed_at || null,
+                },
+            };
         }
         updateMutation.mutate({ id: todo.id, data: updates });
     };
@@ -831,13 +855,13 @@ export default function Todos() {
                                                     )}
                                                     <SwipeRow
                                                         className="flex-1 min-w-0"
-                                                        onSwipe={() => handleStatusChange(todo, 'erledigt')}
-                                                        onSwipeAlt={() => deleteMutation.mutate(todo.id)}
-                                                        revealColor="bg-emerald-600"
-                                                        revealIcon={Check}
-                                                        revealColorAlt="bg-destructive"
-                                                        revealIconAlt={Trash2}
-                                                        disabled={selectMode || todo.status === 'erledigt'}
+                                                        onSwipeRight={todo.status !== 'erledigt' ? () => handleStatusChange(todo, 'erledigt') : undefined}
+                                                        onSwipe={() => handleEdit(todo)}
+                                                        revealColorRight="bg-emerald-600"
+                                                        revealIconRight={Check}
+                                                        revealColor="bg-blue-600"
+                                                        revealIcon={Edit2}
+                                                        disabled={selectMode}
                                                     >
                                                         <TodoCard
                                                             todo={todo}
