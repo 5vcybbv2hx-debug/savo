@@ -53,21 +53,22 @@ function Toast({ message, type = 'error', onDismiss }) {
 }
 
 // ── Confirm Dialog ────────────────────────────────────────────────────────────
-function ConfirmDialog({ open, title, description, confirmLabel = 'Löschen', onConfirm, onCancel, danger = true }) {
+function ConfirmDialog({ open, title, description, confirmLabel = 'Löschen', onConfirm, onCancel, danger = true, processing = false }) {
     return (
-        <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
+        <Dialog open={open} onOpenChange={(v) => !v && !processing && onCancel()}>
             <DialogContent className="sm:max-w-sm rounded-2xl">
                 <DialogHeader>
                     <DialogTitle className="text-foreground">{title}</DialogTitle>
                     {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
                 </DialogHeader>
                 <DialogFooter className="flex gap-2 mt-2">
-                    <Button variant="outline" onClick={onCancel} className="flex-1">Abbrechen</Button>
+                    <Button variant="outline" onClick={onCancel} disabled={processing} className="flex-1">Abbrechen</Button>
                     <Button
                         onClick={onConfirm}
+                        disabled={processing}
                         className={cn('flex-1', danger ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-primary hover:bg-primary/90 text-primary-foreground')}
                     >
-                        {confirmLabel}
+                        {processing ? 'Wird verarbeitet…' : confirmLabel}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -97,6 +98,7 @@ export default function Restock() {
     const [qtyModalOpen, setQtyModalOpen]         = useState(false);
     const [toast, setToast]                       = useState(null);
     const [confirmDialog, setConfirmDialog]       = useState(null);
+    const [isProcessing, setIsProcessing]         = useState(false);
     const [orderNudge, setOrderNudge]             = useState({});
     const [scanOpen, setScanOpen]                 = useState(true); // initial offen; wird je nach offenen Items justiert
 
@@ -414,21 +416,63 @@ export default function Restock() {
             confirmLabel: 'Bestellen & erledigen',
             danger: false,
             onConfirm: async () => {
+                setIsProcessing(true);
                 try {
                     // 1. Bestellen (inkl. Duplikat-Check)
                     const { added, skipped, rounded } = await addAllCompletedToOrder();
-                    // 2. Löschen — erst nach erfolgreichem Bestellen
-                    for (const item of completedItems) {
-                        try { await deleteMutation.mutateAsync(item.id); } catch {}
+
+                    // 2. Optimistic: IDs sofort aus dem Cache nehmen, damit die Liste
+                    //    beim Schließen des Dialogs leer ist (kein Flackern alter Abgehakte).
+                    const completedIds = completedItems.map(i => i.id);
+                    const completedSet = new Set(completedIds);
+                    queryClient.setQueryData(['restock-items'], (old) =>
+                        (old || []).filter(i => !completedSet.has(i.id))
+                    );
+
+                    // 3. Löschen in Batches (10 parallel, 150ms Pause zwischen Batches)
+                    //    Kein deleteMutation in Schleife → keine Einzel-Toasts bei Fehlern.
+                    let fulfilled = 0, rejected = 0;
+                    const BATCH_SIZE = 10;
+                    if (!navigator.onLine) {
+                        for (const id of completedIds) {
+                            await queueMutation({ entityName: 'RestockItem', type: 'delete', id });
+                            fulfilled++;
+                        }
+                    } else {
+                        for (let i = 0; i < completedIds.length; i += BATCH_SIZE) {
+                            const batch = completedIds.slice(i, i + BATCH_SIZE);
+                            const results = await Promise.allSettled(
+                                batch.map(id => base44.entities.RestockItem.delete(id))
+                            );
+                            for (const r of results) {
+                                if (r.status === 'fulfilled') fulfilled++;
+                                else rejected++;
+                            }
+                            if (i + BATCH_SIZE < completedIds.length) {
+                                await new Promise(r => setTimeout(r, 150));
+                            }
+                        }
                     }
+
+                    // 4. Server-Sync
                     queryClient.invalidateQueries({ queryKey: ['restock-items'] });
                     queryClient.invalidateQueries({ queryKey: ['restock-open'] });
                     setConfirmDialog(null);
+                    haptics.success();
+
                     const skipNote = skipped > 0 ? ` · ${skipped} bereits in Bestellung` : '';
                     const roundNote = rounded > 0 ? ` · ${rounded}× auf volles Gebinde aufgerundet` : '';
-                    showToast(`${added} Artikel bestellt, Liste bereinigt${skipNote}${roundNote}`, 'success');
+                    if (rejected === 0) {
+                        showToast(`${added} Artikel bestellt, Liste bereinigt${skipNote}${roundNote}`, 'success');
+                    } else {
+                        // Teilfehler: nicht erneut bestellen (Duplikat-Check in addAllCompletedToOrder);
+                        // beim erneuten Tipp werden nur noch die verbliebenen erledigten Items gelöscht.
+                        showToast(`${added} bestellt, ${rejected} konnten nicht entfernt werden. Bitte nochmal tippen.`, 'error');
+                    }
                 } catch (e) {
                     showToast('Fehler beim Bestellen & Erledigen', 'error');
+                } finally {
+                    setIsProcessing(false);
                 }
             },
         });
@@ -772,6 +816,9 @@ export default function Restock() {
                 open={!!confirmDialog}
                 title={confirmDialog?.title || ''}
                 description={confirmDialog?.description}
+                confirmLabel={confirmDialog?.confirmLabel}
+                danger={confirmDialog?.danger}
+                processing={isProcessing}
                 onConfirm={confirmDialog?.onConfirm}
                 onCancel={() => setConfirmDialog(null)}
             />
