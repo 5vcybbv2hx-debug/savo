@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { haptics } from '@/components/utils/haptics';
+import { toast } from 'sonner';
 import { ArrowLeft, LogOut, Search, Settings, PanelLeftClose, PanelLeftOpen, Pin, PinOff } from 'lucide-react';
 import { mainNavigation, additionalPages, allPages } from '@/components/navigation/navigationConfig';
 import { sidebarPages } from '@/components/navigation/sidebarConfig';
@@ -71,19 +72,28 @@ export default function Layout({ children, currentPageName }) {
     const [pinnedPages, setPinnedPages] = React.useState(() => {
         try { return JSON.parse(localStorage.getItem(PINNED_KEY) || 'null'); } catch { return null; }
     });
-    const isPinned = (page) => !!pinnedPages && pinnedPages.includes(page);
-    const canPin = !!pinnedPages ? pinnedPages.length < MAX_PINS : false;
+    const isPinned = (page) => {
+        if (pinnedPages) return pinnedPages.includes(page);
+        // Auto-Modus: aktuell sichtbare Tabs gelten als "angepinnt"
+        return currentNavItems.some(i => i.page === page);
+    };
     const togglePin = (page) => {
         setPinnedPages(prev => {
-            const current = prev || [];
+            // Auto-Modus (null): aktuelle effektive Tabs als Basis übernehmen,
+            // statt mit leerer Liste zu starten und alle Defaults zu verwerfen.
+            const base = prev ?? currentNavItems.map(i => i.page);
             let next;
-            if (current.includes(page)) {
-                next = current.filter(p => p !== page);
+            if (base.includes(page)) {
+                next = base.filter(p => p !== page);
                 // Wenn alle entfernt → null (zurück zu Auto)
                 if (next.length === 0) next = null;
             } else {
-                if (current.length >= MAX_PINS) return prev; // voll
-                next = [...current, page];
+                if (base.length >= MAX_PINS) {
+                    toast.error('Navigation voll (max. 4). Erst einen Pin entfernen.');
+                    haptics.error();
+                    return prev;
+                }
+                next = [...base, page];
             }
             try { localStorage.setItem(PINNED_KEY, JSON.stringify(next)); } catch {}
             return next;
@@ -258,10 +268,12 @@ export default function Layout({ children, currentPageName }) {
         return defaultPages.map(p => allNavPages.find(i => i.page === p)).filter(Boolean);
     })();
 
-    // Hub-Liste für den Mehr-Drawer — spiegelt die Desktop-Sidebar; bereits angeheftete Tabs entfallen
-    const hubItems = sidebarPages.filter(p =>
-        permissions[p.permission] && !currentNavItems.some(n => n.page === p.page)
-    );
+    // canPin: abhängig von effektiver Tab-Liste (Pins oder Auto-Default)
+    const canPin = (pinnedPages ?? currentNavItems.map(i => i.page)).length < MAX_PINS;
+
+    // Hub-Liste für den Mehr-Drawer — alle berechtigten Seiten bleiben sichtbar;
+    // gepinnte werden nur markiert (Pin gefüllt, Titel in Primärfarbe).
+    const hubItems = sidebarPages.filter(p => permissions[p.permission]);
 
     const { navigateToTab, getActiveTab } = useTabNavigation(currentNavItems);
 
