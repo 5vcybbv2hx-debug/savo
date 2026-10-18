@@ -13,8 +13,48 @@ import UnavailabilityList from '@/components/availability/UnavailabilityList';
 import NotificationSettingsPage from '@/components/profile/NotificationSettings';
 import LegalTabContent from '@/components/legal/LegalTabContent';
 import SettingsTabContent from '@/components/settings/SettingsTabContent';
+import { getOneSignalStatus } from '@/lib/useOneSignal';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+
+// ── Push-Status Diagnosezeile (Settings-Tab) ────────────────────────────────
+function PushStatusLine() {
+    const [status, setStatus] = useState(() => getOneSignalStatus());
+
+    useEffect(() => {
+        const update = () => setStatus(getOneSignalStatus());
+        update();
+        const interval = setInterval(update, 3000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const dot = status.status === 'active' ? 'bg-green-500' : status.status === 'error' ? 'bg-red-500' : 'bg-muted-foreground/40';
+    const label = status.status === 'active' ? 'aktiv' : status.status === 'error' ? 'Fehler' : 'warte…';
+
+    return (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border text-xs text-muted-foreground">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
+            <span className="font-medium text-foreground">Push-Status:</span>
+            <span>{label}</span>
+            <span className="text-muted-foreground/60">·</span>
+            <span>Sub: {status.subscriptionId ? 'ja' : 'nein'}</span>
+            <span className="text-muted-foreground/60">·</span>
+            <span>Perm: {status.permission}</span>
+            {status.externalId && (
+                <>
+                    <span className="text-muted-foreground/60">·</span>
+                    <span className="truncate max-w-[120px]">ID: {String(status.externalId).slice(0, 8)}…</span>
+                </>
+            )}
+            {status.error && (
+                <>
+                    <span className="text-muted-foreground/60">·</span>
+                    <span className="text-red-400 truncate max-w-[160px]" title={status.error}>{status.error}</span>
+                </>
+            )}
+        </div>
+    );
+}
 
 export default function MyAreaPage() {
     const permissions = usePermissions();
@@ -145,6 +185,7 @@ export default function MyAreaPage() {
                     </TabsContent>
 
                     <TabsContent value="settings" className="space-y-0">
+                        <PushStatusLine />
                         <SettingsTabContent />
                     </TabsContent>
                 </Tabs>
