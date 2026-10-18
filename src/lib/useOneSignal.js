@@ -35,13 +35,21 @@ export function useOneSignal({ employeeId, isAuthenticated }) {
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window.OneSignalDeferred.push(async function (OneSignal) {
             try {
-                // 1) Init
-                await OneSignal.init({
-                    appId: ONESIGNAL_APP_ID,
-                    serviceWorkerPath: '/OneSignalSDKWorker.js',
-                    notifyButton: { enable: false },
-                    allowLocalhostAsSecureOrigin: true,
-                });
+                // 1) Init — idempotent: 'already initialized' ist OK (main.jsx initiiert bereits)
+                try {
+                    await OneSignal.init({
+                        appId: ONESIGNAL_APP_ID,
+                        serviceWorkerPath: '/OneSignalSDKWorker.js',
+                        notifyButton: { enable: false },
+                        allowLocalhostAsSecureOrigin: true,
+                    });
+                } catch (initErr) {
+                    const msg = String(initErr?.message || initErr || '');
+                    if (!/already initialized/i.test(msg)) {
+                        throw initErr;
+                    }
+                    // SDK läuft bereits → weitermachen
+                }
 
                 // 2) Subscription sicherstellen
                 const sub = OneSignal.User?.PushSubscription;
