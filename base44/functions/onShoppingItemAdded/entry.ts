@@ -25,11 +25,26 @@ async function pushToEmployees(employeeIds, title, message) {
 }
 
 Deno.serve(async (req) => {
+    let base44;
     try {
-        const base44 = createClientFromRequest(req);
-        const payload = await req.json();
+        base44 = createClientFromRequest(req);
+    } catch (authError) {
+        // Workflow-Kontext bringt evtl. keine Auth mit — klaren 401 liefern,
+        // damit der Run-Log die Ursache zeigt statt eines generischen 500.
+        console.error('[onShoppingItemAdded] Auth-Fehler:', authError?.message);
+        return Response.json(
+            { error: 'AUTH_REQUIRED', message: 'createClientFromRequest konnte keine Auth ermitteln — Aufruf muss authentifiziert sein.' },
+            { status: 401 }
+        );
+    }
 
-        const { data } = payload;
+    try {
+        // Robust gegen beide Aufruf-Shapes:
+        //   - Workflow-Aufruf:  { args: { data: {...} } }
+        //   - direkter Aufruf:  { data: {...} }  oder  { args: {...} }
+        const body = await req.json();
+        const data = body?.args?.data || body?.data || body?.args || {};
+
         const itemName = data?.item_name || 'Unbekannter Artikel';
         const category = data?.category || '';
         const quantity = data?.quantity || '';
@@ -54,8 +69,10 @@ Deno.serve(async (req) => {
             `${itemName}${quantityStr}${categoryStr}`
         );
 
+        // Keine ShoppingList-Creates hier — nur OneSignal-Push. Kein Loop-Risiko.
         return Response.json({ ok: true, notified: managerIds.length });
     } catch (error) {
+        console.error('[onShoppingItemAdded] Fehler:', error?.message);
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
