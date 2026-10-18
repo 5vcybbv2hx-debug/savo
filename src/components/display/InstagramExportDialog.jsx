@@ -233,7 +233,8 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
 
   const fmt = FORMATS.find(f => f.value === format);
   const accentHex = slide ? (ACCENT_HEX[slide.accent_color] || '#f59e0b') : '#f59e0b';
-  const recorder = useSlideRecorder(iframeRef, 10);
+  const recorder = useSlideRecorder({ iframeRef, duration: 10 });
+  const [showPreHint, setShowPreHint] = useState(false);
 
   // CompanyInfo + Keyframes
   useEffect(() => {
@@ -384,14 +385,35 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
         ) : (
           /* ── VIDEO MODUS ── */
           <div className="space-y-4">
-            {!recorder.isSupported() ? (
+            {/* Methoden-Indikator */}
+            <div className="flex items-center gap-2 text-xs">
+              {recorder.availableMethod === 'hd' ? (
+                <span className="flex items-center gap-1.5 text-green-500"><span className="w-2 h-2 rounded-full bg-green-500" /> HD-Aufnahme (30 fps)</span>
+              ) : recorder.availableMethod === 'fallback' ? (
+                <span className="flex items-center gap-1.5 text-amber-500"><span className="w-2 h-2 rounded-full bg-amber-500" /> Vereinfachte Aufnahme (niedrigere Bildrate)</span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-muted-foreground"><span className="w-2 h-2 rounded-full bg-muted-foreground" /> Nicht unterstützt</span>
+              )}
+            </div>
+
+            {/* Vorab-Hinweis für HD-Aufnahme */}
+            {showPreHint && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+                <p className="text-sm text-foreground">Gleich fragt der Browser nach der Freigabe: bitte diesen Tab wählen.</p>
+                <div className="flex gap-2">
+                  <Button onClick={() => { setShowPreHint(false); recorder.startRecording(); }} size="sm" className="flex-1">Verstanden, Aufnahme starten</Button>
+                  <Button onClick={() => setShowPreHint(false)} variant="outline" size="sm">Abbrechen</Button>
+                </div>
+              </div>
+            )}
+
+            {!showPreHint && recorder.availableMethod === 'none' ? (
               /* Browser nicht unterstützt */
               <div className="space-y-3">
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex gap-2">
                   <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
-                    Videoaufnahme geht am besten am Computer (Chrome/Edge) oder mit Android.
-                    Alternativ das Bild herunterladen.
+                    Videoaufnahme geht am besten am Computer (Chrome/Edge). Alternativ das Bild herunterladen.
                   </p>
                 </div>
                 <Button onClick={handleDownloadOverlay} disabled={exporting} variant="outline" className="w-full gap-2">
@@ -399,21 +421,26 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                   Bild herunterladen (Reel-Format)
                 </Button>
               </div>
-            ) : recorder.recording ? (
+            ) : !showPreHint && recorder.recording ? (
               /* Aufnahme läuft */
               <div className="space-y-3">
-                <div ref={videoWrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-                  <div style={{ width: 1080 * videoScale, height: 1920 * videoScale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 1920, transform: `scale(${videoScale})`, transformOrigin: 'top left' }}>
-                      <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} />
+                {recorder.activeMethod === 'fallback' && (
+                  <div ref={videoWrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+                    <div style={{ width: 1080 * videoScale, height: 1920 * videoScale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
+                      <div style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 1920, transform: `scale(${videoScale})`, transformOrigin: 'top left' }}>
+                        <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+                {recorder.activeMethod === 'hd' && (
+                  <p className="text-xs text-muted-foreground text-center py-8">Aufnahme läuft — der Tab-Inhalt wird aufgezeichnet.</p>
+                )}
                 {/* Fortschrittsbalken */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Aufnahme läuft…</span>
-                    <span className="font-medium text-foreground">{Math.round(recorder.progress * 10)}s / 10s</span>
+                    <span className="font-medium text-foreground">{Math.round(recorder.progress * (recorder.activeMethod === 'hd' ? recorder.hdDuration : recorder.fallbackDuration))}s / {recorder.activeMethod === 'hd' ? recorder.hdDuration : recorder.fallbackDuration}s</span>
                   </div>
                   <div className="h-2 rounded-full bg-secondary overflow-hidden">
                     <div className="h-full bg-primary transition-all duration-100" style={{ width: `${recorder.progress * 100}%` }} />
@@ -423,7 +450,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                   <X className="w-4 h-4" /> Abbrechen
                 </Button>
               </div>
-            ) : recorder.videoUrl ? (
+            ) : !showPreHint && recorder.videoUrl ? (
               /* Video fertig */
               <div className="space-y-3">
                 <div className="rounded-xl overflow-hidden border border-border bg-black flex justify-center" style={{ maxHeight: 350 }}>
@@ -439,7 +466,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                 </div>
                 <p className="text-[10px] text-muted-foreground text-center">Format: .{videoExt}</p>
               </div>
-            ) : (
+            ) : !showPreHint ? (
               /* Bereit zur Aufnahme */
               <div className="space-y-3">
                 <div ref={videoWrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
@@ -449,13 +476,17 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                     </div>
                   </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground text-center">TV-Slide-Vorschau · 10 Sekunden Aufnahme</p>
-                <Button onClick={recorder.startRecording} className="w-full gap-2">
+                <p className="text-[10px] text-muted-foreground text-center">TV-Slide-Vorschau · {recorder.availableMethod === 'hd' ? recorder.hdDuration : recorder.fallbackDuration} Sekunden Aufnahme</p>
+                <Button onClick={() => { if (recorder.availableMethod === 'hd') setShowPreHint(true); else recorder.startRecording(); }} className="w-full gap-2">
                   <Film className="w-4 h-4" /> Video aus TV-Slide aufnehmen
                 </Button>
-                <p className="text-[10px] text-muted-foreground text-center">Nimmt 10 Sekunden auf · Alle Texte & Animationen 1:1 wie im TV</p>
+                <p className="text-[10px] text-muted-foreground text-center">
+                  {recorder.availableMethod === 'hd'
+                    ? 'Nimmt 10 Sekunden auf · Alle Texte & Animationen 1:1 wie im TV'
+                    : 'Nimmt 6 Sekunden auf · Vereinfachte Aufnahme mit niedrigerer Bildrate'}
+                </p>
               </div>
-            )}
+            ) : null}
 
             {/* KI-Atmosphäre (experimentell) — eingeklappt */}
             <div className="border-t border-border pt-3">
