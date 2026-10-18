@@ -153,13 +153,14 @@ function EventCard({ slide, fmt, accent, company, imageError, setImageError }) {
       )}
       {/* Preis */}
       {slide.price_info && <div style={{ fontSize: '1.4rem', color: accent, fontWeight: 800, flexShrink: 0, position: 'relative', zIndex: 1 }}>{slide.price_info}</div>}
-      {/* QR + CTA */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5%', marginTop: 'auto', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-        {slide.public_event && (<div style={{ textAlign: 'center' }}><div style={{ background: '#fff', padding: 6, borderRadius: 10, display: 'inline-block' }}><QRCodeImage size={110} /></div><div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>Mehr Infos</div></div>)}
-        {slide.cta_text && !slide.cta_text.startsWith('event:') && <div style={{ background: accent, color: '#fff', padding: '12px 32px', borderRadius: 12, fontWeight: 800, fontSize: '1.3rem', boxShadow: `0 0 24px ${accent}66` }}>{slide.cta_text}</div>}
-      </div>
+      {/* CTA */}
+      {slide.cta_text && !slide.cta_text.startsWith('event:') && (
+        <div style={{ flexShrink: 0, position: 'relative', zIndex: 1 }}>
+          <div style={{ background: accent, color: '#fff', padding: '12px 32px', borderRadius: 12, fontWeight: 800, fontSize: '1.3rem', boxShadow: `0 0 24px ${accent}66`, display: 'inline-block' }}>{slide.cta_text}</div>
+        </div>
+      )}
       {/* Footer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${accent}33`, paddingTop: '2%', flexShrink: 0, position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${accent}33`, paddingTop: '2%', marginTop: 'auto', flexShrink: 0, position: 'relative', zIndex: 1 }}>
         <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)' }}>@savo_loungeclub</span>
         <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)' }}>savo-lounge-club.de</span>
       </div>
