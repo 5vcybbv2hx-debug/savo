@@ -26,7 +26,7 @@ export default function ServiceWorkerRegistration() {
             // Service Worker Registration
             const registerServiceWorker = async () => {
                 try {
-                    const registration = await navigator.serviceWorker.register('/api/functions/sw', {
+                    const registration = await navigator.serviceWorker.register('/OneSignalSDKWorker.js', {
                         scope: '/'
                     });
                     console.log('[App] Service Worker registered:', registration);

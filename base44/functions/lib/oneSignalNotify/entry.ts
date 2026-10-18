@@ -6,7 +6,8 @@
 const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
 
 async function sendOneSignal(payload) {
-    const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY');
+    const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY_2');
+    if (!apiKey) throw new Error('OneSignal API-Key fehlt (ONESIGNAL_REST_API_KEY_2)');
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
         method: 'POST',
         headers: {
@@ -16,7 +17,7 @@ async function sendOneSignal(payload) {
         body: JSON.stringify({ app_id: ONESIGNAL_APP_ID, ...payload })
     });
     const data = await res.json();
-    if (!res.ok) console.error('[OneSignal] API error:', JSON.stringify(data));
+    if (!res.ok) throw new Error(`OneSignal API error: ${JSON.stringify(data)}`);
     return data;
 }
 

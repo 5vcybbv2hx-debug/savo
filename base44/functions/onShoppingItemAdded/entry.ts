@@ -3,8 +3,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
 
 async function pushToEmployees(employeeIds, title, message) {
-    if (!employeeIds || employeeIds.length === 0) return;
+    if (!employeeIds || employeeIds.length === 0) return null;
     const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY_2');
+    if (!apiKey) throw new Error('OneSignal API-Key fehlt (ONESIGNAL_REST_API_KEY_2)');
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
         method: 'POST',
         headers: {
@@ -20,7 +21,7 @@ async function pushToEmployees(employeeIds, title, message) {
         })
     });
     const data = await res.json();
-    if (!res.ok) console.error('[OneSignal] API error:', JSON.stringify(data));
+    if (!res.ok) throw new Error(`OneSignal API error: ${JSON.stringify(data)}`);
     return data;
 }
 
@@ -63,14 +64,14 @@ Deno.serve(async (req) => {
         const quantityStr = quantity ? ` • ${quantity}${unit ? ' ' + unit : ''}` : '';
         const categoryStr = category ? ` (${category})` : '';
 
-        await pushToEmployees(
+        const onesignalData = await pushToEmployees(
             managerIds,
             '🛒 Neuer Einkaufszettel-Eintrag',
             `${itemName}${quantityStr}${categoryStr}`
         );
 
         // Keine ShoppingList-Creates hier — nur OneSignal-Push. Kein Loop-Risiko.
-        return Response.json({ ok: true, notified: managerIds.length });
+        return Response.json({ ok: true, notified: managerIds.length, onesignal: onesignalData });
     } catch (error) {
         console.error('[onShoppingItemAdded] Fehler:', error?.message);
         return Response.json({ error: error.message }, { status: 500 });
