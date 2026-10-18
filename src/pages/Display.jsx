@@ -941,53 +941,59 @@ function SlideQR({ slideId }) {
     }, [slideId]);
     if (!qr) return null;
     return (
-        <div style={{ position: 'absolute', top: 'clamp(32px, 2.5vh, 64px)', right: 'clamp(32px, 2.5vw, 64px)', zIndex: 2, animation: 'fadeInScale 0.8s 1.5s both' }}>
-            <div style={{ background: '#fff', padding: 10, borderRadius: 14, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
-                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 112, height: 112, display: 'block' }} />
+        <div style={{ textAlign: 'center', animation: 'fadeInScale 0.8s 1.5s both' }}>
+            <div style={{ background: '#fff', padding: 8, borderRadius: 12, boxShadow: '0 10px 40px rgba(0,0,0,0.6)', display: 'inline-block' }}>
+                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 140, height: 140, display: 'block' }} />
             </div>
+            <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.6)', marginTop: 8, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Mehr Infos</div>
         </div>
     );
 }
 
 function SlideEvent({ slide, accent, theme }) {
   const titleLen = (slide.title || '').length;
-  const titleFont = titleLen > 16 ? 'clamp(4.08rem,7.44vw,6.48rem)' : titleLen > 11 ? 'clamp(4.92rem,9.84vw,8.04rem)' : 'clamp(6rem,13.2vw,10.8rem)';
+  const titleFont = titleLen > 18 ? 'clamp(2.4rem,4.6vw,4rem)' : titleLen > 12 ? 'clamp(3rem,6vw,5rem)' : titleLen > 8 ? 'clamp(3.5rem,7.5vw,6.5rem)' : 'clamp(4rem,9vw,8rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
   const de2 = hasEnd ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
   const ts = [slide.event_time, slide.event_end_time].filter(Boolean).join(' – ') + (slide.event_time ? ' Uhr' : '');
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '80px 120px', textAlign: 'center', gap: 32 }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: 'clamp(32px,6vh,80px) clamp(48px,7vw,120px)', textAlign: 'center', gap: 32 }}>
       <ThemeBackground theme={theme} accent={accent} />
       <SpotlightStreak color={accent.bg} />
       <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 1, animation: 'slideInUp 0.6s 0.1s both' }}>
         <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
       </div>
-      <div style={{ fontSize: titleFont, maxWidth: '100%', overflowWrap: 'break-word', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
+      <div style={{ fontSize: titleFont, maxWidth: '100%', padding: '0 4%', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', wordBreak: 'keep-all', overflowWrap: 'anywhere', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
       {slide.subtitle && <div style={{ fontSize: '2.7rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
-      {(ds || ts) && (
-        <div style={{ display: 'flex', gap: 80, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.5s both' }}>
+      {(ds || ts || slide.public_event) && (
+        <div style={{ display: 'flex', gap: 60, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.5s both', flexWrap: 'wrap' }}>
           {ds && (
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', maxWidth: '46vw' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Datum</div>
-              <div style={{ fontSize: 'clamp(3rem,5.5vw,4.5rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>
+              <div style={{ fontSize: 'clamp(2.2rem,4.2vw,3.6rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>
                 {ds}{de2 && <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.62em' }}> – {de2}</span>}
               </div>
             </div>
           )}
-          {ds && ts && <div style={{ width: 1, height: 120, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
+          {ds && ts && <div style={{ width: 1, height: 100, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
           {ts && (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Uhrzeit</div>
-              <div style={{ fontSize: 'clamp(3rem,5.5vw,4.5rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{ts}</div>
+              <div style={{ fontSize: 'clamp(2.2rem,4.2vw,3.6rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{ts}</div>
             </div>
+          )}
+          {slide.public_event && (
+            <>
+              {(ds || ts) && <div style={{ width: 1, height: 100, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
+              <SlideQR slideId={slide.id} />
+            </>
           )}
         </div>
       )}
       {slide.location && (
         <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '18px 40px', fontWeight: 600, fontSize: '1.9rem', color: '#fff', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.65s both' }}>📍 {slide.location}</div>
       )}
-      {slide.public_event && <SlideQR slideId={slide.id} />}
       {slide.cta_text && !slide.cta_text.startsWith('event:') && <div style={{ background: accent.bg, color: accent.text, padding: '24px 64px', borderRadius: 20, fontWeight: 800, fontSize: '2rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
     </div>
   );
