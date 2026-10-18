@@ -5,6 +5,7 @@ const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
 async function pushToEmployees(employeeIds, title, message) {
     if (!employeeIds || employeeIds.length === 0) return;
     const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY_2');
+    if (!apiKey) throw new Error('OneSignal API-Key fehlt (ONESIGNAL_REST_API_KEY_2)');
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${apiKey}` },
@@ -16,7 +17,9 @@ async function pushToEmployees(employeeIds, title, message) {
             contents: { en: message, de: message }
         })
     });
-    if (!res.ok) console.error('[OneSignal] pushToEmployees error:', await res.text());
+    const data = await res.json();
+    if (!res.ok) throw new Error(`OneSignal API error: ${JSON.stringify(data)}`);
+    return data;
 }
 
 Deno.serve(async (req) => {
