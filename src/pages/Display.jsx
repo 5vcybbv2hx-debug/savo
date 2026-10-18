@@ -835,7 +835,7 @@ function ProgressBar({ duration, color, resetKey }) {
 // ── Dot Navigation ─────────────────────────────────────────────────────────────
 function DotNav({ slides, currentIdx }) {
   return (
-    <div style={{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 20 }}>
+    <div style={{ position: 'absolute', bottom: 'clamp(16px, 2vh, 32px)', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 20 }}>
       {slides.map((s, i) => {
         const a = ACCENTS[s.accent_color] || ACCENTS.amber;
         return <div key={i} style={{ height: 6, width: i === currentIdx ? 28 : 6, borderRadius: 3, background: i === currentIdx ? a.bg : 'rgba(255,255,255,0.2)', transition: 'all 0.4s ease', boxShadow: i === currentIdx ? `0 0 10px ${a.bg}` : 'none' }} />;
@@ -933,7 +933,7 @@ function SlideQR({ slideId }) {
         let alive = true;
         import('qrcode').then((mod) => {
             const QR = mod.default || mod;
-            QR.toDataURL(`${window.location.origin}/Event/${slideId}`, {
+            QR.toDataURL('https://savo-lounge-club.de/events', {
                 width: 280, margin: 1, color: { dark: '#111827', light: '#ffffff' },
             }).then(d => { if (alive) setQr(d); }).catch(() => {});
         }).catch(() => {});
@@ -941,7 +941,7 @@ function SlideQR({ slideId }) {
     }, [slideId]);
     if (!qr) return null;
     return (
-        <div style={{ position: 'absolute', top: 64, right: 64, zIndex: 2, animation: 'fadeInScale 0.8s 1.5s both' }}>
+        <div style={{ position: 'absolute', top: 'clamp(32px, 2.5vh, 64px)', right: 'clamp(32px, 2.5vw, 64px)', zIndex: 2, animation: 'fadeInScale 0.8s 1.5s both' }}>
             <div style={{ background: '#fff', padding: 10, borderRadius: 14, boxShadow: '0 10px 40px rgba(0,0,0,0.6)' }}>
                 <img src={qr} alt="QR-Code: Event-Details" style={{ width: 112, height: 112, display: 'block' }} />
             </div>
@@ -1125,7 +1125,7 @@ function NextSlidePreview({ slide, visible }) {
   const a = ACCENTS[slide.accent_color] || ACCENTS.amber;
   return (
     <div style={{
-      position:'absolute',bottom:36,right:48,zIndex:25,
+      position:'absolute',bottom:'clamp(24px, 2.5vh, 48px)',right:'clamp(24px, 2.5vw, 48px)',zIndex:25,
       display:'flex',alignItems:'center',gap:12,
       background:'rgba(0,0,0,0.6)',backdropFilter:'blur(16px)',
       border:'1px solid rgba(255,255,255,0.12)',
@@ -1146,6 +1146,35 @@ function NextSlidePreview({ slide, visible }) {
 
 
 // ══════════════════════════════════════════════════════════════════════════════
+// TV SAFE-ZONE SETUP OVERLAY
+// ══════════════════════════════════════════════════════════════════════════════
+function SafeZoneSetup({ scale, onChange, onClose }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.78)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+         onClick={onClose} onPointerDown={e => e.stopPropagation()}>
+      <div style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '32px 40px', width: 'min(420px, 90vw)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}
+           onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()}>
+        <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff', marginBottom: 6 }}>TV-Safe-Zone</div>
+        <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>Bei abgeschnittenen Rändern kleiner stellen</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <input type="range" min="80" max="100" step="1" value={Math.round(scale * 100)}
+                 onChange={e => onChange(e.target.value / 100)}
+                 onPointerDown={e => e.stopPropagation()}
+                 style={{ flex: 1, accentColor: '#06b6d4', height: 6 }} />
+          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#06b6d4', minWidth: 56, textAlign: 'right' }}>{Math.round(scale * 100)}%</div>
+        </div>
+        <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={onClose}
+                  style={{ background: '#06b6d4', color: '#000', border: 'none', borderRadius: 10, padding: '10px 28px', fontSize: '1rem', fontWeight: 700, cursor: 'pointer' }}>
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // HAUPT-COMPONENT
 // ══════════════════════════════════════════════════════════════════════════════
 export default function Display() {
@@ -1156,6 +1185,19 @@ export default function Display() {
   const [showNextPreview, setShowNextPreview] = useState(false);
   const previewRef = useRef(null); // 'in' | 'show' | 'out'
   const timerRef = useRef(null);
+
+  // ── TV Safe-Zone (Overscan-Kompensation) ──────────────────────────────────
+  const [safeScale, setSafeScale] = useState(() => {
+    try { const v = parseFloat(localStorage.getItem('bm_tv_safe_scale')); return v && v >= 0.8 && v <= 1 ? v : 0.96; } catch { return 0.96; }
+  });
+  const [setupOpen, setSetupOpen] = useState(false);
+  const longPressRef = useRef(null);
+  const handlePointerDown = useCallback(() => { longPressRef.current = setTimeout(() => setSetupOpen(true), 2000); }, []);
+  const handlePointerUp = useCallback(() => { clearTimeout(longPressRef.current); }, []);
+  const handleScaleChange = useCallback((v) => {
+    setSafeScale(v);
+    try { localStorage.setItem('bm_tv_safe_scale', String(v)); } catch {}
+  }, []);
 
   useEffect(() => { injectKeyframes(); }, []);
 
@@ -1206,7 +1248,7 @@ export default function Display() {
   }, [slides.length]);
 
   useEffect(() => {
-    if (!slides.length || phase === 'out') return;
+    if (!slides.length || phase === 'out' || setupOpen) return;
     clearTimeout(timerRef.current);
     const slide = slides[currentIdx];
     const dur = (slide?.duration_seconds || TYPE_DURATION[slide?.slide_type] || 10) * 1000;
@@ -1216,7 +1258,7 @@ export default function Display() {
     }
     timerRef.current = setTimeout(goNext, dur);
     return () => { clearTimeout(timerRef.current); clearTimeout(previewRef.current); };
-  }, [currentIdx, slides, goNext, phase]);
+  }, [currentIdx, slides, goNext, phase, setupOpen]);
 
   // Loading
   if (isLoading) return <LoadingSplash />;
@@ -1233,14 +1275,18 @@ export default function Display() {
   const dur = slide.duration_seconds || TYPE_DURATION[slide.slide_type] || 10;
 
   return (
-    <div style={{ background: '#050508', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', fontFamily: '"Inter",system-ui,sans-serif', color: '#fff' }}>
+    <div style={{ background: '#050508', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', fontFamily: '"Inter",system-ui,sans-serif', color: '#fff' }}
+         onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onContextMenu={e => e.preventDefault()}>
 
-      {/* Ambient Glow unten */}
+      {/* Ambient Glow unten — bleibt Fullscreen, wird NICHT skaliert */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse 80% 55% at 50% 105%,${accent.glow} 0%,transparent 70%)`, transition: 'background 1.2s ease' }} />
+
+      {/* Safe-Zone Stage — skaliert gegen Overscan, transformOrigin center */}
+      <div style={{ position: 'absolute', inset: 0, transform: `scale(${safeScale})`, transformOrigin: 'center center', transition: 'transform 0.3s ease' }}>
 
       {/* Logo oben links */}
       {companyLogo && (
-        <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 30, padding: '24px 40px', display: 'flex', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 30, padding: 'clamp(16px, 2.5vh, 32px) clamp(24px, 2.5vw, 48px)', display: 'flex', alignItems: 'center' }}>
           <img
             src={companyLogo}
             alt="Logo"
@@ -1271,6 +1317,22 @@ export default function Display() {
       {/* Dots + Progress */}
       {slides.length > 1 && <DotNav slides={slides} currentIdx={currentIdx} />}
       <ProgressBar duration={dur} color={accent.bg} resetKey={currentIdx} />
+      </div>{/* /Safe-Zone Stage */}
+
+      {/* Zahnrad-Icon — versteckter Setup-Zugang (nicht skaliert) */}
+      <button onClick={() => setSetupOpen(true)} aria-label="TV-Safe-Zone Setup"
+        onPointerDown={e => e.stopPropagation()}
+        style={{ position: 'absolute', bottom: 'clamp(8px, 1.5vh, 16px)', right: 'clamp(8px, 1.5vw, 16px)', zIndex: 200, background: 'transparent', border: 'none', cursor: 'pointer', padding: 8, opacity: 0.12, transition: 'opacity 0.3s ease' }}
+        onMouseEnter={e => e.currentTarget.style.opacity = '0.5'}
+        onMouseLeave={e => e.currentTarget.style.opacity = '0.12'}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      </button>
+
+      {/* Setup Overlay */}
+      {setupOpen && <SafeZoneSetup scale={safeScale} onChange={handleScaleChange} onClose={() => setSetupOpen(false)} />}
     </div>
   );
 }
