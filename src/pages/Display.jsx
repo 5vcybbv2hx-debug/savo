@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
+import { BRAND_WALL_URL, SAVO_BLUE, SAVO_BLACK } from '@/lib/brandAssets';
 
 // ── Akzentfarben ──────────────────────────────────────────────────────────────
 export const ACCENTS = {
@@ -791,8 +792,59 @@ export function ThemeBackground({ theme, accent, prominentDisco = false }) {
     case 'christmas':         return <Christmas3D />;
     case 'love':              return <CanvasLove />;
     case 'party':             return <Party3D />;
-    default:                  return <Party3D />;
+    default:                  return null;
   }
+}
+
+// ── Brand Wall Background (fixe Steinwand für alle Slides) ────────────────────
+export function BrandWallBackground() {
+  return (
+    <>
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${BRAND_WALL_URL})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'brightness(1.18)', zIndex: 0 }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.06)', mixBlendMode: 'overlay', zIndex: 0 }} />
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at center, transparent 35%, ${SAVO_BLACK} 100%)`, opacity: 0.6, zIndex: 0 }} />
+    </>
+  );
+}
+
+// ── Themed Background (ThemeBackground mit Opacity über der Steinwand) ────────
+export function ThemedBackground({ theme, accent, prominentDisco = false }) {
+  if (theme === 'default') {
+    return <div style={{ position: 'absolute', inset: 0, zIndex: 1, background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${SAVO_BLUE}12 0%, transparent 70%)` }} />;
+  }
+  const opacity = prominentDisco ? 0.75 : 0.7;
+  return (
+    <div style={{ position: 'absolute', inset: 0, opacity, zIndex: 1 }}>
+      <ThemeBackground theme={theme} accent={accent} prominentDisco={prominentDisco} />
+    </div>
+  );
+}
+
+// ── Neon-Eckklammern (SAVO-Blau mit Glow) ──────────────────────────────────────
+export function NeonFrame({ color = SAVO_BLUE }) {
+  const s = {
+    position: 'absolute', width: 'clamp(36px,5vw,72px)', height: 'clamp(36px,5vw,72px)',
+    borderStyle: 'solid', borderColor: color, borderWidth: 0,
+    boxShadow: `0 0 10px ${color}, 0 0 20px ${color}55`, pointerEvents: 'none', zIndex: 6,
+  };
+  return (
+    <>
+      <div style={{ ...s, top: '3%', left: '3%', borderTopWidth: 3, borderLeftWidth: 3 }} />
+      <div style={{ ...s, top: '3%', right: '3%', borderTopWidth: 3, borderRightWidth: 3 }} />
+      <div style={{ ...s, bottom: '3%', left: '3%', borderBottomWidth: 3, borderLeftWidth: 3 }} />
+      <div style={{ ...s, bottom: '3%', right: '3%', borderBottomWidth: 3, borderRightWidth: 3 }} />
+    </>
+  );
+}
+
+// ── SAVO Logo (Bebas + Jost) ──────────────────────────────────────────────────
+export function SavoLogo() {
+  return (
+    <div style={{ position: 'absolute', top: 'clamp(14px,2.5vh,36px)', left: '50%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 5 }}>
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: 'clamp(1.8rem,3.5vw,3rem)', color: SAVO_BLUE, letterSpacing: '0.1em', textShadow: `0 0 18px ${SAVO_BLUE},0 0 36px ${SAVO_BLUE}55`, lineHeight: 1 }}>SAVO</div>
+      <div style={{ fontFamily: '"Jost",sans-serif', fontSize: 'clamp(0.55rem,0.9vw,0.8rem)', color: 'rgba(255,255,255,0.55)', letterSpacing: '0.4em', fontWeight: 500, marginTop: 2 }}>LOUNGE · CLUB</div>
+    </div>
+  );
 }
 
 // ── Overlay Helfer ─────────────────────────────────────────────────────────────
@@ -869,7 +921,7 @@ function AmbientScreen() {
   const hh = time.getHours(), mm = time.getMinutes(), ss = time.getSeconds();
 
   return (
-    <div style={{ background: '#050508', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter",system-ui,sans-serif' }}>
+    <div style={{ background: '#050508', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Jost","Century Gothic",sans-serif' }}>
 
       {/* Sanfte Ambient-Lichter im Hintergrund */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
@@ -917,8 +969,10 @@ export function SlideAnnouncement({ slide, accent, theme }) {
   const isDiscoParty = theme === 'disco' || theme === 'party';
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: isDiscoParty ? 'flex-end' : 'center', alignItems: 'center', height: '100%', padding: isDiscoParty ? '40px 100px 120px' : '80px 120px', textAlign: 'center', gap: 28 }}>
-      <ThemeBackground theme={theme} accent={accent} prominentDisco />
-      <div style={{ fontSize: 'clamp(4.2rem,9.5vw,8rem)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.03em', textShadow: `0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`, animation: 'floatUp 5s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.title}</div>
+      <BrandWallBackground />
+      <ThemedBackground theme={theme} accent={accent} prominentDisco={isDiscoParty} />
+      <NeonFrame />
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: 'clamp(4.2rem,9.5vw,8rem)', fontWeight: 400, color: '#fff', lineHeight: 1.05, letterSpacing: '0.01em', textShadow: `0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`, animation: 'floatUp 5s ease-in-out infinite', position: 'relative', zIndex: 2 }}>{slide.title}</div>
       {slide.subtitle && <div style={{ fontSize: '2.6rem', color: 'rgba(255,255,255,0.85)', animation: 'floatDown 6s ease-in-out infinite', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
       {slide.body_text && <div style={{ fontSize: '1.7rem', color: 'rgba(255,255,255,0.65)', maxWidth: 950, position: 'relative', zIndex: 1, textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>{slide.body_text}</div>}
       {slide.cta_text && <div style={{ background: accent.bg, color: accent.text, padding: '24px 64px', borderRadius: 20, fontWeight: 800, fontSize: '2rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'pulseGlow 3s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
@@ -950,51 +1004,55 @@ export function SlideQR({ slideId }) {
     );
 }
 
-export function SlideEvent({ slide, accent, theme }) {
+export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16' }) {
   const titleLen = (slide.title || '').length;
   const titleFont = titleLen > 18 ? 'clamp(2.4rem,4.6vw,4rem)' : titleLen > 12 ? 'clamp(3rem,6vw,5rem)' : titleLen > 8 ? 'clamp(3.5rem,7.5vw,6.5rem)' : 'clamp(4rem,9vw,8rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
   const de2 = hasEnd ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
   const ts = [slide.event_time, slide.event_end_time].filter(Boolean).join(' – ') + (slide.event_time ? ' Uhr' : '');
+  const isCompact = aspectRatio === '1/1' || aspectRatio === '4/5';
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: 'clamp(32px,6vh,80px) clamp(48px,7vw,120px)', textAlign: 'center', gap: 32 }}>
-      <ThemeBackground theme={theme} accent={accent} />
+      <BrandWallBackground />
+      <ThemedBackground theme={theme} accent={accent} />
+      <NeonFrame />
+      <SavoLogo />
       <SpotlightStreak color={accent.bg} />
-      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 1, animation: 'slideInUp 0.6s 0.1s both' }}>
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 2, animation: 'slideInUp 0.6s 0.1s both' }}>
         <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
       </div>
-      <div style={{ fontSize: titleFont, maxWidth: '100%', padding: '0 4%', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.03em', wordBreak: 'keep-all', overflowWrap: 'anywhere', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 1, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
-      {slide.subtitle && <div style={{ fontSize: '2.7rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: titleFont, maxWidth: '100%', padding: '0 4%', fontWeight: 400, lineHeight: 1.05, letterSpacing: '0.01em', wordBreak: 'keep-all', overflowWrap: 'anywhere', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 2, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
+      {slide.subtitle && <div style={{ fontSize: '2.7rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 2, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
       {(ds || ts || slide.public_event) && (
-        <div style={{ display: 'flex', gap: 60, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.5s both', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: isCompact ? 20 : 60, flexDirection: isCompact ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2, animation: 'slideInUp 0.7s 0.5s both', flexWrap: 'wrap' }}>
           {ds && (
-            <div style={{ textAlign: 'center', maxWidth: '46vw' }}>
+            <div style={{ textAlign: 'center', minWidth: isCompact ? 'auto' : 'min(300px,30vw)', maxWidth: '46vw' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Datum</div>
               <div style={{ fontSize: 'clamp(2.2rem,4.2vw,3.6rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>
                 {ds}{de2 && <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.62em' }}> – {de2}</span>}
               </div>
             </div>
           )}
-          {ds && ts && <div style={{ width: 1, height: 100, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
+          {ds && ts && !isCompact && <div style={{ width: 1, height: 100, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
           {ts && (
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', minWidth: isCompact ? 'auto' : 'min(200px,20vw)' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Uhrzeit</div>
               <div style={{ fontSize: 'clamp(2.2rem,4.2vw,3.6rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{ts}</div>
             </div>
           )}
           {slide.public_event && (
             <>
-              {(ds || ts) && <div style={{ width: 1, height: 100, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
+              {(ds || ts) && !isCompact && <div style={{ width: 1, height: 100, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
               <SlideQR slideId={slide.id} />
             </>
           )}
         </div>
       )}
       {slide.location && (
-        <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '18px 40px', fontWeight: 600, fontSize: '1.9rem', color: '#fff', position: 'relative', zIndex: 1, animation: 'slideInUp 0.7s 0.65s both' }}>📍 {slide.location}</div>
+        <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '18px 40px', fontWeight: 600, fontSize: '1.9rem', color: '#fff', position: 'relative', zIndex: 2, animation: 'slideInUp 0.7s 0.65s both' }}>📍 {slide.location}</div>
       )}
-      {slide.cta_text && !slide.cta_text.startsWith('event:') && <div style={{ background: accent.bg, color: accent.text, padding: '24px 64px', borderRadius: 20, fontWeight: 800, fontSize: '2rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
+      {slide.cta_text && !slide.cta_text.startsWith('event:') && <div style={{ background: accent.bg, color: accent.text, padding: '24px 64px', borderRadius: 20, fontWeight: 800, fontSize: '2rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite', position: 'relative', zIndex: 2 }}>{slide.cta_text}</div>}
     </div>
   );
 }
@@ -1006,12 +1064,13 @@ export function SlideDrinkSpecial({ slide, accent, theme }) {
   const valid = drinks.filter(d => d && d.name);
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '60px 80px', textAlign: 'center', gap: 32 }}>
-      <ThemeBackground theme={theme} accent={accent} />
+      <BrandWallBackground />
+      <ThemedBackground theme={theme} accent={accent} />
       <ShimmerBars color={accent.bg} />
-      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 1, animation: 'fadeInScale 0.5s 0.1s both' }}>
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 2, animation: 'fadeInScale 0.5s 0.1s both' }}>
         <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>DRINK SPECIAL</span>
       </div>
-      {slide.title && valid.length > 1 && <div style={{ fontSize: 'clamp(3.5rem,7vw,5.6rem)', fontWeight: 900, color: '#fff', letterSpacing: '-0.03em', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{slide.title}</div>}
+      {slide.title && valid.length > 1 && <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: 'clamp(3.5rem,7vw,5.6rem)', fontWeight: 400, color: '#fff', letterSpacing: '0.01em', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 2, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{slide.title}</div>}
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', width: '100%', position: 'relative', zIndex: 1 }}>
         {valid.map((d, i) => (
           <div key={i} style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(14px)', border: `2px solid ${accent.bg}55`, borderRadius: 28, padding: '36px 48px', textAlign: 'center', minWidth: 240, flex: '1 1 240px', maxWidth: 380, animation: `bounceIn 0.7s ${0.35 + i * 0.15}s both`, boxShadow: `0 8px 32px rgba(0,0,0,0.5),0 0 24px ${accent.glow}22` }}>
@@ -1034,10 +1093,11 @@ export function SlideCountdown({ slide, accent, theme }) {
   const total = differenceInSeconds(target, now);
   if (total < 0) return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 32, textAlign: 'center' }}>
-      <ThemeBackground theme={theme} accent={accent} />
-      <div style={{ fontSize: '6rem', animation: 'bounceIn 0.8s both', position: 'relative', zIndex: 1 }}>🎉</div>
-      <div style={{ fontSize: '5rem', fontWeight: 900, color: accent.bg, textShadow: `0 0 60px ${accent.glow}`, animation: 'pulseGlow 2s ease-in-out infinite', position: 'relative', zIndex: 1 }}>ES IST SOWEIT!</div>
-      <div style={{ fontSize: '2.5rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, position: 'relative', zIndex: 1 }}>{slide.title}</div>
+      <BrandWallBackground />
+      <ThemedBackground theme={theme} accent={accent} />
+      <div style={{ fontSize: '6rem', animation: 'bounceIn 0.8s both', position: 'relative', zIndex: 2 }}>🎉</div>
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: '5rem', fontWeight: 400, color: accent.bg, textShadow: `0 0 60px ${accent.glow}`, animation: 'pulseGlow 2s ease-in-out infinite', position: 'relative', zIndex: 2 }}>ES IST SOWEIT!</div>
+      <div style={{ fontSize: '2.5rem', color: 'rgba(255,255,255,0.85)', fontWeight: 600, position: 'relative', zIndex: 2 }}>{slide.title}</div>
     </div>
   );
 
@@ -1045,12 +1105,13 @@ export function SlideCountdown({ slide, accent, theme }) {
   const units = days > 0 ? [{ v: days, l: 'Tage' }, { v: hours, l: 'Std.' }, { v: mins, l: 'Min.' }] : [{ v: hours, l: 'Std.' }, { v: mins, l: 'Min.' }, { v: secs, l: 'Sek.' }];
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 40, textAlign: 'center', padding: '60px 80px' }}>
-      <ThemeBackground theme={theme} accent={accent} />
+      <BrandWallBackground />
+      <ThemedBackground theme={theme} accent={accent} />
       <PulseRings color={accent.bg} />
-      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 1 }}>
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 2 }}>
         <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Countdown</span>
       </div>
-      <div style={{ fontSize: '5.2rem', fontWeight: 900, color: '#fff', lineHeight: 1.05, textShadow: '0 2px 40px rgba(0,0,0,0.9)', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 1 }}>{slide.title}</div>
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: '5.2rem', fontWeight: 400, color: '#fff', lineHeight: 1.05, textShadow: '0 2px 40px rgba(0,0,0,0.9)', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 2 }}>{slide.title}</div>
       {slide.public_event && <SlideQR slideId={slide.id} />}
       <div style={{ display: 'flex', gap: 28, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
         {units.map((u, i) => (
@@ -1076,14 +1137,15 @@ export function SlideQRCode({ slide, accent, theme }) {
   const qrSize = 'clamp(230px,24vw,340px)';
   return (
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:44 }}>
-      <ThemeBackground theme={theme} accent={accent} />
-      <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:32 }}>
+      <BrandWallBackground />
+      <ThemedBackground theme={theme} accent={accent} />
+      <div style={{ position:'relative',zIndex:3,display:'flex',flexDirection:'column',alignItems:'center',gap:32 }}>
         {slide.subtitle && (
           <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.5s 0.1s both' }}>
             <span style={{ fontSize:'1.25rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>{slide.subtitle}</span>
           </div>
         )}
-        <div style={{ fontSize:'clamp(3rem,7vw,6.2rem)',fontWeight:900,color:'#fff',letterSpacing:'-0.03em',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`,animation:'slideInUp 0.6s 0.2s both' }}>{slide.title}</div>
+        <div style={{ fontFamily:'"Bebas Neue","Jost",sans-serif',fontSize:'clamp(3rem,7vw,6.2rem)',fontWeight:400,color:'#fff',letterSpacing:'0.01em',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`,animation:'slideInUp 0.6s 0.2s both' }}>{slide.title}</div>
         <div style={{ position:'relative',animation:'bounceIn 0.8s 0.4s both' }}>
           <div style={{ position:'absolute',inset:-10,borderRadius:24,border:`3px solid ${accent.bg}`,boxShadow:`0 0 30px ${accent.glow},0 0 60px ${accent.glow}33`,animation:'pulseGlow 3s ease-in-out infinite',pointerEvents:'none' }}/>
           <img
@@ -1102,13 +1164,14 @@ export function SlideQRCode({ slide, accent, theme }) {
 export function SlideTonight({ slide, accent, theme }) {
   return (
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:32 }}>
-      <ThemeBackground theme={theme} accent={accent} />
+      <BrandWallBackground />
+      <ThemedBackground theme={theme} accent={accent} />
       <SpotlightStreak color={accent.bg} />
-      <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',alignItems:'center',gap:28,maxWidth:900,width:'100%' }}>
+      <div style={{ position:'relative',zIndex:3,display:'flex',flexDirection:'column',alignItems:'center',gap:28,maxWidth:900,width:'100%' }}>
         <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.5s 0.1s both' }}>
           <span style={{ fontSize:'1.25rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>Heute Abend</span>
         </div>
-        <div style={{ fontSize:'clamp(3.5rem,8vw,6.8rem)',fontWeight:900,color:'#fff',letterSpacing:'-0.03em',lineHeight:1.05,animation:'slideInUp 0.6s 0.2s both',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}` }}>{slide.title}</div>
+        <div style={{ fontFamily:'"Bebas Neue","Jost",sans-serif',fontSize:'clamp(3.5rem,8vw,6.8rem)',fontWeight:400,color:'#fff',letterSpacing:'0.01em',lineHeight:1.05,animation:'slideInUp 0.6s 0.2s both',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}` }}>{slide.title}</div>
         {slide.subtitle&&<div style={{ fontSize:'clamp(1.7rem,3.2vw,2.6rem)',color:'rgba(255,255,255,0.85)',animation:'slideInUp 0.6s 0.35s both',textShadow:'0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
         {slide.body_text&&(
           <div style={{ display:'flex',gap:18,flexWrap:'wrap',justifyContent:'center',animation:'slideInUp 0.6s 0.5s both' }}>
@@ -1281,7 +1344,7 @@ export default function Display() {
   const dur = slide.duration_seconds || TYPE_DURATION[slide.slide_type] || 10;
 
   return (
-    <div style={{ background: '#050508', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', fontFamily: '"Inter",system-ui,sans-serif', color: '#fff' }}
+    <div style={{ background: '#050508', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', fontFamily: '"Jost","Century Gothic",sans-serif', color: '#fff' }}
          onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onContextMenu={e => e.preventDefault()}>
 
       {/* Ambient Glow unten — bleibt Fullscreen, wird NICHT skaliert */}

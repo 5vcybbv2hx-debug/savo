@@ -78,103 +78,13 @@ function buildMotionPrompt(slide) {
   return parts.join('. ');
 }
 
-// ── QR-Code Komponente ──────────────────────────────────────────────────────
-function QRCodeImage({ size = 110, url = 'https://savo-lounge-club.de/events' }) {
-  const [src, setSrc] = useState(null);
-  useEffect(() => {
-    let alive = true;
-    import('qrcode').then(mod => {
-      const QR = mod.default || mod;
-      QR.toDataURL(url, { width: size * 2, margin: 1, color: { dark: '#000', light: '#fff' } })
-        .then(d => { if (alive) setSrc(d); }).catch(() => {});
-    }).catch(() => {});
-    return () => { alive = false; };
-  }, [url, size]);
-  if (!src) return <div style={{ width: size, height: size, background: '#fff', borderRadius: 8 }} />;
-  return <img src={src} alt="QR-Code" style={{ width: size, height: size, display: 'block' }} />;
-}
-
 // ════════════════════════════════════════════════════════════════════════════
-// EVENT-KARTE (Bild-Modus)
+// SLIDE-RENDERER (nutzt Display.jsx Komponenten — TV + Instagram)
 // ════════════════════════════════════════════════════════════════════════════
-function EventCard({ slide, fmt, accent, company, imageError, setImageError }) {
-  const titleFont = getTitleFont(slide.title);
-  const dateStr = formatEventDate(slide);
-  const timeStr = formatEventTime(slide);
-  const isDrinkSpecial = slide.slide_type === 'drink_special';
-  const description = !isDrinkSpecial ? slide.body_text : null;
-  const locationStr = slide.location || (company ? `SAVO${company.city ? ' · ' + company.city : ''}` : 'SAVO');
-  let drinks = [];
-  if (isDrinkSpecial && slide.body_text) { try { drinks = JSON.parse(slide.body_text).filter(d => d.name); } catch {} }
-  const typeLabel = isDrinkSpecial ? 'Drink Special' : slide.slide_type === 'event' ? 'Event' :
-    slide.slide_type === 'countdown' ? 'Countdown' : slide.slide_type === 'tonight' ? 'Tonight' : 'Ankündigung';
-  const isCompact = fmt.h <= 1200;
-
-  return (
-    <div data-capture-card style={{
-      width: fmt.w, height: fmt.h, position: 'relative', overflow: 'hidden',
-      display: 'flex', flexDirection: 'column', padding: '5% 6%', gap: isCompact ? '1.5%' : '2.5%',
-      fontFamily: '"Jost", "Century Gothic", "AppleGothic", "Segoe UI", system-ui, sans-serif',
-      background: `linear-gradient(160deg, ${accent}18 0%, #0a0a0a 40%, ${accent}0a 100%)`,
-    }}>
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: `radial-gradient(ellipse at 50% 25%, ${accent}25, transparent 65%)` }} />
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-        <span style={{ fontFamily: '"Jost", "Century Gothic", sans-serif', fontWeight: 700, fontSize: '2.5rem', color: '#0099db', letterSpacing: '0.05em' }}>SAVO</span>
-        <span style={{ background: accent + '22', border: `1px solid ${accent}`, borderRadius: 8, padding: '5px 18px', fontSize: '1rem', color: accent, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{typeLabel}</span>
-      </div>
-      {/* Bild-Banner */}
-      {slide.image_url && !imageError && (
-        <div style={{ borderRadius: 16, overflow: 'hidden', flexShrink: 0, height: isCompact ? '22%' : '28%', position: 'relative', zIndex: 1 }}>
-          <img src={slide.image_url} alt="" crossOrigin="anonymous" onError={() => setImageError(true)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-      )}
-      {/* Titel */}
-      <div style={{ fontSize: titleFont, fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.02em', maxWidth: '90%', wordBreak: 'keep-all', overflowWrap: 'anywhere', flexShrink: 0, position: 'relative', zIndex: 1, textShadow: '0 2px 30px rgba(0,0,0,0.8)' }}>{slide.title}</div>
-      {/* Untertitel */}
-      {slide.subtitle && <div style={{ fontSize: '1.6rem', color: 'rgba(255,255,255,0.7)', maxWidth: '85%', flexShrink: 0, position: 'relative', zIndex: 1 }}>{slide.subtitle}</div>}
-      {/* Datum + Uhrzeit */}
-      {(dateStr || timeStr) && (
-        <div style={{ display: 'flex', gap: '5%', alignItems: 'center', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-          {dateStr && (<div><div style={{ fontSize: '0.9rem', fontWeight: 700, color: accent, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 6 }}>Datum</div><div style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', lineHeight: 1.1, maxWidth: '46vw' }}>{dateStr}</div></div>)}
-          {dateStr && timeStr && <div style={{ width: 1, height: 50, background: accent + '44' }} />}
-          {timeStr && (<div><div style={{ fontSize: '0.9rem', fontWeight: 700, color: accent, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 6 }}>Uhrzeit</div><div style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>{timeStr}</div></div>)}
-        </div>
-      )}
-      {/* Ort */}
-      {locationStr && <div style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.8)', fontWeight: 600, flexShrink: 0, position: 'relative', zIndex: 1 }}>📍 {locationStr}</div>}
-      {/* Beschreibung */}
-      {description && <div style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', flexShrink: 0, position: 'relative', zIndex: 1 }}>{description}</div>}
-      {/* Drinks */}
-      {drinks.length > 0 && (
-        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-          {drinks.map((dr, i) => (<div key={i} style={{ background: 'rgba(255,255,255,0.08)', border: `1px solid ${accent}44`, borderRadius: 12, padding: '10px 20px', textAlign: 'center', minWidth: 100 }}><div style={{ fontSize: '2rem' }}>{dr.emoji}</div><div style={{ fontSize: '1rem', color: '#fff', fontWeight: 600, marginTop: 2 }}>{dr.name}</div>{dr.price && <div style={{ fontSize: '1.1rem', color: accent, fontWeight: 800, marginTop: 2 }}>{dr.price}</div>}</div>))}
-        </div>
-      )}
-      {/* Preis */}
-      {slide.price_info && <div style={{ fontSize: '1.4rem', color: accent, fontWeight: 800, flexShrink: 0, position: 'relative', zIndex: 1 }}>{slide.price_info}</div>}
-      {/* CTA */}
-      {slide.cta_text && !slide.cta_text.startsWith('event:') && (
-        <div style={{ flexShrink: 0, position: 'relative', zIndex: 1 }}>
-          <div style={{ background: accent, color: '#fff', padding: '12px 32px', borderRadius: 12, fontWeight: 800, fontSize: '1.3rem', boxShadow: `0 0 24px ${accent}66`, display: 'inline-block' }}>{slide.cta_text}</div>
-        </div>
-      )}
-      {/* Footer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${accent}33`, paddingTop: '2%', marginTop: 'auto', flexShrink: 0, position: 'relative', zIndex: 1 }}>
-        <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)' }}>@savo_loungeclub</span>
-        <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)' }}>savo-lounge-club.de</span>
-      </div>
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// SLIDE-RENDERER (Video-Modus — nutzt Display.jsx Komponenten)
-// ════════════════════════════════════════════════════════════════════════════
-function SlideRenderer({ slide, accent, theme }) {
+function SlideRenderer({ slide, accent, theme, aspectRatio = '9/16' }) {
   switch (slide.slide_type) {
     case 'announcement':  return <SlideAnnouncement slide={slide} accent={accent} theme={theme} />;
-    case 'event':        return <SlideEvent slide={slide} accent={accent} theme={theme} />;
+    case 'event':        return <SlideEvent slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} />;
     case 'drink_special':return <SlideDrinkSpecial slide={slide} accent={accent} theme={theme} />;
     case 'countdown':    return <SlideCountdown slide={slide} accent={accent} theme={theme} />;
     case 'qr_code':      return <SlideQRCode slide={slide} accent={accent} theme={theme} />;
@@ -183,7 +93,7 @@ function SlideRenderer({ slide, accent, theme }) {
   }
 }
 
-function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, height = 1920 }) {
+function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, height = 1920, aspectRatio = '9/16' }) {
   const [portalTarget, setPortalTarget] = useState(null);
 
   useEffect(() => {
@@ -195,9 +105,14 @@ function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, he
       doc.body.style.margin = '0'; doc.body.style.padding = '0';
       doc.body.style.overflow = 'hidden'; doc.body.style.background = '#050508';
       doc.body.style.width = `${width}px`; doc.body.style.height = `${height}px`;
-      doc.body.style.fontFamily = '"Inter",system-ui,sans-serif'; doc.body.style.color = '#fff';
+      doc.body.style.fontFamily = '"Jost","Century Gothic",sans-serif'; doc.body.style.color = '#fff';
       const style = doc.createElement('style'); style.textContent = KEYFRAMES;
       doc.head.appendChild(style);
+      // Google Fonts für Bebas Neue + Jost im iframe
+      const fontLink = doc.createElement('link');
+      fontLink.rel = 'stylesheet';
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Jost:wght@300;400;500;600;700&display=swap';
+      doc.head.appendChild(fontLink);
       setPortalTarget(doc.body);
     };
     setup();
@@ -208,7 +123,7 @@ function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, he
   return (
     <>
       <iframe ref={iframeRef} style={{ width, height, border: 'none', display: 'block' }} />
-      {portalTarget && createPortal(<SlideRenderer slide={slide} accent={accent} theme={theme} />, portalTarget)}
+      {portalTarget && createPortal(<SlideRenderer slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} />, portalTarget)}
     </>
   );
 }
@@ -221,30 +136,25 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
   const [exporting, setExporting] = useState(false);
   const [mode, setMode] = useState('image');
   const [scale, setScale] = useState(0.3);
-  const [company, setCompany] = useState(null);
-  const [imageError, setImageError] = useState(false);
   const [kiExpanded, setKiExpanded] = useState(false);
   const [kiLoading, setKiLoading] = useState(false);
   const [kiVideoUrl, setKiVideoUrl] = useState(null);
 
-  const captureRef = useRef(null);
   const wrapperRef = useRef(null);
   const videoWrapperRef = useRef(null);
   const iframeRef = useRef(null);
+  const imageIframeRef = useRef(null);
+  const overlayIframeRef = useRef(null);
 
   const fmt = FORMATS.find(f => f.value === format);
-  const accentHex = slide ? (ACCENT_HEX[slide.accent_color] || '#f59e0b') : '#f59e0b';
   const recorder = useSlideRecorder({ iframeRef, duration: 10 });
   const [showPreHint, setShowPreHint] = useState(false);
 
-  // CompanyInfo + Keyframes
+  // Keyframes
   useEffect(() => {
     if (!open) return;
     injectKeyframes();
-    base44.entities.CompanyInfo.list().then(r => { if (r?.[0]) setCompany(r[0]); }).catch(() => {});
   }, [open]);
-
-  useEffect(() => { setImageError(false); }, [slide?.id]);
 
   // Skalierung Bild-Modus
   useEffect(() => {
@@ -273,24 +183,21 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
     return () => ro.disconnect();
   }, [open, mode]);
 
-  // ── PNG Capture ──
-  const captureCanvas = useCallback(async (targetFmt) => {
-    if (!captureRef.current) return null;
-    await new Promise(r => setTimeout(r, 300));
-    return html2canvas(captureRef.current, {
+  // ── PNG Capture (iframe body via html2canvas) ──
+  const captureIframe = useCallback(async (targetFmt) => {
+    const iframe = imageIframeRef.current || overlayIframeRef.current;
+    if (!iframe?.contentDocument?.body) return null;
+    await new Promise(r => setTimeout(r, 500));
+    return html2canvas(iframe.contentDocument.body, {
       width: targetFmt.w, height: targetFmt.h, scale: 1,
       backgroundColor: null, useCORS: true, logging: false,
-      onclone: (doc) => {
-        const el = doc.querySelector('[data-capture-card]');
-        if (el) { el.style.transform = 'none'; el.style.position = 'static'; el.style.top = 'auto'; el.style.left = 'auto'; }
-      },
     });
   }, []);
 
   const handleDownload = async () => {
     setExporting(true);
     try {
-      const canvas = await captureCanvas(fmt); if (!canvas) return;
+      const canvas = await captureIframe(fmt); if (!canvas) return;
       const link = document.createElement('a');
       link.download = `instagram_${format}_${(slide.title || 'slide').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 40)}.png`;
       link.href = canvas.toDataURL('image/png'); link.click();
@@ -302,7 +209,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
   const handleDownloadOverlay = async () => {
     setExporting(true);
     try {
-      const canvas = await captureCanvas(FORMATS[0]); if (!canvas) return;
+      const canvas = await captureIframe(FORMATS[0]); if (!canvas) return;
       const link = document.createElement('a');
       link.download = `overlay_${(slide.title || 'slide').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 40)}.png`;
       link.href = canvas.toDataURL('image/png'); link.click();
@@ -371,9 +278,9 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
             </div>
 
             <div ref={wrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-              <div style={{ width: fmt.w * scale, height: fmt.h * scale, overflow: 'hidden', position: 'relative' }}>
-                <div ref={captureRef} style={{ position: 'absolute', top: 0, left: 0, width: fmt.w, height: fmt.h, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-                  <EventCard slide={slide} fmt={fmt} accent={accentHex} company={company} imageError={imageError} setImageError={setImageError} />
+              <div style={{ width: fmt.w * scale, height: fmt.h * scale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: fmt.w, height: fmt.h, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+                  <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={imageIframeRef} width={fmt.w} height={fmt.h} aspectRatio={fmt.ratio} />
                 </div>
               </div>
             </div>
@@ -524,6 +431,13 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Hidden overlay iframe for image capture in video mode */}
+        {mode === 'video' && slide && (
+          <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0 }} aria-hidden="true">
+            <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={overlayIframeRef} width={1080} height={1920} aspectRatio="9/16" />
           </div>
         )}
       </DialogContent>
