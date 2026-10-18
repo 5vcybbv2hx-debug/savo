@@ -10,7 +10,7 @@ import { de } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 
 // ── Akzentfarben ──────────────────────────────────────────────────────────────
-const ACCENTS = {
+export const ACCENTS = {
   amber:   { bg: '#f59e0b', glow: 'rgba(245,158,11,0.5)',  text: '#000', soft: 'rgba(245,158,11,0.15)' },
   orange:  { bg: '#f97316', glow: 'rgba(249,115,22,0.5)',  text: '#000', soft: 'rgba(249,115,22,0.15)' },
   red:     { bg: '#ef4444', glow: 'rgba(239,68,68,0.5)',   text: '#fff', soft: 'rgba(239,68,68,0.15)'  },
@@ -33,7 +33,7 @@ const ACCENTS = {
 const TYPE_DURATION = { announcement: 10, event: 14, drink_special: 12, countdown: 16 };
 
 // ── CSS Keyframes ─────────────────────────────────────────────────────────────
-const KEYFRAMES = `
+export const KEYFRAMES = `
   @keyframes floatUp     { 0%,100%{transform:translateY(0)}     50%{transform:translateY(-14px)} }
   @keyframes floatDown   { 0%,100%{transform:translateY(0)}     50%{transform:translateY(10px)}  }
   @keyframes pulseGlow   { 0%,100%{opacity:0.7;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} }
@@ -55,7 +55,7 @@ const KEYFRAMES = `
 const MENU_URL = 'https://savo-lounge-live.base44.app/getraenke';
 
 
-function injectKeyframes() {
+export function injectKeyframes() {
   if (document.getElementById('savo-display-kf')) return;
   const s = document.createElement('style');
   s.id = 'savo-display-kf';
@@ -123,7 +123,7 @@ function useCanvas(drawFn) {
 
 
 // ── Theme-Erkennung ───────────────────────────────────────────────────────────
-function detectTheme(title = '', subtitle = '') {
+export function detectTheme(title = '', subtitle = '') {
   const txt = (title + ' ' + subtitle).toLowerCase();
   if (/deutsch|germany|german|dfb|schwarz.?rot.?gold/.test(txt)) return 'germany';
   if (/american.?football|nfl|touchdown|superbowl/.test(txt))    return 'american_football';
@@ -777,7 +777,7 @@ function CanvasMusic({ accentColor }) {
 }
 
 // ── Theme-Router ──────────────────────────────────────────────────────────────
-function ThemeBackground({ theme, accent, prominentDisco = false }) {
+export function ThemeBackground({ theme, accent, prominentDisco = false }) {
   switch (theme) {
     case 'germany':           return <GermanyFlag2D />;
     case 'american_football': return <AmericanFootball3D />;
@@ -913,7 +913,7 @@ function AmbientScreen() {
 // SLIDE-TYPEN
 // ══════════════════════════════════════════════════════════════════════════════
 
-function SlideAnnouncement({ slide, accent, theme }) {
+export function SlideAnnouncement({ slide, accent, theme }) {
   const isDiscoParty = theme === 'disco' || theme === 'party';
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: isDiscoParty ? 'flex-end' : 'center', alignItems: 'center', height: '100%', padding: isDiscoParty ? '40px 100px 120px' : '80px 120px', textAlign: 'center', gap: 28 }}>
@@ -927,7 +927,7 @@ function SlideAnnouncement({ slide, accent, theme }) {
 }
 
 // ── QR-Code auf der Slide (nur wenn Manager "public_event" aktiviert hat) ────
-function SlideQR({ slideId }) {
+export function SlideQR({ slideId }) {
     const [qr, setQr] = useState(null);
     useEffect(() => {
         let alive = true;
@@ -950,7 +950,7 @@ function SlideQR({ slideId }) {
     );
 }
 
-function SlideEvent({ slide, accent, theme }) {
+export function SlideEvent({ slide, accent, theme }) {
   const titleLen = (slide.title || '').length;
   const titleFont = titleLen > 18 ? 'clamp(2.4rem,4.6vw,4rem)' : titleLen > 12 ? 'clamp(3rem,6vw,5rem)' : titleLen > 8 ? 'clamp(3.5rem,7.5vw,6.5rem)' : 'clamp(4rem,9vw,8rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
@@ -999,7 +999,7 @@ function SlideEvent({ slide, accent, theme }) {
   );
 }
 
-function SlideDrinkSpecial({ slide, accent, theme }) {
+export function SlideDrinkSpecial({ slide, accent, theme }) {
   let drinks = [];
   try { drinks = JSON.parse(slide.body_text || '[]'); } catch {}
   if (!drinks.length) drinks = [{ name: slide.title, price: slide.price_info, emoji: '🍹' }];
@@ -1026,7 +1026,7 @@ function SlideDrinkSpecial({ slide, accent, theme }) {
   );
 }
 
-function SlideCountdown({ slide, accent, theme }) {
+export function SlideCountdown({ slide, accent, theme }) {
   const [now, setNow] = useState(new Date());
   useEffect(() => { const iv = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(iv); }, []);
   if (!slide.event_date) return null;
@@ -1072,7 +1072,7 @@ function SlideCountdown({ slide, accent, theme }) {
 }
 
 // ── QR-Code Slide ─────────────────────────────────────────────────────────────
-function SlideQRCode({ slide, accent, theme }) {
+export function SlideQRCode({ slide, accent, theme }) {
   const qrSize = 'clamp(230px,24vw,340px)';
   return (
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:44 }}>
@@ -1099,7 +1099,7 @@ function SlideQRCode({ slide, accent, theme }) {
 }
 
 // ── Heute Abend Slide ─────────────────────────────────────────────────────────
-function SlideTonight({ slide, accent, theme }) {
+export function SlideTonight({ slide, accent, theme }) {
   return (
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:32 }}>
       <ThemeBackground theme={theme} accent={accent} />
