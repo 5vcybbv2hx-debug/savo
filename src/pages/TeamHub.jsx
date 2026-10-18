@@ -98,7 +98,7 @@ export default function TeamHub() {
                 <div className="space-y-2">
                     <NavCard icon={Clock}         label="Meine Schichten"  description="Eigene Schichten & Tauschanfragen" page="MyShifts"       badge={swapInboxCount || undefined} badgeVariant="warning" permission="canViewShifts" />
                     <NavCard icon={Clock}         label="Zeiterfassung"    description="Arbeitsstunden & Übersicht"        page="TimeManagement" permission="canViewOwnTimeEntries" />
-                    <NavCard icon={Palmtree}      label="Urlaub"           description="Urlaubsanträge & Planung"          page="Vacation"      badge={vacationRequests.length || undefined} permission="canViewVacation" />
+                    <NavCard icon={Palmtree}      label="Urlaub"           description="Urlaubsanträge & Planung"          page="MyArea?tab=urlaub"      badge={vacationRequests.length || undefined} permission="canViewVacation" />
                 </div>
             </div>
 

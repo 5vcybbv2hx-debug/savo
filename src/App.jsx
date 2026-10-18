@@ -192,6 +192,11 @@ const AuthenticatedApp = () => {
       {/* Redirect old SeatingChart route to GuestHub */}
       <Route path="/SeatingChart" element={<Navigate to="/GuestHub" replace />} />
 
+      {/* Redirect alte Urlaub-Seite → MyArea (Tab urlaub) — konsolidiert am 07.10. */}
+      <Route path="/Vacation" element={<Navigate to="/MyArea?tab=urlaub" replace />} />
+      <Route path="/MyVacation" element={<Navigate to="/MyArea?tab=urlaub" replace />} />
+      <Route path="/Urlaub" element={<Navigate to="/MyArea?tab=urlaub" replace />} />
+
       {/* Zeiterfassung — /TimeManagement und /TimeTracking rendern beide TimeTracking */}
       <Route path="/TimeManagement" element={
         <LayoutWrapper currentPageName="TimeManagement">

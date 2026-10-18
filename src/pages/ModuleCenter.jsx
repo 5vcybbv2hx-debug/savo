@@ -72,7 +72,7 @@ const MODULE_REGISTRY = [
         icon: Calendar,
         color: 'bg-sky-600',
         category: 'planung',
-        page: 'Vacation',
+        page: 'MyArea?tab=urlaub',
         requires: ['mitarbeiter'],
     },
 

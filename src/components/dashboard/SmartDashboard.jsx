@@ -644,7 +644,7 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
         if (lowStockArticles.length > 0)
             list.push({ icon: TrendingDown, label: `${lowStockArticles.length} Artikel niedrig`, to: 'Articles', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' });
         if (pendingVacationRequests.length > 0)
-            list.push({ icon: Calendar, label: `${pendingVacationRequests.length} Urlaubsantrag`, to: 'Vacation', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/30' });
+            list.push({ icon: Calendar, label: `${pendingVacationRequests.length} Urlaubsantrag${pendingVacationRequests.length > 1 ? 'e' : ''}`, to: 'MyArea?tab=urlaub', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/30' });
         return list;
     }, [urgentMaintenance, lowStockArticles, pendingVacationRequests]);
 

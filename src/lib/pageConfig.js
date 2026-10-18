@@ -186,7 +186,7 @@ export const PAGE_REGISTRY = {
     permission: 'canViewOwnTimeEntries',
   },
   vacation: {
-    path: 'Vacation',
+    path: 'MyArea',
     displayName: 'Urlaub',
     shortName: 'Urlaub',
     icon: Palmtree,
