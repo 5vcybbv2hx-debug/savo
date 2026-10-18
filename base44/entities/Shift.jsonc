@@ -43,6 +43,11 @@
     "recurring_series_id": {
       "type": "string",
       "description": "ID der Schichtserie"
+    },
+    "clockin_reminder_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Erinnerungs-Push f\u00fcrs Einstempeln wurde gesendet"
     }
   },
   "required": [
