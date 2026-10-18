@@ -1,3 +1,9 @@
+/**
+ * TeamNotes — Notiz ans Management (BOTTOM-UP: Mitarbeiter → Management).
+ * Ersatz für den Papierzettel: Schnell-Erfassung oben, Liste darunter.
+ * Nicht-Manager lösen beim Senden automatisch eine Notification für Manager aus.
+ * Manager sehen dieselbe Liste und können antworten/löschen/anpinnen.
+ */
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
@@ -7,16 +13,17 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-    Plus, Pin, Check, Archive, Trash2, Edit3, ChevronDown, ChevronUp,
-    MessageSquare, Tag, ClipboardList
+    Pin, Check, Archive, Trash2, Edit3, ChevronDown, ChevronUp,
+    MessageSquare, Tag, Send, ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { haptics } from '@/components/utils/haptics';
+import { createNotification } from '@/utils/createNotification';
 
 const priorityConfig = {
     normal: { label: 'Normal', color: 'bg-slate-600 text-slate-200', dot: 'bg-slate-400' },
@@ -32,8 +39,6 @@ const categoryColors = {
     Gäste: 'text-green-400',
     Sonstiges: 'text-purple-400'
 };
-
-const FILTERS = ['alle', 'offen', 'wichtig', 'heute', 'angepinnt', 'erledigt'];
 
 function NoteCard({ note, isManager, currentUserEmail, onEdit, onDelete, onPin, onDone, onArchive, onConvertToTask }) {
     const [expanded, setExpanded] = useState(false);
@@ -51,12 +56,12 @@ function NoteCard({ note, isManager, currentUserEmail, onEdit, onDelete, onPin, 
     return (
         <Card className={cn(
             'border transition-all',
-            note.is_pinned ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-card',
+            note.is_pinned ? 'border-primary/30 bg-primary/5' : 'border-border bg-card',
             note.status === 'erledigt' && 'opacity-60'
         )}>
             <CardContent className="p-4">
                 <div className="flex items-start gap-2 mb-2">
-                    {note.is_pinned && <Pin className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />}
+                    {note.is_pinned && <Pin className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />}
                     <div className="flex-1 min-w-0">
                         {note.title && (
                             <p className="text-sm font-semibold text-foreground mb-0.5 truncate">{note.title}</p>
@@ -90,7 +95,7 @@ function NoteCard({ note, isManager, currentUserEmail, onEdit, onDelete, onPin, 
                         <Badge className={cn('text-xs px-2 py-0', prio.color)}>{prio.label}</Badge>
                     )}
                     {note.is_for_next_shift && (
-                        <Badge variant="outline" className="text-xs border-blue-500/40 text-blue-300">Nächste Schicht</Badge>
+                        <Badge variant="outline" className="text-xs border-primary/40 text-primary">Nächste Schicht</Badge>
                     )}
                     {note.status === 'erledigt' && (
                         <Badge variant="outline" className="text-xs border-green-500/40 text-green-300">Erledigt</Badge>
@@ -110,11 +115,11 @@ function NoteCard({ note, isManager, currentUserEmail, onEdit, onDelete, onPin, 
                     {isManager && (
                         <>
                             <Button size="sm" variant="ghost" onClick={() => onConvertToTask(note)}
-                                className="h-8 px-2 text-xs text-muted-foreground hover:text-blue-400">
+                                className="h-8 px-2 text-xs text-muted-foreground hover:text-primary">
                                 <ClipboardList className="w-3 h-3 mr-1" />Als Aufgabe
                             </Button>
                             <Button size="sm" variant="ghost" onClick={() => onPin(note)}
-                                className={cn('h-8 px-2 text-xs', note.is_pinned ? 'text-amber-400 hover:text-amber-300' : 'text-muted-foreground hover:text-amber-400')}>
+                                className={cn('h-8 px-2 text-xs', note.is_pinned ? 'text-primary hover:text-primary/80' : 'text-muted-foreground hover:text-primary')}>
                                 <Pin className="w-3 h-3 mr-1" />{note.is_pinned ? 'Ablösen' : 'Anpinnen'}
                             </Button>
                             {note.status !== 'erledigt' && (
@@ -154,28 +159,28 @@ function NoteForm({ initial, onSave, onClose, isManager }) {
     return (
         <div className="space-y-4">
             <div>
-                <Label className="text-sm">Nachricht *</Label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nachricht *</label>
                 <Textarea
                     value={form.message}
                     onChange={e => setForm({ ...form, message: e.target.value })}
-                    placeholder="Nachricht eingeben..."
+                    placeholder="Zettel schreiben…"
                     rows={4}
                     className="mt-1 text-base"
                     autoFocus
                 />
             </div>
             <div>
-                <Label className="text-sm">Titel (optional)</Label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Titel (optional)</label>
                 <Input
                     value={form.title}
                     onChange={e => setForm({ ...form, title: e.target.value })}
-                    placeholder="Kurzer Betreff..."
+                    placeholder="Kurzer Betreff…"
                     className="mt-1"
                 />
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <Label className="text-sm">Kategorie</Label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kategorie</label>
                     <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
                         <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -186,7 +191,7 @@ function NoteForm({ initial, onSave, onClose, isManager }) {
                     </Select>
                 </div>
                 <div>
-                    <Label className="text-sm">Priorität</Label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Priorität</label>
                     <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
                         <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -229,9 +234,13 @@ function NoteForm({ initial, onSave, onClose, isManager }) {
 
 export default function TeamNotes({ isManager, currentUser, compact = false }) {
     const queryClient = useQueryClient();
-    const [activeFilter, setActiveFilter] = useState('alle');
-    const [modalOpen, setModalOpen] = useState(false);
     const [editNote, setEditNote] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
+
+    // Schnell-Erfassung (Bottom-Up: Zettel schreiben)
+    const [quickText, setQuickText] = useState('');
+    const [quickName, setQuickName] = useState('');
+    const [sending, setSending] = useState(false);
 
     const { data: notes = [] } = useQuery({
         queryKey: ['team-notes'],
@@ -248,21 +257,62 @@ export default function TeamNotes({ isManager, currentUser, compact = false }) {
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.TeamNote.create(data),
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-notes'] }); toast.success('Notiz gespeichert'); },
-        onError: () => toast.error('Fehler beim Speichern')
+        onError: () => { haptics.error(); toast.error('Fehler beim Speichern'); }
     });
 
     const updateMutation = useMutation({
         mutationFn: ({ id, data }) => base44.entities.TeamNote.update(id, data),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['team-notes'] }),
-        onError: () => toast.error('Fehler beim Aktualisieren')
+        onError: () => { haptics.error(); toast.error('Fehler beim Aktualisieren'); }
     });
 
     const deleteMutation = useMutation({
         mutationFn: (id) => base44.entities.TeamNote.delete(id),
         onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team-notes'] }); toast.success('Notiz gelöscht'); },
-        onError: () => toast.error('Fehler beim Löschen')
+        onError: () => { haptics.error(); toast.error('Fehler beim Löschen'); }
     });
+
+    // Schnell-Erfassung: Textfeld → Senden → Notification für Manager
+    const handleQuickSend = async () => {
+        const msg = quickText.trim();
+        if (!msg) { haptics.error(); return; }
+        setSending(true);
+        try {
+            const authorName = quickName.trim() || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Anonym';
+            const created = await createMutation.mutateAsync({
+                message: msg,
+                title: null,
+                category: 'Allgemein',
+                priority: 'normal',
+                author_name: authorName,
+                author_email: currentUser?.email || '',
+                status: 'offen'
+            });
+
+            // Notification für Manager, wenn Nicht-Manager die Notiz erstellt
+            if (!isManager) {
+                try {
+                    await createNotification({
+                        type: 'alert',
+                        title: `Neue Team-Notiz von ${authorName}`,
+                        message: msg.length > 100 ? msg.slice(0, 100) + '…' : msg,
+                        category: 'admin',
+                        targetRoles: ['admin', 'Manager'],
+                        relatedId: created?.id,
+                    });
+                } catch { /* Notification ist Best-Effort — Notiz selbst ist gespeichert */ }
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['team-notes'] });
+            haptics.success();
+            toast.success('Notiz ans Management gesendet');
+            setQuickText('');
+            setQuickName('');
+        } catch {
+            // onError von createMutation übernimmt haptics.error + toast
+        } finally {
+            setSending(false);
+        }
+    };
 
     const handleSave = async (form) => {
         if (editNote) {
@@ -276,12 +326,27 @@ export default function TeamNotes({ isManager, currentUser, compact = false }) {
                 }
             });
         } else {
-            await createMutation.mutateAsync({
+            const authorName = currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Unbekannt';
+            const created = await createMutation.mutateAsync({
                 ...form,
-                author_name: currentUser?.full_name || currentUser?.email?.split('@')[0] || 'Unbekannt',
+                author_name: authorName,
                 author_email: currentUser?.email || '',
                 status: 'offen'
             });
+
+            // Notification für Manager bei Nicht-Manager-Erstellung
+            if (!isManager) {
+                try {
+                    await createNotification({
+                        type: 'alert',
+                        title: `Neue Team-Notiz von ${authorName}`,
+                        message: form.message.length > 100 ? form.message.slice(0, 100) + '…' : form.message,
+                        category: 'admin',
+                        targetRoles: ['admin', 'Manager'],
+                        relatedId: created?.id,
+                    });
+                } catch { /* Best-Effort */ }
+            }
         }
         setModalOpen(false);
         setEditNote(null);
@@ -309,82 +374,69 @@ export default function TeamNotes({ isManager, currentUser, compact = false }) {
             status: 'offen',
             created_by: note.author_name || note.author_email || ''
         });
-        // Notiz archivieren (kein Datenverlust, verschwindet aus aktiver Ansicht)
         await updateMutation.mutateAsync({ id: note.id, data: { status: 'archiviert' } });
-        toast.success('✅ Aufgabe erstellt — Notiz archiviert');
+        toast.success('Aufgabe erstellt — Notiz archiviert');
     };
 
-    const today = new Date().toISOString().split('T')[0];
-    const filtered = notes.filter(n => {
-        if (!isManager && n.is_manager_only) return false;
-        if (n.status === 'archiviert' && activeFilter !== 'archiviert') return false;
-        if (activeFilter === 'offen') return n.status === 'offen';
-        if (activeFilter === 'wichtig') return n.priority === 'wichtig' || n.priority === 'dringend';
-        if (activeFilter === 'heute') return n.created_date?.startsWith(today);
-        if (activeFilter === 'angepinnt') return n.is_pinned;
-        if (activeFilter === 'erledigt') return n.status === 'erledigt';
-        return true;
-    });
-
-    const sorted = [...filtered].sort((a, b) => {
+    // Nur aktive (nicht archivierte) Notizen, sortiert: gepinnt zuerst, dann neueste zuerst
+    const activeNotes = notes.filter(n => n.status !== 'archiviert' && (!n.is_manager_only || isManager));
+    const sorted = [...activeNotes].sort((a, b) => {
         if (a.is_pinned && !b.is_pinned) return -1;
         if (!a.is_pinned && b.is_pinned) return 1;
         return new Date(b.created_date) - new Date(a.created_date);
     });
-
-    const openCount = notes.filter(n => n.status === 'offen' && (!n.is_manager_only || isManager)).length;
-    const displayNotes = compact ? sorted.filter(n => n.status !== 'archiviert').slice(0, 3) : sorted;
+    const displayNotes = compact ? sorted.slice(0, 3) : sorted;
+    const openCount = activeNotes.filter(n => n.status === 'offen').length;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-primary" />
-                    <h2 className={cn('font-bold text-foreground', compact ? 'text-sm uppercase tracking-wide' : 'text-lg')}>
-                        Team-Notizen
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                    <h2 className={cn('font-bold text-foreground', compact ? 'text-sm uppercase tracking-wide' : 'text-base')}>
+                        Notiz ans Management
                     </h2>
                     {openCount > 0 && (
-                        <Badge className="bg-primary/20 text-primary border border-primary/30 text-xs">{openCount}</Badge>
+                        <Badge className="bg-primary/15 text-primary border border-primary/30 text-xs">{openCount}</Badge>
                     )}
                 </div>
-                <Button
-                    onClick={() => { setEditNote(null); setModalOpen(true); }}
-                    className="h-9 px-3 bg-primary text-primary-foreground text-xs"
-                >
-                    <Plus className="w-4 h-4 mr-1" />
-                    <span className="hidden sm:inline">Notiz senden</span>
-                    <span className="sm:hidden">+</span>
-                </Button>
             </div>
 
-            {/* Filter Chips – hidden in compact mode */}
+            {/* Schnell-Erfassung — Zettel schreiben, prominent oben */}
             {!compact && (
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    {FILTERS.map(f => (
-                        <button
-                            key={f}
-                            onClick={() => setActiveFilter(f)}
-                            className={cn(
-                                'flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
-                                activeFilter === f
-                                    ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-card text-muted-foreground border-border hover:border-primary/30'
-                            )}
-                        >
-                            {f === 'alle' ? 'Alle' :
-                             f === 'offen' ? 'Offen' :
-                             f === 'wichtig' ? '⚠ Wichtig' :
-                             f === 'heute' ? 'Heute' :
-                             f === 'angepinnt' ? '📌 Angepinnt' :
-                             f === 'erledigt' ? '✓ Erledigt' : f}
-                        </button>
-                    ))}
-                </div>
+                <Card className="border-border bg-card">
+                    <CardContent className="p-3 space-y-2">
+                        <Textarea
+                            value={quickText}
+                            onChange={e => setQuickText(e.target.value)}
+                            placeholder="Zettel schreiben…"
+                            rows={2}
+                            className="text-sm resize-none border-0 bg-transparent p-0 focus-visible:ring-0"
+                            autoFocus={false}
+                        />
+                        <div className="flex items-center gap-2">
+                            <Input
+                                value={quickName}
+                                onChange={e => setQuickName(e.target.value)}
+                                placeholder={currentUser?.full_name ? `(${currentUser.full_name.split(' ')[0]})` : 'Name (optional)'}
+                                className="h-9 text-xs flex-1"
+                            />
+                            <Button
+                                onClick={handleQuickSend}
+                                disabled={!quickText.trim() || sending}
+                                className="h-9 px-4 bg-primary text-primary-foreground text-xs gap-1.5"
+                            >
+                                <Send className="w-3.5 h-3.5" />
+                                {sending ? 'Sendet…' : 'Senden'}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
-            {/* Notes Feed */}
-            <div className="space-y-3">
+            {/* Notes Feed — neueste zuerst */}
+            <div className="space-y-2.5">
                 {displayNotes.map(note => (
                     <NoteCard
                         key={note.id}
@@ -399,24 +451,24 @@ export default function TeamNotes({ isManager, currentUser, compact = false }) {
                         onConvertToTask={handleConvertToTask}
                     />
                 ))}
-                {displayNotes.length === 0 && (
+                {displayNotes.length === 0 && !compact && (
                     <Card className="border-dashed border-border bg-card/50">
-                        <CardContent className="p-8 text-center">
-                            <MessageSquare className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-                            <p className="text-sm text-muted-foreground">Keine Nachrichten</p>
+                        <CardContent className="p-6 text-center">
+                            <MessageSquare className="w-8 h-8 mx-auto mb-2 text-muted-foreground opacity-40" />
+                            <p className="text-xs text-muted-foreground">Noch keine Notizen. Schreibe oben einen Zettel ans Management.</p>
                         </CardContent>
                     </Card>
                 )}
                 {compact && sorted.length > 3 && (
-                    <p className="text-xs text-center text-muted-foreground py-1">+{sorted.length - 3} weitere im Team-Tab</p>
+                    <p className="text-xs text-center text-muted-foreground py-1">+{sorted.length - 3} weitere</p>
                 )}
             </div>
 
-            {/* Modal */}
+            {/* Modal für Bearbeiten/detailliertes Anlegen */}
             <Dialog open={modalOpen} onOpenChange={(v) => { if (!v) { setModalOpen(false); setEditNote(null); } }}>
                 <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>{editNote ? 'Notiz bearbeiten' : 'Neue Notiz senden'}</DialogTitle>
+                        <DialogTitle>{editNote ? 'Notiz bearbeiten' : 'Notiz ans Management'}</DialogTitle>
                     </DialogHeader>
                     <NoteForm
                         initial={editNote}

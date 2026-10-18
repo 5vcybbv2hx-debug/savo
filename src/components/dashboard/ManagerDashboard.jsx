@@ -16,7 +16,6 @@ import ShiftSwapApprovalCard from '@/components/dashboard/ShiftSwapApprovalCard'
 import TodayBriefCard from '@/components/dashboard/TodayBriefCard';
 import TeamMeetingReminder from '@/components/dashboard/TeamMeetingReminder';
 import LegalStatusPanel from '@/components/legal/LegalStatusPanel';
-import TeamNotes from '@/components/dashboard/TeamNotes';
 import TimeApprovalPanel from '@/components/dashboard/TimeApprovalPanel';
 
 export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, clockEntry, hoursThisWeek, remainingVacationDays, myUpcomingShifts, currentUser, isManager = true, employees = [], shifts = [], events = [], reservations = [], todos = [], timeEntries = [], pendingTimeEntries: pendingTimeEntriesProp, vacationRequests = [], maintenanceTasks = [], shoppingList = [], articles = [], cleaningTasks = [] }) {
@@ -222,9 +221,6 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                 </div>
 
                 <TodayOverview shifts={todayShifts} events={todayEvents} reservations={todayReservations} employees={employees} maxItems={4} />
-
-                {/* Team-Notizen */}
-                <TeamNotes isManager={isManager} currentUser={currentUser} />
             </div>
         </div>
     );

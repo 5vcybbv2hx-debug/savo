@@ -24,7 +24,7 @@ import {
     Clock, ArrowRight, CheckSquare, Check, Sparkles, CalendarCheck,
     Users, Calendar, LogIn, LogOut, Wrench, TrendingDown,
     ShoppingCart, FileText, Package, RefreshCw, AlertTriangle,
-    ChevronRight, Timer, ShoppingBasket, Pause, Play, Coffee,
+    ChevronRight, ChevronDown, ChevronUp, Timer, ShoppingBasket, Pause, Play, Coffee,
     Euro, Clock3, BarChart3
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
@@ -365,61 +365,28 @@ function TodoWidget({ todos }) {
 function TodayTab({ currentUser, currentEmployee, permissions, employees, todayEvents, todayReservations, todayShifts, myTodos, isManager, lowStockCount, openOrdersCount, openQuickListCount, openRestockCount, dailyClosingDone }) {
 
     const myShift = todayShifts.find(s => s.employee_id === currentEmployee?.id);
-    const birthdaysToday = employees.filter(e => e.birthday?.slice(5) === format(new Date(), 'MM-dd'));
+    const [moreOpen, setMoreOpen] = useState(false);
+
+    // Sammle "Rest"-Items für aufklappbaren Bereich
+    const hasMore = (
+        (currentEmployee && !currentEmployee.sig_employee) ||
+        (permissions.canViewAnalytics) ||
+        (permissions.canViewRestock && openRestockCount > 0) ||
+        (permissions.canViewShopping && openOrdersCount > 0) ||
+        (permissions.canViewShopping && openQuickListCount > 0) ||
+        (lowStockCount > 0) ||
+        (todayEvents.length > 0) ||
+        (todayReservations.length > 0) ||
+        (employees.some(e => { if (!e.birthday) return false; const [,m,d] = e.birthday.split('-'); const next = new Date(new Date().getFullYear(), parseInt(m)-1, parseInt(d)); if (next < new Date(new Date().setHours(0,0,0,0))) next.setFullYear(next.getFullYear()+1); return Math.round((next - new Date(new Date().setHours(0,0,0,0))) / 86400000) <= 7; }))
+    );
 
     return (
-        <div className="space-y-5">
-
-            {/* Unterschrift Banner */}
-            {currentEmployee && !currentEmployee.sig_employee && (
-                <Link to={createPageUrl('Employees') + `?employee=${currentEmployee.id}`}>
-                    <Card className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/15 transition-colors">
-                        <CardContent className="p-3 flex items-center gap-3">
-                            <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                            <p className="text-sm font-medium text-blue-400 flex-1">Unterschrift erforderlich</p>
-                            <ArrowRight className="w-4 h-4 text-blue-400 shrink-0" />
-                        </CardContent>
-                    </Card>
-                </Link>
-            )}
-
-            {/* Klamotten-Bestellaktion — zeitlich begrenzt */}
-            <ClothingOrderCard currentEmployee={currentEmployee} isManager={isManager} />
-
-            {/* Stempeluhr — erste Priorität */}
-            <NewsPanel currentUser={currentUser} currentEmployee={currentEmployee} isManager={isManager} employees={employees} />
+        <div className="space-y-4">
+            {/* 1. Stempeluhr-Karte */}
             {currentEmployee && <ClockCard currentEmployee={currentEmployee} />}
             <ActiveClockPanel currentEmployee={currentEmployee} employees={employees} />
 
-            {/* Tagesabschluss — Kurzweg für Manager (canViewAnalytics) */}
-            {permissions.canViewAnalytics && (
-                <Link to={createPageUrl('DailyAnalysis')}>
-                    <Card className={cn(
-                        'border card-pressable transition-colors',
-                        dailyClosingDone
-                            ? 'bg-card border-border/50 opacity-60'
-                            : 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/15'
-                    )}>
-                        <CardContent className="p-3 flex items-center gap-3">
-                            <div className={cn(
-                                'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                                dailyClosingDone ? 'bg-muted text-muted-foreground' : 'bg-amber-500/20 text-amber-400'
-                            )}>
-                                <BarChart3 className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-foreground">Tagesabschluss</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {dailyClosingDone ? 'Erledigt ✓' : 'Heute noch offen'}
-                                </p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                        </CardContent>
-                    </Card>
-                </Link>
-            )}
-
-            {/* Meine Schicht */}
+            {/* 2. Meine Schicht heute */}
             {currentEmployee && (
                 <div>
                     <SectionHeader label="Meine Schicht heute" to="Calendar" linkLabel="Schichtplan" />
@@ -447,46 +414,116 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                 </div>
             )}
 
-            {/* Schichttausch-Posteingang */}
-            {currentEmployee && <ShiftSwapInboxCard currentEmployee={currentEmployee} />}
+            {/* 3. NewsPanel — Infos & Aufgaben vom Chef (TOP-DOWN) */}
+            <NewsPanel currentUser={currentUser} currentEmployee={currentEmployee} isManager={isManager} employees={employees} />
 
-            {/* Meine Aufgaben */}
+            {/* 4. Meine Aufgaben */}
             {myTodos.length > 0 && (
                 <TodoWidget todos={myTodos} />
             )}
 
-            {/* Waren & Lager — kompakte Einzeiler, nur bei offenen Items */}
-            {permissions.canViewRestock && openRestockCount > 0 && (
-                <CompactRow to="Restock" icon={RefreshCw} label="Auffüllliste" count={openRestockCount} countLabel="offen" />
-            )}
-            {permissions.canViewShopping && openOrdersCount > 0 && (
-                <CompactRow to="Shopping" icon={ShoppingCart} label="Bestellungen" count={openOrdersCount} countLabel="offen" />
-            )}
-            {permissions.canViewShopping && openQuickListCount > 0 && (
-                <CompactRow to="QuickList" icon={ShoppingBasket} label="Einkaufsliste" count={openQuickListCount} countLabel="offen" />
-            )}
-            {lowStockCount > 0 && (
-                <CompactRow to="Articles" icon={AlertTriangle} label="Niedriger Bestand" count={lowStockCount} countLabel="Artikel" />
-            )}
+            {/* 5. TeamNotes — Notiz ans Management (BOTTOM-UP) */}
+            <TeamNotes isManager={isManager} currentUser={currentUser} compact={false} />
 
-            {/* Geburtstage */}
-            {employees.some(e => { if (!e.birthday) return false; const [,m,d] = e.birthday.split('-'); const next = new Date(new Date().getFullYear(), parseInt(m)-1, parseInt(d)); if (next < new Date(new Date().setHours(0,0,0,0))) next.setFullYear(next.getFullYear()+1); return Math.round((next - new Date(new Date().setHours(0,0,0,0))) / 86400000) <= 7; }) && (
-                <UpcomingBirthdaysWidget employees={employees} />
-            )}
-
-            {/* Events heute — kompakter Einzeiler */}
-            {todayEvents.length > 0 && (
-                <CompactRow to="Events" icon={Sparkles} label="Events heute" count={todayEvents.length} countLabel="Event" />
-            )}
-
-            {/* Reservierungen — kompakter Einzeiler */}
-            {todayReservations.length > 0 && (
-                <CompactRow to="GuestHub" icon={CalendarCheck} label="Reservierungen heute" count={todayReservations.length} countLabel="Buchung" />
-            )}
-
-            {/* Team heute — kompakter Einzeiler */}
+            {/* 6. Team heute — kompakter Einzeiler */}
             {todayShifts.length > 0 && (
                 <CompactRow to="Calendar" icon={Users} label="Team heute" count={todayShifts.length} countLabel="Schicht" />
+            )}
+
+            {/* 7. Schichtwechsel-Inbox */}
+            {currentEmployee && <ShiftSwapInboxCard currentEmployee={currentEmployee} />}
+
+            {/* 8. Mehr anzeigen — aufklappbarer Rest (standardmäßig zu) */}
+            {hasMore && (
+                <div className="space-y-3">
+                    <button
+                        onClick={() => setMoreOpen(!moreOpen)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-xl border border-border/50 bg-card/50"
+                    >
+                        {moreOpen ? (
+                            <><ChevronUp className="w-3.5 h-3.5" />Weniger anzeigen</>
+                        ) : (
+                            <><ChevronDown className="w-3.5 h-3.5" />Mehr anzeigen</>
+                        )}
+                    </button>
+
+                    {moreOpen && (
+                        <div className="space-y-3 animate-fade-in">
+                            {/* Unterschrift Banner */}
+                            {currentEmployee && !currentEmployee.sig_employee && (
+                                <Link to={createPageUrl('Employees') + `?employee=${currentEmployee.id}`}>
+                                    <Card className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/15 transition-colors">
+                                        <CardContent className="p-3 flex items-center gap-3">
+                                            <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                                            <p className="text-sm font-medium text-blue-400 flex-1">Unterschrift erforderlich</p>
+                                            <ArrowRight className="w-4 h-4 text-blue-400 shrink-0" />
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            )}
+
+                            {/* Klamotten-Bestellaktion */}
+                            <ClothingOrderCard currentEmployee={currentEmployee} isManager={isManager} />
+
+                            {/* Tagesabschluss */}
+                            {permissions.canViewAnalytics && (
+                                <Link to={createPageUrl('DailyAnalysis')}>
+                                    <Card className={cn(
+                                        'border card-pressable transition-colors',
+                                        dailyClosingDone
+                                            ? 'bg-card border-border/50 opacity-60'
+                                            : 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/15'
+                                    )}>
+                                        <CardContent className="p-3 flex items-center gap-3">
+                                            <div className={cn(
+                                                'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                                                dailyClosingDone ? 'bg-muted text-muted-foreground' : 'bg-amber-500/20 text-amber-400'
+                                            )}>
+                                                <BarChart3 className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-foreground">Tagesabschluss</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {dailyClosingDone ? 'Erledigt ✓' : 'Heute noch offen'}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            )}
+
+                            {/* Waren & Lager — kompakte Einzeiler */}
+                            {permissions.canViewRestock && openRestockCount > 0 && (
+                                <CompactRow to="Restock" icon={RefreshCw} label="Auffüllliste" count={openRestockCount} countLabel="offen" />
+                            )}
+                            {permissions.canViewShopping && openOrdersCount > 0 && (
+                                <CompactRow to="Shopping" icon={ShoppingCart} label="Bestellungen" count={openOrdersCount} countLabel="offen" />
+                            )}
+                            {permissions.canViewShopping && openQuickListCount > 0 && (
+                                <CompactRow to="QuickList" icon={ShoppingBasket} label="Einkaufsliste" count={openQuickListCount} countLabel="offen" />
+                            )}
+                            {lowStockCount > 0 && (
+                                <CompactRow to="Articles" icon={AlertTriangle} label="Niedriger Bestand" count={lowStockCount} countLabel="Artikel" />
+                            )}
+
+                            {/* Events heute */}
+                            {todayEvents.length > 0 && (
+                                <CompactRow to="Events" icon={Sparkles} label="Events heute" count={todayEvents.length} countLabel="Event" />
+                            )}
+
+                            {/* Reservierungen heute */}
+                            {todayReservations.length > 0 && (
+                                <CompactRow to="GuestHub" icon={CalendarCheck} label="Reservierungen heute" count={todayReservations.length} countLabel="Buchung" />
+                            )}
+
+                            {/* Geburtstage */}
+                            {employees.some(e => { if (!e.birthday) return false; const [,m,d] = e.birthday.split('-'); const next = new Date(new Date().getFullYear(), parseInt(m)-1, parseInt(d)); if (next < new Date(new Date().setHours(0,0,0,0))) next.setFullYear(next.getFullYear()+1); return Math.round((next - new Date(new Date().setHours(0,0,0,0))) / 86400000) <= 7; }) && (
+                                <UpcomingBirthdaysWidget employees={employees} />
+                            )}
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );
@@ -497,7 +534,6 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
 function TeamTab({ employees, todayShifts, currentUser, isManager }) {
     return (
         <div className="space-y-5">
-            <TeamNotes isManager={isManager} currentUser={currentUser} />
             <div>
                 <SectionHeader label={`Team heute (${todayShifts.length} Schichten)`} to="Calendar" />
                 {todayShifts.length === 0 ? (

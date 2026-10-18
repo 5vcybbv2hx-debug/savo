@@ -1,5 +1,5 @@
 /**
- * NewsPanel — News & Heute-Aufgaben über der Stempeluhr.
+ * NewsPanel — Infos & Aufgaben vom Chef (TOP-DOWN: Chef → Team).
  * Manager können News/Tasks anlegen, alle sehen sie beim Einstempeln.
  * Tasks können abgehakt werden, wiederkehrende Tasks erscheinen automatisch neu.
  */
@@ -89,7 +89,7 @@ function NewsEditor({ open, onClose, editItem, currentUser, employees }) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['news-items'] });
-            toast.success(editItem ? 'News aktualisiert' : 'News erstellt');
+            toast.success(editItem ? 'Aktualisiert' : 'An das Team gesendet');
             onClose();
         },
         onError: (err) => toast.error('Fehler: ' + (err.message || 'Speichern fehlgeschlagen')),
@@ -108,7 +108,7 @@ function NewsEditor({ open, onClose, editItem, currentUser, employees }) {
                     </div>
                     <div className="flex-1">
                         <h3 className="text-base font-bold text-foreground">
-                            {editItem ? 'News bearbeiten' : 'News / Aufgabe erstellen'}
+                            {editItem ? 'Bearbeiten' : 'An das Team senden'}
                         </h3>
                         <p className="text-xs text-muted-foreground">{format(new Date(), 'dd.MM.yyyy', { locale: de })}</p>
                     </div>
@@ -351,10 +351,10 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
                         <div className="flex items-center gap-2">
                             <Newspaper className="w-4 h-4 text-primary" />
                             <p className="text-sm font-semibold text-foreground">
-                                {newsCount > 0 && `${newsCount} News`}
+                                {newsCount > 0 && `${newsCount} Info${newsCount > 1 ? 's' : ''}`}
                                 {newsCount > 0 && taskCount > 0 && ' · '}
                                 {taskCount > 0 && `${taskCount} Aufgabe${taskCount > 1 ? 'n' : ''}`}
-                                {newsCount === 0 && taskCount === 0 && 'News & Aufgaben'}
+                                {newsCount === 0 && taskCount === 0 && 'Infos & Aufgaben vom Chef'}
                             </p>
                         </div>
                         {isManager && (
@@ -375,7 +375,7 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
                     {/* Items */}
                     {visibleItems.length === 0 ? (
                         <p className="text-xs text-muted-foreground text-center py-3">
-                            Noch keine News. {isManager ? 'Klicke "Neu" um eine zu erstellen.' : ''}
+                            Noch keine Infos. {isManager ? 'Tippe "Neu" um eine an das Team zu senden.' : ''}
                         </p>
                     ) : (
                         <div className="space-y-1.5">
