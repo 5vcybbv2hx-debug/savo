@@ -74,6 +74,11 @@
     "arbzg_warning": {
       "type": "string",
       "description": "ArbZG Warnung falls vorhanden"
+    },
+    "ausstempel_reminder_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Ausstempel-Erinnerung wurde gesendet"
     }
   },
   "required": [

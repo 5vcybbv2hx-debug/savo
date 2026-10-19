@@ -1,13 +1,13 @@
 {
-  "name": "Ausstempel-Erinnerung (05:30)",
-  "description": "T\u00e4glich 05:30 Uhr: Push an alle noch eingestempelten Mitarbeiter (ClockEntry status clocked_in/on_break) \u2014 nach der letzten Schichtende um 05:00.",
+  "name": "Ausstempel-Check (nachts)",
+  "description": "Nachts alle 30 Min (22:00-06:59): Schichtplan-abh\u00e4ngige Ausstempel-Erinnerung \u2014 pro Mitarbeiter ~45-75 Min nach pers\u00f6nlichem Schichtende.",
   "trigger": {
     "condition": null,
     "config": {
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "30 5 * * *",
+      "cron_expression": "*/30 22-23,0-6 * * *",
       "one_time_date": null,
       "timezone": "Europe/Berlin",
       "interval_value": null,
@@ -21,7 +21,7 @@
   "definition": {
     "document": {
       "dsl": "1.0.0",
-      "name": "ausstempel_erinnerung_0530",
+      "name": "ausstempel_check_nachts",
       "version": "1.0",
       "namespace": "base44"
     },
