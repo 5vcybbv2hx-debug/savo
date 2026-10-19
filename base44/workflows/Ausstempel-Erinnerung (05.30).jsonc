@@ -1,13 +1,13 @@
 {
-  "name": "Wartungs-Alarm (09:00)",
-  "description": "T\u00e4glich 09:00 Uhr: Push an Manager/Orga, wenn \u00fcberf\u00e4llige Wartungsaufgaben existieren.",
+  "name": "Ausstempel-Erinnerung (05:30)",
+  "description": "T\u00e4glich 05:30 Uhr: Push an alle noch eingestempelten Mitarbeiter (ClockEntry status clocked_in/on_break) \u2014 nach der letzten Schichtende um 05:00.",
   "trigger": {
     "condition": null,
     "config": {
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "0 9 * * *",
+      "cron_expression": "30 5 * * *",
       "one_time_date": null,
       "timezone": "Europe/Berlin",
       "interval_value": null,
@@ -21,7 +21,7 @@
   "definition": {
     "document": {
       "dsl": "1.0.0",
-      "name": "wartungs_alarm_0900",
+      "name": "ausstempel_erinnerung_0530",
       "version": "1.0",
       "namespace": "base44"
     },
@@ -30,7 +30,7 @@
         "run_function": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "notifyOverdueMaintenance",
+            "function_name": "notifyOpenClockSessions",
             "args": {}
           },
           "then": "end"
