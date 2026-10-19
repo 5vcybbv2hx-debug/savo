@@ -1,40 +1,47 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
+const URL_SHIFT_SWAPS = 'https://bar-shift-pro-fc3522b9.base44.app/ShiftSwaps';
 
-async function pushToEmployees(employeeIds, title, message) {
+async function pushToEmployees(employeeIds, title, message, url) {
     if (!employeeIds || employeeIds.length === 0) return null;
     const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY_2');
     if (!apiKey) throw new Error('OneSignal API-Key fehlt (ONESIGNAL_REST_API_KEY_2)');
+    const payload = {
+        app_id: ONESIGNAL_APP_ID,
+        include_aliases: { external_id: employeeIds.map(String) },
+        target_channel: 'push',
+        headings: { en: title, de: title },
+        contents: { en: message, de: message }
+    };
+    if (url) payload.url = url;
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${apiKey}` },
-        body: JSON.stringify({
-            app_id: ONESIGNAL_APP_ID,
-            include_aliases: { external_id: employeeIds.map(String) },
-            target_channel: 'push',
-            headings: { en: title, de: title },
-            contents: { en: message, de: message }
-        })
+        body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (!res.ok) {
         const errStr = JSON.stringify(data);
-        // invalid_aliases = Gerät evtl. nicht registriert → kein Fehler
         if (/invalid_aliases/i.test(errStr)) return { skipped: true, reason: 'invalid_aliases' };
         throw new Error(`OneSignal API error: ${errStr}`);
     }
     return data;
 }
 
-async function pushToEmployee(employeeId, title, message) {
+async function pushToEmployee(employeeId, title, message, url) {
     if (!employeeId) return null;
-    return pushToEmployees([employeeId], title, message);
+    return pushToEmployees([employeeId], title, message, url);
 }
 
 async function getManagerIds(base44) {
     const employees = await base44.asServiceRole.entities.Employee.filter({ is_active: true });
     return employees.filter(e => e.role === 'Manager' || e.role === 'Orga').map(e => e.id);
+}
+
+async function getAllActiveEmployeeIds(base44, excludeId) {
+    const employees = await base44.asServiceRole.entities.Employee.filter({ is_active: true });
+    return employees.filter(e => e.id !== excludeId).map(e => e.id);
 }
 
 function formatDate(dateStr) {
@@ -57,21 +64,23 @@ Deno.serve(async (req) => {
 
         if (isCreate) {
             const requesterName = data.requesting_employee_name || 'Ein Kollege';
+            const requesterId = data.requesting_employee_id;
             const shiftDate = formatDate(data.shift_date || data.date);
             const targetEmployeeId = data.target_employee_id;
             const targetName = data.target_employee_name || 'seinem Kollegen';
             const managerIds = await getManagerIds(base44);
 
             if (!targetEmployeeId) {
-                // Offenes Tauschmarkt-Angebot → Manager/Orga benachrichtigen
-                const title = '🔄 Neues Tauschmarkt-Angebot';
-                const message = `${requesterName} bietet die Schicht${shiftDate ? ` am ${shiftDate}` : ''} zur Übernahme an.`;
+                // Offenes Tauschmarkt-Angebot → ALLE aktiven Mitarbeiter (außer Anfrager) + Manager-Notification
+                const title = '🔄 Schicht im Tauschmarkt';
+                const message = `${requesterName} bietet die Schicht${shiftDate ? ` am ${shiftDate}` : ''} zur Übernahme an — schau im Tauschmarkt vorbei.`;
                 await base44.asServiceRole.entities.Notification.create({
                     type: 'general', category: 'schicht', title, message,
                     related_id: data.id, target_roles: ['Manager'], read_by: []
                 });
-                await pushToEmployees(managerIds, title, message);
-                return Response.json({ success: true, action: 'marketplace_notified_managers' });
+                const allIds = await getAllActiveEmployeeIds(base44, requesterId);
+                await pushToEmployees(allIds, title, message, URL_SHIFT_SWAPS);
+                return Response.json({ success: true, action: 'marketplace_notified_all_employees', notified: allIds.length });
             }
 
             // Direkter Tausch → Ziel-Mitarbeiter + Manager/Orga benachrichtigen
@@ -81,7 +90,7 @@ Deno.serve(async (req) => {
                 type: 'general', category: 'schicht', title: targetTitle, message: targetMsg,
                 related_id: data.id, recipient_id: targetEmployeeId, read_by: []
             });
-            await pushToEmployee(targetEmployeeId, targetTitle, targetMsg);
+            await pushToEmployee(targetEmployeeId, targetTitle, targetMsg, URL_SHIFT_SWAPS);
 
             const mgrTitle = '🔄 Direkter Schichttausch';
             const mgrMsg = `${requesterName} hat ${targetName} zum direkten Schichttausch${shiftDate ? ` am ${shiftDate}` : ''} gebeten.`;
@@ -89,7 +98,7 @@ Deno.serve(async (req) => {
                 type: 'general', category: 'schicht', title: mgrTitle, message: mgrMsg,
                 related_id: data.id, target_roles: ['Manager'], read_by: []
             });
-            await pushToEmployees(managerIds, mgrTitle, mgrMsg);
+            await pushToEmployees(managerIds, mgrTitle, mgrMsg, URL_SHIFT_SWAPS);
 
             return Response.json({ success: true, action: 'direct_notified_target_and_managers' });
         }
@@ -118,7 +127,7 @@ Deno.serve(async (req) => {
                         related_id: data.id, target_roles: ['Manager'], read_by: []
                     });
                 }
-                await pushToEmployees(managerIds, title, message);
+                await pushToEmployees(managerIds, title, message, URL_SHIFT_SWAPS);
                 actions.push('notified_managers_approval');
             }
 
@@ -135,7 +144,7 @@ Deno.serve(async (req) => {
                         type: 'general', category: 'schicht', title, message,
                         related_id: data.id, recipient_id: requestingEmployeeId, read_by: []
                     });
-                    await pushToEmployee(requestingEmployeeId, title, message);
+                    await pushToEmployee(requestingEmployeeId, title, message, URL_SHIFT_SWAPS);
                     actions.push('notified_requester');
                 }
             }

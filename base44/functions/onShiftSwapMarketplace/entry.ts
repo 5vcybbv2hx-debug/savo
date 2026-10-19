@@ -1,35 +1,37 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
+const URL_SHIFT_SWAPS = 'https://bar-shift-pro-fc3522b9.base44.app/ShiftSwaps';
 
-async function pushToEmployees(employeeIds, title, message) {
+async function pushToEmployees(employeeIds, title, message, url) {
     if (!employeeIds || employeeIds.length === 0) return null;
     const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY_2');
     if (!apiKey) throw new Error('OneSignal API-Key fehlt (ONESIGNAL_REST_API_KEY_2)');
+    const payload = {
+        app_id: ONESIGNAL_APP_ID,
+        include_aliases: { external_id: employeeIds.map(String) },
+        target_channel: 'push',
+        headings: { en: title, de: title },
+        contents: { en: message, de: message }
+    };
+    if (url) payload.url = url;
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${apiKey}` },
-        body: JSON.stringify({
-            app_id: ONESIGNAL_APP_ID,
-            include_aliases: { external_id: employeeIds.map(String) },
-            target_channel: 'push',
-            headings: { en: title, de: title },
-            contents: { en: message, de: message }
-        })
+        body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (!res.ok) {
         const errStr = JSON.stringify(data);
-        // invalid_aliases = Gerät evtl. nicht registriert → kein Fehler
         if (/invalid_aliases/i.test(errStr)) return { skipped: true, reason: 'invalid_aliases' };
         throw new Error(`OneSignal API error: ${errStr}`);
     }
     return data;
 }
 
-async function pushToEmployee(employeeId, title, message) {
+async function pushToEmployee(employeeId, title, message, url) {
     if (!employeeId) return null;
-    return pushToEmployees([employeeId], title, message);
+    return pushToEmployees([employeeId], title, message, url);
 }
 
 async function getManagerIds(base44) {
@@ -48,7 +50,6 @@ Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
-        // Robust gegen beide Aufruf-Shapes (Workflow vs. direkter Aufruf)
         const data = body?.args?.data || body?.data || body?.args || body || {};
 
         const swapRequestId = data.swap_request_id;
@@ -56,7 +57,6 @@ Deno.serve(async (req) => {
 
         if (!swapRequestId) return Response.json({ message: 'No swap_request_id' });
 
-        // Zugehörige SwapRequest laden (Owner + Datum)
         const swapRequest = await base44.asServiceRole.entities.ShiftSwapRequest.get(swapRequestId);
         if (!swapRequest) return Response.json({ message: 'SwapRequest not found' });
 
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
             type: 'general', category: 'schicht', title: mgrTitle, message: mgrMsg,
             related_id: swapRequestId, target_roles: ['Manager'], read_by: []
         });
-        await pushToEmployees(managerIds, mgrTitle, mgrMsg);
+        await pushToEmployees(managerIds, mgrTitle, mgrMsg, URL_SHIFT_SWAPS);
 
         // 2. Push an den Anbieter (Requester)
         let ownerNotified = false;
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
                 type: 'general', category: 'schicht', title: ownerTitle, message: ownerMsg,
                 related_id: swapRequestId, recipient_id: ownerId, read_by: []
             });
-            await pushToEmployee(ownerId, ownerTitle, ownerMsg);
+            await pushToEmployee(ownerId, ownerTitle, ownerMsg, URL_SHIFT_SWAPS);
             ownerNotified = true;
         }
 

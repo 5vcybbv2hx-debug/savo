@@ -1,0 +1,34 @@
+{
+  "name": "Push: Neue Team-Info",
+  "description": "Push an alle aktiven Mitarbeiter, wenn ein aktives NewsItem erstellt wird.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "NewsItem"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "push_neue_team_info",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onTeamNewsCreated",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}

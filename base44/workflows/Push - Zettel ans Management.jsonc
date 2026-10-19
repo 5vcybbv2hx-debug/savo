@@ -1,0 +1,34 @@
+{
+  "name": "Push: Zettel ans Management",
+  "description": "Push an alle Manager/Orga, wenn eine nicht-manager-only TeamNote erstellt wird.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "TeamNote"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "push_zettel_ans_management",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "onTeamNoteCreated",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  }
+}
