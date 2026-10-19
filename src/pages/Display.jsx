@@ -825,14 +825,17 @@ export function NeonFrame({ color = SAVO_BLUE }) {
   const s = {
     position: 'absolute', width: 'clamp(36px,5vw,72px)', height: 'clamp(36px,5vw,72px)',
     borderStyle: 'solid', borderColor: color, borderWidth: 0,
-    boxShadow: `0 0 10px ${color}, 0 0 20px ${color}55`, pointerEvents: 'none', zIndex: 6,
+    // drop-shadow folgt der gemalten L-Form (nur die sichtbaren Kanten leuchten),
+    // boxShadow würde die unsichtbare Box umleuchten → leuchtende Quadrate.
+    filter: `drop-shadow(0 0 5px ${color}) drop-shadow(0 0 12px ${color}66)`,
+    pointerEvents: 'none', zIndex: 6,
   };
   return (
     <>
-      <div style={{ ...s, top: '3%', left: '3%', borderTopWidth: 3, borderLeftWidth: 3 }} />
-      <div style={{ ...s, top: '3%', right: '3%', borderTopWidth: 3, borderRightWidth: 3 }} />
-      <div style={{ ...s, bottom: '3%', left: '3%', borderBottomWidth: 3, borderLeftWidth: 3 }} />
-      <div style={{ ...s, bottom: '3%', right: '3%', borderBottomWidth: 3, borderRightWidth: 3 }} />
+      <div style={{ ...s, top: '2%', left: '2%', borderTopWidth: 2.5, borderLeftWidth: 2.5 }} />
+      <div style={{ ...s, top: '2%', right: '2%', borderTopWidth: 2.5, borderRightWidth: 2.5 }} />
+      <div style={{ ...s, bottom: '2%', left: '2%', borderBottomWidth: 2.5, borderLeftWidth: 2.5 }} />
+      <div style={{ ...s, bottom: '2%', right: '2%', borderBottomWidth: 2.5, borderRightWidth: 2.5 }} />
     </>
   );
 }
