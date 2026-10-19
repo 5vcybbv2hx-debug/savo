@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
 
-async function pushToEmployees(employeeIds, title, message) {
+async function pushToEmployees(employeeIds, title, message, url) {
     if (!employeeIds || employeeIds.length === 0) return;
     const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY_2');
     if (!apiKey) throw new Error('OneSignal API-Key fehlt (ONESIGNAL_REST_API_KEY_2)');
@@ -17,7 +17,8 @@ async function pushToEmployees(employeeIds, title, message) {
             include_aliases: { external_id: employeeIds.map(String) },
             target_channel: 'push',
             headings: { en: title, de: title },
-            contents: { en: message, de: message }
+            contents: { en: message, de: message },
+            url
         })
     });
     const data = await res.json();
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
             }
         }
 
-        await pushToEmployees(employeeIds, title, message);
+        await pushToEmployees(employeeIds, title, message, 'https://bar-shift-pro-fc3522b9.base44.app/GuestHub');
 
         return Response.json({ ok: true, notified: employeeIds.length });
     } catch (error) {
