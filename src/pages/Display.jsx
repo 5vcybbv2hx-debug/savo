@@ -841,7 +841,12 @@ export function NeonFrame({ color = SAVO_BLUE }) {
 }
 
 // ── SAVO Logo (Bebas + Jost) ──────────────────────────────────────────────────
-export function SavoLogo() {
+export function SavoLogo({ showBrand = true }) {
+  // Das zentrierte SAVO-Logo wird im TV-Betrieb NICHT mehr gezeigt (dort dient das
+  // companyLogo oben links als Branding). Für den Instagram-Export bleibt es erhalten,
+  // da im Export kein companyLogo-Overlay existiert → showBrand wird dort nicht gesetzt (default true),
+  // im TV-Render wird explizit showBrand={false} übergeben.
+  if (!showBrand) return null;
   return (
     <div style={{ position: 'absolute', top: 'clamp(14px,2.5vh,36px)', left: '50%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 5 }}>
       <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: 'clamp(1.8rem,3.5vw,3rem)', color: SAVO_BLUE, letterSpacing: '0.1em', textShadow: `0 0 18px ${SAVO_BLUE},0 0 36px ${SAVO_BLUE}55`, lineHeight: 1 }}>SAVO</div>
@@ -971,7 +976,7 @@ function AmbientScreen() {
 export function SlideAnnouncement({ slide, accent, theme }) {
   const isDiscoParty = theme === 'disco' || theme === 'party';
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: isDiscoParty ? 'flex-end' : 'center', alignItems: 'center', height: '100%', padding: isDiscoParty ? '40px 100px 120px' : '80px 120px', textAlign: 'center', gap: 28 }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: isDiscoParty ? 'flex-end' : 'center', alignItems: 'center', height: '100%', padding: isDiscoParty ? 'clamp(56px,9vh,110px) 100px clamp(48px,8vh,96px)' : 'clamp(56px,9vh,110px) 120px clamp(48px,8vh,96px)', textAlign: 'center', gap: 'clamp(16px,3vh,32px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} prominentDisco={isDiscoParty} />
       <NeonFrame />
@@ -1002,12 +1007,12 @@ export function SlideQR({ slideId }) {
             <div style={{ background: '#fff', padding: 8, borderRadius: 12, boxShadow: '0 10px 40px rgba(0,0,0,0.6)', display: 'inline-block' }}>
                 <img src={qr} alt="QR-Code: Event-Details" style={{ width: 140, height: 140, display: 'block' }} />
             </div>
-            <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.6)', marginTop: 8, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Mehr Infos</div>
+            <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.6)', marginTop: 8, marginBottom: 'clamp(12px,2vh,24px)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Mehr Infos</div>
         </div>
     );
 }
 
-export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16' }) {
+export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16', showBrand = true }) {
   const titleLen = (slide.title || '').length;
   const titleFont = titleLen > 18 ? 'clamp(2.4rem,4.6vw,4rem)' : titleLen > 12 ? 'clamp(3rem,6vw,5rem)' : titleLen > 8 ? 'clamp(3.5rem,7.5vw,6.5rem)' : 'clamp(4rem,9vw,8rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
@@ -1016,11 +1021,11 @@ export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16' }) {
   const ts = [slide.event_time, slide.event_end_time].filter(Boolean).join(' – ') + (slide.event_time ? ' Uhr' : '');
   const isCompact = aspectRatio === '1/1' || aspectRatio === '4/5';
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: 'clamp(32px,6vh,80px) clamp(48px,7vw,120px)', textAlign: 'center', gap: 32 }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: 'clamp(56px,9vh,110px) clamp(48px,7vw,120px) clamp(48px,8vh,96px)', textAlign: 'center', gap: 'clamp(16px,3vh,32px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} />
       <NeonFrame />
-      <SavoLogo />
+      <SavoLogo showBrand={showBrand} />
       <SpotlightStreak color={accent.bg} />
       <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 2, animation: 'slideInUp 0.6s 0.1s both' }}>
         <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
@@ -1066,7 +1071,7 @@ export function SlideDrinkSpecial({ slide, accent, theme }) {
   if (!drinks.length) drinks = [{ name: slide.title, price: slide.price_info, emoji: '🍹' }];
   const valid = drinks.filter(d => d && d.name);
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '60px 80px', textAlign: 'center', gap: 32 }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: 'clamp(56px,9vh,110px) 80px clamp(48px,8vh,96px)', textAlign: 'center', gap: 'clamp(16px,3vh,32px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} />
       <ShimmerBars color={accent.bg} />
@@ -1095,7 +1100,7 @@ export function SlideCountdown({ slide, accent, theme }) {
   const target = parseISO(slide.event_date + (slide.event_time ? 'T' + slide.event_time : 'T00:00:00'));
   const total = differenceInSeconds(target, now);
   if (total < 0) return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 32, textAlign: 'center' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 'clamp(16px,3vh,32px)', textAlign: 'center', padding: 'clamp(56px,9vh,110px) 80px clamp(48px,8vh,96px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} />
       <div style={{ fontSize: '6rem', animation: 'bounceIn 0.8s both', position: 'relative', zIndex: 2 }}>🎉</div>
@@ -1107,7 +1112,7 @@ export function SlideCountdown({ slide, accent, theme }) {
   const days = Math.floor(total / 86400), hours = Math.floor((total % 86400) / 3600), mins = Math.floor((total % 3600) / 60), secs = total % 60;
   const units = days > 0 ? [{ v: days, l: 'Tage' }, { v: hours, l: 'Std.' }, { v: mins, l: 'Min.' }] : [{ v: hours, l: 'Std.' }, { v: mins, l: 'Min.' }, { v: secs, l: 'Sek.' }];
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 40, textAlign: 'center', padding: '60px 80px' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 'clamp(16px,3vh,32px)', textAlign: 'center', padding: 'clamp(56px,9vh,110px) 80px clamp(48px,8vh,96px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} />
       <PulseRings color={accent.bg} />
@@ -1139,7 +1144,7 @@ export function SlideCountdown({ slide, accent, theme }) {
 export function SlideQRCode({ slide, accent, theme }) {
   const qrSize = 'clamp(230px,24vw,340px)';
   return (
-    <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:44 }}>
+    <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'clamp(56px,9vh,110px) 120px clamp(48px,8vh,96px)',textAlign:'center',gap:'clamp(16px,3vh,32px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} />
       <div style={{ position:'relative',zIndex:3,display:'flex',flexDirection:'column',alignItems:'center',gap:32 }}>
@@ -1166,7 +1171,7 @@ export function SlideQRCode({ slide, accent, theme }) {
 // ── Heute Abend Slide ─────────────────────────────────────────────────────────
 export function SlideTonight({ slide, accent, theme }) {
   return (
-    <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'80px 120px',textAlign:'center',gap:32 }}>
+    <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'clamp(56px,9vh,110px) 120px clamp(48px,8vh,96px)',textAlign:'center',gap:'clamp(16px,3vh,32px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} />
       <SpotlightStreak color={accent.bg} />
@@ -1377,7 +1382,7 @@ export default function Display() {
         transition: phase === 'out' ? 'opacity 0.6s ease, transform 0.6s ease' : 'opacity 0.7s ease, transform 0.7s ease',
       }}>
         {slide.slide_type === 'announcement'  && <SlideAnnouncement  slide={slide} accent={accent} theme={theme} />}
-        {slide.slide_type === 'event'         && <SlideEvent         slide={slide} accent={accent} theme={theme} />}
+        {slide.slide_type === 'event'         && <SlideEvent         slide={slide} accent={accent} theme={theme} showBrand={false} />}
         {slide.slide_type === 'drink_special' && <SlideDrinkSpecial  slide={slide} accent={accent} theme={theme} />}
         {slide.slide_type === 'countdown'     && <SlideCountdown     slide={slide} accent={accent} theme={theme} />}
         {slide.slide_type === 'qr_code'       && <SlideQRCode        slide={slide} accent={accent} theme={theme} />}
