@@ -1014,7 +1014,7 @@ export function SlideQR({ slideId }) {
 
 export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16', showBrand = true }) {
   const titleLen = (slide.title || '').length;
-  const titleFont = titleLen > 18 ? 'clamp(2.4rem,4.6vw,4rem)' : titleLen > 12 ? 'clamp(3rem,6vw,5rem)' : titleLen > 8 ? 'clamp(3.5rem,7.5vw,6.5rem)' : 'clamp(4rem,9vw,8rem)';
+  const titleFont = titleLen > 18 ? 'clamp(2.8rem,5.4vw,4.8rem)' : titleLen > 12 ? 'clamp(3.5rem,6.8vw,5.8rem)' : titleLen > 8 ? 'clamp(4.2rem,8.8vw,7.8rem)' : 'clamp(4.8rem,10.5vw,9.5rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
   const ds = slide.event_date ? format(parseISO(slide.event_date), 'EEEE, d. MMMM', { locale: de }) : '';
   const de2 = hasEnd ? format(parseISO(slide.event_end_date), 'd. MMMM', { locale: de }) : '';
@@ -1056,9 +1056,6 @@ export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16', showBra
             </>
           )}
         </div>
-      )}
-      {slide.location && (
-        <div style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '18px 40px', fontWeight: 600, fontSize: '1.9rem', color: '#fff', position: 'relative', zIndex: 2, animation: 'slideInUp 0.7s 0.65s both' }}>📍 {slide.location}</div>
       )}
       {slide.cta_text && !slide.cta_text.startsWith('event:') && <div style={{ background: accent.bg, color: accent.text, padding: '24px 64px', borderRadius: 20, fontWeight: 800, fontSize: '2rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite', position: 'relative', zIndex: 2 }}>{slide.cta_text}</div>}
     </div>
