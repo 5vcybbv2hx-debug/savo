@@ -1027,8 +1027,8 @@ export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16', showBra
       <NeonFrame />
       <SavoLogo showBrand={showBrand} />
       <SpotlightStreak color={accent.bg} />
-      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 2, animation: 'slideInUp 0.6s 0.1s both' }}>
-        <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
+      <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'absolute', top: 'clamp(24px,4vh,56px)', right: 'clamp(24px,4vw,56px)', zIndex: 3, animation: 'slideInUp 0.6s 0.1s both' }}>
+        <span style={{ fontSize: '1.1rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
       </div>
       <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: titleFont, maxWidth: '100%', padding: '0 4%', fontWeight: 400, lineHeight: 1.05, letterSpacing: '0.01em', wordBreak: 'keep-all', overflowWrap: 'anywhere', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 2, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
       {slide.subtitle && <div style={{ fontSize: '2.7rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 2, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
