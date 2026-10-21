@@ -4,12 +4,15 @@
  */
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { createMarketplaceOffers } from '@/lib/employeeDeactivation';
+import { invalidateAllSwapQueries } from '@/lib/shiftSwapHelpers';
+import UpcomingShiftsWarning from '@/components/employees/UpcomingShiftsWarning';
 import {
     Archive, Trash2, AlertTriangle, Check, X, ChevronDown, ChevronUp,
-    Shield, Info
+    Shield, Info, ArrowLeftRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -19,21 +22,62 @@ export default function EmployeeDeleteDialog({ employee, currentUser, onClose, o
     const [step, setStep] = useState('choose'); // 'choose' | 'confirm-delete'
     const [reason, setReason] = useState('');
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [excludedShiftIds, setExcludedShiftIds] = useState([]); // abgewählte Schichten
     const queryClient = useQueryClient();
 
+    // Kommende Schichten des Mitarbeiters (ab heute, aufsteigend)
+    const { data: upcomingShifts = [] } = useQuery({
+        queryKey: ['employee-upcoming-shifts', employee.id],
+        queryFn: () => base44.entities.Shift.filter({ employee_id: employee.id }),
+        select: (shifts) => {
+            const today = format(new Date(), 'yyyy-MM-dd');
+            return shifts
+                .filter(s => s.date && s.date >= today)
+                .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.start_time || '').localeCompare(b.start_time || ''));
+        }
+    });
+
+    const hasShifts = upcomingShifts.length > 0;
+    const selectedShiftIds = upcomingShifts.filter(s => !excludedShiftIds.includes(s.id)).map(s => s.id);
+
     const inactivateMutation = useMutation({
-        mutationFn: async () => {
-            // Set inactive + log
+        mutationFn: async ({ shiftIds = [] } = {}) => {
+            // Zuerst die gewählten Schichten in den Tauschmarkt geben
+            const result = shiftIds.length > 0
+                ? await createMarketplaceOffers(
+                    upcomingShifts.filter(s => shiftIds.includes(s.id)),
+                    'Mitarbeiter wird inaktiv gesetzt'
+                )
+                : { requested: 0, created: 0, skipped: 0 };
+
+            // Danach inaktiv setzen + log
             await base44.entities.Employee.update(employee.id, {
                 is_active: false,
                 deactivated_at: new Date().toISOString(),
                 deactivated_by: currentUser?.email || 'Manager',
                 deactivation_reason: reason || 'Mitarbeiter verlässt das Unternehmen'
             });
+
+            return result;
         },
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['employees'] });
-            toast.success(`${employee.name} wurde als inaktiv / ehemaliger Mitarbeiter gesetzt.`);
+            queryClient.invalidateQueries({ queryKey: ['employee-upcoming-shifts', employee.id] });
+            invalidateAllSwapQueries(queryClient);
+
+            if (result?.created > 0) {
+                toast.success(`${employee.name} inaktiv gesetzt, ${result.created} ${result.created === 1 ? 'Schicht' : 'Schichten'} im Tauschmarkt`, {
+                    description: result.skipped > 0
+                        ? `${result.skipped} Schicht(en) hatten bereits eine offene Tauschanfrage und wurden übersprungen.`
+                        : undefined
+                });
+            } else if (result?.requested > 0) {
+                toast.success(`${employee.name} inaktiv gesetzt`, {
+                    description: 'Für alle gewählten Schichten lief bereits eine offene Tauschanfrage — nichts neu eingestellt.'
+                });
+            } else {
+                toast.success(`${employee.name} wurde als inaktiv / ehemaliger Mitarbeiter gesetzt.`);
+            }
             onDone?.();
             onClose();
         },
@@ -108,6 +152,16 @@ export default function EmployeeDeleteDialog({ employee, currentUser, onClose, o
                                 <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-green-400" />Jederzeit reaktivierbar</li>
                             </ul>
 
+                            {hasShifts && (
+                                <UpcomingShiftsWarning
+                                    employeeName={employee.name}
+                                    shifts={upcomingShifts}
+                                    selectedIds={selectedShiftIds}
+                                    onToggle={(id) => setExcludedShiftIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                                    onToggleAll={() => setExcludedShiftIds(selectedShiftIds.length === upcomingShifts.length ? upcomingShifts.map(s => s.id) : [])}
+                                />
+                            )}
+
                             <div className="pl-11">
                                 <input
                                     type="text"
@@ -118,15 +172,36 @@ export default function EmployeeDeleteDialog({ employee, currentUser, onClose, o
                                 />
                             </div>
 
-                            <div className="pl-11">
-                                <Button
-                                    onClick={() => inactivateMutation.mutate()}
-                                    disabled={inactivateMutation.isPending}
-                                    className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold gap-2"
-                                >
-                                    <Archive className="w-4 h-4" />
-                                    Inaktiv setzen &amp; zu Ehemalige verschieben
-                                </Button>
+                            <div className="pl-11 space-y-2">
+                                {hasShifts ? (
+                                    <>
+                                        <Button
+                                            onClick={() => inactivateMutation.mutate({ shiftIds: selectedShiftIds })}
+                                            disabled={inactivateMutation.isPending || selectedShiftIds.length === 0}
+                                            className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold gap-2 text-xs sm:text-sm"
+                                        >
+                                            <ArrowLeftRight className="w-4 h-4 shrink-0" />
+                                            Inaktiv setzen &amp; {selectedShiftIds.length} {selectedShiftIds.length === 1 ? 'Schicht' : 'Schichten'} in den Tauschmarkt
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => inactivateMutation.mutate({ shiftIds: [] })}
+                                            disabled={inactivateMutation.isPending}
+                                            className="w-full h-11 text-xs sm:text-sm"
+                                        >
+                                            Nur inaktiv setzen
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button
+                                        onClick={() => inactivateMutation.mutate()}
+                                        disabled={inactivateMutation.isPending}
+                                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold gap-2"
+                                    >
+                                        <Archive className="w-4 h-4" />
+                                        Inaktiv setzen &amp; zu Ehemalige verschieben
+                                    </Button>
+                                )}
                             </div>
                         </div>
 
