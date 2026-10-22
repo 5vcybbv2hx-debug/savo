@@ -11,6 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
+    isValidReceiptNumber, sanitizeReceiptNumber,
+    RECEIPT_HINT, RECEIPT_PLACEHOLDER, RECEIPT_INVALID_HINT,
+} from '@/lib/vouchers';
+import {
     Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft,
 } from 'lucide-react';
 
@@ -37,6 +41,7 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
     const [voucher, setVoucher] = useState(null);
     const [notFound, setNotFound] = useState(false);
     const [amount, setAmount] = useState('');
+    const [reference, setReference] = useState('');
     const [done, setDone] = useState(null);
     const [errorText, setErrorText] = useState(null);
 
@@ -44,7 +49,7 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
 
     const reset = () => {
         setQuery(''); setVoucher(null); setNotFound(false);
-        setAmount(''); setDone(null); setErrorText(null);
+        setAmount(''); setReference(''); setDone(null); setErrorText(null);
     };
 
     const handleSearch = (e) => {
@@ -54,6 +59,7 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
         setVoucher(hit);
         setNotFound(!hit);
         setAmount(hit ? String(hit.remaining_value ?? '') : '');
+        setReference('');
         setErrorText(null);
         setDone(null);
     };
@@ -63,15 +69,17 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
         && (voucher.status === 'offen' || voucher.status === 'teilweise_eingelöst')
         && remaining > 0;
     const amt = parseFloat(amount);
-    const valid = redeemable && !isNaN(amt) && amt > 0 && amt <= remaining;
+    const amountValid = !isNaN(amt) && amt > 0 && amt <= remaining;
+    const referenceValid = isValidReceiptNumber(reference);
+    const valid = redeemable && amountValid && referenceValid;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!valid) return;
         setErrorText(null);
         try {
-            const res = await onRedeem({ voucher, amount: amt, reference: null, redeemedBy });
-            setDone({ voucher, newRemaining: res?.newRemaining ?? 0 });
+            const res = await onRedeem({ voucher, amount: amt, reference: reference.trim(), redeemedBy });
+            setDone({ voucher, newRemaining: res?.newRemaining ?? 0, reference: reference.trim() });
         } catch (err) {
             setErrorText(String(err?.message || err));
         }
@@ -87,6 +95,10 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                     <p className="text-sm text-muted-foreground">
                         Gutschein Nr. <span className="font-semibold text-foreground">{done.voucher.voucher_number}</span>
                     </p>
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Am Kassenbon gegenprüfen</p>
+                        <p className="text-lg font-bold text-foreground mt-1 tabular-nums">Re.-Nr. {done.reference} erfasst</p>
+                    </div>
                     <div className="rounded-xl bg-muted/40 px-4 py-3">
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Neuer Restwert</p>
                         <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{fmtEUR(done.newRemaining)}</p>
@@ -173,6 +185,11 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                         </p>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-3">
+                            {redeemedBy && (
+                                <p className="text-[11px] text-muted-foreground">
+                                    Eingelöst von: <span className="font-medium text-foreground">{redeemedBy}</span>
+                                </p>
+                            )}
                             <label className="space-y-1 block">
                                 <span className="text-[11px] font-medium text-muted-foreground">Betrag (€) *</span>
                                 <Input
@@ -185,17 +202,29 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                                     onChange={(e) => setAmount(e.target.value)}
                                     className="h-12 text-lg font-semibold tabular-nums"
                                 />
-                                {amount !== '' && !valid && (
+                                {amount !== '' && !amountValid && (
                                     <span className="text-[11px] text-destructive">
                                         Betrag muss zwischen 0 und {fmtEUR(remaining)} liegen.
                                     </span>
                                 )}
                             </label>
-                            {redeemedBy && (
-                                <p className="text-[11px] text-muted-foreground">
-                                    Eingelöst von: <span className="font-medium text-foreground">{redeemedBy}</span>
-                                </p>
-                            )}
+                            <label className="space-y-1 block">
+                                <span className="text-[11px] font-medium text-muted-foreground">Re.-Nr. vom Kassenbon *</span>
+                                <Input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="\d*"
+                                    autoComplete="off"
+                                    placeholder={RECEIPT_PLACEHOLDER}
+                                    value={reference}
+                                    onChange={(e) => setReference(sanitizeReceiptNumber(e.target.value))}
+                                    className="h-12 text-lg font-semibold tabular-nums"
+                                />
+                                <span className="text-[11px] text-muted-foreground">{RECEIPT_HINT}</span>
+                                {reference !== '' && !referenceValid && (
+                                    <span className="text-[11px] text-destructive block">{RECEIPT_INVALID_HINT}</span>
+                                )}
+                            </label>
                             {errorText && (
                                 <p className="text-xs text-destructive flex items-center gap-1.5">
                                     <AlertTriangle className="w-3.5 h-3.5" />{errorText}

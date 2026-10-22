@@ -27,3 +27,21 @@ export function generateVoucherAccessToken(length = 6) {
 export function voucherQrUrl(voucher) {
   return `${VOUCHER_PUBLIC_BASE_URL}?nr=${voucher?.voucher_number ?? ''}&t=${voucher?.access_token ?? ''}`;
 }
+
+// ── Re.-Nr. vom flatpay-Kassenbon ───────────────────────────────────────────
+// Auf dem flatpay-Beleg stehen mehrere Nummern; eindeutig ist nur die
+// fortlaufende Re.-Nr. (z. B. 1000167) — sie ist im flatpay-Backend
+// (Verkäufe/Belege) wieder auffindbar. Deshalb Pflichtfeld bei jeder Einlösung.
+export const RECEIPT_PLACEHOLDER = 'z. B. 1000167';
+export const RECEIPT_HINT = "Oben auf dem flatpay-Beleg nach 'Re.-Nr.:' — z. B. 1000167";
+export const RECEIPT_INVALID_HINT = 'Bitte die Re.-Nr. vom Kassenbon eingeben — nur Ziffern';
+
+/** Nur Ziffern, höchstens 10 Stellen — direkt beim Tippen anwenden. */
+export function sanitizeReceiptNumber(value) {
+  return String(value ?? '').replace(/\D/g, '').slice(0, 10);
+}
+
+/** Gültig sind 3–10 Ziffern. */
+export function isValidReceiptNumber(value) {
+  return /^\d{3,10}$/.test(String(value ?? '').trim());
+}

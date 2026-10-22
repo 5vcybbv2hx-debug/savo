@@ -20,7 +20,10 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '@/components/auth/usePermissions';
-import { generateVoucherAccessToken } from '@/lib/vouchers';
+import {
+    generateVoucherAccessToken, isValidReceiptNumber, sanitizeReceiptNumber,
+    RECEIPT_HINT, RECEIPT_PLACEHOLDER, RECEIPT_INVALID_HINT,
+} from '@/lib/vouchers';
 import { createNotification } from '@/utils/createNotification';
 import VoucherReceipt from '@/components/vouchers/VoucherReceipt';
 import VoucherRedeemView from '@/components/vouchers/VoucherRedeemView';
@@ -147,14 +150,15 @@ export default function Vouchers() {
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['vouchers'] });
             queryClient.invalidateQueries({ queryKey: ['voucher-redemptions'] });
-            setRedeemVoucher(null);
+            // Modal bleibt offen und zeigt die erfasste Re.-Nr. zum Gegenprüfen
             // Manager/Admin sehen jede Einlösung in der Benachrichtigungs-Liste
             createNotification({
                 type: 'general',
                 category: 'admin',
                 title: '🎟️ Gutschein eingelöst',
                 message: `${variables.redeemedBy || 'Mitarbeiter'} hat Gutschein Nr. ${variables.voucher.voucher_number} `
-                    + `über ${fmtEUR(variables.amount)} eingelöst (Rest: ${fmtEUR(data?.newRemaining ?? 0)})`,
+                    + `über ${fmtEUR(variables.amount)} eingelöst (Rest: ${fmtEUR(data?.newRemaining ?? 0)}) `
+                    + `· Re.-Nr. ${variables.reference}`,
                 relatedId: variables.voucher.id,
             }).catch(() => {});
         },
@@ -403,7 +407,7 @@ export default function Vouchers() {
                     error={redeemMutation.error}
                     onClose={() => setRedeemVoucher(null)}
                     onSubmit={(amount, reference, redeemedBy) =>
-                        redeemMutation.mutate({ voucher: redeemVoucher, amount, reference, redeemedBy })
+                        redeemMutation.mutateAsync({ voucher: redeemVoucher, amount, reference, redeemedBy })
                     }
                 />
             )}
@@ -436,17 +440,54 @@ export default function Vouchers() {
 function RedeemModal({ voucher, currentUser, isPending, error, onClose, onSubmit }) {
     const [amount, setAmount] = useState(String(voucher.remaining_value || 0));
     const [reference, setReference] = useState('');
+    const [done, setDone] = useState(null);
     const redeemedBy = currentUser?.full_name || currentUser?.email || '';
 
     const amt = parseFloat(amount);
     const remaining = voucher.remaining_value || 0;
-    const valid = !isNaN(amt) && amt > 0 && amt <= remaining;
+    const amountValid = !isNaN(amt) && amt > 0 && amt <= remaining;
+    const referenceValid = isValidReceiptNumber(reference);
+    const valid = amountValid && referenceValid;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!valid) return;
-        onSubmit(amt, reference.trim(), redeemedBy);
+        try {
+            const res = await onSubmit(amt, reference.trim(), redeemedBy);
+            setDone({ reference: reference.trim(), newRemaining: res?.newRemaining ?? 0 });
+        } catch {
+            // Fehler wird über die error-Prop angezeigt
+        }
     };
+
+    // ── Erfolg: Re.-Nr. bleibt zum Gegenprüfen am Bon stehen ─────────────
+    if (done) {
+        return (
+            <Dialog open onOpenChange={onClose}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            Gutschein Nr. {voucher.voucher_number} eingelöst
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                        <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center">
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Am Kassenbon gegenprüfen</p>
+                            <p className="text-lg font-bold text-foreground mt-1 tabular-nums">Re.-Nr. {done.reference} erfasst</p>
+                        </div>
+                        <div className="rounded-xl bg-muted/40 px-4 py-3 text-center">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Neuer Restwert</p>
+                            <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{fmtEUR(done.newRemaining)}</p>
+                        </div>
+                        <Button className="w-full" onClick={onClose} disabled={isPending}>
+                            Fertig
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     return (
         <Dialog open onOpenChange={onClose}>
@@ -462,28 +503,33 @@ function RedeemModal({ voucher, currentUser, isPending, error, onClose, onSubmit
                         <span>Restwert</span>
                         <span className="font-bold text-foreground text-sm">{fmtEUR(remaining)}</span>
                     </div>
+                    {redeemedBy && (
+                        <p className="text-[11px] text-muted-foreground">
+                            Eingelöst von: <span className="font-medium text-foreground">{redeemedBy}</span>
+                        </p>
+                    )}
                     <label className="space-y-1 block">
                         <span className="text-[11px] font-medium text-muted-foreground">Betrag (€) *</span>
                         <Input type="number" step="0.01" min="0.01" max={remaining}
                             inputMode="decimal" value={amount}
                             onChange={e => setAmount(e.target.value)} autoFocus />
-                        {!valid && amount !== '' && (
+                        {!amountValid && amount !== '' && (
                             <span className="text-[11px] text-destructive">
                                 Betrag muss zwischen 0 und {fmtEUR(remaining)} liegen.
                             </span>
                         )}
                     </label>
                     <label className="space-y-1 block">
-                        <span className="text-[11px] font-medium text-muted-foreground">Referenz (optional)</span>
-                        <Input type="text" placeholder="z. B. Rechnungsnummer"
+                        <span className="text-[11px] font-medium text-muted-foreground">Re.-Nr. vom Kassenbon *</span>
+                        <Input type="text" inputMode="numeric" pattern="\d*" autoComplete="off"
+                            placeholder={RECEIPT_PLACEHOLDER}
                             value={reference}
-                            onChange={e => setReference(e.target.value)} />
+                            onChange={e => setReference(sanitizeReceiptNumber(e.target.value))} />
+                        <span className="text-[11px] text-muted-foreground">{RECEIPT_HINT}</span>
+                        {reference !== '' && !referenceValid && (
+                            <span className="text-[11px] text-destructive block">{RECEIPT_INVALID_HINT}</span>
+                        )}
                     </label>
-                    {redeemedBy && (
-                        <p className="text-[11px] text-muted-foreground">
-                            Eingelöst von: <span className="font-medium text-foreground">{redeemedBy}</span>
-                        </p>
-                    )}
                     {error && (
                         <p className="text-xs text-destructive flex items-center gap-1.5">
                             <AlertTriangle className="w-3.5 h-3.5" />{String(error.message || error)}
