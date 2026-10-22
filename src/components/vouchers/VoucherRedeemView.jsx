@@ -145,6 +145,9 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                             <p className="text-lg font-bold text-foreground tabular-nums">
                                 Nr. {voucher.voucher_number}
                             </p>
+                            {voucher.holder_name && (
+                                <p className="text-[11px] text-muted-foreground">Inhaber: {voucher.holder_name}</p>
+                            )}
                             <p className="text-[11px] text-muted-foreground">{fmtDate(voucher.issue_date)}</p>
                         </div>
                         <Badge variant="outline" className={cn('text-[10px] px-2 py-0.5', STATUS_STYLES[voucher.status])}>

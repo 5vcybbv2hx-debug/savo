@@ -163,6 +163,7 @@ export default function Vouchers() {
             return await base44.entities.Voucher.create({
                 voucher_number: parseInt(data.voucher_number, 10),
                 access_token: generateVoucherAccessToken(),
+                holder_name: data.holder_name?.trim() || null,
                 issue_date: data.issue_date,
                 original_value: parseFloat(data.original_value),
                 remaining_value: parseFloat(data.original_value),
@@ -298,6 +299,7 @@ export default function Vouchers() {
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-bold text-foreground tabular-nums">
                                                     Nr. {v.voucher_number}
+                                                    {v.holder_name && <span className="font-normal text-muted-foreground"> · {v.holder_name}</span>}
                                                 </span>
                                                 <span className="text-[11px] text-muted-foreground">{fmtDate(v.issue_date)}</span>
                                             </div>
@@ -502,6 +504,7 @@ function CreateModal({ nextNumber, isPending, error, onClose, onSubmit }) {
         original_value: '',
         payment_method: 'bar',
         notes: '',
+        holder_name: '',
     });
 
     const value = parseFloat(form.original_value);
@@ -556,6 +559,15 @@ function CreateModal({ nextNumber, isPending, error, onClose, onSubmit }) {
                             </button>
                         ))}
                     </div>
+                    <label className="space-y-1 block">
+                        <span className="text-[11px] font-medium text-muted-foreground">Inhaber / Käufer (optional)</span>
+                        <Input type="text" placeholder="z. B. Firma Müller oder bei Wert ab 100 €"
+                            value={form.holder_name}
+                            onChange={e => setForm(f => ({ ...f, holder_name: e.target.value }))} />
+                        <span className="text-[11px] text-muted-foreground">
+                            Empfohlen ab 100 € und bei Kauf auf Rechnung — schützt bei Verlust.
+                        </span>
+                    </label>
                     <label className="space-y-1 block">
                         <span className="text-[11px] font-medium text-muted-foreground">Notiz (optional)</span>
                         <Input type="text" placeholder="z. B. Anlass"

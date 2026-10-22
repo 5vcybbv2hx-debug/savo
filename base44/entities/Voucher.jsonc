@@ -10,6 +10,10 @@
       "type": "string",
       "description": "6-stelliger Zugriffs-Code (A-Z ohne I/O, 2-9) f\u00fcr den QR-Code auf dem Beleg \u2014 macht die \u00f6ffentliche Gutschein-URL nicht ratbar"
     },
+    "holder_name": {
+      "type": "string",
+      "description": "Name des K\u00e4ufers/Guthabenkarten-Inhabers (z.B. bei gro\u00dfen Betr\u00e4gen auf Rechnung)"
+    },
     "issue_date": {
       "type": "string",
       "format": "date",

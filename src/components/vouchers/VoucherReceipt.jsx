@@ -91,7 +91,7 @@ export default function VoucherReceipt({ voucher, onClose }) {
                         />
                     )}
                     <p className="text-[10px] text-center leading-snug mt-3">
-                        Gültig 3 Jahre ab Kaufdatum.<br />Einlösbar nur in der SAVO Lounge.
+                        Gültig 3 Jahre ab Kaufdatum.{voucher.holder_name && <> · Inhaber: {voucher.holder_name}.</>}<br />Einlösbar nur in der SAVO Lounge.
                     </p>
                 </div>
 
