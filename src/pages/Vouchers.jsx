@@ -19,9 +19,14 @@ import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/components/auth/usePermissions';
+import { generateVoucherAccessToken } from '@/lib/vouchers';
+import { createNotification } from '@/utils/createNotification';
+import VoucherReceipt from '@/components/vouchers/VoucherReceipt';
+import VoucherRedeemView from '@/components/vouchers/VoucherRedeemView';
 import {
     Ticket, Plus, Loader2, X, AlertTriangle, CheckCircle2,
-    ChevronDown, ChevronUp, History, Euro
+    ChevronDown, ChevronUp, History, Euro, Printer
 } from 'lucide-react';
 
 const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
@@ -57,6 +62,8 @@ const FILTERS = [
 
 export default function Vouchers() {
     const queryClient = useQueryClient();
+    const permissions = usePermissions();
+    const [receiptVoucher, setReceiptVoucher] = useState(null);   // 80mm-Beleg
     const [filter, setFilter] = useState('offen');
     const [search, setSearch] = useState('');
     const [redeemVoucher, setRedeemVoucher] = useState(null);   // Voucher-Objekt oder null
@@ -135,10 +142,19 @@ export default function Vouchers() {
             });
             return { redemption, newRemaining, newStatus };
         },
-        onSuccess: () => {
+        onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['vouchers'] });
             queryClient.invalidateQueries({ queryKey: ['voucher-redemptions'] });
             setRedeemVoucher(null);
+            // Manager/Admin sehen jede Einlösung in der Benachrichtigungs-Liste
+            createNotification({
+                type: 'general',
+                category: 'admin',
+                title: '🎟️ Gutschein eingelöst',
+                message: `${variables.redeemedBy || 'Mitarbeiter'} hat Gutschein Nr. ${variables.voucher.voucher_number} `
+                    + `über ${fmtEUR(variables.amount)} eingelöst (Rest: ${fmtEUR(data?.newRemaining ?? 0)})`,
+                relatedId: variables.voucher.id,
+            }).catch(() => {});
         },
     });
 
@@ -146,6 +162,7 @@ export default function Vouchers() {
         mutationFn: async (data) => {
             return await base44.entities.Voucher.create({
                 voucher_number: parseInt(data.voucher_number, 10),
+                access_token: generateVoucherAccessToken(),
                 issue_date: data.issue_date,
                 original_value: parseFloat(data.original_value),
                 remaining_value: parseFloat(data.original_value),
@@ -155,9 +172,10 @@ export default function Vouchers() {
                 notes: data.notes || null,
             });
         },
-        onSuccess: () => {
+        onSuccess: (created) => {
             queryClient.invalidateQueries({ queryKey: ['vouchers'] });
             setShowCreate(false);
+            setReceiptVoucher(created);   // Tresen-Workflow: Beleg direkt drucken
         },
     });
 
@@ -167,11 +185,23 @@ export default function Vouchers() {
         return Math.max(...vouchers.map(v => v.voucher_number || 0)) + 1;
     }, [vouchers]);
 
-    if (isLoading) {
+    if (isLoading || permissions.isLoading) {
         return (
             <div className="flex items-center justify-center py-24 text-muted-foreground">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" /> Lade Gutscheine …
             </div>
+        );
+    }
+
+    // Nicht-Manager (Aushilfe, Barkeeper, Vollzeit, Orga): nur Einlöse-Ansicht
+    if (!permissions.isManager) {
+        return (
+            <VoucherRedeemView
+                vouchers={vouchers}
+                currentUser={currentUser}
+                isPending={redeemMutation.isPending}
+                onRedeem={(payload) => redeemMutation.mutateAsync(payload)}
+            />
         );
     }
 
@@ -282,6 +312,13 @@ export default function Vouchers() {
                                                 {STATUS_LABEL[v.status] || v.status}
                                             </Badge>
                                             <button
+                                                onClick={() => setReceiptVoucher(v)}
+                                                title="Beleg drucken"
+                                                className="text-muted-foreground hover:text-foreground p-0.5"
+                                            >
+                                                <Printer className="w-4 h-4" />
+                                            </button>
+                                            <button
                                                 onClick={() => setDetailId(isExpanded ? null : v.id)}
                                                 className="text-muted-foreground hover:text-foreground p-0.5"
                                             >
@@ -366,6 +403,14 @@ export default function Vouchers() {
                     error={createMutation.error}
                     onClose={() => setShowCreate(false)}
                     onSubmit={(data) => createMutation.mutate(data)}
+                />
+            )}
+
+            {/* ── 80mm-Beleg zum Drucken ── */}
+            {receiptVoucher && (
+                <VoucherReceipt
+                    voucher={receiptVoucher}
+                    onClose={() => setReceiptVoucher(null)}
                 />
             )}
         </div>

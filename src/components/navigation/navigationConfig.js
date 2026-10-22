@@ -57,7 +57,9 @@ export const additionalPages = [
     { page: 'AccountingBank',        name: 'Bankkonten',        icon: Banknote,   permission: 'canViewAccounting' },
     { page: 'DailyAnalysis',         name: 'Tagesanalyse',      icon: BarChart3,  permission: 'canViewAnalytics' },
     { page: 'RevenueHistory',        name: 'Umsatz-Historie',   icon: TrendingUp, permission: 'isManager' },
-    { page: 'Vouchers',              name: 'Gutscheine',        icon: Ticket,      permission: 'isManager' },
+    // Gutscheine: für alle Rollen sichtbar — Manager sehen die Vollansicht,
+    // alle anderen die Einlöse-Ansicht (Gating in Vouchers.jsx)
+    { page: 'Vouchers',              name: 'Gutscheine',        icon: Ticket,      permission: 'canViewDashboard' },
     { page: 'StaffingAnalysis',     name: 'Personalplanung',   icon: Target,      permission: 'isManager' },
 
     // Team

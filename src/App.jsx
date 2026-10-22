@@ -245,12 +245,11 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
 
-      {/* Gutscheine — Gutschein-Workflow (Migration Gastware-Kasse → flatpay) */}
+      {/* Gutscheine — Manager: Vollansicht · Team: Einlöse-Ansicht
+          (Rollen-Gating passiert in Vouchers.jsx, damit alle Rollen die Route erreichen) */}
       <Route path="/Vouchers" element={
         <LayoutWrapper currentPageName="Vouchers">
-          <RoleGuard permission="isManager">
-            <Vouchers />
-          </RoleGuard>
+          <Vouchers />
         </LayoutWrapper>
       } />
 

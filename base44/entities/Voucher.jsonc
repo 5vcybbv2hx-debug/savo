@@ -6,6 +6,10 @@
       "type": "number",
       "description": "Kassen-Gutscheinnummer"
     },
+    "access_token": {
+      "type": "string",
+      "description": "6-stelliger Zugriffs-Code (A-Z ohne I/O, 2-9) f\u00fcr den QR-Code auf dem Beleg \u2014 macht die \u00f6ffentliche Gutschein-URL nicht ratbar"
+    },
     "issue_date": {
       "type": "string",
       "format": "date",
