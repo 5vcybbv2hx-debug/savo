@@ -24,9 +24,10 @@ import { generateVoucherAccessToken } from '@/lib/vouchers';
 import { createNotification } from '@/utils/createNotification';
 import VoucherReceipt from '@/components/vouchers/VoucherReceipt';
 import VoucherRedeemView from '@/components/vouchers/VoucherRedeemView';
+import { useNavigate } from 'react-router-dom';
 import {
     Ticket, Plus, Loader2, X, AlertTriangle, CheckCircle2,
-    ChevronDown, ChevronUp, History, Euro, Printer
+    ChevronDown, ChevronUp, History, Euro, Printer, FileText
 } from 'lucide-react';
 
 const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
@@ -64,6 +65,7 @@ export default function Vouchers() {
     const queryClient = useQueryClient();
     const permissions = usePermissions();
     const [receiptVoucher, setReceiptVoucher] = useState(null);   // 80mm-Beleg
+    const navigate = useNavigate();
     const [filter, setFilter] = useState('offen');
     const [search, setSearch] = useState('');
     const [redeemVoucher, setRedeemVoucher] = useState(null);   // Voucher-Objekt oder null
@@ -320,6 +322,15 @@ export default function Vouchers() {
                                             >
                                                 <Printer className="w-4 h-4" />
                                             </button>
+                                            {v.holder_name && v.status !== 'eingelöst' && (
+                                                <button
+                                                    onClick={() => navigate(`/ExternalBusiness?new_invoice_voucher=${v.id}`)}
+                                                    title="Rechnung für Kauf auf Rechnung erstellen"
+                                                    className="text-muted-foreground hover:text-foreground p-0.5"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => setDetailId(isExpanded ? null : v.id)}
                                                 className="text-muted-foreground hover:text-foreground p-0.5"

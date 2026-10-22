@@ -92,9 +92,10 @@
       "type": "string",
       "enum": [
         "Externer Event",
-        "Werbekostenzuschuss"
+        "Werbekostenzuschuss",
+        "Gutschein"
       ],
-      "description": "Art des Au\u00dfenauftrags: Bar-Service bei externem Event oder Werbekostenzuschuss von Lieferant/Brauerei"
+      "description": "Art des Au\u00dfenauftrags: Bar-Service bei externem Event, Werbekostenzuschuss von Lieferant/Brauerei oder Gutschein-Verkauf (auf Rechnung)"
     },
     "doc_status": {
       "type": "string",
@@ -179,7 +180,7 @@
     },
     "datev_account": {
       "type": "string",
-      "description": "Erl\u00f6skonto SKR03 \u2014 Standard 8000 (Events) / 8035 (WKZ)"
+      "description": "Erl\u00f6skonto SKR03 \u2014 Standard 8000 (Events) / 8035 (WKZ) / 1370 (Gutschein)"
     },
     "storno_reference": {
       "type": "string",

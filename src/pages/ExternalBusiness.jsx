@@ -6,7 +6,8 @@
  * Rechnungen (doc_status 'Gesendet') fließen in den DATEV-Export ein.
  * Rechnungs-Pflichtangaben nach §14 UStG werden im PDF berücksichtigt.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -33,7 +34,9 @@ import { Landmark } from 'lucide-react';
 
 const CAT_EVENT = 'Externer Event';
 const CAT_WKZ = 'Werbekostenzuschuss';
-const DEFAULT_ACCOUNT = { [CAT_EVENT]: '8000', [CAT_WKZ]: '8035' };
+const CAT_GUTSCHEIN = 'Gutschein';
+// Gutschein-Verkauf (Kauf auf Rechnung): Konto 1370 — DATEV-Konto vom Buchhalter bestätigen lassen
+const DEFAULT_ACCOUNT = { [CAT_EVENT]: '8000', [CAT_WKZ]: '8035', [CAT_GUTSCHEIN]: '1370' };
 
 const eur = n => (n ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const today = () => format(new Date(), 'yyyy-MM-dd');
@@ -246,7 +249,9 @@ async function downloadPdf(kind, data, company) {
     }
 
     // Betreff — dezenter Akzentstrich statt Farbfläche
-    const catLabel = data.category === CAT_WKZ ? 'Werbekostenzuschuss' : 'Bar-Service / Außengeschäft';
+    const catLabel = data.category === CAT_WKZ
+        ? 'Werbekostenzuschuss'
+        : (data.category === CAT_GUTSCHEIN ? 'Gutschein-Verkauf' : 'Bar-Service / Außengeschäft');
     const betreffY = ry + 4;
     doc.setFillColor(...TEAL);
     doc.rect(MARGIN_L, betreffY - 3.2, 1, 4.2, 'F');
@@ -479,6 +484,56 @@ export default function ExternalBusiness() {
     const [editing, setEditing] = useState(null);   // 'offer' | 'invoice' | null
     const [record, setRecord] = useState(null);
     const [confirmOffer, setConfirmOffer] = useState(null); // Offer, dessen Verbrauch bestätigt werden muss
+    const location = useLocation();
+
+    // ── Quick-Prefill aus dem Gutschein-Modul ───────────────────────────────
+    // /ExternalBusiness?new_invoice_voucher={voucherId} → fertige Wert-Rechnung
+    // (Gutschein-Verkauf auf Rechnung, 0 % USt, eine Position über den Gutscheinwert)
+    useEffect(() => {
+        const voucherId = new URLSearchParams(location.search).get('new_invoice_voucher');
+        if (!voucherId) return undefined;
+        let cancelled = false;
+        base44.entities.Voucher.get(voucherId)
+            .then(v => {
+                if (!v || cancelled) return;
+                const value = Number(v.original_value) || 0;
+                const label = `Gutschein Nr. ${v.voucher_number} — SAVO Lounge`;
+                setRecord({
+                    category: CAT_GUTSCHEIN,
+                    customer_name: v.holder_name || '',
+                    customer_address: '',
+                    customer_street: '',
+                    customer_postal_code: '',
+                    customer_city: '',
+                    recipient_vat_id: '',
+                    recipient_country: 'Deutschland',
+                    supplier_name: '',
+                    supplier_id: '',
+                    linked_event_id: '',
+                    positions: [{ ...emptyPosition(), description: label, quantity: 1, unit_price: value }],
+                    tax_rate: 0,
+                    description: label,
+                    notes: `Gutschein Nr. ${v.voucher_number}`,
+                    notes_public: false,
+                    guests: null,
+                    event_start_time: '',
+                    event_end_time: '',
+                    staff_count: null,
+                    amount_net: value,
+                    amount_gross: value,
+                    invoice_date: today(),
+                    service_date: v.issue_date || today(),
+                    service_date_type: 'Einzel',
+                    service_date_end: '',
+                    due_date: format(addDays(new Date(), 14), 'yyyy-MM-dd'),
+                    datev_account: DEFAULT_ACCOUNT[CAT_GUTSCHEIN],
+                    doc_status: 'Entwurf',
+                });
+                setEditing('invoice');
+            })
+            .catch(() => toast.error('Gutschein konnte nicht geladen werden'));
+        return () => { cancelled = true; };
+    }, [location.search]);
 
     // ── Daten ───────────────────────────────────────────────────────────────
     const { data: invoices = [] } = useQuery({
@@ -1034,6 +1089,9 @@ export default function ExternalBusiness() {
                                     <SelectContent>
                                         <SelectItem value={CAT_EVENT}>Externer Event (Bar-Service)</SelectItem>
                                         <SelectItem value={CAT_WKZ}>Werbekostenzuschuss (WKZ)</SelectItem>
+                                        {editing === 'invoice' && (
+                                            <SelectItem value={CAT_GUTSCHEIN}>Gutschein-Verkauf</SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -1130,15 +1188,17 @@ export default function ExternalBusiness() {
                                                         className="w-20"
                                                         title="Soll-Menge (laut Angebot)"
                                                     />
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={p.actual_quantity ?? ''}
-                                                        onChange={(e) => setPosition(i, 'actual_quantity', e.target.value)}
-                                                        placeholder="Ist"
-                                                        className="w-20"
-                                                        title="Tatsächlich verbrauchte/gelieferte Menge"
-                                                    />
+                                                    {record.category !== CAT_GUTSCHEIN && (
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={p.actual_quantity ?? ''}
+                                                            onChange={(e) => setPosition(i, 'actual_quantity', e.target.value)}
+                                                            placeholder="Ist"
+                                                            className="w-20"
+                                                            title="Tatsächlich verbrauchte/gelieferte Menge"
+                                                        />
+                                                    )}
                                                     <div className="relative flex-1">
                                                         <Euro className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                                                         <Input
@@ -1160,8 +1220,8 @@ export default function ExternalBusiness() {
                                 </div>
                             )}
 
-                            {/* Personal-Block (nur Rechnungen) — Arbeitsstunden × Stundensatz */}
-                            {editing === 'invoice' && (
+                            {/* Personal-Block (nur Rechnungen, nicht beim Gutschein-Verkauf) — Arbeitsstunden × Stundensatz */}
+                            {editing === 'invoice' && record.category !== CAT_GUTSCHEIN && (
                                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2.5">
                                     <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
                                         <Users className="w-3.5 h-3.5" />

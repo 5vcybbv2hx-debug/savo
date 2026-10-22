@@ -124,7 +124,7 @@ function buildDATEVCsv(receipts, cashbookEntries, invoices, month, beraterNr, ma
         const betrag = (r.amount_gross || 0).toFixed(2).replace('.', ',');
         const datum  = r.invoice_date ? format(new Date(r.invoice_date), 'ddMM') : '';
         const bu     = buKey(r.tax_rate ?? 19);
-        const konto  = r.datev_account || (r.category === 'Werbekostenzuschuss' ? '8035' : '8000');
+        const konto  = r.datev_account || (r.category === 'Werbekostenzuschuss' ? '8035' : (r.category === 'Gutschein' ? '1370' : '8000'));
         const text   = `"${[r.category, r.customer_name || r.supplier_name, r.invoice_number].filter(Boolean).join(' / ')}"`;
         const fields = Array(14).fill('');
         fields[0]  = betrag;
