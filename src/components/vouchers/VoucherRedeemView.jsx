@@ -288,6 +288,14 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                         </p>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-3">
+                            {/* Kontext-Hinweis: erst in flatpay buchen, dann hier bestätigen */}
+                            <div className="flex gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                                <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                                <p className="text-[11px] leading-snug text-muted-foreground">
+                                    Diesen Gutschein jetzt in flatpay als Zahlart 'Gutschein' verbuchen — bis zu {fmtEUR(remaining)} €.
+                                    Dann hier den Betrag bestätigen.
+                                </p>
+                            </div>
                             {redeemedBy && (
                                 <p className="text-[11px] text-muted-foreground">
                                     Eingelöst von: <span className="font-medium text-foreground">{redeemedBy}</span>
