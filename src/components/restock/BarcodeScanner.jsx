@@ -29,7 +29,7 @@ const contextLabels = {
     default:   { title: 'Barcode scannen',  hint: 'Halte den Code vor die Kamera' },
 };
 
-export default function BarcodeScanner({ onScan, open, onClose, title, hint, mode = 'default' }) {
+export default function BarcodeScanner({ onScan, open, onClose, onError, title, hint, mode = 'default' }) {
     const ctx         = contextLabels[mode] || contextLabels.default;
     const dialogTitle = title || ctx.title;
     const dialogHint  = hint  || ctx.hint;
@@ -42,6 +42,9 @@ export default function BarcodeScanner({ onScan, open, onClose, title, hint, mod
     // Refs that survive re-renders without triggering them
     const qrcodeRef   = useRef(null); // Html5Qrcode instance
     const cleanupDone = useRef(true); // true = safe to start a new session
+    // onError über eine Ref aufrufen — so bleibt startCamera stabil (kein Kamera-Neustart bei Re-Render)
+    const onErrorRef = useRef(onError);
+    useEffect(() => { onErrorRef.current = onError; }, [onError]);
     const mountedRef  = useRef(false);
 
     // ── Stop camera stream completely ────────────────────────────────────────
@@ -77,6 +80,7 @@ export default function BarcodeScanner({ onScan, open, onClose, title, hint, mod
             cleanupDone.current = true;
             setScanStatus('error');
             setErrorMsg('Kamera-Container nicht gefunden. Bitte schließen und erneut öffnen.');
+            onErrorRef.current?.();
             return;
         }
 
@@ -179,6 +183,7 @@ export default function BarcodeScanner({ onScan, open, onClose, title, hint, mod
                 setScanStatus('error');
                 setErrorMsg(`Kamera konnte nicht gestartet werden: ${msg}`);
             }
+            onErrorRef.current?.();
         }
     }, [onScan, onClose, stopCamera]);
 

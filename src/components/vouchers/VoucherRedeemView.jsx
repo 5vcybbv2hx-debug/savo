@@ -5,6 +5,7 @@
  * Bestätigen → Erfolg mit neuem Restwert.
  */
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import BarcodeScanner from '@/components/restock/BarcodeScanner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,10 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
     const [scanOpen, setScanOpen] = useState(false);
     const [scanWarning, setScanWarning] = useState(null);
     const [focusAmount, setFocusAmount] = useState(false);
+    const [highlightSearch, setHighlightSearch] = useState(false);
     const amountRef = useRef(null);
+    const searchRef = useRef(null);
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const redeemedBy = currentUser?.full_name || currentUser?.email || '';
 
@@ -65,6 +69,32 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
         amountRef.current?.focus();
         setFocusAmount(false);
     }, [focusAmount, voucher]);
+
+    // Deep-Link von der Dashboard-Kachel (?scan=1) öffnet den Scanner sofort.
+    useEffect(() => {
+        if (searchParams.get('scan') === '1') setScanOpen(true);
+    }, [searchParams]);
+
+    /** Scan-Param aus der URL nehmen — sonst reißt ein Reload den Scanner erneut auf. */
+    const clearScanParam = () => {
+        if (searchParams.get('scan') === '1') setSearchParams({}, { replace: true });
+    };
+
+    const closeScanner = () => {
+        setScanOpen(false);
+        clearScanParam();
+    };
+
+    /** Kamera verweigert oder Start fehlgeschlagen → normale Ansicht mit hervorgehobenem Nummernfeld. */
+    const handleScanFailure = () => {
+        setScanOpen(false);
+        clearScanParam();
+        setHighlightSearch(true);
+        setTimeout(() => {
+            searchRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            searchRef.current?.focus();
+        }, 80);
+    };
 
     /** Übernimmt eine gefundene Nummer — gleicher Weg für Tippen und Scan. */
     const applyVoucher = ({ num, displayNr, token = null, fromScan = false }) => {
@@ -88,6 +118,8 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
     };
 
     const handleScan = (decodedText) => {
+        clearScanParam();
+        setHighlightSearch(false);
         const { nr, token } = parseVoucherQr(decodedText);
         applyVoucher({
             num: parseInt(String(nr ?? '').trim(), 10),
@@ -167,19 +199,29 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                 <form onSubmit={handleSearch} className="space-y-2.5">
                     <div className="flex gap-2">
                         <Input
+                            ref={searchRef}
                             type="text"
                             inputMode="numeric"
                             autoFocus
                             placeholder="Gutschein-Nummer"
                             value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            className="h-14 flex-1 text-center text-2xl font-bold tabular-nums tracking-wider"
+                            onChange={(e) => { setQuery(e.target.value); setHighlightSearch(false); }}
+                            className={cn(
+                                'h-14 flex-1 text-center text-2xl font-bold tabular-nums tracking-wider',
+                                highlightSearch && 'ring-2 ring-primary border-primary',
+                            )}
                         />
                         <Button type="button" onClick={() => setScanOpen(true)} className="hidden md:flex h-14 px-5 shrink-0">
                             <QrCode className="w-4 h-4 mr-1.5" />
                             QR scannen
                         </Button>
                     </div>
+                    {highlightSearch && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 justify-center">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Kamera nicht verfügbar — Nummer bitte eintippen
+                        </p>
+                    )}
                     <Button type="submit" className="w-full h-11" disabled={!String(query).trim()}>
                         <Search className="w-4 h-4 mr-1.5" />
                         Suchen
@@ -297,8 +339,9 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
 
             <BarcodeScanner
                 open={scanOpen}
-                onClose={() => setScanOpen(false)}
+                onClose={closeScanner}
                 onScan={handleScan}
+                onError={handleScanFailure}
                 title="Gutschein-QR scannen"
                 hint="QR auf Beleg oder Handy-Karte scannen"
             />

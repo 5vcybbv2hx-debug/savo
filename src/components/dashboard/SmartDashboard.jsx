@@ -25,7 +25,7 @@ import {
     Users, Calendar, LogIn, LogOut, Wrench, TrendingDown,
     ShoppingCart, FileText, Package, RefreshCw, AlertTriangle,
     ChevronRight, ChevronDown, ChevronUp, Timer, ShoppingBasket, Pause, Play, Coffee,
-    Euro, Clock3, BarChart3, Ticket
+    Euro, Clock3, BarChart3, Ticket, QrCode
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -414,12 +414,14 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                 </div>
             )}
 
-            {/* 3. Gutschein einlösen — Quick-Action für alle Rollen */}
-            <Link to={createPageUrl('Vouchers')}>
+            {/* 3. Gutschein einlösen — Quick-Action für alle Rollen.
+                ?scan=1: die Kachel öffnet direkt den QR-Scanner in der Einlöse-Ansicht. */}
+            <Link to={`${createPageUrl('Vouchers')}?scan=1`}>
                 <Card className="border-primary/30 bg-primary/10 hover:bg-primary/15 transition-colors card-pressable">
                     <CardContent className="p-3 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-primary/20 text-primary">
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center gap-0.5 shrink-0 bg-primary/20 text-primary">
                             <Ticket className="w-4 h-4" />
+                            <QrCode className="w-3.5 h-3.5" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-foreground">Gutschein einlösen</p>
