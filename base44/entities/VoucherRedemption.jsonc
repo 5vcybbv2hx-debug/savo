@@ -28,5 +28,11 @@
     "voucher_id",
     "redemption_date",
     "amount"
-  ]
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
 }

@@ -63,5 +63,11 @@
     "original_value",
     "remaining_value",
     "status"
-  ]
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
 }
