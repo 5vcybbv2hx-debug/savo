@@ -33,8 +33,12 @@ export function voucherQrUrl(voucher) {
 // fortlaufende Re.-Nr. (z. B. 1000167) — sie ist im flatpay-Backend
 // (Verkäufe/Belege) wieder auffindbar. Deshalb Pflichtfeld bei jeder Einlösung.
 export const RECEIPT_PLACEHOLDER = 'z. B. 1000167';
-export const RECEIPT_HINT = "Oben auf dem flatpay-Beleg nach 'Re.-Nr.:' — z. B. 1000167";
+export const RECEIPT_HINT = 'Die Re.-Nr. steht oben auf dem flatpay-Beleg (z. B. 1000167).';
 export const RECEIPT_INVALID_HINT = 'Bitte die Re.-Nr. vom Kassenbon eingeben — nur Ziffern';
+
+// ── Hinweise, die den Mitarbeiter durch die Einlösung führen ───────────────
+export const AMOUNT_HINT = "Trage denselben Betrag ein, den du in flatpay als 'Gutschein' gebucht hast (nicht die ganze Rechnung).";
+export const REDEEM_STEPS_HINT = "So läuft's: 1) Bestellung in flatpay wie gewohnt, als Zahlart 'Gutschein' wählen. 2) Hier QR scannen oder Nummer eingeben. 3) Betrag + Re.-Nr. vom Bon bestätigen.";
 
 /** Nur Ziffern, höchstens 10 Stellen — direkt beim Tippen anwenden. */
 export function sanitizeReceiptNumber(value) {

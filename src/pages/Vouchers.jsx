@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { usePermissions } from '@/components/auth/usePermissions';
 import {
     generateVoucherAccessToken, isValidReceiptNumber, sanitizeReceiptNumber,
-    RECEIPT_HINT, RECEIPT_PLACEHOLDER, RECEIPT_INVALID_HINT,
+    RECEIPT_HINT, RECEIPT_PLACEHOLDER, RECEIPT_INVALID_HINT, AMOUNT_HINT,
 } from '@/lib/vouchers';
 import { createNotification } from '@/utils/createNotification';
 import VoucherReceipt from '@/components/vouchers/VoucherReceipt';
@@ -472,6 +472,11 @@ function RedeemModal({ voucher, currentUser, isPending, error, onClose, onSubmit
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-3">
+                        <p className="text-xs text-muted-foreground">
+                            Fertig! Rest der Rechnung ist beglichen. Neuer Gutschein-Restwert:{' '}
+                            <span className="font-semibold text-foreground">{fmtEUR(done.newRemaining)}</span>.
+                            Der Gast sieht den Restwert jederzeit über den QR-Code.
+                        </p>
                         <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center">
                             <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Am Kassenbon gegenprüfen</p>
                             <p className="text-lg font-bold text-foreground mt-1 tabular-nums">Re.-Nr. {done.reference} erfasst</p>
@@ -513,6 +518,7 @@ function RedeemModal({ voucher, currentUser, isPending, error, onClose, onSubmit
                         <Input type="number" step="0.01" min="0.01" max={remaining}
                             inputMode="decimal" value={amount}
                             onChange={e => setAmount(e.target.value)} autoFocus />
+                        <span className="text-[11px] text-muted-foreground block">{AMOUNT_HINT}</span>
                         {!amountValid && amount !== '' && (
                             <span className="text-[11px] text-destructive">
                                 Betrag muss zwischen 0 und {fmtEUR(remaining)} liegen.

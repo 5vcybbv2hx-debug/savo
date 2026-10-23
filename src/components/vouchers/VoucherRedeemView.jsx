@@ -15,9 +15,10 @@ import { cn } from '@/lib/utils';
 import {
     isValidReceiptNumber, sanitizeReceiptNumber, parseVoucherQr,
     RECEIPT_HINT, RECEIPT_PLACEHOLDER, RECEIPT_INVALID_HINT,
+    AMOUNT_HINT, REDEEM_STEPS_HINT,
 } from '@/lib/vouchers';
 import {
-    Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft, QrCode,
+    Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft, QrCode, Info,
 } from 'lucide-react';
 
 const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
@@ -157,6 +158,11 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                 <Card className="p-6 text-center space-y-3">
                     <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto" />
                     <h1 className="text-xl font-bold text-foreground">Eingelöst</h1>
+                    <p className="text-xs text-muted-foreground">
+                        Fertig! Rest der Rechnung ist beglichen. Neuer Gutschein-Restwert:{' '}
+                        <span className="font-semibold text-foreground">{fmtEUR(done.newRemaining)}</span>.
+                        Der Gast sieht den Restwert jederzeit über den QR-Code.
+                    </p>
                     <p className="text-sm text-muted-foreground">
                         Gutschein Nr. <span className="font-semibold text-foreground">{done.voucher.voucher_number}</span>
                     </p>
@@ -191,6 +197,11 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
 
             {/* ── Suche ── */}
             <Card className="p-4">
+                {/* Kompakter Ablauf-Hinweis: erklärt Schritt für Schritt, was zu tun ist */}
+                <div className="mb-3 flex gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                    <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <p className="text-[11px] leading-snug text-muted-foreground">{REDEEM_STEPS_HINT}</p>
+                </div>
                 {/* Mobile: QR-Button in Vollbreite über dem manuellen Feld */}
                 <Button type="button" onClick={() => setScanOpen(true)} className="w-full h-12 mb-2.5 md:hidden">
                     <QrCode className="w-4 h-4 mr-1.5" />
@@ -295,6 +306,7 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                                     onChange={(e) => setAmount(e.target.value)}
                                     className="h-12 text-lg font-semibold tabular-nums"
                                 />
+                                <span className="text-[11px] text-muted-foreground block">{AMOUNT_HINT}</span>
                                 {amount !== '' && !amountValid && (
                                     <span className="text-[11px] text-destructive">
                                         Betrag muss zwischen 0 und {fmtEUR(remaining)} liegen.
