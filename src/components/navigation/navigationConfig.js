@@ -25,6 +25,11 @@ export const mainNavigation = [
 ];
 
 export const additionalPages = [
+    // Gutscheine: für alle Rollen sichtbar — Manager sehen die Vollansicht,
+    // alle anderen die Einlöse-Ansicht (Gating in Vouchers.jsx).
+    // Ganz oben, direkt nach den Modulen der Bottom-Nav — am Tresen am häufigsten gebraucht.
+    { page: 'Vouchers',       name: 'Gutscheine',        icon: Ticket,        permission: 'canViewDashboard' },
+
     // Betrieb
     { page: 'GuestHub',       name: 'Gäste & Tische',    icon: Users,         permission: 'canViewReservations' },
     { page: 'Todos',          name: 'Aufgaben',           icon: ClipboardList, permission: 'canViewTodos' },
@@ -57,9 +62,6 @@ export const additionalPages = [
     { page: 'AccountingBank',        name: 'Bankkonten',        icon: Banknote,   permission: 'canViewAccounting' },
     { page: 'DailyAnalysis',         name: 'Tagesanalyse',      icon: BarChart3,  permission: 'canViewAnalytics' },
     { page: 'RevenueHistory',        name: 'Umsatz-Historie',   icon: TrendingUp, permission: 'isManager' },
-    // Gutscheine: für alle Rollen sichtbar — Manager sehen die Vollansicht,
-    // alle anderen die Einlöse-Ansicht (Gating in Vouchers.jsx)
-    { page: 'Vouchers',              name: 'Gutscheine',        icon: Ticket,      permission: 'canViewDashboard' },
     { page: 'StaffingAnalysis',     name: 'Personalplanung',   icon: Target,      permission: 'isManager' },
 
     // Team

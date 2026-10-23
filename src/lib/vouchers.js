@@ -45,3 +45,24 @@ export function sanitizeReceiptNumber(value) {
 export function isValidReceiptNumber(value) {
   return /^\d{3,10}$/.test(String(value ?? '').trim());
 }
+
+/**
+ * QR-Inhalt vom Gutschein-Beleg lesen.
+ * Erwartet https://savo-lounge-club.de/gutschein?nr=319&t=V3K9RL
+ * — auch ohne Protokoll. Eine reine Nummer wird direkt übernommen.
+ * Rückgabe: { nr, token } — token ist der access_token zur Gegenprüfung.
+ */
+export function parseVoucherQr(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text) return { nr: null, token: null };
+
+  const queryIndex = text.indexOf('?');
+  if (queryIndex === -1) {
+    const digits = text.replace(/\D/g, '');
+    return { nr: digits || null, token: null };
+  }
+
+  const params = new URLSearchParams(text.slice(queryIndex + 1).split('#')[0]);
+  const nr = (params.get('nr') || '').replace(/\D/g, '');
+  return { nr: nr || null, token: params.get('t')?.trim() || null };
+}

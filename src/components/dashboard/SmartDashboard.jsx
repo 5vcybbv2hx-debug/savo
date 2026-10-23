@@ -25,7 +25,7 @@ import {
     Users, Calendar, LogIn, LogOut, Wrench, TrendingDown,
     ShoppingCart, FileText, Package, RefreshCw, AlertTriangle,
     ChevronRight, ChevronDown, ChevronUp, Timer, ShoppingBasket, Pause, Play, Coffee,
-    Euro, Clock3, BarChart3
+    Euro, Clock3, BarChart3, Ticket
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -414,7 +414,23 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                 </div>
             )}
 
-            {/* 3. NewsPanel — Infos & Aufgaben vom Chef (TOP-DOWN) */}
+            {/* 3. Gutschein einlösen — Quick-Action für alle Rollen */}
+            <Link to={createPageUrl('Vouchers')}>
+                <Card className="border-primary/30 bg-primary/10 hover:bg-primary/15 transition-colors card-pressable">
+                    <CardContent className="p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-primary/20 text-primary">
+                            <Ticket className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground">Gutschein einlösen</p>
+                            <p className="text-xs text-muted-foreground">QR scannen oder Nummer eingeben</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    </CardContent>
+                </Card>
+            </Link>
+
+            {/* 4. NewsPanel — Infos & Aufgaben vom Chef (TOP-DOWN) */}
             <NewsPanel currentUser={currentUser} currentEmployee={currentEmployee} isManager={isManager} employees={employees} />
 
             {/* 4. Meine Aufgaben */}

@@ -4,18 +4,19 @@
  * Ablauf: Nummer eingeben → Gutschein-Karte → Betrag (Default = Restwert) →
  * Bestätigen → Erfolg mit neuem Restwert.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import BarcodeScanner from '@/components/restock/BarcodeScanner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
-    isValidReceiptNumber, sanitizeReceiptNumber,
+    isValidReceiptNumber, sanitizeReceiptNumber, parseVoucherQr,
     RECEIPT_HINT, RECEIPT_PLACEHOLDER, RECEIPT_INVALID_HINT,
 } from '@/lib/vouchers';
 import {
-    Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft,
+    Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft, QrCode,
 } from 'lucide-react';
 
 const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
@@ -44,24 +45,56 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
     const [reference, setReference] = useState('');
     const [done, setDone] = useState(null);
     const [errorText, setErrorText] = useState(null);
+    const [scanOpen, setScanOpen] = useState(false);
+    const [scanWarning, setScanWarning] = useState(null);
+    const [focusAmount, setFocusAmount] = useState(false);
+    const amountRef = useRef(null);
 
     const redeemedBy = currentUser?.full_name || currentUser?.email || '';
 
     const reset = () => {
         setQuery(''); setVoucher(null); setNotFound(false);
         setAmount(''); setReference(''); setDone(null); setErrorText(null);
+        setScanWarning(null);
     };
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        const num = parseInt(String(query).trim(), 10);
+    // Nach erfolgreichem Scan direkt zur Betrags-Eingabe
+    useEffect(() => {
+        if (!focusAmount || !voucher) return;
+        amountRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        amountRef.current?.focus();
+        setFocusAmount(false);
+    }, [focusAmount, voucher]);
+
+    /** Übernimmt eine gefundene Nummer — gleicher Weg für Tippen und Scan. */
+    const applyVoucher = ({ num, displayNr, token = null, fromScan = false }) => {
         const hit = isNaN(num) ? null : vouchers.find(v => Number(v.voucher_number) === num) || null;
+        if (displayNr != null) setQuery(displayNr);
         setVoucher(hit);
         setNotFound(!hit);
         setAmount(hit ? String(hit.remaining_value ?? '') : '');
         setReference('');
         setErrorText(null);
         setDone(null);
+        const mismatch = !!(hit && token && hit.access_token
+            && String(hit.access_token).toUpperCase() !== String(token).toUpperCase());
+        setScanWarning(mismatch ? 'QR-Code passt nicht zu diesem Gutschein' : null);
+        if (hit && fromScan) setFocusAmount(true);
+    };
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        applyVoucher({ num: parseInt(String(query).trim(), 10) });
+    };
+
+    const handleScan = (decodedText) => {
+        const { nr, token } = parseVoucherQr(decodedText);
+        applyVoucher({
+            num: parseInt(String(nr ?? '').trim(), 10),
+            displayNr: nr ?? '',
+            token,
+            fromScan: true,
+        });
     };
 
     const remaining = voucher?.remaining_value ?? 0;
@@ -126,20 +159,37 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
 
             {/* ── Suche ── */}
             <Card className="p-4">
+                {/* Mobile: QR-Button in Vollbreite über dem manuellen Feld */}
+                <Button type="button" onClick={() => setScanOpen(true)} className="w-full h-12 mb-2.5 md:hidden">
+                    <QrCode className="w-4 h-4 mr-1.5" />
+                    QR scannen
+                </Button>
                 <form onSubmit={handleSearch} className="space-y-2.5">
-                    <Input
-                        type="text"
-                        inputMode="numeric"
-                        autoFocus
-                        placeholder="Gutschein-Nummer"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        className="h-14 text-center text-2xl font-bold tabular-nums tracking-wider"
-                    />
+                    <div className="flex gap-2">
+                        <Input
+                            type="text"
+                            inputMode="numeric"
+                            autoFocus
+                            placeholder="Gutschein-Nummer"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            className="h-14 flex-1 text-center text-2xl font-bold tabular-nums tracking-wider"
+                        />
+                        <Button type="button" onClick={() => setScanOpen(true)} className="hidden md:flex h-14 px-5 shrink-0">
+                            <QrCode className="w-4 h-4 mr-1.5" />
+                            QR scannen
+                        </Button>
+                    </div>
                     <Button type="submit" className="w-full h-11" disabled={!String(query).trim()}>
                         <Search className="w-4 h-4 mr-1.5" />
                         Suchen
                     </Button>
+                    {scanWarning && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 justify-center pt-0.5">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            {scanWarning}
+                        </p>
+                    )}
                     {notFound && (
                         <p className="text-xs text-destructive flex items-center gap-1.5 justify-center pt-0.5">
                             <AlertTriangle className="w-3.5 h-3.5" />
@@ -193,6 +243,7 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                             <label className="space-y-1 block">
                                 <span className="text-[11px] font-medium text-muted-foreground">Betrag (€) *</span>
                                 <Input
+                                    ref={amountRef}
                                     type="number"
                                     step="0.01"
                                     min="0.01"
@@ -243,6 +294,14 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                     </Button>
                 </Card>
             )}
+
+            <BarcodeScanner
+                open={scanOpen}
+                onClose={() => setScanOpen(false)}
+                onScan={handleScan}
+                title="Gutschein-QR scannen"
+                hint="QR auf Beleg oder Handy-Karte scannen"
+            />
         </div>
     );
 }
