@@ -43,7 +43,9 @@ Deno.serve(async (req) => {
 
         // In-app notification
         await base44.asServiceRole.entities.Notification.create({
-            type: isCreate ? 'shift_assigned' : 'shift_updated',
+            type: 'general',
+            category: 'schicht',
+            priority: 'info',
             title,
             message,
             related_id: data.id,
