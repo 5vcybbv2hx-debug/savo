@@ -29,7 +29,7 @@ const contextLabels = {
     default:   { title: 'Barcode scannen',  hint: 'Halte den Code vor die Kamera' },
 };
 
-export default function BarcodeScanner({ onScan, open, onClose, onError, title, hint, mode = 'default' }) {
+export default function BarcodeScanner({ onScan, open, onClose, onError, title, hint, mode = 'default', manualLabel, manualPlaceholder = 'Code manuell eingeben…' }) {
     const ctx         = contextLabels[mode] || contextLabels.default;
     const dialogTitle = title || ctx.title;
     const dialogHint  = hint  || ctx.hint;
@@ -297,18 +297,23 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
                     </p>
 
                     {showManual ? (
-                        <form onSubmit={handleManualSubmit} className="flex gap-2">
-                            <Input
-                                autoFocus
-                                value={manualInput}
-                                onChange={e => setManualInput(e.target.value)}
-                                placeholder="Code manuell eingeben…"
-                                className="flex-1 h-11 rounded-xl"
-                            />
-                            <Button type="submit" className="h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-semibold px-5">OK</Button>
-                            <Button type="button" variant="outline" className="h-11 w-11 rounded-xl p-0" onClick={() => setShowManual(false)}>
-                                <X className="w-4 h-4" />
-                            </Button>
+                        <form onSubmit={handleManualSubmit} className="space-y-2">
+                            {manualLabel && (
+                                <span className="text-[11px] font-medium text-muted-foreground block">{manualLabel}</span>
+                            )}
+                            <div className="flex gap-2">
+                                <Input
+                                    autoFocus
+                                    value={manualInput}
+                                    onChange={e => setManualInput(e.target.value)}
+                                    placeholder={manualPlaceholder}
+                                    className="flex-1 h-11 rounded-xl"
+                                />
+                                <Button type="submit" className="h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-semibold px-5">OK</Button>
+                                <Button type="button" variant="outline" className="h-11 w-11 rounded-xl p-0" onClick={() => setShowManual(false)}>
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </div>
                         </form>
                     ) : (
                         <div className="flex gap-3">

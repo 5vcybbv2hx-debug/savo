@@ -344,6 +344,8 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                 onError={handleScanFailure}
                 title="Gutschein-QR scannen"
                 hint="QR auf Beleg oder Handy-Karte scannen"
+                manualLabel="Gutschein-Nummer"
+                manualPlaceholder="z. B. 320"
             />
         </div>
     );
