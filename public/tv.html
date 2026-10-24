@@ -16,7 +16,6 @@
     .header { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 28px 48px; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); }
     .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; opacity: 0.9; }
     .clock-wrap { text-align: right; }
-    .clock-time { font-size: 3rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
     .clock-date { font-size: 0.9rem; color: rgba(255,255,255,0.5); margin-top: 3px; }
 
     .type-badge { border-radius: 8px; padding: 6px 20px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: inline-block; margin-bottom: 8px; }
@@ -57,7 +56,7 @@
   <div class="header">
     <div class="logo" id="logo">● SAVO</div>
     <div class="clock-wrap">
-      <div class="clock-time" id="clock-time">00:00</div>
+      <!-- Uhrzeit-Anzeige entfernt — Datum bleibt -->
       <div class="clock-date" id="clock-date"></div>
     </div>
   </div>
@@ -83,16 +82,13 @@ let currentIdx = 0;
 let progressStart = null;
 let progressRaf = null;
 
-// Uhr
+// Datum (Uhrzeit-Anzeige entfernt)
 function updateClock() {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('clock-time').textContent = h + ':' + m;
   document.getElementById('clock-date').textContent =
     DAYS_DE[now.getDay()] + ', ' + now.getDate() + '. ' + MONTHS_DE[now.getMonth()];
 }
-setInterval(updateClock, 1000);
+setInterval(updateClock, 60000);
 updateClock();
 
 // Slides laden

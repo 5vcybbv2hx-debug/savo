@@ -49,7 +49,6 @@ export const KEYFRAMES = `
   @keyframes spotlight   { 0%{transform:translateX(-110%) skewX(-15deg)} 100%{transform:translateX(310%) skewX(-15deg)} }
   @keyframes ringPulse   { 0%{transform:scale(0.9);opacity:0.8} 50%{transform:scale(1.12);opacity:0.25} 100%{transform:scale(0.9);opacity:0.8} }
   @keyframes ambientPulse{ 0%,100%{opacity:0.15} 50%{opacity:0.35} }
-  @keyframes clockTick   { 0%{opacity:1} 49%{opacity:1} 50%{opacity:0.2} 99%{opacity:0.2} 100%{opacity:1} }
   @keyframes loadSpin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes crossFadeIn { from{opacity:0;transform:scale(1.03)} to{opacity:1;transform:scale(1)} }
 `;
@@ -860,22 +859,6 @@ function SpotlightStreak({color}){return(<div style={{position:'absolute',inset:
 function ShimmerBars({color}){return(<div style={{position:'absolute',inset:0,overflow:'hidden',pointerEvents:'none'}}>{[0,1,2,3].map(i=>(<div key={i} style={{position:'absolute',left:0,right:0,top:`${20+i*20}%`,height:1,background:`linear-gradient(90deg,transparent,${color},transparent)`,animation:`shimmerBar ${2.5+i*0.6}s ${i*0.4}s ease-in-out infinite`}}/>))}</div>);}
 function PulseRings({color}){return(<div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>{[0,1,2].map(i=>(<div key={i} style={{position:'absolute',width:500+i*200,height:500+i*200,borderRadius:'50%',border:`1px solid ${color}`,opacity:0,animation:`ringPulse ${2.5+i*0.7}s ${i*0.6}s ease-in-out infinite`}}/>))}</div>);}
 
-// ── Uhr ────────────────────────────────────────────────────────────────────────
-function Clock() {
-  const [time, setTime] = useState(new Date());
-  useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
-  return (
-    <div style={{ textAlign: 'right' }}>
-      <div style={{ fontSize: '3rem', fontWeight: 700, lineHeight: 1, color: '#fff', letterSpacing: '-0.02em' }}>
-        {format(time, 'HH:mm')}
-      </div>
-      <div style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
-        {format(time, 'EEEE, d. MMMM', { locale: de })}
-      </div>
-    </div>
-  );
-}
-
 // ── Progress Bar ───────────────────────────────────────────────────────────────
 function ProgressBar({ duration, color, resetKey }) {
   const [p, setP] = useState(0);
@@ -924,9 +907,8 @@ function LoadingSplash() {
 // ══════════════════════════════════════════════════════════════════════════════
 function AmbientScreen() {
   const [time, setTime] = useState(new Date());
-  useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
-
-  const hh = time.getHours(), mm = time.getMinutes(), ss = time.getSeconds();
+  // Nur noch das Datum — Uhrzeit-Anzeige entfernt, Intervall daher 1 Minute
+  useEffect(() => { const t = setInterval(() => setTime(new Date()), 60000); return () => clearInterval(t); }, []);
 
   return (
     <div style={{ background: '#050508', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Jost","Century Gothic",sans-serif' }}>
@@ -941,19 +923,8 @@ function AmbientScreen() {
       {/* Dezente Gitterlinien */}
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '80px 80px', pointerEvents: 'none' }} />
 
-      {/* Große Uhr */}
+      {/* Uhrzeit-Anzeige entfernt — Datum bleibt */}
       <div style={{ position: 'relative', zIndex: 10, textAlign: 'center' }}>
-        <div style={{ fontSize: 'clamp(6rem, 18vw, 14rem)', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.05em', color: '#ffffff', fontVariantNumeric: 'tabular-nums', textShadow: '0 0 80px rgba(99,102,241,0.4), 0 2px 40px rgba(0,0,0,0.8)' }}>
-          {String(hh).padStart(2,'0')}
-          <span style={{ animation: 'clockTick 1s step-start infinite', display: 'inline-block', marginInline: '0.05em', color: 'rgba(255,255,255,0.5)' }}>:</span>
-          {String(mm).padStart(2,'0')}
-        </div>
-
-        {/* Sekunden */}
-        <div style={{ fontSize: '2rem', fontWeight: 300, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginTop: 8, fontVariantNumeric: 'tabular-nums' }}>
-          :{String(ss).padStart(2,'0')}
-        </div>
-
         {/* Datum */}
         <div style={{ fontSize: '1.5rem', fontWeight: 400, color: 'rgba(255,255,255,0.35)', marginTop: 24, letterSpacing: '0.06em' }}>
           {format(time, 'EEEE, d. MMMM yyyy', { locale: de })}
