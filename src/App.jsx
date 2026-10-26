@@ -39,7 +39,6 @@ import IncidentDetail from './pages/IncidentDetail';
 import DataQuality from './pages/DataQuality';
 import StaffingAnalysis from './pages/StaffingAnalysis';
 import RevenueHistory from './pages/RevenueHistory';
-import Cockpit from './pages/Cockpit';
 import MenuReview from './pages/MenuReview';
 import ExternalJobs from './pages/ExternalJobs';
 import Vouchers from './pages/Vouchers';
@@ -242,15 +241,6 @@ const AuthenticatedApp = () => {
         <LayoutWrapper currentPageName="RevenueHistory">
           <RoleGuard permission="isManager">
             <RevenueHistory />
-          </RoleGuard>
-        </LayoutWrapper>
-      } />
-
-      {/* Finanz-Cockpit — Kennzahlen mit Vorjahresvergleich, nur Manager & Admin */}
-      <Route path="/Cockpit" element={
-        <LayoutWrapper currentPageName="Cockpit">
-          <RoleGuard permission="isManager">
-            <Cockpit />
           </RoleGuard>
         </LayoutWrapper>
       } />

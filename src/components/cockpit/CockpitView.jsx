@@ -1,9 +1,9 @@
 /**
- * Finanz-Cockpit — wichtigste Kennzahlen mit Vorjahresvergleich.
+ * CockpitView — Finanz-Cockpit als Bereich im Buchhaltungs-Modul.
  *
  * Zeitraum: Woche (laufende KW, Mo–So) oder Monat (laufender Kalendermonat).
  * Kennzahlen: Umsatz, Personalkosten, Fixkosten, Deckungsbeitrag, Tagesumsätze.
- * Zugriff: nur Manager & Admin (Umsatzdaten sind manager-only).
+ * Wird als Tab "Cockpit" in AccountingDashboard gerendert.
  */
 import { useState } from 'react';
 import { AlertTriangle, Gauge, Loader2, Receipt, TrendingUp, Users, Wallet } from 'lucide-react';
@@ -13,22 +13,22 @@ import CockpitKpiCard from '@/components/cockpit/CockpitKpiCard';
 import CockpitDelta from '@/components/cockpit/CockpitDelta';
 import CockpitRevenueBars from '@/components/cockpit/CockpitRevenueBars';
 import { useCockpitData } from '@/hooks/useCockpitData';
-import { fmtEUR, fmtHours } from '@/lib/cockpitMetrics';
+import { fmtEUR, fmtHours, SAVO_BLUE } from '@/lib/cockpitMetrics';
 
-export default function Cockpit() {
+export default function CockpitView() {
     const [periodType, setPeriodType] = useState('month');
     const { period, kpis, isLoading, error } = useCockpitData(periodType);
 
     return (
-        <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-4">
-            {/* ── Kopf ── */}
+        <div className="space-y-4">
+            {/* ── Zeitraum + Umschalter ── */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
-                        <Gauge className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                    <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Gauge className="w-4 h-4" style={{ color: SAVO_BLUE }} />
                         Finanz-Cockpit
-                    </h1>
-                    <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                         {period.label} · Vorjahresvergleich
                         {period.isRunning && ' (laufende Periode)'}
                     </p>
@@ -37,7 +37,7 @@ export default function Cockpit() {
             </div>
 
             {error && (
-                <Card className="p-5 border-destructive/40">
+                <Card className="p-4 border-destructive/40">
                     <div className="flex items-center gap-2 text-destructive mb-1.5">
                         <AlertTriangle className="w-4 h-4" />
                         <p className="text-sm font-semibold">Kennzahlen konnten nicht geladen werden</p>
@@ -47,7 +47,7 @@ export default function Cockpit() {
             )}
 
             {isLoading && !error && (
-                <div className="flex items-center justify-center py-24 text-muted-foreground">
+                <div className="flex items-center justify-center py-20 text-muted-foreground">
                     <Loader2 className="w-5 h-5 animate-spin mr-2" /> Kennzahlen werden geladen …
                 </div>
             )}

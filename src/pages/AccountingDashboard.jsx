@@ -12,8 +12,10 @@ import { STALE } from '@/lib/queryUtils';
 import { base44 } from '@/api/base44Client';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CockpitView from '@/components/cockpit/CockpitView';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +33,10 @@ const fmt = n => (n ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, ma
 export default function AccountingDashboard() {
     const permissions = usePermissions();
     const navigate    = useNavigate();
+    // Bereich des Moduls: Übersicht (Standard) oder Cockpit — per ?tab=cockpit teilbar
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tab = searchParams.get('tab') === 'cockpit' ? 'cockpit' : 'uebersicht';
+    const setTab = (next) => setSearchParams(next === 'uebersicht' ? {} : { tab: next }, { replace: true });
     const now         = new Date();
     const monthStart  = startOfMonth(now);
     const monthEnd    = endOfMonth(now);
@@ -175,7 +181,7 @@ export default function AccountingDashboard() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
-            <div className="max-w-lg mx-auto px-4 py-5 space-y-5">
+            <div className={cn('mx-auto px-4 py-5 space-y-5', tab === 'cockpit' ? 'max-w-lg md:max-w-3xl' : 'max-w-lg')}>
 
                 {/* ── Header ──────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between">
@@ -190,6 +196,15 @@ export default function AccountingDashboard() {
                         </Button>
                     </Link>
                 </div>
+
+                {/* ── Bereiche des Moduls: Übersicht · Cockpit ─────────────── */}
+                <Tabs value={tab} onValueChange={setTab}>
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+                        <TabsTrigger value="cockpit">Cockpit</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="uebersicht" className="mt-5 space-y-5">
 
                 {/* ── Rohgewinn — die wichtigste Zahl ─────────────────────── */}
                 <Card className={cn(
@@ -291,6 +306,13 @@ export default function AccountingDashboard() {
                         </Link>
                     ))}
                 </div>
+
+                    </TabsContent>
+
+                    <TabsContent value="cockpit" className="mt-5">
+                        <CockpitView />
+                    </TabsContent>
+                </Tabs>
 
             </div>
         </div>
