@@ -10,7 +10,7 @@ import {
     CalendarDays, Clock, Plane, RefreshCw, Shield,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare, Target,
-    Banknote, BookCopy, Warehouse, Utensils, Siren, User, TrendingUp, Ticket,
+    Banknote, BookCopy, Warehouse, Utensils, Siren, User, TrendingUp, Ticket, Gauge,
 } from 'lucide-react';
 
 // ── SIDEBAR — aus sidebarConfig.js (Builder-sicher) ─────────────────────────
@@ -52,6 +52,7 @@ export const additionalPages = [
     { page: 'PriceCalculator', name: 'Schnellkalkulation',  icon: Calculator, permission: 'canViewPriceCalculator' },
 
     // Buchhaltung
+    { page: 'Cockpit',               name: 'Finanz-Cockpit',    icon: Gauge,      permission: 'isManager' },
     { page: 'AccountingDashboard',   name: 'Buchhaltung',       icon: Calculator, permission: 'canViewAccounting' },
     { page: 'ExternalBusiness',    name: 'Außenaufträge',     icon: Receipt,     permission: 'canViewAccounting' },
     { page: 'AccountingCashbook',    name: 'Kassenbuch',        icon: BookCopy,   permission: 'canViewAccountingCashbook' },
