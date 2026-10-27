@@ -49,6 +49,34 @@ export const PRIORITAET_META = {
 export const PRIORITAET_OPTIONS = ['kritisch', 'hoch', 'mittel', 'niedrig'];
 export const SCHULDNER_OPTIONS  = ['Pierre', 'Sandra', 'SAVO'];
 
+// ── Schuldner-Farbcode ────────────────────────────────────────────────────────
+// Pierre = SAVO-Blau, Sandra = Amber, SAVO = Neutral-Grau.
+export const SCHULDNER_META = {
+    Pierre: {
+        label: 'Pierre',
+        dotColor: SAVO_BLUE,
+        badgeStyle: { color: SAVO_BLUE, borderColor: SAVO_BLUE, backgroundColor: 'rgba(0,153,219,0.12)' },
+    },
+    Sandra: {
+        label: 'Sandra',
+        dotColor: '#F59E0B',
+        badgeStyle: { color: '#F59E0B', borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.12)' },
+    },
+    SAVO: {
+        label: 'SAVO',
+        dotColor: '#9CA3AF',
+        className: 'border-border bg-muted text-muted-foreground',
+    },
+};
+
+/** Fällt auf Neutral-Grau zurück, wenn kein (bekannter) Schuldner gesetzt ist. */
+export const schuldnerMeta = (schuldner) =>
+    SCHULDNER_META[schuldner] || {
+        label: schuldner || 'Ohne Zuordnung',
+        dotColor: '#9CA3AF',
+        className: 'border-border bg-muted text-muted-foreground',
+    };
+
 export const PRIORITAET_RANK = { kritisch: 0, hoch: 1, mittel: 2, niedrig: 3 };
 
 // status-Parameter ist null → alle Posten

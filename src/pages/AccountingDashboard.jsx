@@ -36,8 +36,8 @@ export default function AccountingDashboard() {
     const navigate    = useNavigate();
     // Bereich des Moduls: Übersicht (Standard) oder Cockpit — per ?tab=cockpit teilbar
     const [searchParams, setSearchParams] = useSearchParams();
-    // „Schulden & Fahrplan" sind sensible Finanzdaten — nur Manager und Admin.
-    const canViewSchulden = permissions.isManager || permissions.isAdmin;
+    // „Schulden & Fahrplan" sind sensible Finanzdaten — ausschließlich App-Rolle 'Admin'.
+    const canViewSchulden = permissions.isAdmin;
     const requestedTab = searchParams.get('tab');
     // Direkt-URL absichern: ohne Berechtigung fällt der Tab auf die Übersicht zurück.
     const tab = requestedTab === 'cockpit'
