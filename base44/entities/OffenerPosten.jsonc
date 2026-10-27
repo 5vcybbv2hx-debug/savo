@@ -1,0 +1,86 @@
+{
+  "name": "OffenerPosten",
+  "type": "object",
+  "properties": {
+    "titel": {
+      "type": "string",
+      "description": "Kurzbezeichnung des Postens, z.B. 'BGN Mahnung \u2014 Gesamtr\u00fcckstand'"
+    },
+    "glaeubiger": {
+      "type": "string",
+      "description": "Gl\u00e4ubiger / Forderungssteller"
+    },
+    "schuldner": {
+      "type": "string",
+      "enum": [
+        "Pierre",
+        "Sandra",
+        "SAVO"
+      ],
+      "description": "Wer den Posten tr\u00e4gt"
+    },
+    "betrag": {
+      "type": "number",
+      "description": "Betrag in Euro"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "offen",
+        "geplant",
+        "bezahlt",
+        "erledigt",
+        "info"
+      ],
+      "default": "offen",
+      "description": "Bearbeitungsstand des Postens"
+    },
+    "prioritaet": {
+      "type": "string",
+      "enum": [
+        "kritisch",
+        "hoch",
+        "mittel",
+        "niedrig"
+      ],
+      "default": "mittel"
+    },
+    "faelligkeit": {
+      "type": "string",
+      "format": "date",
+      "description": "F\u00e4lligkeitsdatum (kann leer sein)"
+    },
+    "brief_nr": {
+      "type": "string",
+      "description": "Aktenzeichen / Nummer des Schreibens"
+    },
+    "bild_url": {
+      "type": "string",
+      "description": "\u00d6ffentliche CDN-URL des Briefscans (kann leer sein)"
+    },
+    "iban": {
+      "type": "string"
+    },
+    "bic": {
+      "type": "string"
+    },
+    "verwendungszweck": {
+      "type": "string"
+    },
+    "notizen": {
+      "type": "string"
+    },
+    "empfehlung": {
+      "type": "string",
+      "description": "Empfohlenes Vorgehen zum Posten"
+    },
+    "bezahlt_am": {
+      "type": "string",
+      "format": "date",
+      "description": "Zahlungsdatum (wird beim Markieren als bezahlt gesetzt)"
+    }
+  },
+  "required": [
+    "titel"
+  ]
+}

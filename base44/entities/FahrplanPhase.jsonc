@@ -1,0 +1,31 @@
+{
+  "name": "FahrplanPhase",
+  "type": "object",
+  "properties": {
+    "titel": {
+      "type": "string",
+      "description": "Name der Phase, z.B. 'Schritt 1 \u2014 Ratenvereinbarung BGN'"
+    },
+    "beschreibung": {
+      "type": "string",
+      "description": "Was in dieser Phase passiert"
+    },
+    "sort_order": {
+      "type": "number",
+      "description": "Reihenfolge im Fahrplan (aufsteigend)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aktiv",
+        "geplant",
+        "erledigt"
+      ],
+      "default": "geplant",
+      "description": "Bearbeitungsstand der Phase"
+    }
+  },
+  "required": [
+    "titel"
+  ]
+}

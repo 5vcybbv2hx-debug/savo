@@ -16,6 +16,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CockpitView from '@/components/cockpit/CockpitView';
+import SchuldenFahrplanTab from '@/components/accounting/schulden/SchuldenFahrplanTab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +36,13 @@ export default function AccountingDashboard() {
     const navigate    = useNavigate();
     // Bereich des Moduls: Übersicht (Standard) oder Cockpit — per ?tab=cockpit teilbar
     const [searchParams, setSearchParams] = useSearchParams();
-    const tab = searchParams.get('tab') === 'cockpit' ? 'cockpit' : 'uebersicht';
+    // „Schulden & Fahrplan" sind sensible Finanzdaten — nur Manager und Admin.
+    const canViewSchulden = permissions.isManager || permissions.isAdmin;
+    const requestedTab = searchParams.get('tab');
+    // Direkt-URL absichern: ohne Berechtigung fällt der Tab auf die Übersicht zurück.
+    const tab = requestedTab === 'cockpit'
+        ? 'cockpit'
+        : (requestedTab === 'schulden' && canViewSchulden ? 'schulden' : 'uebersicht');
     const setTab = (next) => setSearchParams(next === 'uebersicht' ? {} : { tab: next }, { replace: true });
     const now         = new Date();
     const monthStart  = startOfMonth(now);
@@ -181,7 +188,7 @@ export default function AccountingDashboard() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
-            <div className={cn('mx-auto px-4 py-5 space-y-5', tab === 'cockpit' ? 'max-w-lg md:max-w-3xl' : 'max-w-lg')}>
+            <div className={cn('mx-auto px-4 py-5 space-y-5', tab === 'uebersicht' ? 'max-w-lg' : 'max-w-lg md:max-w-3xl')}>
 
                 {/* ── Header ──────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between">
@@ -199,9 +206,10 @@ export default function AccountingDashboard() {
 
                 {/* ── Bereiche des Moduls: Übersicht · Cockpit ─────────────── */}
                 <Tabs value={tab} onValueChange={setTab}>
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className={cn('grid w-full', canViewSchulden ? 'grid-cols-3' : 'grid-cols-2')}>
                         <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
                         <TabsTrigger value="cockpit">Cockpit</TabsTrigger>
+                        {canViewSchulden && <TabsTrigger value="schulden">Schulden &amp; Fahrplan</TabsTrigger>}
                     </TabsList>
 
                     <TabsContent value="uebersicht" className="mt-5 space-y-5">
@@ -312,6 +320,12 @@ export default function AccountingDashboard() {
                     <TabsContent value="cockpit" className="mt-5">
                         <CockpitView />
                     </TabsContent>
+
+                    {canViewSchulden && (
+                        <TabsContent value="schulden" className="mt-5">
+                            <SchuldenFahrplanTab />
+                        </TabsContent>
+                    )}
                 </Tabs>
 
             </div>
