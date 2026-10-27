@@ -7,7 +7,7 @@ import { CalendarClock, Check, ChevronDown, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
     ABGEBAUTE_STATUS, PRIORITAET_META, PRIORITAET_OPTIONS, STATUS_META,
-    SAVO_BLUE, fmtDate, fmtEUR, isOverdue,
+    SAVO_BLUE, fmtDate, fmtEUR, isOverdue, schuldnerMeta,
 } from '@/lib/offenePosten';
 import PostenDetails from '@/components/accounting/schulden/PostenDetails';
 import BriefVollbildModal from '@/components/accounting/schulden/BriefVollbildModal';
@@ -19,12 +19,23 @@ export default function PostenKarte({ posten, onMarkPaid, onPriorityChange, isPe
 
     const prio   = PRIORITAET_META[posten.prioritaet] || PRIORITAET_META.mittel;
     const status = STATUS_META[posten.status] || STATUS_META.offen;
+    const schuldner = schuldnerMeta(posten.schuldner);
     const overdue = isOverdue(posten);
     const done = ABGEBAUTE_STATUS.includes(posten.status);
 
     return (
         <Card className="p-3.5">
-            <div className="flex gap-3">
+            {/* Schuldner — farbcodiert, immer sichtbar */}
+            <Badge
+                variant="outline"
+                className={cn('gap-1.5 h-7 px-2.5 text-xs font-bold uppercase tracking-wide', schuldner.className)}
+                style={schuldner.badgeStyle}
+            >
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: schuldner.dotColor }} />
+                {schuldner.label}
+            </Badge>
+
+            <div className="flex gap-3 mt-2.5">
                 {posten.bild_url && (
                     <button
                         type="button"
@@ -71,11 +82,6 @@ export default function PostenKarte({ posten, onMarkPaid, onPriorityChange, isPe
                             {posten.faelligkeit ? `Fällig ${fmtDate(posten.faelligkeit)}` : 'Keine Frist gesetzt'}
                             {overdue && ' · überfällig'}
                         </span>
-                        {posten.schuldner && (
-                            <span className="px-1.5 py-0.5 rounded-md border border-border bg-muted text-muted-foreground">
-                                {posten.schuldner}
-                            </span>
-                        )}
                     </div>
                 </div>
             </div>

@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
-import { OFFENE_STATUS, todayISO, sortPosten } from '@/lib/offenePosten';
+import { OFFENE_STATUS, SCHULDNER_OPTIONS, schuldnerMeta, todayISO, sortPosten } from '@/lib/offenePosten';
 import { toast } from 'sonner';
 import { Loader2, Scale } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -93,6 +93,26 @@ export default function SchuldenFahrplanTab() {
                 <p className="text-xs text-muted-foreground mt-0.5">
                     Offene Posten, Fristen und die nächsten Schritte
                 </p>
+
+                {/* Legende der Schuldner-Farben */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Zuordnung
+                    </span>
+                    {SCHULDNER_OPTIONS.map(s => {
+                        const meta = schuldnerMeta(s);
+                        return (
+                            <span
+                                key={s}
+                                className="inline-flex items-center gap-1.5 text-[11px] font-semibold"
+                                style={{ color: meta.dotColor }}
+                            >
+                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: meta.dotColor }} />
+                                {meta.label}
+                            </span>
+                        );
+                    })}
+                </div>
             </div>
 
             <SchuldenKopfKacheln posten={posten} />
