@@ -287,16 +287,21 @@ async function downloadPdf(kind, data, company) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     (data.positions || []).forEach((p, idx) => {
-        if (y > 248) { doc.addPage(); y = 24; }
+        // Beschreibung umbrechen statt abschneiden — Zeile wächst mit
+        const descMaxW = (hasActual ? 117 : 127) - (MARGIN_L + 9);
+        const descLines = doc.splitTextToSize(String(p.description || ''), descMaxW);
+        const lineH = 4.3;
+        const rowH = 6.3 + (descLines.length - 1) * lineH;
+        if (y + rowH > 248) { doc.addPage(); y = 24; }
         // sehr helle, neutrale Zebra-Füllung (keine Farbe — nur Grauton für Lesbarkeit)
         if (idx % 2 === 1) {
             doc.setFillColor(249, 249, 250);
-            doc.rect(MARGIN_L, y - 4.3, MARGIN_R - MARGIN_L, 6.3, 'F');
+            doc.rect(MARGIN_L, y - 4.3, MARGIN_R - MARGIN_L, rowH, 'F');
         }
         doc.setTextColor(...GRAY);
         doc.text(String(idx + 1), MARGIN_L, y);
         doc.setTextColor(...INK);
-        doc.text(String(p.description || '').slice(0, 62), MARGIN_L + 9, y);
+        doc.text(descLines, MARGIN_L + 9, y, { lineHeightFactor: 1.15 });
         if (hasActual) {
             doc.text(String(p.quantity ?? 1), 128, y, { align: 'right' });
             doc.setTextColor(...TEAL_DARK);
@@ -308,7 +313,7 @@ async function downloadPdf(kind, data, company) {
             doc.text(eur(p.unit_price), 158, y, { align: 'right' });
         }
         doc.text(eur(p.total ?? (p.quantity * p.unit_price)), MARGIN_R, y, { align: 'right' });
-        y += 6.3;
+        y += rowH;
         doc.setDrawColor(...GRAY_LIGHT);
         doc.setLineWidth(0.2);
         doc.line(MARGIN_L, y - 3.4, MARGIN_R, y - 3.4);
