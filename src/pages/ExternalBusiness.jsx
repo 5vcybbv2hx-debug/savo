@@ -829,10 +829,12 @@ export default function ExternalBusiness() {
                                     {record.positions.map((p, i) => (
                                         <div key={i} className="flex gap-1.5 items-start">
                                             <div className="flex-1 space-y-1.5">
-                                                <Input
+                                                <Textarea
                                                     value={p.description}
                                                     onChange={(e) => setPosition(i, 'description', e.target.value)}
-                                                    placeholder="z.B. Bar-Service 6h inkl. 2 Barkeeper"
+                                                    placeholder={"z.B. Bar-Service 6h inkl. 2 Barkeeper\n(Zeilenumbruch mit Enter)"}
+                                                    rows={2}
+                                                    className="resize-none min-h-0"
                                                 />
                                                 <div className="flex gap-1.5">
                                                     <Input
