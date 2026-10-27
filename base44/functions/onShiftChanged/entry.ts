@@ -1,61 +1,47 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-
-const ONESIGNAL_APP_ID = '664fda20-f8c7-411a-928f-217c855bb2bb';
-
-async function pushToEmployee(employeeId, title, message, url) {
-    if (!employeeId) return;
-    const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY_2');
-    if (!apiKey) throw new Error('OneSignal API-Key fehlt (ONESIGNAL_REST_API_KEY_2)');
-    const res = await fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${apiKey}` },
-        body: JSON.stringify({
-            app_id: ONESIGNAL_APP_ID,
-            include_aliases: { external_id: [String(employeeId)] },
-            target_channel: 'push',
-            headings: { en: title, de: title },
-            contents: { en: message, de: message },
-            url
-        })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(`OneSignal API error: ${JSON.stringify(data)}`);
-    return data;
-}
+import {
+    parseShiftPayload,
+    isRelevantShiftChange,
+    formatShiftMessage,
+    notifyShiftEmployee,
+} from '../../shared/shiftNotify.ts';
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
         const body = await req.json();
-        const { event, data } = body;
 
-        if (!event || !data) return Response.json({ message: 'Invalid payload' }, { status: 400 });
+        const { eventType, data, oldData, changedFields } = parseShiftPayload(body);
 
+        if (!eventType || !data) {
+            return Response.json({ message: 'Invalid payload' }, { status: 400 });
+        }
+
+        // Empfänger ist immer der Mitarbeiter der geänderten Schicht
         const employeeId = data.employee_id;
-        if (!employeeId) return Response.json({ message: 'No employee_id in shift' });
+        if (!employeeId) {
+            return Response.json({ message: 'No employee_id in shift — keine Push' });
+        }
 
-        const isCreate = event.type === 'create';
+        // Technische Feld-Writes (z.B. clockin_reminder_sent) lösen keine Meldung aus
+        if (!isRelevantShiftChange(eventType, data, oldData, changedFields)) {
+            return Response.json({
+                skipped: true,
+                reason: 'irrelevant_change',
+                changed_fields: changedFields || null,
+            });
+        }
+
+        const isCreate = eventType === 'create';
         const title = isCreate ? 'Neue Schicht eingeplant' : 'Schicht geändert';
-        const dateStr = data.date || '';
-        const timeStr = data.start_time ? `${data.start_time}–${data.end_time || ''}` : '';
-        const typeStr = data.shift_type ? ` (${data.shift_type})` : '';
-        const message = `${dateStr} ${timeStr}${typeStr}`.trim();
 
-        // In-app notification
-        await base44.asServiceRole.entities.Notification.create({
-            type: 'general',
-            category: 'schicht',
-            priority: 'info',
+        const result = await notifyShiftEmployee(base44, {
+            shift: data,
             title,
-            message,
-            related_id: data.id,
-            read_by: []
+            message: formatShiftMessage(data),
         });
 
-        // OneSignal push
-        await pushToEmployee(employeeId, title, message, 'https://bar-shift-pro-fc3522b9.base44.app/Calendar');
-
-        return Response.json({ success: true });
+        return Response.json({ success: true, title, ...result });
     } catch (error) {
         console.error('[onShiftChanged] Error:', error);
         return Response.json({ error: error.message }, { status: 500 });
