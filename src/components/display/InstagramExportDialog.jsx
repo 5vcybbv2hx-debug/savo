@@ -30,6 +30,7 @@ import {
   SlideAnnouncement, SlideEvent, SlideDrinkSpecial, SlideCountdown, SlideQRCode, SlideTonight,
 } from '@/pages/Display';
 import { useSlideRecorder } from '@/components/display/useSlideRecorder';
+import { WallAssetContext, loadBrandWallDataUrl, waitForImages, EXPORT_FREEZE_CSS } from '@/lib/exportAssets';
 
 const FORMATS = [
   { value: 'reel',  label: 'Reel / Story', ratio: '9/16',  w: 1080, h: 1920, desc: '9:16 — Hochformat' },
@@ -98,7 +99,7 @@ function SlideRenderer({ slide, accent, theme, aspectRatio = '9/16' }) {
   }
 }
 
-function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, height = 1920, aspectRatio = '9/16' }) {
+function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, height = 1920, aspectRatio = '9/16', wallSrc = null }) {
   const [portalTarget, setPortalTarget] = useState(null);
 
   useEffect(() => {
@@ -113,6 +114,9 @@ function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, he
       doc.body.style.fontFamily = '"Jost","Century Gothic",sans-serif'; doc.body.style.color = '#fff';
       const style = doc.createElement('style'); style.textContent = KEYFRAMES;
       doc.head.appendChild(style);
+      // Nur bei Klasse .export-freeze aktiv: Animationen in den Endzustand
+      const exportStyle = doc.createElement('style'); exportStyle.textContent = EXPORT_FREEZE_CSS;
+      doc.head.appendChild(exportStyle);
       // Google Fonts für Bebas Neue + Jost im iframe
       const fontLink = doc.createElement('link');
       fontLink.rel = 'stylesheet';
@@ -128,7 +132,12 @@ function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, he
   return (
     <>
       <iframe ref={iframeRef} style={{ width, height, border: 'none', display: 'block' }} />
-      {portalTarget && createPortal(<SlideRenderer slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} />, portalTarget)}
+      {portalTarget && createPortal(
+        <WallAssetContext.Provider value={wallSrc}>
+          <SlideRenderer slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} />
+        </WallAssetContext.Provider>,
+        portalTarget
+      )}
     </>
   );
 }
@@ -147,6 +156,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
   const [withLogo, setWithLogo] = useState(true);
   const [touchImage, setTouchImage] = useState(null);
   const [shareReady] = useState(() => canShareFiles());
+  const [wallSrc, setWallSrc] = useState(null);
   const preBlobRef = useRef(null);
 
   const wrapperRef = useRef(null);
@@ -163,6 +173,14 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
   useEffect(() => {
     if (!open) return;
     injectKeyframes();
+  }, [open]);
+
+  // Steinwand als Data-URL vorladen → im Export-iframe als echtes <img> (html2canvas-fest)
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    loadBrandWallDataUrl().then(url => { if (alive) setWallSrc(url); }).catch(() => {});
+    return () => { alive = false; };
   }, [open]);
 
   // Skalierung Bild-Modus
@@ -195,18 +213,29 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
   // ── PNG Capture (iframe body via html2canvas, volle Auflösung) ──
   const captureCanvas = useCallback(async (targetFmt) => {
     const iframe = imageIframeRef.current || overlayIframeRef.current;
-    if (!iframe?.contentDocument?.body) return null;
-    await new Promise(r => setTimeout(r, 500));
-    const canvas = await html2canvas(iframe.contentDocument.body, {
-      width: targetFmt.w, height: targetFmt.h, scale: 1,
-      backgroundColor: null, useCORS: true, logging: false,
-    });
-    if (withLogo) {
-      await ensureSavoLogoFont();
-      drawSavoWordmark(canvas.getContext('2d'), canvas.width, canvas.height);
+    const doc = iframe?.contentDocument;
+    if (!doc?.body) return null;
+    // Steinwand-Data-URL sicherstellen, damit sie als <img> im Bild landet
+    if (!wallSrc) { try { await loadBrandWallDataUrl(); } catch { /* ohne Wand exportieren */ } }
+
+    // Animationen in den Endzustand (Titel sichtbar, Glow an, Partikel gerendert)
+    doc.body.classList.add('export-freeze');
+    try {
+      await waitForImages(doc);
+      await new Promise(r => setTimeout(r, 1200));
+      const canvas = await html2canvas(doc.body, {
+        width: targetFmt.w, height: targetFmt.h, scale: 1,
+        backgroundColor: null, useCORS: true, logging: false,
+      });
+      if (withLogo) {
+        await ensureSavoLogoFont();
+        drawSavoWordmark(canvas.getContext('2d'), canvas.width, canvas.height);
+      }
+      return canvas;
+    } finally {
+      doc.body.classList.remove('export-freeze');
     }
-    return canvas;
-  }, [withLogo]);
+  }, [withLogo, wallSrc]);
 
   // Bild vorab rendern: so startet das Teilen ohne Wartezeit und die User-Geste bleibt gültig
   useEffect(() => {
@@ -346,7 +375,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
               <div ref={wrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                 <div style={{ width: fmt.w * scale, height: fmt.h * scale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
                   <div style={{ position: 'absolute', top: 0, left: 0, width: fmt.w, height: fmt.h, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-                    <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={imageIframeRef} width={fmt.w} height={fmt.h} aspectRatio={fmt.ratio} />
+                    <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={imageIframeRef} width={fmt.w} height={fmt.h} aspectRatio={fmt.ratio} wallSrc={wallSrc} />
                   </div>
                   {withLogo && <SavoLogoOverlay width={fmt.w * scale} />}
                 </div>
@@ -407,7 +436,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                   <div ref={videoWrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                     <div style={{ width: 1080 * videoScale, height: 1920 * videoScale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
                       <div style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 1920, transform: `scale(${videoScale})`, transformOrigin: 'top left' }}>
-                        <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} />
+                        <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} wallSrc={wallSrc} />
                       </div>
                     </div>
                   </div>
@@ -452,7 +481,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                 <div ref={videoWrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                   <div style={{ width: 1080 * videoScale, height: 1920 * videoScale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 1920, transform: `scale(${videoScale})`, transformOrigin: 'top left' }}>
-                      <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} />
+                      <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} wallSrc={wallSrc} />
                     </div>
                   </div>
                 </div>
@@ -509,7 +538,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
         {/* Hidden overlay iframe for image capture in video mode */}
         {mode === 'video' && slide && (
           <div style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0 }} aria-hidden="true">
-            <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={overlayIframeRef} width={1080} height={1920} aspectRatio="9/16" />
+            <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={overlayIframeRef} width={1080} height={1920} aspectRatio="9/16" wallSrc={wallSrc} />
           </div>
         )}
       </DialogContent>

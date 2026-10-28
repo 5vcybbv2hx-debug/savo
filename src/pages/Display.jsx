@@ -3,12 +3,13 @@
  * v8: Ambient Screen, elegante Crossfade-Übergänge, Loading Splash,
  *     typ-spezifische Slide-Dauern, 3D Animationen prominent
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, differenceInSeconds, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { BRAND_WALL_URL, SAVO_BLUE, SAVO_BLACK } from '@/lib/brandAssets';
+import { WallAssetContext } from '@/lib/exportAssets';
 
 // ── Akzentfarben ──────────────────────────────────────────────────────────────
 export const ACCENTS = {
@@ -797,9 +798,20 @@ export function ThemeBackground({ theme, accent, prominentDisco = false }) {
 
 // ── Brand Wall Background (fixe Steinwand für alle Slides) ────────────────────
 export function BrandWallBackground() {
+  // Im Export liefert der Kontext die Steinwand als Data-URL → echtes <img>, das
+  // html2canvas zuverlässig rendert. Ohne Kontext (TV-Display) bleibt alles wie bisher.
+  const wallSrc = useContext(WallAssetContext);
   return (
     <>
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${BRAND_WALL_URL})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'brightness(1.18)', zIndex: 0 }} />
+      {wallSrc ? (
+        <img
+          src={wallSrc}
+          alt=""
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', filter: 'brightness(1.18)', zIndex: 0 }}
+        />
+      ) : (
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${BRAND_WALL_URL})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'brightness(1.18)', zIndex: 0 }} />
+      )}
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.06)', mixBlendMode: 'overlay', zIndex: 0 }} />
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at center, transparent 35%, ${SAVO_BLACK} 100%)`, opacity: 0.6, zIndex: 0 }} />
     </>
