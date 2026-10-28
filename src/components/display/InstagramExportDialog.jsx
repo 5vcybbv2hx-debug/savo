@@ -1,6 +1,7 @@
 /**
  * InstagramExportDialog — Rendert eine Display-Slide im Instagram-Format
- * (Reel 9:16, Post 1:1 oder 4:5) und erlaubt den Download als PNG.
+ * (Reel 9:16, Post 1:1 oder 4:5) und erlaubt Teilen/Speichern als PNG bzw. Video
+ * (Web Share API → „In Fotos sichern“, Fallback: Download).
  *
  * Video-Modus: Nimmt die animierte TV-Slide (aus Display.jsx) als Video auf.
  * Die Slide wird in einem 9:16-iframe gerendert (damit vw korrekt ist) und
@@ -17,6 +18,10 @@ import { Download, Loader2, Share2, Video, Image as ImageIcon, Info, ChevronDown
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { base44 } from '@/api/base44Client';
+import { Switch } from '@/components/ui/switch';
+import { drawInstagramGlyph } from '@/lib/instagramGlyph';
+import InstagramGlyphOverlay, { InstagramGlyph } from '@/components/display/InstagramGlyph';
+import { canShareFiles, isTouchDevice, canvasToBlob, buildExportFilename, shareOrDownloadFile } from '@/lib/shareExport';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -139,6 +144,10 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
   const [kiExpanded, setKiExpanded] = useState(false);
   const [kiLoading, setKiLoading] = useState(false);
   const [kiVideoUrl, setKiVideoUrl] = useState(null);
+  const [withLogo, setWithLogo] = useState(true);
+  const [touchImage, setTouchImage] = useState(null);
+  const [shareReady] = useState(() => canShareFiles());
+  const preBlobRef = useRef(null);
 
   const wrapperRef = useRef(null);
   const videoWrapperRef = useRef(null);
@@ -183,40 +192,65 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
     return () => ro.disconnect();
   }, [open, mode]);
 
-  // ── PNG Capture (iframe body via html2canvas) ──
-  const captureIframe = useCallback(async (targetFmt) => {
+  // ── PNG Capture (iframe body via html2canvas, volle Auflösung) ──
+  const captureCanvas = useCallback(async (targetFmt) => {
     const iframe = imageIframeRef.current || overlayIframeRef.current;
     if (!iframe?.contentDocument?.body) return null;
     await new Promise(r => setTimeout(r, 500));
-    return html2canvas(iframe.contentDocument.body, {
+    const canvas = await html2canvas(iframe.contentDocument.body, {
       width: targetFmt.w, height: targetFmt.h, scale: 1,
       backgroundColor: null, useCORS: true, logging: false,
     });
-  }, []);
+    if (withLogo) drawInstagramGlyph(canvas.getContext('2d'), canvas.width, canvas.height);
+    return canvas;
+  }, [withLogo]);
 
-  const handleDownload = async () => {
+  // Bild vorab rendern: so startet das Teilen ohne Wartezeit und die User-Geste bleibt gültig
+  useEffect(() => {
+    preBlobRef.current = null;
+    setTouchImage(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+    if (!open || mode !== 'image') return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const canvas = await captureCanvas(fmt);
+        if (cancelled || !canvas) return;
+        preBlobRef.current = await canvasToBlob(canvas);
+      } catch { /* beim Klick wird bei Bedarf neu gerendert */ }
+    }, 900);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [open, mode, format, withLogo, captureCanvas, fmt]);
+
+  useEffect(() => () => { if (touchImage) URL.revokeObjectURL(touchImage); }, [touchImage]);
+
+  // ── Bild teilen / speichern ──
+  const saveImage = async (targetFmt, formatKey, label) => {
     setExporting(true);
     try {
-      const canvas = await captureIframe(fmt); if (!canvas) return;
-      const link = document.createElement('a');
-      link.download = `instagram_${format}_${(slide.title || 'slide').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 40)}.png`;
-      link.href = canvas.toDataURL('image/png'); link.click();
-      toast.success('Instagram-Bild heruntergeladen');
+      let blob = preBlobRef.current;
+      if (!blob) {
+        const canvas = await captureCanvas(targetFmt);
+        if (!canvas) { toast.error('Vorschau noch nicht bereit'); return; }
+        blob = await canvasToBlob(canvas);
+      }
+      const filename = buildExportFilename(slide, formatKey, 'png');
+      const result = await shareOrDownloadFile(blob, filename, { title: slide.title || 'SAVO' });
+
+      if (result === 'shared') { toast.success('Gespeichert ✓'); return; }
+      if (result === 'downloaded') {
+        toast.success(`${label} gespeichert`, { description: filename });
+        // Auf Touch-Geräten ohne Teilen-Support: echtes Bild zeigen, das per Long-Press gesichert wird
+        if (isTouchDevice()) {
+          const url = URL.createObjectURL(blob);
+          setTouchImage(prev => { if (prev) URL.revokeObjectURL(prev); return url; });
+        }
+      }
     } catch (e) { toast.error('Export fehlgeschlagen: ' + (e?.message || 'Unbekannt')); }
     finally { setExporting(false); }
   };
 
-  const handleDownloadOverlay = async () => {
-    setExporting(true);
-    try {
-      const canvas = await captureIframe(FORMATS[0]); if (!canvas) return;
-      const link = document.createElement('a');
-      link.download = `overlay_${(slide.title || 'slide').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 40)}.png`;
-      link.href = canvas.toDataURL('image/png'); link.click();
-      toast.success('Overlay-Bild heruntergeladen');
-    } catch (e) { toast.error('Download fehlgeschlagen: ' + (e?.message || 'Unbekannt')); }
-    finally { setExporting(false); }
-  };
+  const handleDownload = () => saveImage(fmt, format, 'Bild');
+  const handleDownloadOverlay = () => saveImage(FORMATS[0], 'reel', 'Overlay-Bild');
 
   // ── KI-Video (Core.GenerateVideo) ──
   const handleGenerateKI = async () => {
@@ -231,10 +265,22 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
     finally { setKiLoading(false); }
   };
 
-  const downloadVideo = (url, prefix) => {
-    const a = document.createElement('a');
-    a.href = url; a.download = `${prefix}_${(slide.title || 'slide').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 40)}.mp4`;
-    a.target = '_blank'; a.click();
+  // ── Video teilen / speichern ──
+  const saveVideo = async (url, formatKey) => {
+    setExporting(true);
+    try {
+      const res = await fetch(url);
+      const raw = await res.blob();
+      const type = (raw.type || 'video/webm').split(';')[0];
+      const ext = type.includes('mp4') ? 'mp4' : 'webm';
+      const blob = new Blob([raw], { type });
+      const filename = buildExportFilename(slide, formatKey, ext);
+      const result = await shareOrDownloadFile(blob, filename, { title: slide.title || 'SAVO' });
+
+      if (result === 'shared') toast.success('Gespeichert ✓');
+      else if (result === 'downloaded') toast.success('Video gespeichert', { description: filename });
+    } catch (e) { toast.error('Video-Export fehlgeschlagen: ' + (e?.message || 'Unbekannt')); }
+    finally { setExporting(false); }
   };
 
   if (!slide) return null;
@@ -277,18 +323,40 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
               </div>
             </div>
 
-            <div ref={wrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
-              <div style={{ width: fmt.w * scale, height: fmt.h * scale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, width: fmt.w, height: fmt.h, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-                  <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={imageIframeRef} width={fmt.w} height={fmt.h} aspectRatio={fmt.ratio} />
+            <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <InstagramGlyph size={15} className="text-foreground shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-foreground">Instagram-Logo</p>
+                  <p className="text-[10px] text-muted-foreground">Glyphe unten rechts im Bild</p>
                 </div>
               </div>
+              <Switch checked={withLogo} onCheckedChange={setWithLogo} />
             </div>
-            <p className="text-[10px] text-muted-foreground text-center -mt-1">Vorschau skaliert · Download in voller Auflösung ({fmt.w}×{fmt.h}px)</p>
+
+            {touchImage ? (
+              <div className="space-y-1.5">
+                <img src={touchImage} alt="Exportierte Grafik" className="w-full rounded-xl border border-border" />
+                <p className="text-[11px] text-center text-foreground">Foto lang gedrückt halten → „Bild speichern“</p>
+              </div>
+            ) : (
+              <div ref={wrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+                <div style={{ width: fmt.w * scale, height: fmt.h * scale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, width: fmt.w, height: fmt.h, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+                    <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={imageIframeRef} width={fmt.w} height={fmt.h} aspectRatio={fmt.ratio} />
+                  </div>
+                  {withLogo && <InstagramGlyphOverlay />}
+                </div>
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground text-center -mt-1">Vorschau skaliert · Export in voller Auflösung ({fmt.w}×{fmt.h}px)</p>
             <Button onClick={handleDownload} disabled={exporting} className="w-full gap-2">
-              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {exporting ? 'Wird erstellt…' : `${fmt.label} herunterladen`}
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : shareReady ? <Share2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+              {exporting ? 'Wird erstellt…' : shareReady ? 'In Fotos sichern / Teilen' : `${fmt.label} herunterladen`}
             </Button>
+            {!shareReady && isTouchDevice() && (
+              <p className="text-[10px] text-muted-foreground text-center">Foto lang gedrückt halten → „Bild speichern“</p>
+            )}
           </>
         ) : (
           /* ── VIDEO MODUS ── */
@@ -325,8 +393,8 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                   </p>
                 </div>
                 <Button onClick={handleDownloadOverlay} disabled={exporting} variant="outline" className="w-full gap-2">
-                  {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                  Bild herunterladen (Reel-Format)
+                  {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : shareReady ? <Share2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                  {exporting ? 'Wird erstellt…' : shareReady ? 'Bild in Fotos sichern' : 'Bild speichern (Reel-Format)'}
                 </Button>
               </div>
             ) : !showPreHint && recorder.recording ? (
@@ -365,8 +433,9 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                   <video src={recorder.videoUrl} controls loop playsInline className="max-h-80 rounded" style={{ aspectRatio: '9/16', height: '100%' }} />
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => downloadVideo(recorder.videoUrl, 'instagram_reel')} className="flex-1 gap-2">
-                    <Download className="w-4 h-4" /> Video herunterladen
+                  <Button onClick={() => saveVideo(recorder.videoUrl, 'reel')} disabled={exporting} className="flex-1 gap-2">
+                    {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : shareReady ? <Share2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                    {exporting ? 'Wird erstellt…' : shareReady ? 'In Fotos sichern / Teilen' : 'Video herunterladen'}
                   </Button>
                   <Button onClick={recorder.reset} variant="outline" className="gap-2">
                     <Video className="w-4 h-4" /> Neu
@@ -423,8 +492,8 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                     {kiLoading ? 'KI generiert… (~60s)' : 'KI-Video generieren'}
                   </Button>
                   {kiVideoUrl && (
-                    <Button onClick={() => downloadVideo(kiVideoUrl, 'ki_reel')} variant="outline" className="w-full gap-2 text-xs">
-                      <Download className="w-3.5 h-3.5" /> KI-Video herunterladen
+                    <Button onClick={() => saveVideo(kiVideoUrl, 'ki_reel')} disabled={exporting} variant="outline" className="w-full gap-2 text-xs">
+                      {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} KI-Video speichern
                     </Button>
                   )}
                   <p className="text-[10px] text-muted-foreground text-center">Kostet 30 Integrations-Credits</p>
