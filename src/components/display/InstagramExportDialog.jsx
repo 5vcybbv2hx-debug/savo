@@ -19,8 +19,8 @@ import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { base44 } from '@/api/base44Client';
 import { Switch } from '@/components/ui/switch';
-import { drawInstagramGlyph } from '@/lib/instagramGlyph';
-import InstagramGlyphOverlay, { InstagramGlyph } from '@/components/display/InstagramGlyph';
+import { drawSavoWordmark, ensureSavoLogoFont } from '@/lib/savoWordmark';
+import SavoLogoOverlay, { SavoWordmarkIcon } from '@/components/display/SavoLogoOverlay';
 import { canShareFiles, isTouchDevice, canvasToBlob, buildExportFilename, shareOrDownloadFile } from '@/lib/shareExport';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -201,7 +201,10 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
       width: targetFmt.w, height: targetFmt.h, scale: 1,
       backgroundColor: null, useCORS: true, logging: false,
     });
-    if (withLogo) drawInstagramGlyph(canvas.getContext('2d'), canvas.width, canvas.height);
+    if (withLogo) {
+      await ensureSavoLogoFont();
+      drawSavoWordmark(canvas.getContext('2d'), canvas.width, canvas.height);
+    }
     return canvas;
   }, [withLogo]);
 
@@ -325,10 +328,10 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
 
             <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
               <div className="flex items-center gap-2 min-w-0">
-                <InstagramGlyph size={15} className="text-foreground shrink-0" />
+                <SavoWordmarkIcon size={15} className="text-foreground shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-foreground">Instagram-Logo</p>
-                  <p className="text-[10px] text-muted-foreground">Glyphe unten rechts im Bild</p>
+                  <p className="text-xs font-medium text-foreground">SAVO-Logo</p>
+                  <p className="text-[10px] text-muted-foreground">Wortzeichen unten rechts im Bild</p>
                 </div>
               </div>
               <Switch checked={withLogo} onCheckedChange={setWithLogo} />
@@ -345,7 +348,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                   <div style={{ position: 'absolute', top: 0, left: 0, width: fmt.w, height: fmt.h, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
                     <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={imageIframeRef} width={fmt.w} height={fmt.h} aspectRatio={fmt.ratio} />
                   </div>
-                  {withLogo && <InstagramGlyphOverlay />}
+                  {withLogo && <SavoLogoOverlay width={fmt.w * scale} height={fmt.h * scale} />}
                 </div>
               </div>
             )}
