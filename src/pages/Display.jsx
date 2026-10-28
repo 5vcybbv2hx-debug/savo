@@ -944,14 +944,14 @@ function AmbientScreen() {
 // SLIDE-TYPEN
 // ══════════════════════════════════════════════════════════════════════════════
 
-export function SlideAnnouncement({ slide, accent, theme }) {
+export function SlideAnnouncement({ slide, accent, theme, titleScale = 1 }) {
   const isDiscoParty = theme === 'disco' || theme === 'party';
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: isDiscoParty ? 'flex-end' : 'center', alignItems: 'center', height: '100%', padding: isDiscoParty ? 'clamp(56px,9vh,110px) 100px clamp(48px,8vh,96px)' : 'clamp(56px,9vh,110px) 120px clamp(48px,8vh,96px)', textAlign: 'center', gap: 'clamp(16px,3vh,32px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} prominentDisco={isDiscoParty} />
       <NeonFrame />
-      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: 'clamp(4.2rem,9.5vw,8rem)', fontWeight: 400, color: '#fff', lineHeight: 1.05, letterSpacing: '0.01em', textShadow: `0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`, animation: 'floatUp 5s ease-in-out infinite', position: 'relative', zIndex: 2 }}>{slide.title}</div>
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: `calc(clamp(4.2rem,9.5vw,8rem) * ${titleScale})`, fontWeight: 400, color: '#fff', lineHeight: 1.05, letterSpacing: '0.01em', textShadow: `0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`, animation: 'floatUp 5s ease-in-out infinite', position: 'relative', zIndex: 2 }}>{slide.title}</div>
       {slide.subtitle && <div style={{ fontSize: '2.6rem', color: 'rgba(255,255,255,0.85)', animation: 'floatDown 6s ease-in-out infinite', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
       {slide.body_text && <div style={{ fontSize: '1.7rem', color: 'rgba(255,255,255,0.65)', maxWidth: 950, position: 'relative', zIndex: 1, textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>{slide.body_text}</div>}
       {slide.cta_text && <div style={{ background: accent.bg, color: accent.text, padding: '24px 64px', borderRadius: 20, fontWeight: 800, fontSize: '2rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'pulseGlow 3s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}

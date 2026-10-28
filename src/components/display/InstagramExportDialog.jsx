@@ -88,7 +88,7 @@ function buildMotionPrompt(slide) {
 // ════════════════════════════════════════════════════════════════════════════
 function SlideRenderer({ slide, accent, theme, aspectRatio = '9/16' }) {
   switch (slide.slide_type) {
-    case 'announcement':  return <SlideAnnouncement slide={slide} accent={accent} theme={theme} />;
+    case 'announcement':  return <SlideAnnouncement slide={slide} accent={accent} theme={theme} titleScale={1.3} />;
     case 'event':        return <SlideEvent slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} />;
     case 'drink_special':return <SlideDrinkSpecial slide={slide} accent={accent} theme={theme} />;
     case 'countdown':    return <SlideCountdown slide={slide} accent={accent} theme={theme} />;

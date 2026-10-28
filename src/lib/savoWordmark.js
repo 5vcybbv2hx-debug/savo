@@ -10,9 +10,10 @@ import { SAVO_BLUE } from '@/lib/brandAssets';
 const FONT_STACK = '"Bebas Neue","Jost",sans-serif';
 const WORD = 'SAVO';
 
-/** Layout im Export — Schriftgröße ~13 % der Bildbreite, zentral im Bild. */
+/** Layout im Export — Schriftgröße ~17 % der Bildbreite, oberhalb der Bildmitte. */
 export const SAVO_LOGO_LAYOUT = {
-  fontRatio: 0.13,
+  fontRatio: 0.17,
+  centerYRatio: 0.3,
   opacity: 0.85,
 };
 
@@ -25,7 +26,7 @@ export async function ensureSavoLogoFont() {
 }
 
 /**
- * Zeichnet "SAVO" zentral in SAVO-Blau auf ein Canvas (volle Export-Auflösung).
+ * Zeichnet "SAVO" in SAVO-Blau auf ein Canvas (volle Export-Auflösung).
  */
 export function drawSavoWordmark(ctx, width, height, layout = SAVO_LOGO_LAYOUT) {
   if (!ctx || !width || !height) return;
@@ -42,6 +43,6 @@ export function drawSavoWordmark(ctx, width, height, layout = SAVO_LOGO_LAYOUT) 
   // feiner Schatten, damit das blaue Wortzeichen auch auf dunklem Stein lesbar bleibt
   ctx.shadowColor = 'rgba(0,0,0,0.35)';
   ctx.shadowBlur = fontSize * 0.2;
-  ctx.fillText(WORD, width / 2, height / 2);
+  ctx.fillText(WORD, width / 2, height * layout.centerYRatio);
   ctx.restore();
 }

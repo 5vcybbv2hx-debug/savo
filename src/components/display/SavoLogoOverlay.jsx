@@ -30,7 +30,10 @@ export function SavoWordmarkIcon({ size = 15, className = '' }) {
 export default function SavoLogoOverlay({ width }) {
   if (!width) return null;
   return (
-    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+    <div
+      className="pointer-events-none absolute inset-x-0 flex justify-center"
+      style={{ top: `${SAVO_LOGO_LAYOUT.centerYRatio * 100}%`, transform: 'translateY(-50%)' }}
+    >
       <span
         aria-hidden="true"
         style={{
