@@ -331,7 +331,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                 <SavoWordmarkIcon size={15} className="text-foreground shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-foreground">SAVO-Logo</p>
-                  <p className="text-[10px] text-muted-foreground">Wortzeichen unten rechts im Bild</p>
+                  <p className="text-[10px] text-muted-foreground">Wortzeichen zentral im Bild</p>
                 </div>
               </div>
               <Switch checked={withLogo} onCheckedChange={setWithLogo} />
@@ -348,7 +348,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                   <div style={{ position: 'absolute', top: 0, left: 0, width: fmt.w, height: fmt.h, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
                     <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={imageIframeRef} width={fmt.w} height={fmt.h} aspectRatio={fmt.ratio} />
                   </div>
-                  {withLogo && <SavoLogoOverlay width={fmt.w * scale} height={fmt.h * scale} />}
+                  {withLogo && <SavoLogoOverlay width={fmt.w * scale} />}
                 </div>
               </div>
             )}

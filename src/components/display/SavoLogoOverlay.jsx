@@ -2,11 +2,12 @@
  * SAVO-Logo — Wortzeichen in der Slide-Typografie (Bebas Neue, letter-spacing 0.1em).
  *
  * <SavoWordmarkIcon />   kleines Icon (z. B. Toggle im Export-Modal)
- * <SavoLogoOverlay />    Overlay in der Export-Vorschau — prozentuales Layout,
- *                        identisch zur Position im fertigen Bild
+ * <SavoLogoOverlay />    Overlay in der Export-Vorschau — zentral, in SAVO-Blau,
+ *                        identische Größe wie im fertigen Bild
  */
 import React from 'react';
 import { SAVO_LOGO_LAYOUT } from '@/lib/savoWordmark';
+import { SAVO_BLUE } from '@/lib/brandAssets';
 
 export function SavoWordmarkIcon({ size = 15, className = '' }) {
   return (
@@ -26,27 +27,21 @@ export function SavoWordmarkIcon({ size = 15, className = '' }) {
   );
 }
 
-export default function SavoLogoOverlay({ width, height }) {
-  if (!width || !height) return null;
+export default function SavoLogoOverlay({ width }) {
+  if (!width) return null;
   return (
-    <div
-      className="pointer-events-none absolute"
-      style={{
-        right: width * SAVO_LOGO_LAYOUT.rightRatio,
-        bottom: height * SAVO_LOGO_LAYOUT.bottomRatio,
-      }}
-    >
+    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
       <span
         aria-hidden="true"
         style={{
           display: 'block',
           fontFamily: '"Bebas Neue","Jost",sans-serif',
-          fontSize: Math.max(8, width * SAVO_LOGO_LAYOUT.fontRatio),
+          fontSize: Math.max(10, width * SAVO_LOGO_LAYOUT.fontRatio),
           letterSpacing: '0.1em',
           lineHeight: 1,
-          color: '#ffffff',
+          color: SAVO_BLUE,
           opacity: SAVO_LOGO_LAYOUT.opacity,
-          filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.55))',
+          filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.35))',
         }}
       >
         SAVO
