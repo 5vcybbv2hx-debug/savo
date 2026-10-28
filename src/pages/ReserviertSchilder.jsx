@@ -1,10 +1,13 @@
 /**
  * ReserviertSchilder — druckfertige A4-Vorlage "Reserviert-Schilder" (4 Schilder pro Blatt).
  *
- * Es wird ausschließlich die offizielle Vorlage gedruckt (1:1, kein Nachbau,
- * keine Skalierung). Der Bildschirm zeigt nur eine Vorschau.
+ * Gedruckt wird ausschließlich die offizielle Vorlage (1:1, kein Nachbau, keine
+ * Skalierung). Der Druckinhalt liegt als eigenes Element direkt unter <body>,
+ * damit beim Druck kein Seiten-Container (Sidebar, Abstände) die Vorlage
+ * verschiebt oder beschneidet.
  */
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Printer, ExternalLink } from 'lucide-react';
 
@@ -12,20 +15,18 @@ export const RESERVIERT_VORLAGE_URL =
   'https://base44.app/api/apps/69e6756d3c5299b2c62399f2/files/mp/public/69e6756d3c5299b2c62399f2/1051a9a35_reserviert_schilder_a4.jpg';
 
 const PRINT_CSS = `
+.reserviert-print-portal { display: none; }
 @media print {
   @page { size: A4; margin: 0; }
-  html, body { background: #fff !important; height: auto !important; overflow: visible !important; }
-  body * { visibility: hidden !important; }
-  .reserviert-print-area, .reserviert-print-area * { visibility: visible !important; }
-  .reserviert-print-area {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
+  html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+  body > *:not(.reserviert-print-portal) { display: none !important; }
+  .reserviert-print-portal {
+    display: block !important;
+    position: static !important;
     margin: 0 !important;
     padding: 0 !important;
   }
-  .reserviert-print-area img {
+  .reserviert-print-portal img {
     display: block !important;
     width: 100% !important;
     height: auto !important;
@@ -65,15 +66,13 @@ export default function ReserviertSchilder() {
 
       {/* Vorschau der Vorlage */}
       <div className="max-w-2xl mx-auto px-4 py-4">
-        <div className="reserviert-print-area">
-          <img
-            src={RESERVIERT_VORLAGE_URL}
-            alt="Reserviert-Schilder Vorlage A4 mit 4 Schildern"
-            loading="eager"
-            onError={() => setFailed(true)}
-            className="w-full block rounded-lg border border-border"
-          />
-        </div>
+        <img
+          src={RESERVIERT_VORLAGE_URL}
+          alt="Reserviert-Schilder Vorlage A4 mit 4 Schildern"
+          loading="eager"
+          onError={() => setFailed(true)}
+          className="w-full block rounded-lg border border-border"
+        />
 
         {failed ? (
           <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-600 dark:text-amber-400">
@@ -88,6 +87,18 @@ export default function ReserviertSchilder() {
           </p>
         )}
       </div>
+
+      {/* Nur für den Druck: Vorlage randlos auf A4 */}
+      {createPortal(
+        <div className="reserviert-print-portal">
+          <img
+            src={RESERVIERT_VORLAGE_URL}
+            alt="Reserviert-Schilder Vorlage A4 mit 4 Schildern"
+            loading="eager"
+          />
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
