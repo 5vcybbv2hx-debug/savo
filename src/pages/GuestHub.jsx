@@ -4,13 +4,14 @@
  * Keine Tabs mehr. Archiv = altes Datum wählen.
  */
 import React, { useState, useMemo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-    Plus, Search, Download, X, Settings,
+    Plus, Search, Download, X, Settings, Printer,
     ChevronLeft, ChevronRight, Users, Clock, MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -310,6 +311,12 @@ export default function GuestHub() {
                             </p>
                         </div>
                         <div className="flex gap-1.5">
+                            <Button asChild variant="outline" className="h-9 gap-1 text-sm" aria-label="Reserviert-Schilder drucken">
+                                <Link to="/ReserviertSchilder">
+                                    <Printer className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Reserviert-Schilder</span>
+                                </Link>
+                            </Button>
                             {permissions.canEditReservations && (
                                 <Button variant="outline" size="icon" onClick={handleExport} className="h-9 w-9">
                                     <Download className="w-4 h-4" />

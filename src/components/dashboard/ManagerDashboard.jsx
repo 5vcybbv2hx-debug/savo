@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
     Calendar, Clock, CheckSquare, AlertCircle, ArrowRight, Users, ShoppingCart,
-    Sparkles, Package, AlertTriangle, CalendarCheck, Umbrella, TrendingUp, Wrench, Euro, ReceiptText
+    Sparkles, Package, AlertTriangle, CalendarCheck, Umbrella, TrendingUp, Wrench, Euro, ReceiptText, Printer
 } from 'lucide-react';
 import { getTaskStatus } from '@/lib/maintenanceUtils';
 import { Card, CardContent } from "@/components/ui/card";
@@ -196,6 +196,7 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                         { page: 'Cleaning', color: 'bg-pink-600', icon: Sparkles, label: 'Putzen', sub: `${cleaningProgress}% erledigt` },
                         { page: 'AccountingDashboard', color: 'bg-emerald-600', icon: TrendingUp, label: 'Buchhaltung', sub: 'Übersicht' },
                         { page: 'Warehouse', color: 'bg-teal-600', icon: Package, label: 'Lager', sub: `${articles.length} Artikel` },
+                        { page: 'ReserviertSchilder', color: 'bg-sky-600', icon: Printer, label: 'Reserviert-Schilder', sub: 'drucken' },
                     ].map(({ page, color, icon: Icon, label, sub }, idx) => (
                         <Link key={label} to={createPageUrl(page)}>
                             <Card className="bg-card border-border hover:bg-accent/50 transition-colors card-pressable animate-stagger" style={{ '--delay': `${idx * 55}ms` }}>

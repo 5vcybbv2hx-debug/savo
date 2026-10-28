@@ -42,6 +42,7 @@ import RevenueHistory from './pages/RevenueHistory';
 import MenuReview from './pages/MenuReview';
 import ExternalJobs from './pages/ExternalJobs';
 import Vouchers from './pages/Vouchers';
+import ReserviertSchilder from './pages/ReserviertSchilder';
 
 const { Pages, CorePages, SpecialPagesWithLayout, PublicPages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -272,6 +273,7 @@ const AuthenticatedApp = () => {
       <Route path="/MenuReview" element={<LayoutWrapper currentPageName="MenuReview"><RoleGuard permission="canViewDrinkMenu"><MenuReview /></RoleGuard></LayoutWrapper>} />
       <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/GuestHub" element={<LayoutWrapper currentPageName="GuestHub"><RoleGuard permission="canViewReservations"><GuestHub /></RoleGuard></LayoutWrapper>} />
+      <Route path="/ReserviertSchilder" element={<LayoutWrapper currentPageName="GuestHub"><RoleGuard permission="canViewReservations"><ReserviertSchilder /></RoleGuard></LayoutWrapper>} />
       <Route path="/Display" element={<Display />} />
       <Route path="/DisplayManager" element={<Navigate to="/Events" replace />} />
       <Route path="/ShiftSwaps" element={<Navigate to="/MyShifts" replace />} />
