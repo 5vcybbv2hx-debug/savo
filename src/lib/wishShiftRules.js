@@ -34,9 +34,15 @@ export function getWishShiftTypes(shiftTypes = [], date) {
     return [...shiftTypes]
         .filter(type => {
             const start = normalizeTime(type.start_time);
-            if (!start || start < rule.start) return false;
-            if (rule.type === 'exact') return normalizeTime(type.end_time) === rule.end;
-            return true;
+            if (!start) return false;
+            // 'exact': Start UND Ende müssen exakt der Regel entsprechen
+            if (rule.type === 'exact') {
+                return start === normalizeTime(rule.start)
+                    && normalizeTime(type.end_time) === normalizeTime(rule.end);
+            }
+            // 'from': alles ab der Regel-Startzeit
+            if (rule.type === 'from') return start >= normalizeTime(rule.start);
+            return false;
         })
         .sort((a, b) => normalizeTime(a.start_time).localeCompare(normalizeTime(b.start_time)));
 }
