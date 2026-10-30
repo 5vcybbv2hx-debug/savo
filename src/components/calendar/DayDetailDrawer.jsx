@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Badge } from '@/components/ui/badge';
+import { PenLine } from 'lucide-react';
 
 export default function DayDetailDrawer({
     day,
@@ -14,6 +15,8 @@ export default function DayDetailDrawer({
     maintenanceTasks = [],
     reservations = [],
     employees = [],
+    wishAvailable = false,
+    onWish = () => {},
 }) {
     if (!day) return null;
 
@@ -53,6 +56,17 @@ export default function DayDetailDrawer({
                 </DrawerHeader>
 
                 <div className="overflow-y-auto p-4 space-y-5 pb-8">
+                    {/* Wunschschicht für diesen Tag eintragen (nur wenn möglich) */}
+                    {wishAvailable && (
+                        <button
+                            onClick={onWish}
+                            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-semibold transition-colors"
+                        >
+                            <PenLine className="w-4 h-4" />
+                            Wunsch eintragen
+                        </button>
+                    )}
+
                     {isEmpty && (
                         <p className="text-sm text-muted-foreground text-center py-6">Keine Einträge für diesen Tag.</p>
                     )}

@@ -48,7 +48,7 @@ export default function TeamMonthView() {
     const { data: myAccesses = [] } = useQuery({
         queryKey: ['my-provisional-access', permissions.employeeId],
         queryFn:  () => base44.entities.ProvisionalShiftAccess.filter({ employee_id: permissions.employeeId, is_active: true }),
-        enabled:  !isManager && !!permissions.employeeId,
+        enabled:  !!permissions.employeeId,
         staleTime: STALE.MEDIUM,
     });
     const { data: myRequests = [] } = useQuery({
@@ -58,7 +58,8 @@ export default function TeamMonthView() {
         staleTime: STALE.MEDIUM,
     });
     const activeAccess = myAccesses.find(a => a.start_date <= todayStr && a.end_date >= todayStr) || null;
-    const wishMode = !isManager && !!permissions.employee && !!activeAccess;
+    // Wunsch-Eingabe gilt für alle mit verknüpftem Mitarbeiter-Profil (auch Manager)
+    const wishMode = !!permissions.employee && !!activeAccess;
 
     const deleteWish = useMutation({
         mutationFn: (id) => base44.entities.ProvisionalShiftRequest.delete(id),
@@ -128,11 +129,17 @@ export default function TeamMonthView() {
     const holidays = [...getHolidaysBW(currentYear), ...getHolidaysBW(currentYear + 1)];
 
     const handleEventClick = event => { setSelectedEvent(event); setShowEventModal(true); };
-    const handleDayClick   = day   => {
+    // Kann an diesem Tag ein Wunsch eingetragen werden? (Fenster aktiv + Wunschtag)
+    const canWishOn = day => {
+        if (!day || !wishMode) return false;
         const dayStr = format(day, 'yyyy-MM-dd');
-        const canWish = wishMode && isWishWeekday(day) && dayStr >= todayStr
+        return isWishWeekday(day) && dayStr >= todayStr
             && dayStr >= activeAccess.start_date && dayStr <= activeAccess.end_date;
-        if (canWish) {
+    };
+
+    const handleDayClick   = day   => {
+        // Manager behalten das Tagesdetail — der Wunsch-Button steckt dort im Drawer
+        if (!isManager && canWishOn(day)) {
             haptics.selection();
             setWishDate(day);
             setShowWishSheet(true);
@@ -186,9 +193,9 @@ export default function TeamMonthView() {
                 onSearchChange={setSearchQuery}
                 onNavigate={date => setViewMonth(date)}
                 myWishes={myRequests}
-                wishMode={wishMode}
+                wishMode={wishMode && !isManager}
                 onWishClick={setWishDetail}
-                wishRange={wishMode ? { start: activeAccess.start_date, end: activeAccess.end_date } : null}
+                wishRange={wishMode && !isManager ? { start: activeAccess.start_date, end: activeAccess.end_date } : null}
             />
             </div>
 
@@ -199,10 +206,17 @@ export default function TeamMonthView() {
                 onClose={() => { setShowEventModal(false); setSelectedEvent(null); }}
                 onShiftSwap={shift => setShiftSwapData(shift)}
             />
+            {/* Tap-Hinweis im Kalender nur für Nicht-Manager — eigene Wunsch-Chips sehen alle */}
             <DayDetailDrawer
                 open={showDayDrawer}
                 onClose={() => setShowDayDrawer(false)}
                 day={selectedDay}
+                wishAvailable={canWishOn(selectedDay)}
+                onWish={() => {
+                    setShowDayDrawer(false);
+                    setWishDate(selectedDay);
+                    setShowWishSheet(true);
+                }}
                 shifts={shifts}
                 vacations={vacations}
                 holidays={holidays}

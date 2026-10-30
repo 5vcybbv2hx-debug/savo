@@ -437,7 +437,7 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
             <NewsPanel currentUser={currentUser} currentEmployee={currentEmployee} isManager={isManager} employees={employees} />
 
             {/* Wunschschichten — nur für Mitarbeiter, nur bei laufendem Eingabefenster */}
-            {!isManager && currentEmployee && <WishShiftsCard employee={currentEmployee} />}
+            {currentEmployee && <WishShiftsCard employee={currentEmployee} />}
 
             {/* 4. Meine Aufgaben */}
             {myTodos.length > 0 && (
