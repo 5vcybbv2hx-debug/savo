@@ -24,7 +24,6 @@ import ShiftRequirementsManager from '@/components/shifts/ShiftRequirementsManag
 import MonthlyStaffingCheck from '@/components/shifts/MonthlyStaffingCheck';
 import DefaultShiftRulesManager from '@/components/shifts/DefaultShiftRulesManager';
 import ProvisionalAccessManager from '@/components/provisional/ProvisionalAccessManager';
-import ProvisionalShiftEntry from '@/components/provisional/ProvisionalShiftEntry';
 import ShiftSwapManager from '@/components/shifts/ShiftSwapManager';
 import QuickScheduler from '@/components/shifts/QuickScheduler';
 import { usePermissions } from '@/components/auth/usePermissions';
@@ -131,20 +130,6 @@ export default function Calendar() {
         queryFn: () => base44.entities.ProvisionalShiftAccess.list('-created_date', 100),
         staleTime: STALE.MEDIUM,
     });
-
-    // ── Wunschschichten: eigenes aktives Eingabefenster (nur Mitarbeiter) ────
-    const isManagerView = permissions.isManager || permissions.isAdmin;
-    const { data: myProvisionalAccesses = [] } = useQuery({
-        queryKey: ['my-provisional-access', permissions.employeeId],
-        queryFn: () => base44.entities.ProvisionalShiftAccess.filter({
-            employee_id: permissions.employeeId,
-            is_active: true,
-        }),
-        enabled: !isManagerView && !!permissions.employeeId,
-        staleTime: STALE.MEDIUM,
-    });
-    const myProvisionalAccess = myProvisionalAccesses[0] || null;
-    const showWishEntry = !isManagerView && !!permissions.employee && !!myProvisionalAccess;
 
     const { data: currentUser } = useQuery({
         queryKey: ['user'],
@@ -400,13 +385,6 @@ export default function Calendar() {
                     {filterCard}
                 </div>
 
-                {/* Wunschschichten — Eingabe für Mitarbeiter, oben sichtbar */}
-                {showWishEntry && (view === 'monat' || activeMobileTab === 'calendar') && (
-                    <div className="px-3 pt-2 shrink-0 max-h-[38vh] overflow-y-auto">
-                        <ProvisionalShiftEntry employee={permissions.employee} access={myProvisionalAccess} />
-                    </div>
-                )}
-
                 {/* Content */}
                 <div className="flex-1 overflow-hidden">
                     {view === 'monat' && canMonth ? (
@@ -500,11 +478,6 @@ export default function Calendar() {
                     <div className="mb-3">
                         <ShiftSwapManager compact />
                     </div>
-                    {showWishEntry && (
-                        <div className="mb-4">
-                            <ProvisionalShiftEntry employee={permissions.employee} access={myProvisionalAccess} />
-                        </div>
-                    )}
                     <TeamMonthView />
                 </div>
             </div>
@@ -558,11 +531,6 @@ export default function Calendar() {
                 {/* Kalender-Content */}
                 {activeTab === 'calendar' && (
                     <>
-                    {showWishEntry && (
-                        <div className="mb-4">
-                            <ProvisionalShiftEntry employee={permissions.employee} access={myProvisionalAccess} />
-                        </div>
-                    )}
                     <WeekContextBar
                         weekStart={startOfWeek(new Date(), { weekStartsOn: 1 })}
                         shifts={shifts}

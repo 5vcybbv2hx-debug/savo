@@ -8,6 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { haptics } from '@/components/utils/haptics';
+
+// Farben der eigenen Wunschschichten im Kalender
+const WISH_STYLES = {
+    ausstehend: 'bg-amber-500/15 border-amber-500/40 text-amber-300',
+    bestätigt: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300',
+    abgelehnt: 'bg-rose-500/10 border-rose-500/20 text-rose-300/60 line-through',
+};
 
 const EVENT_STYLES = {
     shift: {
@@ -58,7 +66,11 @@ export default function UnifiedCalendarView({
     selectedRoles = [],
     searchQuery = '',
     onSearchChange = () => {},
-    onNavigate = null
+    onNavigate = null,
+    myWishes = [],
+    wishMode = false,
+    onWishClick = () => {},
+    wishRange = null
 }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showFilterModal, setShowFilterModal] = useState(false);
@@ -238,11 +250,21 @@ export default function UnifiedCalendarView({
                         const isWeekendDay = isWeekend(day);
                         const dayEvents = getEventsForDay(day);
                         const MAX_VISIBLE = 3;
+                        const dayStr = format(day, 'yyyy-MM-dd');
+                        const dayWishes = myWishes.filter(w => w.date === dayStr);
+                        // Wunsch-Modus: nur Tage ab heute innerhalb des Eingabefensters
+                        const inWishRange = wishMode && wishRange?.start && wishRange?.end
+                            && dayStr >= wishRange.start && dayStr <= wishRange.end
+                            && dayStr >= format(new Date(), 'yyyy-MM-dd');
 
                         return (
                             <div
                                 key={day.toISOString()}
-                                onClick={() => isCurrentMonth && onDayClick(day)}
+                                onClick={() => {
+                                    if (!isCurrentMonth) return;
+                                    if (inWishRange) haptics.light();
+                                    onDayClick(day);
+                                }}
                                 className={cn(
                                     'relative border-r border-b border-border/50 last:border-r-0 transition-colors group',
                                     'min-h-[120px] md:min-h-[130px] p-2',
@@ -250,6 +272,7 @@ export default function UnifiedCalendarView({
                                     isWeekendDay && isCurrentMonth && 'bg-secondary/30',
                                     isToday && 'bg-amber-500/5',
                                     isCurrentMonth && 'cursor-pointer hover:bg-accent/30',
+                                    inWishRange && 'hover:bg-primary/10',
                                 )}
                             >
                                 {/* Day Number */}
@@ -261,6 +284,30 @@ export default function UnifiedCalendarView({
                                 )}>
                                     {format(day, 'd')}
                                 </div>
+
+                                {/* Eigene Wunschschichten */}
+                                {dayWishes.length > 0 && (
+                                    <div className="space-y-0.5 mb-1">
+                                        {dayWishes.slice(0, 2).map(wish => (
+                                            <div
+                                                key={wish.id}
+                                                title={`${wish.start_time} – ${wish.end_time}${wish.shift_type ? ` · ${wish.shift_type}` : ''}`}
+                                                onClick={e => { e.stopPropagation(); onWishClick(wish); }}
+                                                className={cn(
+                                                    'text-[10px] px-1 py-0.5 rounded border truncate cursor-pointer',
+                                                    WISH_STYLES[wish.status] || WISH_STYLES.ausstehend
+                                                )}
+                                            >
+                                                {wish.start_time}–{wish.end_time}
+                                            </div>
+                                        ))}
+                                        {dayWishes.length > 2 && (
+                                            <div className="text-[10px] text-muted-foreground pl-1 font-medium">
+                                                +{dayWishes.length - 2}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Events */}
                                 <div className="space-y-1">

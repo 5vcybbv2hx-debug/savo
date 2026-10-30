@@ -6,9 +6,14 @@
  */
 import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
 import { Calendar } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { usePermissions } from '@/components/auth/usePermissions';
+import WishShiftSheet from '@/components/provisional/WishShiftSheet';
 import UnifiedCalendarView from '@/components/calendar/UnifiedCalendarView';
 import EventDetailsModal from '@/components/calendar/EventDetailsModal';
 import ShiftSwapRequestModal from '@/components/shifts/ShiftSwapRequestModal';
@@ -16,7 +21,8 @@ import TeamCalendarExport from '@/components/calendar/TeamCalendarExport';
 import { getHolidaysBW } from '@/components/shifts/getHolidays';
 import DayDetailDrawer from '@/components/calendar/DayDetailDrawer';
 import { haptics } from '@/components/utils/haptics';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 export default function TeamMonthView() {
     const [selectedEmployees, setSelectedEmployees] = useState([]);
@@ -28,6 +34,41 @@ export default function TeamMonthView() {
     const [selectedDay,       setSelectedDay]       = useState(null);
     const [showDayDrawer,     setShowDayDrawer]     = useState(false);
     const [viewMonth,         setViewMonth]         = useState(new Date());
+    const [wishDate,          setWishDate]          = useState(null);
+    const [showWishSheet,     setShowWishSheet]     = useState(false);
+    const [wishDetail,        setWishDetail]        = useState(null);
+
+    const permissions = usePermissions();
+    const queryClient = useQueryClient();
+    const isManager = permissions.isManager || permissions.isAdmin;
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+    // ── Wunschschichten: eigenes Eingabefenster + eigene Wünsche ──────────────
+    const { data: myAccesses = [] } = useQuery({
+        queryKey: ['my-provisional-access', permissions.employeeId],
+        queryFn:  () => base44.entities.ProvisionalShiftAccess.filter({ employee_id: permissions.employeeId, is_active: true }),
+        enabled:  !isManager && !!permissions.employeeId,
+        staleTime: STALE.MEDIUM,
+    });
+    const { data: myRequests = [] } = useQuery({
+        queryKey: ['my-provisional-requests', permissions.employeeId],
+        queryFn:  () => base44.entities.ProvisionalShiftRequest.filter({ employee_id: permissions.employeeId }),
+        enabled:  !!permissions.employeeId,
+        staleTime: STALE.MEDIUM,
+    });
+    const activeAccess = myAccesses.find(a => a.start_date <= todayStr && a.end_date >= todayStr) || null;
+    const wishMode = !isManager && !!permissions.employee && !!activeAccess;
+
+    const deleteWish = useMutation({
+        mutationFn: (id) => base44.entities.ProvisionalShiftRequest.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['my-provisional-requests', permissions.employeeId] });
+            queryClient.invalidateQueries({ queryKey: ['provisional-shift-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['all-provisional-requests'] });
+            setWishDetail(null);
+            toast.success('Wunsch entfernt');
+        },
+    });
 
     // ── Touch: horizontaler Swipe blättert durch die Monate ──────────────────
     const touchStartX = useRef(0);
@@ -86,7 +127,19 @@ export default function TeamMonthView() {
     const holidays = [...getHolidaysBW(currentYear), ...getHolidaysBW(currentYear + 1)];
 
     const handleEventClick = event => { setSelectedEvent(event); setShowEventModal(true); };
-    const handleDayClick   = day   => { setSelectedDay(day);     setShowDayDrawer(true);  };
+    const handleDayClick   = day   => {
+        const dayStr = format(day, 'yyyy-MM-dd');
+        const canWish = wishMode && dayStr >= todayStr
+            && dayStr >= activeAccess.start_date && dayStr <= activeAccess.end_date;
+        if (canWish) {
+            haptics.selection();
+            setWishDate(day);
+            setShowWishSheet(true);
+            return;
+        }
+        setSelectedDay(day);
+        setShowDayDrawer(true);
+    };
 
     return (
         <div className="space-y-4">
@@ -131,6 +184,10 @@ export default function TeamMonthView() {
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 onNavigate={date => setViewMonth(date)}
+                myWishes={myRequests}
+                wishMode={wishMode}
+                onWishClick={setWishDetail}
+                wishRange={wishMode ? { start: activeAccess.start_date, end: activeAccess.end_date } : null}
             />
             </div>
 
@@ -159,6 +216,58 @@ export default function TeamMonthView() {
                     onClose={() => setShiftSwapData(null)}
                 />
             )}
+
+            {/* Wunschschicht eintragen — direkt aus dem Kalender */}
+            <WishShiftSheet
+                open={showWishSheet}
+                onOpenChange={setShowWishSheet}
+                date={wishDate}
+                employee={permissions.employee}
+                access={activeAccess}
+            />
+
+            {/* Eigenen Wunsch ansehen / entfernen */}
+            <Dialog open={!!wishDetail} onOpenChange={open => !open && setWishDetail(null)}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Wunsch entfernen?</DialogTitle>
+                    </DialogHeader>
+                    {wishDetail && (
+                        <div className="space-y-4">
+                            <div className="rounded-xl bg-secondary/50 border border-border p-3">
+                                <p className="font-semibold text-foreground">
+                                    {format(parseISO(wishDetail.date), 'EEEE, dd.MM.yyyy', { locale: de })}
+                                </p>
+                                <p className="text-sm text-muted-foreground font-mono">
+                                    {wishDetail.start_time} – {wishDetail.end_time}
+                                    {wishDetail.shift_type ? ` · ${wishDetail.shift_type}` : ''}
+                                </p>
+                            </div>
+                            {wishDetail.status === 'ausstehend' ? (
+                                <div className="flex gap-2">
+                                    <Button variant="outline" className="flex-1" onClick={() => setWishDetail(null)}>
+                                        Behalten
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        className="flex-1"
+                                        disabled={deleteWish.isPending}
+                                        onClick={() => deleteWish.mutate(wishDetail.id)}
+                                    >
+                                        Entfernen
+                                    </Button>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">
+                                    {wishDetail.status === 'bestätigt'
+                                        ? 'Dieser Wunsch wurde bereits bestätigt und kann nicht mehr entfernt werden.'
+                                        : 'Dieser Wunsch wurde abgelehnt.'}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
