@@ -54,7 +54,10 @@ export default function ProvisionalShiftEntry({ employee, access }) {
             return base44.entities.ProvisionalShiftRequest.create(payload);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries(['my-provisional-requests', employee?.id]);
+            queryClient.invalidateQueries({ queryKey: ['my-provisional-requests', employee?.id] });
+            // Manager-Prüfliste (TeamMeeting → Wünsche) und Kalender sofort aktualisieren
+            queryClient.invalidateQueries({ queryKey: ['provisional-shift-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['all-provisional-requests'] });
             setModalOpen(false);
             setEditing(null);
         }
@@ -62,7 +65,11 @@ export default function ProvisionalShiftEntry({ employee, access }) {
 
     const deleteMutation = useMutation({
         mutationFn: (id) => base44.entities.ProvisionalShiftRequest.delete(id),
-        onSuccess: () => queryClient.invalidateQueries(['my-provisional-requests', employee?.id])
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['my-provisional-requests', employee?.id] });
+            queryClient.invalidateQueries({ queryKey: ['provisional-shift-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['all-provisional-requests'] });
+        }
     });
 
     const openNew = () => {

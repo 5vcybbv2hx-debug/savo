@@ -9,6 +9,7 @@ import ManagerDashboard from '@/components/dashboard/ManagerDashboard';
 import AlarmPanel from '@/components/dashboard/AlarmPanel';
 import ActiveClockPanel from '@/components/dashboard/ActiveClockPanel';
 import NewsPanel from '@/components/dashboard/NewsPanel';
+import WishShiftsCard from '@/components/dashboard/WishShiftsCard';
 import ClothingOrderCard from '@/components/dashboard/ClothingOrderCard';
 import ShiftSwapInboxCard from '@/components/shifts/ShiftSwapInboxCard';
 import WhatsAppMessageGenerator from '@/components/employees/WhatsAppMessageGenerator';
@@ -434,6 +435,9 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
 
             {/* 4. NewsPanel — Infos & Aufgaben vom Chef (TOP-DOWN) */}
             <NewsPanel currentUser={currentUser} currentEmployee={currentEmployee} isManager={isManager} employees={employees} />
+
+            {/* Wunschschichten — nur für Mitarbeiter, nur bei laufendem Eingabefenster */}
+            {!isManager && currentEmployee && <WishShiftsCard employee={currentEmployee} />}
 
             {/* 4. Meine Aufgaben */}
             {myTodos.length > 0 && (
