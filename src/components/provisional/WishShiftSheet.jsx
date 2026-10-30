@@ -16,21 +16,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useIsMobile } from '@/components/utils/useIsMobile';
 import { haptics } from '@/components/utils/haptics';
 import { cn } from '@/lib/utils';
+import { getWishShiftTypes, normalizeTime, wishDayHint } from '@/lib/wishShiftRules';
 
-// "5:00" → "05:00" (Normalisierung für Anzeige und Vergleich)
-function normalizeTime(t) {
-    if (!t) return '';
-    const [h, m] = String(t).split(':');
-    return `${String(h || '0').padStart(2, '0')}:${String(m || '00').padStart(2, '0')}`;
-}
-
+// "5:00" → "05:00" (nur für die Anzeige)
 function displayTime(t) {
     return normalizeTime(t);
 }
-
-// Nur Schichtarten ab 19:00 Uhr sind für Wunschschichten wählbar —
-// frühere Startzeiten plant der Inhaber manuell.
-const WISH_START_FROM = '19:00';
 
 export default function WishShiftSheet({ open, onOpenChange, date, employee, access }) {
     const queryClient = useQueryClient();
@@ -53,11 +44,10 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
         enabled: open,
     });
 
-    const sortedTypes = useMemo(
-        () => [...shiftTypes]
-            .filter(t => normalizeTime(t.start_time) >= WISH_START_FROM)
-            .sort((a, b) => normalizeTime(a.start_time).localeCompare(normalizeTime(b.start_time))),
-        [shiftTypes]
+    // Wochentagsabhängige Regeln (Di 17–22, Mi/Do 18–22, Fr/Sa ab 19:00)
+    const availableTypes = useMemo(
+        () => getWishShiftTypes(shiftTypes, date),
+        [shiftTypes, date]
     );
 
     const invalidate = () => {
@@ -91,6 +81,7 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
     };
 
     const title = date ? `Wunschschicht · ${format(date, 'EEEE, dd.MM.', { locale: de })}` : 'Wunschschicht';
+    const hint = wishDayHint(date);
 
     const body = (
         <div className="space-y-2 pb-2">
@@ -98,10 +89,10 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                     <Loader2 className="w-5 h-5 animate-spin" />
                 </div>
-            ) : sortedTypes.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">Aktuell keine Schichtart ab 19:00 Uhr verfügbar.</p>
+            ) : availableTypes.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">Für diesen Tag ist keine Schichtart zur Auswahl hinterlegt.</p>
             ) : (
-                sortedTypes.map(type => (
+                availableTypes.map(type => (
                     <button
                         key={type.id}
                         type="button"
@@ -156,6 +147,7 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                 <DrawerContent className="bg-card border-border">
                     <DrawerHeader className="border-b border-border pb-3">
                         <DrawerTitle className="text-foreground text-base text-left">{title}</DrawerTitle>
+                        {hint && <p className="text-xs text-muted-foreground text-left mt-1">{hint}</p>}
                     </DrawerHeader>
                     <div className="px-4 pt-3 overflow-y-auto max-h-[70vh]">{body}</div>
                 </DrawerContent>
@@ -168,6 +160,7 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="text-base">{title}</DialogTitle>
+                    {hint && <p className="text-xs text-muted-foreground text-left mt-1">{hint}</p>}
                 </DialogHeader>
                 {body}
             </DialogContent>

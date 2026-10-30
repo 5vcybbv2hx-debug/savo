@@ -21,6 +21,7 @@ import TeamCalendarExport from '@/components/calendar/TeamCalendarExport';
 import { getHolidaysBW } from '@/components/shifts/getHolidays';
 import DayDetailDrawer from '@/components/calendar/DayDetailDrawer';
 import { haptics } from '@/components/utils/haptics';
+import { isWishWeekday } from '@/lib/wishShiftRules';
 import { format, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -129,7 +130,7 @@ export default function TeamMonthView() {
     const handleEventClick = event => { setSelectedEvent(event); setShowEventModal(true); };
     const handleDayClick   = day   => {
         const dayStr = format(day, 'yyyy-MM-dd');
-        const canWish = wishMode && dayStr >= todayStr
+        const canWish = wishMode && isWishWeekday(day) && dayStr >= todayStr
             && dayStr >= activeAccess.start_date && dayStr <= activeAccess.end_date;
         if (canWish) {
             haptics.selection();

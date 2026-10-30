@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/components/utils/haptics';
+import { isWishWeekday } from '@/lib/wishShiftRules';
 
 // Farben der eigenen Wunschschichten im Kalender
 const WISH_STYLES = {
@@ -252,10 +253,12 @@ export default function UnifiedCalendarView({
                         const MAX_VISIBLE = 3;
                         const dayStr = format(day, 'yyyy-MM-dd');
                         const dayWishes = myWishes.filter(w => w.date === dayStr);
-                        // Wunsch-Modus: nur Tage ab heute innerhalb des Eingabefensters
+                        // Wunsch-Modus: nur Tage ab heute innerhalb des Eingabefensters,
+                        // und nur an Tagen mit Wunschschicht-Regel (Di–Sa)
                         const inWishRange = wishMode && wishRange?.start && wishRange?.end
                             && dayStr >= wishRange.start && dayStr <= wishRange.end
-                            && dayStr >= format(new Date(), 'yyyy-MM-dd');
+                            && dayStr >= format(new Date(), 'yyyy-MM-dd')
+                            && isWishWeekday(day);
 
                         return (
                             <div
