@@ -17,12 +17,20 @@ import { useIsMobile } from '@/components/utils/useIsMobile';
 import { haptics } from '@/components/utils/haptics';
 import { cn } from '@/lib/utils';
 
-// "5:00" → "05:00" (nur für die Anzeige)
-function displayTime(t) {
+// "5:00" → "05:00" (Normalisierung für Anzeige und Vergleich)
+function normalizeTime(t) {
     if (!t) return '';
     const [h, m] = String(t).split(':');
     return `${String(h || '0').padStart(2, '0')}:${String(m || '00').padStart(2, '0')}`;
 }
+
+function displayTime(t) {
+    return normalizeTime(t);
+}
+
+// Nur Schichtarten ab 19:00 Uhr sind für Wunschschichten wählbar —
+// frühere Startzeiten plant der Inhaber manuell.
+const WISH_START_FROM = '19:00';
 
 export default function WishShiftSheet({ open, onOpenChange, date, employee, access }) {
     const queryClient = useQueryClient();
@@ -46,7 +54,9 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
     });
 
     const sortedTypes = useMemo(
-        () => [...shiftTypes].sort((a, b) => (a.start_time || '').localeCompare(b.start_time || '')),
+        () => [...shiftTypes]
+            .filter(t => normalizeTime(t.start_time) >= WISH_START_FROM)
+            .sort((a, b) => normalizeTime(a.start_time).localeCompare(normalizeTime(b.start_time))),
         [shiftTypes]
     );
 
@@ -89,7 +99,7 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                     <Loader2 className="w-5 h-5 animate-spin" />
                 </div>
             ) : sortedTypes.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">Keine Schichtarten hinterlegt</p>
+                <p className="text-sm text-muted-foreground text-center py-6">Aktuell keine Schichtart ab 19:00 Uhr verfügbar.</p>
             ) : (
                 sortedTypes.map(type => (
                     <button
