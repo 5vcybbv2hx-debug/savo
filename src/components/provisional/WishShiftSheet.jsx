@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { Loader2, ChevronDown, StickyNote } from 'lucide-react';
+import { Loader2, ChevronDown, StickyNote, Check } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,6 +44,18 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
         enabled: open,
     });
 
+    const dayStr = date ? format(date, 'yyyy-MM-dd') : null;
+
+    // Bereits eingetragene Wünsche für diesen Tag (für Kapazität + "eingetragen")
+    const { data: dayRequests = [] } = useQuery({
+        queryKey: ['wish-counts', dayStr],
+        queryFn: async () => {
+            const page = await base44.entities.ProvisionalShiftRequest.filter({ date: dayStr }, { limit: 200 });
+            return page?.items || [];
+        },
+        enabled: open && !!dayStr,
+    });
+
     // Wochentagsabhängige Regeln (Di 17–22, Mi/Do 18–22, Fr/Sa ab 19:00)
     const availableTypes = useMemo(
         () => getWishShiftTypes(shiftTypes, date),
@@ -54,6 +66,7 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
         queryClient.invalidateQueries({ queryKey: ['my-provisional-requests', employee?.id] });
         queryClient.invalidateQueries({ queryKey: ['provisional-shift-requests'] });
         queryClient.invalidateQueries({ queryKey: ['all-provisional-requests'] });
+        queryClient.invalidateQueries({ queryKey: ['wish-counts', dayStr] });
     };
 
     const handlePick = async (type) => {
@@ -92,23 +105,55 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
             ) : availableTypes.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">Für diesen Tag ist keine Schichtart zur Auswahl hinterlegt.</p>
             ) : (
-                availableTypes.map(type => (
-                    <button
-                        key={type.id}
-                        type="button"
-                        disabled={saving}
-                        onClick={() => handlePick(type)}
-                        className={cn(
-                            'w-full flex items-center justify-between gap-3 px-4 py-4 rounded-xl border border-border bg-secondary/40 text-left transition-all',
-                            saving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary active:scale-[0.99]'
-                        )}
-                    >
-                        <span className="font-semibold text-foreground">{type.name}</span>
-                        <span className="text-sm text-muted-foreground font-mono shrink-0">
-                            {displayTime(type.start_time)} – {displayTime(type.end_time)}
-                        </span>
-                    </button>
-                ))
+                availableTypes.map(type => {
+                    // Belegt = ausstehend + bestätigt (abgelehnte zählen nicht)
+                    const taken = dayRequests.filter(r =>
+                        r.shift_type === type.name && (r.status === 'ausstehend' || r.status === 'bestätigt')
+                    ).length;
+                    const capacity = type.wish_capacity ?? 2;
+                    const full = taken >= capacity;
+                    const own = dayRequests.some(r =>
+                        r.employee_id === employee?.id && r.shift_type === type.name && r.status !== 'abgelehnt'
+                    );
+                    const blocked = full || own;
+                    const pct = capacity > 0 ? Math.min(100, (taken / capacity) * 100) : 100;
+
+                    return (
+                        <button
+                            key={type.id}
+                            type="button"
+                            disabled={saving || blocked}
+                            onClick={() => handlePick(type)}
+                            className={cn(
+                                'w-full flex items-center justify-between gap-3 px-4 py-4 rounded-xl border border-border bg-secondary/40 text-left transition-all',
+                                saving || blocked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary active:scale-[0.99]'
+                            )}
+                        >
+                            <span className="font-semibold text-foreground min-w-0 truncate">{type.name}</span>
+                            <span className="shrink-0 text-right space-y-1">
+                                <span className="flex items-center justify-end gap-2">
+                                    {own && (
+                                        <span className="flex items-center gap-1 text-xs text-emerald-500">
+                                            <Check className="w-3 h-3" /> eingetragen
+                                        </span>
+                                    )}
+                                    {!own && full && (
+                                        <span className="text-xs text-muted-foreground">voll</span>
+                                    )}
+                                    <span className="text-sm text-muted-foreground font-mono">
+                                        {displayTime(type.start_time)} – {displayTime(type.end_time)}
+                                    </span>
+                                </span>
+                                <span className="flex items-center justify-end gap-2">
+                                    <span className="text-xs text-muted-foreground">{taken} von {capacity}</span>
+                                    <span className="block w-16 h-[3px] rounded-full bg-border overflow-hidden">
+                                        <span className="block h-full bg-amber-500" style={{ width: `${pct}%` }} />
+                                    </span>
+                                </span>
+                            </span>
+                        </button>
+                    );
+                })
             )}
 
             {/* Notiz — eingeklappt */}

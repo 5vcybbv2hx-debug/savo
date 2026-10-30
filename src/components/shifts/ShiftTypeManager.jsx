@@ -14,7 +14,7 @@ export default function ShiftTypeManager() {
     const queryClient = useQueryClient();
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [form, setForm] = useState({ name: '', start_time: '06:00', end_time: '14:00', order: 0, is_active: true });
+    const [form, setForm] = useState({ name: '', start_time: '06:00', end_time: '14:00', order: 0, is_active: true, wish_capacity: '' });
 
     const { data: types = [] } = useQuery({
         queryKey: ['shift-types'],
@@ -26,7 +26,7 @@ export default function ShiftTypeManager() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shift-types'] });
             setOpen(false);
-            setForm({ name: '', start_time: '06:00', end_time: '14:00', order: 0, is_active: true });
+            setForm({ name: '', start_time: '06:00', end_time: '14:00', order: 0, is_active: true, wish_capacity: '' });
             toast.success('Schichttyp erstellt');
         }
     });
@@ -37,7 +37,7 @@ export default function ShiftTypeManager() {
             queryClient.invalidateQueries({ queryKey: ['shift-types'] });
             setOpen(false);
             setEditing(null);
-            setForm({ name: '', start_time: '06:00', end_time: '14:00', order: 0, is_active: true });
+            setForm({ name: '', start_time: '06:00', end_time: '14:00', order: 0, is_active: true, wish_capacity: '' });
             toast.success('Schichttyp aktualisiert');
         }
     });
@@ -53,10 +53,17 @@ export default function ShiftTypeManager() {
     const handleOpen = (type = null) => {
         if (type) {
             setEditing(type);
-            setForm({ name: type.name, start_time: type.start_time || '06:00', end_time: type.end_time || '14:00', order: type.order || 0, is_active: type.is_active !== false });
+            setForm({
+                name: type.name,
+                start_time: type.start_time || '06:00',
+                end_time: type.end_time || '14:00',
+                order: type.order || 0,
+                is_active: type.is_active !== false,
+                wish_capacity: type.wish_capacity ?? '',
+            });
         } else {
             setEditing(null);
-            setForm({ name: '', start_time: '06:00', end_time: '14:00', order: 0, is_active: true });
+            setForm({ name: '', start_time: '06:00', end_time: '14:00', order: 0, is_active: true, wish_capacity: '' });
         }
         setOpen(true);
     };
@@ -66,10 +73,15 @@ export default function ShiftTypeManager() {
             toast.error('Name erforderlich');
             return;
         }
+        // Leeres Feld → null (= Standardkapazität 2)
+        const payload = {
+            ...form,
+            wish_capacity: form.wish_capacity === '' || form.wish_capacity === null ? null : Number(form.wish_capacity),
+        };
         if (editing) {
-            updateMutation.mutate({ id: editing.id, data: form });
+            updateMutation.mutate({ id: editing.id, data: payload });
         } else {
-            createMutation.mutate(form);
+            createMutation.mutate(payload);
         }
     };
 
@@ -127,6 +139,18 @@ export default function ShiftTypeManager() {
                                     <Label className="text-sm">Bis</Label>
                                     <Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} className="mt-1.5" />
                                 </div>
+                            </div>
+                            <div>
+                                <Label className="text-sm">Wunsch-Plätze pro Tag</Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    value={form.wish_capacity}
+                                    onChange={(e) => setForm({ ...form, wish_capacity: e.target.value })}
+                                    placeholder="2"
+                                    className="mt-1.5"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">Leer = 2 Plätze</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <input type="checkbox" id="active" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 rounded border-border" />

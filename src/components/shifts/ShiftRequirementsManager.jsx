@@ -31,7 +31,8 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
         name: '',
         start_time: '',
         end_time: '',
-        order: 0
+        order: 0,
+        wish_capacity: ''
     });
 
     const getColorForOrder = (order, totalTypes) => {
@@ -144,7 +145,8 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                 name: type.name,
                 start_time: type.start_time || '',
                 end_time: type.end_time || '',
-                order: type.order || 0
+                order: type.order || 0,
+                wish_capacity: type.wish_capacity ?? ''
             });
         } else {
             setEditingType(null);
@@ -152,7 +154,8 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                 name: '',
                 start_time: '',
                 end_time: '',
-                order: shiftTypes.length
+                order: shiftTypes.length,
+                wish_capacity: ''
             });
         }
         setTypesModalOpen(true);
@@ -165,10 +168,17 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
 
     const handleTypeSubmit = (e) => {
         e.preventDefault();
+        // Leeres Feld → null (= Standardkapazität 2)
+        const payload = {
+            ...typeFormData,
+            wish_capacity: typeFormData.wish_capacity === '' || typeFormData.wish_capacity === null
+                ? null
+                : Number(typeFormData.wish_capacity),
+        };
         if (editingType) {
-            updateTypeMutation.mutate({ id: editingType.id, data: typeFormData });
+            updateTypeMutation.mutate({ id: editingType.id, data: payload });
         } else {
-            createTypeMutation.mutate(typeFormData);
+            createTypeMutation.mutate(payload);
         }
     };
 
@@ -471,6 +481,18 @@ export default function ShiftRequirementsManager({ open: extOpen, onOpenChange: 
                                         style={{ backgroundColor: getColorForOrder(typeFormData.order, shiftTypes.length + 1) }}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Wunsch-Plätze pro Tag</Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    value={typeFormData.wish_capacity}
+                                    onChange={(e) => setTypeFormData({ ...typeFormData, wish_capacity: e.target.value })}
+                                    placeholder="2"
+                                />
+                                <p className="text-xs text-muted-foreground">Leer = 2 Plätze</p>
                             </div>
 
                             <div className="flex gap-2 pt-2">

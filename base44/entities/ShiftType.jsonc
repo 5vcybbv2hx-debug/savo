@@ -22,6 +22,10 @@
       "type": "boolean",
       "default": true,
       "description": "Aktiv"
+    },
+    "wish_capacity": {
+      "type": "number",
+      "description": "Wunsch-Pl\u00e4tze pro Tag f\u00fcr diese Schicht. Leer = 2."
     }
   },
   "required": [
