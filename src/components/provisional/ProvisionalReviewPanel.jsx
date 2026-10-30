@@ -15,6 +15,8 @@ import {
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { formatHours, statsByEmployee } from '@/lib/provisionalShiftHours';
+import WunschUebersicht from '@/components/provisional/WunschUebersicht';
 
 const SHIFT_TYPES = ['Aufmachen', 'Frühschicht', 'Spätschicht', 'Sonderschicht'];
 
@@ -29,9 +31,11 @@ function formatDate(dateStr) {
 }
 
 // ── Single request card used in both list & queue mode ──
-function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProcessing = false }) {
+function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProcessing = false, employee, empStats }) {
     const sc = STATUS_CONFIG[req.status] || STATUS_CONFIG.ausstehend;
     const isPending = req.status === 'ausstehend';
+    const weeklyHours = employee?.weekly_hours ?? null;
+    const empLabel = employee?.short_name || employee?.name || req.employee_name;
 
     return (
         <div className={cn(
@@ -60,6 +64,18 @@ function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProc
                         <span>{req.start_time} – {req.end_time}</span>
                         {req.shift_type && <span className="text-amber-400 font-medium">• {req.shift_type}</span>}
                     </div>
+                    {(weeklyHours != null || empStats) && (
+                        <div className="mt-1 space-y-0.5">
+                            {weeklyHours != null && weeklyHours !== '' && (
+                                <p className="text-xs text-muted-foreground">Vertrag: {weeklyHours} Std/Woche</p>
+                            )}
+                            {empStats && (
+                                <p className="text-xs text-muted-foreground">
+                                    von {empLabel}: {empStats.count} {empStats.count === 1 ? 'Wunsch' : 'Wünsche'} · {formatHours(empStats.hours)} Std gewünscht
+                                </p>
+                            )}
+                        </div>
+                    )}
                     {req.comment && (
                         <p className="text-xs text-muted-foreground mt-1.5 italic bg-secondary/50 rounded-lg px-2.5 py-1.5">
                             „{req.comment}"
@@ -109,7 +125,7 @@ function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProc
 }
 
 // ── Queue / Meeting mode: one card at a time ──
-function QueueMode({ pending, onConfirm, onReject, onEdit, isProcessing }) {
+function QueueMode({ pending, onConfirm, onReject, onEdit, isProcessing, employeeMap, employeeStats, overviewRows, overviewTotal }) {
     const [idx, setIdx] = useState(0);
     const total = pending.length;
 
@@ -135,6 +151,8 @@ function QueueMode({ pending, onConfirm, onReject, onEdit, isProcessing }) {
 
     return (
         <div className="space-y-4">
+            <WunschUebersicht rows={overviewRows} totalCount={overviewTotal.count} totalHours={overviewTotal.hours} />
+
             {/* Progress */}
             <div className="flex items-center justify-between mb-1">
                 <span className="text-sm text-muted-foreground font-medium">
@@ -168,6 +186,8 @@ function QueueMode({ pending, onConfirm, onReject, onEdit, isProcessing }) {
                 onReject={handleReject}
                 onEdit={onEdit}
                 isProcessing={isProcessing}
+                employee={employeeMap[current.employee_id]}
+                empStats={employeeStats[current.employee_id]}
             />
 
             {/* Prev/Next nav */}
@@ -186,7 +206,7 @@ function QueueMode({ pending, onConfirm, onReject, onEdit, isProcessing }) {
 }
 
 // ── List mode: grouped by date ──
-function ListView({ filtered, onConfirm, onReject, onEdit, isProcessing }) {
+function ListView({ filtered, onConfirm, onReject, onEdit, isProcessing, employeeMap, employeeStats }) {
     if (filtered.length === 0) {
         return (
             <Card className="p-8 text-center">
@@ -224,6 +244,8 @@ function ListView({ filtered, onConfirm, onReject, onEdit, isProcessing }) {
                                 onReject={onReject}
                                 onEdit={onEdit}
                                 isProcessing={isProcessing}
+                                employee={employeeMap[req.employee_id]}
+                                empStats={employeeStats[req.employee_id]}
                             />
                         ))}
                     </div>
@@ -354,6 +376,21 @@ export default function ProvisionalReviewPanel() {
         queryFn: () => base44.entities.ProvisionalShiftRequest.list('-date', 200)
     });
 
+    // Mitarbeiterdaten (Vertragsstunden) für die Prüfansicht
+    const { data: employees = [] } = useQuery({
+        queryKey: ['review-employees'],
+        queryFn: () => base44.entities.Employee.list()
+    });
+
+    const employeeMap = useMemo(() => {
+        const map = {};
+        employees.forEach(e => { map[e.id] = e; });
+        return map;
+    }, [employees]);
+
+    // Wünsche + Stunden pro Mitarbeiter über den gesamten geladenen Datensatz
+    const employeeStats = useMemo(() => statsByEmployee(requests), [requests]);
+
     const reviewMutation = useMutation({
         mutationFn: async ({ req, action, note, overrides }) => {
             if (action === 'bestätigt') {
@@ -388,6 +425,25 @@ export default function ProvisionalReviewPanel() {
             .sort((a, b) => a.date.localeCompare(b.date)),
         [requests, statusFilter]
     );
+
+    // Übersicht „Wer hat wie viel" — nur ausstehende Wünsche, absteigend nach Stunden
+    const overviewRows = useMemo(() => {
+        const map = statsByEmployee(pending);
+        return Object.entries(map)
+            .map(([key, s]) => ({
+                key,
+                name: employeeMap[s.employee_id]?.short_name || employeeMap[s.employee_id]?.name || s.employee_name,
+                count: s.count,
+                hours: s.hours,
+                weeklyHours: employeeMap[s.employee_id]?.weekly_hours ?? null,
+            }))
+            .sort((a, b) => b.hours - a.hours);
+    }, [pending, employeeMap]);
+
+    const overviewTotal = useMemo(() => overviewRows.reduce(
+        (acc, r) => ({ count: acc.count + r.count, hours: acc.hours + r.hours }),
+        { count: 0, hours: 0 }
+    ), [overviewRows]);
 
     const handleConfirm = (req, overrides, note) => {
         reviewMutation.mutate({ req, action: 'bestätigt', note: note || '', overrides: overrides || null });
@@ -468,6 +524,10 @@ export default function ProvisionalReviewPanel() {
                     onReject={handleQuickReject}
                     onEdit={setEditTarget}
                     isProcessing={reviewMutation.isPending}
+                    employeeMap={employeeMap}
+                    employeeStats={employeeStats}
+                    overviewRows={overviewRows}
+                    overviewTotal={overviewTotal}
                 />
             ) : (
                 <ListView
@@ -476,6 +536,8 @@ export default function ProvisionalReviewPanel() {
                     onReject={handleQuickReject}
                     onEdit={setEditTarget}
                     isProcessing={reviewMutation.isPending}
+                    employeeMap={employeeMap}
+                    employeeStats={employeeStats}
                 />
             )}
 
