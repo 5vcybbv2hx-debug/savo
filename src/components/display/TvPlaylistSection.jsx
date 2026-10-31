@@ -34,6 +34,7 @@ import DrinkEmojiPicker from '@/components/emoji/DrinkEmojiPicker';
 import InstagramExportDialog from '@/components/display/InstagramExportDialog';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
+import { ACCENT_OPTIONS, resolveAccent } from '@/lib/accentColors';
 import { isAfter, parseISO } from 'date-fns';
 
 const SLIDE_TYPES = [
@@ -46,24 +47,8 @@ const SLIDE_TYPES = [
   { value: 'tonight',       label: '🌙 Tonight',           desc: 'Heutige Veranstaltung' },
 ];
 
-const ACCENT_COLORS = [
-  { value: 'amber',    label: 'Gold',      hex: '#f59e0b' },
-  { value: 'orange',   label: 'Orange',    hex: '#f97316' },
-  { value: 'red',      label: 'Rot',       hex: '#ef4444' },
-  { value: 'rose',     label: 'Rose',      hex: '#f43f5e' },
-  { value: 'pink',     label: 'Pink',      hex: '#ec4899' },
-  { value: 'fuchsia',  label: 'Fuchsia',   hex: '#d946ef' },
-  { value: 'purple',   label: 'Lila',      hex: '#a855f7' },
-  { value: 'violet',   label: 'Violett',   hex: '#7c3aed' },
-  { value: 'indigo',   label: 'Indigo',    hex: '#6366f1' },
-  { value: 'blue',     label: 'Blau',      hex: '#3b82f6' },
-  { value: 'sky',      label: 'Hellblau',  hex: '#0ea5e9' },
-  { value: 'cyan',     label: 'Cyan',      hex: '#06b6d4' },
-  { value: 'teal',     label: 'Teal',      hex: '#14b8a6' },
-  { value: 'green',    label: 'Grün',      hex: '#22c55e' },
-  { value: 'lime',     label: 'Lime',      hex: '#84cc16' },
-  { value: 'white',    label: 'Weiß',      hex: '#f8fafc' },
-];
+// Farbauswahl kommt zentral aus src/lib/accentColors.js (gleiches Mapping wie TV + Export)
+const ACCENT_COLORS = ACCENT_OPTIONS;
 
 const BACKGROUND_THEMES = [
   { value: 'auto',             label: '✨ Automatisch',        desc: 'Anhand des Titels erkannt' },
@@ -244,7 +229,7 @@ export default function TvPlaylistSection() {
     return Number(s.sort_order) === Number(form.sort_order);
   });
 
-  const accentHex = ACCENT_COLORS.find(c => c.value === form.accent_color)?.hex || '#f59e0b';
+  const accentHex = resolveAccent(form.accent_color).bg;
 
   if (!permissions.isManager) return <PermissionDenied />;
 
@@ -662,7 +647,7 @@ export default function TvPlaylistSection() {
 
 // ── Mini-Vorschau ──────────────────────────────────────────────────────────────
 function SlidePreview({ form }) {
-  const accentHex = ACCENT_COLORS.find(c => c.value === form.accent_color)?.hex || '#f59e0b';
+  const accentHex = resolveAccent(form.accent_color).bg;
   const glow = accentHex + '66';
   const soft = accentHex + '22';
 

@@ -26,24 +26,18 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-  ACCENTS, KEYFRAMES, injectKeyframes, detectTheme,
+  KEYFRAMES, injectKeyframes, detectTheme,
   SlideAnnouncement, SlideEvent, SlideDrinkSpecial, SlideCountdown, SlideQRCode, SlideTonight,
 } from '@/pages/Display';
 import { useSlideRecorder } from '@/components/display/useSlideRecorder';
 import { WallAssetContext, loadBrandWallDataUrl, waitForImages, EXPORT_FREEZE_CSS } from '@/lib/exportAssets';
+import { resolveAccent } from '@/lib/accentColors';
 
 const FORMATS = [
   { value: 'reel',  label: 'Reel / Story', ratio: '9/16',  w: 1080, h: 1920, desc: '9:16 — Hochformat' },
   { value: 'post',  label: 'Post (quadrat)', ratio: '1/1',  w: 1080, h: 1080, desc: '1:1 — Klassischer Post' },
   { value: 'post45', label: 'Post (hoch)',  ratio: '4/5',  w: 1080, h: 1350, desc: '4:5 — Portrait-Post' },
 ];
-
-const ACCENT_HEX = {
-  amber: '#f59e0b', orange: '#f97316', red: '#ef4444', rose: '#f43f5e',
-  pink: '#ec4899', fuchsia: '#d946ef', purple: '#a855f7', violet: '#7c3aed',
-  indigo: '#6366f1', blue: '#3b82f6', sky: '#0ea5e9', cyan: '#06b6d4',
-  teal: '#14b8a6', green: '#22c55e', lime: '#84cc16', white: '#f8fafc',
-};
 
 const THEME_PROMPTS = {
   auto: 'cinematic bar atmosphere', germany: 'German flag colors waving',
@@ -87,19 +81,21 @@ function buildMotionPrompt(slide) {
 // ════════════════════════════════════════════════════════════════════════════
 // SLIDE-RENDERER (nutzt Display.jsx Komponenten — TV + Instagram)
 // ════════════════════════════════════════════════════════════════════════════
-function SlideRenderer({ slide, accent, theme, aspectRatio = '9/16' }) {
+// showQr: QR-Codes gehören ausschließlich in die TV-Ansicht. Im Bild-Export
+// (Story/Post/4:5) bleibt der QR-Code deshalb standardmäßig ausgeblendet.
+function SlideRenderer({ slide, accent, theme, aspectRatio = '9/16', showQr = false }) {
   switch (slide.slide_type) {
     case 'announcement':  return <SlideAnnouncement slide={slide} accent={accent} theme={theme} titleScale={1.3} />;
-    case 'event':        return <SlideEvent slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} />;
+    case 'event':        return <SlideEvent slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} showQr={showQr} />;
     case 'drink_special':return <SlideDrinkSpecial slide={slide} accent={accent} theme={theme} />;
-    case 'countdown':    return <SlideCountdown slide={slide} accent={accent} theme={theme} />;
-    case 'qr_code':      return <SlideQRCode slide={slide} accent={accent} theme={theme} />;
+    case 'countdown':    return <SlideCountdown slide={slide} accent={accent} theme={theme} showQr={showQr} />;
+    case 'qr_code':      return <SlideQRCode slide={slide} accent={accent} theme={theme} showQr={showQr} />;
     case 'tonight':      return <SlideTonight slide={slide} accent={accent} theme={theme} />;
     default:             return <SlideAnnouncement slide={slide} accent={accent} theme={theme} />;
   }
 }
 
-function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, height = 1920, aspectRatio = '9/16', wallSrc = null }) {
+function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, height = 1920, aspectRatio = '9/16', wallSrc = null, showQr = false }) {
   const [portalTarget, setPortalTarget] = useState(null);
 
   useEffect(() => {
@@ -134,7 +130,7 @@ function IframeSlideRenderer({ slide, accent, theme, iframeRef, width = 1080, he
       <iframe ref={iframeRef} style={{ width, height, border: 'none', display: 'block' }} />
       {portalTarget && createPortal(
         <WallAssetContext.Provider value={wallSrc}>
-          <SlideRenderer slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} />
+          <SlideRenderer slide={slide} accent={accent} theme={theme} aspectRatio={aspectRatio} showQr={showQr} />
         </WallAssetContext.Provider>,
         portalTarget
       )}
@@ -317,7 +313,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
 
   if (!slide) return null;
 
-  const slideAccent = ACCENTS[slide.accent_color] || ACCENTS.amber;
+  const slideAccent = resolveAccent(slide.accent_color);
   const slideTheme = slide.background_theme && slide.background_theme !== 'auto'
     ? slide.background_theme : detectTheme(slide.title, slide.subtitle);
   const safeTitle = (slide.title || 'slide').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 40);
@@ -436,7 +432,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                   <div ref={videoWrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                     <div style={{ width: 1080 * videoScale, height: 1920 * videoScale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
                       <div style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 1920, transform: `scale(${videoScale})`, transformOrigin: 'top left' }}>
-                        <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} wallSrc={wallSrc} />
+                        <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} wallSrc={wallSrc} showQr />
                       </div>
                     </div>
                   </div>
@@ -481,7 +477,7 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
                 <div ref={videoWrapperRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                   <div style={{ width: 1080 * videoScale, height: 1920 * videoScale, overflow: 'hidden', position: 'relative', borderRadius: 12, border: '1px solid var(--border)' }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, width: 1080, height: 1920, transform: `scale(${videoScale})`, transformOrigin: 'top left' }}>
-                      <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} wallSrc={wallSrc} />
+                      <IframeSlideRenderer slide={slide} accent={slideAccent} theme={slideTheme} iframeRef={iframeRef} wallSrc={wallSrc} showQr />
                     </div>
                   </div>
                 </div>

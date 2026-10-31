@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, Eye, EyeOff, GripVertical, RefreshCw, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { accentHex } from '@/lib/accentColors';
 
 const SLIDE_TYPES = [
   { value: 'announcement',  label: '📢 Ankündigung' },
@@ -25,12 +26,6 @@ const TYPE_COLORS = {
   qr_code:       'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
   tonight:       'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
 };
-
-const ACCENT_COLORS = [
-  { value: 'amber', hex: '#f59e0b' }, { value: 'orange', hex: '#f97316' },
-  { value: 'red', hex: '#ef4444' }, { value: 'blue', hex: '#3b82f6' },
-  { value: 'green', hex: '#22c55e' }, { value: 'cyan', hex: '#06b6d4' },
-];
 
 const isEventSlide = (s) => typeof s.cta_text === 'string' && s.cta_text.startsWith('event:');
 
@@ -54,7 +49,7 @@ export default function SortableSlideCard({ slide, onToggle, onEdit, onDelete, o
             <GripVertical className="w-4 h-4" />
           </div>
           <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-base"
-            style={{ background: (ACCENT_COLORS.find(c => c.value === slide.accent_color)?.hex || '#f59e0b') + '22' }}>
+            style={{ background: accentHex(slide.accent_color) + '22' }}>
             {SLIDE_TYPES.find(t => t.value === slide.slide_type)?.label.split(' ')[0] || '📢'}
           </div>
           <div className="flex-1 min-w-0">

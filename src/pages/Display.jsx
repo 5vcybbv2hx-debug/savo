@@ -10,26 +10,12 @@ import { de } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { BRAND_WALL_URL, SAVO_BLUE, SAVO_BLACK } from '@/lib/brandAssets';
 import { WallAssetContext } from '@/lib/exportAssets';
+import { ACCENTS, DEFAULT_ACCENT, resolveAccent, accentGlowText, accentGlowFilter } from '@/lib/accentColors';
 
-// ── Akzentfarben ──────────────────────────────────────────────────────────────
-export const ACCENTS = {
-  amber:   { bg: '#f59e0b', glow: 'rgba(245,158,11,0.5)',  text: '#000', soft: 'rgba(245,158,11,0.15)' },
-  orange:  { bg: '#f97316', glow: 'rgba(249,115,22,0.5)',  text: '#000', soft: 'rgba(249,115,22,0.15)' },
-  red:     { bg: '#ef4444', glow: 'rgba(239,68,68,0.5)',   text: '#fff', soft: 'rgba(239,68,68,0.15)'  },
-  rose:    { bg: '#f43f5e', glow: 'rgba(244,63,94,0.5)',   text: '#fff', soft: 'rgba(244,63,94,0.15)'  },
-  pink:    { bg: '#ec4899', glow: 'rgba(236,72,153,0.5)',  text: '#fff', soft: 'rgba(236,72,153,0.15)' },
-  fuchsia: { bg: '#d946ef', glow: 'rgba(217,70,239,0.5)',  text: '#fff', soft: 'rgba(217,70,239,0.15)' },
-  purple:  { bg: '#a855f7', glow: 'rgba(168,85,247,0.5)',  text: '#fff', soft: 'rgba(168,85,247,0.15)' },
-  violet:  { bg: '#7c3aed', glow: 'rgba(124,58,237,0.5)',  text: '#fff', soft: 'rgba(124,58,237,0.15)' },
-  indigo:  { bg: '#6366f1', glow: 'rgba(99,102,241,0.5)',  text: '#fff', soft: 'rgba(99,102,241,0.15)' },
-  blue:    { bg: '#3b82f6', glow: 'rgba(59,130,246,0.5)',  text: '#fff', soft: 'rgba(59,130,246,0.15)' },
-  sky:     { bg: '#0ea5e9', glow: 'rgba(14,165,233,0.5)',  text: '#fff', soft: 'rgba(14,165,233,0.15)' },
-  cyan:    { bg: '#06b6d4', glow: 'rgba(6,182,212,0.5)',   text: '#fff', soft: 'rgba(6,182,212,0.15)'  },
-  teal:    { bg: '#14b8a6', glow: 'rgba(20,184,166,0.5)',  text: '#fff', soft: 'rgba(20,184,166,0.15)' },
-  green:   { bg: '#22c55e', glow: 'rgba(34,197,94,0.5)',   text: '#000', soft: 'rgba(34,197,94,0.15)'  },
-  lime:    { bg: '#84cc16', glow: 'rgba(132,204,22,0.5)',  text: '#000', soft: 'rgba(132,204,22,0.15)' },
-  white:   { bg: '#f8fafc', glow: 'rgba(248,250,252,0.4)', text: '#000', soft: 'rgba(248,250,252,0.12)' },
-};
+// Akzentfarben kommen zentral aus src/lib/accentColors.js (ein Mapping für
+// TV-Display und Instagram-Export). Hier nur re-exportiert, damit bestehende
+// Importe (z. B. InstagramExportDialog) unverändert weiterlaufen.
+export { ACCENTS };
 
 // Slide-Typ → Default-Dauer in Sekunden
 const TYPE_DURATION = { announcement: 10, event: 14, drink_special: 12, countdown: 16 };
@@ -831,8 +817,20 @@ export function ThemedBackground({ theme, accent, prominentDisco = false }) {
   );
 }
 
-// ── Neon-Eckklammern (SAVO-Blau mit Glow) ──────────────────────────────────────
-export function NeonFrame({ color = SAVO_BLUE }) {
+// ── Akzentlinien (zwei kurze Linien links, in Akzentfarbe mit Glow) ────────────
+export function AccentLines({ color = DEFAULT_ACCENT.bg }) {
+  const widths = ['clamp(38px,5vw,80px)', 'clamp(22px,3vw,46px)'];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7, alignItems: 'flex-start', alignSelf: 'flex-start', marginLeft: '4%', position: 'relative', zIndex: 2, animation: 'slideInUp 0.6s 0.15s both' }}>
+      {widths.map((w, i) => (
+        <div key={i} style={{ width: w, height: 3, borderRadius: 2, background: color, filter: accentGlowFilter(color) }} />
+      ))}
+    </div>
+  );
+}
+
+// ── Neon-Eckklammern (in der Akzentfarbe des Events, mit Glow) ─────────────────
+export function NeonFrame({ color = DEFAULT_ACCENT.bg }) {
   const s = {
     position: 'absolute', width: 'clamp(36px,5vw,72px)', height: 'clamp(36px,5vw,72px)',
     borderStyle: 'solid', borderColor: color, borderWidth: 0,
@@ -892,7 +890,7 @@ function DotNav({ slides, currentIdx }) {
   return (
     <div style={{ position: 'absolute', bottom: 'clamp(16px, 2vh, 32px)', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 20 }}>
       {slides.map((s, i) => {
-        const a = ACCENTS[s.accent_color] || ACCENTS.amber;
+        const a = resolveAccent(s.accent_color);
         return <div key={i} style={{ height: 6, width: i === currentIdx ? 28 : 6, borderRadius: 3, background: i === currentIdx ? a.bg : 'rgba(255,255,255,0.2)', transition: 'all 0.4s ease', boxShadow: i === currentIdx ? `0 0 10px ${a.bg}` : 'none' }} />;
       })}
     </div>
@@ -962,8 +960,8 @@ export function SlideAnnouncement({ slide, accent, theme, titleScale = 1 }) {
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: isDiscoParty ? 'flex-end' : 'center', alignItems: 'center', height: '100%', padding: isDiscoParty ? 'clamp(56px,9vh,110px) 100px clamp(48px,8vh,96px)' : 'clamp(56px,9vh,110px) 120px clamp(48px,8vh,96px)', textAlign: 'center', gap: 'clamp(16px,3vh,32px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} prominentDisco={isDiscoParty} />
-      <NeonFrame />
-      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: `calc(clamp(4.2rem,9.5vw,8rem) * ${titleScale})`, fontWeight: 400, color: '#fff', lineHeight: 1.05, letterSpacing: '0.01em', textShadow: `0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`, animation: 'floatUp 5s ease-in-out infinite', position: 'relative', zIndex: 2 }}>{slide.title}</div>
+      <NeonFrame color={accent.bg} />
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: `calc(clamp(4.2rem,9.5vw,8rem) * ${titleScale})`, fontWeight: 400, color: accent.bg, lineHeight: 0.9, letterSpacing: '0.01em', textShadow: accentGlowText(accent.bg), animation: 'floatUp 5s ease-in-out infinite', position: 'relative', zIndex: 2 }}>{slide.title}</div>
       {slide.subtitle && <div style={{ fontSize: '2.6rem', color: 'rgba(255,255,255,0.85)', animation: 'floatDown 6s ease-in-out infinite', position: 'relative', zIndex: 1, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
       {slide.body_text && <div style={{ fontSize: '1.7rem', color: 'rgba(255,255,255,0.65)', maxWidth: 950, position: 'relative', zIndex: 1, textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>{slide.body_text}</div>}
       {slide.cta_text && <div style={{ background: accent.bg, color: accent.text, padding: '24px 64px', borderRadius: 20, fontWeight: 800, fontSize: '2rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'pulseGlow 3s ease-in-out infinite', position: 'relative', zIndex: 1 }}>{slide.cta_text}</div>}
@@ -972,30 +970,38 @@ export function SlideAnnouncement({ slide, accent, theme, titleScale = 1 }) {
 }
 
 // ── QR-Code auf der Slide (nur wenn Manager "public_event" aktiviert hat) ────
+// Erscheint ausschließlich in der TV-Ansicht (showQr in SlideEvent/SlideCountdown);
+// im Bild-Export (Story/Post/4:5) wird er ausgeblendet.
+export const EVENT_QR_URL = 'https://savo-lounge-club.de/events';
+
 export function SlideQR({ slideId }) {
     const [qr, setQr] = useState(null);
     useEffect(() => {
         let alive = true;
         import('qrcode').then((mod) => {
             const QR = mod.default || mod;
-            QR.toDataURL('https://savo-lounge-club.de/events', {
+            QR.toDataURL(EVENT_QR_URL, {
                 width: 280, margin: 1, color: { dark: '#111827', light: '#ffffff' },
             }).then(d => { if (alive) setQr(d); }).catch(() => {});
         }).catch(() => {});
         return () => { alive = false; };
     }, [slideId]);
     if (!qr) return null;
+    // Position: ~68,5 % der Bildhöhe, rechts — mit genug Abstand zur unteren
+    // Eckklammer (bei 1080 px Höhe bleiben >100 px Luft, gefordert sind 64 px).
     return (
-        <div style={{ textAlign: 'center', animation: 'fadeInScale 0.8s 1.5s both' }}>
+        <div style={{ position: 'absolute', top: '62.5%', right: 'clamp(28px,3.5vw,64px)', transform: 'translateY(-50%)', zIndex: 4, textAlign: 'center', animation: 'fadeInScale 0.8s 1.5s both' }}>
             <div style={{ background: '#fff', padding: 8, borderRadius: 12, boxShadow: '0 10px 40px rgba(0,0,0,0.6)', display: 'inline-block' }}>
-                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 140, height: 140, display: 'block' }} />
+                <img src={qr} alt="QR-Code: Event-Details" style={{ width: 'clamp(110px,13.5vh,190px)', height: 'clamp(110px,13.5vh,190px)', display: 'block' }} />
             </div>
-            <div style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.6)', marginTop: 8, marginBottom: 'clamp(12px,2vh,24px)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Mehr Infos</div>
+            <div style={{ fontSize: 'clamp(0.85rem,1.35vh,1.15rem)', color: 'rgba(255,255,255,0.75)', marginTop: 8, fontWeight: 600, letterSpacing: '0.04em' }}>
+                {EVENT_QR_URL.replace(/^https?:\/\//, '')}
+            </div>
         </div>
     );
 }
 
-export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16', showBrand = true }) {
+export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16', showBrand = true, showQr = true }) {
   const titleLen = (slide.title || '').length;
   const titleFont = titleLen > 18 ? 'clamp(2.8rem,5.4vw,4.8rem)' : titleLen > 12 ? 'clamp(3.5rem,6.8vw,5.8rem)' : titleLen > 8 ? 'clamp(4.2rem,8.8vw,7.8rem)' : 'clamp(4.8rem,10.5vw,9.5rem)';
   const hasEnd = slide.event_end_date && slide.event_end_date !== slide.event_date;
@@ -1007,16 +1013,17 @@ export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16', showBra
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', padding: 'clamp(56px,9vh,110px) clamp(48px,7vw,120px) clamp(48px,8vh,96px)', textAlign: 'center', gap: 'clamp(16px,3vh,32px)' }}>
       <BrandWallBackground />
       <ThemedBackground theme={theme} accent={accent} />
-      <NeonFrame />
+      <NeonFrame color={accent.bg} />
       <SavoLogo showBrand={showBrand} />
       <SpotlightStreak color={accent.bg} />
       <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'absolute', top: 'clamp(24px,4vh,56px)', right: 'clamp(24px,4vw,56px)', zIndex: 3, animation: 'slideInUp 0.6s 0.1s both' }}>
         <span style={{ fontSize: '1.1rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>EVENT</span>
       </div>
-      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: titleFont, maxWidth: '100%', padding: '0 4%', fontWeight: 400, lineHeight: 1.05, letterSpacing: '0.01em', wordBreak: 'keep-all', overflowWrap: 'anywhere', background: `linear-gradient(90deg,#fff 0%,${accent.bg} 40%,#fff 60%,${accent.bg} 80%,#fff 100%)`, backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', animation: 'shimmer 4s linear infinite,slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 2, filter: 'drop-shadow(0 2px 20px rgba(0,0,0,0.9))' }}>{slide.title}</div>
+      <AccentLines color={accent.bg} />
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: titleFont, maxWidth: '100%', padding: '0 4%', fontWeight: 400, color: accent.bg, lineHeight: 0.9, letterSpacing: '0.01em', wordBreak: 'keep-all', overflowWrap: 'anywhere', textShadow: accentGlowText(accent.bg), animation: 'slideInUp 0.7s 0.2s both', position: 'relative', zIndex: 2 }}>{slide.title}</div>
       {slide.subtitle && <div style={{ fontSize: '2.7rem', color: 'rgba(255,255,255,0.8)', animation: 'slideInUp 0.7s 0.35s both', position: 'relative', zIndex: 2, textShadow: '0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
       {(ds || ts || slide.public_event) && (
-        <div style={{ display: 'flex', gap: isCompact ? 20 : 60, flexDirection: isCompact ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2, animation: 'slideInUp 0.7s 0.5s both', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: isCompact ? 20 : 60, flexDirection: isCompact ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2, animation: 'slideInUp 0.7s 0.5s both', flexWrap: 'wrap', paddingRight: showQr && !isCompact ? 'clamp(0px,16vw,260px)' : 0 }}>
           {ds && (
             <div style={{ textAlign: 'center', minWidth: isCompact ? 'auto' : 'min(300px,30vw)', maxWidth: '46vw' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: accent.bg, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 10 }}>Datum</div>
@@ -1032,12 +1039,7 @@ export function SlideEvent({ slide, accent, theme, aspectRatio = '9/16', showBra
               <div style={{ fontSize: 'clamp(2.2rem,4.2vw,3.6rem)', fontWeight: 900, color: '#fff', lineHeight: 1.1, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{ts}</div>
             </div>
           )}
-          {slide.public_event && (
-            <>
-              {(ds || ts) && !isCompact && <div style={{ width: 1, height: 100, background: `linear-gradient(180deg,transparent,${accent.bg}66,transparent)` }} />}
-              <SlideQR slideId={slide.id} />
-            </>
-          )}
+          {slide.public_event && showQr && <SlideQR slideId={slide.id} />}
         </div>
       )}
       {slide.cta_text && !slide.cta_text.startsWith('event:') && <div style={{ background: accent.bg, color: accent.text, padding: '24px 64px', borderRadius: 20, fontWeight: 800, fontSize: '2rem', boxShadow: `0 0 30px ${accent.glow},0 4px 20px rgba(0,0,0,0.6)`, animation: 'slideInUp 0.7s 0.95s both,pulseGlow 3s 1.8s ease-in-out infinite', position: 'relative', zIndex: 2 }}>{slide.cta_text}</div>}
@@ -1058,7 +1060,7 @@ export function SlideDrinkSpecial({ slide, accent, theme }) {
       <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 2, animation: 'fadeInScale 0.5s 0.1s both' }}>
         <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>DRINK SPECIAL</span>
       </div>
-      {slide.title && valid.length > 1 && <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: 'clamp(3.5rem,7vw,5.6rem)', fontWeight: 400, color: '#fff', letterSpacing: '0.01em', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 2, textShadow: '0 2px 30px rgba(0,0,0,0.9)' }}>{slide.title}</div>}
+      {slide.title && valid.length > 1 && <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: 'clamp(3.5rem,7vw,5.6rem)', fontWeight: 400, color: accent.bg, lineHeight: 0.9, letterSpacing: '0.01em', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 2, textShadow: accentGlowText(accent.bg) }}>{slide.title}</div>}
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center', width: '100%', position: 'relative', zIndex: 1 }}>
         {valid.map((d, i) => (
           <div key={i} style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(14px)', border: `2px solid ${accent.bg}55`, borderRadius: 28, padding: '36px 48px', textAlign: 'center', minWidth: 240, flex: '1 1 240px', maxWidth: 380, animation: `bounceIn 0.7s ${0.35 + i * 0.15}s both`, boxShadow: `0 8px 32px rgba(0,0,0,0.5),0 0 24px ${accent.glow}22` }}>
@@ -1073,7 +1075,7 @@ export function SlideDrinkSpecial({ slide, accent, theme }) {
   );
 }
 
-export function SlideCountdown({ slide, accent, theme }) {
+export function SlideCountdown({ slide, accent, theme, showQr = true }) {
   const [now, setNow] = useState(new Date());
   useEffect(() => { const iv = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(iv); }, []);
   if (!slide.event_date) return null;
@@ -1099,8 +1101,8 @@ export function SlideCountdown({ slide, accent, theme }) {
       <div style={{ background: accent.soft, border: `1px solid ${accent.bg}`, borderRadius: 8, padding: '6px 24px', position: 'relative', zIndex: 2 }}>
         <span style={{ fontSize: '1.3rem', color: accent.bg, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Countdown</span>
       </div>
-      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: '5.2rem', fontWeight: 400, color: '#fff', lineHeight: 1.05, textShadow: '0 2px 40px rgba(0,0,0,0.9)', animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 2 }}>{slide.title}</div>
-      {slide.public_event && <SlideQR slideId={slide.id} />}
+      <div style={{ fontFamily: '"Bebas Neue","Jost",sans-serif', fontSize: '5.2rem', fontWeight: 400, color: accent.bg, lineHeight: 0.9, textShadow: accentGlowText(accent.bg), animation: 'slideInUp 0.6s 0.2s both', position: 'relative', zIndex: 2 }}>{slide.title}</div>
+      {slide.public_event && showQr && <SlideQR slideId={slide.id} />}
       <div style={{ display: 'flex', gap: 28, alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
         {units.map((u, i) => (
           <div key={i} style={{ textAlign: 'center' }}>
@@ -1121,7 +1123,7 @@ export function SlideCountdown({ slide, accent, theme }) {
 }
 
 // ── QR-Code Slide ─────────────────────────────────────────────────────────────
-export function SlideQRCode({ slide, accent, theme }) {
+export function SlideQRCode({ slide, accent, theme, showQr = true }) {
   const qrSize = 'clamp(230px,24vw,340px)';
   return (
     <div style={{ position:'relative',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',height:'100%',padding:'clamp(56px,9vh,110px) 120px clamp(48px,8vh,96px)',textAlign:'center',gap:'clamp(16px,3vh,32px)' }}>
@@ -1133,15 +1135,15 @@ export function SlideQRCode({ slide, accent, theme }) {
             <span style={{ fontSize:'1.25rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>{slide.subtitle}</span>
           </div>
         )}
-        <div style={{ fontFamily:'"Bebas Neue","Jost",sans-serif',fontSize:'clamp(3rem,7vw,6.2rem)',fontWeight:400,color:'#fff',letterSpacing:'0.01em',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}`,animation:'slideInUp 0.6s 0.2s both' }}>{slide.title}</div>
-        <div style={{ position:'relative',animation:'bounceIn 0.8s 0.4s both' }}>
+        <div style={{ fontFamily:'"Bebas Neue","Jost",sans-serif',fontSize:'clamp(3rem,7vw,6.2rem)',fontWeight:400,color:accent.bg,lineHeight:0.9,letterSpacing:'0.01em',textShadow:accentGlowText(accent.bg),animation:'slideInUp 0.6s 0.2s both' }}>{slide.title}</div>
+        {showQr && <div style={{ position:'relative',animation:'bounceIn 0.8s 0.4s both' }}>
           <div style={{ position:'absolute',inset:-10,borderRadius:24,border:`3px solid ${accent.bg}`,boxShadow:`0 0 30px ${accent.glow},0 0 60px ${accent.glow}33`,animation:'pulseGlow 3s ease-in-out infinite',pointerEvents:'none' }}/>
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=380x380&data=${encodeURIComponent(slide.body_text||MENU_URL)}&bgcolor=050508&color=ffffff&margin=12`}
             alt="QR Code"
             style={{ width:qrSize,height:qrSize,borderRadius:16,display:'block' }}
           />
-        </div>
+        </div>}
         {slide.cta_text&&<div style={{ fontSize:'clamp(1.3rem,2.1vw,1.7rem)',color:'rgba(255,255,255,0.7)',fontWeight:500,animation:'slideInUp 0.6s 0.9s both' }}>{slide.cta_text}</div>}
       </div>
     </div>
@@ -1159,7 +1161,7 @@ export function SlideTonight({ slide, accent, theme }) {
         <div style={{ background:accent.soft,border:`1px solid ${accent.bg}`,borderRadius:8,padding:'5px 20px',animation:'slideInUp 0.5s 0.1s both' }}>
           <span style={{ fontSize:'1.25rem',color:accent.bg,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase' }}>Heute Abend</span>
         </div>
-        <div style={{ fontFamily:'"Bebas Neue","Jost",sans-serif',fontSize:'clamp(3.5rem,8vw,6.8rem)',fontWeight:400,color:'#fff',letterSpacing:'0.01em',lineHeight:1.05,animation:'slideInUp 0.6s 0.2s both',textShadow:`0 2px 40px rgba(0,0,0,0.9),0 0 80px ${accent.glow}` }}>{slide.title}</div>
+        <div style={{ fontFamily:'"Bebas Neue","Jost",sans-serif',fontSize:'clamp(3.5rem,8vw,6.8rem)',fontWeight:400,color:accent.bg,letterSpacing:'0.01em',lineHeight:0.9,animation:'slideInUp 0.6s 0.2s both',textShadow:accentGlowText(accent.bg) }}>{slide.title}</div>
         {slide.subtitle&&<div style={{ fontSize:'clamp(1.7rem,3.2vw,2.6rem)',color:'rgba(255,255,255,0.85)',animation:'slideInUp 0.6s 0.35s both',textShadow:'0 2px 20px rgba(0,0,0,0.9)' }}>{slide.subtitle}</div>}
         {slide.body_text&&(
           <div style={{ display:'flex',gap:18,flexWrap:'wrap',justifyContent:'center',animation:'slideInUp 0.6s 0.5s both' }}>
@@ -1179,7 +1181,7 @@ export function SlideTonight({ slide, accent, theme }) {
 // ── Nächster Slide Preview ────────────────────────────────────────────────────
 function NextSlidePreview({ slide, visible }) {
   if (!slide) return null;
-  const a = ACCENTS[slide.accent_color] || ACCENTS.amber;
+  const a = resolveAccent(slide.accent_color);
   return (
     <div style={{
       position:'absolute',bottom:'clamp(24px, 2.5vh, 48px)',right:'clamp(24px, 2.5vw, 48px)',zIndex:25,
@@ -1324,7 +1326,7 @@ export default function Display() {
   if (!slides.length) return <AmbientScreen />;
 
   const slide = slides[currentIdx];
-  const accent = ACCENTS[slide.accent_color] || ACCENTS.amber;
+  const accent = resolveAccent(slide.accent_color);
   const theme = slide.background_theme && slide.background_theme !== 'auto'
     ? slide.background_theme
     : detectTheme(slide.title, slide.subtitle);
