@@ -13,7 +13,7 @@ export default function UnassignedArticlesSection({
     articles, counts, categories,
     searchTerm, setSearchTerm,
     filterCategory, setFilterCategory,
-    activeArticle, onCountChange
+    activeArticle, deliveredToday = {}, onCountChange
 }) {
     const filtered = articles.filter(a => {
         const matchesSearch = a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,6 +64,7 @@ export default function UnassignedArticlesSection({
                                 counted={counts[article.id]}
                                 categories={categories}
                                 isActive={activeArticle === article.id}
+                                deliveredToday={deliveredToday[article.id]}
                                 onCountChange={onCountChange}
                             />
                         )}

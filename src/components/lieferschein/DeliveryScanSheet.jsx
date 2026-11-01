@@ -1,40 +1,32 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ScanLine, History, Loader2, Sparkles, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Loader2, AlertTriangle, ExternalLink, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
-import { usePermissions } from '@/components/auth/usePermissions';
-import PermissionDenied from '@/components/auth/PermissionDenied';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SmartCombobox from '@/components/ui/SmartCombobox';
-import UploadZone from '@/components/lieferschein/UploadZone';
-import ReviewTable from '@/components/lieferschein/ReviewTable';
-import DeliveryHistory from '@/components/lieferschein/DeliveryHistory';
-import BookingResult from '@/components/lieferschein/BookingResult';
+import UploadZone from './UploadZone';
+import ReviewTable from './ReviewTable';
+import BookingResult from './BookingResult';
 import { extractDeliveryNote, uploadDeliveryFile } from '@/lib/deliveryNoteExtraction';
 import { matchArticle, matchShoppingItem, matchSupplier, normalizeName } from '@/lib/deliveryNoteMatching';
-import { cn } from '@/lib/utils';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export default function LieferscheinScanner() {
-  const permissions = usePermissions();
+/**
+ * Lieferschein-Scan als Vollbild-Sheet über der Inventur.
+ * Die Inventur-Seite bleibt gemountet — Session, Zählwerte und Filter bleiben erhalten.
+ */
+export default function DeliveryScanSheet({ open, onOpenChange, articles = [], countedArticleIds, onBooked }) {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState('scan');
   const [file, setFile] = useState(null);
   const [draft, setDraft] = useState(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
   const [error, setError] = useState(null);
-
-  const { data: articles = [] } = useQuery({
-    queryKey: ['articles-active-scanner'],
-    queryFn: async () => (await base44.entities.Article.filter({ is_active: true }, 'name', 500)) || [],
-    placeholderData: [],
-    staleTime: 5 * 60_000,
-  });
 
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers-scanner'],
@@ -47,17 +39,25 @@ export default function LieferscheinScanner() {
     queryKey: ['shopping-open-scanner'],
     queryFn: async () => (await base44.entities.ShoppingList.filter({ status: { $in: ['offen', 'bestellt'] } }, '-created_date', 300)) || [],
     placeholderData: [],
+    enabled: open,
   });
 
-  const { data: notes = [], isLoading: notesLoading } = useQuery({
-    queryKey: ['delivery-notes'],
-    queryFn: async () => (await base44.entities.DeliveryNote.list('-delivery_date', 100)) || [],
-    placeholderData: [],
-  });
+  const isCounted = (articleId) => !!(articleId && countedArticleIds?.has?.(articleId));
 
-  if (!permissions.isLoading && !permissions.canViewWarehouse) return <PermissionDenied />;
+  /** Vorauswahl: bereits gezählt → nur Preis, sonst Bestand buchen. */
+  const defaultAction = (articleId) => (isCounted(articleId) ? 'price' : 'stock');
 
-  const canWrite = permissions.isAdmin || permissions.isManager || permissions.canEditArticles;
+  const reset = () => {
+    setFile(null);
+    setDraft(null);
+    setBookingResult(null);
+    setError(null);
+  };
+
+  const handleOpenChange = (next) => {
+    if (!next) reset();
+    onOpenChange(next);
+  };
 
   const openItemsForSupplier = (supplierName) => {
     const target = normalizeName(supplierName);
@@ -84,10 +84,7 @@ export default function LieferscheinScanner() {
 
   const handleFile = async (selected) => {
     if (!selected) {
-      setFile(null);
-      setDraft(null);
-      setBookingResult(null);
-      setError(null);
+      reset();
       return;
     }
     setFile(selected);
@@ -116,6 +113,7 @@ export default function LieferscheinScanner() {
           unit_price: p.unit_price,
           line_total: p.line_total,
           shopping_item_id: shoppingItem?.id || '',
+          action: defaultAction(article?.id),
         };
       });
 
@@ -147,6 +145,8 @@ export default function LieferscheinScanner() {
           if (article) next.article_name = article.name;
           const candidates = openItemsForSupplier(prev.supplier_name);
           next.shopping_item_id = matchShoppingItem(next, next.article_id, candidates)?.id || '';
+          // Vorauswahl neu bewerten, wenn die Artikel-Zuordnung wechselt und noch nichts gewählt wurde
+          if (!('action' in patch)) next.action = defaultAction(next.article_id);
         }
         return next;
       });
@@ -160,7 +160,7 @@ export default function LieferscheinScanner() {
 
   const createArticle = async (name) => {
     const created = await base44.entities.Article.create({ name, is_active: true, current_stock: 0 });
-    queryClient.invalidateQueries({ queryKey: ['articles-active-scanner'] });
+    queryClient.invalidateQueries({ queryKey: ['articles'] });
     return created;
   };
 
@@ -193,6 +193,7 @@ export default function LieferscheinScanner() {
           unit_price: p.unit_price,
           line_total: p.line_total,
           shopping_item_id: p.shopping_item_id,
+          action: p.action || 'stock',
         })),
       });
       const data = response.data;
@@ -200,10 +201,16 @@ export default function LieferscheinScanner() {
       setBookingResult(data);
       setDraft(null);
       setFile(null);
+
       queryClient.invalidateQueries({ queryKey: ['delivery-notes'] });
-      queryClient.invalidateQueries({ queryKey: ['articles-active-scanner'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-notes-today'] });
       queryClient.invalidateQueries({ queryKey: ['shopping-open-scanner'] });
-      toast.success(data.summary);
+      onBooked?.(data);
+
+      const changes = data.priceChanges?.length || 0;
+      toast.success(`${data.booked?.length || 0} Position${data.booked?.length === 1 ? '' : 'en'} gebucht`, {
+        description: `${changes} Preisänderung${changes === 1 ? '' : 'en'}${data.priceOnly?.length ? ` · ${data.priceOnly.length} nur Preis` : ''}`,
+      });
     } catch (e) {
       toast.error(e?.response?.data?.error || e?.message || 'Buchung fehlgeschlagen.');
     } finally {
@@ -212,39 +219,26 @@ export default function LieferscheinScanner() {
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4 pb-24">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <ScanLine className="w-5 h-5 text-primary" /> Lieferschein-Scanner
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Foto oder PDF einlesen, prüfen und in den Wareneingang buchen</p>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col gap-0">
+        <div className="flex items-start justify-between gap-3 p-4 border-b border-border shrink-0">
+          <div className="min-w-0">
+            <SheetTitle className="text-base font-bold text-foreground">Lieferschein scannen</SheetTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Foto oder PDF einlesen, prüfen und direkt in die Inventur buchen
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleOpenChange(false)}
+            className="shrink-0 h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary"
+            title="Schließen"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-      </div>
 
-      <div className="inline-flex rounded-xl bg-secondary/60 p-1 gap-1">
-        <button
-          type="button"
-          onClick={() => setTab('scan')}
-          className={cn('px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5',
-            tab === 'scan' ? 'bg-card text-foreground shadow' : 'text-muted-foreground')}
-        >
-          <Sparkles className="w-4 h-4" /> Scannen
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('verlauf')}
-          className={cn('px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5',
-            tab === 'verlauf' ? 'bg-card text-foreground shadow' : 'text-muted-foreground')}
-        >
-          <History className="w-4 h-4" /> Verlauf
-        </button>
-      </div>
-
-      {tab === 'verlauf' ? (
-        <DeliveryHistory notes={notes} isLoading={notesLoading} />
-      ) : (
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {!draft && !isExtracting && !bookingResult && (
             <div className="rounded-2xl border border-border bg-card p-4">
               <UploadZone file={file} onSelect={handleFile} disabled={isExtracting} />
@@ -265,19 +259,19 @@ export default function LieferscheinScanner() {
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">Lesen fehlgeschlagen</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{error}</p>
-                <button type="button" onClick={() => { setError(null); setFile(null); }} className="mt-2 text-xs font-semibold text-primary">
+                <button type="button" onClick={reset} className="mt-2 text-xs font-semibold text-primary">
                   Erneut versuchen
                 </button>
               </div>
             </div>
           )}
 
-          {bookingResult && <BookingResult result={bookingResult} onReset={() => { setBookingResult(null); setFile(null); setError(null); }} />}
+          {bookingResult && <BookingResult result={bookingResult} onReset={reset} />}
 
           {draft && !bookingResult && (
-            <div className="space-y-4">
+            <>
               <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">Lieferant</Label>
                     <SmartCombobox
@@ -326,14 +320,14 @@ export default function LieferscheinScanner() {
                 onCreateArticle={createArticle}
               />
 
-              <div className="sticky bottom-16 md:bottom-4 rounded-2xl border border-border bg-card/95 backdrop-blur p-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="rounded-2xl border border-border bg-card p-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs text-muted-foreground">
-                  Bestand, EK-Preise, Preisverlauf und offene Bestellungen werden gebucht.
+                  „Bestand buchen“ zählt die Ware zu, „Nur Preis übernehmen“ lässt den Bestand unverändert.
                 </p>
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => { setDraft(null); setFile(null); }}
+                    onClick={reset}
                     disabled={isBooking}
                     className="h-11 px-4 rounded-xl bg-secondary text-sm font-semibold text-foreground disabled:opacity-50"
                   >
@@ -342,18 +336,18 @@ export default function LieferscheinScanner() {
                   <button
                     type="button"
                     onClick={handleBook}
-                    disabled={isBooking || !canWrite}
+                    disabled={isBooking}
                     className="h-11 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50 inline-flex items-center gap-2"
                   >
                     {isBooking && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Wareneingang buchen
+                    Buchen
                   </button>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
-      )}
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

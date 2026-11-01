@@ -8,6 +8,8 @@ const toNum = (value) => {
 
 const isPackUnit = (unit) => /karton|kiste|pack|gebinde|flasche/i.test(String(unit || ''));
 
+const ACTIONS = ['stock', 'price', 'ignore'];
+
 export default async function (req) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -55,6 +57,7 @@ export default async function (req) {
         unit_price: toNum(p.unit_price),
         line_total: toNum(p.line_total),
         shopping_item_id: p.shopping_item_id || '',
+        action: ACTIONS.includes(p.action) ? p.action : 'stock',
         booked: false,
       })),
       positions_count: positions.length,
@@ -64,6 +67,8 @@ export default async function (req) {
     });
 
     const booked = [];
+    const priceOnly = [];
+    const ignored = [];
     const unbooked = [];
     const errors = [];
     const priceChanges = [];
@@ -74,21 +79,30 @@ export default async function (req) {
       const p = positions[i];
       const label = p.article_name || p.raw_text || `Position ${i + 1}`;
       const articleId = p.article_id || '';
+      const action = ACTIONS.includes(p.action) ? p.action : 'stock';
+      const base = {
+        raw_text: p.raw_text || '',
+        article_name: p.article_name || '',
+        article_id: articleId,
+        quantity: toNum(p.quantity),
+        unit: p.unit || '',
+        unit_size: toNum(p.unit_size),
+        unit_price: toNum(p.unit_price),
+        line_total: toNum(p.line_total),
+        shopping_item_id: p.shopping_item_id || '',
+        action,
+        booked: false,
+      };
+
+      if (action === 'ignore') {
+        ignored.push({ position: i + 1, name: label });
+        storedPositions.push(base);
+        continue;
+      }
 
       if (!articleId) {
         unbooked.push({ position: i + 1, name: p.raw_text || p.article_name || `Position ${i + 1}` });
-        storedPositions.push({
-          raw_text: p.raw_text || '',
-          article_name: p.article_name || '',
-          article_id: '',
-          quantity: toNum(p.quantity),
-          unit: p.unit || '',
-          unit_size: toNum(p.unit_size),
-          unit_price: toNum(p.unit_price),
-          line_total: toNum(p.line_total),
-          shopping_item_id: p.shopping_item_id || '',
-          booked: false,
-        });
+        storedPositions.push(base);
         continue;
       }
 
@@ -103,9 +117,11 @@ export default async function (req) {
         const addUnits = isPackUnit(p.unit) && unitSize > 0 ? qty * unitSize : qty;
         const oldStock = toNum(article.current_stock) || 0;
 
-        await base44.asServiceRole.entities.Article.update(articleId, {
-          current_stock: oldStock + addUnits,
-        });
+        if (action === 'stock') {
+          await base44.asServiceRole.entities.Article.update(articleId, {
+            current_stock: oldStock + addUnits,
+          });
+        }
 
         const oldPrice = toNum(article.purchase_price);
         const newPrice = toNum(p.unit_price);
@@ -126,7 +142,7 @@ export default async function (req) {
           priceChanges.push({ article_name: article.name, old_price: oldPrice ?? 0, new_price: newPrice });
         }
 
-        if (p.shopping_item_id) {
+        if (action === 'stock' && p.shopping_item_id) {
           const item = await base44.asServiceRole.entities.ShoppingList
             .get(p.shopping_item_id)
             .catch((e) => (e.status === 404 ? null : Promise.reject(e)));
@@ -142,34 +158,22 @@ export default async function (req) {
           }
         }
 
-        booked.push({ position: i + 1, name: article.name, units: addUnits });
+        if (action === 'stock') {
+          booked.push({ position: i + 1, name: article.name, units: addUnits });
+        } else {
+          priceOnly.push({ position: i + 1, name: article.name });
+        }
+
         storedPositions.push({
-          raw_text: p.raw_text || '',
+          ...base,
           article_name: article.name,
-          article_id: articleId,
-          quantity: qty,
-          unit: p.unit || '',
-          unit_size: unitSize,
           unit_price: newPrice,
-          line_total: toNum(p.line_total),
-          shopping_item_id: p.shopping_item_id || '',
           booked: true,
-          booked_units: addUnits,
+          booked_units: action === 'stock' ? addUnits : 0,
         });
       } catch (error) {
         errors.push({ position: i + 1, name: label, message: error.message });
-        storedPositions.push({
-          raw_text: p.raw_text || '',
-          article_name: p.article_name || '',
-          article_id: articleId,
-          quantity: toNum(p.quantity),
-          unit: p.unit || '',
-          unit_size: toNum(p.unit_size),
-          unit_price: toNum(p.unit_price),
-          line_total: toNum(p.line_total),
-          shopping_item_id: p.shopping_item_id || '',
-          booked: false,
-        });
+        storedPositions.push(base);
       }
     }
 
@@ -192,10 +196,12 @@ export default async function (req) {
     }
 
     const summaryParts = [
-      `${booked.length} von ${positions.length} Positionen gebucht`,
+      `${booked.length} von ${positions.length} Positionen mit Bestand gebucht`,
       `${priceChanges.length} Preisänderung${priceChanges.length === 1 ? '' : 'en'}`,
-      `${shoppingClosed} Bestellung${shoppingClosed === 1 ? '' : 'en'} abgeschlossen`,
     ];
+    if (priceOnly.length > 0) summaryParts.push(`${priceOnly.length} nur Preis übernommen`);
+    if (ignored.length > 0) summaryParts.push(`${ignored.length} ignoriert`);
+    if (shoppingClosed > 0) summaryParts.push(`${shoppingClosed} Bestellung${shoppingClosed === 1 ? '' : 'en'} abgeschlossen`);
     if (unbooked.length > 0) summaryParts.push(`${unbooked.length} Position${unbooked.length === 1 ? '' : 'en'} ohne Artikel`);
     if (errors.length > 0) summaryParts.push(`${errors.length} Fehler`);
     const summary = summaryParts.join(' · ');
@@ -212,6 +218,8 @@ export default async function (req) {
       note: updatedNote,
       summary,
       booked,
+      priceOnly,
+      ignored,
       unbooked,
       priceChanges,
       errors,

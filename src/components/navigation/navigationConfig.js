@@ -10,7 +10,7 @@ import {
     CalendarDays, Clock, Plane, RefreshCw, Shield,
     MapPin, BarChart3, CreditCard, Scale, Trash2, ListChecks,
     LayoutGrid, Database, CalendarClock, Truck, MessageSquare, Target,
-    Banknote, BookCopy, Warehouse, Utensils, Siren, User, TrendingUp, Ticket, ScanLine,
+    Banknote, BookCopy, Warehouse, Utensils, Siren, User, TrendingUp, Ticket,
 } from 'lucide-react';
 
 // ── SIDEBAR — aus sidebarConfig.js (Builder-sicher) ─────────────────────────
@@ -40,7 +40,6 @@ export const additionalPages = [
     // Waren & Lager
     { page: 'Restock',    name: 'Auffüllen',    icon: Package,       permission: 'canViewRestock' },
     { page: 'Shopping',   name: 'Bestellung',   icon: ShoppingCart,  permission: 'canViewShopping' },
-    { page: 'LieferscheinScanner', name: 'Lieferschein-Scanner', icon: ScanLine, permission: 'canViewWarehouse' },
     { page: 'QuickList',  name: 'Einkaufsliste', icon: ListChecks,   permission: 'canViewShopping' },
     { page: 'Articles',   name: 'Artikel',      icon: Boxes,         permission: 'canViewWarehouse' },
     { page: 'Inventory',  name: 'Inventur',     icon: ClipboardList, permission: 'canViewInventory' },

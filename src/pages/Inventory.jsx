@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
-import { Camera, Save, RotateCcw, Cloud, CloudOff } from 'lucide-react';
+import { Camera, Save, RotateCcw, Cloud, CloudOff, ClipboardList, Truck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -18,6 +18,9 @@ import BarcodeScanner from '@/components/restock/BarcodeScanner';
 import PDFExportButton from '@/components/export/PDFExportButton';
 import SlotCountingSection from '@/components/inventory/SlotCountingSection';
 import UnassignedArticlesSection from '@/components/inventory/UnassignedArticlesSection';
+import DeliveryScanSheet from '@/components/lieferschein/DeliveryScanSheet';
+import DeliveriesTab from '@/components/lieferschein/DeliveriesTab';
+import useTodaysDeliveries from '@/hooks/useTodaysDeliveries';
 
 export default function Inventory() {
     const permissions = usePermissions();
@@ -31,6 +34,8 @@ export default function Inventory() {
     const [lastScanned, setLastScanned] = useState(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [activeArticle, setActiveArticle] = useState(null);
+    const [deliverySheetOpen, setDeliverySheetOpen] = useState(false);
+    const [tab, setTab] = useState('zaehlung');
 
     // Fach-basierte Zählung: slotValues ist vorbefüllt mit assignment.quantity
     const [slotValues, setSlotValues] = useState(() => {
@@ -109,6 +114,14 @@ export default function Inventory() {
         queryFn: () => base44.auth.me(),
         staleTime: STALE.SLOW,
     });
+
+    // Heute gebuchte Lieferscheine → Badge „heute geliefert“ in der Zählliste
+    const { deliveredToday } = useTodaysDeliveries();
+
+    const handleDeliveryBooked = () => {
+        queryClient.invalidateQueries({ queryKey: ['articles'] });
+        queryClient.invalidateQueries({ queryKey: ['inv-assignments'] });
+    };
 
     // ── slotValues aus assignment.quantity initialisieren (Vorbefüllung) ────────
     useEffect(() => {
@@ -439,6 +452,13 @@ export default function Inventory() {
 
                     <div className="flex gap-2 flex-wrap">
                         <Button
+                            onClick={() => setDeliverySheetOpen(true)}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                        >
+                            <Camera className="w-4 h-4 mr-2" />
+                            Lieferschein scannen
+                        </Button>
+                        <Button
                             onClick={() => {
                                 setScanMode(!scanMode);
                                 if (!scanMode) setScannerOpen(true);
@@ -505,6 +525,28 @@ export default function Inventory() {
                     </div>
                 )}
 
+                {/* Unterbereiche: Zählung / Lieferscheine */}
+                <div className="inline-flex rounded-xl bg-secondary/60 p-1 gap-1 mb-5">
+                    <button
+                        type="button"
+                        onClick={() => setTab('zaehlung')}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5 ${tab === 'zaehlung' ? 'bg-card text-foreground shadow' : 'text-muted-foreground'}`}
+                    >
+                        <ClipboardList className="w-4 h-4" /> Zählung
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setTab('lieferscheine')}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5 ${tab === 'lieferscheine' ? 'bg-card text-foreground shadow' : 'text-muted-foreground'}`}
+                    >
+                        <Truck className="w-4 h-4" /> Lieferscheine
+                    </button>
+                </div>
+
+                {tab === 'lieferscheine' && <DeliveriesTab active={tab === 'lieferscheine'} />}
+
+                {tab === 'zaehlung' && (
+                <>
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3 mb-6">
                     <Card className="p-4 bg-card border-border">
@@ -532,6 +574,7 @@ export default function Inventory() {
                         furniture={furniture}
                         slotValues={slotValues}
                         touchedAssignments={touchedAssignments}
+                        deliveredToday={deliveredToday}
                         onCountChange={handleSlotCountChange}
                     />
                 </div>
@@ -546,8 +589,11 @@ export default function Inventory() {
                     filterCategory={filterCategory}
                     setFilterCategory={setFilterCategory}
                     activeArticle={activeArticle}
+                    deliveredToday={deliveredToday}
                     onCountChange={handleUnassignedCountChange}
                 />
+                </>
+                )}
 
                 <BarcodeScanner
                     open={scannerOpen}
@@ -565,6 +611,15 @@ export default function Inventory() {
                     }}
                 />
             </div>
+
+            {/* Lieferschein-Scan als Sheet über der Inventur */}
+            <DeliveryScanSheet
+                open={deliverySheetOpen}
+                onOpenChange={setDeliverySheetOpen}
+                articles={articles}
+                countedArticleIds={interactedArticleIds}
+                onBooked={handleDeliveryBooked}
+            />
 
             {/* Inventur speichern Dialog */}
             <AlertDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>

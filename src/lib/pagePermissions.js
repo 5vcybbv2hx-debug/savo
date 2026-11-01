@@ -18,7 +18,6 @@ export const PAGE_PERMISSIONS = {
     CleaningChecklist:       'canViewCleaning',
     Restock:                 'canViewRestock',
     Shopping:                'canViewShopping',
-    LieferscheinScanner:     'canViewWarehouse',
     QuickList:               'canViewShopping',
     Events:                  'canViewEvents',
     ExternalJobs:            'canViewEvents',
