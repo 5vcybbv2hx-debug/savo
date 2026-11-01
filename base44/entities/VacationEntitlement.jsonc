@@ -20,7 +20,12 @@
     },
     "days_carryover": {
       "type": "number",
-      "description": "\u00dcbertrag aus dem Vorjahr in Tagen (0 wenn keiner)"
+      "description": "\u00dcbertrag aus dem Vorjahr in Tagen. Leer = wird automatisch aus dem Vorjahr berechnet; ein gesetzter Wert gewinnt immer."
+    },
+    "carryover_expires_on": {
+      "type": "string",
+      "format": "date",
+      "description": "Verfallsdatum des \u00dcbertrags (Hinweis in der Kontokarte). Standard bei automatischem \u00dcbertrag: 31. M\u00e4rz des Anspruchsjahres. Wird noch nicht hart durchgesetzt."
     },
     "notes": {
       "type": "string",

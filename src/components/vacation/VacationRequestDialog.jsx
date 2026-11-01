@@ -72,6 +72,10 @@ export default function VacationRequestDialog({
     const available = balance ? Number(balance.available) || 0 : null;
     const overLimit = available !== null && requestedDays > available;
     const remainingAfter = available !== null ? Math.round((available - requestedDays) * 10) / 10 : null;
+    // Übertrag wird zuerst verbraucht, danach der Jahresanspruch
+    const carryoverLeft = balance ? Number(balance.carryover_remaining) || 0 : 0;
+    const fromCarryover = Math.round(Math.min(requestedDays, carryoverLeft) * 10) / 10;
+    const fromEntitlement = Math.round(Math.max(0, requestedDays - carryoverLeft) * 10) / 10;
     const blocked = validPeriods.length === 0 || (overLimit && !confirmed) || isSubmitting;
 
     const handleSubmit = async (e) => {
@@ -208,6 +212,14 @@ export default function VacationRequestDialog({
                                     <span className="text-xs text-muted-foreground">Rest danach</span>
                                     <span className={`text-sm font-semibold tabular-nums ${remainingAfter < 0 ? 'text-red-400' : 'text-foreground'}`}>
                                         {fmt(remainingAfter)} Tage
+                                    </span>
+                                </div>
+                            )}
+                            {requestedDays > 0 && carryoverLeft > 0 && (
+                                <div className="flex items-baseline justify-between gap-3">
+                                    <span className="text-xs text-muted-foreground">Verbrauch</span>
+                                    <span className="text-xs text-foreground tabular-nums text-right">
+                                        {fmt(fromCarryover)} Tage Übertrag + {fmt(fromEntitlement)} Tage Anspruch
                                     </span>
                                 </div>
                             )}

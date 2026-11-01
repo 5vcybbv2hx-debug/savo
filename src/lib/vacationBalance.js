@@ -143,17 +143,56 @@ export function getRequestDays(request, openingHours) {
     return getVacationDaysForRange(request?.start_date, request?.end_date, openingHours);
 }
 
+const findEntitlement = (id, year, entitlements) => entitlements.find(
+    (e) => e.employee_id === id && Number(e.year) === Number(year) && e.is_active !== false,
+);
+
+/** Genehmigte Urlaubstage eines Jahres (nur type "Urlaub"). */
+function approvedDaysForYear(id, year, requests, openingHours) {
+    return round1(requests
+        .filter((r) => r.employee_id === id && r.type === 'Urlaub'
+            && r.status === 'genehmigt'
+            && String(r.start_date || '').startsWith(String(year)))
+        .reduce((sum, r) => sum + getRequestDays(r, openingHours), 0));
+}
+
+/**
+ * Anspruch + Übertrag eines Jahres.
+ * Ein gesetzter days_carryover gewinnt immer. Ist er leer, wird der Übertrag
+ * aus dem Vorjahr berechnet:
+ *   max(0, Vorjahr.Anspruch + Vorjahr.Übertrag − Vorjahr.genehmigt − Vorjahr.verfallen)
+ * Verfallene Tage werden noch nicht durchgesetzt (carryover_expires_on ist nur Hinweis),
+ * also geht "verfallen" aktuell mit 0 in die Rechnung ein.
+ * Ohne Vorjahres-Datensatz gibt es keinen Übertrag.
+ */
+function resolveYear({ id, year, employee, requests, entitlements, openingHours, depth = 0 }) {
+    const record = findEntitlement(id, year, entitlements);
+    const entitlement = round1(record?.days_entitlement ?? employee?.vacation_days_per_year ?? 0);
+
+    const raw = record?.days_carryover;
+    const manual = (raw === null || raw === undefined || raw === '') ? null : round1(raw);
+    if (manual !== null) return { record, entitlement, carryover: manual, isAuto: false };
+
+    const prevYear = Number(year) - 1;
+    const prevRecord = depth < 10 ? findEntitlement(id, prevYear, entitlements) : null;
+    if (!prevRecord) return { record, entitlement, carryover: 0, isAuto: true };
+
+    const prev = resolveYear({ id, year: prevYear, employee, requests, entitlements, openingHours, depth: depth + 1 });
+    const prevUsed = approvedDaysForYear(id, prevYear, requests, openingHours);
+    const forfeited = 0;
+    const carryover = round1(Math.max(0, prev.entitlement + prev.carryover - prevUsed - forfeited));
+    return { record, entitlement, carryover, isAuto: true };
+}
+
 /**
  * Saldo aus bereits geladenen Daten berechnen (rein, ohne API-Calls).
+ * Verbrauch: erst der Übertrag, dann der Jahresanspruch.
  */
 export function computeVacationBalance({ employeeId, employee, requests = [], entitlements = [], year, openingHours }) {
     const id = employeeId || employee?.id;
-    const record = entitlements.find(
-        (e) => e.employee_id === id && Number(e.year) === Number(year) && e.is_active !== false,
-    );
-
-    const entitlement = round1(record?.days_entitlement ?? employee?.vacation_days_per_year ?? 0);
-    const carryover = round1(record?.days_carryover ?? 0);
+    const { record, entitlement, carryover, isAuto } = resolveYear({
+        id, year, employee, requests, entitlements, openingHours,
+    });
 
     const yearPrefix = String(year);
     const yearRequests = requests.filter(
@@ -167,16 +206,28 @@ export function computeVacationBalance({ employeeId, employee, requests = [], en
 
     const used = sumFor('genehmigt');
     const pending = sumFor('beantragt');
-    const available = round1(entitlement + carryover - used - pending);
+    const total = round1(entitlement + carryover);
+    const available = round1(total - used - pending);
+
+    // Übertrag zuerst verbrauchen
+    const consumed = round1(used + pending);
+    const carryoverRemaining = round1(Math.max(0, carryover - consumed));
+    const entitlementRemaining = round1(available - carryoverRemaining);
 
     return {
         year: Number(year),
         entitlement,
         carryover,
+        total,
+        carryover_is_auto: isAuto,
+        carryover_expires_on: record?.carryover_expires_on
+            || (carryover > 0 && isAuto ? `${Number(year)}-03-31` : null),
         used,
         pending,
         available,
         available_hours: round1(available * HOURS_PER_VACATION_DAY),
+        carryover_remaining: carryoverRemaining,
+        entitlement_remaining: entitlementRemaining,
         hasEntitlement: !!record,
     };
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Wallet } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const fmt = (value) => {
@@ -9,22 +10,22 @@ const fmt = (value) => {
     return Number.isInteger(v) ? String(v) : v.toFixed(1).replace('.', ',');
 };
 
-const Row = ({ label, value, hint }) => (
-    <div className="flex items-baseline justify-between gap-2">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="text-sm font-semibold text-foreground tabular-nums">
-            {value}
-            {hint && <span className="text-muted-foreground font-normal"> {hint}</span>}
-        </span>
-    </div>
-);
+const fmtDay = (iso) => {
+    if (!iso) return null;
+    const d = parseISO(iso);
+    return Number.isNaN(d.getTime()) ? null : format(d, 'dd.MM.');
+};
 
 export default function VacationBalanceCard({ balance, year }) {
     if (!balance) return null;
 
-    const { entitlement, carryover, used, pending, available, available_hours } = balance;
+    const {
+        entitlement, carryover, total, used, pending,
+        available, available_hours, carryover_expires_on,
+    } = balance;
     const negative = available < 0;
     const low = !negative && available < 5;
+    const expiresLabel = fmtDay(carryover_expires_on);
 
     return (
         <Card className="p-5 mb-6 bg-card border-border">
@@ -45,7 +46,7 @@ export default function VacationBalanceCard({ balance, year }) {
                 )}
             </div>
 
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-4">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-2">
                 <span className={cn(
                     'text-4xl font-bold tabular-nums leading-none',
                     negative ? 'text-red-400' : 'text-primary',
@@ -57,12 +58,17 @@ export default function VacationBalanceCard({ balance, year }) {
                 </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 pt-3 border-t border-border">
-                <Row label="Anspruch" value={fmt(entitlement)} hint="Tage" />
-                <Row label="Übertrag" value={fmt(carryover)} hint="Tage" />
-                <Row label="Genommen" value={fmt(used)} hint="Tage" />
-                <Row label="Beantragt" value={fmt(pending)} hint="Tage" />
-            </div>
+            <p className="text-xs text-foreground tabular-nums">
+                {fmt(entitlement)} Anspruch{carryover > 0 ? ` + ${fmt(carryover)} Übertrag` : ''} = {fmt(total)} Tage
+                {' · '}genommen {fmt(used)}
+                {pending > 0 ? ` · beantragt ${fmt(pending)}` : ''}
+            </p>
+            {carryover > 0 && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                    davon {fmt(carryover)} Tage Übertrag
+                    {expiresLabel ? `, verfallen am ${expiresLabel}` : ''}
+                </p>
+            )}
 
             {negative && (
                 <div className="mt-4 flex items-start gap-2 text-xs text-red-400">
@@ -77,7 +83,7 @@ export default function VacationBalanceCard({ balance, year }) {
                 </div>
             )}
             <p className="mt-3 text-[11px] text-muted-foreground">
-                1 Urlaubstag = 8 h · Ruhetage zählen nicht als Urlaubstag.
+                1 Urlaubstag = 8 h · Ruhetage zählen nicht als Urlaubstag. Übertrag wird zuerst verbraucht.
             </p>
         </Card>
     );
