@@ -306,7 +306,6 @@ export default function PersonalBogenForm({ employee, onSave, isLoading = false,
 
             <SectionTitle>Zugang</SectionTitle>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <TextField label="PIN (4-stellig)" field="pin" {...f} />
               <TextField label="Kalender-Token" field="calendar_token" {...f} />
             </div>
           </div>

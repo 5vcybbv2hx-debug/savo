@@ -24,7 +24,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import AreasManager from '@/components/cleaning/AreasManager';
-import PinVerification from '@/components/terminal/PinVerification';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { getUserDisplayName } from '@/lib/userDisplayName';
 import { toast } from 'sonner';
@@ -38,8 +37,6 @@ export default function Cleaning() {
     const [reportsModalOpen, setReportsModalOpen] = useState(false);
     const [endDayDialogOpen, setEndDayDialogOpen] = useState(false);
     const [endDayLoading, setEndDayLoading] = useState(false);
-    const [selectedTask, setSelectedTask] = useState(null);
-    const [pinModalOpen, setPinModalOpen] = useState(false);
     const [activeArea, setActiveArea] = useState('all');
     const WEEKDAYS = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
     const [formData, setFormData] = useState({
@@ -171,32 +168,27 @@ export default function Cleaning() {
     useShake(undoLast);
 
     const handleComplete = (task) => {
-        if (permissions.isTerminal && !task.is_completed) {
-            setSelectedTask(task);
-            setPinModalOpen(true);
-        } else {
-            const displayName = getUserDisplayName({ employeeName: permissions.employeeName, user });
-            const willComplete = !task.is_completed;
-            if (willComplete) {
-                haptics.light();
-                lastUndoRef.current = {
-                    id: task.id,
-                    prevData: {
-                        is_completed: task.is_completed,
-                        completed_by: task.completed_by || null,
-                        completed_at: task.completed_at || null,
-                    },
-                };
-            }
-            updateMutation.mutate({
+        const displayName = getUserDisplayName({ employeeName: permissions.employeeName, user });
+        const willComplete = !task.is_completed;
+        if (willComplete) {
+            haptics.light();
+            lastUndoRef.current = {
                 id: task.id,
-                data: {
-                    is_completed: willComplete,
-                    completed_by: willComplete ? displayName : null,
-                    completed_at: willComplete ? new Date().toISOString() : null
-                }
-            });
+                prevData: {
+                    is_completed: task.is_completed,
+                    completed_by: task.completed_by || null,
+                    completed_at: task.completed_at || null,
+                },
+            };
         }
+        updateMutation.mutate({
+            id: task.id,
+            data: {
+                is_completed: willComplete,
+                completed_by: willComplete ? displayName : null,
+                completed_at: willComplete ? new Date().toISOString() : null
+            }
+        });
     };
 
     const handleBulkComplete = (areaTasks) => {
@@ -214,18 +206,6 @@ export default function Cleaning() {
             });
         });
         toast.success(`${openTasks.length} Aufgabe${openTasks.length === 1 ? '' : 'n'} erledigt`);
-    };
-
-    const handlePinVerified = async (pin) => {
-        const employee = employees.find(e => e.pin === pin);
-        if (!employee) { haptics.error(); toast.error('Falsche PIN — bitte nochmal versuchen'); return; }
-        const displayName = employee.name.split(' ').reverse().join(', ');
-        await updateMutation.mutateAsync({
-            id: selectedTask.id,
-            data: { is_completed: true, completed_by: displayName, completed_at: new Date().toISOString() }
-        });
-        setPinModalOpen(false);
-        setSelectedTask(null);
     };
 
     const endDay = async () => {
@@ -510,15 +490,6 @@ export default function Cleaning() {
                         </form>
                     </DialogContent>
                 </Dialog>
-
-                {/* ── PIN Modal ────────────────────────────────────────── */}
-                {pinModalOpen && (
-                    <PinVerification
-                        onVerified={handlePinVerified}
-                        onCancel={() => { setPinModalOpen(false); setSelectedTask(null); }}
-                        title="PIN eingeben um abzuhaken"
-                    />
-                )}
 
                 {/* ── Tag beenden Dialog ───────────────────────────────── */}
                 <Dialog open={endDayDialogOpen} onOpenChange={setEndDayDialogOpen}>

@@ -4,9 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { UserCircle, Mail, Phone, Calendar, Lock, Shield, Trash2, AlertTriangle } from 'lucide-react';
+import { UserCircle, Mail, Phone, Calendar, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import PinManager from '@/components/employees/PinManager';
 import MyShiftsCalendarSync from '@/components/calendar/MyShiftsCalendarSync';
 import {
     AlertDialog,
@@ -20,7 +19,6 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function MyProfilePage() {
-    const [showPinManager, setShowPinManager] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     const { data: currentUser } = useQuery({
@@ -129,41 +127,6 @@ export default function MyProfilePage() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-card/50 border-border">
-                    <CardHeader>
-                        <CardTitle className="text-foreground flex items-center gap-2">
-                            <Shield className="w-5 h-5 text-amber-500" />
-                            Sicherheit
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-border">
-                            <div>
-                                <div className="font-medium text-foreground mb-1">Terminal-PIN</div>
-                                <div className="text-sm text-muted-foreground">
-                                    {myEmployee.pin 
-                                        ? 'PIN ist eingerichtet - für Zeiterfassung am Terminal' 
-                                        : 'Noch keine PIN erstellt'}
-                                </div>
-                            </div>
-                            <Button
-                                onClick={() => setShowPinManager(true)}
-                                className="bg-amber-600 hover:bg-amber-700"
-                            >
-                                <Lock className="w-4 h-4 mr-2" />
-                                {myEmployee.pin ? 'PIN ändern' : 'PIN erstellen'}
-                            </Button>
-                        </div>
-
-                        <div className="p-4 bg-blue-900/20 border border-blue-800/30 rounded-lg">
-                            <div className="text-sm text-blue-200">
-                                <strong>Wichtig:</strong> Ihre PIN ist persönlich und wird für die Zeiterfassung 
-                                am Terminal benötigt. Teilen Sie Ihre PIN niemals mit anderen.
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
                 <MyShiftsCalendarSync
                     employeeId={myEmployee.id}
                     existingToken={myEmployee.calendar_token}
@@ -196,15 +159,6 @@ export default function MyProfilePage() {
                     </CardContent>
                 </Card>
             </div>
-
-            {showPinManager && (
-                <PinManager
-                    employee={myEmployee}
-                    open={showPinManager}
-                    onClose={() => setShowPinManager(false)}
-                    isAdmin={false}
-                />
-            )}
 
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <AlertDialogContent className="bg-card border-border">

@@ -26,7 +26,7 @@
     },
     "pin": {
       "type": "string",
-      "description": "4-stellige PIN f\u00fcr Terminal-Aktionen"
+      "description": "DEPRECATED \u2014 wird nicht mehr genutzt. Zeiterfassung l\u00e4uft ausschlie\u00dflich \u00fcber das pers\u00f6nliche Konto. Feld bleibt nur aus Datenkompatibilit\u00e4t erhalten und darf nicht mehr beschrieben werden."
     },
     "calendar_token": {
       "type": "string",

@@ -43,7 +43,6 @@ export const EmployeeSchema = z.object({
 
     // ── Meta ──────────────────────────────────────────────────────────────────
     color:         z.string().optional().or(z.literal('')),
-    pin:           z.string().length(4, 'PIN muss genau 4 Ziffern haben').regex(/^\d+$/, 'Nur Ziffern').optional().or(z.literal('')),
     is_active:     z.boolean().default(true),
     skills:        z.array(z.string()).default([]),
 });
@@ -57,5 +56,5 @@ export const EMPLOYEE_DEFAULTS = {
     contract_type: 'Minijob', hourly_rate: '', weekly_hours: '',
     entry_date: '', birthday: '', street: '', postal_code: '', city: '',
     nationality: '', iban: '', bic: '', bank_name: '', tax_id: '',
-    tshirt_size: '', color: '', pin: '', is_active: true, skills: [],
+    tshirt_size: '', color: '', is_active: true, skills: [],
 };

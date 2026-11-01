@@ -95,7 +95,6 @@ export default function EmployeeForm({ defaultValues, onSubmit, onCancel, isPend
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Sonstiges</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <SelectField name="tshirt_size" label="T-Shirt Größe" form={form} options={TSHIRT_OPTIONS} />
-                    <TextField   name="pin"         label="PIN (4 Ziffern)" form={form} inputProps={{ maxLength: 4 }} />
                     <TextField   name="color"       label="Farbe (Hex)"   form={form} type="color" />
                     <Controller
                         name="is_active"

@@ -14,14 +14,6 @@ const onboardingTasks = [
     action: '/settings'
   },
   {
-    id: 'pin',
-    title: 'PIN setzen',
-    description: '4-stellige Sicherheits-PIN für Terminal',
-    icon: '🔐',
-    points: 150,
-    action: '/settings'
-  },
-  {
     id: 'first_clock',
     title: 'Erste Zeiterfassung',
     description: 'Stempel dich ein & wieder aus',
