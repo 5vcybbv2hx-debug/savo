@@ -29,7 +29,8 @@
         "Rechnung",
         "Bericht",
         "Handbuch",
-        "Sonstiges"
+        "Sonstiges",
+        "belege"
       ],
       "description": "Kategorie"
     },
@@ -40,7 +41,8 @@
         "SalesReport",
         "Event",
         "Supplier",
-        "Keine"
+        "Keine",
+        "DeliveryNote"
       ],
       "description": "Verkn\u00fcpfte Entit\u00e4t"
     },

@@ -43,6 +43,7 @@ import MenuReview from './pages/MenuReview';
 import ExternalJobs from './pages/ExternalJobs';
 import Vouchers from './pages/Vouchers';
 import ReserviertSchilder from './pages/ReserviertSchilder';
+import LieferscheinScanner from './pages/LieferscheinScanner';
 
 const { Pages, CorePages, SpecialPagesWithLayout, PublicPages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -242,6 +243,15 @@ const AuthenticatedApp = () => {
         <LayoutWrapper currentPageName="RevenueHistory">
           <RoleGuard permission="isManager">
             <RevenueHistory />
+          </RoleGuard>
+        </LayoutWrapper>
+      } />
+
+      {/* Lieferschein-Scanner — Wareneingang per Foto/PDF (Inhaber & Manager) */}
+      <Route path="/LieferscheinScanner" element={
+        <LayoutWrapper currentPageName="LieferscheinScanner">
+          <RoleGuard permission="canViewWarehouse">
+            <LieferscheinScanner />
           </RoleGuard>
         </LayoutWrapper>
       } />

@@ -1,0 +1,109 @@
+{
+  "name": "DeliveryNote",
+  "type": "object",
+  "properties": {
+    "supplier_name": {
+      "type": "string",
+      "description": "Lieferant laut Lieferschein (best\u00e4tigt)"
+    },
+    "supplier_id": {
+      "type": "string",
+      "description": "Referenz auf Supplier (optional, wenn zugeordnet)"
+    },
+    "delivery_note_number": {
+      "type": "string",
+      "description": "Lieferschein-Nummer"
+    },
+    "delivery_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Lieferdatum (YYYY-MM-DD)"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL des hochgeladenen Fotos/PDF des Lieferscheins"
+    },
+    "positions": {
+      "type": "array",
+      "description": "Erkannte und best\u00e4tigte Positionen",
+      "items": {
+        "type": "object",
+        "properties": {
+          "raw_text": {
+            "type": "string",
+            "description": "Bezeichnung wie auf dem Lieferschein"
+          },
+          "article_name": {
+            "type": "string",
+            "description": "Zugeordneter Artikelname"
+          },
+          "article_id": {
+            "type": "string",
+            "description": "Referenz auf Article"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Gelieferte Menge in der angegebenen Einheit"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Einheit: Karton, Flaschen, St\u00fcck, kg"
+          },
+          "unit_size": {
+            "type": "number",
+            "description": "Einzeleinheiten pro Gebinde (sonst 1)"
+          },
+          "unit_price": {
+            "type": "number",
+            "description": "EK netto pro Einheit"
+          },
+          "line_total": {
+            "type": "number",
+            "description": "Zeilensumme netto"
+          },
+          "shopping_item_id": {
+            "type": "string",
+            "description": "Zugeordnete offene Bestellposition"
+          },
+          "booked": {
+            "type": "boolean",
+            "default": false,
+            "description": "Wurde die Position gebucht?"
+          },
+          "booked_units": {
+            "type": "number",
+            "description": "Tats\u00e4chlich gebuchte Einzeleinheiten"
+          }
+        }
+      }
+    },
+    "positions_count": {
+      "type": "number",
+      "description": "Anzahl der Positionen"
+    },
+    "total_net": {
+      "type": "number",
+      "description": "Summe netto in Euro"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "entwurf",
+        "gebucht"
+      ],
+      "default": "entwurf",
+      "description": "Bearbeitungsstand"
+    },
+    "booking_summary": {
+      "type": "string",
+      "description": "Zusammenfassung der Buchung (Positionen, Preis\u00e4nderungen, abgeschlossene Bestellungen)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen"
+    }
+  },
+  "required": [
+    "supplier_name"
+  ]
+}
