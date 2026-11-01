@@ -22,10 +22,15 @@
       "type": "number",
       "description": "\u00dcbertrag aus dem Vorjahr in Tagen. Leer = wird automatisch aus dem Vorjahr berechnet; ein gesetzter Wert gewinnt immer."
     },
+    "carryover_auto": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatischen \u00dcbertrag aus dem Vorjahr erlauben. false = Resturlaub wird f\u00fcr diesen Mitarbeiter nicht ins Folgejahr \u00fcbertragen."
+    },
     "carryover_expires_on": {
       "type": "string",
       "format": "date",
-      "description": "Verfallsdatum des \u00dcbertrags (Hinweis in der Kontokarte). Standard bei automatischem \u00dcbertrag: 31. M\u00e4rz des Anspruchsjahres. Wird noch nicht hart durchgesetzt."
+      "description": "NICHT MEHR BENUTZT. Der \u00dcbertrag verf\u00e4llt nicht. Feld bleibt nur aus Datenkompatibilit\u00e4t im Schema."
     },
     "notes": {
       "type": "string",

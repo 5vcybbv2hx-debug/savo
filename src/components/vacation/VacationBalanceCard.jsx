@@ -2,7 +2,6 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Wallet } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const fmt = (value) => {
@@ -10,22 +9,15 @@ const fmt = (value) => {
     return Number.isInteger(v) ? String(v) : v.toFixed(1).replace('.', ',');
 };
 
-const fmtDay = (iso) => {
-    if (!iso) return null;
-    const d = parseISO(iso);
-    return Number.isNaN(d.getTime()) ? null : format(d, 'dd.MM.');
-};
-
 export default function VacationBalanceCard({ balance, year }) {
     if (!balance) return null;
 
     const {
         entitlement, carryover, total, used, pending,
-        available, available_hours, carryover_expires_on,
+        available, available_hours,
     } = balance;
     const negative = available < 0;
     const low = !negative && available < 5;
-    const expiresLabel = fmtDay(carryover_expires_on);
 
     return (
         <Card className="p-5 mb-6 bg-card border-border">
@@ -65,8 +57,7 @@ export default function VacationBalanceCard({ balance, year }) {
             </p>
             {carryover > 0 && (
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                    davon {fmt(carryover)} Tage Übertrag
-                    {expiresLabel ? `, verfallen am ${expiresLabel}` : ''}
+                    davon {fmt(carryover)} Tage Übertrag (verfällt nicht)
                 </p>
             )}
 

@@ -160,10 +160,10 @@ function approvedDaysForYear(id, year, requests, openingHours) {
  * Anspruch + Übertrag eines Jahres.
  * Ein gesetzter days_carryover gewinnt immer. Ist er leer, wird der Übertrag
  * aus dem Vorjahr berechnet:
- *   max(0, Vorjahr.Anspruch + Vorjahr.Übertrag − Vorjahr.genehmigt − Vorjahr.verfallen)
- * Verfallene Tage werden noch nicht durchgesetzt (carryover_expires_on ist nur Hinweis),
- * also geht "verfallen" aktuell mit 0 in die Rechnung ein.
- * Ohne Vorjahres-Datensatz gibt es keinen Übertrag.
+ *   max(0, Vorjahr.Anspruch + Vorjahr.Übertrag − Vorjahr.genehmigt)
+ * Ein Übertrag verfällt nicht (carryover_expires_on wird nicht ausgewertet).
+ * carryover_auto = false bei einem Datensatz des Mitarbeiters schaltet die
+ * automatische Übertragung komplett ab. Ohne Vorjahres-Datensatz kein Übertrag.
  */
 function resolveYear({ id, year, employee, requests, entitlements, openingHours, depth = 0 }) {
     const record = findEntitlement(id, year, entitlements);
@@ -173,14 +173,18 @@ function resolveYear({ id, year, employee, requests, entitlements, openingHours,
     const manual = (raw === null || raw === undefined || raw === '') ? null : round1(raw);
     if (manual !== null) return { record, entitlement, carryover: manual, isAuto: false };
 
+    const autoDisabled = entitlements.some(
+        (e) => e.employee_id === id && e.is_active !== false && e.carryover_auto === false,
+    );
+    if (autoDisabled) return { record, entitlement, carryover: 0, isAuto: false };
+
     const prevYear = Number(year) - 1;
     const prevRecord = depth < 10 ? findEntitlement(id, prevYear, entitlements) : null;
     if (!prevRecord) return { record, entitlement, carryover: 0, isAuto: true };
 
     const prev = resolveYear({ id, year: prevYear, employee, requests, entitlements, openingHours, depth: depth + 1 });
     const prevUsed = approvedDaysForYear(id, prevYear, requests, openingHours);
-    const forfeited = 0;
-    const carryover = round1(Math.max(0, prev.entitlement + prev.carryover - prevUsed - forfeited));
+    const carryover = round1(Math.max(0, prev.entitlement + prev.carryover - prevUsed));
     return { record, entitlement, carryover, isAuto: true };
 }
 
@@ -220,8 +224,6 @@ export function computeVacationBalance({ employeeId, employee, requests = [], en
         carryover,
         total,
         carryover_is_auto: isAuto,
-        carryover_expires_on: record?.carryover_expires_on
-            || (carryover > 0 && isAuto ? `${Number(year)}-03-31` : null),
         used,
         pending,
         available,
