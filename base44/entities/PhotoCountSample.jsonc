@@ -1,0 +1,108 @@
+{
+  "name": "PhotoCountSample",
+  "type": "object",
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "description": "ID des StorageSlot (Fach)"
+    },
+    "slot_full_name": {
+      "type": "string",
+      "description": "Vollst\u00e4ndiger Fachpfad (Bereich \u203a M\u00f6bel \u203a Fach)"
+    },
+    "area_id": {
+      "type": "string",
+      "description": "ID des Bereichs (Area)"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL des Fotos"
+    },
+    "expected_articles": {
+      "type": "array",
+      "description": "Erwartete Artikel des Fachs inkl. Gebindegr\u00f6\u00dfe",
+      "items": {
+        "type": "object",
+        "properties": {
+          "article_id": {
+            "type": "string"
+          },
+          "article_name": {
+            "type": "string"
+          },
+          "content_amount": {
+            "type": "number"
+          },
+          "content_unit": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "model_raw_response": {
+      "type": "object",
+      "description": "Unver\u00e4nderte Antwort des Modells (JSON)"
+    },
+    "suggested_counts": {
+      "type": "array",
+      "description": "Vorschl\u00e4ge des Modells je Artikel",
+      "items": {
+        "type": "object",
+        "properties": {
+          "article_id": {
+            "type": "string"
+          },
+          "article_name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "confidence": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "final_counts": {
+      "type": "array",
+      "description": "Vom Menschen best\u00e4tigte Mengen",
+      "items": {
+        "type": "object",
+        "properties": {
+          "article_id": {
+            "type": "string"
+          },
+          "article_name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "opened_partial": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "photo_quality": {
+      "type": "string",
+      "description": "Einsch\u00e4tzung der Fotoqualit\u00e4t (gut, mittel, schlecht)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen zur Z\u00e4hlung"
+    },
+    "model_hint": {
+      "type": "string",
+      "description": "Hinweis des Modells (falls vorhanden)"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Name der Person, die gez\u00e4hlt hat"
+    }
+  },
+  "required": [
+    "slot_id"
+  ]
+}

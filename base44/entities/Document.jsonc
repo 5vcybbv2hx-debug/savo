@@ -42,7 +42,8 @@
         "Event",
         "Supplier",
         "Keine",
-        "DeliveryNote"
+        "DeliveryNote",
+        "PhotoCountSample"
       ],
       "description": "Verkn\u00fcpfte Entit\u00e4t"
     },

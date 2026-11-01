@@ -9,10 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { usePermissions } from '@/components/auth/usePermissions';
 import {
-    Layers, CheckCircle2, Package, X, ChevronRight, ChevronDown
+    Layers, CheckCircle2, Package, X, ChevronRight, ChevronDown, Camera
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import RegelGrid from '@/components/storage/RegelGrid';
+import PhotoCountSheet from '@/components/warehouse/PhotoCountSheet';
 
 const FURNITURE_ICONS = {
     'Kühlschrank': '🧊',
@@ -78,6 +79,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     const [istValues, setIstValues] = useState({});     // { [assignmentId]: number }
     const [restockedValues, setRestockedValues] = useState({}); // { [assignmentId]: number|string } — tatsächlich aus Keller aufgefüllt
     const [isSaving, setIsSaving] = useState(false);
+    const [photoCountOpen, setPhotoCountOpen] = useState(false);
 
     // ── Bereiche aufklappbar ───────────────────────────────────────────────────
     const [expandedAreas, setExpandedAreas] = useState({});
@@ -507,12 +509,20 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                 </h4>
                                 <p className="text-[11px] text-muted-foreground">Wieviel ist gerade im Fach?</p>
                             </div>
-                            <button
-                                onClick={() => !isSaving && setIstPopover(null)}
-                                className="text-muted-foreground hover:text-foreground p-1"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                    onClick={() => setPhotoCountOpen(true)}
+                                    className="flex items-center gap-1.5 h-9 px-2.5 rounded-lg bg-primary/10 text-primary text-[11px] font-bold active:scale-95"
+                                >
+                                    <Camera className="w-3.5 h-3.5" /> Foto zählen
+                                </button>
+                                <button
+                                    onClick={() => { setPhotoCountOpen(false); !isSaving && setIstPopover(null); }}
+                                    className="text-muted-foreground hover:text-foreground p-1"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Artikel */}
@@ -639,6 +649,21 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Foto-Zählung für das aktuelle Fach */}
+            {istPopover && (
+                <PhotoCountSheet
+                    open={photoCountOpen}
+                    slot={istPopover.slot}
+                    assignments={istPopover.assignments}
+                    onClose={() => setPhotoCountOpen(false)}
+                    onApplied={(values) => {
+                        setIstValues(prev => ({ ...prev, ...values }));
+                        setPhotoCountOpen(false);
+                        showToast('Foto-Zählung übernommen — bitte prüfen und speichern', 'success');
+                    }}
+                />
             )}
 
             {/* Abschluss-Sheet */}
