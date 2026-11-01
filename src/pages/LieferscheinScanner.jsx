@@ -1,0 +1,292 @@
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Loader2, AlertTriangle, ClipboardList, FileClock } from 'lucide-react';
+import { toast } from 'sonner';
+import { base44 } from '@/api/base44Client';
+import { usePermissions } from '@/components/auth/usePermissions';
+import PermissionDenied from '@/components/auth/PermissionDenied';
+import UploadZone from '@/components/lieferschein/UploadZone';
+import ScanDraftForm from '@/components/lieferschein/ScanDraftForm';
+import BookingResult from '@/components/lieferschein/BookingResult';
+import DeliveryHistory from '@/components/lieferschein/DeliveryHistory';
+import { extractDeliveryNote, uploadDeliveryFile } from '@/lib/deliveryNoteExtraction';
+import { matchArticle, matchShoppingItem, matchSupplier, normalizeName } from '@/lib/deliveryNoteMatching';
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+export default function LieferscheinScanner() {
+  const permissions = usePermissions();
+  const queryClient = useQueryClient();
+  const [tab, setTab] = useState('scan');
+  const [file, setFile] = useState(null);
+  const [draft, setDraft] = useState(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingResult, setBookingResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const { data: articles = [] } = useQuery({
+    queryKey: ['articles'],
+    queryFn: async () => (await base44.entities.Article.list('name', 1000)) || [],
+    placeholderData: [],
+  });
+
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ['suppliers-scanner'],
+    queryFn: async () => (await base44.entities.Supplier.list('name')) || [],
+    placeholderData: [],
+    staleTime: 10 * 60_000,
+  });
+
+  const { data: openItems = [] } = useQuery({
+    queryKey: ['shopping-open-scanner'],
+    queryFn: async () => (await base44.entities.ShoppingList.filter({ status: { $in: ['offen', 'bestellt'] } }, '-created_date', 300)) || [],
+    placeholderData: [],
+  });
+
+  const { data: notes = [], isLoading: notesLoading } = useQuery({
+    queryKey: ['delivery-notes'],
+    queryFn: async () => (await base44.entities.DeliveryNote.list('-delivery_date', 100)) || [],
+    placeholderData: [],
+    enabled: tab === 'verlauf',
+  });
+
+  const reset = () => {
+    setFile(null);
+    setDraft(null);
+    setBookingResult(null);
+    setError(null);
+  };
+
+  const openItemsForSupplier = (supplierName) => {
+    const target = normalizeName(supplierName);
+    if (!target) return openItems;
+    return openItems.filter((i) => normalizeName(i.category) === target || normalizeName(i.supplier_name) === target);
+  };
+
+  const handleFile = async (selected) => {
+    if (!selected) {
+      reset();
+      return;
+    }
+    setFile(selected);
+    setDraft(null);
+    setBookingResult(null);
+    setError(null);
+    setIsExtracting(true);
+    try {
+      const fileUrl = await uploadDeliveryFile(selected);
+      const extracted = await extractDeliveryNote(fileUrl);
+      const supplier = matchSupplier(extracted.supplier_name, suppliers);
+      const supplierName = supplier?.name || extracted.supplier_name || '';
+      const candidates = openItemsForSupplier(supplierName);
+
+      const positions = extracted.positions.map((p) => {
+        const article = matchArticle(p, articles, supplierName);
+        const shoppingItem = matchShoppingItem(p, article?.id, candidates);
+        return {
+          _key: crypto.randomUUID(),
+          raw_text: p.raw_text,
+          article_name: article?.name || p.article_name,
+          article_id: article?.id || '',
+          quantity: p.quantity,
+          unit: p.unit || 'Stück',
+          unit_size: p.unit_size ?? 1,
+          unit_price: p.unit_price,
+          line_total: p.line_total,
+          shopping_item_id: shoppingItem?.id || '',
+        };
+      });
+
+      setDraft({
+        supplier_name: supplierName,
+        supplier_id: supplier?.id || '',
+        delivery_note_number: extracted.delivery_note_number || '',
+        delivery_date: extracted.delivery_date || today(),
+        file_url: fileUrl,
+        total_net: extracted.total_net,
+        positions,
+      });
+    } catch (e) {
+      setError(e?.message || 'Der Lieferschein konnte nicht gelesen werden.');
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleSupplierChange = (name) => {
+    const supplier = matchSupplier(name, suppliers);
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const candidates = openItemsForSupplier(supplier?.name || name);
+      return {
+        ...prev,
+        supplier_name: supplier?.name || name,
+        supplier_id: supplier?.id || '',
+        positions: prev.positions.map((p) => ({
+          ...p,
+          shopping_item_id: matchShoppingItem(p, p.article_id, candidates)?.id || '',
+        })),
+      };
+    });
+  };
+
+  const updatePosition = (index, patch) => {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const positions = prev.positions.map((p, i) => {
+        if (i !== index) return p;
+        const next = { ...p, ...patch };
+        if ('article_id' in patch) {
+          const article = articles.find((a) => a.id === patch.article_id);
+          if (article) next.article_name = article.name;
+          const candidates = openItemsForSupplier(prev.supplier_name);
+          next.shopping_item_id = matchShoppingItem(next, next.article_id, candidates)?.id || '';
+        }
+        return next;
+      });
+      return { ...prev, positions };
+    });
+  };
+
+  const removePosition = (index) => {
+    setDraft((prev) => prev ? { ...prev, positions: prev.positions.filter((_, i) => i !== index) } : prev);
+  };
+
+  const createArticle = async (name) => {
+    const created = await base44.entities.Article.create({ name, is_active: true, current_stock: 0 });
+    queryClient.invalidateQueries({ queryKey: ['articles'] });
+    return created;
+  };
+
+  const handleBook = async () => {
+    if (!draft) return;
+    const positions = draft.positions.filter((p) => p.quantity != null && p.quantity !== 0);
+    if (positions.length === 0) {
+      toast.error('Keine Positionen mit Menge vorhanden.');
+      return;
+    }
+    setIsBooking(true);
+    try {
+      const response = await base44.functions.invoke('bookDeliveryNote', {
+        deliveryNote: {
+          supplier_name: draft.supplier_name,
+          supplier_id: draft.supplier_id,
+          delivery_note_number: draft.delivery_note_number,
+          delivery_date: draft.delivery_date,
+          file_url: draft.file_url,
+          total_net: draft.total_net ?? null,
+        },
+        positions: positions.map((p) => ({
+          raw_text: p.raw_text,
+          article_name: p.article_name,
+          article_id: p.article_id,
+          quantity: p.quantity,
+          unit: p.unit,
+          unit_size: p.unit_size,
+          unit_price: p.unit_price,
+          line_total: p.line_total,
+          shopping_item_id: p.shopping_item_id,
+        })),
+      });
+      const data = response.data;
+      if (data?.error) throw new Error(data.error);
+      setBookingResult(data);
+      setDraft(null);
+      setFile(null);
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
+      queryClient.invalidateQueries({ queryKey: ['delivery-notes'] });
+      queryClient.invalidateQueries({ queryKey: ['shopping-open-scanner'] });
+      queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
+      toast.success(`${data.booked?.length || 0} Position${data.booked?.length === 1 ? '' : 'en'} gebucht`);
+    } catch (e) {
+      toast.error(e?.response?.data?.error || e?.message || 'Buchung fehlgeschlagen.');
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  if (!permissions.canViewWarehouse) return <PermissionDenied />;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="mb-5">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Lieferschein-Scanner</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Foto oder PDF einlesen, Positionen prüfen und als Wareneingang buchen
+          </p>
+        </div>
+
+        <div className="inline-flex rounded-xl bg-secondary/60 p-1 gap-1 mb-5">
+          <button
+            type="button"
+            onClick={() => setTab('scan')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5 ${tab === 'scan' ? 'bg-card text-foreground shadow' : 'text-muted-foreground'}`}
+          >
+            <ClipboardList className="w-4 h-4" /> Scannen
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('verlauf')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1.5 ${tab === 'verlauf' ? 'bg-card text-foreground shadow' : 'text-muted-foreground'}`}
+          >
+            <FileClock className="w-4 h-4" /> Verlauf
+          </button>
+        </div>
+
+        {tab === 'verlauf' ? (
+          <DeliveryHistory notes={notes} isLoading={notesLoading} />
+        ) : (
+          <div className="space-y-4">
+            {!draft && !isExtracting && !bookingResult && (
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <UploadZone file={file} onSelect={handleFile} disabled={isExtracting} />
+              </div>
+            )}
+
+            {isExtracting && (
+              <div className="rounded-2xl border border-border bg-card p-8 text-center">
+                <Loader2 className="w-7 h-7 mx-auto text-primary animate-spin" />
+                <p className="mt-3 text-sm font-medium text-foreground">Lieferschein wird gelesen…</p>
+                <p className="text-xs text-muted-foreground mt-1">Positionen werden erkannt und mit Artikeln abgeglichen</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-2">
+                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Lesen fehlgeschlagen</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{error}</p>
+                  <button type="button" onClick={reset} className="mt-2 text-xs font-semibold text-primary">
+                    Erneut versuchen
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {bookingResult && <BookingResult result={bookingResult} onReset={reset} />}
+
+            {draft && !bookingResult && (
+              <ScanDraftForm
+                draft={draft}
+                suppliers={suppliers}
+                articles={articles}
+                openItems={openItems}
+                isBooking={isBooking}
+                onSupplierChange={handleSupplierChange}
+                onFieldChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
+                onChangePosition={updatePosition}
+                onRemovePosition={removePosition}
+                onCreateArticle={createArticle}
+                onBook={handleBook}
+                onDiscard={reset}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

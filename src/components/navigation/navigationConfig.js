@@ -42,6 +42,7 @@ export const additionalPages = [
     { page: 'Shopping',   name: 'Bestellung',   icon: ShoppingCart,  permission: 'canViewShopping' },
     { page: 'QuickList',  name: 'Einkaufsliste', icon: ListChecks,   permission: 'canViewShopping' },
     { page: 'Articles',   name: 'Artikel',      icon: Boxes,         permission: 'canViewWarehouse' },
+    { page: 'LieferscheinScanner', name: 'Lieferschein-Scanner', icon: Truck, permission: 'canViewWarehouse' },
     { page: 'Inventory',  name: 'Inventur',     icon: ClipboardList, permission: 'canViewInventory' },
     { page: 'Suppliers',  name: 'Lieferanten',  icon: Truck,         permission: 'canViewSuppliers' },
     { page: 'Wastage',    name: 'Schwund',       icon: Trash2,        permission: 'canViewWastage' },

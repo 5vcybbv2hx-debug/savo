@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/card";
 import { Layers, ChevronRight, ChevronDown, CheckCircle2, Circle, Package } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import CountInput from './CountInput';
-import DeliveredTodayBadge from './DeliveredTodayBadge';
 
 const FURNITURE_ICONS = {
   'Kühlschrank': '🧊',
@@ -24,7 +23,7 @@ const FURNITURE_ICONS = {
  */
 export default function SlotCountingSection({
     areas, slots, assignments, articles, furniture = [],
-    slotValues, touchedAssignments, deliveredToday = {},
+    slotValues, touchedAssignments,
     onCountChange
 }) {
     const [expandedAreas, setExpandedAreas] = useState({});
@@ -177,7 +176,6 @@ export default function SlotCountingSection({
                                                             isCounted={isSlotCounted(slot.id)}
                                                             slotValues={slotValues}
                                                             touchedAssignments={touchedAssignments}
-                                                            deliveredToday={deliveredToday}
                                                             onCountChange={onCountChange}
                                                         />
                                                     ))}
@@ -217,7 +215,6 @@ export default function SlotCountingSection({
                                                         isCounted={isSlotCounted(slot.id)}
                                                         slotValues={slotValues}
                                                         touchedAssignments={touchedAssignments}
-                                                        deliveredToday={deliveredToday}
                                                         onCountChange={onCountChange}
                                                     />
                                                 ))}
@@ -235,7 +232,7 @@ export default function SlotCountingSection({
 }
 
 // ── Slot-Gruppe (Fach Header + aufklappbare Artikel-Liste) ────────────────────
-function SlotGroup({ slot, expanded, onToggle, assignments, isCounted, slotValues, touchedAssignments, deliveredToday = {}, onCountChange }) {
+function SlotGroup({ slot, expanded, onToggle, assignments, isCounted, slotValues, touchedAssignments, onCountChange }) {
     return (
         <div className="border-b border-border/20 last:border-0">
             {/* Fach Header */}
@@ -277,7 +274,6 @@ function SlotGroup({ slot, expanded, onToggle, assignments, isCounted, slotValue
                                     <p className="text-sm text-foreground truncate">
                                         {assignment.article_name}
                                     </p>
-                                    <DeliveredTodayBadge units={deliveredToday[assignment.article_id]} />
                                     <p className="text-[10px] text-muted-foreground">
                                         Letzte: {oldValue}{assignment.unit ? ` ${assignment.unit}` : ''}
                                         {hasMinStock && (

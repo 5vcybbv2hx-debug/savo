@@ -2,14 +2,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle } from "lucide-react";
 import CountInput from './CountInput';
-import DeliveredTodayBadge from './DeliveredTodayBadge';
 import { cn } from "@/lib/utils";
 
 /**
  * Einzelne Artikel-Zeile für den "Nicht zugeordnete Artikel"-Bereich.
  * Identisches Layout zur bisherigen flachen Inventur-Liste.
  */
-export default function ArticleCountRow({ article, counted, categories, isActive, deliveredToday, onCountChange }) {
+export default function ArticleCountRow({ article, counted, categories, isActive, onCountChange }) {
     const systemStock = article.current_stock || 0;
     const diff = counted !== undefined ? counted - systemStock : 0;
     const hasDiff = counted !== undefined && diff !== 0;
@@ -48,7 +47,6 @@ export default function ArticleCountRow({ article, counted, categories, isActive
                             </Badge>
                         )}
                     </div>
-                    <DeliveredTodayBadge units={deliveredToday} />
                 </div>
 
                 <div className="flex items-center gap-4">

@@ -8,12 +8,6 @@ import { cn } from '@/lib/utils';
 
 const UNITS = ['Karton', 'Flaschen', 'Stück', 'kg'];
 
-const ACTIONS = [
-  { value: 'stock', label: 'Bestand buchen' },
-  { value: 'price', label: 'Nur Preis' },
-  { value: 'ignore', label: 'Ignorieren' },
-];
-
 const FieldLabel = ({ children }) => (
   <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1 lg:hidden">
     {children}
@@ -37,7 +31,6 @@ function DeltaBadge({ delta }) {
 }
 
 export default function PositionRow({ position, index, articles, openItems, onChange, onRemove, onCreateArticle }) {
-  const action = position.action || 'stock';
   const article = articles.find((a) => a.id === position.article_id) || null;
   const oldPrice = article?.purchase_price ?? null;
   const delta = priceDeltaPercent(oldPrice, position.unit_price);
@@ -161,37 +154,6 @@ export default function PositionRow({ position, index, articles, openItems, onCh
         </div>
       </div>
 
-      {/* Was soll passieren? */}
-      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/50">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Was soll passieren?
-        </span>
-        <div className="inline-flex rounded-lg bg-secondary/60 p-0.5 gap-0.5">
-          {ACTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onChange({ action: opt.value })}
-              className={cn(
-                'px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors',
-                action === opt.value
-                  ? opt.value === 'ignore'
-                    ? 'bg-card text-muted-foreground shadow'
-                    : 'bg-primary text-primary-foreground shadow'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-        {action === 'price' && (
-          <span className="text-[10px] font-medium text-amber-500">Bestand unverändert</span>
-        )}
-        {action === 'ignore' && (
-          <span className="text-[10px] font-medium text-muted-foreground">wird nicht gebucht</span>
-        )}
-      </div>
     </div>
   );
 }

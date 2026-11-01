@@ -8,8 +8,6 @@ const toNum = (value) => {
 
 const isPackUnit = (unit) => /karton|kiste|pack|gebinde|flasche/i.test(String(unit || ''));
 
-const ACTIONS = ['stock', 'price', 'ignore'];
-
 export default async function (req) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -57,7 +55,6 @@ export default async function (req) {
         unit_price: toNum(p.unit_price),
         line_total: toNum(p.line_total),
         shopping_item_id: p.shopping_item_id || '',
-        action: ACTIONS.includes(p.action) ? p.action : 'stock',
         booked: false,
       })),
       positions_count: positions.length,
@@ -67,8 +64,6 @@ export default async function (req) {
     });
 
     const booked = [];
-    const priceOnly = [];
-    const ignored = [];
     const unbooked = [];
     const errors = [];
     const priceChanges = [];
@@ -79,7 +74,6 @@ export default async function (req) {
       const p = positions[i];
       const label = p.article_name || p.raw_text || `Position ${i + 1}`;
       const articleId = p.article_id || '';
-      const action = ACTIONS.includes(p.action) ? p.action : 'stock';
       const base = {
         raw_text: p.raw_text || '',
         article_name: p.article_name || '',
@@ -90,15 +84,8 @@ export default async function (req) {
         unit_price: toNum(p.unit_price),
         line_total: toNum(p.line_total),
         shopping_item_id: p.shopping_item_id || '',
-        action,
         booked: false,
       };
-
-      if (action === 'ignore') {
-        ignored.push({ position: i + 1, name: label });
-        storedPositions.push(base);
-        continue;
-      }
 
       if (!articleId) {
         unbooked.push({ position: i + 1, name: p.raw_text || p.article_name || `Position ${i + 1}` });
@@ -117,11 +104,9 @@ export default async function (req) {
         const addUnits = isPackUnit(p.unit) && unitSize > 0 ? qty * unitSize : qty;
         const oldStock = toNum(article.current_stock) || 0;
 
-        if (action === 'stock') {
-          await base44.asServiceRole.entities.Article.update(articleId, {
-            current_stock: oldStock + addUnits,
-          });
-        }
+        await base44.asServiceRole.entities.Article.update(articleId, {
+          current_stock: oldStock + addUnits,
+        });
 
         const oldPrice = toNum(article.purchase_price);
         const newPrice = toNum(p.unit_price);
@@ -135,14 +120,14 @@ export default async function (req) {
             changed_by_name: user.full_name || '',
             change_date: deliveryDate,
             supplier_name: supplierName,
-            price_type: 'Einkaufspreis',
+            price_type: 'ek',
             note: `Lieferschein ${noteNumber || '-'}`,
           });
           await base44.asServiceRole.entities.Article.update(articleId, { purchase_price: newPrice });
           priceChanges.push({ article_name: article.name, old_price: oldPrice ?? 0, new_price: newPrice });
         }
 
-        if (action === 'stock' && p.shopping_item_id) {
+        if (p.shopping_item_id) {
           const item = await base44.asServiceRole.entities.ShoppingList
             .get(p.shopping_item_id)
             .catch((e) => (e.status === 404 ? null : Promise.reject(e)));
@@ -158,18 +143,14 @@ export default async function (req) {
           }
         }
 
-        if (action === 'stock') {
-          booked.push({ position: i + 1, name: article.name, units: addUnits });
-        } else {
-          priceOnly.push({ position: i + 1, name: article.name });
-        }
+        booked.push({ position: i + 1, name: article.name, units: addUnits });
 
         storedPositions.push({
           ...base,
           article_name: article.name,
           unit_price: newPrice,
           booked: true,
-          booked_units: action === 'stock' ? addUnits : 0,
+          booked_units: addUnits,
         });
       } catch (error) {
         errors.push({ position: i + 1, name: label, message: error.message });
@@ -177,7 +158,6 @@ export default async function (req) {
       }
     }
 
-    let documentCreated = false;
     if (header.file_url) {
       try {
         await base44.asServiceRole.entities.Document.create({
@@ -189,18 +169,15 @@ export default async function (req) {
           linked_entity_id: note.id,
           linked_entity_name: `${supplierName} ${noteNumber}`.trim(),
         });
-        documentCreated = true;
       } catch (error) {
         errors.push({ position: 0, name: 'Beleg-Ablage', message: error.message });
       }
     }
 
     const summaryParts = [
-      `${booked.length} von ${positions.length} Positionen mit Bestand gebucht`,
+      `${booked.length} von ${positions.length} Positionen gebucht`,
       `${priceChanges.length} Preisänderung${priceChanges.length === 1 ? '' : 'en'}`,
     ];
-    if (priceOnly.length > 0) summaryParts.push(`${priceOnly.length} nur Preis übernommen`);
-    if (ignored.length > 0) summaryParts.push(`${ignored.length} ignoriert`);
     if (shoppingClosed > 0) summaryParts.push(`${shoppingClosed} Bestellung${shoppingClosed === 1 ? '' : 'en'} abgeschlossen`);
     if (unbooked.length > 0) summaryParts.push(`${unbooked.length} Position${unbooked.length === 1 ? '' : 'en'} ohne Artikel`);
     if (errors.length > 0) summaryParts.push(`${errors.length} Fehler`);
@@ -218,12 +195,9 @@ export default async function (req) {
       note: updatedNote,
       summary,
       booked,
-      priceOnly,
-      ignored,
       unbooked,
       priceChanges,
       errors,
-      documentCreated,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

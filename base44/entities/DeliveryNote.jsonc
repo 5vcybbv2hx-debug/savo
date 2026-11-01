@@ -65,16 +65,6 @@
             "type": "string",
             "description": "Zugeordnete offene Bestellposition"
           },
-          "action": {
-            "type": "string",
-            "enum": [
-              "stock",
-              "price",
-              "ignore"
-            ],
-            "default": "stock",
-            "description": "Aktion beim Buchen: stock = Bestand + Preis, price = nur Preis, ignore = nichts buchen"
-          },
           "booked": {
             "type": "boolean",
             "default": false,

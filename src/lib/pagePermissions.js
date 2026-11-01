@@ -24,6 +24,7 @@ export const PAGE_PERMISSIONS = {
 
     // ── Lager ──────────────────────────────────────────────────────────────────
     Articles:                'canViewWarehouse',
+    LieferscheinScanner:     'canViewWarehouse',
     Warehouse:               'canViewWarehouse',
     Wastage:                 'canViewWastage',
     Suppliers:               'canViewSuppliers',
