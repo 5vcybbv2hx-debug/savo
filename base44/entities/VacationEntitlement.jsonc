@@ -1,0 +1,40 @@
+{
+  "name": "VacationEntitlement",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "ID des Mitarbeiters"
+    },
+    "employee_name": {
+      "type": "string",
+      "description": "Name des Mitarbeiters (Anzeige)"
+    },
+    "year": {
+      "type": "number",
+      "description": "Urlaubsjahr, z.B. 2027"
+    },
+    "days_entitlement": {
+      "type": "number",
+      "description": "Jahresanspruch in Tagen f\u00fcr dieses Jahr"
+    },
+    "days_carryover": {
+      "type": "number",
+      "description": "\u00dcbertrag aus dem Vorjahr in Tagen (0 wenn keiner)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen zur Herkunft / Vereinbarung des Anspruchs"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Anspruch aktiv"
+    }
+  },
+  "required": [
+    "employee_id",
+    "year",
+    "days_entitlement"
+  ]
+}

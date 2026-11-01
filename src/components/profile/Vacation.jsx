@@ -2,22 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
-import { format, parseISO, differenceInBusinessDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Calendar, Plus, Check, X, Clock, AlertCircle, FileText, Trash2 } from 'lucide-react';
+import { Calendar, Check, X, Clock, FileText, Plus } from 'lucide-react';
 import VacationTaxReport from '@/components/vacation/VacationTaxReport';
+import VacationBalanceCard from '@/components/vacation/VacationBalanceCard';
+import VacationRequestDialog from '@/components/vacation/VacationRequestDialog';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import { LoadingState, ListSkeleton, ErrorState } from '@/components/ui/StateDisplay';
+import { getVacationBalances, isVacationEligible, loadOpeningHours } from '@/lib/vacationBalance';
 
 const statusConfig = {
     'beantragt': { label: 'Beantragt', color: 'bg-blue-100 text-blue-700', icon: Clock },
@@ -36,11 +35,6 @@ export default function Vacation() {
     const permissions = usePermissions();
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [formData, setFormData] = useState({
-        type: 'Urlaub',
-        notes: '',
-        periods: [{ start_date: '', end_date: '' }]
-    });
 
     const { data: user } = useQuery({
         queryKey: ['user'],
@@ -71,20 +65,40 @@ export default function Vacation() {
         allEmployees.find(e => e.user_id === user?.id) ||
         null;
 
-    // Check if current employee is full-time
-    const isFullTimeEmployee = currentEmployee?.contract_type === 'Vollzeit';
-    
-    // Filter to show only full-time and part-time employees for vacation stats
-    const fullTimeEmployees = allEmployees.filter(e => 
-        ['Vollzeit', 'Teilzeit'].includes(e.contract_type) && e.vacation_days_per_year > 0
-    );
+    // Urlaubskonto nur für Festangestellte (Rollen Vollzeit & Manager)
+    const isEligible = isVacationEligible(currentEmployee);
+
+    // Öffnungstage für die Tageszählung (Ruhetage zählen nicht als Urlaubstag)
+    const { data: openingHours } = useQuery({
+        queryKey: ['vacation-opening-hours'],
+        queryFn: () => loadOpeningHours(),
+        staleTime: STALE.SLOW,
+    });
+
+    const eligibleEmployees = allEmployees.filter(isVacationEligible);
+
+    // Gemeinsamer Datenstand für Kontokarte und Manager-Übersicht
+    const balanceIds = React.useMemo(() => {
+        const ids = eligibleEmployees.map(e => e.id);
+        if (currentEmployee?.id && !ids.includes(currentEmployee.id)) ids.push(currentEmployee.id);
+        return ids;
+    }, [eligibleEmployees, currentEmployee?.id]);
+
+    const { data: balances = {} } = useQuery({
+        queryKey: ['vacation-balances', balanceIds.join(','), selectedYear],
+        queryFn: () => getVacationBalances(balanceIds, selectedYear),
+        enabled: balanceIds.length > 0,
+        staleTime: STALE.MEDIUM,
+    });
+
+    const balance = currentEmployee ? balances[currentEmployee.id] ?? null : null;
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.VacationRequest.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['vacation-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['vacation-balances'] });
             setModalOpen(false);
-            resetForm();
         }
     });
 
@@ -92,64 +106,32 @@ export default function Vacation() {
         mutationFn: ({ id, data }) => base44.entities.VacationRequest.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['vacation-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['vacation-balances'] });
         }
     });
 
     const withdrawMutation = useMutation({
         mutationFn: (id) => base44.entities.VacationRequest.delete(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vacation-requests'] })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['vacation-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['vacation-balances'] });
+        }
     });
 
-    const calculateBusinessDays = (start, end) => {
-        return differenceInBusinessDays(new Date(end), new Date(start)) + 1;
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        
-        const validPeriods = formData.periods.filter(p => p.start_date && p.end_date);
-        if (validPeriods.length === 0) return;
-
-        // Create one request per period
-        const promises = validPeriods.map(period => {
-            const daysCount = calculateBusinessDays(period.start_date, period.end_date);
-            return createMutation.mutateAsync({
-                employee_id: currentEmployee.id,
-                employee_name: currentEmployee.name,
-                start_date: period.start_date,
-                end_date: period.end_date,
-                days_count: daysCount,
-                type: formData.type,
-                notes: formData.notes,
-                status: 'beantragt'
-            });
-        });
-
-        Promise.all(promises).then(() => {
-            setModalOpen(false);
-            resetForm();
-        });
-    };
-
-    const addPeriod = () => {
-        setFormData(prev => ({
-            ...prev,
-            periods: [...prev.periods, { start_date: '', end_date: '' }]
-        }));
-    };
-
-    const removePeriod = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            periods: prev.periods.filter((_, i) => i !== index)
-        }));
-    };
-
-    const updatePeriod = (index, field, value) => {
-        setFormData(prev => ({
-            ...prev,
-            periods: prev.periods.map((p, i) => i === index ? { ...p, [field]: value } : p)
-        }));
+    // Tage werden im Dialog aus den Öffnungstagen berechnet (halb-Tage überschreibbar)
+    const handleSubmit = async ({ type, notes, periods }) => {
+        if (!currentEmployee) return;
+        await Promise.all(periods.map(period => createMutation.mutateAsync({
+            employee_id: currentEmployee.id,
+            employee_name: currentEmployee.name,
+            start_date: period.start_date,
+            end_date: period.end_date,
+            days_count: period.days_count,
+            type,
+            notes,
+            status: 'beantragt',
+        })));
+        setModalOpen(false);
     };
 
     const handleApprove = async (request) => {
@@ -174,36 +156,24 @@ export default function Vacation() {
         });
     };
 
-    const resetForm = () => {
-        setFormData({
-            type: 'Urlaub',
-            notes: '',
-            periods: [{ start_date: '', end_date: '' }]
-        });
-    };
-
     // Filter requests based on permissions
     const visibleRequests = permissions.isManager 
         ? vacationRequests 
         : vacationRequests.filter(r => r.employee_id === currentEmployee?.id);
 
-    // Calculate stats per employee (only for full-time)
+    // Kontostand je Festangestelltem für die Manager-Übersicht
     const employeeStats = {};
-    fullTimeEmployees.forEach(emp => {
-        const empRequests = vacationRequests.filter(r => 
-            r.employee_id === emp.id && r.status === 'genehmigt' && r.type === 'Urlaub'
-        );
-        const usedDays = empRequests.reduce((sum, r) => sum + r.days_count, 0);
-        const totalDays = emp.vacation_days_per_year || 30; // Individuelle Tage oder Standard
+    eligibleEmployees.forEach(emp => {
+        const empBalance = balances[emp.id];
+        if (!empBalance) return;
         employeeStats[emp.id] = {
             name: emp.name,
-            used: usedDays,
-            total: totalDays,
-            remaining: totalDays - usedDays
+            used: empBalance.used,
+            total: empBalance.entitlement + empBalance.carryover,
+            remaining: empBalance.available
         };
     });
 
-    const currentEmployeeStats = currentEmployee ? employeeStats[currentEmployee.id] : null;
     const pendingRequests = visibleRequests.filter(r => r.status === 'beantragt');
     const [showTaxReport, setShowTaxReport] = React.useState(false);
 
@@ -220,8 +190,8 @@ export default function Vacation() {
         </div>
     );
 
-    if (!permissions.isLoading && (!permissions.canViewVacation || (!permissions.isManager && !isFullTimeEmployee))) {
-        return <PermissionDenied message="Urlaub ist für Aushilfen nicht verfügbar. Nutze die 'Nicht verfügbar'-Funktion im Schichtplan." />;
+    if (!permissions.isLoading && !permissions.canViewVacation) {
+        return <PermissionDenied message="Urlaub ist für deine Rolle nicht verfügbar." />;
     }
 
     return (
@@ -256,10 +226,10 @@ export default function Vacation() {
                                 <SelectItem value={(selectedYear + 1).toString()}>{selectedYear + 1}</SelectItem>
                             </SelectContent>
                         </Select>
-                        {currentEmployee && isFullTimeEmployee && (
+                        {currentEmployee && (
                             <Button 
                                 onClick={() => setModalOpen(true)}
-                                className="bg-amber-600 hover:bg-amber-700"
+                                className="bg-primary hover:bg-primary/90"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
                                 Urlaub beantragen
@@ -268,32 +238,17 @@ export default function Vacation() {
                     </div>
                 </div>
 
-                {/* Stats Card */}
-                {currentEmployeeStats && (
-                    <Card className="p-6 bg-card border-border mb-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-muted-foreground mb-1">Dein Urlaubskonto {selectedYear}</p>
-                                <div className="flex items-baseline gap-3">
-                                    <span className="text-3xl font-bold text-foreground">
-                                        {currentEmployeeStats.remaining}
-                                    </span>
-                                    <span className="text-muted-foreground">von {currentEmployeeStats.total} Tagen</span>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-sm text-muted-foreground mb-1">Genommen</p>
-                                <p className="text-2xl font-semibold text-amber-400">
-                                    {currentEmployeeStats.used} Tage
-                                </p>
-                            </div>
-                        </div>
-                        {currentEmployeeStats.remaining < 5 && (
-                            <div className="mt-4 flex items-center gap-2 text-orange-400 text-sm">
-                                <AlertCircle className="w-4 h-4" />
-                                Weniger als 5 Tage verfügbar
-                            </div>
-                        )}
+                {/* Urlaubskonto — nur Festangestellte */}
+                {isEligible ? (
+                    <VacationBalanceCard balance={balance} year={selectedYear} />
+                ) : currentEmployee && (
+                    <Card className="p-4 mb-6 bg-card border-border">
+                        <p className="text-sm font-semibold text-foreground">
+                            Urlaubskonto gilt für Festangestellte
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Du kannst deinen Urlaub weiterhin beantragen — ein Resturlaub-Saldo wird für Aushilfen nicht geführt.
+                        </p>
                     </Card>
                 )}
 
@@ -311,7 +266,7 @@ export default function Vacation() {
                     <Card className="p-6 bg-card border-border mb-6">
                         <h2 className="text-lg font-semibold text-foreground mb-4">Mitarbeiter-Übersicht</h2>
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {fullTimeEmployees.map(emp => {
+                            {eligibleEmployees.map(emp => {
                                 const stats = employeeStats[emp.id];
                                 if (!stats) return null;
                                 return (
@@ -435,113 +390,17 @@ export default function Vacation() {
                     )}
                 </div>
 
-                {/* Modal */}
-                <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Urlaub beantragen</DialogTitle>
-                        </DialogHeader>
-                        
-                        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                            <div className="space-y-2">
-                                <Label>Art</Label>
-                                <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Urlaub">Urlaub</SelectItem>
-                                        <SelectItem value="Krankheit">Krankheit</SelectItem>
-                                        <SelectItem value="Sonderurlaub">Sonderurlaub</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <Label>Zeiträume</Label>
-                                    <Button type="button" variant="outline" size="sm" onClick={addPeriod} className="text-xs h-7">
-                                        <Plus className="w-3 h-3 mr-1" />
-                                        Zeitraum hinzufügen
-                                    </Button>
-                                </div>
-
-                                {formData.periods.map((period, index) => (
-                                    <div key={index} className="p-3 border border-border rounded-lg space-y-2 bg-background/50">
-                                         <div className="flex items-center justify-between">
-                                            <span className="text-xs text-muted-foreground font-medium">
-                                                 Zeitraum {index + 1}
-                                                {period.start_date && period.end_date && (
-                                                    <span className="ml-2 text-amber-400">
-                                                         · {calculateBusinessDays(period.start_date, period.end_date)} Tage
-                                                    </span>
-                                                 )}
-                                            </span>
-                                             {formData.periods.length > 1 && (
-                                                 <button type="button" onClick={() => removePeriod(index)} className="text-red-400 hover:text-red-300">
-                                                     <Trash2 className="w-3.5 h-3.5" />
-                                                 </button>
-                                             )}
-                                        </div>
-                                         <div className="grid grid-cols-2 gap-2">
-                                             <div>
-                                                 <Label className="text-xs text-muted-foreground">Von *</Label>
-                                                <Input
-                                                    type="date"
-                                                    value={period.start_date}
-                                                    onChange={(e) => updatePeriod(index, 'start_date', e.target.value)}
-                                                    required
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label className="text-xs text-muted-foreground">Bis *</Label>
-                                                <Input
-                                                    type="date"
-                                                    value={period.end_date}
-                                                    onChange={(e) => updatePeriod(index, 'end_date', e.target.value)}
-                                                    required
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {formData.periods.filter(p => p.start_date && p.end_date).length > 1 && (
-                                    <div className="p-2 bg-amber-900/20 border border-amber-700/50 rounded text-xs text-amber-300 text-center">
-                                        Gesamt: {formData.periods
-                                            .filter(p => p.start_date && p.end_date)
-                                            .reduce((sum, p) => sum + calculateBusinessDays(p.start_date, p.end_date), 0)
-                                        } Arbeitstage · {formData.periods.filter(p => p.start_date && p.end_date).length} separate Anträge
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Notizen</Label>
-                                <Textarea
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    placeholder="Optional: Grund oder Hinweise..."
-                                    rows={2}
-                                />
-                            </div>
-
-                            <div className="flex gap-2 pt-4">
-                                <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="flex-1">
-                                    Abbrechen
-                                </Button>
-                                <Button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700">
-                                    {formData.periods.filter(p => p.start_date && p.end_date).length > 1
-                                        ? `${formData.periods.filter(p => p.start_date && p.end_date).length} Anträge einreichen`
-                                        : 'Beantragen'
-                                    }
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                {/* Antragsdialog mit Resturlaub-Vorschau */}
+                {openingHours && (
+                    <VacationRequestDialog
+                        open={modalOpen}
+                        onOpenChange={setModalOpen}
+                        balance={isEligible ? balance : null}
+                        openingHours={openingHours}
+                        onSubmit={handleSubmit}
+                        isSubmitting={createMutation.isPending}
+                    />
+                )}
             </div>
         </div>
     );

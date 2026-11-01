@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Umbrella, RepeatIcon, QrCode, Bell, Clock, Scale, Settings } from 'lucide-react';
+import { User, Umbrella, RepeatIcon, QrCode, Bell, Scale, Settings } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 
 // Import existing page components
@@ -9,7 +9,6 @@ import MyProfilePage from '@/components/profile/MyProfile';
 import VacationPage from '@/components/profile/Vacation';
 import ShiftSwapSection from '@/components/shifts/ShiftSwapSection';
 import DigitalBusinessCard from '@/components/company/DigitalBusinessCard';
-import UnavailabilityList from '@/components/availability/UnavailabilityList';
 import NotificationSettingsPage from '@/components/profile/NotificationSettings';
 import LegalTabContent from '@/components/legal/LegalTabContent';
 import SettingsTabContent from '@/components/settings/SettingsTabContent';
@@ -60,7 +59,7 @@ export default function MyAreaPage() {
     const permissions = usePermissions();
     const [activeTab, setActiveTab] = useState('profile');
     const [searchParams, setSearchParams] = useSearchParams();
-    const reverseTabMap = { profile: 'profil', vacation: 'urlaub', swaps: 'tauschen', card: 'visitenkarte', termine: 'verfuegbarkeiten', notifications: 'benachrichtigungen', legal: 'rechtliches', settings: 'einstellungen' };
+    const reverseTabMap = { profile: 'profil', vacation: 'urlaub', swaps: 'tauschen', card: 'visitenkarte', notifications: 'benachrichtigungen', legal: 'rechtliches', settings: 'einstellungen' };
 
     // URL-Tab-Parameter auslesen (?tab=profil|urlaub|tauschen|visitenkarte|verfuegbarkeiten|benachrichtigungen|rechtliches)
     useEffect(() => {
@@ -71,7 +70,6 @@ export default function MyAreaPage() {
                 urlaub: 'vacation',
                 tauschen: 'swaps',
                 visitenkarte: 'card',
-                verfuegbarkeiten: 'termine',
                 benachrichtigungen: 'notifications',
                 rechtliches: 'legal',
                 einstellungen: 'settings',
@@ -128,10 +126,6 @@ export default function MyAreaPage() {
                             <Bell className="w-5 h-5 sm:w-4 sm:h-4" />
                             <span className="hidden sm:inline">Info</span>
                         </TabsTrigger>
-                        <TabsTrigger value="termine" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
-                            <Clock className="w-5 h-5 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline">Termine</span>
-                        </TabsTrigger>
                         <TabsTrigger value="card" className="py-3 sm:py-2.5 text-xs sm:text-sm flex-col sm:flex-row gap-1">
                             <QrCode className="w-5 h-5 sm:w-4 sm:h-4" />
                             <span className="hidden sm:inline">Karte</span>
@@ -166,12 +160,6 @@ export default function MyAreaPage() {
 
                     <TabsContent value="notifications" className="space-y-0">
                         <NotificationSettingsPage />
-                    </TabsContent>
-
-                    <TabsContent value="termine" className="space-y-0">
-                        <div className="p-4 sm:p-6 rounded-lg bg-card border border-border">
-                            <UnavailabilityList />
-                        </div>
                     </TabsContent>
 
                     <TabsContent value="card" className="space-y-0">

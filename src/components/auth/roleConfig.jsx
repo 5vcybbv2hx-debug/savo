@@ -158,7 +158,7 @@ export const PERMISSION_MATRIX = {
 
     // ── Zeiterfassung ─────────────────────────────────────────────────────────
     canViewOwnTimeEntries:       { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE, M.ORGA], terminal: false },
-    canViewVacation:             { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER],             terminal: false },
+    canViewVacation:             { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE],  terminal: false },
     canViewTeamTimeEntries:      { roles: [M.MANAGER],                                       terminal: false },
     canApproveTimeEntries:       { roles: [M.MANAGER],      sensitive: true,                 terminal: false },
     canCorrectTimeEntries:       { roles: [M.MANAGER],      sensitive: true,                 terminal: false },
