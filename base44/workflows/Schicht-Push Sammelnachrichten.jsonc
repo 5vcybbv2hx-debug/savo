@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "shift_notify_digest",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "flush_windows": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "flushShiftNotifyWindows",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Sammelnachrichten senden",
+            "description": "Abgelaufene Push-Fenster abschlie\u00dfen"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Schicht-Push Sammelnachrichten",
+  "description": "Schlie\u00dft abgelaufene 60-Sekunden-Fenster pro Mitarbeiter und sendet eine Sammelnachricht statt vieler Einzel-Pushes",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "*/5 * * * *",
+      "one_time_date": null,
+      "timezone": "Europe/Berlin",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

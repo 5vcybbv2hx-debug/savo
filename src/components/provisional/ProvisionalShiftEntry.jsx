@@ -17,6 +17,7 @@ const STATUS_CONFIG = {
     ausstehend: { label: 'Ausstehend', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
     bestätigt: { label: 'Bestätigt', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
     abgelehnt: { label: 'Abgelehnt', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
+    warteliste: { label: 'Warteliste', color: 'bg-amber-500/15 text-amber-300 border-dashed border-amber-500/50' },
 };
 
 const SHIFT_TYPES = ['Frühschicht', 'Spätschicht', 'Aufmachen', 'Sonderschicht'];
@@ -133,7 +134,7 @@ export default function ProvisionalShiftEntry({ employee, access }) {
                 <div className="space-y-3">
                     {[...requests].sort((a, b) => a.date.localeCompare(b.date)).map(req => {
                         const sc = STATUS_CONFIG[req.status] || STATUS_CONFIG.ausstehend;
-                        const canEdit = req.status === 'ausstehend' && windowActive;
+                        const canEdit = (req.status === 'ausstehend' || req.status === 'warteliste') && windowActive;
                         return (
                             <Card key={req.id} className={cn('p-4', req.status === 'bestätigt' && 'border-green-500/30', req.status === 'abgelehnt' && 'border-red-500/30 opacity-70')}>
                                 <div className="flex items-start gap-3">

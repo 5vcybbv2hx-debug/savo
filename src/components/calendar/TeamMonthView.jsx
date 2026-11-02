@@ -67,6 +67,7 @@ export default function TeamMonthView() {
             queryClient.invalidateQueries({ queryKey: ['my-provisional-requests', permissions.employeeId] });
             queryClient.invalidateQueries({ queryKey: ['provisional-shift-requests'] });
             queryClient.invalidateQueries({ queryKey: ['all-provisional-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['wish-month'] });
             setWishDetail(null);
             toast.success('Wunsch entfernt');
         },
@@ -98,6 +99,26 @@ export default function TeamMonthView() {
         staleTime: STALE.SHORT,
     });
     const shifts = allShifts.filter(s => s.date >= shiftFrom && s.date <= shiftTo);
+
+    // Wünsche des sichtbaren Monats — Warteliste + Auslastung (Manager-Sicht)
+    const { data: monthWishes = [] } = useQuery({
+        queryKey: ['wish-month', shiftFrom, shiftTo],
+        queryFn: async () => {
+            const page = await base44.entities.ProvisionalShiftRequest.filter(
+                { date: { $gte: shiftFrom, $lte: shiftTo } },
+                { limit: 500 }
+            );
+            return page?.items || [];
+        },
+        enabled: isManager,
+        staleTime: STALE.SHORT,
+    });
+    const { data: shiftTypes = [] } = useQuery({
+        queryKey: ['wish-shift-types'],
+        queryFn: () => base44.entities.ShiftType.filter({ is_active: true }, 'order'),
+        enabled: isManager,
+        staleTime: STALE.SLOW,
+    });
 
     const { data: employees = [] } = useQuery({
         queryKey: ['employees'],
@@ -196,6 +217,8 @@ export default function TeamMonthView() {
                 wishMode={wishMode && !isManager}
                 onWishClick={setWishDetail}
                 wishRange={wishMode && !isManager ? { start: activeAccess.start_date, end: activeAccess.end_date } : null}
+                wishRequests={isManager ? monthWishes : []}
+                shiftTypes={isManager ? shiftTypes : []}
             />
             </div>
 

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isWeekend } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import WishCapacityBadge from '@/components/calendar/WishCapacityBadge';
+import { buildWishUsage, capacityFor, usageFor } from '@/lib/wishShiftCapacity';
 
 export default function MobileTeamCalendarView({ 
     shifts = [], 
@@ -12,10 +14,15 @@ export default function MobileTeamCalendarView({
     holidays = [],
     employees = [],
     onEventClick,
-    selectedEmployees = []
+    selectedEmployees = [],
+    // Wünsche des Zeitraums (Warteliste + Auslastung)
+    wishes = [],
+    shiftTypes = []
 }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDay, setSelectedDay] = useState(null);
+
+    const wishUsage = useMemo(() => buildWishUsage(wishes), [wishes]);
 
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
@@ -39,6 +46,19 @@ export default function MobileTeamCalendarView({
                     employee: employee,
                     color: employee?.color || '#64748b',
                     label: `${shift.employee_name} (${shift.start_time}-${shift.end_time})`
+                });
+            });
+
+        // Warteliste für Wunschschichten — gestrichelt, mit "W"
+        wishes
+            .filter(wish => wish.date === dayStr && wish.status === 'warteliste')
+            .filter(wish => selectedEmployees.length === 0 || selectedEmployees.includes(wish.employee_id))
+            .forEach(wish => {
+                events.push({
+                    type: 'warteliste',
+                    data: wish,
+                    color: '#f59e0b',
+                    label: `W ${wish.employee_name} (${wish.start_time}-${wish.end_time})`
                 });
             });
 
@@ -75,6 +95,23 @@ export default function MobileTeamCalendarView({
     };
 
     const dayEvents = selectedDay ? getEventsForDay(selectedDay) : [];
+
+    // Auslastung der Wunschplätze für den gewählten Tag
+    const dayCapacity = selectedDay
+        ? shiftTypes
+            .filter(type => typeof type.wish_capacity === 'number' && type.wish_capacity > 0)
+            .map(type => {
+                const usage = usageFor(wishUsage, format(selectedDay, 'yyyy-MM-dd'), type.name);
+                return {
+                    name: type.name,
+                    label: type.start_time ? type.start_time.slice(0, 5) : type.name,
+                    taken: usage.taken,
+                    capacity: capacityFor(type),
+                    waiting: usage.waitlist.length,
+                };
+            })
+            .filter(row => row.taken > 0 || row.waiting > 0)
+        : [];
 
     return (
         <>
@@ -192,6 +229,19 @@ export default function MobileTeamCalendarView({
                         </DialogTitle>
                     </DialogHeader>
 
+                    {dayCapacity.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            {dayCapacity.map(row => (
+                                <WishCapacityBadge
+                                    key={row.name}
+                                    label={`${row.name} ${row.label}`}
+                                    taken={row.taken}
+                                    capacity={row.capacity}
+                                />
+                            ))}
+                        </div>
+                    )}
+
                     {dayEvents.length > 0 ? (
                         <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                             {dayEvents.map((event, idx) => (
@@ -201,8 +251,13 @@ export default function MobileTeamCalendarView({
                                         onEventClick?.(event);
                                         setSelectedDay(null);
                                     }}
-                                    className="w-full p-4 rounded-lg text-left transition-all active:scale-95 hover:opacity-90"
-                                    style={{ backgroundColor: event.color + '20', borderLeft: `4px solid ${event.color}` }}
+                                    className={cn(
+                                        'w-full p-4 rounded-lg text-left transition-all active:scale-95 hover:opacity-90',
+                                        event.type === 'warteliste' && 'border border-dashed border-amber-500/70'
+                                    )}
+                                    style={event.type === 'warteliste'
+                                        ? { backgroundColor: 'rgba(245, 158, 11, 0.08)' }
+                                        : { backgroundColor: event.color + '20', borderLeft: `4px solid ${event.color}` }}
                                 >
                                     <div className="font-semibold text-foreground">{event.label}</div>
                                     {event.type === 'shift' && (

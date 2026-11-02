@@ -2,8 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import {
     parseShiftPayload,
     isRelevantShiftChange,
-    formatShiftMessage,
-    notifyShiftEmployee,
+    notifyShiftChange,
 } from '../../shared/shiftNotify.ts';
 
 Deno.serve(async (req) => {
@@ -32,16 +31,12 @@ Deno.serve(async (req) => {
             });
         }
 
-        const isCreate = eventType === 'create';
-        const title = isCreate ? 'Neue Schicht eingeplant' : 'Schicht geändert';
+        const kind = eventType === 'create' ? 'create' : 'update';
 
-        const result = await notifyShiftEmployee(base44, {
-            shift: data,
-            title,
-            message: formatShiftMessage(data),
-        });
+        // Bündelung pro Mitarbeiter (60-Sekunden-Fenster) liegt in shared/shiftNotify.ts
+        const result = await notifyShiftChange(base44, { shift: data, kind });
 
-        return Response.json({ success: true, title, ...result });
+        return Response.json({ success: true, kind, ...result });
     } catch (error) {
         console.error('[onShiftChanged] Error:', error);
         return Response.json({ error: error.message }, { status: 500 });

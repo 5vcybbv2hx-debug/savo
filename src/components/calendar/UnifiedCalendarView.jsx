@@ -10,12 +10,16 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/components/utils/haptics';
 import { isWishWeekday } from '@/lib/wishShiftRules';
+import WishlistChip from '@/components/calendar/WishlistChip';
+import WishCapacityBadge from '@/components/calendar/WishCapacityBadge';
+import { buildWishUsage, capacityFor, usageFor, waitlistPosition } from '@/lib/wishShiftCapacity';
 
 // Farben der eigenen Wunschschichten im Kalender
 const WISH_STYLES = {
     ausstehend: 'bg-amber-500/15 border-amber-500/40 text-amber-300',
     bestätigt: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300',
     abgelehnt: 'bg-rose-500/10 border-rose-500/20 text-rose-300/60 line-through',
+    warteliste: 'bg-amber-500/5 border-dashed border-amber-500/60 text-amber-300',
 };
 
 const EVENT_STYLES = {
@@ -71,10 +75,15 @@ export default function UnifiedCalendarView({
     myWishes = [],
     wishMode = false,
     onWishClick = () => {},
-    wishRange = null
+    wishRange = null,
+    // Manager-Sicht: alle Wünsche des Zeitraums (Warteliste + Auslastung)
+    wishRequests = [],
+    shiftTypes = []
 }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showFilterModal, setShowFilterModal] = useState(false);
+
+    const wishUsage = useMemo(() => buildWishUsage(wishRequests), [wishRequests]);
 
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
@@ -253,6 +262,20 @@ export default function UnifiedCalendarView({
                         const MAX_VISIBLE = 3;
                         const dayStr = format(day, 'yyyy-MM-dd');
                         const dayWishes = myWishes.filter(w => w.date === dayStr);
+                        const dayWaitlist = wishRequests.filter(w => w.date === dayStr && w.status === 'warteliste');
+                        const dayCapacity = shiftTypes
+                            .filter(t => typeof t.wish_capacity === 'number' && t.wish_capacity > 0)
+                            .map(t => {
+                                const usage = usageFor(wishUsage, dayStr, t.name);
+                                return {
+                                    name: t.name,
+                                    label: t.start_time ? t.start_time.slice(0, 5) : t.name,
+                                    taken: usage.taken,
+                                    capacity: capacityFor(t),
+                                    waiting: usage.waitlist.length,
+                                };
+                            })
+                            .filter(row => row.taken > 0 || row.waiting > 0);
                         // Wunsch-Modus: nur Tage ab heute innerhalb des Eingabefensters,
                         // und nur an Tagen mit Wunschschicht-Regel (Di–Sa)
                         const inWishRange = wishMode && wishRange?.start && wishRange?.end
@@ -301,7 +324,7 @@ export default function UnifiedCalendarView({
                                                     WISH_STYLES[wish.status] || WISH_STYLES.ausstehend
                                                 )}
                                             >
-                                                {wish.start_time}–{wish.end_time}
+                                                {wish.status === 'warteliste' ? 'W ' : ''}{wish.start_time}–{wish.end_time}
                                             </div>
                                         ))}
                                         {dayWishes.length > 2 && (
@@ -309,6 +332,38 @@ export default function UnifiedCalendarView({
                                                 +{dayWishes.length - 2}
                                             </div>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* Warteliste (gestrichelt + W) */}
+                                {dayWaitlist.length > 0 && (
+                                    <div className="space-y-0.5 mb-1">
+                                        {dayWaitlist.slice(0, 2).map(wish => (
+                                            <WishlistChip
+                                                key={wish.id}
+                                                wish={wish}
+                                                position={waitlistPosition(wishUsage, wish)}
+                                            />
+                                        ))}
+                                        {dayWaitlist.length > 2 && (
+                                            <div className="text-[10px] text-amber-400/80 pl-1 font-medium">
+                                                +{dayWaitlist.length - 2} auf Warteliste
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Auslastung der Wunschplätze */}
+                                {dayCapacity.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mb-1">
+                                        {dayCapacity.map(row => (
+                                            <WishCapacityBadge
+                                                key={row.name}
+                                                label={row.label}
+                                                taken={row.taken}
+                                                capacity={row.capacity}
+                                            />
+                                        ))}
                                     </div>
                                 )}
 
@@ -379,6 +434,12 @@ export default function UnifiedCalendarView({
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <div className="w-3 h-3 rounded-sm bg-purple-500/30 border-l-2 border-purple-500" />
                     Geburtstag
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className="w-3 h-3 rounded-sm border border-dashed border-amber-500/70 text-[8px] font-bold text-amber-300 flex items-center justify-center">
+                        W
+                    </div>
+                    Warteliste
                 </div>
             </div>
 

@@ -2,6 +2,9 @@
  * WishShiftSheet — Wunschschicht direkt aus dem Kalender eintragen.
  * Mobile: Bottom-Sheet, Desktop: Dialog.
  * Props: { open, onOpenChange, date (Date), employee, access }
+ *
+ * Ist ein Schichttyp voll (taken >= wish_capacity), wird die Zeile nicht
+ * deaktiviert: der Mitarbeiter trägt sich stattdessen auf die Warteliste ein.
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
@@ -9,7 +12,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { Loader2, ChevronDown, StickyNote, Check } from 'lucide-react';
+import { Loader2, ChevronDown, StickyNote, Check, Hourglass } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +20,7 @@ import { useIsMobile } from '@/components/utils/useIsMobile';
 import { haptics } from '@/components/utils/haptics';
 import { cn } from '@/lib/utils';
 import { getWishShiftTypes, normalizeTime, wishDayHint } from '@/lib/wishShiftRules';
+import { BELEGT_STATUS, buildWishUsage, capacityFor, usageFor } from '@/lib/wishShiftCapacity';
 
 // "5:00" → "05:00" (nur für die Anzeige)
 function displayTime(t) {
@@ -62,6 +66,8 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
         [shiftTypes, date]
     );
 
+    const usageMap = useMemo(() => buildWishUsage(dayRequests), [dayRequests]);
+
     const invalidate = () => {
         queryClient.invalidateQueries({ queryKey: ['my-provisional-requests', employee?.id] });
         queryClient.invalidateQueries({ queryKey: ['provisional-shift-requests'] });
@@ -69,11 +75,14 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
         queryClient.invalidateQueries({ queryKey: ['wish-counts', dayStr] });
     };
 
-    const handlePick = async (type) => {
+    const handlePick = async (type, status) => {
         if (saving || !employee?.id || !date) return;
         haptics.selection();
         setSaving(true);
         try {
+            const usage = usageFor(usageMap, dayStr, type.name);
+            const position = usage.waitlist.length + 1;
+
             await base44.entities.ProvisionalShiftRequest.create({
                 employee_id: employee.id,
                 employee_name: employee.name,
@@ -81,13 +90,19 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                 start_time: type.start_time,
                 end_time: type.end_time,
                 shift_type: type.name,
-                status: 'ausstehend',
+                status,
                 access_id: access?.id,
                 ...(note.trim() ? { comment: note.trim() } : {}),
             });
             invalidate();
-            toast.success('Wunsch eingetragen');
-            onOpenChange(false);
+
+            if (status === 'warteliste') {
+                // Sheet bleibt offen, damit die Position direkt sichtbar wird
+                toast.success(`Auf der Warteliste – Platz ${position}`);
+            } else {
+                toast.success('Wunsch eingetragen');
+                onOpenChange(false);
+            }
         } finally {
             setSaving(false);
         }
@@ -106,39 +121,49 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                 <p className="text-sm text-muted-foreground text-center py-6">Für diesen Tag ist keine Schichtart zur Auswahl hinterlegt.</p>
             ) : (
                 availableTypes.map(type => {
-                    // Belegt = ausstehend + bestätigt (abgelehnte zählen nicht)
-                    const taken = dayRequests.filter(r =>
-                        r.shift_type === type.name && (r.status === 'ausstehend' || r.status === 'bestätigt')
-                    ).length;
-                    const capacity = type.wish_capacity ?? 2;
+                    // Belegt = ausstehend + bestätigt (Warteliste zählt nicht)
+                    const usage = usageFor(usageMap, dayStr, type.name);
+                    const taken = usage.taken;
+                    const capacity = capacityFor(type);
                     const full = taken >= capacity;
-                    const own = dayRequests.some(r =>
-                        r.employee_id === employee?.id && r.shift_type === type.name && r.status !== 'abgelehnt'
+                    const ownActive = dayRequests.some(r =>
+                        r.employee_id === employee?.id && r.shift_type === type.name && BELEGT_STATUS.includes(r.status)
                     );
-                    const blocked = full || own;
+                    const ownWaitIndex = usage.waitlist.findIndex(r => r.employee_id === employee?.id);
+                    const ownWaitPosition = ownWaitIndex >= 0 ? ownWaitIndex + 1 : null;
+                    const blocked = saving || ownActive || ownWaitPosition !== null;
                     const pct = capacity > 0 ? Math.min(100, (taken / capacity) * 100) : 100;
 
                     return (
                         <button
                             key={type.id}
                             type="button"
-                            disabled={saving || blocked}
-                            onClick={() => handlePick(type)}
+                            disabled={blocked}
+                            onClick={() => handlePick(type, full ? 'warteliste' : 'ausstehend')}
                             className={cn(
-                                'w-full flex items-center justify-between gap-3 px-4 py-4 rounded-xl border border-border bg-secondary/40 text-left transition-all',
-                                saving || blocked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary active:scale-[0.99]'
+                                'w-full flex items-center justify-between gap-3 px-4 py-4 rounded-xl border text-left transition-all',
+                                blocked
+                                    ? 'opacity-60 cursor-not-allowed border-border bg-secondary/30'
+                                    : full
+                                        ? 'border-dashed border-amber-500/60 bg-amber-500/5 hover:bg-amber-500/10 active:scale-[0.99]'
+                                        : 'border-border bg-secondary/40 hover:bg-secondary active:scale-[0.99]'
                             )}
                         >
                             <span className="font-semibold text-foreground min-w-0 truncate">{type.name}</span>
                             <span className="shrink-0 text-right space-y-1">
                                 <span className="flex items-center justify-end gap-2">
-                                    {own && (
+                                    {ownActive && (
                                         <span className="flex items-center gap-1 text-xs text-emerald-500">
                                             <Check className="w-3 h-3" /> eingetragen
                                         </span>
                                     )}
-                                    {!own && full && (
-                                        <span className="text-xs text-muted-foreground">voll</span>
+                                    {ownWaitPosition !== null && (
+                                        <span className="flex items-center gap-1 text-xs text-amber-400">
+                                            <Hourglass className="w-3 h-3" /> Warteliste, Platz {ownWaitPosition}
+                                        </span>
+                                    )}
+                                    {!ownActive && ownWaitPosition === null && full && (
+                                        <span className="text-xs font-semibold text-amber-400">Auf die Warteliste</span>
                                     )}
                                     <span className="text-sm text-muted-foreground font-mono">
                                         {displayTime(type.start_time)} – {displayTime(type.end_time)}
@@ -150,6 +175,11 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                                         <span className="block h-full bg-amber-500" style={{ width: `${pct}%` }} />
                                     </span>
                                 </span>
+                                {usage.waitlist.length > 0 && (
+                                    <span className="block text-[11px] text-amber-400/80">
+                                        {usage.waitlist.length} auf der Warteliste
+                                    </span>
+                                )}
                             </span>
                         </button>
                     );

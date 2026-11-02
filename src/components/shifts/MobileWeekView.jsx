@@ -2,11 +2,16 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { format, addWeeks, subWeeks, startOfWeek, addDays, isSameDay, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Trash2, X } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { haptics } from '@/components/utils/haptics';
 import { getHolidaysBW, getHolidayName } from './getHolidays';
 import ShiftBottomSheet from './ShiftBottomSheet';
+import WishlistChip from '@/components/calendar/WishlistChip';
+import WishCapacityBadge from '@/components/calendar/WishCapacityBadge';
+import { buildWishUsage, capacityFor, usageFor, waitlistPosition } from '@/lib/wishShiftCapacity';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -121,6 +126,28 @@ export default function MobileWeekView({ shifts = [], employees = [], isLoading,
 
     const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+    // Warteliste + Wunsch-Auslastung der sichtbaren Woche
+    const weekFrom = format(weekStart, 'yyyy-MM-dd');
+    const weekTo = format(addDays(weekStart, 6), 'yyyy-MM-dd');
+
+    const { data: weekWishes = [] } = useQuery({
+        queryKey: ['wish-week', weekFrom],
+        queryFn: async () => {
+            const page = await base44.entities.ProvisionalShiftRequest.filter(
+                { date: { $gte: weekFrom, $lte: weekTo } },
+                { limit: 300 }
+            );
+            return page?.items || [];
+        },
+    });
+
+    const { data: shiftTypes = [] } = useQuery({
+        queryKey: ['wish-shift-types'],
+        queryFn: () => base44.entities.ShiftType.filter({ is_active: true }, 'order'),
+    });
+
+    const wishUsage = useMemo(() => buildWishUsage(weekWishes), [weekWishes]);
+
     const getEmployeeColor = (employeeId) => {
         return employees.find(e => e.id === employeeId)?.color || '#64748b';
     };
@@ -195,6 +222,23 @@ export default function MobileWeekView({ shifts = [], employees = [], isLoading,
                     const dayShifts = shiftsForDay(day);
                     const holidayName = getHolidayName(day, holidays);
 
+                    // Warteliste + Auslastung je Schichtart (nur wo es Wünsche gibt)
+                    const dayStr = format(day, 'yyyy-MM-dd');
+                    const dayWaitlist = weekWishes.filter(w => w.date === dayStr && w.status === 'warteliste');
+                    const dayCapacity = shiftTypes
+                        .filter(t => typeof t.wish_capacity === 'number' && t.wish_capacity > 0)
+                        .map(t => {
+                            const usage = usageFor(wishUsage, dayStr, t.name);
+                            return {
+                                name: t.name,
+                                label: t.start_time ? t.start_time.slice(0, 5) : t.name,
+                                taken: usage.taken,
+                                capacity: capacityFor(t),
+                                waiting: usage.waitlist.length,
+                            };
+                        })
+                        .filter(row => row.taken > 0 || row.waiting > 0);
+
                     return (
                         <div
                             key={idx}
@@ -257,6 +301,27 @@ export default function MobileWeekView({ shifts = [], employees = [], isLoading,
                                     <p className="text-[9px] text-muted-foreground/50 text-center pt-2">Frei</p>
                                 )}
                             </div>
+
+                            {/* Warteliste (gestrichelt + W) und Wunsch-Auslastung */}
+                            {(dayWaitlist.length > 0 || dayCapacity.length > 0) && (
+                                <div className="px-1 pb-1 space-y-0.5">
+                                    {dayWaitlist.map(wish => (
+                                        <WishlistChip key={wish.id} wish={wish} position={waitlistPosition(wishUsage, wish)} />
+                                    ))}
+                                    {dayCapacity.length > 0 && (
+                                        <div className="flex flex-wrap gap-0.5">
+                                            {dayCapacity.map(row => (
+                                                <WishCapacityBadge
+                                                    key={row.name}
+                                                    label={row.label}
+                                                    taken={row.taken}
+                                                    capacity={row.capacity}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Add button */}
                             {permissions.canEditShifts && (

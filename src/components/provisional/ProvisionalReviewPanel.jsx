@@ -17,6 +17,8 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { formatHours, statsByEmployee } from '@/lib/provisionalShiftHours';
 import WunschUebersicht from '@/components/provisional/WunschUebersicht';
+import WishlistSection from '@/components/provisional/WishlistSection';
+import { buildWishUsage } from '@/lib/wishShiftCapacity';
 
 const SHIFT_TYPES = ['Aufmachen', 'Frühschicht', 'Spätschicht', 'Sonderschicht'];
 
@@ -24,6 +26,7 @@ const STATUS_CONFIG = {
     ausstehend: { label: 'Ausstehend', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40' },
     bestätigt:  { label: 'Bestätigt',  color: 'bg-green-500/20 text-green-300 border-green-500/40' },
     abgelehnt:  { label: 'Abgelehnt',  color: 'bg-red-500/20 text-red-300 border-red-500/40' },
+    warteliste: { label: 'Warteliste', color: 'bg-amber-500/15 text-amber-300 border-amber-500/40' },
 };
 
 function formatDate(dateStr) {
@@ -382,6 +385,12 @@ export default function ProvisionalReviewPanel() {
         queryFn: () => base44.entities.Employee.list()
     });
 
+    // Schichtarten für die Wunschkapazität (Warteliste / Platz frei)
+    const { data: shiftTypes = [] } = useQuery({
+        queryKey: ['wish-shift-types'],
+        queryFn: () => base44.entities.ShiftType.filter({ is_active: true }, 'order')
+    });
+
     const employeeMap = useMemo(() => {
         const map = {};
         employees.forEach(e => { map[e.id] = e; });
@@ -419,6 +428,8 @@ export default function ProvisionalReviewPanel() {
     });
 
     const pending = useMemo(() => requests.filter(r => r.status === 'ausstehend').sort((a, b) => a.date.localeCompare(b.date)), [requests]);
+    const waitlist = useMemo(() => requests.filter(r => r.status === 'warteliste'), [requests]);
+    const usageMap = useMemo(() => buildWishUsage(requests), [requests]);
     const filtered = useMemo(() =>
         [...requests]
             .filter(r => statusFilter === 'alle' || r.status === statusFilter)
@@ -453,6 +464,19 @@ export default function ProvisionalReviewPanel() {
     };
     const handleQuickConfirm = (req) => reviewMutation.mutate({ req, action: 'bestätigt', note: '' });
     const handleQuickReject  = (req) => reviewMutation.mutate({ req, action: 'abgelehnt', note: '' });
+
+    // Bestätigen aus der Warteliste: Shift wie bisher anlegen (Mutation) und
+    // den Mitarbeiter per Push informieren.
+    const handleWaitlistConfirm = async (req) => {
+        await reviewMutation.mutateAsync({ req, action: 'bestätigt', note: '' });
+        base44.functions.invoke('sendPushNotification', {
+            title: 'Wunsch bestätigt',
+            message: 'Dein Wunsch ist bestätigt (Warteliste aufgelöst)',
+            external_user_id: req.employee_id,
+            url: 'https://bar-shift-pro-fc3522b9.base44.app/Calendar',
+        }).catch(() => {});
+    };
+    const handleWaitlistReject = (req) => reviewMutation.mutate({ req, action: 'abgelehnt', note: '' });
 
     return (
         <div className="space-y-5">
@@ -500,7 +524,7 @@ export default function ProvisionalReviewPanel() {
             {/* Filter tabs – only in list mode */}
             {viewMode === 'liste' && (
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                    {['ausstehend', 'bestätigt', 'abgelehnt', 'alle'].map(s => (
+                    {['ausstehend', 'warteliste', 'bestätigt', 'abgelehnt', 'alle'].map(s => (
                         <button key={s} onClick={() => setStatusFilter(s)}
                             className={cn('px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 border',
                                 statusFilter === s
@@ -540,6 +564,16 @@ export default function ProvisionalReviewPanel() {
                     employeeStats={employeeStats}
                 />
             )}
+
+            {/* Warteliste — unter den offenen Wünschen */}
+            <WishlistSection
+                entries={waitlist}
+                usageMap={usageMap}
+                shiftTypes={shiftTypes}
+                onConfirm={handleWaitlistConfirm}
+                onReject={handleWaitlistReject}
+                isProcessing={reviewMutation.isPending}
+            />
 
             {/* Edit modal */}
             <EditModal

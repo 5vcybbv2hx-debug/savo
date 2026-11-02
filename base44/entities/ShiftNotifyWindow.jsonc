@@ -1,0 +1,44 @@
+{
+  "name": "ShiftNotifyWindow",
+  "type": "object",
+  "properties": {
+    "employee_id": {
+      "type": "string",
+      "description": "Mitarbeiter, f\u00fcr den das B\u00fcndelungsfenster l\u00e4uft"
+    },
+    "employee_name": {
+      "type": "string",
+      "description": "Name des Mitarbeiters (Anzeige)"
+    },
+    "window_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start des 60-Sekunden-Fensters (ISO). Leer/null = kein aktives Fenster."
+    },
+    "count": {
+      "type": "number",
+      "default": 0,
+      "description": "Anzahl der Schicht-\u00c4nderungen im laufenden Fenster"
+    },
+    "kinds": {
+      "type": "string",
+      "description": "Arten der \u00c4nderungen als Komma-Liste, z.B. 'create,create,update'"
+    },
+    "first_date": {
+      "type": "string",
+      "description": "Fr\u00fchestes Schichtdatum im Fenster (YYYY-MM-DD)"
+    },
+    "last_date": {
+      "type": "string",
+      "description": "Sp\u00e4testes Schichtdatum im Fenster (YYYY-MM-DD)"
+    },
+    "pending": {
+      "type": "boolean",
+      "default": true,
+      "description": "true = Fenster ist offen und die Sammelnachricht steht noch aus"
+    }
+  },
+  "required": [
+    "employee_id"
+  ]
+}

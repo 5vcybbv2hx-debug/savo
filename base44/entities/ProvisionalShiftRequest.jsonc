@@ -36,10 +36,11 @@
       "enum": [
         "ausstehend",
         "best\u00e4tigt",
-        "abgelehnt"
+        "abgelehnt",
+        "warteliste"
       ],
       "default": "ausstehend",
-      "description": "Status der Anfrage"
+      "description": "Status der Anfrage. 'warteliste' = Schichttyp war voll; Eintrag z\u00e4hlt nicht gegen wish_capacity."
     },
     "manager_note": {
       "type": "string",
