@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils'
 import { transferKellerToTheke, reduceCurrentStock, restoreCurrentStock } from '@/lib/stockSync';
+import { buildOrderRows, restockItemKey, hasOpenOrderRow, toShoppingPayload } from '@/lib/restockOrderRows';
 import { useErrorHandler } from '@/components/error/ErrorHandler';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
@@ -310,92 +311,53 @@ export default function Restock() {
         }
     };
 
-    // Gebinde-Bestell-Vorschlag: rechnet die im Rundgang aufgefüllte Flaschen-Menge auf
-    // volle Gebinde-Einheiten (Kiste/Karton/Palette…) des Standard-Lieferanten hoch —
-    // z.B. 3 Flaschen benötigt bei einem 6er-Karton → Vorschlag "1× Karton (6×)".
-    // Ohne diese Umrechnung würde die Flaschen-Anzahl 1:1 als Gebinde-Menge übernommen
-    // (bei Havana Club 3 also fälschlich "3× Karton" statt "1× Karton" bestellt werden).
+    // Bestellzeile einer Auffüll-Position: gebündelt über alle heutigen Fächer
+    // desselben Artikels + Lieferanten (eine Zeile pro Artikel, nicht pro Fach).
     const getOrderSuggestion = (item) => {
-        const article = articles.find(a => a.id === item.article_id);
-        const primarySupplier = article?.supplier_details?.find(s => s.is_primary) || article?.supplier_details?.[0];
-        const supplierName = primarySupplier?.supplier_name || article?.suppliers?.[0] || '';
-        const defaultOpt = (primarySupplier?.packaging_options || []).find(o => o.is_default) || (primarySupplier?.packaging_options || [])[0];
-        const unitsPerPack = parseFloat(defaultOpt?.units_per_pack) || 1;
-        const bottleNeed = item.needed_quantity != null ? parseFloat(item.needed_quantity) : (parseFloat(item.quantity) || 0);
-        const suggestedQty = Math.max(1, Math.ceil(bottleNeed / unitsPerPack));
-        return {
-            article, primarySupplier, supplierName, defaultOpt, unitsPerPack, bottleNeed,
-            suggestedQty,
-            suggestedUnits: suggestedQty * unitsPerPack,
-            packagingLabel: defaultOpt ? `${defaultOpt.packaging_type} ${defaultOpt.units_per_pack}×` : null,
-            wasRounded: unitsPerPack > 1 && suggestedQty * unitsPerPack !== bottleNeed,
-        };
+        const key = restockItemKey(item, articles);
+        return orderRowsToday.find(r => r.key === key) || buildOrderRows([item], articles)[0];
     };
 
     // Einzeln zur Bestellung
     const addToOrder = async (item) => {
-        const s = getOrderSuggestion(item);
-        await base44.entities.ShoppingList.create({
-            item_name:           item.article_name,
-            article_id:          item.article_id || null,
-            category:            s.supplierName,
-            supplier_name:       s.supplierName,
-            packaging_option_id: s.defaultOpt?.id || null,
-            packaging_label:     s.packagingLabel,
-            price_per_pack:      s.defaultOpt?.price_per_pack || null,
-            price_per_unit:      s.defaultOpt?.price_per_unit || s.article?.purchase_price || null,
-            quantity:            s.suggestedQty,
-            quantity_units:      s.suggestedUnits,
-            unit:                s.defaultOpt?.packaging_type || 'Stück',
-            status:              'offen',
-            notes:               `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`,
-        });
+        const row = getOrderSuggestion(item);
+        if (hasOpenOrderRow(shoppingItems, row)) {
+            setOrderNudge(prev => ({ ...prev, [item.id]: false }));
+            showToast(`${row.item_name} ist bereits in der Bestellliste`, 'info');
+            return;
+        }
+        await base44.entities.ShoppingList.create(toShoppingPayload(row));
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         queryClient.invalidateQueries({ queryKey: ['shopping-list-restock'] });
         setOrderNudge(prev => ({ ...prev, [item.id]: false }));
         showToast(
-            s.wasRounded
-                ? `${item.article_name}: ${s.suggestedQty}× ${s.defaultOpt?.packaging_type || ''} bestellt (auf volles Gebinde aufgerundet)`
-                : `${item.article_name} zur Bestellung hinzugefügt`,
+            row.wasRounded
+                ? `${row.item_name}: ${row.quantity}× ${row.unit} bestellt (auf volles Gebinde aufgerundet)`
+                : `${row.item_name} zur Bestellung hinzugefügt`,
             'success'
         );
     };
 
-    // Alle erledigten zur Bestellung (bereichsübergreifend)
+    // Alle erledigten zur Bestellung (bereichsübergreifend) — gebündelt pro Artikel + Lieferant
     const addAllCompletedToOrder = async () => {
         const completed = todayItems.filter(i => i.is_completed);
+        const rows = buildOrderRows(completed, articles);
+        const known = [...shoppingItems];
         let added = 0, skipped = 0, rounded = 0;
 
-        for (const item of completed) {
-            const alreadyInOrder = shoppingItems.some(
-                s => s.item_name === item.article_name && (s.status === 'offen' || s.status === 'bestellt')
-            );
-            if (alreadyInOrder) { skipped++; continue; }
-
-            const s = getOrderSuggestion(item);
-            await base44.entities.ShoppingList.create({
-                item_name:           item.article_name,
-                article_id:          item.article_id || null,
-                category:            s.supplierName,
-                supplier_name:       s.supplierName,
-                packaging_option_id: s.defaultOpt?.id || null,
-                packaging_label:     s.packagingLabel,
-                price_per_pack:      s.defaultOpt?.price_per_pack || null,
-                price_per_unit:      s.defaultOpt?.price_per_unit || s.article?.purchase_price || null,
-                quantity:            s.suggestedQty,
-                quantity_units:      s.suggestedUnits,
-                unit:                s.defaultOpt?.packaging_type || 'Stück',
-                status:              'offen',
-                notes:               `Auffüllliste ${format(new Date(), 'dd.MM.yyyy')} · ${item.area_name || ''}`.trim().replace(/·\s*$/, ''),
-            });
+        for (const row of rows) {
+            if (hasOpenOrderRow(known, row)) { skipped++; continue; }
+            const payload = toShoppingPayload(row);
+            const created = await base44.entities.ShoppingList.create(payload);
+            known.push(created || payload);
             added++;
-            if (s.wasRounded) rounded++;
+            if (row.wasRounded) rounded++;
         }
 
         queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
         queryClient.invalidateQueries({ queryKey: ['shopping-list-restock'] });
 
-        return { added, skipped, rounded };
+        return { added, skipped, rounded, facilities: completed.length };
     };
 
     const handleDelete = (id) => {
@@ -419,7 +381,7 @@ export default function Restock() {
                 setIsProcessing(true);
                 try {
                     // 1. Bestellen (inkl. Duplikat-Check)
-                    const { added, skipped, rounded } = await addAllCompletedToOrder();
+                    const { added, skipped, rounded, facilities } = await addAllCompletedToOrder();
 
                     // 2. Optimistic: IDs sofort aus dem Cache nehmen, damit die Liste
                     //    beim Schließen des Dialogs leer ist (kein Flackern alter Abgehakte).
@@ -462,8 +424,9 @@ export default function Restock() {
 
                     const skipNote = skipped > 0 ? ` · ${skipped} bereits in Bestellung` : '';
                     const roundNote = rounded > 0 ? ` · ${rounded}× auf volles Gebinde aufgerundet` : '';
+                    const bundleNote = facilities > added + skipped ? ` (${facilities} Fächer gebündelt)` : '';
                     if (rejected === 0) {
-                        showToast(`${added} Artikel bestellt, Liste bereinigt${skipNote}${roundNote}`, 'success');
+                        showToast(`${added} Artikel bestellt, Liste bereinigt${bundleNote}${skipNote}${roundNote}`, 'success');
                     } else {
                         // Teilfehler: nicht erneut bestellen (Duplikat-Check in addAllCompletedToOrder);
                         // beim erneuten Tipp werden nur noch die verbliebenen erledigten Items gelöscht.
@@ -490,6 +453,9 @@ export default function Restock() {
                 return (b.created_date || '').localeCompare(a.created_date || '');
             });
     }, [restockItems, today]);
+
+    // Gebündelte Bestellzeilen (eine pro Artikel + Lieferant) für heute
+    const orderRowsToday = useMemo(() => buildOrderRows(todayItems, articles), [todayItems, articles]);
 
     const searchMatches = useMemo(() => {
         if (!barcode.trim()) return [];
@@ -763,7 +729,7 @@ export default function Restock() {
                                                             <ShoppingCart className="w-3.5 h-3.5 text-primary shrink-0" />
                                                             <p className="text-xs text-muted-foreground flex-1 min-w-0 truncate">
                                                                 {s.wasRounded
-                                                                    ? <>In Bestellliste? <span className="text-foreground font-medium">{s.suggestedQty}× {s.defaultOpt?.packaging_type}</span></>
+                                                                    ? <>In Bestellliste? <span className="text-foreground font-medium">{s.quantity}× {s.unit}</span></>
                                                                     : 'In Bestellliste aufnehmen?'}
                                                             </p>
                                                             <Button
