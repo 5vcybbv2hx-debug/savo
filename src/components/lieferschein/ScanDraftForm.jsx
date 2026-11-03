@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SmartCombobox from '@/components/ui/SmartCombobox';
@@ -51,15 +51,33 @@ export default function ScanDraftForm({
             />
           </div>
         </div>
-        {draft.file_url && (
-          <a
-            href={draft.file_url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"
-          >
-            <ExternalLink className="w-3.5 h-3.5" /> Original-Lieferschein ansehen
-          </a>
+        {(draft.file_urls?.length > 0 || draft.file_url) && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {(draft.file_urls?.length ? draft.file_urls : [draft.file_url]).map((url, i) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Seite {i + 1}
+              </a>
+            ))}
+            {draft.page_count > 1 && (
+              <span className="text-[11px] text-muted-foreground">· {draft.page_count} Seiten, ein Beleg</span>
+            )}
+          </div>
+        )}
+
+        {draft.missing_pages?.length > 0 && (
+          <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+              {draft.missing_pages.map((page) => `Seite ${page} nicht erkannt`).join(' · ')}
+              {' '}– bitte Positionen manuell ergänzen oder Seite neu aufnehmen.
+            </p>
+          </div>
         )}
       </div>
 

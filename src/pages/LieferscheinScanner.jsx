@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2, AlertTriangle, ClipboardList, FileClock } from 'lucide-react';
+import { Loader2, AlertTriangle, ClipboardList, FileClock, ScanText } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { usePermissions } from '@/components/auth/usePermissions';
@@ -9,7 +9,7 @@ import UploadZone from '@/components/lieferschein/UploadZone';
 import ScanDraftForm from '@/components/lieferschein/ScanDraftForm';
 import BookingResult from '@/components/lieferschein/BookingResult';
 import DeliveryHistory from '@/components/lieferschein/DeliveryHistory';
-import { extractDeliveryNote, uploadDeliveryFile } from '@/lib/deliveryNoteExtraction';
+import { extractDeliveryNote, uploadDeliveryFile, MAX_PAGES } from '@/lib/deliveryNoteExtraction';
 import { matchArticle, matchShoppingItem, matchSupplier, normalizeName } from '@/lib/deliveryNoteMatching';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -18,7 +18,8 @@ export default function LieferscheinScanner() {
   const permissions = usePermissions();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('scan');
-  const [file, setFile] = useState(null);
+  const [pages, setPages] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [draft, setDraft] = useState(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
@@ -52,7 +53,7 @@ export default function LieferscheinScanner() {
   });
 
   const reset = () => {
-    setFile(null);
+    setPages([]);
     setDraft(null);
     setBookingResult(null);
     setError(null);
@@ -64,19 +65,48 @@ export default function LieferscheinScanner() {
     return openItems.filter((i) => normalizeName(i.category) === target || normalizeName(i.supplier_name) === target);
   };
 
-  const handleFile = async (selected) => {
-    if (!selected) {
-      reset();
+  const addPages = async (files) => {
+    const room = MAX_PAGES - pages.length;
+    if (room <= 0) {
+      toast.error(`Maximal ${MAX_PAGES} Seiten pro Beleg.`);
       return;
     }
-    setFile(selected);
+    const list = Array.from(files || []).slice(0, room);
+    if (list.length === 0) return;
+    setBookingResult(null);
+    setError(null);
+    setIsUploading(true);
+    try {
+      const uploaded = [];
+      for (const f of list) {
+        const url = await uploadDeliveryFile(f);
+        uploaded.push({
+          id: crypto.randomUUID(),
+          name: f.name,
+          url,
+          isImage: !!f.type?.startsWith('image/'),
+        });
+      }
+      setPages((prev) => [...prev, ...uploaded]);
+    } catch (e) {
+      setError(e?.message || 'Seite konnte nicht hochgeladen werden.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removePage = (id) => {
+    setPages((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const runExtraction = async () => {
+    if (pages.length === 0) return;
     setDraft(null);
     setBookingResult(null);
     setError(null);
     setIsExtracting(true);
     try {
-      const fileUrl = await uploadDeliveryFile(selected);
-      const extracted = await extractDeliveryNote(fileUrl);
+      const extracted = await extractDeliveryNote(pages.map((p) => p.url));
       const supplier = matchSupplier(extracted.supplier_name, suppliers);
       const supplierName = supplier?.name || extracted.supplier_name || '';
       const candidates = openItemsForSupplier(supplierName);
@@ -92,19 +122,32 @@ export default function LieferscheinScanner() {
           quantity: p.quantity,
           unit: p.unit || 'Stück',
           unit_size: p.unit_size ?? 1,
+          content_amount: p.content_amount,
+          content_unit: p.content_unit,
           unit_price: p.unit_price,
           line_total: p.line_total,
+          price_missing: p.price_missing !== false,
+          page_number: p.page_number || 1,
           shopping_item_id: shoppingItem?.id || '',
         };
       });
+
+      const priced = positions.filter((p) => p.unit_price != null);
+      const totalNet = priced.length
+        ? priced.reduce((sum, p) => sum + (p.line_total
+            ?? (Number(p.quantity) || 0) * (Number(p.unit_size) || 1) * (Number(p.unit_price) || 0)), 0)
+        : null;
 
       setDraft({
         supplier_name: supplierName,
         supplier_id: supplier?.id || '',
         delivery_note_number: extracted.delivery_note_number || '',
         delivery_date: extracted.delivery_date || today(),
-        file_url: fileUrl,
-        total_net: extracted.total_net,
+        file_url: pages[0]?.url || '',
+        file_urls: pages.map((p) => p.url),
+        page_count: pages.length,
+        missing_pages: extracted.missing_pages || [],
+        total_net: totalNet,
         positions,
       });
     } catch (e) {
@@ -175,6 +218,8 @@ export default function LieferscheinScanner() {
           delivery_note_number: draft.delivery_note_number,
           delivery_date: draft.delivery_date,
           file_url: draft.file_url,
+          file_urls: draft.file_urls || [],
+          page_count: draft.page_count || 1,
           total_net: draft.total_net ?? null,
         },
         positions: positions.map((p) => ({
@@ -184,8 +229,12 @@ export default function LieferscheinScanner() {
           quantity: p.quantity,
           unit: p.unit,
           unit_size: p.unit_size,
+          content_amount: p.content_amount ?? null,
+          content_unit: p.content_unit ?? null,
           unit_price: p.unit_price,
           line_total: p.line_total,
+          page_number: p.page_number || 1,
+          price_missing: p.unit_price == null,
           shopping_item_id: p.shopping_item_id,
         })),
       });
@@ -193,7 +242,7 @@ export default function LieferscheinScanner() {
       if (data?.error) throw new Error(data.error);
       setBookingResult(data);
       setDraft(null);
-      setFile(null);
+      setPages([]);
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['delivery-notes'] });
       queryClient.invalidateQueries({ queryKey: ['shopping-open-scanner'] });
@@ -240,8 +289,25 @@ export default function LieferscheinScanner() {
         ) : (
           <div className="space-y-4">
             {!draft && !isExtracting && !bookingResult && (
-              <div className="rounded-2xl border border-border bg-card p-4">
-                <UploadZone file={file} onSelect={handleFile} disabled={isExtracting} />
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+                <UploadZone
+                  pages={pages}
+                  onAddFiles={addPages}
+                  onRemovePage={removePage}
+                  disabled={isExtracting}
+                  isUploading={isUploading}
+                />
+                {pages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={runExtraction}
+                    disabled={isUploading}
+                    className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                  >
+                    <ScanText className="w-4 h-4" />
+                    {pages.length === 1 ? 'Seite auslesen' : `${pages.length} Seiten auslesen`}
+                  </button>
+                )}
               </div>
             )}
 
@@ -259,7 +325,11 @@ export default function LieferscheinScanner() {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">Lesen fehlgeschlagen</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{error}</p>
-                  <button type="button" onClick={reset} className="mt-2 text-xs font-semibold text-primary">
+                  <button
+                    type="button"
+                    onClick={pages.length > 0 ? runExtraction : reset}
+                    className="mt-2 text-xs font-semibold text-primary"
+                  >
                     Erneut versuchen
                   </button>
                 </div>

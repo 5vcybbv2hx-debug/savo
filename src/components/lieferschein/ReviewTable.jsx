@@ -1,14 +1,28 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import PositionRow from './PositionRow';
+import { normalizeName } from '@/lib/deliveryNoteMatching';
+
+const pageKey = (position) =>
+  position.article_id || normalizeName(`${position.article_name || ''} ${position.raw_text || ''}`);
 
 export default function ReviewTable({ positions, articles, openItems, onChange, onRemove, onCreateArticle }) {
   const assigned = positions.filter((p) => p.article_id);
-  const totalNet = positions.reduce(
+  const priced = positions.filter((p) => p.unit_price != null);
+  const totalNet = priced.reduce(
     (sum, p) => sum + (p.quantity && p.unit_price ? Number(p.quantity) * Number(p.unit_price) * (Number(p.unit_size) || 1) : 0),
     0
   );
   const unassigned = positions.length - assigned.length;
+
+  // Gleicher Artikel auf mehreren Seiten → getrennt bleiben, aber Hinweis "auch auf Seite X".
+  const pagesByKey = positions.reduce((acc, p) => {
+    const key = pageKey(p);
+    if (!key) return acc;
+    acc[key] = acc[key] || new Set();
+    if (p.page_number) acc[key].add(p.page_number);
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-2">
@@ -23,18 +37,25 @@ export default function ReviewTable({ positions, articles, openItems, onChange, 
         <span />
       </div>
 
-      {positions.map((position, index) => (
-        <PositionRow
-          key={position._key || index}
-          position={position}
-          index={index}
-          articles={articles}
-          openItems={openItems}
-          onChange={(patch) => onChange(index, patch)}
-          onRemove={onRemove}
-          onCreateArticle={onCreateArticle}
-        />
-      ))}
+      {positions.map((position, index) => {
+        const key = pageKey(position);
+        const otherPages = key
+          ? Array.from(pagesByKey[key] || []).filter((page) => page !== position.page_number).sort((a, b) => a - b)
+          : [];
+        return (
+          <PositionRow
+            key={position._key || index}
+            position={position}
+            index={index}
+            articles={articles}
+            openItems={openItems}
+            otherPages={otherPages}
+            onChange={(patch) => onChange(index, patch)}
+            onRemove={onRemove}
+            onCreateArticle={onCreateArticle}
+          />
+        );
+      })}
 
       {positions.length === 0 && (
         <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
@@ -58,7 +79,11 @@ export default function ReviewTable({ positions, articles, openItems, onChange, 
         </div>
         <div className="text-right">
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Summe netto</p>
-          <p className="text-lg font-bold text-foreground num">{totalNet.toFixed(2)} €</p>
+          {priced.length > 0 ? (
+            <p className="text-lg font-bold text-foreground num">{totalNet.toFixed(2)} €</p>
+          ) : (
+            <p className="text-sm font-semibold text-muted-foreground">— <span className="text-[10px] font-normal">kein Preis auf Beleg</span></p>
+          )}
         </div>
       </div>
     </div>

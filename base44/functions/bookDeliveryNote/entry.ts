@@ -39,26 +39,39 @@ export default async function (req) {
     const deliveryDate = header.delivery_date || new Date().toISOString().slice(0, 10);
     const totalNet = toNum(header.total_net);
 
+    const fileUrls = Array.isArray(header.file_urls) && header.file_urls.length > 0
+      ? header.file_urls.filter(Boolean)
+      : (header.file_url ? [header.file_url] : []);
+    const pageCount = Math.max(toNum(header.page_count) || 0, fileUrls.length, 1);
+    const sumLineTotals = (list) => list.reduce((sum, p) => sum + (toNum(p.line_total) || 0), 0);
+    const hasAnyPrice = positions.some((p) => toNum(p.unit_price) !== null);
+
     const note = await base44.asServiceRole.entities.DeliveryNote.create({
       supplier_name: supplierName,
       supplier_id: header.supplier_id || '',
       delivery_note_number: noteNumber,
       delivery_date: deliveryDate,
-      file_url: header.file_url || '',
+      file_url: header.file_url || fileUrls[0] || '',
+      file_urls: fileUrls,
+      page_count: pageCount,
       positions: positions.map((p) => ({
         raw_text: p.raw_text || '',
         article_name: p.article_name || '',
         article_id: p.article_id || '',
         quantity: toNum(p.quantity),
         unit: p.unit || '',
+        packaging: p.unit || '',
         unit_size: toNum(p.unit_size),
+        content_amount: toNum(p.content_amount),
+        content_unit: p.content_unit || '',
+        page_number: toNum(p.page_number) || 1,
         unit_price: toNum(p.unit_price),
         line_total: toNum(p.line_total),
         shopping_item_id: p.shopping_item_id || '',
         booked: false,
       })),
       positions_count: positions.length,
-      total_net: totalNet ?? positions.reduce((sum, p) => sum + (toNum(p.line_total) || 0), 0),
+      total_net: totalNet ?? (hasAnyPrice ? sumLineTotals(positions) : null),
       status: 'entwurf',
       notes: header.notes || '',
     });
@@ -69,6 +82,8 @@ export default async function (req) {
     const priceChanges = [];
     const storedPositions = [];
     let shoppingClosed = 0;
+    let withPrice = 0;
+    let withoutPrice = 0;
 
     for (let i = 0; i < positions.length; i += 1) {
       const p = positions[i];
@@ -80,7 +95,11 @@ export default async function (req) {
         article_id: articleId,
         quantity: toNum(p.quantity),
         unit: p.unit || '',
+        packaging: p.unit || '',
         unit_size: toNum(p.unit_size),
+        content_amount: toNum(p.content_amount),
+        content_unit: p.content_unit || '',
+        page_number: toNum(p.page_number) || 1,
         unit_price: toNum(p.unit_price),
         line_total: toNum(p.line_total),
         shopping_item_id: p.shopping_item_id || '',
@@ -109,7 +128,11 @@ export default async function (req) {
         });
 
         const oldPrice = toNum(article.purchase_price);
-        const newPrice = toNum(p.unit_price);
+        // Ohne erkannten Preis (Lieferscheine enthalten meist keine Preise) wird
+        // weder purchase_price geändert noch ein PriceHistory-Eintrag geschrieben.
+        const newPrice = p.price_missing === true ? null : toNum(p.unit_price);
+        if (newPrice !== null && newPrice > 0) withPrice += 1;
+        else withoutPrice += 1;
         if (newPrice !== null && newPrice > 0 && newPrice !== oldPrice) {
           await base44.asServiceRole.entities.PriceHistory.create({
             article_id: articleId,
@@ -175,8 +198,9 @@ export default async function (req) {
     }
 
     const summaryParts = [
-      `${booked.length} von ${positions.length} Positionen gebucht`,
-      `${priceChanges.length} Preisänderung${priceChanges.length === 1 ? '' : 'en'}`,
+      `${booked.length} Position${booked.length === 1 ? '' : 'en'} gebucht`,
+      `${withPrice} mit Preis übernommen`,
+      `${withoutPrice} ohne Preis`,
     ];
     if (shoppingClosed > 0) summaryParts.push(`${shoppingClosed} Bestellung${shoppingClosed === 1 ? '' : 'en'} abgeschlossen`);
     if (unbooked.length > 0) summaryParts.push(`${unbooked.length} Position${unbooked.length === 1 ? '' : 'en'} ohne Artikel`);
@@ -188,12 +212,13 @@ export default async function (req) {
       booking_summary: summary,
       positions: storedPositions,
       positions_count: positions.length,
-      total_net: totalNet ?? positions.reduce((sum, p) => sum + (toNum(p.line_total) || 0), 0),
+      total_net: totalNet ?? (hasAnyPrice ? sumLineTotals(positions) : null),
     });
 
     return Response.json({
       note: updatedNote,
       summary,
+      counts: { booked: booked.length, withPrice, withoutPrice },
       booked,
       unbooked,
       priceChanges,

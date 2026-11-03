@@ -21,6 +21,23 @@ export default function BookingResult({ result, onReset }) {
         </div>
       </div>
 
+      {result.counts && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-xl border border-border bg-card p-3 text-center">
+            <p className="text-lg font-bold text-foreground num">{result.counts.booked ?? 0}</p>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Positionen gebucht</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-3 text-center">
+            <p className="text-lg font-bold text-emerald-500 num">{result.counts.withPrice ?? 0}</p>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">mit Preis übernommen</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-3 text-center">
+            <p className="text-lg font-bold text-muted-foreground num">{result.counts.withoutPrice ?? 0}</p>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">ohne Preis</p>
+          </div>
+        </div>
+      )}
+
       {result.priceChanges?.length > 0 && (
         <div className="rounded-xl border border-border bg-card p-3">
           <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-2">Preisänderungen</p>

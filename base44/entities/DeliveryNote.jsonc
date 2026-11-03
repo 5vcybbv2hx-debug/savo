@@ -21,7 +21,18 @@
     },
     "file_url": {
       "type": "string",
-      "description": "URL des hochgeladenen Fotos/PDF des Lieferscheins"
+      "description": "URL des hochgeladenen Fotos/PDF des Lieferscheins (erste Seite)"
+    },
+    "file_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs aller Seiten des Belegs in Seitenreihenfolge (Seite 1 zuerst). Leer bei Altbest\u00e4nden mit nur file_url."
+    },
+    "page_count": {
+      "type": "number",
+      "description": "Anzahl der Seiten des Belegs (1 bei einseitigen Lieferscheinen)"
     },
     "positions": {
       "type": "array",
@@ -47,19 +58,35 @@
           },
           "unit": {
             "type": "string",
-            "description": "Einheit: Karton, Flaschen, St\u00fcck, kg"
+            "description": "Einheit: Karton, Kasten, Flaschen, St\u00fcck, kg"
+          },
+          "packaging": {
+            "type": "string",
+            "description": "Gebindeart laut Beleg: Kasten, Karton, Flaschen, St\u00fcck"
           },
           "unit_size": {
             "type": "number",
             "description": "Einzeleinheiten pro Gebinde (sonst 1)"
           },
+          "content_amount": {
+            "type": "number",
+            "description": "F\u00fcllmenge je Einheit laut Beleg (z. B. 0.7 bei 0,7 l). Keine Preisangabe."
+          },
+          "content_unit": {
+            "type": "string",
+            "description": "Einheit der F\u00fcllmenge: l, ml, cl, g, kg"
+          },
+          "page_number": {
+            "type": "number",
+            "description": "Seite des Belegs, auf der die Position steht (1-basiert)"
+          },
           "unit_price": {
             "type": "number",
-            "description": "EK netto pro Einheit"
+            "description": "EK netto pro Einheit \u2014 nur wenn auf dem Beleg ausdr\u00fccklich als Preis gekennzeichnet, sonst null"
           },
           "line_total": {
             "type": "number",
-            "description": "Zeilensumme netto"
+            "description": "Zeilensumme netto \u2014 nur bei vorhandenem Preis, sonst null"
           },
           "shopping_item_id": {
             "type": "string",
@@ -83,7 +110,7 @@
     },
     "total_net": {
       "type": "number",
-      "description": "Summe netto in Euro"
+      "description": "Summe netto in Euro \u2014 null, wenn auf dem Beleg keine Preise stehen"
     },
     "status": {
       "type": "string",
@@ -91,12 +118,16 @@
         "entwurf",
         "gebucht"
       ],
+      "enumColors": [
+        "gray",
+        "green"
+      ],
       "default": "entwurf",
       "description": "Bearbeitungsstand"
     },
     "booking_summary": {
       "type": "string",
-      "description": "Zusammenfassung der Buchung (Positionen, Preis\u00e4nderungen, abgeschlossene Bestellungen)"
+      "description": "Zusammenfassung der Buchung (Positionen, Preis\u00fcbernahmen, abgeschlossene Bestellungen)"
     },
     "notes": {
       "type": "string",
