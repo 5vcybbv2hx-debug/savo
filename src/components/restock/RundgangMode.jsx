@@ -14,6 +14,9 @@ import {
 import { cn } from '@/lib/utils';
 import RegelGrid from '@/components/storage/RegelGrid';
 import PhotoCountSheet from '@/components/warehouse/PhotoCountSheet';
+import RundgangProtocol from '@/components/restock/RundgangProtocol';
+import RundgangCompleteButton from '@/components/restock/RundgangCompleteButton';
+import { useRundgangSession } from '@/hooks/useRundgangSession';
 
 const FURNITURE_ICONS = {
     'Kühlschrank': '🧊',
@@ -211,6 +214,14 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         return list;
     }, [restockAreas, furnitureByArea, slotsByFurniture, assignmentsBySlot]);
 
+    // ── Rundgang-Protokoll (rein additiv) ──────────────────────────────────────
+    const { session, recordSlotChange, completeSession } = useRundgangSession(flatSlots.length);
+
+    const handleCompleteRundgang = async () => {
+        await completeSession();
+        showToast('Rundgang abgeschlossen ✓', 'success');
+    };
+
     // ── IST speichern: RestockItem erstellen/updaten + Stock sync ──────────────
     const handleSaveIst = async (advanceToNext = false) => {
         if (!istPopover || isSaving) return;
@@ -281,6 +292,9 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
             }
         }
 
+        // Protokoll: dieses Fach einmalig als bearbeitet zählen
+        await recordSlotChange(slot.id, areas.find(a => a.id === slot.area_id)?.name || '');
+
         // Assignments-Cache aktualisieren (neue quantity-Werte)
         qc.invalidateQueries({ queryKey: ['assignments'] });
         qc.invalidateQueries({ queryKey: ['restock-items'] });
@@ -350,17 +364,27 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
 
     return (
         <div className="space-y-4 pb-32">
+            {/* Rundgang-Protokoll — nur Manager/Inhaber */}
+            <RundgangProtocol />
+
             {/* Fortschrittsbalken */}
             <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm border-b border-border/40 px-1 py-2">
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="text-xs font-semibold text-muted-foreground">
                         {overallProgress.done}/{overallProgress.total} Fächer geprüft
                     </span>
-                    {allDone && (
-                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                            ✓ Alles erledigt!
-                        </span>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {allDone && (
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                ✓ Alles erledigt!
+                            </span>
+                        )}
+                        <RundgangCompleteButton
+                            isCompleted={!!session?.is_completed}
+                            completedAt={session?.completed_at}
+                            onComplete={handleCompleteRundgang}
+                        />
+                    </div>
                 </div>
                 <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                     <div

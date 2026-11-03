@@ -64,6 +64,10 @@ export const QK = {
 
   // Suppliers
   suppliers:        () => ['suppliers'],
+
+  // Rundgang-Protokoll
+  rundgangSessions:     (daysBack) => ['rundgangSessions', { daysBack }],
+  rundgangSessionToday: (date) => ['rundgangSessions', 'today', date],
 };
 
 /**

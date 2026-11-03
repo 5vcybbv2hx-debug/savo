@@ -1,0 +1,62 @@
+{
+  "name": "RundgangSession",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tag des Rundgangs (YYYY-MM-DD) \u2014 genau ein Datensatz pro Tag"
+    },
+    "started_by_name": {
+      "type": "string",
+      "description": "Name des Mitarbeiters, der den Rundgang gestartet hat"
+    },
+    "started_by_email": {
+      "type": "string",
+      "description": "E-Mail des Starters"
+    },
+    "employee_id": {
+      "type": "string",
+      "description": "Employee-ID des Starters"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Zeitpunkt des ersten \u00d6ffnens am Tag"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Zeitpunkt von 'Rundgang abschlie\u00dfen'"
+    },
+    "is_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Rundgang wurde abgeschlossen"
+    },
+    "slots_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Anzahl der F\u00e4cher, die der Rundgang an diesem Tag abarbeitet"
+    },
+    "slots_changed": {
+      "type": "number",
+      "default": 0,
+      "description": "Anzahl der F\u00e4cher, f\u00fcr die an diesem Tag eine IST-Eingabe gespeichert wurde"
+    },
+    "areas_touched": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Bereiche, in denen F\u00e4cher bearbeitet wurden"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen"
+    }
+  },
+  "required": [
+    "date"
+  ]
+}
