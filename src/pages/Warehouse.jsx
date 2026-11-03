@@ -9,7 +9,7 @@ import { STALE } from '@/lib/queryUtils';
 import { format } from 'date-fns';
 import {
     Package, RefreshCw, ShoppingCart, ShoppingBasket, Layers,
-    Building2, TrendingDown, ClipboardCheck, AlertTriangle,
+    Building2, TrendingDown, ClipboardCheck, AlertTriangle, FileScan,
     PackageCheck, Square, Inbox, CheckCircle2, AlertTriangle as AlertTriangleIcon, Minus, Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -218,6 +218,14 @@ export default function Warehouse() {
                                 page="Shopping"
                                 badge={openOrdersCount || undefined}
                                 badgeVariant="default"
+                            />
+                        )}
+                        {permissions.canViewWarehouse && (
+                            <NavCard
+                                icon={FileScan}
+                                label="Lieferschein-Scanner"
+                                description="Lieferschein fotografieren · Positionen prüfen · Wareneingang buchen"
+                                page="LieferscheinScanner"
                             />
                         )}
                         {permissions.canViewShopping && (
