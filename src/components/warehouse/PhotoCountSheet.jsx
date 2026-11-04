@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Camera, Image as ImageIcon, Loader2, X, AlertTriangle, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { haptics } from '@/components/utils/haptics';
-import { uploadCountPhoto, recognizeSlotPhoto, matchSuggestion, preparePhoto, MIN_CONFIDENCE } from '@/lib/photoCount';
+import { uploadCountPhoto, recognizeSlotPhoto, orderSlotAssignments, preparePhoto, MIN_CONFIDENCE } from '@/lib/photoCount';
 import PhotoCountReview from './PhotoCountReview';
 
 const TIMEOUT_MS = 45000;
@@ -23,6 +23,8 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
   const [isApplying, setIsApplying] = useState(false);
   const [dimensions, setDimensions] = useState(null);
   const [preparing, setPreparing] = useState(false);
+  const [orderConfirmed, setOrderConfirmed] = useState(null);
+  const qc = useQueryClient();
   const cameraRef = useRef(null);
   const galleryRef = useRef(null);
   const jobRef = useRef(0);
@@ -47,6 +49,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
     setIsApplying(false);
     setDimensions(null);
     setPreparing(false);
+    setOrderConfirmed(slot?.variety_order_confirmed || null);
   }, [open, slot?.id]);
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
@@ -81,26 +84,47 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
     }
   };
 
-  // Nur vorausfüllen, wenn das Foto gut ist UND das Modell sicher genug war.
-  const buildRows = (detection) => assignments.map((a) => {
-    const hit = matchSuggestion(a, detection.detected);
-    const confident = Boolean(hit)
-      && hit.count != null
+  // Eine Zeile je Sorte, in Fachreihenfolge (links → rechts).
+  // Vorausgefüllt wird nur, wenn das Foto gut ist UND das Modell sicher genug war.
+  const orderedAssignments = orderSlotAssignments(assignments);
+
+  const buildRows = (detection) => orderedAssignments.map((a, idx) => {
+    const segment = detection.segments.find((s) => s.article_id && s.article_id === a.article_id)
+      || detection.segments.find((s) => s.position === idx + 1)
+      || null;
+    const confident = Boolean(segment)
+      && segment.count != null
       && detection.photoQuality !== 'schlecht'
-      && (hit.confidence ?? 0) >= MIN_CONFIDENCE;
+      && (segment.confidence ?? 0) >= MIN_CONFIDENCE;
     return {
+      position: idx + 1,
       assignmentId: a.id,
       article_id: a.article_id,
       article_name: a.article_name,
-      suggestion: hit ? hit.count : null,
-      confidence: hit ? hit.confidence : 0,
-      comment: hit?.comment || '',
-      suggestedOpened: hit ? hit.opened_partial : 0,
-      count: confident ? hit.count : null,
-      opened: confident ? hit.opened_partial : 0,
+      min_stock: a.min_stock ?? null,
+      suggestion: segment ? segment.count : null,
+      confidence: segment ? segment.confidence : 0,
+      comment: segment?.comment || '',
+      count: confident ? segment.count : null,
       uncertain: !confident,
     };
   });
+
+  // Sortenreihenfolge gegen das Foto bestätigen (Fach-Metadatum).
+  const confirmVarietyOrder = async () => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    try {
+      await base44.entities.StorageSlot.update(slot.id, {
+        variety_order_confirmed: today,
+        variety_order_source: 'foto',
+      });
+      setOrderConfirmed(today);
+      haptics.medium();
+      qc.invalidateQueries({ queryKey: ['slots'] });
+    } catch {
+      // Bestätigung ist optional — Zählung bleibt möglich
+    }
+  };
 
   const recognize = async () => {
     if (!file) return;
@@ -169,6 +193,15 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
           };
         }),
         model_raw_response: result.raw,
+        segments: rows.map((r) => ({
+          position: r.position,
+          article_id: r.article_id,
+          article_name: r.article_name,
+          suggested_count: r.suggestion ?? 0,
+          confirmed_count: r.count ?? 0,
+          confidence: r.confidence ?? 0,
+        })),
+        detected_total: result.detectedTotal ?? 0,
         suggested_counts: rows.map((r) => ({
           article_id: r.article_id,
           article_name: r.article_name,
@@ -210,7 +243,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
             <h2 className="text-base font-bold text-foreground truncate">{slotLabel}</h2>
             <p className="text-[11px] text-muted-foreground">
               {assignments.length} Artikel
-              {slotCapacity ? ` · Kapazität ${slotCapacity} Gebinde` : ''}
+              {slotCapacity ? ` · Kapazität ${slotCapacity} Flaschen/Dosen` : ''}
             </p>
           </div>
           <button onClick={onClose} className="p-1.5 text-muted-foreground hover:text-foreground shrink-0" aria-label="Schließen">
@@ -248,7 +281,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
             </div>
           )}
 
-          {preview && (
+          {preview && status !== 'review' && (
             <>
               <img src={preview} alt="Fach-Foto" className="w-full max-h-64 object-contain rounded-xl bg-muted/30" />
               {dimensions?.portrait && (
@@ -313,6 +346,10 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
               summary={result.summary}
               unknownItems={result.unknownItems}
               onManual={onClose}
+              preview={preview}
+              detectedTotal={result.detectedTotal}
+              orderConfirmed={orderConfirmed}
+              onConfirmOrder={confirmVarietyOrder}
             />
           )}
         </div>

@@ -3,26 +3,36 @@ import { base44 } from '@/api/base44Client';
 // Unter diesem Wert gilt ein Vorschlag als unsicher → nicht vorausfüllen.
 export const MIN_CONFIDENCE = 0.5;
 
+// ── Fachreihenfolge ─────────────────────────────────────────────────────────
+// Physische Reihenfolge im Fach: sort_order, sonst Name. Position 1 = links.
+export function orderSlotAssignments(assignments = []) {
+  return [...assignments].sort((a, b) =>
+    ((a.sort_order ?? 0) - (b.sort_order ?? 0)) ||
+    (a.article_name || '').localeCompare(b.article_name || '', 'de')
+  );
+}
+
 export const DETECTION_SCHEMA = {
   type: 'object',
   properties: {
     photo_quality: { type: 'string', enum: ['gut', 'mittel', 'schlecht'] },
     view_ok: { type: 'boolean' },
-    detected: {
+    segments: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
+          position: { type: 'number' },
           article_id: { type: 'string' },
           article_name: { type: 'string' },
           count: { type: ['number', 'null'] },
-          opened_partial: { type: 'number' },
           confidence: { type: 'number' },
           comment: { type: 'string' },
         },
-        required: ['article_name', 'count'],
+        required: ['position', 'count'],
       },
     },
+    detected_total: { type: ['number', 'null'] },
     unknown_items: {
       type: 'array',
       items: {
@@ -36,7 +46,7 @@ export const DETECTION_SCHEMA = {
     },
     summary: { type: 'string' },
   },
-  required: ['photo_quality', 'detected'],
+  required: ['photo_quality', 'segments'],
 };
 
 // ── Foto vorbereiten ────────────────────────────────────────────────────────
@@ -80,33 +90,38 @@ export async function preparePhoto(file) {
 }
 
 // ── Prompt ──────────────────────────────────────────────────────────────────
-function packLabel(article) {
-  const parts = [];
-  if (article?.content_amount) parts.push(`${article.content_amount} ${article.content_unit || ''}`.trim());
-  if (article?.quantity && article.quantity > 1) parts.push(`${article.quantity} Stück`);
-  return parts.length ? parts.join(' × ') : 'Gebinde unbekannt';
-}
-
-function buildPrompt(slotLabel, assignments, articles) {
-  const list = assignments
-    .map((a) => {
+function buildPrompt(slotLabel, ordered, articles) {
+  const list = ordered
+    .map((a, idx) => {
       const article = articles.find((art) => art.id === a.article_id);
-      const cap = a.max_stock != null ? `${a.max_stock} Gebinde` : 'unbekannt';
-      const unit = a.unit || article?.content_unit || 'Stück';
-      const orientation = a.storage_orientation || 'nicht angegeben';
+      const parts = [`${idx + 1}) ${a.article_name} [ID: ${a.article_id}]`];
+      if (article?.content_amount) {
+        parts.push(`${article.content_amount} ${article.content_unit || ''}`.trim());
+      }
+      if (a.storage_orientation && a.storage_orientation !== 'unbekannt') {
+        parts.push(`Lagerung ${a.storage_orientation}`);
+      }
       const hint = (a.notes || '').trim();
-      return `- ${a.article_name} [ID: ${a.article_id}] — Gebindegröße: ${packLabel(article)} · Lagereinheit: ${unit} · Lagerung: ${orientation} · Fach-Kapazität: ${cap}${hint ? ` · Lagerhinweis: ${hint}` : ''}`;
+      if (hint) parts.push(`Hinweis: ${hint}`);
+      return `- ${parts.join(' · ')}`;
     })
     .join('\n');
 
-  return `Du siehst ein Foto des Lagerfachs „${slotLabel}" von oben. In diesem Fach stehen erwartungsgemäß folgende Artikel:
+  return `Du siehst ein Foto des Lagerfachs „${slotLabel}". In diesem Fach stehen diese Sorten in dieser physischen Reihenfolge von links nach rechts:
 ${list}
 
-Zähle für jeden dieser Artikel, wie viele GEBINDE du siehst. Zähle nur Gebinde, die vollständig sichtbar sind. Verdeckte oder angeschnittene Gebinde zählen nicht. Wenn du unsicher bist, gib count null und confidence unter 0,5, statt zu raten. Zähle angebrochene Flaschen separat (opened_partial). Nenne zusätzlich Artikel, die nicht in der Liste stehen (unknown_items). Schätze je Artikel eine Confidence 0-1. Wenn das Bild unscharf, dunkel oder nicht von oben aufgenommen ist, setze photo_quality auf "mittel" oder "schlecht" und view_ok auf false.
+EINHEIT — WICHTIG: Die Einheit ist immer Flasche bzw. Dose (Stück). Rechne NICHT in Kästen oder Gebinden. Lieferschein-Logik (Ka/Fa/Do mit Gebindeumrechnung) gilt hier nicht.
+
+Zähle JEDE Sorte EINZELN. Gib genau einen Eintrag pro Position zurück — auch wenn die Sorte dort nicht sichtbar oder das Fach an dieser Stelle leer ist (dann count 0). Gib KEINE Gesamtsumme über alle Sorten als Sortenwert aus.
+
+Positionsraster: Position 1 ist das linke Segment des Fachs, Position ${ordered.length} das rechte. Teile das Foto gleichmäßig auf diese ${ordered.length} Positionen auf und zähle je Segment die Flaschen/Dosen dieser Sorte.
 
 Regeln:
-- Übernimm article_id unverändert aus der Liste oben.
-- count = Anzahl vollständiger Gebinde (oder null, wenn nicht sicher zählbar), opened_partial = Anzahl angebrochener Einheiten.
+- count = Anzahl sichtbarer Flaschen bzw. Dosen dieser Sorte (nur vollständig sichtbare Einheiten; verdeckte oder angeschnittene zählen nicht). Nichts sichtbar → 0. Wenn du unsicher bist: count null und confidence unter 0,5, statt zu raten.
+- position = die Nummer aus der Liste oben, article_id unverändert übernehmen.
+- confidence je Sorte 0-1. Nenne zusätzlich Artikel, die nicht in der Liste stehen (unknown_items).
+- detected_total = Summe aller gezählten Flaschen/Dosen (nur Kontrollwert).
+- Wenn das Bild unscharf, dunkel oder nicht aufs Fach gerichtet ist: photo_quality "mittel" oder "schlecht" und view_ok false.
 - Alle Zahlen als JSON-Number, niemals leere Strings.
 - summary: ein kurzer Satz zur Zählung.
 Antworte ausschließlich mit der JSON-Struktur.`;
@@ -119,14 +134,15 @@ export async function uploadCountPhoto(file) {
 
 export async function recognizeSlotPhoto({ fileUrl, slot, assignments, articles }) {
   const slotLabel = slot?.full_name || slot?.name || 'Fach';
+  const ordered = orderSlotAssignments(assignments);
   const result = await base44.integrations.Core.InvokeLLM({
-    prompt: buildPrompt(slotLabel, assignments, articles),
+    prompt: buildPrompt(slotLabel, ordered, articles),
     file_urls: [fileUrl],
     response_json_schema: DETECTION_SCHEMA,
   });
 
   const data = typeof result === 'string' ? JSON.parse(result) : result;
-  if (!data || !Array.isArray(data.detected)) {
+  if (!data || !Array.isArray(data.segments)) {
     throw new Error('Unerwartetes Antwortformat');
   }
 
@@ -135,19 +151,22 @@ export async function recognizeSlotPhoto({ fileUrl, slot, assignments, articles 
     photoQuality: ['gut', 'mittel', 'schlecht'].includes(data.photo_quality) ? data.photo_quality : 'mittel',
     viewOk: data.view_ok !== false,
     summary: data.summary || '',
-    detected: data.detected.map((d) => {
-      const count = Number.isFinite(d?.count) ? Math.max(0, Math.round(d.count)) : null;
-      const confidence = Number.isFinite(d?.confidence) ? Math.min(1, Math.max(0, d.confidence)) : 0;
-      return {
-        article_id: d?.article_id || '',
-        article_name: d?.article_name || '',
-        count,
-        opened_partial: Number.isFinite(d?.opened_partial) ? Math.max(0, Math.round(d.opened_partial)) : 0,
-        confidence,
-        uncertain: count == null || confidence < MIN_CONFIDENCE,
-        comment: d?.comment || '',
-      };
-    }),
+    segments: data.segments
+      .map((s) => {
+        const count = Number.isFinite(s?.count) ? Math.max(0, Math.round(s.count)) : null;
+        const confidence = Number.isFinite(s?.confidence) ? Math.min(1, Math.max(0, s.confidence)) : 0;
+        return {
+          position: Number.isFinite(s?.position) ? Math.round(s.position) : 0,
+          article_id: s?.article_id || '',
+          article_name: s?.article_name || '',
+          count,
+          confidence,
+          uncertain: count == null || confidence < MIN_CONFIDENCE,
+          comment: s?.comment || '',
+        };
+      })
+      .sort((a, b) => a.position - b.position),
+    detectedTotal: Number.isFinite(data.detected_total) ? Math.round(data.detected_total) : null,
     unknownItems: Array.isArray(data.unknown_items)
       ? data.unknown_items.map((u) => ({
           description: u?.description || '',
@@ -155,12 +174,4 @@ export async function recognizeSlotPhoto({ fileUrl, slot, assignments, articles 
         }))
       : [],
   };
-}
-
-// Vorschlag je Fachartikel: Treffer über article_id, sonst über den Namen.
-export function matchSuggestion(assignment, detected) {
-  const byId = detected.find((d) => d.article_id && d.article_id === assignment.article_id);
-  if (byId) return byId;
-  const name = (assignment.article_name || '').trim().toLowerCase();
-  return detected.find((d) => (d.article_name || '').trim().toLowerCase() === name) || null;
 }

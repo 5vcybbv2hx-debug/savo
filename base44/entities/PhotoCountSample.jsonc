@@ -18,9 +18,43 @@
       "type": "string",
       "description": "URL des Fotos"
     },
+    "segments": {
+      "type": "array",
+      "description": "Sorten-Segmente in Fachreihenfolge (links \u2192 rechts). position 1 = linkes Segment.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "number",
+            "description": "Position im Fach (1 = links)"
+          },
+          "article_id": {
+            "type": "string"
+          },
+          "article_name": {
+            "type": "string"
+          },
+          "suggested_count": {
+            "type": "number",
+            "description": "Vorschlag des Modells in Flaschen/Dosen (0 = nichts erkannt)"
+          },
+          "confirmed_count": {
+            "type": "number",
+            "description": "Vom Menschen best\u00e4tigte Anzahl Flaschen/Dosen"
+          },
+          "confidence": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "detected_total": {
+      "type": "number",
+      "description": "Summe aller vom Modell gez\u00e4hlten Flaschen/Dosen \u00fcber alle Sorten (nur Kontrollwert)"
+    },
     "expected_articles": {
       "type": "array",
-      "description": "Erwartete Artikel des Fachs inkl. Gebindegr\u00f6\u00dfe",
+      "description": "Erwartete Artikel des Fachs in Fachreihenfolge",
       "items": {
         "type": "object",
         "properties": {
@@ -45,7 +79,7 @@
     },
     "suggested_counts": {
       "type": "array",
-      "description": "Vorschl\u00e4ge des Modells je Artikel",
+      "description": "Vorschl\u00e4ge des Modells je Artikel (Flaschen/Dosen)",
       "items": {
         "type": "object",
         "properties": {
@@ -66,7 +100,7 @@
     },
     "final_counts": {
       "type": "array",
-      "description": "Vom Menschen best\u00e4tigte Mengen",
+      "description": "Vom Menschen best\u00e4tigte Mengen (Flaschen/Dosen)",
       "items": {
         "type": "object",
         "properties": {

@@ -21,12 +21,17 @@ export default function PhotoCountRow({ row, onChange }) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground truncate">{row.article_name}</p>
+          <div className="flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[9px] font-bold flex items-center justify-center shrink-0">
+              {row.position}
+            </span>
+            <p className="text-sm font-bold text-foreground truncate">{row.article_name}</p>
+          </div>
           <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
             {seen && !uncertain ? (
               <>
                 <Camera className="w-3 h-3 shrink-0" />
-                Foto-Vorschlag: {row.suggestion} Gebinde
+                Foto-Vorschlag: {row.suggestion} Flaschen/Dosen
               </>
             ) : seen ? (
               <>
@@ -84,6 +89,13 @@ export default function PhotoCountRow({ row, onChange }) {
           <Plus className="w-4 h-4" />
         </button>
       </div>
+
+      {row.min_stock > 0 && row.count != null && (
+        <p className="text-[11px] text-muted-foreground">
+          Soll {row.min_stock} · auffüllen{' '}
+          <span className="font-bold text-foreground">{Math.max(0, row.min_stock - row.count)}</span> Flaschen/Dosen
+        </p>
+      )}
 
       {row.suggestedOpened > 0 && (
         <div className="flex items-center gap-2">

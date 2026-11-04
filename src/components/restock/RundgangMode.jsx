@@ -16,6 +16,7 @@ import RegelGrid from '@/components/storage/RegelGrid';
 import PhotoCountSheet from '@/components/warehouse/PhotoCountSheet';
 import RundgangProtocol from '@/components/restock/RundgangProtocol';
 import PhotoCountAccuracy from '@/components/warehouse/PhotoCountAccuracy';
+import VarietyOrderChecklist from '@/components/warehouse/VarietyOrderChecklist';
 import RundgangCompleteButton from '@/components/restock/RundgangCompleteButton';
 import { useRundgangSession } from '@/hooks/useRundgangSession';
 
@@ -370,6 +371,9 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
 
             {/* Foto-Zählung: Trefferquote (Kalibrierung) — nur Manager */}
             <PhotoCountAccuracy />
+
+            {/* Fächer ohne bestätigte Sortenreihenfolge — nur Manager */}
+            <VarietyOrderChecklist slots={restockSlots} assignments={assignments} />
 
             {/* Fortschrittsbalken */}
             <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm border-b border-border/40 px-1 py-2">
