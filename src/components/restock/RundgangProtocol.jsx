@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -8,7 +8,7 @@ import { STALE } from '@/lib/queryUtils';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, ChevronDown } from 'lucide-react';
 
 const DAYS = 14;
 
@@ -26,6 +26,7 @@ function statusOf(session) {
 /** Rundgang-Protokoll der letzten 14 Tage — nur Manager/Inhaber. */
 export default function RundgangProtocol() {
     const { isManager } = usePermissions();
+    const [open, setOpen] = useState(false);
     const from = format(subDays(new Date(), DAYS - 1), 'yyyy-MM-dd');
 
     const { data: sessions = [], isLoading } = useQuery({
@@ -56,7 +57,15 @@ export default function RundgangProtocol() {
 
     return (
         <Card className="overflow-hidden border-border/50">
-            <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-border/40 bg-muted/20">
+            <button
+                type="button"
+                onClick={() => setOpen(prev => !prev)}
+                aria-expanded={open}
+                className={cn(
+                    'w-full flex items-center gap-2.5 px-3 py-2.5 bg-muted/20 text-left transition-colors hover:bg-accent/40 active:bg-accent/60',
+                    open && 'border-b border-border/40'
+                )}
+            >
                 <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <ClipboardList className="w-4 h-4 text-primary" />
                 </div>
@@ -66,9 +75,15 @@ export default function RundgangProtocol() {
                         Letzte {DAYS} Tage · {completedCount} abgeschlossen
                     </p>
                 </div>
-            </div>
+                <ChevronDown
+                    className={cn(
+                        'w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200',
+                        !open && '-rotate-90'
+                    )}
+                />
+            </button>
 
-            {isLoading ? (
+            {!open ? null : isLoading ? (
                 <p className="px-3 py-6 text-center text-xs text-muted-foreground">Lade Protokoll…</p>
             ) : (
                 <>
