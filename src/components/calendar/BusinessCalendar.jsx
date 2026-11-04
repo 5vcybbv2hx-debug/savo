@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { getHolidaysBW, getHolidayName } from '@/components/shifts/getHolidays';
+import HolidayReviewPanel from '@/components/calendar/HolidayReviewPanel';
 import { toast } from 'sonner';
 
 // ── Konfiguration ──────────────────────────────────────────────────────────
@@ -614,6 +615,9 @@ export default function BusinessCalendar() {
                         </div>
                     )}
                 </div>
+
+                {/* ── Feiertage prüfen (offen / geschlossen je Feiertag) ── */}
+                <HolidayReviewPanel days={specialDays} canEdit={canEdit} />
 
                 {/* ── Kalender Card ────────────────────────────────────── */}
                 <div className="bg-card border border-border rounded-2xl p-4">

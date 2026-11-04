@@ -60,10 +60,17 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
         enabled: open && !!dayStr,
     });
 
-    // Wochentagsabhängige Regeln (Di 17–22, Mi/Do 18–22, Fr/Sa ab 19:00)
+    // Betriebskalender: geschlossene Tage sperren, Sonderöffnungen begrenzen
+    const { data: businessDays = [] } = useQuery({
+        queryKey: ['business-calendar'],
+        queryFn: () => base44.entities.BusinessCalendarDay.list('-date', 500),
+        enabled: open,
+    });
+
+    // Regeln: Feiertag/Sonderöffnung vor Wochentag (Di 17–22, Mi/Do 18–22, Fr/Sa ab 19:00)
     const availableTypes = useMemo(
-        () => getWishShiftTypes(shiftTypes, date),
-        [shiftTypes, date]
+        () => getWishShiftTypes(shiftTypes, date, businessDays),
+        [shiftTypes, date, businessDays]
     );
 
     const usageMap = useMemo(() => buildWishUsage(dayRequests), [dayRequests]);
@@ -109,7 +116,7 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
     };
 
     const title = date ? `Wunschschicht · ${format(date, 'EEEE, dd.MM.', { locale: de })}` : 'Wunschschicht';
-    const hint = wishDayHint(date);
+    const hint = wishDayHint(date, businessDays);
 
     const body = (
         <div className="space-y-2 pb-2">
@@ -118,7 +125,9 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                     <Loader2 className="w-5 h-5 animate-spin" />
                 </div>
             ) : availableTypes.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">Für diesen Tag ist keine Schichtart zur Auswahl hinterlegt.</p>
+                <p className="text-sm text-muted-foreground text-center py-6">
+                    {hint || 'Für diesen Tag ist keine Schichtart zur Auswahl hinterlegt.'}
+                </p>
             ) : (
                 availableTypes.map(type => {
                     // Belegt = ausstehend + bestätigt (Warteliste zählt nicht)

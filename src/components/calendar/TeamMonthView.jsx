@@ -145,6 +145,12 @@ export default function TeamMonthView() {
         queryFn:  () => base44.entities.Reservation.filter({ is_archived: false }),
         staleTime: STALE.MEDIUM,
     });
+    // Betriebskalender: geschlossene Tage sperren Wunschschichten
+    const { data: businessDays = [] } = useQuery({
+        queryKey: ['business-calendar'],
+        queryFn:  () => base44.entities.BusinessCalendarDay.list('-date', 500),
+        staleTime: STALE.MEDIUM,
+    });
 
     const currentYear = new Date().getFullYear();
     const holidays = [...getHolidaysBW(currentYear), ...getHolidaysBW(currentYear + 1)];
@@ -154,7 +160,7 @@ export default function TeamMonthView() {
     const canWishOn = day => {
         if (!day || !wishMode) return false;
         const dayStr = format(day, 'yyyy-MM-dd');
-        return isWishWeekday(day) && dayStr >= todayStr
+        return isWishWeekday(day, businessDays) && dayStr >= todayStr
             && dayStr >= activeAccess.start_date && dayStr <= activeAccess.end_date;
     };
 
@@ -219,6 +225,7 @@ export default function TeamMonthView() {
                 wishRange={wishMode && !isManager ? { start: activeAccess.start_date, end: activeAccess.end_date } : null}
                 wishRequests={isManager ? monthWishes : []}
                 shiftTypes={isManager ? shiftTypes : []}
+                businessDays={businessDays}
             />
             </div>
 

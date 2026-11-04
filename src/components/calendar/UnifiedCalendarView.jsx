@@ -78,7 +78,9 @@ export default function UnifiedCalendarView({
     wishRange = null,
     // Manager-Sicht: alle Wünsche des Zeitraums (Warteliste + Auslastung)
     wishRequests = [],
-    shiftTypes = []
+    shiftTypes = [],
+    // Betriebskalender-Tage (geschlossene Tage sperren Wunschschichten)
+    businessDays = []
 }) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showFilterModal, setShowFilterModal] = useState(false);
@@ -281,7 +283,7 @@ export default function UnifiedCalendarView({
                         const inWishRange = wishMode && wishRange?.start && wishRange?.end
                             && dayStr >= wishRange.start && dayStr <= wishRange.end
                             && dayStr >= format(new Date(), 'yyyy-MM-dd')
-                            && isWishWeekday(day);
+                            && isWishWeekday(day, businessDays);
 
                         return (
                             <div
