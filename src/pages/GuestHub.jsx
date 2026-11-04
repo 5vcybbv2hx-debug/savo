@@ -1,7 +1,7 @@
 /**
  * GuestHub — "Ein Tag, ein Blick"
- * Eine Seite, eine Datumszeile steuert Reservierungs-Zeitstrahl UND Tischplan.
- * Keine Tabs mehr. Archiv = altes Datum wählen.
+ * Eine Seite: Tages-Kennzahlen + Liste der kommenden Reservierungen (7 Tage).
+ * Kein grafischer Tischplan. Keine Tabs. Archiv = altes Datum wählen.
  */
 import React, { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -11,11 +11,10 @@ import { STALE } from '@/lib/queryUtils';;
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-    Plus, Download, X, Settings, Printer,
+    Plus, Download, Printer,
     ChevronLeft, ChevronRight, Users, Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { haptics } from '@/components/utils/haptics';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
@@ -25,27 +24,9 @@ import {
     useReservations, useArchivedReservations,
     useCreateReservation, useUpdateReservation, useDeleteReservation
 } from '@/features/reservations/hooks/useReservations';
-import { getTableStatus, getReservationTables } from '@/components/seating/QuickReservationSheet';
-import QuickReservationSheet from '@/components/seating/QuickReservationSheet';
-import TableModal from '@/components/seating/TableModal';
-import RoomManager from '@/components/seating/RoomManager';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ErrorState, ListSkeleton } from '@/components/ui/StateDisplay';
-import GuestHubTablesTab from '@/components/seating/GuestHubTablesTab';
 import UpcomingReservationsList from '@/components/reservations/UpcomingReservationsList';
 import { resolveCreatorName } from '@/lib/reservationCreator';
-
-function suggestTables(tables, reservations, guestCount, date, time) {
-    const available = tables.filter(t => {
-        if (t.is_active === false) return false;
-        return getTableStatus(t, reservations, date, time) === 'free';
-    });
-    return available
-        .map(t => ({ table: t, score: t.capacity >= guestCount ? t.capacity - guestCount : 999 }))
-        .sort((a, b) => a.score - b.score)
-        .slice(0, 3)
-        .map(s => s.table);
-}
 
 function addDaysHelper(dateStr, days) {
     const d = new Date(dateStr);
@@ -59,22 +40,9 @@ export default function GuestHub() {
     // ── State ──────────────────────────────────────────────────────────────
     const [resModalOpen, setResModalOpen] = useState(false);
     const [selectedRes, setSelectedRes] = useState(null);
-    const [highlightedRes, setHighlightedRes] = useState(null);
 
-    // Tischplan
-    const [selectedTable, setSelectedTable] = useState(null);
-    const [showTableModal, setShowTableModal] = useState(null);
-    const [showRooms, setShowRooms] = useState(false);
-    const [selectedRoom, setSelectedRoom] = useState(null);
-    const [planView, setPlanView] = useState('plan');
-    const [guestFilter, setGuestFilter] = useState('');
-
-    // Zentrale Datumsquelle — steuert Zeitstrahl UND Tischplan
+    // Zentrale Datumsquelle
     const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
-    const [filterTime, setFilterTime] = useState(() => {
-        const n = new Date();
-        return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
-    });
 
     // ── Touch: horizontaler Swipe blättert durchs zentrale Datum ──────────────
     const touchStartX = useRef(0);
@@ -103,12 +71,6 @@ export default function GuestHub() {
     const { data: tables = [] } = useQuery({
         queryKey: ['tables'],
         queryFn: () => base44.entities.Table.list(),
-        staleTime: STALE.MEDIUM
-    });
-
-    const { data: rooms = [] } = useQuery({
-        queryKey: ['rooms'],
-        queryFn: () => base44.entities.Room.list(),
         staleTime: STALE.MEDIUM
     });
 
@@ -147,11 +109,6 @@ export default function GuestHub() {
     const handleConfirm = (id) =>
         updateMutation.mutate({ id, data: { status: 'bestätigt' } });
 
-    const handleTableNewReservation = (table) => {
-        setSelectedRes({ table: table.table_number, guests: table.capacity });
-        setResModalOpen(true);
-    };
-
     const handleCancel = (id) =>
         updateMutation.mutate({ id, data: { status: 'storniert' } });
 
@@ -174,63 +131,15 @@ export default function GuestHub() {
             .sort((a, b) => `${a.date} ${a.time || ''}`.localeCompare(`${b.date} ${b.time || ''}`));
     }, [allReservations, todayStr]);
 
-    // ── Tischplan-Daten (für filterDate) ─────────────────────────────────────
-    const filteredTables = useMemo(() => {
-        let list = selectedRoom ? tables.filter(t => t.room === selectedRoom) : tables;
-        if (guestFilter) list = list.filter(t => t.capacity >= Number(guestFilter));
-        return list.sort((a, b) => String(a.number).localeCompare(String(b.number), undefined, { numeric: true }));
-    }, [tables, selectedRoom, guestFilter]);
-
-    const tableWithStatus = useMemo(() =>
-        filteredTables.map(t => {
-            const dayRes = allReservations.filter(r =>
-                r.status !== 'storniert' &&
-                !r.is_archived &&
-                r.date === filterDate &&
-                getReservationTables(r).includes(t.table_number)
-            ).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-
-            const reservation = dayRes.find(r => {
-                const [rh, rm] = (r.time || '00:00').split(':').map(Number);
-                const [fh, fm] = filterTime.split(':').map(Number);
-                return Math.abs(rh * 60 + rm - (fh * 60 + fm)) < 90;
-            }) || dayRes[0] || null;
-
-            return {
-                table: t,
-                status: getTableStatus(t, allReservations, filterDate, filterTime),
-                reservation,
-                dayReservations: dayRes
-            };
-        }),
-        [filteredTables, allReservations, filterDate, filterTime]
-    );
-
-    const stats = useMemo(() => ({
-        free: tableWithStatus.filter(t => t.status === 'free').length,
-        reserved: tableWithStatus.filter(t => t.status === 'reserved').length,
-        soon: tableWithStatus.filter(t => t.status === 'soon').length,
-    }), [tableWithStatus]);
-
-    // KPI-Zeile: X Gäste · Y frei · Z reserviert · N offen
+    // KPI-Zeile: X Gäste · N offen (für den gewählten Tag)
     const kpi = useMemo(() => {
         const active = dayReservations.filter(r => r.status !== 'storniert');
         const guests = active.reduce((s, r) => s + (Number(r.guests) || 0), 0);
         const offen = dayReservations.filter(r => r.status === 'vorgemerkt').length;
-        return { guests, frei: stats.free, reserviert: stats.reserved, offen };
-    }, [dayReservations, stats]);
+        return { guests, offen };
+    }, [dayReservations]);
 
-    const suggested = guestFilter
-        ? suggestTables(tables, allReservations, Number(guestFilter), filterDate, filterTime)
-        : [];
-
-    // Hervorgehobene Tische der im Zeitstrahl angetippten Reservierung
-    const highlightedTableNumbers = useMemo(
-        () => highlightedRes ? getReservationTables(highlightedRes) : [],
-        [highlightedRes]
-    );
-
-    // ── Navigation im Reservierungs-Modal (folgt dem Zeitstrahl des Tages) ──
+    // ── Navigation im Reservierungs-Modal (folgt der Liste der kommenden Reservierungen) ──
     const reservationNavList = upcomingReservations;
 
     const handleNavigateReservation = (direction) => {
@@ -249,9 +158,8 @@ export default function GuestHub() {
         return { index: idx, total: reservationNavList.length, hasPrev: idx > 0, hasNext: idx < reservationNavList.length - 1 };
     })();
 
-    // Reservierung antippen → Modal öffnen UND Tische im Plan hervorheben
+    // Reservierung antippen → Detailansicht öffnen
     const openReservation = (res) => {
-        setHighlightedRes(res);
         setSelectedRes(res);
         setResModalOpen(true);
     };
@@ -355,93 +263,10 @@ export default function GuestHub() {
                         <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-semibold">
                             <Users className="w-3.5 h-3.5" />{kpi.guests} Gäste
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-500 font-semibold">
-                            {kpi.frei} frei
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 font-semibold">
-                            {kpi.reserviert} reserviert
-                        </span>
                         <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-semibold">
                             {kpi.offen} offen
                         </span>
                     </div>
-
-                    {/* ── Tischplan ─────────────────────────────────────────── */}
-                    <section className="space-y-3 pt-2">
-                        <div className="flex items-center justify-between gap-2">
-                            <h2 className="text-sm font-semibold text-foreground">Tischplan</h2>
-                            {permissions.isManager && (
-                                <div className="flex gap-1.5">
-                                    <Button variant="outline" size="sm" onClick={() => setShowRooms(true)} className="h-8 gap-1 text-xs">
-                                        <Settings className="w-3.5 h-3.5" /><span className="hidden sm:inline">Räume</span>
-                                    </Button>
-                                    <Button size="sm" onClick={() => setShowTableModal({})} className="h-8 gap-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
-                                        <Plus className="w-3.5 h-3.5" /><span className="hidden sm:inline">Tisch</span>
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Highlight-Hinweis */}
-                        {highlightedRes && (
-                            <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25">
-                                <p className="text-xs text-amber-500 truncate">
-                                    Tische für <strong>{highlightedRes.customer_name}</strong> ({highlightedRes.time}) hervorgehoben
-                                </p>
-                                <button onClick={() => setHighlightedRes(null)} className="text-amber-500 hover:text-foreground shrink-0">
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Zeit + Personen + Raum-Filter */}
-                        <div className="flex items-center gap-2">
-                            <input type="time" value={filterTime} onChange={e => setFilterTime(e.target.value)}
-                                className="h-9 px-3 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none w-24 shrink-0" />
-                            <div className="relative shrink-0">
-                                <Users className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                                <input type="number" value={guestFilter} min="1" max="20" onChange={e => setGuestFilter(e.target.value)}
-                                    placeholder="Personen" className="h-9 pl-7 pr-3 w-20 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-                            </div>
-                            {guestFilter && (
-                                <button onClick={() => setGuestFilter('')} className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
-                        </div>
-
-                        {rooms.length > 0 && (
-                            <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1">
-                                <button onClick={() => setSelectedRoom(null)}
-                                    className={cn('text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap',
-                                        !selectedRoom ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:text-foreground')}>
-                                    Alle
-                                </button>
-                                {rooms.map(room => (
-                                    <button key={room.id} onClick={() => setSelectedRoom(room.name)}
-                                        className={cn('text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap',
-                                            selectedRoom === room.name ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:text-foreground')}>
-                                        {room.name}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        <GuestHubTablesTab
-                            tableWithStatus={tableWithStatus}
-                            stats={stats}
-                            guestFilter={guestFilter}
-                            suggested={suggested}
-                            permissions={permissions}
-                            planView={planView}
-                            setPlanView={setPlanView}
-                            highlightedTableNumbers={highlightedTableNumbers}
-                            onTableSelect={setSelectedTable}
-                            onTableNewReservation={handleTableNewReservation}
-                            onCreateTable={(t) => setShowTableModal(t)}
-                            onEditTable={(t) => setShowTableModal(t)}
-                        />
-                    </section>
 
                     {/* ── Kommende Reservierungen (nächste 7 Tage) ──────────── */}
                     <section className="space-y-3 pt-2">
@@ -458,20 +283,6 @@ export default function GuestHub() {
                 </div>
             </div>
 
-            {/* Quick Reservation Sheet */}
-            {selectedTable && (
-                <QuickReservationSheet
-                    table={selectedTable}
-                    tables={tables}
-                    reservations={allReservations}
-                    checkDate={filterDate}
-                    checkTime={filterTime}
-                    isManager={permissions.isManager}
-                    onClose={() => setSelectedTable(null)}
-                    onEditReservation={(res) => { setSelectedRes(res); setResModalOpen(true); setSelectedTable(null); }}
-                />
-            )}
-
             {/* Reservation Modal */}
             <ReservationModal
                 open={resModalOpen}
@@ -487,23 +298,6 @@ export default function GuestHub() {
                 creatorName={selectedRes ? resolveCreator(selectedRes.created_by) : ''}
             />
 
-            {/* Table edit modal */}
-            {showTableModal !== null && (
-                <TableModal
-                    table={showTableModal?.id ? showTableModal : null}
-                    open={true}
-                    onClose={() => setShowTableModal(null)}
-                    reservation={null}
-                />
-            )}
-
-            {/* Rooms dialog */}
-            <Dialog open={showRooms} onOpenChange={setShowRooms}>
-                <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-                    <DialogHeader><DialogTitle>Räume verwalten</DialogTitle></DialogHeader>
-                    <RoomManager rooms={rooms} />
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

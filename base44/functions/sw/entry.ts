@@ -1,12 +1,12 @@
-const CACHE_NAME = 'barmanager-v3';
-const STATIC_CACHE = 'barmanager-static-v3';
-const DYNAMIC_CACHE = 'barmanager-dynamic-v3';
+const CACHE_NAME = 'barmanager-v4';
+const STATIC_CACHE = 'barmanager-static-v4';
+const DYNAMIC_CACHE = 'barmanager-dynamic-v4';
 
 Deno.serve((req) => {
     const swCode = `
-        const CACHE_NAME = 'barmanager-v3';
-        const STATIC_CACHE = 'barmanager-static-v3';
-        const DYNAMIC_CACHE = 'barmanager-dynamic-v3';
+        const CACHE_NAME = 'barmanager-v4';
+        const STATIC_CACHE = 'barmanager-static-v4';
+        const DYNAMIC_CACHE = 'barmanager-dynamic-v4';
         
         const urlsToCache = [
             '/',
