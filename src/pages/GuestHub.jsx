@@ -11,11 +11,10 @@ import { STALE } from '@/lib/queryUtils';;
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-    Plus, Search, Download, X, Settings, Printer,
-    ChevronLeft, ChevronRight, Users, Clock, MapPin
+    Plus, Download, X, Settings, Printer,
+    ChevronLeft, ChevronRight, Users, Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { haptics } from '@/components/utils/haptics';
 import { usePermissions } from '@/components/auth/usePermissions';
@@ -31,9 +30,8 @@ import QuickReservationSheet from '@/components/seating/QuickReservationSheet';
 import TableModal from '@/components/seating/TableModal';
 import RoomManager from '@/components/seating/RoomManager';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { LoadingState, EmptyState, ErrorState, ListSkeleton } from '@/components/ui/StateDisplay';
+import { ErrorState, ListSkeleton } from '@/components/ui/StateDisplay';
 import GuestHubTablesTab from '@/components/seating/GuestHubTablesTab';
-import { getTableDisplayName } from '@/components/tables/TableNameDisplay';
 import UpcomingReservationsList from '@/components/reservations/UpcomingReservationsList';
 import { resolveCreatorName } from '@/lib/reservationCreator';
 
