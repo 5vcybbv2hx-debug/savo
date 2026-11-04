@@ -1,18 +1,30 @@
-import { AlertTriangle, Sparkles } from 'lucide-react';
+import { AlertTriangle, Sparkles, PencilLine } from 'lucide-react';
 import PhotoCountRow from './PhotoCountRow';
 
-export default function PhotoCountReview({ rows, onChange, photoQuality, summary, unknownItems }) {
-  const unsafe = photoQuality && photoQuality !== 'gut';
+export default function PhotoCountReview({ rows, onChange, photoQuality, summary, unknownItems = [], onManual }) {
+  const lowQuality = photoQuality === 'schlecht';
+  const hasUncertain = rows.some((r) => r.uncertain);
 
   return (
     <div className="space-y-3">
-      {unsafe && (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3">
-          <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-            Foto unsicher, bitte prüfen
-            {photoQuality === 'schlecht' ? ' — Qualität schlecht erkannt' : ''}
-          </p>
+      {(lowQuality || hasUncertain) && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+              {lowQuality
+                ? 'Foto-Qualität schlecht — keine Mengen vorausgefüllt'
+                : 'Einzelne Artikel unsicher — Mengen bitte prüfen'}
+            </p>
+          </div>
+          {onManual && (
+            <button
+              onClick={onManual}
+              className="w-full h-10 rounded-lg border border-amber-500/40 bg-card text-xs font-bold text-foreground flex items-center justify-center gap-1.5 active:scale-[0.98]"
+            >
+              <PencilLine className="w-3.5 h-3.5" /> Manuell zählen (ohne Vorschlag)
+            </button>
+          )}
         </div>
       )}
 

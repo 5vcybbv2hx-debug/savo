@@ -1,4 +1,4 @@
-import { Minus, Plus, EyeOff, Camera } from 'lucide-react';
+import { Minus, Plus, EyeOff, Camera, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function confidenceColor(value) {
@@ -9,33 +9,39 @@ function confidenceColor(value) {
 
 export default function PhotoCountRow({ row, onChange }) {
   const seen = row.suggestion != null;
+  const uncertain = Boolean(row.uncertain);
   const pct = Math.round((row.confidence || 0) * 100);
 
   return (
     <div
       className={cn(
         'rounded-xl border p-3 space-y-2',
-        seen ? 'bg-muted/20 border-border/40' : 'bg-amber-500/5 border-amber-500/30'
+        !seen || uncertain ? 'bg-amber-500/5 border-amber-500/30' : 'bg-muted/20 border-border/40'
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-bold text-foreground truncate">{row.article_name}</p>
           <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-            {seen ? (
+            {seen && !uncertain ? (
               <>
                 <Camera className="w-3 h-3 shrink-0" />
                 Foto-Vorschlag: {row.suggestion} Gebinde
               </>
+            ) : seen ? (
+              <>
+                <AlertTriangle className="w-3 h-3 shrink-0 text-amber-500" />
+                unsicher ({pct}%) — bitte manuell zählen
+              </>
             ) : (
               <>
                 <EyeOff className="w-3 h-3 shrink-0 text-amber-500" />
-                im Foto nicht gesehen
+                im Foto nicht gesehen — bitte manuell zählen
               </>
             )}
           </p>
         </div>
-        {seen && (
+        {seen && !uncertain && (
           <div className="flex flex-col items-end gap-1 shrink-0 w-16">
             <span className="text-[10px] font-semibold text-muted-foreground">{pct}%</span>
             <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
@@ -58,12 +64,16 @@ export default function PhotoCountRow({ row, onChange }) {
           type="number"
           inputMode="numeric"
           min="0"
-          value={row.count ?? 0}
+          placeholder="–"
+          value={row.count ?? ''}
           onChange={(e) => {
             const parsed = parseInt(e.target.value);
-            onChange({ count: isNaN(parsed) ? 0 : Math.max(0, parsed) });
+            onChange({ count: isNaN(parsed) ? null : Math.max(0, parsed) });
           }}
-          className="flex-1 text-center font-bold text-xl h-12 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary"
+          className={cn(
+            'flex-1 text-center font-bold text-xl h-12 rounded-xl border-2 bg-background focus:outline-none focus:border-primary',
+            row.count == null ? 'border-amber-500/50 placeholder:text-muted-foreground/50' : 'border-border'
+          )}
         />
         <button
           type="button"

@@ -4,7 +4,7 @@ import { Camera, Image as ImageIcon, Loader2, X, AlertTriangle, Sparkles } from 
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { haptics } from '@/components/utils/haptics';
-import { uploadCountPhoto, recognizeSlotPhoto, matchSuggestion } from '@/lib/photoCount';
+import { uploadCountPhoto, recognizeSlotPhoto, matchSuggestion, preparePhoto, MIN_CONFIDENCE } from '@/lib/photoCount';
 import PhotoCountReview from './PhotoCountReview';
 
 const TIMEOUT_MS = 45000;
@@ -21,6 +21,8 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
   const [rows, setRows] = useState([]);
   const [result, setResult] = useState(null);
   const [isApplying, setIsApplying] = useState(false);
+  const [dimensions, setDimensions] = useState(null);
+  const [preparing, setPreparing] = useState(false);
   const cameraRef = useRef(null);
   const galleryRef = useRef(null);
   const jobRef = useRef(0);
@@ -43,6 +45,8 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
     setRows([]);
     setResult(null);
     setIsApplying(false);
+    setDimensions(null);
+    setPreparing(false);
   }, [open, slot?.id]);
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
@@ -51,21 +55,39 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
 
   const slotLabel = slot?.full_name || slot?.name || 'Fach';
   const slotCapacity = capacity ?? (assignments.reduce((sum, a) => sum + (a.max_stock || 0), 0) || null);
+  const incomplete = rows.some((r) => r.count == null);
 
-  const handlePick = (e) => {
+  // Foto einlesen: EXIF-Orientierung anwenden, volle Auflösung behalten (kein Downscaling).
+  const handlePick = async (e) => {
     const picked = e.target.files?.[0];
     e.target.value = '';
     if (!picked) return;
     haptics.light();
     if (preview) URL.revokeObjectURL(preview);
-    setFile(picked);
-    setPreview(URL.createObjectURL(picked));
     setStatus('pick');
     setError('');
+    setPreparing(true);
+    try {
+      const prepared = await preparePhoto(picked);
+      setFile(prepared.blob);
+      setDimensions(prepared);
+      setPreview(URL.createObjectURL(prepared.blob));
+    } catch {
+      setFile(picked);
+      setDimensions(null);
+      setPreview(URL.createObjectURL(picked));
+    } finally {
+      setPreparing(false);
+    }
   };
 
+  // Nur vorausfüllen, wenn das Foto gut ist UND das Modell sicher genug war.
   const buildRows = (detection) => assignments.map((a) => {
     const hit = matchSuggestion(a, detection.detected);
+    const confident = Boolean(hit)
+      && hit.count != null
+      && detection.photoQuality !== 'schlecht'
+      && (hit.confidence ?? 0) >= MIN_CONFIDENCE;
     return {
       assignmentId: a.id,
       article_id: a.article_id,
@@ -74,8 +96,9 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
       confidence: hit ? hit.confidence : 0,
       comment: hit?.comment || '',
       suggestedOpened: hit ? hit.opened_partial : 0,
-      count: hit ? hit.count : 0,
-      opened: hit ? hit.opened_partial : 0,
+      count: confident ? hit.count : null,
+      opened: confident ? hit.opened_partial : 0,
+      uncertain: !confident,
     };
   });
 
@@ -94,7 +117,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
 
     try {
       const fileUrl = await uploadCountPhoto(file);
-      const detection = await recognizeSlotPhoto({ fileUrl, assignments, articles });
+      const detection = await recognizeSlotPhoto({ fileUrl, slot, assignments, articles });
       if (jobRef.current !== token) return;
       setResult({ ...detection, fileUrl });
       setRows(buildRows(detection));
@@ -219,8 +242,29 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
             </div>
           )}
 
+          {preparing && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Foto wird vorbereitet…
+            </div>
+          )}
+
           {preview && (
-            <img src={preview} alt="Fach-Foto" className="w-full max-h-64 object-contain rounded-xl bg-muted/30" />
+            <>
+              <img src={preview} alt="Fach-Foto" className="w-full max-h-64 object-contain rounded-xl bg-muted/30" />
+              {dimensions?.portrait && (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-2.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                    Foto quer halten, Fach komplett im Bild — hochkant erkennt das Modell schlechter.
+                  </p>
+                </div>
+              )}
+              {dimensions && (
+                <p className="text-[10px] text-muted-foreground text-center">
+                  {dimensions.width} × {dimensions.height} px · volle Auflösung
+                </p>
+              )}
+            </>
           )}
 
           {status === 'pick' && preview && (
@@ -268,6 +312,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
               photoQuality={result.photoQuality}
               summary={result.summary}
               unknownItems={result.unknownItems}
+              onManual={onClose}
             />
           )}
         </div>
@@ -275,14 +320,21 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
         {/* Fuß */}
         <div className="px-4 py-3 border-t border-border/40 bg-background shrink-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           {status === 'review' ? (
-            <button
-              onClick={apply}
-              disabled={isApplying}
-              className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60"
-            >
-              {isApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              In Rundgang übernehmen
-            </button>
+            <>
+              <button
+                onClick={apply}
+                disabled={isApplying || incomplete}
+                className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60"
+              >
+                {isApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                In Rundgang übernehmen
+              </button>
+              {incomplete && (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 text-center mt-1.5">
+                  Bitte alle Mengen bestätigen — nichts wird automatisch gebucht
+                </p>
+              )}
+            </>
           ) : status === 'analyzing' ? (
             <button onClick={cancelRecognition} className="w-full h-12 rounded-xl border border-border text-sm font-semibold text-muted-foreground">
               Abbrechen
@@ -301,7 +353,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
           ) : (
             <button
               onClick={recognize}
-              disabled={!file}
+              disabled={!file || preparing}
               className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-40"
             >
               <Sparkles className="w-4 h-4" /> Erkennen

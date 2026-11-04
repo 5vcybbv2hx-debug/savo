@@ -34,6 +34,21 @@
       "type": "string",
       "description": "Einheit (St\u00fcck, Liter, kg, etc.)"
     },
+    "storage_orientation": {
+      "type": "string",
+      "enum": [
+        "liegend",
+        "stehend",
+        "unbekannt"
+      ],
+      "enumColors": [
+        "blue",
+        "purple",
+        "gray"
+      ],
+      "default": "unbekannt",
+      "description": "Lagerung im Fach: liegend oder stehend. Wird der Foto-Z\u00e4hlung als Kontext mitgegeben."
+    },
     "notes": {
       "type": "string",
       "description": "Notizen zur Lagerung"
