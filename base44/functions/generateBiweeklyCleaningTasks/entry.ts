@@ -34,6 +34,19 @@ Deno.serve(async (req) => {
             });
         }
 
+        // Betriebsferien / geschlossene Tage: keine automatischen Tagesaufgaben
+        const todayStr = today.toISOString().split('T')[0];
+        const closedRows = await base44.asServiceRole.entities.BusinessCalendarDay.filter({ date: todayStr });
+        const closedDay = (closedRows || [])[0];
+        if (closedDay && (closedDay.is_closed === true || closedDay.day_type === 'betriebsferien')) {
+            return Response.json({
+                success: true,
+                skipped: true,
+                message: `${closedDay.title || 'Betriebsferien'} am ${todayStr} — keine BiWeekly-Aufgaben aktiviert`,
+                tasks: 0
+            });
+        }
+
         // Hole die Aufgaben mit dem heutigen Muster
         const tasks = await base44.entities.CleaningTask.filter({
             biweekly_pattern: pattern,

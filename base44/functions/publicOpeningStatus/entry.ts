@@ -94,16 +94,20 @@ Deno.serve(async (req: Request) => {
 
       // Betriebskalender gewinnt
       const entry = calendarByDate[dateStr];
-      const is_holiday = entry?.is_holiday === true;
+      const is_ferien = entry?.day_type === 'betriebsferien';
+      // Betriebsferien sind kein Feiertag → is_holiday bleibt false
+      const is_holiday = entry?.is_holiday === true && !is_ferien;
       const holiday_name = is_holiday ? (entry?.title || '') : '';
       let note = '';
 
       if (entry) {
-        if (entry.is_closed === true) {
+        if (entry.is_closed === true || is_ferien) {
           is_open = false;
           open_time = null;
           close_time = null;
-          note = is_holiday ? 'Geschlossen (Feiertag)' : 'Geschlossen';
+          note = is_ferien
+            ? (entry.title || 'Betriebsferien')
+            : is_holiday ? 'Geschlossen (Feiertag)' : 'Geschlossen';
         } else if (entry.opening_time_override) {
           is_open = true;
           open_time = entry.opening_time_override;

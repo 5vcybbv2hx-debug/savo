@@ -14,7 +14,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { format, addDays, subDays, startOfWeek, endOfWeek, getDay, isSameDay, parseISO, differenceInCalendarDays } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Brain, TrendingUp, TrendingDown, Users, Cloud, Sun, CloudRain, Calendar, AlertCircle, Lightbulb, ChevronDown, ChevronUp, History, HelpCircle } from 'lucide-react';
+import { Brain, TrendingUp, TrendingDown, Users, Cloud, Sun, CloudRain, Calendar, AlertCircle, Lightbulb, ChevronDown, ChevronUp, History, HelpCircle, Palmtree } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -133,6 +133,14 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
         retry: 1,
     });
 
+    // Betriebskalender: Betriebsferien / geschlossene Tage → keine Schichtvorschläge
+    const { data: businessDays = [] } = useQuery({
+        queryKey: ['business-calendar'],
+        queryFn: () => base44.entities.BusinessCalendarDay.list('-date', 500),
+        staleTime: 10 * 60 * 1000,
+        retry: 1,
+    });
+
     // Compute suggestions for the current week
     const suggestions = useMemo(() => {
         if (!revenues.length || !weekStart) return [];
@@ -146,6 +154,15 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
             const dow = getDay(d);
             const dayName = getDayName(dow);
             const monthDay = format(d, 'MM-dd');
+
+            // Betriebsferien / geschlossene Tage
+            const calEntry = businessDays.find(b => b.date === dateStr);
+            const closedLabel = calEntry && (
+                calEntry.is_closed === true ||
+                ['betriebsferien', 'geschlossen', 'geschlossen_mit_reinigung'].includes(calEntry.day_type)
+            )
+                ? (calEntry.title || (calEntry.day_type === 'betriebsferien' ? 'Betriebsferien' : 'Geschlossen'))
+                : null;
             
             // Find historical data for same weekday within ±14 days of same month-day in previous years
             const historicalMatches = revenues.filter(r => {
@@ -263,7 +280,8 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                     unavailableCount: unavailableIds.size,
                     shortageWarning: baseShortage,
                     schoolVacation,
-                    recommendation: baseRec,
+                    closedLabel,
+                    recommendation: closedLabel ? null : baseRec,
                     reasonText: baseReason,
                 });
                 continue;
@@ -467,8 +485,9 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                 avgTemp,
                 avgRain,
                 avgRatio,
-                recommendation: adjustedRecommendation,
-                reasonText: adjustedReason,
+                closedLabel,
+                recommendation: closedLabel ? null : adjustedRecommendation,
+                reasonText: closedLabel ? `${closedLabel} – geschlossen, keine Personalplanung nötig` : adjustedReason,
                 plannedCount,
                 isPast: d < today,
                 isToday: isSameDay(d, today),
@@ -491,7 +510,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
         }
 
         return days;
-    }, [revenues, allShifts, localEvents, weekStart, confirmedEvents, reservations, vacations, unavailabilities, totalEmployees]);
+    }, [revenues, allShifts, localEvents, weekStart, confirmedEvents, reservations, vacations, unavailabilities, totalEmployees, businessDays]);
 
     // Expose computed suggestions to parent (WeekContextBar compact chips).
     // Ref-basierter Ansatz: feuert nur bei echten Content-Änderungen, nicht bei
@@ -555,7 +574,12 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                                 <p className="text-[9px] text-muted-foreground font-medium">
                                     {format(day.dateObj, 'EEEEE', { locale: de })}
                                 </p>
-                                {day.recommendation != null ? (
+                                {day.closedLabel ? (
+                                    <>
+                                        <p className="text-[11px] leading-none mt-0.5">🏖️</p>
+                                        <p className="text-[8px] text-pink-400 font-semibold leading-none mt-0.5">Ferien</p>
+                                    </>
+                                ) : day.recommendation != null ? (
                                     <>
                                         <p className={cn(
                                             'text-sm font-bold leading-none mt-0.5',
@@ -590,6 +614,21 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                 {expanded && (
                     <div className="mt-3 space-y-2">
                         {upcomingDays.map(day => {
+                            // Betriebsferien / geschlossen — kein Personalvorschlag
+                            if (day.closedLabel) {
+                                return (
+                                    <div key={day.date} className="flex items-center gap-2 py-2 px-2 rounded-lg bg-pink-500/10 border border-pink-500/25">
+                                        <Palmtree className="w-3.5 h-3.5 text-pink-400 shrink-0" />
+                                        <span className="text-xs text-foreground flex-1">
+                                            {day.dayName}, {format(day.dateObj, 'dd.MM.')}
+                                        </span>
+                                        <span className="text-[10px] font-semibold text-pink-400 text-right leading-tight">
+                                            {day.closedLabel} · geschlossen
+                                        </span>
+                                    </div>
+                                );
+                            }
+
                             if (!day.hasData) {
                                 return (
                                     <div key={day.date} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-muted/30">

@@ -81,6 +81,14 @@ export default function WeekContextBar({ weekStart, shifts = [], employees, isMa
         retry: 1,
     });
 
+    // Betriebskalender: Betriebsferien / geschlossene Tage markieren
+    const { data: businessDays = [] } = useQuery({
+        queryKey: ['business-calendar'],
+        queryFn: () => base44.entities.BusinessCalendarDay.list('-date', 500),
+        staleTime: 30 * 60 * 1000,
+        retry: 1,
+    });
+
     // Build 7 chips: merge weather + planned shift count by date
     const chips = useMemo(() => {
         const days = [];
@@ -89,6 +97,13 @@ export default function WeekContextBar({ weekStart, shifts = [], employees, isMa
             const dateStr = format(date, 'yyyy-MM-dd');
             const w = weather.find(d => d.date === dateStr);
             const plannedCount = shifts.filter(s => s.date === dateStr).length;
+            const entry = businessDays.find(b => b.date === dateStr);
+            const closedLabel = entry && (
+                entry.is_closed === true ||
+                ['betriebsferien', 'geschlossen', 'geschlossen_mit_reinigung'].includes(entry.day_type)
+            )
+                ? (entry.title || (entry.day_type === 'betriebsferien' ? 'Betriebsferien' : 'Geschlossen'))
+                : null;
             days.push({
                 dateStr,
                 dateObj: date,
@@ -96,10 +111,11 @@ export default function WeekContextBar({ weekStart, shifts = [], employees, isMa
                 isToday: dateStr === format(new Date(), 'yyyy-MM-dd'),
                 weather: w,
                 plannedCount,
+                closedLabel,
             });
         }
         return days;
-    }, [weekStart, weather, shifts]);
+    }, [weekStart, weather, shifts, businessDays]);
 
     const hasWeather = weather.length > 0;
     if (!hasWeather && shifts.length === 0) return null;
@@ -118,9 +134,11 @@ export default function WeekContextBar({ weekStart, shifts = [], employees, isMa
                             onClick={() => setDetailOpen(true)}
                             className={cn(
                                 'flex-shrink-0 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border transition-all min-w-[52px]',
-                                chip.isToday
-                                    ? 'border-primary/40 bg-primary/10'
-                                    : 'border-border bg-card hover:bg-accent/30'
+                                chip.closedLabel
+                                    ? 'border-pink-500/40 bg-pink-500/10'
+                                    : chip.isToday
+                                        ? 'border-primary/40 bg-primary/10'
+                                        : 'border-border bg-card hover:bg-accent/30'
                             )}
                         >
                             <span className={cn('text-[10px] font-semibold', chip.isToday ? 'text-primary' : 'text-muted-foreground')}>
@@ -139,12 +157,18 @@ export default function WeekContextBar({ weekStart, shifts = [], employees, isMa
                                     {chip.weather.tempMax}°
                                 </span>
                             )}
-                            <span className={cn(
-                                'text-[11px] font-bold leading-none',
-                                chip.plannedCount > 0 ? 'text-foreground' : 'text-muted-foreground/50'
-                            )}>
-                                {chip.plannedCount > 0 ? `${chip.plannedCount} Pers.` : '—'}
-                            </span>
+                            {chip.closedLabel ? (
+                                <span className="text-[10px] font-bold leading-none text-pink-400">
+                                    {chip.closedLabel === 'Betriebsferien' ? 'Ferien' : 'zu'}
+                                </span>
+                            ) : (
+                                <span className={cn(
+                                    'text-[11px] font-bold leading-none',
+                                    chip.plannedCount > 0 ? 'text-foreground' : 'text-muted-foreground/50'
+                                )}>
+                                    {chip.plannedCount > 0 ? `${chip.plannedCount} Pers.` : '—'}
+                                </span>
+                            )}
                         </button>
                     );
                 })}

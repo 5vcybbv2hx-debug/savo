@@ -22,6 +22,7 @@ import { usePermissions } from '@/components/auth/usePermissions';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { getHolidaysBW, getHolidayName } from '@/components/shifts/getHolidays';
 import HolidayReviewPanel from '@/components/calendar/HolidayReviewPanel';
+import ClosePeriodDialog from '@/components/calendar/ClosePeriodDialog';
 import { toast } from 'sonner';
 
 // ── Konfiguration ──────────────────────────────────────────────────────────
@@ -300,6 +301,29 @@ function MonthCalendar({ currentMonth, specialDays, onDayClick, openingHours }) 
         return openingHours.find(o => o.day_of_week === DE_DAYS[getDay(day)]) || null;
     };
 
+    // Wochen aufteilen und Betriebsferien-Läufe je Woche finden (für den Balken)
+    const weeks = [];
+    for (let i = 0; i < offset + days.length; i += 7) {
+        const cells = Array.from({ length: 7 }, (_, c) => {
+            const idx = i + c - offset;
+            return idx >= 0 && idx < days.length ? days[idx] : null;
+        });
+        const segments = [];
+        let runStart = null;
+        cells.forEach((day, c) => {
+            const ferien = !!day && getSpecialDay(day)?.day_type === 'betriebsferien';
+            if (ferien && runStart === null) runStart = c;
+            if (!ferien && runStart !== null) {
+                segments.push({ from: runStart, to: c - 1 });
+                runStart = null;
+            } else if (ferien && c === 6) {
+                segments.push({ from: runStart, to: 6 });
+                runStart = null;
+            }
+        });
+        weeks.push({ key: `w-${i}`, cells, segments });
+    }
+
     return (
         <div>
             {/* Wochentag-Header */}
@@ -309,57 +333,75 @@ function MonthCalendar({ currentMonth, specialDays, onDayClick, openingHours }) 
                 ))}
             </div>
 
-            {/* Tage */}
-            <div className="grid grid-cols-7 gap-0.5">
-                {Array.from({ length: offset }).map((_, i) => <div key={`e-${i}`} />)}
-                {days.map(day => {
-                    const special       = getSpecialDay(day);
-                    const holiday       = getHoliday(day);
-                    const oh            = getOpeningHour(day);
-                    const cfg           = special ? getDayTypeConfig(special.day_type) : null;
-                    const today         = isToday(day);
-                    const isRegularClosed = !special && oh?.is_closed;
-                    const isHolidayDay  = !special && !!holiday;
-                    const shortLabel    = special ? getDayTypeConfig(special.day_type).short : '';
+            {/* Tage — wochenweise, damit Betriebsferien als durchgehender Balken laufen */}
+            <div className="space-y-1">
+                {weeks.map(({ key, cells, segments }) => (
+                    <div key={key} className="relative pb-2">
+                        <div className="grid grid-cols-7 gap-0.5">
+                            {cells.map((day, c) => {
+                                if (!day) return <div key={`e-${key}-${c}`} />;
+                                const special       = getSpecialDay(day);
+                                const holiday       = getHoliday(day);
+                                const oh            = getOpeningHour(day);
+                                const cfg           = special ? getDayTypeConfig(special.day_type) : null;
+                                const today         = isToday(day);
+                                const isRegularClosed = !special && oh?.is_closed;
+                                const isHolidayDay  = !special && !!holiday;
+                                const shortLabel    = special ? getDayTypeConfig(special.day_type).short : '';
 
-                    return (
-                        <button
-                            key={day.toISOString()}
-                            onClick={() => onDayClick(day, special)}
-                            className={cn(
-                                'relative flex flex-col items-center justify-start pt-1 pb-0.5 rounded-xl transition-all active:scale-95 min-h-[52px]',
-                                today && !special && !isHolidayDay
-                                    ? 'ring-2 ring-amber-500 bg-amber-500/10'
-                                    : '',
-                                special
-                                    ? `${cfg.color} text-white`
-                                    : isHolidayDay
-                                        ? 'bg-red-500/15 text-red-300'
-                                        : isRegularClosed
-                                            ? 'bg-secondary/30 text-muted-foreground/60'
-                                            : 'hover:bg-accent/50 text-foreground',
-                            )}
-                        >
-                            <span className={cn('text-xs font-bold', today && !special ? 'text-amber-400' : '')}>
-                                {format(day, 'd')}
-                            </span>
-                            {/* Inline-Label */}
-                            {shortLabel && (
-                                <span className="text-[8px] leading-tight text-foreground/80 px-0.5 text-center truncate w-full">
-                                    {shortLabel}
-                                </span>
-                            )}
-                            {/* Feiertag Emoji */}
-                            {isHolidayDay && (
-                                <span className="text-[10px]">🎉</span>
-                            )}
-                            {/* Regular closed dot */}
-                            {isRegularClosed && !special && (
-                                <div className="w-1 h-1 rounded-full bg-muted-foreground/40 mt-0.5" />
-                            )}
-                        </button>
-                    );
-                })}
+                                return (
+                                    <button
+                                        key={day.toISOString()}
+                                        onClick={() => onDayClick(day, special)}
+                                        className={cn(
+                                            'relative flex flex-col items-center justify-start pt-1 pb-0.5 rounded-xl transition-all active:scale-95 min-h-[52px]',
+                                            today && !special && !isHolidayDay
+                                                ? 'ring-2 ring-amber-500 bg-amber-500/10'
+                                                : '',
+                                            special
+                                                ? `${cfg.color} text-white`
+                                                : isHolidayDay
+                                                    ? 'bg-red-500/15 text-red-300'
+                                                    : isRegularClosed
+                                                        ? 'bg-secondary/30 text-muted-foreground/60'
+                                                        : 'hover:bg-accent/50 text-foreground',
+                                        )}
+                                    >
+                                        <span className={cn('text-xs font-bold', today && !special ? 'text-amber-400' : '')}>
+                                            {format(day, 'd')}
+                                        </span>
+                                        {/* Inline-Label */}
+                                        {shortLabel && (
+                                            <span className="text-[8px] leading-tight text-foreground/80 px-0.5 text-center truncate w-full">
+                                                {shortLabel}
+                                            </span>
+                                        )}
+                                        {/* Feiertag Emoji */}
+                                        {isHolidayDay && (
+                                            <span className="text-[10px]">🎉</span>
+                                        )}
+                                        {/* Regular closed dot */}
+                                        {isRegularClosed && !special && (
+                                            <div className="w-1 h-1 rounded-full bg-muted-foreground/40 mt-0.5" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Betriebsferien-Balken: läuft über alle betroffenen Tage der Woche */}
+                        {segments.map((seg, si) => (
+                            <div
+                                key={`bar-${si}`}
+                                className="pointer-events-none absolute bottom-0 h-1.5 rounded-full bg-pink-500"
+                                style={{
+                                    left: `calc(${(seg.from / 7) * 100}% + 2px)`,
+                                    width: `calc(${((seg.to - seg.from + 1) / 7) * 100}% - 4px)`,
+                                }}
+                            />
+                        ))}
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -497,6 +539,7 @@ export default function BusinessCalendar() {
     const [selectedExisting, setSelectedExisting] = useState(null);
     const [drawerOpen, setDrawerOpen]     = useState(false);
     const [autoFilling, setAutoFilling]   = useState(false);
+    const [periodOpen, setPeriodOpen]     = useState(false);
 
     const canEdit = permissions.isManager || permissions.isAdmin;
 
@@ -601,7 +644,12 @@ export default function BusinessCalendar() {
                         </div>
                     </div>
                     {canEdit && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2 justify-end">
+                            <Button variant="outline" size="sm" onClick={() => setPeriodOpen(true)}
+                                className="h-9 gap-1.5 text-xs border-pink-500/40 text-pink-400 hover:bg-pink-500/10 hover:text-pink-300">
+                                <Palmtree className="w-3.5 h-3.5" />
+                                Zeitraum schließen
+                            </Button>
                             <Button variant="outline" size="sm" onClick={handleAutoFill} disabled={autoFilling}
                                 className="h-9 gap-1.5 text-xs">
                                 <Wand2 className="w-3.5 h-3.5" />
@@ -703,6 +751,14 @@ export default function BusinessCalendar() {
                 onDelete={(id) => deleteMutation.mutate(id)}
                 canEdit={canEdit}
                 cleaningTasks={cleaningTasks}
+            />
+
+            {/* ── Zeitraum schließen (Betriebsferien, Renovierung …) ────── */}
+            <ClosePeriodDialog
+                open={periodOpen}
+                onOpenChange={setPeriodOpen}
+                existingDays={specialDays}
+                onSaved={() => queryClient.invalidateQueries({ queryKey: ['business-calendar'] })}
             />
         </div>
     );

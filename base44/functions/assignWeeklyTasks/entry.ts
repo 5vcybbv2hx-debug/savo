@@ -37,6 +37,19 @@ Deno.serve(async (req) => {
     const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
     const targetDayName = dayNames[targetDayOfWeek];
 
+    // 0. Betriebsferien / geschlossene Tage: keine automatischen Tagesaufgaben
+    const closedOnTarget = await base44.entities.BusinessCalendarDay.filter({ date: targetDateStr });
+    const closedDay = closedOnTarget?.[0];
+    if (closedDay && (closedDay.is_closed === true || closedDay.day_type === 'betriebsferien')) {
+      return Response.json({
+        success: true,
+        skipped: true,
+        message: `${closedDay.title || 'Betriebsferien'} am ${targetDateStr} — keine Tagesaufgaben zugewiesen`,
+        assigned: 0,
+        date: targetDateStr,
+      });
+    }
+
     // 1. Finde alle Schichten am Zieldatum
     const shiftsForTarget = await base44.entities.Shift.filter({
       date: targetDateStr

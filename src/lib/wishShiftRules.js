@@ -46,6 +46,23 @@ export function findBusinessDay(calendarDays, date) {
     return calendarDays.find(d => d?.date === key) || null;
 }
 
+/** Tagesarten, die immer wie "geschlossen" wirken. */
+export const CLOSED_DAY_TYPES = ['geschlossen', 'geschlossen_mit_reinigung', 'betriebsferien'];
+
+/** Ist der Tag laut Betriebskalender geschlossen (inkl. Betriebsferien)? */
+export function isBusinessClosed(calendarDays, date) {
+    return specialFor(calendarDays, date)?.closed === true;
+}
+
+/** Anzeige-Label für geschlossene Tage ("Betriebsferien", "Geschlossen (Feiertag)" …). */
+export function closedDayLabel(calendarDays, date) {
+    const entry = findBusinessDay(calendarDays, date);
+    if (!entry) return null;
+    if (!(entry.is_closed === true || CLOSED_DAY_TYPES.includes(entry.day_type))) return null;
+    if (entry.day_type === 'betriebsferien') return entry.title || 'Betriebsferien';
+    return entry.title || (entry.is_holiday === true ? 'Geschlossen (Feiertag)' : 'Betrieb geschlossen');
+}
+
 /**
  * Kalender-Sonderfall für ein Datum:
  * { closed: true }                     → Betrieb geschlossen
@@ -55,7 +72,7 @@ export function findBusinessDay(calendarDays, date) {
 function specialFor(calendarDays, date) {
     const entry = findBusinessDay(calendarDays, date);
     if (!entry) return null;
-    if (entry.is_closed === true) return { closed: true, entry };
+    if (entry.is_closed === true || CLOSED_DAY_TYPES.includes(entry.day_type)) return { closed: true, entry };
     const open = normalizeTime(entry.opening_time_override);
     if (open) return { closed: false, open, entry };
     return null;
