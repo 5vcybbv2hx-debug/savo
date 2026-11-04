@@ -72,7 +72,7 @@
     "baseline_date": {
       "type": "string",
       "format": "date",
-      "description": "Datum der Basisaufnahme"
+      "description": "Datum der Basisaufnahme (YYYY-MM-DD)"
     },
     "baseline_by": {
       "type": "string",
@@ -90,7 +90,8 @@
         "type": "object",
         "properties": {
           "position": {
-            "type": "number"
+            "type": "number",
+            "description": "Position im Fach (1 = links)"
           },
           "article_id": {
             "type": "string",
@@ -108,10 +109,12 @@
             "description": "Lagerung im Segment: liegend / stehend / unbekannt"
           },
           "x_from": {
-            "type": "number"
+            "type": "number",
+            "description": "Segmente links als Anteil der Bildbreite (0-1)"
           },
           "x_to": {
-            "type": "number"
+            "type": "number",
+            "description": "Segment rechts als Anteil der Bildbreite (0-1)"
           }
         }
       }

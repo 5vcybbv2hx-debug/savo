@@ -12,6 +12,14 @@ import { cn } from '@/lib/utils';
 const TIP = 'Handy an dieselbe Kante/Markierung, Blitz aus, Fach komplett und senkrecht von oben, Licht an.';
 const STEPS = ['Fach', 'Foto', 'Linien', 'Sorten'];
 
+// Probefächer für den Test: oben im Wizard sichtbar und zusätzlich in der Auswahlliste.
+const TEST_AREA = 'Raucherbereich';
+const TEST_FURNITURE = 'Kühltheke Bar';
+const TEST_SLOT_ORDER = [
+  'oben links', 'oben mitte links', 'oben mitte rechts', 'oben rechts',
+  'unten links', 'unten mitte links', 'unten mitte rechts', 'unten rechts',
+];
+
 /**
  * Wizard "Fach-Basis aufnehmen": Referenzfoto + Segmentlinien + Sorten je Segment.
  * Speichert baseline_* am StorageSlot und sperrt die Basis.
@@ -35,8 +43,16 @@ export default function BaselineWizard({ open, slots = [], assignments = [], ini
 
   const slot = slots.find((s) => s.id === slotId) || null;
   const slotAssignments = orderSlotAssignments(assignments.filter((a) => a.storage_slot_id === slotId));
+  const testSlots = slots
+    .filter((s) => s.area_name === TEST_AREA && s.furniture_name === TEST_FURNITURE)
+    .sort((a, b) => {
+      const ia = TEST_SLOT_ORDER.indexOf((a.name || '').toLowerCase());
+      const ib = TEST_SLOT_ORDER.indexOf((b.name || '').toLowerCase());
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+  const testIds = new Set(testSlots.map((s) => s.id));
   const selectableSlots = slots
-    .filter((s) => assignments.some((a) => a.storage_slot_id === s.id))
+    .filter((s) => testIds.has(s.id) || assignments.some((a) => a.storage_slot_id === s.id))
     .sort((a, b) => (a.full_name || a.name || '').localeCompare(b.full_name || b.name || '', 'de'));
 
   useEffect(() => {
@@ -234,6 +250,32 @@ export default function BaselineWizard({ open, slots = [], assignments = [], ini
           {step === 1 && (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Für welches Fach nimmst du die Basis auf?</p>
+              {testSlots.length > 0 && (
+                <div className="rounded-xl border border-primary/25 bg-primary/5 p-2.5 space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-primary">
+                    Probefächer · {TEST_AREA} › {TEST_FURNITURE}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {testSlots.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => selectSlot(s.id)}
+                        className={cn(
+                          'px-2 h-8 rounded-lg border text-[11px] font-semibold active:scale-95',
+                          slotId === s.id
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : s.baseline_photo_url
+                              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              : 'border-border bg-card text-foreground'
+                        )}
+                      >
+                        {s.name}{s.baseline_photo_url ? ' ✓' : ''}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <select
                 value={slotId}
                 onChange={(e) => selectSlot(e.target.value)}

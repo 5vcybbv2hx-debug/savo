@@ -19,6 +19,8 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fuzzySearch } from '@/lib/fuzzySearch';
 import StorageLabelPrint from './StorageLabelPrint';
+import BaselineWizard from '@/components/warehouse/BaselineWizard';
+import { Camera } from 'lucide-react';
 
 const FURNITURE_TYPES = ['Regal','Schrank','Kühlschrank','Tiefkühlschrank','Schubladenbox','Tisch','Kiste','Sonstiges'];
 const FURNITURE_ICONS = {
@@ -52,7 +54,7 @@ function generateSimpleLagerCode(existingSlots) {
 }
 
 // ── Inline Fach-Zeile ─────────────────────────────────────────────────────────
-function SlotRow({ slot, canEdit, onEdit, onDelete, onPrintLabel, onMoveUp, onMoveDown, canMoveUp, canMoveDown, index, totalSlots }) {
+function SlotRow({ slot, canEdit, onEdit, onDelete, onPrintLabel, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onBaseline, index, totalSlots }) {
   return (
     <div
       className={cn(
@@ -82,6 +84,14 @@ function SlotRow({ slot, canEdit, onEdit, onDelete, onPrintLabel, onMoveUp, onMo
       )}
       {canEdit && (
         <div className="flex gap-0.5 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <Button size="icon" variant="ghost"
+            className={cn('h-6 w-auto px-1.5 gap-1 text-[10px] font-semibold',
+              slot.baseline_photo_url ? 'text-emerald-500 hover:text-emerald-400' : 'text-primary hover:text-primary')}
+            title={slot.baseline_photo_url ? `Basis-Foto vorhanden (${slot.baseline_date || 'ohne Datum'})` : 'Basis-Foto aufnehmen'}
+            onClick={() => onBaseline(slot)}>
+            <Camera className="w-3 h-3" />
+            Basis-Foto
+          </Button>
           <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-foreground"
             title="Etikett drucken"
             onClick={() => onPrintLabel(slot)}>
@@ -135,6 +145,9 @@ export default function StructureTab({ permissions }) {
 
   // Etikettendruck
   const [labelSlot, setLabelSlot] = useState(null);
+
+  // Basis-Foto (nur Manager)
+  const [baselineSlotId, setBaselineSlotId] = useState(null);
 
   // ── Queries ───────────────────────────────────────────────────────────────────
   const { data: areas = [],     isLoading: aL } = useQuery({ queryKey: ['st-areas'],     queryFn: async () => { const d = await base44.entities.Area.list('sort_order', 100); return d.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || '')); },         staleTime: STALE.SLOW });
@@ -563,6 +576,7 @@ export default function StructureTab({ permissions }) {
                                   onEdit={openEditSlot}
                                   onDelete={setDeleteSlotTarget}
                                   onPrintLabel={setLabelSlot}
+                                  onBaseline={(s) => setBaselineSlotId(s.id)}
                                   onMoveUp={(s) => updateSlotSortMut.mutate({ slot: s, direction: 'up', siblings: furSlots })}
                                   onMoveDown={(s) => updateSlotSortMut.mutate({ slot: s, direction: 'down', siblings: furSlots })}
                                   canMoveUp={idx > 0}
@@ -895,6 +909,17 @@ export default function StructureTab({ permissions }) {
         location={labelSlot ? toLabelLocation(labelSlot) : null}
         onClose={() => setLabelSlot(null)}
       />
+
+      {/* Basis-Foto je Fach (nur Manager) */}
+      {canEdit && (
+        <BaselineWizard
+          open={Boolean(baselineSlotId)}
+          slots={slots}
+          assignments={assignments}
+          initialSlotId={baselineSlotId || undefined}
+          onClose={() => { setBaselineSlotId(null); qc.invalidateQueries({ queryKey: ['slots'] }); }}
+        />
+      )}
     </>
   );
 }
