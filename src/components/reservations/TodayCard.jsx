@@ -1,0 +1,65 @@
+/**
+ * TodayCard — Karte "Heute": Kopfzeile + Zusammenfassung + Tagesliste.
+ * Zeile antippen → Detailansicht.
+ */
+import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { CalendarDays, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import ReservationRow from './ReservationRow';
+
+function formatDay(dateStr) {
+    try { return format(parseISO(dateStr), 'EEE, d. MMMM', { locale: de }); }
+    catch { return dateStr; }
+}
+
+export default function TodayCard({ date, reservations = [], tables = [], resolveCreator, onOpen, onCreate }) {
+    const count = reservations.length;
+    const guests = reservations
+        .filter(r => r.status !== 'storniert')
+        .reduce((sum, r) => sum + (Number(r.guests) || 0), 0);
+
+    const summary = count === 0
+        ? 'Keine Reservierungen heute'
+        : `${count} ${count === 1 ? 'Reservierung' : 'Reservierungen'} · ${guests} Gäste`;
+
+    return (
+        <section className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
+                <div className="min-w-0">
+                    <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                        <CalendarDays className="w-4 h-4 text-primary shrink-0" />
+                        <span>Heute</span>
+                        <span className="text-muted-foreground font-normal truncate">· {formatDay(date)}</span>
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">{summary}</p>
+                </div>
+                {onCreate && count > 0 && (
+                    <Button variant="ghost" size="sm" onClick={onCreate}
+                        className="h-8 gap-1 text-xs text-primary shrink-0">
+                        <Plus className="w-3.5 h-3.5" />Neu
+                    </Button>
+                )}
+            </div>
+
+            {count === 0 ? (
+                <p className="px-4 py-6 text-sm text-center text-muted-foreground">
+                    Keine Reservierungen an diesem Tag
+                </p>
+            ) : (
+                <div className="p-2 space-y-2">
+                    {reservations.map((res, idx) => (
+                        <ReservationRow
+                            key={res.id}
+                            reservation={res}
+                            tables={tables}
+                            resolveCreator={resolveCreator}
+                            onOpen={onOpen}
+                            index={idx}
+                        />
+                    ))}
+                </div>
+            )}
+        </section>
+    );
+}

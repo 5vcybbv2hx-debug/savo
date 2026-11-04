@@ -1,8 +1,11 @@
 /**
  * ReservationRow — eine Reservierungszeile (Zeit, Name, Personen, Tisch,
- * Status, "eingetragen von"). Die ganze Zeile ist antippbar → Detailansicht.
+ * Status, "eingetragen von"). Antippen → Detailansicht.
+ * `showDate` blendet zusätzlich das Datum ein (für die Mehr-Tages-Liste).
  */
-import { Users, MapPin, UserPen } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { Users, MapPin, UserPen, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getTableDisplayName } from '@/components/tables/TableNameDisplay';
 
@@ -14,7 +17,12 @@ const STATUS_BADGE = {
     'storniert':  'bg-muted text-muted-foreground border-border',
 };
 
-export default function ReservationRow({ reservation, tables = [], resolveCreator, onOpen, index = 0 }) {
+function dayLabel(dateStr) {
+    try { return format(parseISO(dateStr), 'EEE, dd.MM.', { locale: de }); }
+    catch { return dateStr; }
+}
+
+export default function ReservationRow({ reservation, tables = [], resolveCreator, onOpen, showDate = false, index = 0 }) {
     const res = reservation;
     const table = tables.find(t => t.table_number === res.table || t.id === res.table);
     const tableLabel = Array.isArray(res.tables) && res.tables.length > 0
@@ -29,6 +37,11 @@ export default function ReservationRow({ reservation, tables = [], resolveCreato
         >
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-baseline gap-2 min-w-0">
+                    {showDate && (
+                        <span className="text-xs font-semibold text-muted-foreground shrink-0 w-20">
+                            {dayLabel(res.date)}
+                        </span>
+                    )}
                     <span className="text-sm font-bold tabular-nums text-foreground shrink-0">
                         {res.time || '–'}
                     </span>
@@ -53,6 +66,9 @@ export default function ReservationRow({ reservation, tables = [], resolveCreato
                 </span>
                 <span className="flex items-center gap-1">
                     <UserPen className="w-3 h-3" />eingetragen von {resolveCreator?.(res.created_by) ?? '—'}
+                </span>
+                <span className="flex items-center gap-1 ml-auto text-primary/80 font-medium">
+                    <Clock className="w-3 h-3" />Details
                 </span>
             </div>
         </button>

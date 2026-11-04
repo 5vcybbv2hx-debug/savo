@@ -1,17 +1,21 @@
 /**
- * GuestHub — "Ein Blick"
- * Eine Seite, eine Liste: Reservierungen ab heute (14 Tage), nach Tagen gruppiert.
- * Kein grafischer Tischplan. Keine Tabs.
+ * GuestHub — "Ein Tag, ein Blick"
+ * Eine Seite: Tages-Kennzahlen + Liste der kommenden Reservierungen (7 Tage).
+ * Kein grafischer Tischplan. Keine Tabs. Archiv = altes Datum wählen.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query'
 import { STALE } from '@/lib/queryUtils';;
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Plus, Download, Printer } from 'lucide-react';
+import {
+    Plus, Download, Printer,
+    ChevronLeft, ChevronRight, Users, Clock
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { haptics } from '@/components/utils/haptics';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import ReservationModal from '@/components/reservations/ReservationModal';
@@ -21,7 +25,8 @@ import {
     useCreateReservation, useUpdateReservation, useDeleteReservation
 } from '@/features/reservations/hooks/useReservations';
 import { ErrorState, ListSkeleton } from '@/components/ui/StateDisplay';
-import ReservationDayList from '@/components/reservations/ReservationDayList';
+import UpcomingReservationsList from '@/components/reservations/UpcomingReservationsList';
+import TodayCard from '@/components/reservations/TodayCard';
 import { resolveCreatorName } from '@/lib/reservationCreator';
 
 function addDaysHelper(dateStr, days) {
@@ -37,8 +42,25 @@ export default function GuestHub() {
     const [resModalOpen, setResModalOpen] = useState(false);
     const [selectedRes, setSelectedRes] = useState(null);
 
-    // Zeitraum der einen Liste: heute + die nächsten 13 Tage
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Zentrale Datumsquelle
+    const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+
+    // ── Touch: horizontaler Swipe blättert durchs zentrale Datum ──────────────
+    const touchStartX = useRef(0);
+    const touchStartY = useRef(0);
+    const handleSwipeStart = (e) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchStartY.current = e.touches[0].clientY;
+    };
+    const handleSwipeEnd = (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        const dy = e.changedTouches[0].clientY - touchStartY.current;
+        // Nur bei eindeutig horizontaler Dominanz auslösen — schützt Tischplan & Vertikal-Scroll
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+            haptics.selection();
+            setFilterDate(addDaysHelper(filterDate, dx < 0 ? 1 : -1));
+        }
+    };
 
     // ── Data queries ─────────────────────────────────────────────────────────
     const { data: activeReservations = [], isLoading: activeLoading, isError: reservationsError } = useReservations();
@@ -91,16 +113,41 @@ export default function GuestHub() {
     const handleCancel = (id) =>
         updateMutation.mutate({ id, data: { status: 'storniert' } });
 
-    // ── Eine Liste: heute + nächste 13 Tage, chronologisch ───────────────────
-    const timelineReservations = useMemo(() => {
-        const to = addDaysHelper(todayStr, 13);
-        return allReservations
-            .filter(r => !r.is_archived && r.date && r.date >= todayStr && r.date <= to)
-            .sort((a, b) => `${a.date} ${a.time || ''}`.localeCompare(`${b.date} ${b.time || ''}`));
-    }, [allReservations, todayStr]);
+    // ── Reservierungen des gewählten Tages (chronologisch) ───────────────────
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    // ── Navigation im Reservierungs-Modal (folgt der einen Liste) ────────────
-    const reservationNavList = timelineReservations;
+    const dayReservations = useMemo(() =>
+        allReservations
+            .filter(r => r.date === filterDate)
+            .sort((a, b) => (a.time || '').localeCompare(b.time || '')),
+        [allReservations, filterDate]
+    );
+
+    // Kommende Reservierungen: 7 Tage ab morgen — der gewählte Tag steht in der "Heute"-Karte
+    const upcomingReservations = useMemo(() => {
+        const from = addDaysHelper(todayStr, 1);
+        const to = addDaysHelper(todayStr, 7);
+        return allReservations
+            .filter(r =>
+                !r.is_archived &&
+                r.date &&
+                r.date >= from &&
+                r.date <= to &&
+                r.date !== filterDate
+            )
+            .sort((a, b) => `${a.date} ${a.time || ''}`.localeCompare(`${b.date} ${b.time || ''}`));
+    }, [allReservations, todayStr, filterDate]);
+
+    // KPI-Zeile: X Gäste · N offen (für den gewählten Tag)
+    const kpi = useMemo(() => {
+        const active = dayReservations.filter(r => r.status !== 'storniert');
+        const guests = active.reduce((s, r) => s + (Number(r.guests) || 0), 0);
+        const offen = dayReservations.filter(r => r.status === 'vorgemerkt').length;
+        return { guests, offen };
+    }, [dayReservations]);
+
+    // ── Navigation im Reservierungs-Modal (folgt der Liste der kommenden Reservierungen) ──
+    const reservationNavList = upcomingReservations;
 
     const handleNavigateReservation = (direction) => {
         if (!selectedRes?.id) return;
@@ -154,6 +201,8 @@ export default function GuestHub() {
         </div>
     );
 
+    const isToday = filterDate === todayStr;
+
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
             <div className="max-w-2xl mx-auto">
@@ -164,7 +213,7 @@ export default function GuestHub() {
                         <div>
                             <h1 className="text-lg font-bold text-foreground">Gäste & Tische</h1>
                             <p className="text-xs text-muted-foreground">
-                                {format(new Date(), "EEEE, d. MMMM", { locale: de })}
+                                {format(parseISO(filterDate), "EEEE, d. MMMM", { locale: de })}
                             </p>
                         </div>
                         <div className="flex gap-1.5">
@@ -189,16 +238,65 @@ export default function GuestHub() {
                         </div>
                     </div>
 
+                    {/* Zentrale Datumszeile — steuert alle Sektionen */}
+                    <div className="flex items-center gap-2 px-4 pb-3">
+                        <button onClick={() => setFilterDate(addDaysHelper(filterDate, -1))}
+                            className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
+                            className="h-9 px-3 rounded-lg border border-input bg-transparent text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring text-center flex-1" />
+                        <button onClick={() => setFilterDate(addDaysHelper(filterDate, 1))}
+                            className="h-9 w-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                        {!isToday && (
+                            <button onClick={() => setFilterDate(todayStr)}
+                                className="h-9 px-3 text-xs rounded-lg border border-input text-muted-foreground hover:text-foreground hover:bg-accent shrink-0">
+                                Heute
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <div className="px-4 py-4">
-                    {/* ── Die eine Liste: Reservierungen ─────────────────────── */}
-                    <ReservationDayList
-                        reservations={timelineReservations}
+                <div
+                    className="px-4 py-4 space-y-5"
+                    onTouchStart={handleSwipeStart}
+                    onTouchEnd={handleSwipeEnd}
+                >
+
+                    {/* ── KPI-Zeile ──────────────────────────────────────────── */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-semibold">
+                            <Users className="w-3.5 h-3.5" />{kpi.guests} Gäste
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-semibold">
+                            {kpi.offen} offen
+                        </span>
+                    </div>
+
+                    {/* ── Heute: Reservierungen des gewählten Tages ─────────── */}
+                    <TodayCard
+                        date={filterDate}
+                        reservations={dayReservations}
                         tables={tables}
                         resolveCreator={resolveCreator}
                         onOpen={openReservation}
+                        onCreate={() => { setSelectedRes(null); setResModalOpen(true); }}
                     />
+
+                    {/* ── Kommende Reservierungen (7 Tage ab morgen) ────────── */}
+                    <section className="space-y-3 pt-2">
+                        <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                            <Clock className="w-4 h-4" />Kommende Reservierungen
+                        </h2>
+                        <UpcomingReservationsList
+                            reservations={upcomingReservations}
+                            tables={tables}
+                            resolveCreator={resolveCreator}
+                            onOpen={openReservation}
+                        />
+                    </section>
                 </div>
             </div>
 
@@ -213,7 +311,7 @@ export default function GuestHub() {
                 isManager={permissions.isManager}
                 onNavigate={handleNavigateReservation}
                 navPosition={reservationNavPosition}
-                defaultDate={todayStr}
+                defaultDate={filterDate}
                 creatorName={selectedRes ? resolveCreator(selectedRes.created_by) : ''}
             />
 
