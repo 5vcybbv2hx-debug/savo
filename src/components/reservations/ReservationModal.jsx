@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Trash2, AlertCircle, RepeatIcon, Check, X } from 'lucide-react';
+import { Trash2, AlertCircle, RepeatIcon, Check, X, ChevronDown, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,19 +31,20 @@ function getReservationTables(r) {
     return [];
 }
 
-export default function ReservationModal({ open, onClose, reservation, onSave, onDelete, canDelete = false, isManager = false, onNavigate, navPosition }) {
+export default function ReservationModal({ open, onClose, reservation, onSave, onDelete, canDelete = false, isManager = false, onNavigate, navPosition, defaultDate = '', creatorName = '' }) {
     const queryClient = useQueryClient();
+    const [showMore, setShowMore] = useState(false);
     const [formData, setFormData] = useState({
         customer_name: '',
         phone: '',
         email: '',
         date: '',
-        time: '19:00',
+        time: '20:00',
         guests: 2,
         tables: [],
         table: '',
         notes: '',
-        status: 'vorgemerkt',
+        status: 'bestätigt',
         is_recurring: false,
         recurring_pattern: 'weekly',
         recurring_end_date: ''
@@ -70,6 +71,21 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
             .sort((a, b) => String(a.table_number).localeCompare(String(b.table_number), undefined, { numeric: true })),
         [allTables]
     );
+
+    // Tischvorschlag nach Personenanzahl (freie Tische am gewählten Tag/Zeitpunkt)
+    const suggestions = useMemo(() => {
+        if (!formData.date) return [];
+        return sortedTables
+            .filter(t => (t.capacity || 0) >= (Number(formData.guests) || 1))
+            .filter(t => !allReservations.some(r => {
+                if (r.id === reservation?.id) return false;
+                if (r.status === 'storniert' || r.is_archived) return false;
+                if (r.date !== formData.date) return false;
+                if (!timesOverlap(r.time, formData.time)) return false;
+                return getReservationTables(r).includes(t.table_number);
+            }))
+            .slice(0, 3);
+    }, [sortedTables, allReservations, formData.date, formData.time, formData.guests, reservation?.id]);
 
     const hasEventOnDate = formData.date && events.some(e =>
         isSameDay(new Date(e.date), new Date(formData.date)) && e.status !== 'abgesagt'
@@ -116,32 +132,25 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                 recurring_end_date: ''
             });
         } else {
-            // Smart Vorbelegung: Datum = heute, Uhrzeit = nächste halbe Stunde
-            const now = new Date();
-            const minutes = now.getMinutes();
-            const rounded = minutes <= 30 ? 30 : 60;
-            now.setMinutes(rounded, 0, 0);
-            if (rounded === 60) now.setHours(now.getHours() + 1);
-            const pad = (n) => String(n).padStart(2, '0');
-            const defaultTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-            const todayStr = format(now, 'yyyy-MM-dd');
+            // Vorbelegung: gewählter Tag der Ansicht (sonst heute), 20:00, 2 Personen, bestätigt
+            setShowMore(false);
             setFormData({
                 customer_name: '',
                 phone: '',
                 email: '',
-                date: todayStr,
-                time: defaultTime,
+                date: defaultDate || format(new Date(), 'yyyy-MM-dd'),
+                time: '20:00',
                 guests: 2,
                 tables: [],
                 table: '',
                 notes: '',
-                status: 'vorgemerkt',
+                status: 'bestätigt',
                 is_recurring: false,
                 recurring_pattern: 'weekly',
                 recurring_end_date: ''
             });
         }
-    }, [reservation, open]);
+    }, [reservation, open, defaultDate]);
 
     const toggleTable = (tableNumber) => {
         setFormData(prev => {
@@ -154,11 +163,29 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e, keepOpen = false) => {
         e.preventDefault();
         if (isBlocked) return;
         haptics.light();
-        onSave({ ...formData }, reservation?.id);
+        onSave({ ...formData }, reservation?.id, keepOpen);
+        if (keepOpen) {
+            setShowMore(false);
+            setFormData(prev => ({
+                ...prev,
+                customer_name: '',
+                phone: '',
+                email: '',
+                time: '20:00',
+                guests: 2,
+                tables: [],
+                table: '',
+                notes: '',
+                status: 'bestätigt',
+                is_recurring: false,
+                recurring_pattern: 'weekly',
+                recurring_end_date: ''
+            }));
+        }
     };
 
     return (
@@ -198,60 +225,40 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                            <Label>Telefon</Label>
-                            <Input
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                placeholder="+49..."
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>E-Mail</Label>
-                            <Input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                placeholder="email@..."
-                            />
-                        </div>
-                    </div>
+                    {reservation && (
+                        <p className="text-xs text-muted-foreground">
+                            eingetragen von {creatorName || reservation.created_by || '—'}
+                        </p>
+                    )}
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <Label>Datum *</Label>
+                            <Label>Datum</Label>
                             <Input
                                 type="date"
                                 value={formData.date}
                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                required
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Uhrzeit * (bis 21:00 Uhr)</Label>
+                            <Label>Uhrzeit (bis 21:00)</Label>
                             <Input
                                 type="time"
                                 max="21:00"
                                 value={formData.time}
                                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                required
                             />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                            <Label>Personen *</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                value={formData.guests}
-                                onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
-                                required
-                            />
-                        </div>
+                    <div className="space-y-2">
+                        <Label>Personen</Label>
+                        <Input
+                            type="number"
+                            min="1"
+                            value={formData.guests}
+                            onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) || 1 })}
+                        />
                     </div>
 
                     {/* Kapazitätswarnung */}
@@ -277,13 +284,38 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                     {/* Multi-Select Tische */}
                     <div className="space-y-2">
                         <Label>
-                            Tische
+                            Tisch
                             {formData.tables.length > 0 && (
                                 <span className="ml-2 text-xs text-muted-foreground font-normal">
                                     {formData.tables.length} gewählt · {totalCapacity > 0 ? `${totalCapacity} Pl.` : ''}
                                 </span>
                             )}
                         </Label>
+
+                        {/* Vorschlag nach Personenanzahl */}
+                        {suggestions.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Users className="w-3 h-3" />Vorschlag für {formData.guests} Pers.:
+                                </span>
+                                {suggestions.map(t => (
+                                    <button
+                                        key={t.id}
+                                        type="button"
+                                        onClick={() => toggleTable(t.table_number)}
+                                        className={cn(
+                                            'px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors min-h-[32px]',
+                                            formData.tables.includes(t.table_number)
+                                                ? 'bg-primary/20 border-primary/60 text-primary'
+                                                : 'bg-secondary/40 border-border text-foreground hover:border-foreground/40'
+                                        )}
+                                    >
+                                        {t.name || t.table_number}{t.capacity ? ` · ${t.capacity} Pl.` : ''}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
                         <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
                             {sortedTables.map(t => {
                                 const isSelected = formData.tables.includes(t.table_number);
@@ -321,30 +353,64 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Status</Label>
-                        <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="vorgemerkt">Vorgemerkt</SelectItem>
-                                <SelectItem value="bestätigt">Bestätigt</SelectItem>
-                                <SelectItem value="storniert">Storniert</SelectItem>
-                                <SelectItem value="no-show">No-Show</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    {/* Weitere Angaben — eingeklappt */}
+                    <div className="rounded-xl border border-border overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setShowMore(v => !v)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-accent/40 transition-colors"
+                        >
+                            Weitere Angaben
+                            <ChevronDown className={cn('w-4 h-4 transition-transform', showMore && 'rotate-180')} />
+                        </button>
 
-                    <div className="space-y-2">
-                        <Label>Notizen</Label>
-                        <Textarea
-                            value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            placeholder="Besondere Wünsche..."
-                            rows={2}
-                        />
-                    </div>
+                        {showMore && (
+                            <div className="px-4 pb-4 pt-3 space-y-4 border-t border-border">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <Label>Telefon</Label>
+                                        <Input
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            placeholder="+49..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>E-Mail</Label>
+                                        <Input
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            placeholder="email@..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Status</Label>
+                                    <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="vorgemerkt">Vorgemerkt</SelectItem>
+                                            <SelectItem value="bestätigt">Bestätigt</SelectItem>
+                                            <SelectItem value="storniert">Storniert</SelectItem>
+                                            <SelectItem value="no-show">No-Show</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Notizen</Label>
+                                    <Textarea
+                                        value={formData.notes}
+                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                        placeholder="Besondere Wünsche..."
+                                        rows={2}
+                                    />
+                                </div>
 
                     {!reservation && (
                         <div className="space-y-3 p-4 bg-secondary/40 rounded-lg border border-border">
@@ -392,6 +458,9 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                             )}
                         </div>
                     )}
+                            </div>
+                        )}
+                    </div>
 
                 </form>
                 </MobileModalContent>
@@ -412,20 +481,27 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                         </Button>
                     )}
                     <div className="flex gap-2">
-                        <Button type="button" variant="outline" onClick={onClose} className="flex-1 h-11">
+                        <Button type="button" variant="outline" onClick={onClose} className="h-11 px-3">
                             Abbrechen
                         </Button>
+                        {!reservation && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="h-11 px-3 flex-1"
+                                disabled={isBlocked}
+                                onClick={(e) => handleSubmit(e, true)}
+                            >
+                                Speichern und neu
+                            </Button>
+                        )}
                         <Button
                             type="submit"
-                            className="flex-1 h-11 bg-amber-600 hover:bg-amber-700"
+                            className="h-11 px-4 flex-1 bg-amber-600 hover:bg-amber-700"
                             disabled={isBlocked}
                             onClick={handleSubmit}
                         >
-                            {reservation
-                                ? 'Speichern'
-                                : formData.is_recurring
-                                    ? 'Wiederk. anlegen'
-                                    : 'Hinzufügen'}
+                            Speichern
                         </Button>
                     </div>
                 </MobileModalFooter>

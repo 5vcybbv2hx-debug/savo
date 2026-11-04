@@ -37,7 +37,7 @@ const PATTERN_LABELS = {
 export default function ReservationCard({
     reservation: res, permissions,
     onEdit, onArchive, onDelete, onConfirm, onCancel,
-    tables = []
+    tables = [], creatorName = ''
 }) {
     const [menuOpen, setMenuOpen] = useState(false);
 
@@ -104,6 +104,12 @@ export default function ReservationCard({
                     </span>
                 )}
             </div>
+
+            {creatorName && (
+                <p className="px-4 pb-3 text-xs text-muted-foreground">
+                    eingetragen von {creatorName}
+                </p>
+            )}
 
             {res.notes && (
                 <p className="px-4 pb-3 text-xs text-muted-foreground italic border-t border-border/50 pt-2 line-clamp-2">

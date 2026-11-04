@@ -1,0 +1,42 @@
+{
+  "name": "Neue Reservierung \u2192 Manager benachrichtigen",
+  "description": "Erzeugt beim Anlegen einer Reservierung eine Notification f\u00fcr alle Manager/Inhaber und l\u00f6st \u2013 abh\u00e4ngig von deren NotificationSettings \u2013 einen Push aus.",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Reservation"
+    },
+    "condition": null
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "neue_reservierung_manager_benachrichtigen",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "notify_managers": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "notifyNewReservation",
+            "args": {
+              "data": "${ .trigger.data }",
+              "entity_id": "${ .trigger.entity_id }",
+              "event_type": "${ .trigger.event_type }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Manager benachrichtigen",
+            "description": "Notification + Push"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -34,24 +34,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { LoadingState, EmptyState, ErrorState, ListSkeleton } from '@/components/ui/StateDisplay';
 import GuestHubTablesTab from '@/components/seating/GuestHubTablesTab';
 import { getTableDisplayName } from '@/components/tables/TableNameDisplay';
-
-// Filter-Chips für den Zeitstrahl (alte Status-Filter-Logik, ohne Archiv-Tab)
-const STATUS_FILTERS = [
-    { value: 'alle',       label: 'Alle' },
-    { value: 'vorgemerkt', label: 'Offen' },
-    { value: 'bestätigt',  label: 'Bestätigt' },
-    { value: 'erschienen', label: 'Erschienen' },
-    { value: 'storniert',  label: 'Storniert' },
-];
-
-// Status-Badge-Farben für den Zeitstrahl
-const STATUS_BADGE = {
-    'bestätigt':  'bg-green-500/15 text-green-400 border-green-500/30',
-    'vorgemerkt': 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-    'erschienen': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    'no-show':    'bg-muted text-muted-foreground border-border',
-    'storniert':  'bg-muted text-muted-foreground border-border',
-};
+import UpcomingReservationsList from '@/components/reservations/UpcomingReservationsList';
+import { resolveCreatorName } from '@/lib/reservationCreator';
 
 function suggestTables(tables, reservations, guestCount, date, time) {
     const available = tables.filter(t => {
@@ -75,8 +59,6 @@ export default function GuestHub() {
     const permissions = usePermissions();
 
     // ── State ──────────────────────────────────────────────────────────────
-    const [statusFilter, setStatusFilter] = useState('alle');
-    const [searchTerm, setSearchTerm] = useState('');
     const [resModalOpen, setResModalOpen] = useState(false);
     const [selectedRes, setSelectedRes] = useState(null);
     const [highlightedRes, setHighlightedRes] = useState(null);
@@ -132,16 +114,29 @@ export default function GuestHub() {
         staleTime: STALE.MEDIUM
     });
 
+    const { data: employees = [] } = useQuery({
+        queryKey: ['employees'],
+        queryFn: () => base44.entities.Employee.list(),
+        staleTime: STALE.MEDIUM
+    });
+
+    const resolveCreator = (email) => resolveCreatorName(employees, email);
+
     // ── Mutations ────────────────────────────────────────────────────────────
     const createMutation = useCreateReservation();
     const updateMutation = useUpdateReservation();
     const deleteMutation = useDeleteReservation();
 
-    const handleSave = (data, id) => {
+    const handleSave = (data, id, keepOpen = false) => {
+        const onSuccess = () => {
+            if (keepOpen) return;
+            setResModalOpen(false);
+            setSelectedRes(null);
+        };
         if (id) {
-            updateMutation.mutate({ id, data }, { onSuccess: () => { setResModalOpen(false); setSelectedRes(null); } });
+            updateMutation.mutate({ id, data }, { onSuccess });
         } else {
-            createMutation.mutate(data, { onSuccess: () => { setResModalOpen(false); setSelectedRes(null); } });
+            createMutation.mutate(data, { onSuccess });
         }
     };
 
@@ -172,16 +167,14 @@ export default function GuestHub() {
         [allReservations, filterDate]
     );
 
-    const filteredReservations = useMemo(() => {
-        const search = searchTerm.toLowerCase();
-        return dayReservations.filter(r => {
-            // Zukünftiges Datum: archivierte Einträge ausblenden
-            if (r.is_archived && filterDate >= todayStr) return false;
-            if (search && !r.customer_name?.toLowerCase().includes(search) && !r.phone?.toLowerCase().includes(search)) return false;
-            if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
-            return true;
-        });
-    }, [dayReservations, searchTerm, statusFilter, filterDate, todayStr]);
+    // Kommende Reservierungen: heute + nächste 6 Tage, chronologisch
+    const upcomingReservations = useMemo(() => {
+        const from = todayStr;
+        const to = addDaysHelper(todayStr, 6);
+        return allReservations
+            .filter(r => !r.is_archived && r.date && r.date >= from && r.date <= to)
+            .sort((a, b) => `${a.date} ${a.time || ''}`.localeCompare(`${b.date} ${b.time || ''}`));
+    }, [allReservations, todayStr]);
 
     // ── Tischplan-Daten (für filterDate) ─────────────────────────────────────
     const filteredTables = useMemo(() => {
@@ -240,7 +233,7 @@ export default function GuestHub() {
     );
 
     // ── Navigation im Reservierungs-Modal (folgt dem Zeitstrahl des Tages) ──
-    const reservationNavList = filteredReservations;
+    const reservationNavList = upcomingReservations;
 
     const handleNavigateReservation = (direction) => {
         if (!selectedRes?.id) return;
@@ -375,101 +368,6 @@ export default function GuestHub() {
                         </span>
                     </div>
 
-                    {/* ── Reservierungen als Zeitstrahl ─────────────────────── */}
-                    <section className="space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                                <Clock className="w-4 h-4" />Reservierungen
-                            </h2>
-                            <div className="relative flex-1 max-w-[200px]">
-                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                                <Input
-                                    placeholder="Name oder Telefon…"
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="pl-8 h-9 bg-card border-border text-sm"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Filter-Chips */}
-                        <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1">
-                            {STATUS_FILTERS.map(f => (
-                                <button
-                                    key={f.value}
-                                    onClick={() => setStatusFilter(f.value)}
-                                    className={cn(
-                                        'text-xs px-3 py-1.5 rounded-full border shrink-0 h-8 whitespace-nowrap transition-all',
-                                        statusFilter === f.value
-                                            ? 'bg-foreground text-background border-foreground'
-                                            : 'border-border text-muted-foreground hover:text-foreground'
-                                    )}
-                                >
-                                    {f.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Chronologische Liste */}
-                        {filteredReservations.length === 0 ? (
-                            <EmptyState
-                                title={searchTerm || statusFilter !== 'alle' ? 'Keine Ergebnisse' : 'Keine Reservierungen'}
-                                description={searchTerm || statusFilter !== 'alle'
-                                    ? 'Versuchen Sie andere Filter.'
-                                    : isToday ? 'Erstellen Sie eine neue Reservierung.' : 'Keine Reservierungen an diesem Tag.'}
-                            />
-                        ) : (
-                            <div className="space-y-2">
-                                {filteredReservations.map((res, idx) => {
-                                    const tbl = tables.find(t => t.id === res.table || t.table_number === res.table);
-                                    const isHighlighted = highlightedRes?.id === res.id;
-                                    return (
-                                        <button
-                                            key={res.id}
-                                            onClick={() => openReservation(res)}
-                                            className={cn(
-                                                'w-full flex items-center gap-3 p-3 rounded-xl border bg-card text-left transition-all card-pressable animate-stagger',
-                                                isHighlighted
-                                                    ? 'border-amber-500/50 ring-1 ring-amber-500/30'
-                                                    : 'border-border hover:bg-accent/50'
-                                            )}
-                                            style={{ '--delay': `${idx * 40}ms` }}
-                                        >
-                                            <span className="text-sm font-bold tabular-nums shrink-0 w-12 text-foreground">
-                                                {res.time || '–'}
-                                            </span>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-semibold text-foreground truncate">{res.customer_name}</p>
-                                                <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
-                                                    <span className="flex items-center gap-0.5">
-                                                        <Users className="w-3 h-3" />{res.guests} Pers.
-                                                    </span>
-                                                    {tbl ? (
-                                                        <span className="flex items-center gap-0.5">
-                                                            <MapPin className="w-3 h-3" />{getTableDisplayName(tbl)}
-                                                        </span>
-                                                    ) : res.table ? (
-                                                        <span className="flex items-center gap-0.5">
-                                                            <MapPin className="w-3 h-3" />Tisch {res.table}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-amber-500">kein Tisch</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <span className={cn(
-                                                'text-[11px] px-2 py-1 rounded-full border font-medium shrink-0',
-                                                STATUS_BADGE[res.status] || 'bg-muted text-muted-foreground border-border'
-                                            )}>
-                                                {res.status}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </section>
-
                     {/* ── Tischplan ─────────────────────────────────────────── */}
                     <section className="space-y-3 pt-2">
                         <div className="flex items-center justify-between gap-2">
@@ -546,6 +444,19 @@ export default function GuestHub() {
                             onEditTable={(t) => setShowTableModal(t)}
                         />
                     </section>
+
+                    {/* ── Kommende Reservierungen (nächste 7 Tage) ──────────── */}
+                    <section className="space-y-3 pt-2">
+                        <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                            <Clock className="w-4 h-4" />Kommende Reservierungen
+                        </h2>
+                        <UpcomingReservationsList
+                            reservations={upcomingReservations}
+                            tables={tables}
+                            resolveCreator={resolveCreator}
+                            onOpen={openReservation}
+                        />
+                    </section>
                 </div>
             </div>
 
@@ -574,6 +485,8 @@ export default function GuestHub() {
                 isManager={permissions.isManager}
                 onNavigate={handleNavigateReservation}
                 navPosition={reservationNavPosition}
+                defaultDate={filterDate}
+                creatorName={selectedRes ? resolveCreator(selectedRes.created_by) : ''}
             />
 
             {/* Table edit modal */}
