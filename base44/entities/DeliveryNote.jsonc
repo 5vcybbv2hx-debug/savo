@@ -19,6 +19,23 @@
       "format": "date",
       "description": "Lieferdatum (YYYY-MM-DD)"
     },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "lieferschein",
+        "leergut",
+        "rechnung",
+        "unbekannt"
+      ],
+      "enumColors": [
+        "green",
+        "yellow",
+        "blue",
+        "gray"
+      ],
+      "default": "lieferschein",
+      "description": "Erkannter Dokumenttyp. 'leergut' = nur R\u00fcckgabe, wird nicht als Wareneingang gebucht."
+    },
     "file_url": {
       "type": "string",
       "description": "URL des hochgeladenen Fotos/PDF des Lieferscheins (erste Seite)"
@@ -36,7 +53,7 @@
     },
     "positions": {
       "type": "array",
-      "description": "Erkannte und best\u00e4tigte Positionen",
+      "description": "Erkannte und best\u00e4tigte Warenpositionen (gebucht)",
       "items": {
         "type": "object",
         "properties": {
@@ -52,21 +69,50 @@
             "type": "string",
             "description": "Referenz auf Article"
           },
+          "supplier_article_number": {
+            "type": "string",
+            "description": "Artikelnummer des Lieferanten laut Beleg (z. B. 38182)"
+          },
+          "match_source": {
+            "type": "string",
+            "enum": [
+              "artikelnummer",
+              "name",
+              "manuell"
+            ],
+            "description": "Herkunft der Artikelzuordnung. 'manuell' = vom Mitarbeiter gew\u00e4hlt (l\u00f6st den Lernmodus aus)."
+          },
           "quantity": {
             "type": "number",
-            "description": "Gelieferte Menge in der angegebenen Einheit"
+            "description": "Liefermenge in Gebinden (Alias zu quantity_packages)"
+          },
+          "quantity_packages": {
+            "type": "number",
+            "description": "Liefermenge in Gebinden, z. B. 1 bei 1 Kasten"
+          },
+          "unit_code": {
+            "type": "string",
+            "description": "Einheiten-K\u00fcrzel laut Beleg: Ka, Fa, Do, Fl, Ba, St"
+          },
+          "quantity_units": {
+            "type": "number",
+            "description": "In Lagereinheiten umgerechnete Menge (quantity_packages \u00d7 units_per_packaging; bei Fass = Anzahl F\u00e4sser)"
           },
           "unit": {
             "type": "string",
-            "description": "Einheit: Karton, Kasten, Flaschen, St\u00fcck, kg"
+            "description": "Einheit: Kasten, Fass, Dose, Flasche, Bag in Box, St\u00fcck, kg"
           },
           "packaging": {
             "type": "string",
-            "description": "Gebindeart laut Beleg: Kasten, Karton, Flaschen, St\u00fcck"
+            "description": "Gebindeart laut Beleg"
           },
           "unit_size": {
             "type": "number",
             "description": "Einzeleinheiten pro Gebinde (sonst 1)"
+          },
+          "units_per_packaging": {
+            "type": "number",
+            "description": "St\u00fcck pro Gebinde aus der Spalte Geb."
           },
           "content_amount": {
             "type": "number",
@@ -104,9 +150,56 @@
         }
       }
     },
+    "return_positions": {
+      "type": "array",
+      "description": "Leergut/R\u00fcckgabe \u2014 nur informativ gespeichert, kein Bestand und kein Preis",
+      "items": {
+        "type": "object",
+        "properties": {
+          "raw_text": {
+            "type": "string"
+          },
+          "article_name": {
+            "type": "string"
+          },
+          "supplier_article_number": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "R\u00fcckgabemenge in Gebinden"
+          },
+          "unit_code": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "units_per_packaging": {
+            "type": "number"
+          },
+          "quantity_units": {
+            "type": "number"
+          },
+          "content_amount": {
+            "type": "number"
+          },
+          "content_unit": {
+            "type": "string"
+          },
+          "page_number": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "return_positions_count": {
+      "type": "number",
+      "description": "Anzahl der Leergut-/R\u00fcckgabezeilen (nicht gebucht)"
+    },
     "positions_count": {
       "type": "number",
-      "description": "Anzahl der Positionen"
+      "description": "Anzahl der Warenpositionen"
     },
     "total_net": {
       "type": "number",

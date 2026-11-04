@@ -36,48 +36,75 @@ function preferredBySupplier(article, supplierName) {
   return inList || inDetails;
 }
 
-/** Artikelnummern beim Lieferanten (für den Barcode/Artikelnummer-Abgleich). */
-function supplierArticleNumbers(article) {
-  return (article.supplier_details || [])
-    .map(d => String(d.article_number || '').trim())
-    .filter(Boolean);
+const normNumber = (v) => String(v ?? '').trim().toLowerCase().replace(/^0+/, '');
+
+/**
+ * Gelernte Lieferanten-Artikelnummern: Article.supplier_article_numbers
+ * ({"Mebold": "38182"}) plus Altbestand supplier_details[].article_number.
+ */
+function supplierNumbers(article, supplierName) {
+  const learned = Object.entries(article.supplier_article_numbers || {})
+    .filter(([name]) => !supplierName || String(name).trim().toLowerCase() === supplierName.trim().toLowerCase())
+    .map(([, number]) => String(number ?? '').trim());
+  const fromDetails = (article.supplier_details || [])
+    .filter(d => !supplierName || String(d.supplier_name || '').trim().toLowerCase() === supplierName.trim().toLowerCase())
+    .map(d => String(d.article_number || '').trim());
+  return [...learned, ...fromDetails].filter(Boolean);
 }
 
-export function matchArticle(position, articles = [], supplierName = '') {
+const supplierMatches = (supplierName, article) => preferredBySupplier(article, supplierName);
+
+/**
+ * Artikel-Abgleich in fester Reihenfolge:
+ * 1. Lieferanten-Artikelnummer, 2. exakter Name, 3. normalisierter Name, 4. includes.
+ * Gibt { article, source } zurück; source = 'artikelnummer' | 'name' | null.
+ */
+export function matchArticleDetailed(position, articles = [], supplierName = '') {
   const raw = position.raw_text || '';
   const name = position.article_name || raw;
   const nameLower = name.trim().toLowerCase();
   const norm = normalizeName(name);
+  const number = normNumber(position.supplier_article_number);
 
   const active = articles.filter(a => a.is_active !== false && a.name);
   const bySupplierFirst = (list) =>
-    [...list.filter(a => preferredBySupplier(a, supplierName)), ...list.filter(a => !preferredBySupplier(a, supplierName))];
+    [...list.filter(a => supplierMatches(supplierName, a)), ...list.filter(a => !supplierMatches(supplierName, a))];
 
-  // 1. exakter Name
+  // 1. Lieferanten-Artikelnummer
+  if (number) {
+    const hit = bySupplierFirst(active.filter(a => supplierNumbers(a, supplierName).some(n => normNumber(n) === number)));
+    if (hit[0]) return { article: hit[0], source: 'artikelnummer' };
+  }
+
+  // 2. exakter Name
   if (nameLower) {
     const exact = bySupplierFirst(active.filter(a => a.name.trim().toLowerCase() === nameLower));
-    if (exact[0]) return exact[0];
+    if (exact[0]) return { article: exact[0], source: 'name' };
   }
-  // 2. normalisierter Name
+  // 3. normalisierter Name
   if (norm) {
     const normed = bySupplierFirst(active.filter(a => normalizeName(a.name) === norm));
-    if (normed[0]) return normed[0];
+    if (normed[0]) return { article: normed[0], source: 'name' };
   }
-  // 3. includes (kürzester Treffer = spezifischster)
+  // 4. includes (kürzester Treffer = spezifischster)
   if (norm.length >= 4) {
     const partial = bySupplierFirst(active.filter(a => {
       const n = normalizeName(a.name);
       return n && (n.includes(norm) || norm.includes(n));
     })).sort((a, b) => a.name.length - b.name.length);
-    if (partial[0]) return partial[0];
+    if (partial[0]) return { article: partial[0], source: 'name' };
   }
-  // 4. Barcode / Artikelnummer im Lieferschein-Text
+  // 5. Artikelnummer irgendwo im Zeilentext (Altbestand, Barcode)
   const haystack = `${raw} ${name}`.toLowerCase();
   const codeHit = active.find(a => {
-    const codes = [a.barcode, ...supplierArticleNumbers(a)].filter(Boolean).map(c => String(c).toLowerCase());
+    const codes = [a.barcode, ...supplierNumbers(a, supplierName)].filter(Boolean).map(c => String(c).toLowerCase());
     return codes.some(c => c.length >= 4 && haystack.includes(c));
   });
-  return codeHit || null;
+  return { article: codeHit || null, source: codeHit ? 'artikelnummer' : null };
+}
+
+export function matchArticle(position, articles = [], supplierName = '') {
+  return matchArticleDetailed(position, articles, supplierName).article;
 }
 
 /** Offene Bestellposition desselben Lieferanten zu einer Lieferschein-Position. */
@@ -102,14 +129,4 @@ export function priceDeltaPercent(oldPrice, newPrice) {
   const newV = Number(newPrice);
   if (!oldV || !newV || oldV <= 0) return null;
   return ((newV - oldV) / oldV) * 100;
-}
-
-/** Einzeleinheiten, die gebucht werden (Menge × Gebindegröße bei Karton/Flaschen). */
-export function bookedUnits(position) {
-  const qty = Number(position.quantity) || 0;
-  const size = Number(position.unit_size) || 0;
-  const unit = String(position.unit || '');
-  const isPack = /karton|kiste|pack|gebinde|flasche/i.test(unit);
-  if (isPack && size > 0) return qty * size;
-  return qty;
 }

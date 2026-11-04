@@ -10,7 +10,8 @@ import ScanDraftForm from '@/components/lieferschein/ScanDraftForm';
 import BookingResult from '@/components/lieferschein/BookingResult';
 import DeliveryHistory from '@/components/lieferschein/DeliveryHistory';
 import { extractDeliveryNote, uploadDeliveryFile, MAX_PAGES } from '@/lib/deliveryNoteExtraction';
-import { matchArticle, matchShoppingItem, matchSupplier, normalizeName } from '@/lib/deliveryNoteMatching';
+import { matchArticleDetailed, matchShoppingItem, matchSupplier, normalizeName } from '@/lib/deliveryNoteMatching';
+import { quantityUnits } from '@/lib/deliveryNoteUnits';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -111,17 +112,23 @@ export default function LieferscheinScanner() {
       const supplierName = supplier?.name || extracted.supplier_name || '';
       const candidates = openItemsForSupplier(supplierName);
 
-      const positions = extracted.positions.map((p) => {
-        const article = matchArticle(p, articles, supplierName);
+      const positions = extracted.positions.filter((p) => !p.is_return).map((p) => {
+        const { article, source } = matchArticleDetailed(p, articles, supplierName);
         const shoppingItem = matchShoppingItem(p, article?.id, candidates);
-        return {
+        const row = {
           _key: crypto.randomUUID(),
           raw_text: p.raw_text,
           article_name: article?.name || p.article_name,
+          supplier_article_number: p.supplier_article_number || '',
           article_id: article?.id || '',
-          quantity: p.quantity,
-          unit: p.unit || 'Stück',
-          unit_size: p.unit_size ?? 1,
+          match_source: source || null,
+          quantity: p.quantity_packages,
+          quantity_packages: p.quantity_packages,
+          unit: p.unit || '',
+          unit_code: p.unit_code || 'St',
+          unit_size: p.units_per_packaging ?? 1,
+          units_per_packaging: p.units_per_packaging ?? 1,
+          quantity_units: null,
           content_amount: p.content_amount,
           content_unit: p.content_unit,
           unit_price: p.unit_price,
@@ -130,15 +137,33 @@ export default function LieferscheinScanner() {
           page_number: p.page_number || 1,
           shopping_item_id: shoppingItem?.id || '',
         };
+        return { ...row, quantity_units: quantityUnits(row) };
       });
+
+      const returnPositions = extracted.positions.filter((p) => p.is_return).map((p) => ({
+        _key: crypto.randomUUID(),
+        raw_text: p.raw_text,
+        article_name: p.article_name,
+        supplier_article_number: p.supplier_article_number || '',
+        quantity: p.quantity_packages,
+        quantity_packages: p.quantity_packages,
+        unit: p.unit || '',
+        unit_code: p.unit_code || 'St',
+        units_per_packaging: p.units_per_packaging ?? 1,
+        quantity_units: quantityUnits(p),
+        content_amount: p.content_amount,
+        content_unit: p.content_unit,
+        page_number: p.page_number || 1,
+      }));
 
       const priced = positions.filter((p) => p.unit_price != null);
       const totalNet = priced.length
         ? priced.reduce((sum, p) => sum + (p.line_total
-            ?? (Number(p.quantity) || 0) * (Number(p.unit_size) || 1) * (Number(p.unit_price) || 0)), 0)
+            ?? (quantityUnits(p) || 0) * (Number(p.unit_price) || 0)), 0)
         : null;
 
       setDraft({
+        document_type: extracted.document_type || 'lieferschein',
         supplier_name: supplierName,
         supplier_id: supplier?.id || '',
         delivery_note_number: extracted.delivery_note_number || '',
@@ -149,6 +174,7 @@ export default function LieferscheinScanner() {
         missing_pages: extracted.missing_pages || [],
         total_net: totalNet,
         positions,
+        return_positions: returnPositions,
       });
     } catch (e) {
       setError(e?.message || 'Der Lieferschein konnte nicht gelesen werden.');
@@ -180,12 +206,15 @@ export default function LieferscheinScanner() {
       const positions = prev.positions.map((p, i) => {
         if (i !== index) return p;
         const next = { ...p, ...patch };
-        if ('article_id' in patch) {
+        if ('quantity_packages' in patch) next.quantity = patch.quantity_packages;
+        if (patch.article_id) {
           const article = articles.find((a) => a.id === patch.article_id);
           if (article) next.article_name = article.name;
+          next.match_source = 'manuell';
           const candidates = openItemsForSupplier(prev.supplier_name);
           next.shopping_item_id = matchShoppingItem(next, next.article_id, candidates)?.id || '';
         }
+        next.quantity_units = quantityUnits(next);
         return next;
       });
       return { ...prev, positions };
@@ -196,6 +225,23 @@ export default function LieferscheinScanner() {
     setDraft((prev) => prev ? { ...prev, positions: prev.positions.filter((_, i) => i !== index) } : prev);
   };
 
+  const updateReturn = (index, patch) => {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const return_positions = (prev.return_positions || []).map((r, i) => {
+        if (i !== index) return r;
+        const next = { ...r, ...patch };
+        if ('quantity' in patch) next.quantity_packages = patch.quantity;
+        return { ...next, quantity_units: quantityUnits(next) };
+      });
+      return { ...prev, return_positions };
+    });
+  };
+
+  const removeReturn = (index) => {
+    setDraft((prev) => prev ? { ...prev, return_positions: (prev.return_positions || []).filter((_, i) => i !== index) } : prev);
+  };
+
   const createArticle = async (name) => {
     const created = await base44.entities.Article.create({ name, is_active: true, current_stock: 0 });
     queryClient.invalidateQueries({ queryKey: ['articles'] });
@@ -204,8 +250,9 @@ export default function LieferscheinScanner() {
 
   const handleBook = async () => {
     if (!draft) return;
-    const positions = draft.positions.filter((p) => p.quantity != null && p.quantity !== 0);
-    if (positions.length === 0) {
+    const positions = draft.positions.filter((p) => p.quantity_packages != null && p.quantity_packages !== 0);
+    const returnPositions = (draft.return_positions || []).filter((p) => p.quantity != null && p.quantity !== 0);
+    if (positions.length === 0 && returnPositions.length === 0) {
       toast.error('Keine Positionen mit Menge vorhanden.');
       return;
     }
@@ -217,6 +264,7 @@ export default function LieferscheinScanner() {
           supplier_id: draft.supplier_id,
           delivery_note_number: draft.delivery_note_number,
           delivery_date: draft.delivery_date,
+          document_type: draft.document_type || 'lieferschein',
           file_url: draft.file_url,
           file_urls: draft.file_urls || [],
           page_count: draft.page_count || 1,
@@ -226,9 +274,15 @@ export default function LieferscheinScanner() {
           raw_text: p.raw_text,
           article_name: p.article_name,
           article_id: p.article_id,
-          quantity: p.quantity,
+          supplier_article_number: p.supplier_article_number || '',
+          match_source: p.match_source || null,
+          quantity: p.quantity_packages,
+          quantity_packages: p.quantity_packages,
           unit: p.unit,
-          unit_size: p.unit_size,
+          unit_code: p.unit_code,
+          unit_size: p.units_per_packaging,
+          units_per_packaging: p.units_per_packaging,
+          quantity_units: quantityUnits(p),
           content_amount: p.content_amount ?? null,
           content_unit: p.content_unit ?? null,
           unit_price: p.unit_price,
@@ -236,6 +290,19 @@ export default function LieferscheinScanner() {
           page_number: p.page_number || 1,
           price_missing: p.unit_price == null,
           shopping_item_id: p.shopping_item_id,
+        })),
+        return_positions: returnPositions.map((p) => ({
+          raw_text: p.raw_text,
+          article_name: p.article_name,
+          supplier_article_number: p.supplier_article_number || '',
+          quantity: p.quantity,
+          unit_code: p.unit_code,
+          unit: p.unit,
+          units_per_packaging: p.units_per_packaging,
+          quantity_units: quantityUnits(p),
+          content_amount: p.content_amount ?? null,
+          content_unit: p.content_unit ?? null,
+          page_number: p.page_number || 1,
         })),
       });
       const data = response.data;
@@ -247,7 +314,7 @@ export default function LieferscheinScanner() {
       queryClient.invalidateQueries({ queryKey: ['delivery-notes'] });
       queryClient.invalidateQueries({ queryKey: ['shopping-open-scanner'] });
       queryClient.invalidateQueries({ queryKey: ['shopping-list'] });
-      toast.success(`${data.booked?.length || 0} Position${data.booked?.length === 1 ? '' : 'en'} gebucht`);
+      toast.success(`${data.counts?.booked || 0} Position${data.counts?.booked === 1 ? '' : 'en'} Ware gebucht`);
     } catch (e) {
       toast.error(e?.response?.data?.error || e?.message || 'Buchung fehlgeschlagen.');
     } finally {
@@ -349,6 +416,8 @@ export default function LieferscheinScanner() {
                 onFieldChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
                 onChangePosition={updatePosition}
                 onRemovePosition={removePosition}
+                onChangeReturn={updateReturn}
+                onRemoveReturn={removeReturn}
                 onCreateArticle={createArticle}
                 onBook={handleBook}
                 onDiscard={reset}

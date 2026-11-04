@@ -22,11 +22,17 @@ export default function BookingResult({ result, onReset }) {
       </div>
 
       {result.counts && (
-        <div className="grid grid-cols-3 gap-2">
+        <div className={result.counts.leergut > 0 ? 'grid grid-cols-2 sm:grid-cols-4 gap-2' : 'grid grid-cols-3 gap-2'}>
           <div className="rounded-xl border border-border bg-card p-3 text-center">
             <p className="text-lg font-bold text-foreground num">{result.counts.booked ?? 0}</p>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Positionen gebucht</p>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Positionen Ware gebucht</p>
           </div>
+          {result.counts.leergut > 0 && (
+            <div className="rounded-xl border border-border bg-card p-3 text-center">
+              <p className="text-lg font-bold text-amber-500 num">{result.counts.leergut}</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Leergut (nicht gebucht)</p>
+            </div>
+          )}
           <div className="rounded-xl border border-border bg-card p-3 text-center">
             <p className="text-lg font-bold text-emerald-500 num">{result.counts.withPrice ?? 0}</p>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">mit Preis übernommen</p>

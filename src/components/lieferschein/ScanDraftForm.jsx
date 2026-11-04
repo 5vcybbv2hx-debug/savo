@@ -4,6 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SmartCombobox from '@/components/ui/SmartCombobox';
 import ReviewTable from './ReviewTable';
+import ReturnSection from './ReturnSection';
+
+const DOC_TYPES = {
+  lieferschein: { label: 'Lieferschein', className: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
+  leergut: { label: 'Leergut / Rückgabe', className: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+  rechnung: { label: 'Rechnung', className: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  unbekannt: { label: 'Typ unklar', className: 'bg-muted text-muted-foreground' },
+};
 
 /** Prüfbereich: Kopfdaten des Lieferscheins, Positionen und Buchen. */
 export default function ScanDraftForm({
@@ -16,13 +24,27 @@ export default function ScanDraftForm({
   onFieldChange,
   onChangePosition,
   onRemovePosition,
+  onChangeReturn,
+  onRemoveReturn,
   onCreateArticle,
   onBook,
   onDiscard,
 }) {
+  const wareCount = draft.positions?.length || 0;
+  const returnCount = draft.return_positions?.length || 0;
+  const docType = DOC_TYPES[draft.document_type] || DOC_TYPES.lieferschein;
+
   return (
     <div className="space-y-3">
       <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${docType.className}`}>{docType.label}</span>
+          <span className="text-[11px] text-muted-foreground">
+            {wareCount} Position{wareCount === 1 ? '' : 'en'} Ware
+            {returnCount > 0 ? ` · ${returnCount} Leergut` : ''}
+          </span>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <Label className="text-xs">Lieferant</Label>
@@ -81,6 +103,12 @@ export default function ScanDraftForm({
         )}
       </div>
 
+      {draft.document_type === 'leergut' && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+          Auf diesem Beleg ist nur Leergut/Rückgabe erkannt – es wird kein Wareneingang gebucht.
+        </div>
+      )}
+
       <ReviewTable
         positions={draft.positions}
         articles={articles}
@@ -90,7 +118,18 @@ export default function ScanDraftForm({
         onCreateArticle={onCreateArticle}
       />
 
+      <ReturnSection
+        positions={draft.return_positions}
+        onChange={onChangeReturn}
+        onRemove={onRemoveReturn}
+      />
+
       <div className="flex flex-wrap items-center justify-end gap-2">
+        {returnCount > 0 && (
+          <span className="mr-auto text-[11px] font-semibold text-muted-foreground">
+            {returnCount} Position{returnCount === 1 ? '' : 'en'} Leergut (nicht gebucht)
+          </span>
+        )}
         <button
           type="button"
           onClick={onDiscard}
@@ -106,7 +145,9 @@ export default function ScanDraftForm({
           className="h-11 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50 inline-flex items-center gap-2"
         >
           {isBooking && <Loader2 className="w-4 h-4 animate-spin" />}
-          Wareneingang buchen
+          {wareCount > 0
+            ? `${wareCount} Position${wareCount === 1 ? '' : 'en'} Ware buchen`
+            : 'Leergut-Beleg speichern'}
         </button>
       </div>
     </div>

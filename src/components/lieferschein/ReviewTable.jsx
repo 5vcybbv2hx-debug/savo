@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import PositionRow from './PositionRow';
 import { normalizeName } from '@/lib/deliveryNoteMatching';
+import { quantityUnits } from '@/lib/deliveryNoteUnits';
 
 const pageKey = (position) =>
   position.article_id || normalizeName(`${position.article_name || ''} ${position.raw_text || ''}`);
@@ -10,7 +11,7 @@ export default function ReviewTable({ positions, articles, openItems, onChange, 
   const assigned = positions.filter((p) => p.article_id);
   const priced = positions.filter((p) => p.unit_price != null);
   const totalNet = priced.reduce(
-    (sum, p) => sum + (p.quantity && p.unit_price ? Number(p.quantity) * Number(p.unit_price) * (Number(p.unit_size) || 1) : 0),
+    (sum, p) => sum + (quantityUnits(p) || 0) * (Number(p.unit_price) || 0),
     0
   );
   const unassigned = positions.length - assigned.length;

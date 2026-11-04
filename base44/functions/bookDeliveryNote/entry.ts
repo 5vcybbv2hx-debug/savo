@@ -6,14 +6,35 @@ const toNum = (value) => {
   return Number.isFinite(n) ? n : null;
 };
 
-const isPackUnit = (unit) => /karton|kiste|pack|gebinde|flasche/i.test(String(unit || ''));
+const isPackUnit = (unit) => /karton|kiste|kasten|pack|gebinde|flasche|dose/i.test(String(unit || ''));
+
+/**
+ * Menge in Lagereinheiten. quantity_units kommt bereits umgerechnet vom Client
+ * (quantity_packages × units_per_packaging; Fass = Anzahl Fässer). Ohne diesen
+ * Wert greift die Alt-Logik über Einheit + Gebindegröße.
+ */
+const addUnitsOf = (p) => {
+  const explicit = toNum(p.quantity_units);
+  if (explicit !== null) return explicit;
+
+  const qty = toNum(p.quantity_packages) ?? toNum(p.quantity) ?? 0;
+  const perPack = toNum(p.units_per_packaging) ?? toNum(p.unit_size);
+  const code = String(p.unit_code || '');
+  if (code === 'Fa') return qty;
+  if (code && code !== 'St' && code !== 'kg' && perPack > 0) return qty * perPack;
+  if (isPackUnit(p.unit) && perPack > 0) return qty * perPack;
+  return qty;
+};
+
+const normalizeNumber = (value) => String(value ?? '').trim().replace(/^0+/, '').toLowerCase();
 
 export default async function (req) {
   try {
     const body = await req.json().catch(() => ({}));
     const positions = Array.isArray(body.positions) ? body.positions : [];
+    const returnPositionsRaw = Array.isArray(body.return_positions) ? body.return_positions : [];
     const header = body.deliveryNote && typeof body.deliveryNote === 'object' ? body.deliveryNote : {};
-    if (positions.length === 0) {
+    if (positions.length === 0 && returnPositionsRaw.length === 0) {
       return Response.json({ error: 'Keine Positionen übergeben' }, { status: 400 });
     }
 
@@ -46,11 +67,31 @@ export default async function (req) {
     const sumLineTotals = (list) => list.reduce((sum, p) => sum + (toNum(p.line_total) || 0), 0);
     const hasAnyPrice = positions.some((p) => toNum(p.unit_price) !== null);
 
+    // Leergut/Rückgabe: nur informativ, kein Bestand, kein Preis.
+    const returnPositions = returnPositionsRaw.map((r) => ({
+      raw_text: r.raw_text || '',
+      article_name: r.article_name || '',
+      supplier_article_number: r.supplier_article_number || '',
+      quantity: toNum(r.quantity) ?? toNum(r.quantity_packages),
+      unit_code: r.unit_code || '',
+      unit: r.unit || '',
+      units_per_packaging: toNum(r.units_per_packaging),
+      quantity_units: toNum(r.quantity_units),
+      content_amount: toNum(r.content_amount),
+      content_unit: r.content_unit || '',
+      page_number: toNum(r.page_number) || 1,
+    }));
+
+    const documentType = ['lieferschein', 'leergut', 'rechnung', 'unbekannt'].includes(header.document_type)
+      ? header.document_type
+      : 'lieferschein';
+
     const note = await base44.asServiceRole.entities.DeliveryNote.create({
       supplier_name: supplierName,
       supplier_id: header.supplier_id || '',
       delivery_note_number: noteNumber,
       delivery_date: deliveryDate,
+      document_type: documentType,
       file_url: header.file_url || fileUrls[0] || '',
       file_urls: fileUrls,
       page_count: pageCount,
@@ -58,10 +99,16 @@ export default async function (req) {
         raw_text: p.raw_text || '',
         article_name: p.article_name || '',
         article_id: p.article_id || '',
-        quantity: toNum(p.quantity),
+        supplier_article_number: p.supplier_article_number || '',
+        match_source: p.match_source || '',
+        quantity: toNum(p.quantity_packages) ?? toNum(p.quantity),
+        quantity_packages: toNum(p.quantity_packages) ?? toNum(p.quantity),
+        quantity_units: addUnitsOf(p),
+        unit_code: p.unit_code || '',
         unit: p.unit || '',
         packaging: p.unit || '',
-        unit_size: toNum(p.unit_size),
+        unit_size: toNum(p.units_per_packaging) ?? toNum(p.unit_size),
+        units_per_packaging: toNum(p.units_per_packaging) ?? toNum(p.unit_size),
         content_amount: toNum(p.content_amount),
         content_unit: p.content_unit || '',
         page_number: toNum(p.page_number) || 1,
@@ -70,6 +117,8 @@ export default async function (req) {
         shopping_item_id: p.shopping_item_id || '',
         booked: false,
       })),
+      return_positions: returnPositions,
+      return_positions_count: returnPositions.length,
       positions_count: positions.length,
       total_net: totalNet ?? (hasAnyPrice ? sumLineTotals(positions) : null),
       status: 'entwurf',
@@ -80,6 +129,7 @@ export default async function (req) {
     const unbooked = [];
     const errors = [];
     const priceChanges = [];
+    const learned = [];
     const storedPositions = [];
     let shoppingClosed = 0;
     let withPrice = 0;
@@ -93,10 +143,16 @@ export default async function (req) {
         raw_text: p.raw_text || '',
         article_name: p.article_name || '',
         article_id: articleId,
-        quantity: toNum(p.quantity),
+        supplier_article_number: p.supplier_article_number || '',
+        match_source: p.match_source || '',
+        quantity: toNum(p.quantity_packages) ?? toNum(p.quantity),
+        quantity_packages: toNum(p.quantity_packages) ?? toNum(p.quantity),
+        quantity_units: addUnitsOf(p),
+        unit_code: p.unit_code || '',
         unit: p.unit || '',
         packaging: p.unit || '',
-        unit_size: toNum(p.unit_size),
+        unit_size: toNum(p.units_per_packaging) ?? toNum(p.unit_size),
+        units_per_packaging: toNum(p.units_per_packaging) ?? toNum(p.unit_size),
         content_amount: toNum(p.content_amount),
         content_unit: p.content_unit || '',
         page_number: toNum(p.page_number) || 1,
@@ -118,14 +174,25 @@ export default async function (req) {
           .catch((e) => (e.status === 404 ? null : Promise.reject(e)));
         if (!article) throw new Error('Artikel nicht gefunden');
 
-        const qty = toNum(p.quantity) || 0;
-        const unitSize = toNum(p.unit_size);
-        const addUnits = isPackUnit(p.unit) && unitSize > 0 ? qty * unitSize : qty;
+        const addUnits = addUnitsOf(p);
         const oldStock = toNum(article.current_stock) || 0;
 
         await base44.asServiceRole.entities.Article.update(articleId, {
           current_stock: oldStock + addUnits,
         });
+
+        // Lernmodus: manuell zugeordnete Zeile mit Lieferanten-Art.-Nr. lernt die Nummer am Artikel.
+        const supplierNumber = String(p.supplier_article_number || '').trim();
+        if (p.match_source === 'manuell' && supplierNumber && supplierName) {
+          const map = { ...(article.supplier_article_numbers || {}) };
+          const existingKey = Object.keys(map).find((k) => String(k).trim().toLowerCase() === supplierName.toLowerCase());
+          const slotFilled = existingKey ? String(map[existingKey] || '').trim() : false;
+          if (!existingKey || !slotFilled) {
+            map[existingKey || supplierName] = supplierNumber;
+            await base44.asServiceRole.entities.Article.update(articleId, { supplier_article_numbers: map });
+            learned.push({ article_name: article.name, supplier_name: supplierName, article_number: supplierNumber });
+          }
+        }
 
         const oldPrice = toNum(article.purchase_price);
         // Ohne erkannten Preis (Lieferscheine enthalten meist keine Preise) wird
@@ -156,7 +223,7 @@ export default async function (req) {
             .catch((e) => (e.status === 404 ? null : Promise.reject(e)));
           if (item) {
             await base44.asServiceRole.entities.ShoppingList.update(item.id, {
-              delivered_quantity: qty,
+              delivered_quantity: toNum(p.quantity_packages) ?? toNum(p.quantity),
               delivered_units: addUnits,
               delivery_note: noteNumber || supplierName,
               received_at: new Date().toISOString(),
@@ -198,12 +265,14 @@ export default async function (req) {
     }
 
     const summaryParts = [
-      `${booked.length} Position${booked.length === 1 ? '' : 'en'} gebucht`,
+      `${booked.length} Position${booked.length === 1 ? '' : 'en'} Ware gebucht`,
       `${withPrice} mit Preis übernommen`,
       `${withoutPrice} ohne Preis`,
     ];
     if (shoppingClosed > 0) summaryParts.push(`${shoppingClosed} Bestellung${shoppingClosed === 1 ? '' : 'en'} abgeschlossen`);
+    if (returnPositions.length > 0) summaryParts.push(`${returnPositions.length} Position${returnPositions.length === 1 ? '' : 'en'} Leergut (nicht gebucht)`);
     if (unbooked.length > 0) summaryParts.push(`${unbooked.length} Position${unbooked.length === 1 ? '' : 'en'} ohne Artikel`);
+    if (learned.length > 0) summaryParts.push(`${learned.length} Art.-Nr. gelernt`);
     if (errors.length > 0) summaryParts.push(`${errors.length} Fehler`);
     const summary = summaryParts.join(' · ');
 
@@ -212,16 +281,19 @@ export default async function (req) {
       booking_summary: summary,
       positions: storedPositions,
       positions_count: positions.length,
+      return_positions: returnPositions,
+      return_positions_count: returnPositions.length,
       total_net: totalNet ?? (hasAnyPrice ? sumLineTotals(positions) : null),
     });
 
     return Response.json({
       note: updatedNote,
       summary,
-      counts: { booked: booked.length, withPrice, withoutPrice },
+      counts: { booked: booked.length, withPrice, withoutPrice, leergut: returnPositions.length },
       booked,
       unbooked,
       priceChanges,
+      learned,
       errors,
     });
   } catch (error) {

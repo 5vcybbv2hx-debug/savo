@@ -1,10 +1,12 @@
 import { base44 } from '@/api/base44Client';
+import { unitCodeFromLegacy } from '@/lib/deliveryNoteUnits';
 
 export const MAX_PAGES = 10;
 
 const RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
+    document_type: { type: 'string' },
     supplier_name: { type: 'string' },
     delivery_note_number: { type: 'string' },
     delivery_date: { type: 'string' },
@@ -16,16 +18,18 @@ const RESPONSE_SCHEMA = {
         properties: {
           raw_text: { type: 'string' },
           article_name: { type: 'string' },
-          quantity: { type: 'number' },
-          packaging: { type: 'string' },
+          supplier_article_number: { type: 'string' },
+          quantity_packages: { type: 'number' },
+          unit_code: { type: 'string' },
           units_per_packaging: { type: 'number' },
           content_amount: { type: 'number' },
           content_unit: { type: 'string' },
+          is_return: { type: 'boolean' },
           unit_price: { type: 'number' },
           line_total: { type: 'number' },
           page_number: { type: 'number' },
         },
-        required: ['raw_text', 'article_name', 'quantity', 'page_number'],
+        required: ['raw_text', 'article_name', 'quantity_packages', 'page_number'],
       },
     },
   },
@@ -36,6 +40,12 @@ const PRICE_RULE = 'Auf Lieferscheinen stehen in der Regel keine Preise. Zahlen 
 
 const PROMPT = `Du liest einen Lieferschein eines Getränke-/Gastro-Lieferanten aus (Fotos oder PDF, ggf. mehrere Seiten desselben Belegs).
 Gib ausschließlich die geforderte JSON-Struktur zurück, ohne Erklärungen, ohne Kommentare und ohne Markdown.
+
+Dokumenttyp (zuerst prüfen):
+- Prüfe zuerst, ob die Seite Ware oder LEERGUT/RETOURE zeigt.
+- Erkennungsmerkmale Leergut: Spaltenüberschrift "RETOURE", "Leergut", Zeilen wie "GASTRO-FASS", "WEINVOLL", "CO2 PFAND", handschriftlich eingetragene Mengen, keine Artikelnummern im Format 5-stellig.
+- document_type: "leergut", wenn der ganze Beleg ausschließlich Leergut/Rückgabe zeigt; "lieferschein", wenn Ware geliefert wird (auch wenn zusätzlich Leergut-Zeilen auf dem Beleg stehen); "rechnung" bei einer Rechnung; "unbekannt", wenn nichts erkennbar ist.
+- is_return je Position: true bei Leergut-/Rückgabe-Zeilen, sonst false.
 
 Seiten:
 - Du bekommst alle Seiten EINES Belegs, in der Reihenfolge der Übergabe (Seite 1 zuerst).
@@ -48,14 +58,19 @@ Kopf:
 - delivery_note_number: Lieferschein-Nummer (nur die Nummer, ohne Label).
 - delivery_date: Lieferdatum im Format YYYY-MM-DD. Wenn kein Datum erkennbar ist: null.
 
+Einheiten-Kürzel auf Lieferscheinen: Ka = Kasten, Fa = Fass, Do = Dose, Fl = Flasche, Ba = Bag in Box, St = Stück.
+Spalte "Geb." = Stück pro Gebinde → units_per_packaging.
+Spalte "Inh." = Inhalt je Gebinde in Litern bzw. kg und ist KEIN Preis und KEINE Stückzahl → content_amount / content_unit.
+
 Positionen:
 - raw_text: die Bezeichnung genau so, wie sie auf dem Lieferschein steht (inkl. Artikelnummer, Gebindeangabe).
 - article_name: der reine Produktname ohne Mengen-, Gebinde- und Preisangaben.
-- quantity: gelieferte Menge als Zahl (Anzahl Gebinde bzw. Stück).
-- packaging: Gebindeart — einer von "Kasten", "Karton", "Flaschen", "Stück" (bei Unsicherheit "Stück").
-- units_per_packaging: Anzahl Einzelflaschen/-stücke pro Gebinde, sonst 1. Wenn z. B. "6 x 0,75 l" steht, dann 6.
-- content_amount: Füllmenge je Einheit als Zahl (z. B. 0.7 bei "0,7 l", 0.75 bei "0,75 l"). Sonst null.
-- content_unit: Einheit der Füllmenge — einer von "l", "ml", "cl", "g", "kg". Sonst null.
+- supplier_article_number: die Artikelnummer des Lieferanten aus dieser Zeile (meist 5-stellig, z. B. "38182"). Nicht die Lieferschein-Nummer. Sonst null.
+- quantity_packages: Liefermenge als Zahl in der Einheit der Zeile (z. B. 1.00 bei "1,00 Ka").
+- unit_code: Einheiten-Kürzel der Zeile — genau einer von "Ka", "Fa", "Do", "Fl", "Ba", "St". Wenn kein Kürzel erkennbar ist: "St".
+- units_per_packaging: Stück pro Gebinde aus der Spalte "Geb."; wenn dort nichts steht: 1.
+- content_amount: Inhalt je Gebinde als Zahl aus der Spalte "Inh." (z. B. 0.7 bei "0,7 l", 30 bei "30,00"). Sonst null.
+- content_unit: Einheit des Inhalts — einer von "l", "ml", "cl", "g", "kg". Sonst null.
 - unit_price: Einkaufspreis netto pro Einzeleinheit als Zahl (ohne Währungszeichen) oder null.
 - line_total: Zeilensumme netto als Zahl oder null.
 
@@ -65,9 +80,11 @@ Preis-Regel (wörtlich zu befolgen):
 Weitere Regeln:
 - Alle Zahlen als JSON-Number mit Punkt als Dezimaltrennzeichen (12.50, nicht "12,50").
 - Unbekannte oder nicht lesbare Werte: null. Niemals schätzen, niemals leere Strings.
-- Keine Positionen erfinden. Nur Zeilen, die tatsächlich als Warenposition auf dem Lieferschein stehen (keine Summen-, MwSt- oder Pfandzeilen).`;
+- Keine Positionen erfinden. Nur Zeilen, die tatsächlich als Waren- oder Leergutposition auf dem Beleg stehen (keine Summen- oder MwSt-Zeilen).`;
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
+const UNIT_ALIASES = { ka: 'Ka', fa: 'Fa', do: 'Do', fl: 'Fl', ba: 'Ba', st: 'St', kg: 'kg' };
 
 /** Deterministischer Preis-Filter: Inhaltsangaben dürfen nie als Preis durchgehen. */
 export function sanitizePrice(position) {
@@ -85,18 +102,25 @@ export function sanitizePrice(position) {
 }
 
 function normalizePosition(p, fallbackPage) {
-  const packaging = p?.packaging || p?.unit || 'Stück';
-  const unitsPer = num(p?.units_per_packaging) ?? num(p?.unit_size) ?? 1;
+  const legacyUnit = p?.packaging || (p?.unit_code ? '' : p?.unit) || '';
+  const unitCode = UNIT_ALIASES[p?.unit_code] || unitCodeFromLegacy(legacyUnit);
+  const perPack = num(p?.units_per_packaging) ?? num(p?.unit_size) ?? 1;
+  const packages = num(p?.quantity_packages) ?? num(p?.quantity);
   const mapped = {
     raw_text: p?.raw_text || '',
     article_name: p?.article_name || p?.raw_text || '',
-    quantity: num(p?.quantity),
-    unit: packaging,
-    packaging,
-    unit_size: unitsPer,
-    units_per_packaging: unitsPer,
+    supplier_article_number: p?.supplier_article_number ? String(p.supplier_article_number).trim() : '',
+    quantity: packages,
+    quantity_packages: packages,
+    unit_code: unitCode,
+    quantity_units: null,
+    unit: legacyUnit,
+    packaging: legacyUnit,
+    unit_size: perPack,
+    units_per_packaging: perPack,
     content_amount: num(p?.content_amount),
     content_unit: p?.content_unit || null,
+    is_return: p?.is_return === true,
     unit_price: num(p?.unit_price),
     line_total: num(p?.line_total),
     page_number: num(p?.page_number) ?? fallbackPage,
@@ -107,6 +131,7 @@ function normalizePosition(p, fallbackPage) {
 function normalizeResult(data, pageCount, fallbackPage = 1) {
   const positions = Array.isArray(data?.positions) ? data.positions : [];
   return {
+    document_type: String(data?.document_type || '').trim().toLowerCase(),
     supplier_name: data?.supplier_name || '',
     delivery_note_number: data?.delivery_note_number || '',
     delivery_date: data?.delivery_date || '',
@@ -124,6 +149,16 @@ async function callModel(pageUrls) {
   return typeof result === 'string' ? JSON.parse(result) : result;
 }
 
+function resolveDocumentType(results, positions) {
+  const ware = positions.filter((p) => !p.is_return).length;
+  const returns = positions.length - ware;
+  const declared = results.find((r) => r?.document_type)?.document_type || '';
+  if (ware === 0 && returns > 0) return 'leergut';
+  if (declared === 'rechnung') return 'rechnung';
+  if (positions.length === 0) return declared === 'leergut' ? 'leergut' : 'unbekannt';
+  return 'lieferschein';
+}
+
 function finalize(results, pageCount) {
   const first = results.find(Boolean) || {};
   const positions = results.filter(Boolean).flatMap((r) => r.positions);
@@ -133,6 +168,7 @@ function finalize(results, pageCount) {
     if (!coveredPages.has(page)) missing_pages.push(page);
   }
   return {
+    document_type: resolveDocumentType(results, positions),
     supplier_name: first.supplier_name || '',
     delivery_note_number: first.delivery_note_number || '',
     delivery_date: first.delivery_date || '',
