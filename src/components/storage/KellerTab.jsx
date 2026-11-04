@@ -15,7 +15,7 @@ import { haptics } from '@/components/utils/haptics';
  * führt completeArticleMutation mit transferKellerToTheke/reduceCurrentStock aus.
  * Wird eingebettet in Warehouse (keller-Tab) und Restock (Keller-Entnahme-Modus).
  */
-export default function KellerTab() {
+export default function KellerTab({ badgeCount }) {
     const queryClient = useQueryClient();
     const [kellerQtys, setKellerQtys] = useState({});
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -121,7 +121,7 @@ export default function KellerTab() {
                         {kellerGroups.length > 0 && (
                             <span className="inline-flex h-2 w-2 rounded-full bg-primary animate-pulse" />
                         )}
-                        <p className="text-sm font-bold text-foreground">{kellerGroups.length}</p>
+                        <p className="text-sm font-bold text-foreground">{badgeCount ?? kellerGroups.length}</p>
                     </div>
                 </div>
             </div>

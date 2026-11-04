@@ -37,8 +37,9 @@ export const additionalPages = [
     { page: 'Events',         name: 'Events',             icon: CalendarDays,  permission: 'canViewEvents' },
     { page: 'Wusa',           name: 'Wurstsalat',        icon: Utensils,      permission: 'canViewDashboard' },
 
-    // Waren & Lager
-    { page: 'Restock',    name: 'Auffüllen',    icon: Package,       permission: 'canViewRestock' },
+    // Waren & Lager — "Auffüllen" führt direkt in die eine Keller-Auffüllliste
+    // (Warehouse?tab=keller). Die separate Tages-Auffüllliste ist kein eigener Einstieg mehr.
+    { page: 'Warehouse?tab=keller', name: 'Auffüllen', icon: Package, permission: 'canViewRestock' },
     { page: 'Shopping',   name: 'Bestellung',   icon: ShoppingCart,  permission: 'canViewShopping' },
     { page: 'QuickList',  name: 'Einkaufsliste', icon: ListChecks,   permission: 'canViewShopping' },
     { page: 'Articles',   name: 'Artikel',      icon: Boxes,         permission: 'canViewWarehouse' },

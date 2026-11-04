@@ -204,10 +204,18 @@ export default function Warehouse() {
                             <NavCard
                                 icon={RefreshCw}
                                 label="Auffüllen"
-                                description="Keller → Theke · nach Bereichen (NR / Raucher)"
-                                page="Restock"
+                                description="Offene Positionen unter Mindestbestand · Keller → Theke"
+                                onClick={() => setActiveTab('keller')}
                                 badge={openRestockCount || undefined}
                                 badgeVariant="warning"
+                            />
+                        )}
+                        {permissions.canViewRestock && (
+                            <NavCard
+                                icon={PackageCheck}
+                                label="Rundgang & Erfassung"
+                                description="Fächer zählen (IST) · Artikel scannen · Bedarf erzeugen"
+                                page="Restock"
                             />
                         )}
                         {permissions.canViewShopping && (
@@ -289,7 +297,7 @@ export default function Warehouse() {
             )}
 
             {/* ── Keller-Tab ── */}
-            {activeTab === 'keller' && <KellerTab />}
+            {activeTab === 'keller' && <KellerTab badgeCount={openRestockCount} />}
         </div>
     );
 }

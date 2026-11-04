@@ -679,7 +679,9 @@ export default function Restock() {
                                                             {item.article_name}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                                            {item.needed_quantity != null ? item.needed_quantity : item.quantity} Stück
+                                                            {(Number(item.needed_quantity ?? item.quantity) || 0) > 0
+                                                                ? `${item.needed_quantity ?? item.quantity} Stück`
+                                                                : 'nicht gezählt'}
                                                             <span className="mx-1 text-muted-foreground/40">·</span>
                                                             {item.time || '–'}
                                                             {item.area_name ? <><span className="mx-1 text-muted-foreground/40">·</span>{item.area_name}</> : null}

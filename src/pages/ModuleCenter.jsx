@@ -160,11 +160,11 @@ const MODULE_REGISTRY = [
     {
         id: 'auffuellen',
         name: 'Auffüllen & Restock',
-        description: 'Nachfülllisten, Lagerauffüllung, Bestandsänderungen',
+        description: 'Keller-Auffüllliste, Bestandsänderungen',
         icon: RefreshCw,
         color: 'bg-amber-600',
         category: 'lager',
-        page: 'Restock',
+        page: 'Warehouse?tab=keller',
         requires: ['artikel'],
     },
     {

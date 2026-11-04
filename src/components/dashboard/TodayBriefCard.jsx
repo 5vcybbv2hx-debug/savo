@@ -322,7 +322,7 @@ export default function TodayBriefCard() {
         const openParts = [];
         if (openRestock > 0) {
             openParts.push(
-                <Link key="restock" to={createPageUrl('Restock')} className="text-primary hover:underline inline-flex items-center gap-0.5">
+                <Link key="restock" to={createPageUrl('Warehouse?tab=keller')} className="text-primary hover:underline inline-flex items-center gap-0.5">
                     {openRestock} offene Auffüll-Positionen <ChevronRight className="w-3 h-3" />
                 </Link>
             );
