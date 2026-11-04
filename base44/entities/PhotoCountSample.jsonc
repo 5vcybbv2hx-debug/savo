@@ -18,6 +18,11 @@
       "type": "string",
       "description": "URL des Fotos"
     },
+    "baseline_used": {
+      "type": "boolean",
+      "default": false,
+      "description": "Z\u00e4hlung lief gegen das Basis-Foto des Fachs (Delta-Z\u00e4hlung)"
+    },
     "segments": {
       "type": "array",
       "description": "Sorten-Segmente in Fachreihenfolge (links \u2192 rechts). position 1 = linkes Segment.",
@@ -41,6 +46,10 @@
           "confirmed_count": {
             "type": "number",
             "description": "Vom Menschen best\u00e4tigte Anzahl Flaschen/Dosen"
+          },
+          "delta": {
+            "type": "number",
+            "description": "confirmed_count \u2212 suggested_count (Korrektur des Menschen)"
           },
           "confidence": {
             "type": "number"

@@ -46,14 +46,20 @@ export default function PhotoCountRow({ row, onChange }) {
             )}
           </p>
         </div>
-        {seen && !uncertain && (
-          <div className="flex flex-col items-end gap-1 shrink-0 w-16">
-            <span className="text-[10px] font-semibold text-muted-foreground">{pct}%</span>
-            <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-              <div className={cn('h-full rounded-full', confidenceColor(row.confidence))} style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-        )}
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          {row.baselineCount != null && (
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary whitespace-nowrap">
+              Basis {row.baselineCount}
+            </span>
+          )}
+          <span className="flex items-center gap-1.5">
+            <span
+              className={cn('w-2 h-2 rounded-full shrink-0', confidenceColor(row.confidence))}
+              title={`Confidence ${pct}%`}
+            />
+            <span className="text-[10px] font-semibold text-muted-foreground tabular-nums">{pct}%</span>
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

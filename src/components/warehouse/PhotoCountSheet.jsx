@@ -4,7 +4,7 @@ import { Camera, Image as ImageIcon, Loader2, X, AlertTriangle, Sparkles } from 
 import { format } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { haptics } from '@/components/utils/haptics';
-import { uploadCountPhoto, recognizeSlotPhoto, orderSlotAssignments, preparePhoto, MIN_CONFIDENCE } from '@/lib/photoCount';
+import { uploadCountPhoto, recognizeSlotPhoto, orderSlotAssignments, preparePhoto, hasBaseline, MIN_CONFIDENCE } from '@/lib/photoCount';
 import PhotoCountReview from './PhotoCountReview';
 
 const TIMEOUT_MS = 45000;
@@ -88,27 +88,48 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
   // Vorausgefüllt wird nur, wenn das Foto gut ist UND das Modell sicher genug war.
   const orderedAssignments = orderSlotAssignments(assignments);
 
-  const buildRows = (detection) => orderedAssignments.map((a, idx) => {
-    const segment = detection.segments.find((s) => s.article_id && s.article_id === a.article_id)
-      || detection.segments.find((s) => s.position === idx + 1)
-      || null;
-    const confident = Boolean(segment)
-      && segment.count != null
-      && detection.photoQuality !== 'schlecht'
-      && (segment.confidence ?? 0) >= MIN_CONFIDENCE;
-    return {
-      position: idx + 1,
-      assignmentId: a.id,
-      article_id: a.article_id,
-      article_name: a.article_name,
-      min_stock: a.min_stock ?? null,
-      suggestion: segment ? segment.count : null,
-      confidence: segment ? segment.confidence : 0,
-      comment: segment?.comment || '',
-      count: confident ? segment.count : null,
-      uncertain: !confident,
-    };
-  });
+  const buildRows = (detection) => {
+    // Mit Basis: Segmente der Basis sind das Raster (inkl. leerer Segmente).
+    // Ohne Basis: aktive Zuordnungen in Fachreihenfolge.
+    const seeds = detection.baselineUsed
+      ? detection.baselineSegments.map((seg) => {
+          const assignment = orderedAssignments.find((a) => a.article_id === seg.article_id) || null;
+          return {
+            position: seg.position,
+            assignmentId: assignment?.id || `seg-${seg.position}`,
+            article_id: seg.article_id || '',
+            article_name: seg.article_name || 'frei/leer',
+            min_stock: assignment?.min_stock ?? null,
+            baselineCount: seg.baseline_count ?? null,
+          };
+        })
+      : orderedAssignments.map((a, idx) => ({
+          position: idx + 1,
+          assignmentId: a.id,
+          article_id: a.article_id,
+          article_name: a.article_name,
+          min_stock: a.min_stock ?? null,
+          baselineCount: null,
+        }));
+
+    return seeds.map((seed) => {
+      const segment = detection.segments.find((s) => s.article_id && s.article_id === seed.article_id)
+        || detection.segments.find((s) => s.position === seed.position)
+        || null;
+      const confident = Boolean(segment)
+        && segment.count != null
+        && detection.photoQuality !== 'schlecht'
+        && (segment.confidence ?? 0) >= MIN_CONFIDENCE;
+      return {
+        ...seed,
+        suggestion: segment ? segment.count : null,
+        confidence: segment ? segment.confidence : 0,
+        comment: segment?.comment || '',
+        count: confident ? segment.count : null,
+        uncertain: !confident,
+      };
+    });
+  };
 
   // Sortenreihenfolge gegen das Foto bestätigen (Fach-Metadatum).
   const confirmVarietyOrder = async () => {
@@ -183,6 +204,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
         slot_full_name: slotLabel,
         area_id: slot?.area_id || '',
         file_url: result.fileUrl,
+        baseline_used: Boolean(result.baselineUsed),
         expected_articles: rows.map((r) => {
           const article = articles.find((art) => art.id === r.article_id);
           return {
@@ -199,6 +221,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
           article_name: r.article_name,
           suggested_count: r.suggestion ?? 0,
           confirmed_count: r.count ?? 0,
+          delta: (r.count ?? 0) - (r.suggestion ?? 0),
           confidence: r.confidence ?? 0,
         })),
         detected_total: result.detectedTotal ?? 0,
@@ -260,6 +283,11 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
                 <p className="text-sm font-semibold text-foreground">Fach von oben fotografieren</p>
                 <p className="text-xs text-muted-foreground">Ganzes Fach im Bild, möglichst von oben und hell.</p>
               </div>
+              {!hasBaseline(slot) && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Basis fehlt – einmal im Rundgang unter „Fächer ohne Basis" aufnehmen.
+                </p>
+              )}
               <button
                 onClick={() => cameraRef.current?.click()}
                 className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 active:scale-[0.98]"
@@ -347,6 +375,8 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
               unknownItems={result.unknownItems}
               onManual={onClose}
               preview={preview}
+              baselineUrl={result.baselineUsed ? slot?.baseline_photo_url : null}
+              baselineSegments={result.baselineSegments || []}
               detectedTotal={result.detectedTotal}
               orderConfirmed={orderConfirmed}
               onConfirmOrder={confirmVarietyOrder}

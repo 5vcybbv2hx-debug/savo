@@ -85,10 +85,8 @@ export default function PhotoCountAccuracy() {
                   </p>
                 </div>
                 <div className="rounded-xl bg-muted/30 px-2 py-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Unsicher</p>
-                  <p className="text-base font-bold text-foreground tabular-nums">
-                    {overall.unsurePhotos}/{overall.photos}
-                  </p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">conf. &lt; 0,5</p>
+                  <p className="text-base font-bold text-foreground tabular-nums">{pct(overall.lowConfRate)}</p>
                 </div>
               </div>
 
@@ -102,13 +100,14 @@ export default function PhotoCountAccuracy() {
                       ±{slot.avgDeviation == null ? '–' : slot.avgDeviation.toFixed(1)}
                     </span>
                     <span className="tabular-nums text-muted-foreground w-12 text-right">
-                      {slot.unsurePhotos}/{slot.photos}
+                      {pct(slot.lowConfRate)}
                     </span>
                   </div>
                 ))}
               </div>
               <p className="text-[10px] text-muted-foreground">
-                Treffer = Vorschlag unverändert übernommen · {overall.compared} Artikel-Vergleiche
+                Treffer = Vorschlag unverändert übernommen · {overall.compared} Sorten-Vergleiche
+                {' '}· mit Basis: {overall.baselinePhotos}/{overall.photos}
               </p>
             </>
           )}

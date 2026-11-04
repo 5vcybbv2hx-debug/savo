@@ -63,7 +63,99 @@
         "blue",
         "gray"
       ],
-      "description": "Herkunft der Best\u00e4tigung: 'foto' = im Foto-Pr\u00fcf-UI best\u00e4tigt, 'manuell' = in der Liste durchgesehen."
+      "description": "Herkunft der Best\u00e4tigung: 'foto' = im Foto-Pr\u00fcf-UI bzw. Basis-Wizard best\u00e4tigt, 'manuell' = in der Liste durchgesehen."
+    },
+    "baseline_photo_url": {
+      "type": "string",
+      "description": "Referenzfoto des Fachs (Basis, Vollbest\u00fcckung). Leer = keine Basis vorhanden."
+    },
+    "baseline_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum der Basisaufnahme"
+    },
+    "baseline_by": {
+      "type": "string",
+      "description": "Name der Person, die die Basis aufgenommen hat"
+    },
+    "baseline_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Basis ist gesperrt. \u00c4nderungen nur \u00fcber 'Basis neu aufnehmen' (alte Basis wandert nach baseline_history)."
+    },
+    "baseline_segments": {
+      "type": "array",
+      "description": "Sorten-Segmente der Basis von links (position 1) nach rechts. x_from/x_to sind die Trennlinien als Anteil der Bildbreite (0-1).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "number"
+          },
+          "article_id": {
+            "type": "string",
+            "description": "Leer = Segment ist frei/leer"
+          },
+          "article_name": {
+            "type": "string"
+          },
+          "baseline_count": {
+            "type": "number",
+            "description": "Anzahl Flaschen/Dosen bei Vollbest\u00fcckung (Default = min_stock der Zuordnung)"
+          },
+          "orientation": {
+            "type": "string",
+            "description": "Lagerung im Segment: liegend / stehend / unbekannt"
+          },
+          "x_from": {
+            "type": "number"
+          },
+          "x_to": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "baseline_history": {
+      "type": "array",
+      "description": "Fr\u00fchere Basisaufnahmen (neueste zuletzt, max. 5)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "photo_url": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "position": {
+                  "type": "number"
+                },
+                "article_id": {
+                  "type": "string"
+                },
+                "article_name": {
+                  "type": "string"
+                },
+                "baseline_count": {
+                  "type": "number"
+                },
+                "x_from": {
+                  "type": "number"
+                },
+                "x_to": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
     },
     "grid_row": {
       "type": "number",

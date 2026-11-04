@@ -1,12 +1,31 @@
 import { AlertTriangle, Sparkles, PencilLine, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { segmentCuts } from '@/lib/photoCount';
 import PhotoCountRow from './PhotoCountRow';
+
+function PhotoPane({ label, src, cuts }) {
+  return (
+    <div className="space-y-1 min-w-0">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="relative rounded-lg overflow-hidden bg-black/50">
+        <img src={src} alt={label} className="w-full max-h-44 object-contain" />
+        {cuts.map((c, idx) => (
+          <span
+            key={idx}
+            className="absolute inset-y-0 border-l border-white/70 pointer-events-none"
+            style={{ left: `${c * 100}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Prüf-Ansicht der Foto-Zählung.
- * Segmente = Sorten in Fachreihenfolge (links → rechts). Über dem Foto liegen
- * dünne, gleiche Trennlinien (n Segmente = n Sorten) als reines Overlay.
+ * Mit Basis: Basis-Foto und aktuelles Foto nebeneinander, gleiche Trennlinien.
+ * Ohne Basis: Einzelbild mit Positionsraster.
  */
 export default function PhotoCountReview({
   rows,
@@ -16,6 +35,8 @@ export default function PhotoCountReview({
   unknownItems = [],
   onManual,
   preview,
+  baselineUrl,
+  baselineSegments = [],
   detectedTotal,
   orderConfirmed,
   onConfirmOrder,
@@ -23,29 +44,21 @@ export default function PhotoCountReview({
   const lowQuality = photoQuality === 'schlecht';
   const hasUncertain = rows.some((r) => r.uncertain);
   const ordered = [...rows].sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
-  const segments = ordered.length;
+  const overlaySegments = baselineSegments.length ? baselineSegments : ordered;
+  const cuts = segmentCuts(overlaySegments);
 
   return (
     <div className="space-y-3">
       {preview && (
         <div className="space-y-2">
-          <div className="relative rounded-xl overflow-hidden bg-black/50">
-            <img src={preview} alt="Fach-Foto" className="w-full max-h-72 object-contain" />
-            {segments > 1 && (
-              <div className="absolute inset-0 flex pointer-events-none">
-                {ordered.map((row, idx) => (
-                  <div
-                    key={row.assignmentId}
-                    className={cn('relative flex-1 min-w-0', idx < segments - 1 && 'border-r border-white/70')}
-                  >
-                    <span className="absolute top-1 left-1/2 -translate-x-1/2 min-w-[18px] h-[18px] px-1 rounded-full bg-black/70 text-white text-[10px] font-bold flex items-center justify-center">
-                      {row.position}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {baselineUrl ? (
+            <div className="grid grid-cols-2 gap-1.5">
+              <PhotoPane label="Basis" src={baselineUrl} cuts={cuts} />
+              <PhotoPane label="aktuell" src={preview} cuts={cuts} />
+            </div>
+          ) : (
+            <PhotoPane label="aktuell" src={preview} cuts={cuts} />
+          )}
 
           <div className="flex flex-wrap gap-1.5">
             {ordered.map((row) => (
@@ -61,6 +74,9 @@ export default function PhotoCountReview({
                 </span>
                 <span className="truncate max-w-[110px] text-foreground">{row.article_name}</span>
                 <span className="font-bold tabular-nums text-foreground">{row.count ?? '–'}</span>
+                {row.baselineCount != null && (
+                  <span className="text-muted-foreground tabular-nums">/ {row.baselineCount}</span>
+                )}
               </span>
             ))}
           </div>
@@ -86,6 +102,12 @@ export default function PhotoCountReview({
               </span>
             )}
           </div>
+
+          {!baselineUrl && (
+            <p className="text-[10px] text-muted-foreground">
+              Ohne Basis gezählt — einmal eine Fach-Basis aufnehmen verbessert die Trefferquote.
+            </p>
+          )}
         </div>
       )}
 
@@ -96,7 +118,7 @@ export default function PhotoCountReview({
             <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
               {lowQuality
                 ? 'Foto-Qualität schlecht — keine Mengen vorausgefüllt'
-                : 'Einzelne Sorten unsicher — Mengen bitte prüfen'}
+                : 'Einzelne Segmente unsicher — Mengen bitte prüfen'}
             </p>
           </div>
           {onManual && (

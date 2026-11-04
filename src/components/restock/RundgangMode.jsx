@@ -17,6 +17,7 @@ import PhotoCountSheet from '@/components/warehouse/PhotoCountSheet';
 import RundgangProtocol from '@/components/restock/RundgangProtocol';
 import PhotoCountAccuracy from '@/components/warehouse/PhotoCountAccuracy';
 import VarietyOrderChecklist from '@/components/warehouse/VarietyOrderChecklist';
+import BaselineStatusCard from '@/components/warehouse/BaselineStatusCard';
 import RundgangCompleteButton from '@/components/restock/RundgangCompleteButton';
 import { useRundgangSession } from '@/hooks/useRundgangSession';
 
@@ -371,6 +372,9 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
 
             {/* Foto-Zählung: Trefferquote (Kalibrierung) — nur Manager */}
             <PhotoCountAccuracy />
+
+            {/* Fach-Basis: Wizard + Fächer ohne Basis — nur Manager */}
+            <BaselineStatusCard slots={restockSlots} assignments={assignments} />
 
             {/* Fächer ohne bestätigte Sortenreihenfolge — nur Manager */}
             <VarietyOrderChecklist slots={restockSlots} assignments={assignments} />
