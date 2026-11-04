@@ -26,6 +26,7 @@ import {
 } from '@/features/reservations/hooks/useReservations';
 import { ErrorState, ListSkeleton } from '@/components/ui/StateDisplay';
 import UpcomingReservationsList from '@/components/reservations/UpcomingReservationsList';
+import TodayCard from '@/components/reservations/TodayCard';
 import { resolveCreatorName } from '@/lib/reservationCreator';
 
 function addDaysHelper(dateStr, days) {
@@ -122,14 +123,20 @@ export default function GuestHub() {
         [allReservations, filterDate]
     );
 
-    // Kommende Reservierungen: heute + nächste 6 Tage, chronologisch
+    // Kommende Reservierungen: 7 Tage ab morgen — der gewählte Tag steht in der "Heute"-Karte
     const upcomingReservations = useMemo(() => {
-        const from = todayStr;
-        const to = addDaysHelper(todayStr, 6);
+        const from = addDaysHelper(todayStr, 1);
+        const to = addDaysHelper(todayStr, 7);
         return allReservations
-            .filter(r => !r.is_archived && r.date && r.date >= from && r.date <= to)
+            .filter(r =>
+                !r.is_archived &&
+                r.date &&
+                r.date >= from &&
+                r.date <= to &&
+                r.date !== filterDate
+            )
             .sort((a, b) => `${a.date} ${a.time || ''}`.localeCompare(`${b.date} ${b.time || ''}`));
-    }, [allReservations, todayStr]);
+    }, [allReservations, todayStr, filterDate]);
 
     // KPI-Zeile: X Gäste · N offen (für den gewählten Tag)
     const kpi = useMemo(() => {
@@ -268,7 +275,17 @@ export default function GuestHub() {
                         </span>
                     </div>
 
-                    {/* ── Kommende Reservierungen (nächste 7 Tage) ──────────── */}
+                    {/* ── Heute: Reservierungen des gewählten Tages ─────────── */}
+                    <TodayCard
+                        date={filterDate}
+                        reservations={dayReservations}
+                        tables={tables}
+                        resolveCreator={resolveCreator}
+                        onOpen={openReservation}
+                        onCreate={() => { setSelectedRes(null); setResModalOpen(true); }}
+                    />
+
+                    {/* ── Kommende Reservierungen (7 Tage ab morgen) ────────── */}
                     <section className="space-y-3 pt-2">
                         <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                             <Clock className="w-4 h-4" />Kommende Reservierungen
