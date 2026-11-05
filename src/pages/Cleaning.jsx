@@ -24,6 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import AreasManager from '@/components/cleaning/AreasManager';
+import OpenTasksToday from '@/components/cleaning/OpenTasksToday';
+import { isDemandDay, demandReason } from '@/lib/cleaningSchedule';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { getUserDisplayName } from '@/lib/userDisplayName';
 import { toast } from 'sonner';
@@ -38,6 +40,7 @@ export default function Cleaning() {
     const [endDayDialogOpen, setEndDayDialogOpen] = useState(false);
     const [endDayLoading, setEndDayLoading] = useState(false);
     const [activeArea, setActiveArea] = useState('all');
+    const [view, setView] = useState('open'); // 'open' = Offene Aufgaben heute (Standard), 'all' = alles inkl. erledigt
     const WEEKDAYS = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
     const [formData, setFormData] = useState({
         title: '', area: 'Theke', frequency: 'täglich',
@@ -87,6 +90,13 @@ export default function Cleaning() {
         queryFn: () => base44.entities.CleaningArea.list('order'),
         staleTime: STALE.SLOW,
     });
+    // Betriebskalender von heute — entscheidet, ob heute ein Bedarfstag ist
+    const todayDateStr = format(new Date(), 'yyyy-MM-dd');
+    const { data: todayCalendar = [] } = useQuery({
+        queryKey: ['business-calendar-day', todayDateStr],
+        queryFn: () => base44.entities.BusinessCalendarDay.filter({ date: todayDateStr }),
+        staleTime: STALE.MEDIUM,
+    });
 
     const todayName = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'][new Date().getDay()];
     const currentMonth = new Date().getMonth() + 1;
@@ -115,7 +125,14 @@ export default function Cleaning() {
     }, [tasks, activeArea]);
 
     const completedCount = tasks.filter(t => t.is_completed).length;
+    const openCount = tasks.length - completedCount;
     const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+
+    // Nur Bedarfstage fließen in die Durchschnittsquote ein (Werktage = "kein Bedarf")
+    const demandReports = reports.filter(r => r.required !== false);
+    const averageDemandRate = demandReports.length > 0
+        ? Math.round(demandReports.reduce((sum, r) => sum + (r.completion_rate || 0), 0) / demandReports.length)
+        : null;
 
     // Aufgaben nach Bereich gruppieren (für Bulk-Button je Bereich)
     const groupedTasks = useMemo(() => {
@@ -311,8 +328,37 @@ export default function Cleaning() {
                     )}
                 </div>
 
+                {/* ── Ansicht: Offene Aufgaben heute (Standard) / Alle ───── */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                    <button
+                        onClick={() => setView('open')}
+                        className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                            view === 'open' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+                        }`}
+                    >
+                        Offene Aufgaben heute ({openCount})
+                    </button>
+                    <button
+                        onClick={() => setView('all')}
+                        className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                            view === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+                        }`}
+                    >
+                        Alle ({tasks.length})
+                    </button>
+                </div>
+
+                {view === 'open' && (
+                    <OpenTasksToday
+                        tasks={tasks}
+                        onComplete={handleComplete}
+                        onBulkComplete={handleBulkComplete}
+                        disabled={permissions.isTerminal}
+                    />
+                )}
+
                 {/* ── Bereich-Tabs ─────────────────────────────────────── */}
-                {taskAreas.length > 1 && (
+                {view === 'all' && taskAreas.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
                         <button
                             onClick={() => setActiveArea('all')}
@@ -348,7 +394,7 @@ export default function Cleaning() {
                 )}
 
                 {/* ── Aufgabenliste (nach Bereich gruppiert) ─────────────── */}
-                <div className="space-y-4">
+                <div className={view === 'open' ? 'hidden' : 'space-y-4'}>
                     {filteredTasks.length === 0 && (
                         <div className="text-center py-12 text-muted-foreground">
                             <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -437,15 +483,30 @@ export default function Cleaning() {
                         <DialogHeader><DialogTitle>Tagesberichte</DialogTitle></DialogHeader>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                             {reports.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">Noch keine Berichte</p>}
+                            {averageDemandRate !== null && (
+                                <p className="text-xs text-muted-foreground px-1">
+                                    Ø an Bedarfstagen: <span className="font-semibold text-foreground">{averageDemandRate}%</span> · Werktage zählen nicht mit
+                                </p>
+                            )}
                             {reports.map(r => (
                                 <div key={r.id} className="rounded-lg border bg-card p-3">
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="font-medium text-sm">{format(new Date(r.week_start), "dd. MMM yyyy", { locale: de })}</span>
-                                        <Badge variant={r.completion_rate === 100 ? 'default' : 'secondary'}>
-                                            {r.completion_rate}%
-                                        </Badge>
+                                        {r.required === false ? (
+                                            <Badge variant="outline" className="text-muted-foreground">kein Bedarf</Badge>
+                                        ) : (
+                                            <Badge variant={r.completion_rate === 100 ? 'default' : 'secondary'}>
+                                                {r.completion_rate ?? 0}%
+                                            </Badge>
+                                        )}
                                     </div>
-                                    <p className="text-xs text-muted-foreground">{r.completed_tasks}/{r.total_tasks} Aufgaben erledigt</p>
+                                    {r.required === false ? (
+                                        <p className="text-xs text-muted-foreground">Werktag ohne Bedarf — zählt nicht in die Quote</p>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">
+                                            {r.completed_tasks ?? 0}/{r.total_tasks ?? 0} Aufgaben erledigt{r.demand_reason ? ` · ${r.demand_reason}` : ''}
+                                        </p>
+                                    )}
                                 </div>
                             ))}
                         </div>

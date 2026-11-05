@@ -167,9 +167,6 @@ export default function CleaningChecklist() {
                         <Circle className="w-6 h-6 text-muted-foreground mt-0.5 shrink-0" />
                         <div className="flex-1">
                             <p className="font-medium text-foreground">{task.title}</p>
-                            {task.assigned_to_name && (
-                                <p className="text-xs text-muted-foreground mt-0.5">→ {task.assigned_to_name}</p>
-                            )}
                             <Badge variant="outline" className="text-xs mt-1">{task.frequency}</Badge>
                         </div>
                     </button>

@@ -1,0 +1,45 @@
+{
+  "name": "Putzliste Samstags-Check",
+  "description": "Meldet Managern am Samstagabend um 23:00 kurz, wenn an diesem Bedarfstag unter 80 % der f\u00e4lligen Putzaufgaben erledigt sind. Sonntag und Werktage bleiben stumm.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 23 * * 6",
+      "one_time_date": null,
+      "timezone": "Europe/Berlin",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "putzliste_samstags_check",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "check_shortfall": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "notifyCleaningShortfall",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Quote pr\u00fcfen",
+            "description": "Nur am Samstagabend, nur unter 80 %"
+          }
+        }
+      }
+    ]
+  }
+}

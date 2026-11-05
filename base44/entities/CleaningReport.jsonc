@@ -5,12 +5,21 @@
     "week_start": {
       "type": "string",
       "format": "date",
-      "description": "Wochenanfang"
+      "description": "Datum des Berichtstags (YYYY-MM-DD)"
     },
     "week_end": {
       "type": "string",
       "format": "date",
-      "description": "Wochenende"
+      "description": "Ende des Berichtszeitraums (bei Tagesberichten identisch mit week_start)"
+    },
+    "required": {
+      "type": "boolean",
+      "default": true,
+      "description": "true = Bedarfstag (Samstag, Sonntag, Vorfeiertag, Feiertag oder Eventtag). false = Werktag ohne Bedarf \u2014 z\u00e4hlt nicht in Durchschnittsquote oder Warnungen."
+    },
+    "demand_reason": {
+      "type": "string",
+      "description": "Grund der Einstufung, z.B. Samstag, Sonntag, Feiertag \u2014 oder 'kein Bedarf' an Werktagen"
     },
     "report_data": {
       "type": "array",
@@ -38,7 +47,7 @@
     },
     "total_tasks": {
       "type": "number",
-      "description": "Gesamtanzahl Aufgaben"
+      "description": "Gesamtanzahl der an diesem Tag f\u00e4lligen Aufgaben"
     },
     "completed_tasks": {
       "type": "number",
@@ -46,7 +55,7 @@
     },
     "completion_rate": {
       "type": "number",
-      "description": "Erledigungsrate in Prozent"
+      "description": "Erledigungsrate in Prozent (an Tagen ohne Bedarf nicht aussagekr\u00e4ftig)"
     }
   },
   "required": [

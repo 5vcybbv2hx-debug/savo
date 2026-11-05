@@ -1,0 +1,45 @@
+{
+  "name": "Putzliste Reset nach Faelligkeit",
+  "description": "Setzt erledigte Putzaufgaben t\u00e4glich um 00:10 nach ihrer F\u00e4lligkeit zur\u00fcck (t\u00e4glich, Wochenende, w\u00f6chentlich, alle zwei Wochen, monatlich) und schreibt den Tagesbericht f\u00fcr gestern inkl. Bedarfstag-Kennzeichnung.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "10 0 * * *",
+      "one_time_date": null,
+      "timezone": "Europe/Berlin",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "putzliste_reset_nach_faelligkeit",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "reset_tasks": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "resetDailyCleaning",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Reset nach F\u00e4lligkeit",
+            "description": "Tagesbericht gestern + Reset heute f\u00e4lliger Aufgaben"
+          }
+        }
+      }
+    ]
+  }
+}
