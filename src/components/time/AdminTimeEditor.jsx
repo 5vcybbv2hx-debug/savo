@@ -299,7 +299,7 @@ export default function AdminTimeEditor() {
                             <AlertTriangle className="w-5 h-5 text-red-400" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground">Admin Zeit-Editor</h1>
+                            <h1 className="page-title">Admin Zeit-Editor</h1>
                             <p className="text-xs text-muted-foreground">Direktbearbeitung aller ClockEntry & TimeEntry Datensätze</p>
                         </div>
                     </div>

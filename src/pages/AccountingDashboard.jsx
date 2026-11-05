@@ -277,7 +277,7 @@ export default function AccountingDashboard() {
 
                 {/* ── Schnellzugriff ───────────────────────────────────────── */}
                 <div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5 px-0.5">
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2.5 px-0.5">
                         Schnellzugriff
                     </p>
                     <div className="grid grid-cols-2 gap-2.5">

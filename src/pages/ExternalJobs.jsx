@@ -61,7 +61,7 @@ export default function ExternalJobs() {
             <div className="flex items-start justify-between gap-3 mb-5">
                 <div>
                     <h1 className="page-title">Außeneinsätze</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Externe Veranstaltungen & Catering</p>
+                    <p className="page-subtitle">Externe Veranstaltungen & Catering</p>
                 </div>
                 <Button size="sm" onClick={() => setParams({ new: '1' })} className="gap-1.5 shrink-0">
                     <Plus className="w-4 h-4" /> Neu

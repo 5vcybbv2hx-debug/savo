@@ -245,17 +245,17 @@ export default function Vouchers() {
             {/* ── KPI-Karten ── */}
             <div className="grid grid-cols-3 gap-2.5">
                 <Card className="p-3.5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Offen</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight">Offen</p>
                     <p className="text-lg font-bold text-foreground mt-1">{kpis.openCount}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">Gutscheine</p>
                 </Card>
                 <Card className="p-3.5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Eingelöst gesamt</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight">Eingelöst gesamt</p>
                     <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-1">{fmtEUR(kpis.redeemedTotal)}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">alle Einlösungen</p>
                 </Card>
                 <Card className="p-3.5 border-amber-500/30 bg-amber-500/5">
-                    <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">Verbindlichkeit</p>
+                    <p className="text-[13.5px] font-medium text-status-warn tracking-tight">Verbindlichkeit</p>
                     <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">{fmtEUR(kpis.liability)}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">offene Restwerte</p>
                 </Card>
@@ -384,7 +384,7 @@ export default function Vouchers() {
                                 {/* Detail (expandiert) */}
                                 {isExpanded && (
                                     <div className="border-t border-border/50 px-3.5 py-3 bg-muted/20">
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                        <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2 flex items-center gap-1.5">
                                             <History className="w-3 h-3" />
                                             Einlösungs-Historie ({history.length})
                                         </p>
@@ -513,11 +513,11 @@ function RedeemModal({ voucher, currentUser, isPending, error, onClose, onSubmit
                             Der Gast sieht den Restwert jederzeit über den QR-Code.
                         </p>
                         <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center">
-                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Am Kassenbon gegenprüfen</p>
+                            <p className="text-[13.5px] font-medium text-primary tracking-tight">Am Kassenbon gegenprüfen</p>
                             <p className="text-lg font-bold text-foreground mt-1 tabular-nums">Re.-Nr. {done.reference} erfasst</p>
                         </div>
                         <div className="rounded-xl bg-muted/40 px-4 py-3 text-center">
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Neuer Restwert</p>
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight">Neuer Restwert</p>
                             <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{fmtEUR(done.newRemaining)}</p>
                         </div>
                         <Button className="w-full" onClick={onClose} disabled={isPending}>

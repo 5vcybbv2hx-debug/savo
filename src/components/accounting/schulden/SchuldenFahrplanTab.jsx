@@ -96,7 +96,7 @@ export default function SchuldenFahrplanTab() {
 
                 {/* Legende der Schuldner-Farben */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    <span className="text-[13.5px] font-medium text-foreground tracking-tight text-muted-foreground">
                         Zuordnung
                     </span>
                     {SCHULDNER_OPTIONS.map(s => {

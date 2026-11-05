@@ -313,7 +313,7 @@ export default function RevenueHistory() {
             {/* ── KPI-Zeile ── */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                 <Card className="p-3.5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Bestes Jahr</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight">Bestes Jahr</p>
                     <p className="text-lg font-bold text-foreground mt-1">
                         {derived.yearly.length ? fmtEUR(Math.max(...derived.yearly.map(y => y.total))) : '—'}
                     </p>
@@ -322,7 +322,7 @@ export default function RevenueHistory() {
                     </p>
                 </Card>
                 <Card className="p-3.5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Rekordtag</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight">Rekordtag</p>
                     <p className="text-lg font-bold text-foreground mt-1">
                         {derived.best ? fmtEUR(derived.best.revenue) : '—'}
                     </p>
@@ -331,14 +331,14 @@ export default function RevenueHistory() {
                     </p>
                 </Card>
                 <Card className="p-3.5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ø pro Tag</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight">Ø pro Tag</p>
                     <p className="text-lg font-bold text-foreground mt-1">
                         {derived.count ? fmtEUR(derived.totalAll / derived.count) : '—'}
                     </p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">über alle erfassten Tage</p>
                 </Card>
                 <Card className="p-3.5">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Bar / EC</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight">Bar / EC</p>
                     <p className="text-lg font-bold text-foreground mt-1">
                         {Math.round(barShare)}% / {Math.round(100 - barShare)}%
                     </p>

@@ -74,7 +74,7 @@ export default function DayDetailDrawer({
                     {/* Feiertage */}
                     {dayHolidays.length > 0 && (
                         <section>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Feiertag</p>
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">Feiertag</p>
                             <div className="space-y-2">
                                 {dayHolidays.map(h => (
                                     <div key={h.id} className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
@@ -89,7 +89,7 @@ export default function DayDetailDrawer({
                     {/* Schichten */}
                     {dayShifts.length > 0 && (
                         <section>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">
                                 Schichten ({dayShifts.length})
                             </p>
                             <div className="space-y-2">
@@ -120,7 +120,7 @@ export default function DayDetailDrawer({
                     {/* Urlaube */}
                     {dayVacations.length > 0 && (
                         <section>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">
                                 Abwesend ({dayVacations.length})
                             </p>
                             <div className="space-y-2">
@@ -148,7 +148,7 @@ export default function DayDetailDrawer({
                     {/* Wartung */}
                     {dayMaintenance.length > 0 && (
                         <section>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Wartung</p>
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">Wartung</p>
                             <div className="space-y-2">
                                 {dayMaintenance.map(t => (
                                     <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
@@ -163,7 +163,7 @@ export default function DayDetailDrawer({
                     {/* Geburtstage */}
                     {dayBirthdays.length > 0 && (
                         <section>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">
                                 Geburtstage ({dayBirthdays.length})
                             </p>
                             <div className="space-y-2">
@@ -189,7 +189,7 @@ export default function DayDetailDrawer({
                     {/* Reservierungen */}
                     {dayReservations.length > 0 && (
                         <section>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">
                                 Reservierungen ({dayReservations.length})
                             </p>
                             <div className="space-y-2">

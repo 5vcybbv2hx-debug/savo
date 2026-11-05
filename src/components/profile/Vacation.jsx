@@ -201,7 +201,7 @@ export default function Vacation() {
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="text-2xl font-bold text-foreground tracking-tight">Urlaubsverwaltung</h1>
-                        <p className="text-muted-foreground text-sm mt-1">
+                        <p className="page-subtitle">
                             {selectedYear} · {pendingRequests.length} offene Anträge
                         </p>
                     </div>

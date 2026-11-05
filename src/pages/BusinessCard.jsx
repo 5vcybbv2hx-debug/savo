@@ -45,7 +45,7 @@ export default function BusinessCardPage() {
                             <Building2 className="w-5 h-5 text-amber-500" />
                             Digitale Visitenkarte
                         </h1>
-                        <p className="text-muted-foreground text-sm mt-1">
+                        <p className="page-subtitle">
                             Zeig deinen Gästen den QR-Code zum Abscannen
                         </p>
                     </div>

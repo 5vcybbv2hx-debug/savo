@@ -98,11 +98,11 @@ export default function VoucherRedeemDialog({
                         </DialogHeader>
                         <div className="space-y-3">
                             <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-center">
-                                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Eingelöst</p>
+                                <p className="text-[13.5px] font-medium text-primary tracking-tight">Eingelöst</p>
                                 <p className="text-lg font-bold text-foreground mt-1 tabular-nums">{fmtEUR(done.amount)}</p>
                             </div>
                             <div className="rounded-xl bg-muted/40 px-4 py-3 text-center">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Neuer Restwert</p>
+                                <p className="text-[13.5px] font-medium text-foreground tracking-tight">Neuer Restwert</p>
                                 <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{fmtEUR(done.newRemaining)}</p>
                             </div>
                             <Button variant="secondary" className="w-full" onClick={() => setPrintOpen(true)}>
@@ -148,7 +148,7 @@ export default function VoucherRedeemDialog({
                 <div className="space-y-3">
                     {/* Restwert groß — auch bei teilweise eingelöst */}
                     <div className="rounded-xl bg-primary/10 border border-primary/25 px-4 py-3 text-center">
-                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Restwert</p>
+                        <p className="text-[13.5px] font-medium text-primary tracking-tight">Restwert</p>
                         <p className="text-3xl font-bold text-foreground mt-1 tabular-nums">{fmtEUR(remaining)}</p>
                         <p className="text-[11px] text-muted-foreground mt-1">
                             von {fmtEUR(voucher.original_value)} · ausgestellt {fmtDate(voucher.issue_date)}
@@ -175,7 +175,7 @@ export default function VoucherRedeemDialog({
                             </div>
 
                             <div>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-1.5 flex items-center gap-1.5">
                                     <History className="w-3 h-3" />
                                     Einlöse-Historie ({history.length})
                                 </p>

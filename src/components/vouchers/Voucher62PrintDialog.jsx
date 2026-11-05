@@ -180,7 +180,7 @@ export default function Voucher62PrintDialog({
                     <div className="space-y-3">
                         {/* Format wählen */}
                         <div>
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-1.5">
                                 Format
                             </p>
                             <div className="grid grid-cols-2 gap-2">
@@ -226,7 +226,7 @@ export default function Voucher62PrintDialog({
                             </div>
                         ) : (
                             <div className="rounded-xl bg-muted/40 px-4 py-3 text-center">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sammeldruck</p>
+                                <p className="text-[13.5px] font-medium text-foreground tracking-tight">Sammeldruck</p>
                                 <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{targets.length}</p>
                                 <p className="text-[11px] text-muted-foreground mt-0.5">
                                     {isRedeem ? 'eingelöste Gutscheine' : 'offene Gutscheine'} · je {fmt.width} × {fmt.height} mm,

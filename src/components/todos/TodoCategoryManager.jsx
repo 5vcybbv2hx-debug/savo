@@ -139,7 +139,7 @@ export default function TodoCategoryManager({ open, onClose }) {
                     ) : (
                         <div className="space-y-1 max-h-[50vh] overflow-y-auto pr-1">
                             {/* Standardkategorien */}
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-1">Standard</p>
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight px-1 mb-1">Standard</p>
                             {allStandard.map(cat => (
                                 <div key={cat.name} className="flex items-center justify-between px-3 py-2 rounded-lg bg-card border border-border/50">
                                     <span className="text-sm text-foreground">{cat.name}</span>
@@ -150,7 +150,7 @@ export default function TodoCategoryManager({ open, onClose }) {
                             {/* Eigene Kategorien */}
                             {customCategories.length > 0 && (
                                 <>
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1 mt-3 mb-1">Eigene</p>
+                                    <p className="text-[13.5px] font-medium text-foreground tracking-tight px-1 mt-3 mb-1">Eigene</p>
                                     {customCategories.map(cat => {
                                         const openCount = allTodoItems.filter(t =>
                                             t.category === cat.name && t.status !== 'erledigt' && !t.is_archived

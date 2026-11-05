@@ -366,7 +366,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
 
                             {/* Meine Anfragen */}
                             <div>
-                                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1 flex items-center gap-1.5">
+                                <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2 px-1 flex items-center gap-1.5">
                                     <User className="w-3 h-3" /> Meine Anfragen
                                 </p>
                                 {myRequests.length > 0 ? (
@@ -435,7 +435,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                             {/* Manager: Zu genehmigen */}
                             {permissions.isManager && pendingRequests.length > 0 && (
                                 <div>
-                                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1 flex items-center gap-1.5">
+                                    <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2 px-1 flex items-center gap-1.5">
                                         <AlertCircle className="w-3 h-3" /> Zu genehmigen ({pendingRequests.length})
                                     </p>
                                     <div className="space-y-2">

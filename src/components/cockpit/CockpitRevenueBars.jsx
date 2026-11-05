@@ -13,7 +13,7 @@ export default function CockpitRevenueBars({ series, periodLabel }) {
         <Card className="p-4 md:p-5">
             <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Umsatz pro Tag</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight text-muted-foreground">Umsatz pro Tag</p>
                     <p className="text-xs text-muted-foreground mt-1">
                         {activeDays} von {series.length} Tagen mit Umsatz
                         {activeDays > 0 && ` · Ø ${fmtEUR(total / activeDays)}`}

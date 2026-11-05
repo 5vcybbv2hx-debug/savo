@@ -372,7 +372,7 @@ export default function Layout({ children, currentPageName }) {
                                 return (
                                     <div key={section.id}>
                                         {!sidebarCollapsed && visibleItems.length > 1 && (
-                                            <h3 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">
+                                            <h3 className="px-3 text-[13.5px] font-medium text-foreground tracking-tight mb-3">
                                                 {section.name}
                                             </h3>
                                         )}
@@ -547,7 +547,7 @@ export default function Layout({ children, currentPageName }) {
                     <div className="overflow-y-auto px-4 pt-3 pb-6">
                         {menuSearch.trim() ? (
                             <div className="space-y-1">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1">
+                                <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2 px-1">
                                     {searchResults.length === 1 ? '1 Treffer' : `${searchResults.length} Treffer`}
                                 </p>
                                 {searchResults.map(item => (

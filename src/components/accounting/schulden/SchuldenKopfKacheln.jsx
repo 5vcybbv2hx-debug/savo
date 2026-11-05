@@ -22,7 +22,7 @@ export default function SchuldenKopfKacheln({ posten }) {
                     className={cn('p-3.5', t.wide && 'col-span-2')}
                     style={t.accent ? { borderColor: 'rgba(0,153,219,0.4)' } : undefined}
                 >
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.label}</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight text-muted-foreground">{t.label}</p>
                     <p
                         className={cn(
                             'font-bold tabular-nums mt-1 leading-tight',

@@ -244,7 +244,7 @@ function SubSection({ sub, perms, permissions, employeeRole, onToggle, searchQue
 
     return (
         <div className="space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1 pt-2">{sub}</p>
+            <p className="text-[13.5px] font-medium text-foreground tracking-tight px-1 pt-2">{sub}</p>
             {filteredPerms.map(perm => {
                 const override = permissions[perm.key];
                 const roleDefault = getRoleDefault(perm.key, employeeRole);

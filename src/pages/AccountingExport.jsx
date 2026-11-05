@@ -337,7 +337,7 @@ export default function AccountingExport() {
 
                 {/* ── Was wird exportiert ──────────────────────────────────── */}
                 <div className="space-y-2">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-0.5">
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight px-0.5">
                         Dein Steuerberater bekommt
                     </p>
 

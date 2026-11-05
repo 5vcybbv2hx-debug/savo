@@ -77,15 +77,15 @@ export default function TeamHub() {
         <div className="max-w-2xl mx-auto px-5 py-4 pb-32 md:pb-8">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-foreground">Team</h1>
-                <p className="text-muted-foreground text-sm mt-1">
+                <h1 className="page-title">Team</h1>
+                <p className="page-subtitle">
                     {employees.length > 0 ? `${employees.length} aktive Mitarbeiter` : 'Team & Schichten verwalten'}
                 </p>
             </div>
 
             {/* Planung */}
             <div className="mb-6">
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Planung</p>
+                <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-3 px-1">Planung</p>
                 <div className="space-y-2">
                     <NavCard icon={Calendar}      label="Schichtplan"     description="Woche & Monat, Schichten planen"    page="Calendar"      permission="canViewShifts" />
                     <NavCard icon={MapPin}        label="Stationsplan"    description="Bereiche & Stationen zuweisen"      page="Stationsplan"  permission="canViewShifts" />
@@ -94,7 +94,7 @@ export default function TeamHub() {
 
             {/* Mein Bereich */}
             <div className="mb-6">
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Mein Bereich</p>
+                <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-3 px-1">Mein Bereich</p>
                 <div className="space-y-2">
                     <NavCard icon={Clock}         label="Meine Schichten"  description="Eigene Schichten & Tauschanfragen" page="MyShifts"       badge={swapInboxCount || undefined} badgeVariant="warning" permission="canViewShifts" />
                     <NavCard icon={Clock}         label="Zeiterfassung"    description="Arbeitsstunden & Übersicht"        page="TimeManagement" permission="canViewOwnTimeEntries" />
@@ -105,7 +105,7 @@ export default function TeamHub() {
             {/* Verwaltung */}
             {(permissions.canViewEmployees || permissions.canEditEmployeePermissions || permissions.canViewTeamMeeting) && (
                 <div className="mb-6">
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Verwaltung</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-3 px-1">Verwaltung</p>
                     <div className="space-y-2">
                         <NavCard icon={Users}    label="Mitarbeiter"    description="Profile, Kontakte & Daten"        page="Employees"    permission="canViewEmployees" />
                         <NavCard icon={Shield}   label="Berechtigungen" description="Rollen & Zugriffsrechte"          page="PermissionsNew"  permission="canEditEmployeePermissions" />

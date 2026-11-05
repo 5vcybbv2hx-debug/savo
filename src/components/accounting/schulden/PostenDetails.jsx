@@ -45,7 +45,7 @@ export default function PostenDetails({ posten }) {
                 >
                     <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: SAVO_BLUE }} />
                     <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: SAVO_BLUE }}>
+                        <p className="text-[13.5px] font-medium text-foreground tracking-tight" style={{ color: SAVO_BLUE }}>
                             Empfehlung
                         </p>
                         <p className="text-xs text-foreground mt-0.5 whitespace-pre-line">{posten.empfehlung}</p>

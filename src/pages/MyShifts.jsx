@@ -77,7 +77,7 @@ function NextShiftHero({ shifts }) {
             'rounded-2xl p-5 border',
             isToday ? 'bg-amber-500/10 border-amber-500/40' : 'bg-card border-border'
         )}>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+            <p className="text-[13.5px] font-medium text-foreground tracking-tight text-muted-foreground mb-3">
                 {isToday ? '⚡ Nächste Schicht — Heute' : 'Nächste Schicht'}
             </p>
             <div className="flex items-center justify-between gap-4">

@@ -123,11 +123,11 @@ export default function VoucherRedeemView({ vouchers = [], redemptions = [], cur
                         Gutschein Nr. <span className="font-semibold text-foreground">{done.voucher.voucher_number}</span>
                     </p>
                     <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
-                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Am Kassenbon gegenprüfen</p>
+                        <p className="text-[13.5px] font-medium text-primary tracking-tight">Am Kassenbon gegenprüfen</p>
                         <p className="text-lg font-bold text-foreground mt-1 tabular-nums">Re.-Nr. {done.reference} erfasst</p>
                     </div>
                     <div className="rounded-xl bg-muted/40 px-4 py-3">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Neuer Restwert</p>
+                        <p className="text-[13.5px] font-medium text-foreground tracking-tight">Neuer Restwert</p>
                         <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{fmtEUR(done.newRemaining)}</p>
                     </div>
                     <Button
@@ -238,11 +238,11 @@ export default function VoucherRedeemView({ vouchers = [], redemptions = [], cur
 
                     <div className="grid grid-cols-2 gap-2.5">
                         <div className="rounded-lg bg-muted/40 px-3 py-2">
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Original</p>
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight">Original</p>
                             <p className="text-base font-semibold text-foreground mt-0.5 tabular-nums">{fmtEUR(voucher.original_value)}</p>
                         </div>
                         <div className="rounded-lg bg-primary/10 px-3 py-2">
-                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Restwert</p>
+                            <p className="text-[13.5px] font-medium text-primary tracking-tight">Restwert</p>
                             <p className="text-base font-bold text-foreground mt-0.5 tabular-nums">{fmtEUR(remaining)}</p>
                         </div>
                     </div>

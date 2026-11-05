@@ -50,7 +50,7 @@ export default function WeekdayTasksSection({ tasks = [], nextWeekTasks = [], on
                 <div className="space-y-3">
                     {groups.map(group => (
                         <div key={group.area}>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1 mb-1.5">
+                            <p className="text-[13.5px] font-medium text-foreground tracking-tight text-muted-foreground px-1 mb-1.5">
                                 {group.area} · diese Woche
                             </p>
                             <div className="space-y-2">

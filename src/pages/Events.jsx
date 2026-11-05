@@ -363,7 +363,7 @@ export default function Events() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
                     <div>
                         <h1 className="page-title">Events</h1>
-                        <p className="text-muted-foreground text-sm mt-1">
+                        <p className="page-subtitle">
                             {upcomingEvents.length} kommend · {archiveEvents.length} archiviert · {allIdeas.length} Ideen
                         </p>
                     </div>

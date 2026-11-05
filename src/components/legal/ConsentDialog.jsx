@@ -177,7 +177,7 @@ export function PrivacyContent() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="page-title">
           {PRIVACY_POLICY_CONTENT.sections.intro.title}
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -243,7 +243,7 @@ export function ImprintContent() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-foreground">Impressum</h1>
+        <h1 className="page-title">Impressum</h1>
         <p className="text-sm text-muted-foreground">
           Letztes Update: {IMPRINT_CONTENT.lastUpdated}
         </p>

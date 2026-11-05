@@ -240,7 +240,7 @@ export default function StorageLocationScan() {
               📦
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-0.5">
+              <p className="text-[13.5px] font-medium text-status-warn tracking-tight mb-0.5">
                 Lagerplatz
               </p>
               <h1 className="text-xl font-bold text-foreground leading-tight break-words">

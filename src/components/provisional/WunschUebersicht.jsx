@@ -7,7 +7,7 @@ export default function WunschUebersicht({ rows = [], totalCount = 0, totalHours
 
     return (
         <div className="rounded-2xl border border-border/50 bg-card/60 p-3">
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-1">
+            <p className="text-[13.5px] font-medium text-foreground tracking-tight px-1 mb-1">
                 Übersicht vor Bestätigung
             </p>
             <div className="max-h-56 overflow-y-auto">

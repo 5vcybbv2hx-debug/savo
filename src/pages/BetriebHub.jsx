@@ -73,13 +73,13 @@ export default function BetriebHub() {
     return (
         <div className="max-w-2xl mx-auto px-5 py-4 pb-32 md:pb-8">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-foreground">Betrieb</h1>
-                <p className="text-muted-foreground text-sm mt-1">Gäste, Aufgaben & tägliche Abläufe</p>
+                <h1 className="page-title">Betrieb</h1>
+                <p className="page-subtitle">Gäste, Aufgaben & tägliche Abläufe</p>
             </div>
 
             {/* Gäste */}
             <div className="mb-6">
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Gäste</p>
+                <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-3 px-1">Gäste</p>
                 <div className="space-y-2">
                     <NavCard icon={MapPin} label="Gäste & Tische"
                         description={reservations.length > 0 ? `${reservations.length} Reservierungen heute` : 'Tische & Reservierungen'}
@@ -89,7 +89,7 @@ export default function BetriebHub() {
 
             {/* Aufgaben */}
             <div className="mb-6">
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Aufgaben</p>
+                <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-3 px-1">Aufgaben</p>
                 <div className="space-y-2">
                     <NavCard icon={CheckSquare} label="Aufgaben"       description="Todos & offene Punkte"            page="Todos"       badge={todos.filter(t => t.status !== 'erledigt').length || undefined} permission="canViewTodos" />
                     <NavCard icon={Brush}       label="Putzliste"      description="Reinigungsaufgaben & Checkliste"  page="Cleaning"    badge={openCleaningCount || undefined} badgeVariant="warning" permission="canViewCleaning" />
@@ -99,7 +99,7 @@ export default function BetriebHub() {
 
             {/* Speisen */}
             <div className="mb-6">
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Speisen</p>
+                <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-3 px-1">Speisen</p>
                 <div className="space-y-2">
                     <NavCard icon={Utensils} label="Wurstsalat" description="Vorbestellungen · jeden Dienstag" page="Wusa" />
                 </div>
@@ -108,7 +108,7 @@ export default function BetriebHub() {
             {/* Veranstaltungen */}
             {permissions.canViewEvents && (
                 <div className="mb-6">
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-3 px-1">Veranstaltungen</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-3 px-1">Veranstaltungen</p>
                     <div className="space-y-2">
                         <NavCard icon={Star} label="Events" description="Veranstaltungen planen & verwalten" page="Events" permission="canViewEvents" />
                         <NavCard icon={Truck} label="Außeneinsätze" description="Catering & externe Einsätze" page="ExternalJobs" permission="canViewEvents" />

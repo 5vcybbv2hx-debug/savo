@@ -10,7 +10,7 @@ export default function CockpitKpiCard({ label, value, sub, icon: Icon, prominen
             style={prominent ? { borderColor: SAVO_BLUE } : undefined}
         >
             <div className="flex items-start justify-between gap-3">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+                <p className="text-[13.5px] font-medium text-foreground tracking-tight text-muted-foreground">{label}</p>
                 {Icon && <Icon className="w-4 h-4 shrink-0" style={{ color: SAVO_BLUE }} />}
             </div>
 

@@ -155,7 +155,7 @@ export default function NotificationSettings() {
                             <Settings className="w-6 h-6 text-amber-500" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground">Benachrichtigungen</h1>
+                            <h1 className="page-title">Benachrichtigungen</h1>
                             <p className="text-sm text-muted-foreground">Passe deine Benachrichtigungseinstellungen an</p>
                         </div>
                     </div>

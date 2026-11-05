@@ -421,7 +421,7 @@ export default function Inventory() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="page-title">Inventur</h1>
-                            <p className="text-muted-foreground text-sm mt-1">
+                            <p className="page-subtitle">
                                 {countedSlots} von {totalSlots} Fächern gezählt
                             </p>
                         </div>
