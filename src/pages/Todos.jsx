@@ -402,7 +402,7 @@ export default function Todos() {
                 await queryClient.invalidateQueries({ queryKey: ['employees'] });
                 await queryClient.invalidateQueries({ queryKey: ['todo-categories'] });
             }}>
-            <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+            <div className="max-w-3xl mx-auto px-5 py-4 sm:py-6 space-y-3">
 
                 {/* ── Header ─────────────────────────────────────────────── */}
                 <PageHeader

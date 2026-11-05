@@ -1,17 +1,20 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export default function StatCard({ title, value, icon: Icon, color = "bg-slate-100", iconColor = "text-slate-600" }) {
+/* Zahlenblock: innere Fläche, Wert 20/600, Label 11,5 gedämpft */
+export default function StatCard({ title, value, icon: Icon, color = "bg-surface", iconColor = "text-primary" }) {
     return (
-        <Card className="p-5 bg-white border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-medium mb-1">{title}</p>
-                    <p className="text-2xl font-semibold text-slate-800">{value}</p>
+        <Card className="p-4">
+            <div className="flex items-center justify-between gap-3">
+                <div className="rounded-xl bg-surface p-3 min-w-0 flex-1">
+                    <p className="stat-label mb-1.5">{title}</p>
+                    <p className="stat-value truncate">{value}</p>
                 </div>
-                <div className={cn("p-3 rounded-xl", color)}>
-                    <Icon className={cn("w-5 h-5", iconColor)} />
-                </div>
+                {Icon && (
+                    <div className={cn("p-2.5 rounded-xl shrink-0", color)}>
+                        <Icon className={cn("w-4 h-4", iconColor)} />
+                    </div>
+                )}
             </div>
         </Card>
     );

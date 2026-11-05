@@ -43,6 +43,15 @@ module.exports = {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))'
         },
+        /* Innere Fläche in Karten (Zahlenblöcke) und Fortschritts-Spur */
+        surface: 'hsl(var(--surface))',
+        track: 'hsl(var(--track))',
+        /* Statusfarben — nur diese drei tragen Bedeutung */
+        status: {
+          ok: 'hsl(var(--status-ok))',
+          warn: 'hsl(var(--status-warn))',
+          danger: 'hsl(var(--status-danger))'
+        },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))'

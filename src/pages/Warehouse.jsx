@@ -140,7 +140,7 @@ export default function Warehouse() {
     const openRestockCount = openRestockItems.length;
 
     return (
-        <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8" {...swipeHandlers}>
+        <div className="max-w-2xl mx-auto px-5 py-4 pb-32 md:pb-8" {...swipeHandlers}>
             <PageHeader
                 title="Waren & Lager"
                 subtitle="Artikel, Bestellungen, Lagerplätze"

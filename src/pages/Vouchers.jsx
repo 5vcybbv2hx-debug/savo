@@ -218,7 +218,7 @@ export default function Vouchers() {
     }
 
     return (
-        <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+        <div className="px-5 py-4 md:py-5 max-w-3xl mx-auto space-y-3">
             {/* ── Ganz oben: bestehenden Gutschein scannen ── */}
             <VoucherScanBar
                 vouchers={vouchers}

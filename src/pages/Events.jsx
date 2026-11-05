@@ -358,7 +358,7 @@ export default function Events() {
 
     return (
         <div className="min-h-screen bg-background animate-page-enter pb-24 md:pb-0">
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-8">
+            <div className="max-w-7xl mx-auto px-5 py-4 sm:py-6">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
                     <div>

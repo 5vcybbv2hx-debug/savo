@@ -49,7 +49,7 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
 
     return (
         <div className="min-h-screen bg-background p-3 sm:p-8 pb-24 md:pb-0">
-            <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6">
+            <div className="max-w-7xl mx-auto space-y-3">
                 <div className="page-header flex-col sm:flex-row sm:items-start">
                     <div>
                         <h1 className="page-title">Dashboard</h1>

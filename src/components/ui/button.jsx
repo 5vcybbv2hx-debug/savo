@@ -10,7 +10,7 @@ const buttonVariants = cva(
       variant: {
         /* Drei Varianten: primär · sekundär (Rahmen) · ghost (nur Text) */
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90",
+          "bg-primary text-primary-foreground hover:bg-primary/90 btn-primary-glow",
         outline:
           "border border-border bg-card text-foreground hover:bg-secondary",
         ghost:

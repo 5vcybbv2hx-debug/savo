@@ -189,7 +189,7 @@ export default function AccountingDashboard() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
-            <div className={cn('mx-auto px-4 py-5 space-y-5', tab === 'uebersicht' ? 'max-w-lg' : 'max-w-lg md:max-w-3xl')}>
+            <div className={cn('mx-auto px-5 py-5 space-y-3', tab === 'uebersicht' ? 'max-w-lg' : 'max-w-lg md:max-w-3xl')}>
 
                 {/* ── Header ──────────────────────────────────────────────── */}
                 <PageHeader

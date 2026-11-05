@@ -453,7 +453,7 @@ export default function ModuleCenter() {
             <div className="max-w-2xl mx-auto">
 
                 {/* ── Header ────────────────────────────────────────────── */}
-                <div className="px-4 pt-4 pb-3">
+                <div className="px-5 pt-4 pb-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">

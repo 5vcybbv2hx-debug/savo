@@ -572,7 +572,7 @@ export default function TimeTracking() {
     // ── Render ─────────────────────────────────────────────────────────────────
     const trackingContent = (
         <div className="min-h-screen bg-background animate-page-enter">
-            <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+            <div className="max-w-6xl mx-auto px-5 py-5 sm:py-6">
 
                 {/* ── STEMPELUHR HERO ──────────────────────────────────────── */}
                 {isLoadingEmployee && (

@@ -292,7 +292,7 @@ export default function Cleaning() {
 
     return (
         <div className="min-h-screen bg-background pb-8 animate-page-enter">
-            <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+            <div className="max-w-2xl mx-auto px-5 py-4 sm:py-6">
 
                 <PageHeader
                     title="Putzliste"

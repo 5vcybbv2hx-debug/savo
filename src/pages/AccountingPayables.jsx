@@ -39,7 +39,7 @@ export default function AccountingPayables() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
-            <div className="max-w-2xl mx-auto px-4 py-5 space-y-6">
+            <div className="max-w-2xl mx-auto px-5 py-5 space-y-3">
 
                 {/* ── Header ──────────────────────────────────────────────── */}
                 <div>
