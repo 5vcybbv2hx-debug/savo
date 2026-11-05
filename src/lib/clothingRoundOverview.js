@@ -202,9 +202,9 @@ export function buildOverviewPdf(round, summary) {
         if (slot.open) return `${slot.size} · offen`;
         return `${slot.size} · ${slot.qty}×`;
     };
-    const personRows = summary.persons.map((p, i) => ({
+    const personRows = summary.persons.map((p) => ({
         cells: [p.name, cellFor(p.pulli), cellFor(p.shirt)],
-        muted: i > 0 && false,
+        muted: !p.pulli && !p.shirt,
     }));
     y = drawTable(doc, y, [
         { label: 'Name', x: MARGIN_L, width: 68 },
@@ -321,6 +321,14 @@ export async function openRoundPdf(fileUri) {
         window.open(fileUri, '_blank', 'noopener');
         return;
     }
-    const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({ file_uri: fileUri, expires_in: 3600 });
-    window.open(signed_url, '_blank', 'noopener');
+    // Fenster sofort öffnen (Klick-Geste bleibt erhalten), danach auf die signierte URL leiten
+    const win = window.open('', '_blank');
+    try {
+        const { signed_url } = await base44.integrations.Core.CreateFileSignedUrl({ file_uri: fileUri, expires_in: 3600 });
+        if (win) win.location.href = signed_url;
+        else window.open(signed_url, '_blank', 'noopener');
+    } catch (error) {
+        if (win) win.close();
+        throw error;
+    }
 }

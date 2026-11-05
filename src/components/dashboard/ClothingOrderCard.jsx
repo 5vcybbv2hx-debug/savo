@@ -154,10 +154,11 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
     // Abschließen erzeugt immer die PDF-Bestellübersicht, legt sie ab und bietet sie zum Download an
     const closeRoundMutation = useMutation({
         mutationFn: () => generateRoundOverviewPdf(activeRound, { markClosed: true }),
-        onSuccess: async ({ file_uri, summary }) => {
+        onSuccess: ({ file_uri, summary }) => {
             queryClient.invalidateQueries({ queryKey: ['clothingRounds'] });
-            toast.success(`Runde abgeschlossen — ${summary.totalPieces} Teile, ${summary.openCount} Zeilen ohne Menge`);
-            await openRoundPdf(file_uri);
+            toast.success(`Runde abgeschlossen — ${summary.totalPieces} Teile, ${summary.openCount} Zeilen ohne Menge`, {
+                action: { label: 'PDF öffnen', onClick: () => openRoundPdf(file_uri) },
+            });
         },
         onError: (error) => toast.error('Abschließen fehlgeschlagen: ' + error.message),
     });

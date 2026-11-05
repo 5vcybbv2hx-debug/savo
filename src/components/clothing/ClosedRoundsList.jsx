@@ -30,8 +30,9 @@ export default function ClosedRoundsList({ rounds = [] }) {
         try {
             const { file_uri } = await generateRoundOverviewPdf(round, { markClosed: true });
             queryClient.invalidateQueries({ queryKey: ['clothingRounds'] });
-            toast.success('Bestellübersicht neu erzeugt');
-            await openRoundPdf(file_uri);
+            toast.success('Bestellübersicht neu erzeugt', {
+                action: { label: 'PDF öffnen', onClick: () => openRoundPdf(file_uri) },
+            });
         } catch (error) {
             toast.error('PDF konnte nicht erzeugt werden: ' + error.message);
         } finally {
