@@ -41,6 +41,7 @@ import StaffingAnalysis from './pages/StaffingAnalysis';
 import RevenueHistory from './pages/RevenueHistory';
 import MenuReview from './pages/MenuReview';
 import LieferscheinScanner from './pages/LieferscheinScanner';
+import Storage from './pages/Storage';
 import ExternalJobs from './pages/ExternalJobs';
 import Vouchers from './pages/Vouchers';
 import ReserviertSchilder from './pages/ReserviertSchilder';
@@ -273,6 +274,7 @@ const AuthenticatedApp = () => {
 
       <Route path="/MenuReview" element={<LayoutWrapper currentPageName="MenuReview"><RoleGuard permission="canViewDrinkMenu"><MenuReview /></RoleGuard></LayoutWrapper>} />
       <Route path="/LieferscheinScanner" element={<LayoutWrapper currentPageName="LieferscheinScanner"><RoleGuard permission="canViewWarehouse"><LieferscheinScanner /></RoleGuard></LayoutWrapper>} />
+      <Route path="/Storage" element={<LayoutWrapper currentPageName="Storage"><RoleGuard permission="canViewWarehouse"><Storage /></RoleGuard></LayoutWrapper>} />
       <Route path="/BetriebHub" element={<LayoutWrapper currentPageName="BetriebHub"><RoleGuard permission="canViewReservations"><BetriebHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/GuestHub" element={<LayoutWrapper currentPageName="GuestHub"><RoleGuard permission="canViewReservations"><GuestHub /></RoleGuard></LayoutWrapper>} />
       <Route path="/ReserviertSchilder" element={<LayoutWrapper currentPageName="GuestHub"><RoleGuard permission="canViewReservations"><ReserviertSchilder /></RoleGuard></LayoutWrapper>} />

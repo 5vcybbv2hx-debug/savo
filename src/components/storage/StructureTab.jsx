@@ -18,7 +18,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { fuzzySearch } from '@/lib/fuzzySearch';
-import StorageLabelPrint from './StorageLabelPrint';
+import SlotLabelPrintDialog from './SlotLabelPrintDialog';
 import BaselineWizard from '@/components/warehouse/BaselineWizard';
 import { Camera } from 'lucide-react';
 
@@ -143,8 +143,8 @@ export default function StructureTab({ permissions }) {
   const [deleteFurTarget,  setDeleteFurTarget]  = useState(null);
   const [deleteSlotTarget, setDeleteSlotTarget] = useState(null);
 
-  // Etikettendruck
-  const [labelSlot, setLabelSlot] = useState(null);
+  // Etikettendruck (62 × 30 mm)
+  const [labelSlotId, setLabelSlotId] = useState(null);
 
   // Basis-Foto (nur Manager)
   const [baselineSlotId, setBaselineSlotId] = useState(null);
@@ -189,28 +189,6 @@ export default function StructureTab({ permissions }) {
     slots.forEach(s => { map[s.area_id] = (map[s.area_id] || 0) + 1; });
     return map;
   }, [slots]);
-
-  // ── Etikett-Datenaufbereitung ──────────────────────────────────────────────
-  // Produkt(e), Soll-Menge (aus der Fach-Zuordnung) und Fach-Nummer fürs Etikett.
-  // area_type wird mitgegeben, damit StorageLabelPrint den Fach-Code bei Lager/Keller-Fächern
-  // groß darstellen kann.
-  const toLabelLocation = (slot) => {
-    const slotAssignments = assignments.filter(a => a.storage_slot_id === slot.id && a.is_active !== false);
-    const area = areas.find(a => a.id === slot.area_id);
-    const primaryAssignment = slotAssignments[0];
-    return {
-      id:            slot.id,
-      name:          slot.full_name || slot.name,
-      area:          slot.area_name,
-      furniture:     slot.furniture_name,
-      position:      slot.name,
-      short_code:    slot.short_code,
-      location_type: slot.furniture_type || 'Fach',
-      article_names: slotAssignments.map(a => a.article_name).filter(Boolean),
-      min_stock:     primaryAssignment?.min_stock ?? null,
-      area_type:     area?.area_type || 'theke',
-    };
-  };
 
   const toggleArea = id => setExpandedAreas(e => ({ ...e, [id]: !e[id] }));
   const toggleFur  = id => setExpandedFurs(e  => ({ ...e, [id]: !e[id] }));
@@ -575,7 +553,7 @@ export default function StructureTab({ permissions }) {
                                   canEdit={canEdit}
                                   onEdit={openEditSlot}
                                   onDelete={setDeleteSlotTarget}
-                                  onPrintLabel={setLabelSlot}
+                                  onPrintLabel={(s) => setLabelSlotId(s.id)}
                                   onBaseline={(s) => setBaselineSlotId(s.id)}
                                   onMoveUp={(s) => updateSlotSortMut.mutate({ slot: s, direction: 'up', siblings: furSlots })}
                                   onMoveDown={(s) => updateSlotSortMut.mutate({ slot: s, direction: 'down', siblings: furSlots })}
@@ -903,11 +881,11 @@ export default function StructureTab({ permissions }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Etikettendruck (Produkt, Soll-Menge, Fach-Nummer — bei Lager/Keller groß) */}
-      <StorageLabelPrint
-        open={!!labelSlot}
-        location={labelSlot ? toLabelLocation(labelSlot) : null}
-        onClose={() => setLabelSlot(null)}
+      {/* Etikettendruck 62 × 30 mm (Fach-QR = short_code) */}
+      <SlotLabelPrintDialog
+        open={!!labelSlotId}
+        initialSlotId={labelSlotId || undefined}
+        onClose={() => setLabelSlotId(null)}
       />
 
       {/* Basis-Foto je Fach (nur Manager) */}
