@@ -1,0 +1,76 @@
+{
+  "name": "SlotBaseline",
+  "type": "object",
+  "properties": {
+    "slot_id": {
+      "type": "string",
+      "description": "ID des StorageSlot (Fach)"
+    },
+    "slot_full_name": {
+      "type": "string",
+      "description": "Vollst\u00e4ndiger Fachpfad, z. B. \"Raucherbereich \u203a Schnapsregal \u203a Schublade\""
+    },
+    "area_name": {
+      "type": "string",
+      "description": "Name des Bereichs"
+    },
+    "furniture_name": {
+      "type": "string",
+      "description": "Name des M\u00f6bels"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Basis-Foto des Fachs (Referenzaufnahme bei Vollbest\u00fcckung)"
+    },
+    "photo_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum der Basisaufnahme (YYYY-MM-DD)"
+    },
+    "captured_by": {
+      "type": "string",
+      "description": "Name der Person, die das Basis-Foto aufgenommen hat"
+    },
+    "is_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Basis ist gesperrt"
+    },
+    "segments": {
+      "type": "array",
+      "description": "Sorten-Segmente der Basis in Fachreihenfolge (position 1 = links)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "number",
+            "description": "Position im Fach (1 = links)"
+          },
+          "article_id": {
+            "type": "string",
+            "description": "ID des Artikels (leer = Segment frei/leer)"
+          },
+          "article_name": {
+            "type": "string",
+            "description": "Artikelname im Segment"
+          },
+          "baseline_count": {
+            "type": "number",
+            "description": "Anzahl Flaschen/Dosen bei Vollbest\u00fcckung"
+          },
+          "orientation": {
+            "type": "string",
+            "description": "Lagerung im Segment: liegend / stehend / unbekannt"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen zur Basisaufnahme"
+    }
+  },
+  "required": [
+    "slot_id"
+  ]
+}
