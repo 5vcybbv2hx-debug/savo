@@ -788,7 +788,7 @@ export default function Shopping() {
                 {/* ── Header ────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                        <h1 className="page-title flex items-center gap-2">
                             <ShoppingCart className="w-5 h-5 text-primary" />
                             Bestellungen
                         </h1>

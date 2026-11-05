@@ -14,6 +14,7 @@ import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
+import PageHeader from '@/components/ui/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CockpitView from '@/components/cockpit/CockpitView';
 import SchuldenFahrplanTab from '@/components/accounting/schulden/SchuldenFahrplanTab';
@@ -191,18 +192,18 @@ export default function AccountingDashboard() {
             <div className={cn('mx-auto px-4 py-5 space-y-5', tab === 'uebersicht' ? 'max-w-lg' : 'max-w-lg md:max-w-3xl')}>
 
                 {/* ── Header ──────────────────────────────────────────────── */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-bold text-foreground">Buchhaltung</h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">{monthLabel}</p>
-                    </div>
-                    <Link to="/AccountingExport">
-                        <Button size="sm" className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
-                            <Download className="w-4 h-4" />
-                            DATEV Export
-                        </Button>
-                    </Link>
-                </div>
+                <PageHeader
+                    title="Buchhaltung"
+                    subtitle={monthLabel}
+                    action={
+                        <Link to="/AccountingExport">
+                            <Button size="sm" className="gap-1.5">
+                                <Download className="w-4 h-4" />
+                                DATEV Export
+                            </Button>
+                        </Link>
+                    }
+                />
 
                 {/* ── Bereiche des Moduls: Übersicht · Cockpit ─────────────── */}
                 <Tabs value={tab} onValueChange={setTab}>

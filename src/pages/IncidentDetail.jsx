@@ -103,7 +103,7 @@ export default function IncidentDetail() {
                         <ArrowLeft className="w-4 h-4" />
                     </Link>
                     <div className="flex-1">
-                        <h1 className="text-xl font-bold text-foreground">Vorfall-Detail</h1>
+                        <h1 className="page-title">Vorfall-Detail</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
                             {form.incident_time ? format(parseISO(form.incident_time), 'dd.MM.yyyy HH:mm', { locale: de }) : '—'}
                         </p>

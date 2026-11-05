@@ -689,10 +689,10 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
                 <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                            <h1 className="page-title">
                                 {getGreeting()}{currentEmployee ? `, ${currentEmployee.name.split(' ')[0]}` : ''}!
                             </h1>
-                            <p className="text-sm text-muted-foreground mt-0.5">
+                            <p className="page-subtitle">
                                 {format(new Date(), "EEEE, d. MMMM yyyy", { locale: de })}
                             </p>
                         </div>

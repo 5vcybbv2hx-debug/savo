@@ -466,7 +466,7 @@ export default function DailyAnalysis() {
             <div className="flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Tagesabrechnung</h1>
+                        <h1 className="page-title">Tagesabrechnung</h1>
                         <p className="text-sm text-muted-foreground">Z-Abschlag · Personal · Trinkgeld</p>
                     </div>
                     <div className="flex gap-2 shrink-0">

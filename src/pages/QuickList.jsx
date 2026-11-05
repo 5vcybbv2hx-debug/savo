@@ -242,7 +242,7 @@ export default function QuickList() {
             {/* Header */}
             <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                    <h1 className="text-xl font-bold text-foreground">Einkaufsliste</h1>
+                    <h1 className="page-title">Einkaufsliste</h1>
                     <p className="text-muted-foreground text-xs mt-0.5">
                         Heute, {dateDisplay} — {openItems.length} offen
                     </p>

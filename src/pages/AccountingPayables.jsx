@@ -43,7 +43,7 @@ export default function AccountingPayables() {
 
                 {/* ── Header ──────────────────────────────────────────────── */}
                 <div>
-                    <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                    <h1 className="page-title flex items-center gap-2">
                         <Scale className="w-5 h-5 text-primary" />
                         Offene Posten
                     </h1>

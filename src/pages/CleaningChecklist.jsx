@@ -109,7 +109,7 @@ export default function CleaningChecklist() {
             )}>
                 <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-lg font-bold text-foreground">{area}</h1>
+                        <h1 className="page-title">{area}</h1>
                         <p className="text-sm text-muted-foreground">
                             {isLoading ? 'Lade...' : `${doneTasks.length} / ${tasks.length} erledigt`}
                         </p>

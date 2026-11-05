@@ -187,7 +187,7 @@ export default function Wastage() {
                 <div className="mb-8">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground tracking-tight">Schwund & Verluste</h1>
+                            <h1 className="page-title">Schwund & Verluste</h1>
                             <p className="text-muted-foreground text-sm mt-1">Dokumentation von Bruch, Nachtwächter und Verlusten</p>
                         </div>
                         <PDFExportButton

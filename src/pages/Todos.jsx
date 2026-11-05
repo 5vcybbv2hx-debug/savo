@@ -13,6 +13,7 @@ import {
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { toast } from 'sonner';
 import TodoCategoryManager from '@/components/todos/TodoCategoryManager';
+import PageHeader from '@/components/ui/PageHeader';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
 import { Button } from "@/components/ui/button";
@@ -404,53 +405,26 @@ export default function Todos() {
             <div className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
 
                 {/* ── Header ─────────────────────────────────────────────── */}
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                            <CheckSquare className="w-5 h-5 text-amber-500" />
-                            Aufgaben
-                        </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            {openCount} offen · {inProgressCount} aktiv · {doneCount} erledigt
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {permissions.canEditTodos && (
-                            <>
-                                <Button size="sm" variant="outline"
-                                    onClick={() => setCategoryManagerOpen(true)}
-                                    className="h-9 px-2.5 border-border text-muted-foreground hover:text-foreground"
-                                    title="Kategorien verwalten">
-                                    <Tag className="w-4 h-4" />
-                                </Button>
-                                <Button size="sm" variant="outline"
-                                    onClick={() => { setSelectMode(s => !s); setSelectedIds(new Set()); }}
-                                    className={cn('h-9 px-2.5',
-                                        selectMode
-                                            ? 'bg-amber-500 text-primary-foreground border-amber-500'
-                                            : 'border-border text-muted-foreground hover:text-foreground'
-                                    )}
-                                    title="Auswählen">
-                                    {selectMode ? <X className="w-4 h-4" /> : <CheckCheck className="w-4 h-4" />}
-                                </Button>
-                            </>
-                        )}
-                        <Button
-                            size="sm"
-                            onClick={() => { setSelectedTodo(null); setModalOpen(true); }}
-                            variant="outline"
-                            className="h-9 gap-1.5">
+                <PageHeader
+                    title="Aufgaben"
+                    subtitle={`${openCount} offen · ${inProgressCount} aktiv · ${doneCount} erledigt`}
+                    action={
+                        <Button size="sm" className="gap-1.5" onClick={() => { setSelectedTodo(null); setModalOpen(true); }}>
                             <Plus className="w-4 h-4" />
-                            <span className="hidden sm:inline">Vollformular</span>
+                            Neue Aufgabe
                         </Button>
-                    </div>
-                </div>
+                    }
+                    menu={permissions.canEditTodos ? [
+                        { label: 'Kategorien verwalten', icon: Tag, onClick: () => setCategoryManagerOpen(true) },
+                        { label: selectMode ? 'Auswahl beenden' : 'Mehrfachauswahl', icon: selectMode ? X : CheckCheck, onClick: () => { setSelectMode(s => !s); setSelectedIds(new Set()); } },
+                    ] : []}
+                />
 
                 {/* ── Quick-Add ─────────────────────────────────────────── */}
                 {permissions.canCreateTodos !== false && (
                     <div className={cn(
                         'rounded-2xl border bg-card transition-all duration-200',
-                        quickExpanded ? 'border-amber-500/50 shadow-sm shadow-amber-500/10' : 'border-border'
+                        quickExpanded ? 'border-primary/40' : 'border-border'
                     )}>
                         {/* Eingabezeile */}
                         <div className="flex items-center gap-2 px-3 py-2">
@@ -467,7 +441,7 @@ export default function Todos() {
                             {quickTitle.trim() && (
                                 <button
                                     onClick={handleQuickAdd}
-                                    className="shrink-0 flex items-center justify-center w-8 h-8 rounded-xl bg-amber-500 hover:bg-amber-600 text-white transition-colors">
+                                    className="shrink-0 flex items-center justify-center w-8 h-8 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-colors">
                                     <Send className="w-3.5 h-3.5" />
                                 </button>
                             )}

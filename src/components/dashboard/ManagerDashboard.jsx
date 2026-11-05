@@ -50,10 +50,10 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
     return (
         <div className="min-h-screen bg-background p-3 sm:p-8 pb-24 md:pb-0">
             <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6">
-                <div className="flex items-center justify-between gap-2 flex-col sm:flex-row">
+                <div className="page-header flex-col sm:flex-row sm:items-start">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard</h1>
-                        <p className="text-muted-foreground text-sm mt-1">{format(new Date(), "EEEE, d. MMMM yyyy", { locale: de })}</p>
+                        <h1 className="page-title">Dashboard</h1>
+                        <p className="page-subtitle">{format(new Date(), "EEEE, d. MMMM yyyy", { locale: de })}</p>
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={onSwitchToEmployee} className="border-border text-muted-foreground hover:bg-accent">
@@ -67,9 +67,9 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                 {/* Persönlicher Bereich */}
                 {currentEmployee && (
                     <>
-                        <Card className="p-6 bg-card border-border shadow-xl">
-                            <h2 className="text-lg font-bold text-foreground mb-5 flex items-center gap-2">
-                                <Users className="w-5 h-5 text-amber-500" />
+                        <Card className="p-4">
+                            <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-primary" />
                                 Mein Bereich
                             </h2>
                             <div className="grid sm:grid-cols-3 gap-6">

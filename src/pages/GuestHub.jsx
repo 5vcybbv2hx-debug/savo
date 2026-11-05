@@ -211,7 +211,7 @@ export default function GuestHub() {
                 <div className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b border-border">
                     <div className="flex items-center justify-between gap-2 px-4 py-3">
                         <div>
-                            <h1 className="text-lg font-bold text-foreground">Gäste & Tische</h1>
+                            <h1 className="page-title">Gäste & Tische</h1>
                             <p className="text-xs text-muted-foreground">
                                 {format(parseISO(filterDate), "EEEE, d. MMMM", { locale: de })}
                             </p>

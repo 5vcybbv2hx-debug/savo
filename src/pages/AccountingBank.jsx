@@ -269,7 +269,7 @@ export default function AccountingBank() {
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <Building2 className="w-5 h-5 text-blue-400" />
-                        <h1 className="text-lg font-bold text-foreground">Bankkonten</h1>
+                        <h1 className="page-title">Bankkonten</h1>
                         {unmatchedCount > 0 && (
                             <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-xs">{unmatchedCount} offen</Badge>
                         )}

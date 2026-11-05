@@ -461,7 +461,7 @@ export default function AccountingFixedCosts() {
                 {/* ── Header ──────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between gap-2">
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Fixkosten</h1>
+                        <h1 className="page-title">Fixkosten</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">Wiederkehrende Ausgaben · monatliche Übersicht</p>
                     </div>
                     <Button onClick={openAdd}

@@ -547,7 +547,7 @@ export default function MyShiftsPage() {
                 {/* ── Header ────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Meine Schichten</h1>
+                        <h1 className="page-title">Meine Schichten</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">{employee.name}</p>
                     </div>
                     <Button

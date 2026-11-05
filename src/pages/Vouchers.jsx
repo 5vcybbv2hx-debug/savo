@@ -12,6 +12,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
+import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -227,27 +228,19 @@ export default function Vouchers() {
             />
 
             {/* ── Header ── */}
-            <div className="flex items-start justify-between gap-3">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
-                        <Ticket className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                        Gutscheine
-                    </h1>
-                    <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                        {vouchers.length} Gutscheine · {kpis.openCount} offen
-                    </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <Button size="sm" variant="secondary" onClick={() => setPrint62({ batch: true })}>
-                        <Printer className="w-4 h-4 mr-1.5" />
-                        Gutschein drucken
-                    </Button>
+            <PageHeader
+                title="Gutscheine"
+                subtitle={`${vouchers.length} Gutscheine · ${kpis.openCount} offen`}
+                action={
                     <Button size="sm" onClick={() => setShowCreate(true)}>
                         <Plus className="w-4 h-4 mr-1.5" />
                         Neuer Gutschein
                     </Button>
-                </div>
-            </div>
+                }
+                menu={[
+                    { label: 'Gutschein drucken', icon: Printer, onClick: () => setPrint62({ batch: true }) },
+                ]}
+            />
 
             {/* ── KPI-Karten ── */}
             <div className="grid grid-cols-3 gap-2.5">

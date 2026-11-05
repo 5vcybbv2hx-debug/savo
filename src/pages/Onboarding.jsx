@@ -479,7 +479,7 @@ export default function Onboarding() {
                 {/* ── Header ─────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Einlernliste</h1>
+                        <h1 className="page-title">Einlernliste</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">Einarbeitung neuer Mitarbeiter</p>
                     </div>
                     {permissions.isManager && (

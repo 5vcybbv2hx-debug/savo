@@ -409,7 +409,7 @@ export default function AccountingCashbook() {
                 {/* ── Header ──────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Kassenbuch</h1>
+                        <h1 className="page-title">Kassenbuch</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">Einnahmen & Ausgaben · DATEV-Vorbereitung</p>
                     </div>
                     <Button onClick={() => { setFormData(EMPTY_FORM); setModalOpen(true); }}

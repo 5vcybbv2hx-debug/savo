@@ -198,7 +198,7 @@ export default function DrinkMenuPage() {
                 {/* ── Header ──────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between print:hidden">
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Getränkekarte</h1>
+                        <h1 className="page-title">Getränkekarte</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
                             {items.filter(i => i.is_available !== false).length} verfügbar · {items.length} gesamt
                         </p>

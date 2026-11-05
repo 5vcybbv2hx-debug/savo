@@ -471,7 +471,7 @@ export default function TeamMeeting() {
                             <Users className="w-4.5 h-4.5 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-foreground leading-none">Teamsitzung</h1>
+                            <h1 className="page-title">Teamsitzung</h1>
                             <p className="text-xs text-muted-foreground mt-0.5">
                                 {openCount > 0 ? `${openCount} offene Punkte` : 'Agenda verwalten'}
                             </p>

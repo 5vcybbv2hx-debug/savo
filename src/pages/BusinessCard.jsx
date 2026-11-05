@@ -41,7 +41,7 @@ export default function BusinessCardPage() {
             <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
                 <div className="mb-6 flex items-start justify-between">
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                        <h1 className="page-title flex items-center gap-2">
                             <Building2 className="w-5 h-5 text-amber-500" />
                             Digitale Visitenkarte
                         </h1>

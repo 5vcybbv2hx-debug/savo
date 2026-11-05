@@ -13,6 +13,7 @@ import {
     PackageCheck, Square, Inbox, CheckCircle2, AlertTriangle as AlertTriangleIcon, Minus, Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import PageHeader from '@/components/ui/PageHeader';
 import { sendPushNotification } from '@/lib/pushService';
 import { transferKellerToTheke, reduceCurrentStock } from '@/lib/stockSync';
 import KellerTab from '@/components/storage/KellerTab';
@@ -140,11 +141,11 @@ export default function Warehouse() {
 
     return (
         <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8" {...swipeHandlers}>
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-xl font-bold text-foreground">Waren & Lager</h1>
-                <p className="text-muted-foreground text-xs mt-0.5">Artikel, Bestellungen, Lagerplätze</p>
-            </div>
+            <PageHeader
+                title="Waren & Lager"
+                subtitle="Artikel, Bestellungen, Lagerplätze"
+                className="mb-4"
+            />
 
             {/* Tab Navigation */}
             <div className="flex border-b border-border mb-6">

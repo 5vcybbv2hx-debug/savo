@@ -13,8 +13,8 @@ import { Card } from '@/components/ui/card';
 export function LoadingState({ text = 'Lädt…', fullScreen = false }) {
   const content = (
     <div className="flex flex-col items-center justify-center gap-3">
-      <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-      <p className="text-sm text-muted-foreground">{text}</p>
+      <Loader2 className="w-6 h-6 text-primary animate-spin" />
+      <p className="text-xs text-muted-foreground">{text}</p>
     </div>
   );
 
@@ -27,7 +27,7 @@ export function LoadingState({ text = 'Lädt…', fullScreen = false }) {
   }
 
   return (
-    <Card className="p-8 text-center">
+    <Card className="p-6 text-center">
       {content}
     </Card>
   );
@@ -45,12 +45,12 @@ export function EmptyState({
 }) {
   const Icon = icon;
   const content = (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center">
-        <Icon className="w-6 h-6 text-muted-foreground" />
+    <div className="flex flex-col items-center justify-center gap-4 py-4 text-center">
+      <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center">
+        <Icon className="w-6 h-6 text-primary" />
       </div>
-      <p className="text-sm text-muted-foreground">{text}</p>
-      {action && <div className="mt-2">{action}</div>}
+      <p className="text-sm text-muted-foreground max-w-sm">{text}</p>
+      {action && <div>{action}</div>}
     </div>
   );
 
@@ -63,7 +63,7 @@ export function EmptyState({
   }
 
   return (
-    <Card className="p-8 text-center">
+    <Card className="p-6 text-center">
       {content}
     </Card>
   );
@@ -81,8 +81,8 @@ export function ErrorState({
 }) {
   const content = (
     <div className="flex flex-col items-center justify-center gap-4">
-      <div className="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center">
-        <AlertCircle className="w-6 h-6 text-red-500" />
+      <div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center">
+        <AlertCircle className="w-6 h-6 text-destructive" />
       </div>
       <p className="text-sm text-foreground font-medium">{text}</p>
       {details && (
@@ -91,7 +91,7 @@ export function ErrorState({
       {retry && (
         <button
           onClick={retry}
-          className="mt-2 px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
+          className="mt-2 px-4 py-2 h-9 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
         >
           Erneut versuchen
         </button>
@@ -108,7 +108,7 @@ export function ErrorState({
   }
 
   return (
-    <Card className="p-8 text-center bg-red-500/5 border-red-500/20">
+    <Card className="p-6 text-center border-destructive/30">
       {content}
     </Card>
   );

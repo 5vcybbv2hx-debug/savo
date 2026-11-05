@@ -470,8 +470,8 @@ export default function Calendar() {
                 <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
                     <div className="flex flex-col gap-3 mb-6 sm:mb-8">
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Schichtplan</h1>
-                            <p className="text-muted-foreground text-sm mt-1">Verwalte die Arbeitszeiten deines Teams</p>
+                            <h1 className="page-title">Schichtplan</h1>
+                            <p className="page-subtitle">Verwalte die Arbeitszeiten deines Teams</p>
                         </div>
                         {ViewSwitch}
                     </div>
@@ -492,15 +492,12 @@ export default function Calendar() {
                 <div className="flex flex-col gap-3 mb-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Schichtplan</h1>
-                            <p className="text-muted-foreground text-sm mt-1">Verwalte die Arbeitszeiten deines Teams</p>
+                            <h1 className="page-title">Schichtplan</h1>
+                            <p className="page-subtitle">Verwalte die Arbeitszeiten deines Teams</p>
                         </div>
                         <div className="flex items-center gap-2">
                             {permissions.canEditShifts && (
-                                <Button
-                                    onClick={() => handleAddShift(new Date())}
-                                    className="bg-amber-600 hover:bg-amber-700"
-                                >
+                                <Button onClick={() => handleAddShift(new Date())}>
                                     <Plus className="w-4 h-4 mr-2" />
                                     Neue Schicht
                                 </Button>

@@ -328,7 +328,7 @@ export default function LieferscheinScanner() {
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <div className="mb-5">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Lieferschein-Scanner</h1>
+          <h1 className="page-title">Lieferschein-Scanner</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Foto oder PDF einlesen, Positionen prüfen und als Wareneingang buchen
           </p>

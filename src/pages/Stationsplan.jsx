@@ -372,7 +372,7 @@ export default function Stationsplan() {
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                     <MapPin className="w-5 h-5 text-amber-400 shrink-0" />
-                    <h1 className="text-xl font-bold text-foreground">Stationsplan</h1>
+                    <h1 className="page-title">Stationsplan</h1>
                     {currentPlan && (
                         <Badge className={cn('text-xs shrink-0', currentPlan.status === 'published'
                             ? 'bg-emerald-500/15 text-emerald-400'

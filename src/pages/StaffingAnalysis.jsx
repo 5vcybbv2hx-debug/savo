@@ -286,7 +286,7 @@ export default function StaffingAnalysis() {
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+                        <h1 className="page-title flex items-center gap-2">
                             <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                             Personalplanungs-Analyse
                         </h1>

@@ -448,7 +448,7 @@ export default function PriceCalculator() {
             <div className="max-w-2xl mx-auto px-4 py-6">
                 {/* Header */}
                 <div className="mb-5">
-                    <h1 className="text-xl font-bold text-foreground">Schnellkalkulation</h1>
+                    <h1 className="page-title">Schnellkalkulation</h1>
                     <p className="text-xs text-muted-foreground mt-0.5">
                         Einzelartikel-Check — für Getränke aus Rezepten: Getränkekarte-Modal nutzen
                     </p>

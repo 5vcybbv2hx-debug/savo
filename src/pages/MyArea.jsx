@@ -99,7 +99,7 @@ export default function MyAreaPage() {
             <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
                 {/* Header */}
                 <div className="mb-4 sm:mb-6">
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">Mein Bereich</h1>
+                    <h1 className="page-title">Mein Bereich</h1>
                     <p className="text-muted-foreground text-xs sm:text-sm mt-1">Profil, Urlaub und Schichttausch</p>
                 </div>
 

@@ -414,7 +414,7 @@ export default function Suppliers() {
                 {/* ── Header ────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Kontakte & Partner</h1>
+                        <h1 className="page-title">Kontakte & Partner</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
                             {suppliers.filter(s => s.is_active !== false).length} aktiv
                         </p>

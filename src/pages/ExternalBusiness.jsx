@@ -617,7 +617,7 @@ export default function ExternalBusiness() {
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Außenaufträge</h1>
+                        <h1 className="page-title">Außenaufträge</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
                             Angebote & Rechnungen — externe Events, Werbekostenzuschüsse
                         </p>

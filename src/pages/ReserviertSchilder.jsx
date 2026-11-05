@@ -50,7 +50,7 @@ export default function ReserviertSchilder() {
       <div className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b border-border">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-2 px-4 py-3">
           <div className="min-w-0">
-            <h1 className="text-lg font-bold text-foreground">Reserviert-Schilder</h1>
+            <h1 className="page-title">Reserviert-Schilder</h1>
             <p className="text-xs text-muted-foreground">1 Blatt A4 = 4 Schilder</p>
           </div>
           <Button

@@ -117,7 +117,7 @@ export default function DocumentsPage() {
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                     <FileText className="w-5 h-5 text-amber-400 shrink-0" />
-                    <h1 className="text-xl font-bold text-foreground">Dokumente</h1>
+                    <h1 className="page-title">Dokumente</h1>
                     <Badge className="bg-secondary text-muted-foreground text-xs hidden sm:flex">
                         {activeCount} aktiv
                     </Badge>

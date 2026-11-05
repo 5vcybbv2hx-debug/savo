@@ -460,7 +460,7 @@ export default function ModuleCenter() {
                                 <Zap className="w-5 h-5 text-amber-500" />
                             </div>
                             <div>
-                                <h1 className="text-lg font-bold text-foreground">Modulcenter</h1>
+                                <h1 className="page-title">Modulcenter</h1>
                                 <p className="text-xs text-muted-foreground">Module aktivieren & verwalten</p>
                             </div>
                         </div>

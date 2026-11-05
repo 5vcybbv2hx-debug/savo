@@ -31,7 +31,7 @@ export default function Storage() {
     <div className="max-w-3xl mx-auto px-3 py-4 pb-32 md:pb-8">
       <div className="flex items-start justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Lagerplätze</h1>
+          <h1 className="page-title">Lagerplätze</h1>
           <p className="text-muted-foreground text-xs mt-0.5">Bereich → Möbel → Fach → Artikel</p>
         </div>
         <button

@@ -11,6 +11,7 @@ import {
     Circle, ChevronRight, RefreshCw, Trash2, Archive, Check
 } from 'lucide-react';
 import SwipeRow from '@/components/ui/SwipeRow';
+import PageHeader from '@/components/ui/PageHeader';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -293,43 +294,17 @@ export default function Cleaning() {
         <div className="min-h-screen bg-background pb-8 animate-page-enter">
             <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
 
-                {/* ── Header ─────────────────────────────────────────── */}
-                <div className="flex items-center justify-between mb-4">
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Putzliste</h1>
-                        <p className="text-muted-foreground text-sm mt-0.5">
-                            {format(new Date(), "EEEE, d. MMMM", { locale: de })}
-                        </p>
-                    </div>
-                    {(permissions.isManager || permissions.isAdmin) && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button size="sm" variant="ghost" className="h-9 w-9 p-0">
-                                    <MoreVertical className="w-4 h-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setModalOpen(true)}>
-                                    <Plus className="w-4 h-4 mr-2" /> Aufgabe anlegen
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setAreasOpen(true)}>
-                                    <Settings className="w-4 h-4 mr-2" /> Bereiche verwalten
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setReportsModalOpen(true)}>
-                                    <FileText className="w-4 h-4 mr-2" /> Berichte
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={() => setEndDayDialogOpen(true)}
-                                    className="text-destructive focus:text-destructive"
-                                >
-                                    <Archive className="w-4 h-4 mr-2" /> Tag beenden
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                    <AreasManager open={areasOpen} onOpenChange={setAreasOpen} />
-                </div>
+                <PageHeader
+                    title="Putzliste"
+                    subtitle={format(new Date(), "EEEE, d. MMMM", { locale: de })}
+                    menu={(permissions.isManager || permissions.isAdmin) ? [
+                        { label: 'Aufgabe anlegen', icon: Plus, onClick: () => setModalOpen(true) },
+                        { label: 'Bereiche verwalten', icon: Settings, onClick: () => setAreasOpen(true) },
+                        { label: 'Berichte', icon: FileText, onClick: () => setReportsModalOpen(true) },
+                        { label: 'Tag beenden', icon: Archive, onClick: () => setEndDayDialogOpen(true), destructive: true, separator: true },
+                    ] : []}
+                />
+                <AreasManager open={areasOpen} onOpenChange={setAreasOpen} />
 
                 {/* ── Fortschritt ─────────────────────────────────────── */}
                 <div className="rounded-xl border bg-card p-3 mb-4 shadow-sm">

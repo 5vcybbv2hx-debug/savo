@@ -67,7 +67,7 @@ export default function Incidents() {
                         <ArrowLeft className="w-4 h-4" />
                     </Link>
                     <div>
-                        <h1 className="text-xl font-bold text-foreground">Vorfälle</h1>
+                        <h1 className="page-title">Vorfälle</h1>
                         <p className="text-xs text-muted-foreground mt-0.5">{incidents.length} insgesamt</p>
                     </div>
                 </div>

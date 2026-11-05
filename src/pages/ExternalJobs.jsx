@@ -60,7 +60,7 @@ export default function ExternalJobs() {
         <div className="max-w-2xl mx-auto px-4 py-6 pb-32 md:pb-8">
             <div className="flex items-start justify-between gap-3 mb-5">
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">Außeneinsätze</h1>
+                    <h1 className="page-title">Außeneinsätze</h1>
                     <p className="text-muted-foreground text-sm mt-1">Externe Veranstaltungen & Catering</p>
                 </div>
                 <Button size="sm" onClick={() => setParams({ new: '1' })} className="gap-1.5 shrink-0">
