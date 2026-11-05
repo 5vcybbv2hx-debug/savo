@@ -17,6 +17,27 @@
     "items": {
       "type": "string",
       "description": "JSON-Array der angebotenen Artikel-Keys, z.B. [\"zshirt\",\"pulli\"]"
+    },
+    "pdf_url": {
+      "type": "string",
+      "description": "Ablage der erzeugten Bestell\u00fcbersicht (file_uri aus UploadPrivateFile, wird beim Download in eine signierte URL umgewandelt)"
+    },
+    "pdf_created_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum der letzten PDF-Erzeugung (YYYY-MM-DD)"
+    },
+    "total_items": {
+      "type": "number",
+      "description": "Summe der bestellten Teile (nur Zeilen mit Mengenangabe)"
+    },
+    "open_items": {
+      "type": "number",
+      "description": "Anzahl Zeilen ohne Mengenangabe (unvollst\u00e4ndige Bestellungen)"
+    },
+    "closed_at": {
+      "type": "string",
+      "description": "Zeitpunkt des Abschlie\u00dfens (ISO)"
     }
   }
 }

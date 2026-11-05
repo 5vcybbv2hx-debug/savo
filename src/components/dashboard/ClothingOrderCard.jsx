@@ -14,6 +14,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import ClosedRoundsList from '@/components/clothing/ClosedRoundsList';
+import { generateRoundOverviewPdf, openRoundPdf } from '@/lib/clothingRoundOverview';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 const MAX_QTY = 5;
@@ -149,11 +151,13 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
         onError: (error) => toast.error('Runde konnte nicht gestartet werden: ' + error.message),
     });
 
+    // Abschließen erzeugt immer die PDF-Bestellübersicht, legt sie ab und bietet sie zum Download an
     const closeRoundMutation = useMutation({
-        mutationFn: () => base44.entities.ClothingRound.update(activeRound.id, { is_active: false }),
-        onSuccess: () => {
+        mutationFn: () => generateRoundOverviewPdf(activeRound, { markClosed: true }),
+        onSuccess: async ({ file_uri, summary }) => {
             queryClient.invalidateQueries({ queryKey: ['clothingRounds'] });
-            toast.success('Runde abgeschlossen');
+            toast.success(`Runde abgeschlossen — ${summary.totalPieces} Teile, ${summary.openCount} Zeilen ohne Menge`);
+            await openRoundPdf(file_uri);
         },
         onError: (error) => toast.error('Abschließen fehlgeschlagen: ' + error.message),
     });
@@ -242,6 +246,7 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
                             </span>
                         </button>
                     )}
+                    <ClosedRoundsList rounds={rounds} />
                 </CardContent>
             </Card>
         );
@@ -300,6 +305,7 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
                             </div>
                         );
                     })}
+                    <ClosedRoundsList rounds={rounds} />
                 </CardContent>
             </Card>
         );
@@ -425,6 +431,7 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
                         </span>
                     </div>
                 )}
+                {isManager && <ClosedRoundsList rounds={rounds} />}
             </CardContent>
         </Card>
     );
