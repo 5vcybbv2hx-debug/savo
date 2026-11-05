@@ -54,7 +54,7 @@ function getOperationPhase() {
     if (h >= 6  && h < 11) return { label: 'Vorbereitung',  color: 'text-amber-400',          bg: 'bg-amber-500/10 border-amber-500/30' };
     if (h >= 11 && h < 15) return { label: 'Mittagsbetrieb',color: 'text-green-400',           bg: 'bg-green-500/10 border-green-500/30' };
     if (h >= 15 && h < 18) return { label: 'Ruhephase',     color: 'text-blue-400',            bg: 'bg-blue-500/10 border-blue-500/30' };
-    if (h >= 18 && h < 23) return { label: 'Abendbetrieb',  color: 'text-purple-400',          bg: 'bg-purple-500/10 border-purple-500/30' };
+    if (h >= 18 && h < 23) return { label: 'Abendbetrieb',  color: 'text-primary',             bg: 'bg-primary/10 border-primary/30' };
     return                         { label: 'Nachtschicht',  color: 'text-muted-foreground',    bg: 'bg-secondary/50 border-border/50' };
 }
 
@@ -207,20 +207,20 @@ function ClockCard({ currentEmployee }) {
                         </div>
                         <Separator />
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-muted rounded-xl p-4 text-center space-y-1">
-                                <Clock3 className="w-5 h-5 mx-auto text-blue-500" />
-                                <p className="text-2xl font-bold text-foreground">{shiftSummary.paidHours}h</p>
+                            <div className="bg-surface rounded-xl p-4 text-center space-y-1">
+                                <Clock3 className="w-5 h-5 mx-auto text-muted-foreground" />
+                                <p className="text-[20px] font-semibold text-foreground">{shiftSummary.paidHours}h</p>
                                 <p className="text-[11px] text-muted-foreground leading-tight">Gearbeitet (inkl. {shiftSummary.breakMinutes} Min Pause)</p>
                             </div>
-                            <div className="bg-muted rounded-xl p-4 text-center space-y-1">
-                                <Coffee className="w-5 h-5 mx-auto text-amber-500" />
-                                <p className="text-2xl font-bold text-foreground">{shiftSummary.breakMinutes} Min</p>
+                            <div className="bg-surface rounded-xl p-4 text-center space-y-1">
+                                <Coffee className="w-5 h-5 mx-auto text-muted-foreground" />
+                                <p className="text-[20px] font-semibold text-foreground">{shiftSummary.breakMinutes} Min</p>
                                 <p className="text-xs text-muted-foreground">Pause (max. 45 Min mitbezahlt)</p>
                             </div>
                             {shiftSummary.earned && (
-                                <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1 col-span-2">
-                                    <Euro className="w-5 h-5 mx-auto text-emerald-500" />
-                                    <p className="text-3xl font-bold text-emerald-500">{shiftSummary.earned} €</p>
+                                <div className="bg-surface rounded-xl p-4 text-center space-y-1 col-span-2">
+                                    <Euro className="w-5 h-5 mx-auto text-primary" />
+                                    <p className="text-[20px] font-semibold text-primary">{shiftSummary.earned} €</p>
                                     <p className="text-xs text-muted-foreground">{shiftSummary.paidHours} × {shiftSummary.hourlyRate} €/h (Pause bis 45 Min mitbezahlt)</p>
                                 </div>
                             )}
@@ -666,7 +666,7 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
         if (lowStockArticles.length > 0)
             list.push({ icon: TrendingDown, label: `${lowStockArticles.length} Artikel niedrig`, to: 'Articles', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' });
         if (pendingVacationRequests.length > 0)
-            list.push({ icon: Calendar, label: `${pendingVacationRequests.length} Urlaubsantrag${pendingVacationRequests.length > 1 ? 'e' : ''}`, to: 'MyArea?tab=urlaub', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/30' });
+            list.push({ icon: Calendar, label: `${pendingVacationRequests.length} Urlaubsantrag${pendingVacationRequests.length > 1 ? 'e' : ''}`, to: 'MyArea?tab=urlaub', color: 'text-primary', bg: 'bg-primary/10 border-primary/30' });
         return list;
     }, [urgentMaintenance, lowStockArticles, pendingVacationRequests]);
 
@@ -710,7 +710,7 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
                         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                             {todayEvents.length > 0 && (
                                 <Link to={createPageUrl('Events')}>
-                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap bg-purple-500/10 border-purple-500/30 text-purple-300">
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap bg-primary/10 border-primary/30 text-primary">
                                         <Sparkles className="w-3 h-3" />
                                         {todayEvents.length} Event{todayEvents.length > 1 ? 's' : ''} heute
                                     </div>
