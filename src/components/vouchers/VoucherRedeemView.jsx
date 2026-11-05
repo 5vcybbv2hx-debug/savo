@@ -4,22 +4,22 @@
  * Ablauf: Nummer eingeben → Gutschein-Karte → Betrag (Default = Restwert) →
  * Bestätigen → Erfolg mit neuem Restwert.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import BarcodeScanner from '@/components/restock/BarcodeScanner';
 import Voucher62PrintDialog from '@/components/vouchers/Voucher62PrintDialog';
+import VoucherScanBar from '@/components/vouchers/VoucherScanBar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
-    isValidReceiptNumber, sanitizeReceiptNumber, parseVoucherQr,
+    isValidReceiptNumber, sanitizeReceiptNumber,
     RECEIPT_HINT, RECEIPT_PLACEHOLDER, RECEIPT_INVALID_HINT,
     AMOUNT_HINT, REDEEM_STEPS_HINT,
 } from '@/lib/vouchers';
 import {
-    Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft, QrCode, Info, Printer,
+    Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft, Info, Printer,
 } from 'lucide-react';
 
 const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
@@ -40,7 +40,7 @@ const STATUS_LABEL = {
     'ungültig': 'Ungültig',
 };
 
-export default function VoucherRedeemView({ vouchers = [], currentUser, isPending, onRedeem }) {
+export default function VoucherRedeemView({ vouchers = [], redemptions = [], currentUser, isPending, onRedeem }) {
     const [query, setQuery] = useState('');
     const [voucher, setVoucher] = useState(null);
     const [notFound, setNotFound] = useState(false);
@@ -48,14 +48,8 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
     const [reference, setReference] = useState('');
     const [done, setDone] = useState(null);
     const [errorText, setErrorText] = useState(null);
-    const [scanOpen, setScanOpen] = useState(false);
-    const [scanWarning, setScanWarning] = useState(null);
-    const [focusAmount, setFocusAmount] = useState(false);
-    const [highlightSearch, setHighlightSearch] = useState(false);
     // 62-mm-Druck: { voucher, redeemed? } — null = Dialog zu
     const [print62, setPrint62] = useState(null);
-    const amountRef = useRef(null);
-    const searchRef = useRef(null);
     const [searchParams, setSearchParams] = useSearchParams();
 
     const redeemedBy = currentUser?.full_name || currentUser?.email || '';
@@ -63,45 +57,15 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
     const reset = () => {
         setQuery(''); setVoucher(null); setNotFound(false);
         setAmount(''); setReference(''); setDone(null); setErrorText(null);
-        setScanWarning(null);
     };
 
-    // Nach erfolgreichem Scan direkt zur Betrags-Eingabe
-    useEffect(() => {
-        if (!focusAmount || !voucher) return;
-        amountRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        amountRef.current?.focus();
-        setFocusAmount(false);
-    }, [focusAmount, voucher]);
-
-    // Deep-Link von der Dashboard-Kachel (?scan=1) öffnet den Scanner sofort.
-    useEffect(() => {
-        if (searchParams.get('scan') === '1') setScanOpen(true);
-    }, [searchParams]);
-
-    /** Scan-Param aus der URL nehmen — sonst reißt ein Reload den Scanner erneut auf. */
+    /** Deep-Link von der Dashboard-Kachel (?scan=1) öffnet den Scanner oben. */
     const clearScanParam = () => {
         if (searchParams.get('scan') === '1') setSearchParams({}, { replace: true });
     };
 
-    const closeScanner = () => {
-        setScanOpen(false);
-        clearScanParam();
-    };
-
-    /** Kamera verweigert oder Start fehlgeschlagen → normale Ansicht mit hervorgehobenem Nummernfeld. */
-    const handleScanFailure = () => {
-        setScanOpen(false);
-        clearScanParam();
-        setHighlightSearch(true);
-        setTimeout(() => {
-            searchRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-            searchRef.current?.focus();
-        }, 80);
-    };
-
-    /** Übernimmt eine gefundene Nummer — gleicher Weg für Tippen und Scan. */
-    const applyVoucher = ({ num, displayNr, token = null, fromScan = false }) => {
+    /** Übernimmt eine gefundene Nummer aus der manuellen Suche. */
+    const applyVoucher = ({ num, displayNr }) => {
         const hit = isNaN(num) ? null : vouchers.find(v => Number(v.voucher_number) === num) || null;
         if (displayNr != null) setQuery(displayNr);
         setVoucher(hit);
@@ -110,27 +74,11 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
         setReference('');
         setErrorText(null);
         setDone(null);
-        const mismatch = !!(hit && token && hit.access_token
-            && String(hit.access_token).toUpperCase() !== String(token).toUpperCase());
-        setScanWarning(mismatch ? 'QR-Code passt nicht zu diesem Gutschein' : null);
-        if (hit && fromScan) setFocusAmount(true);
     };
 
     const handleSearch = (e) => {
         e.preventDefault();
         applyVoucher({ num: parseInt(String(query).trim(), 10) });
-    };
-
-    const handleScan = (decodedText) => {
-        clearScanParam();
-        setHighlightSearch(false);
-        const { nr, token } = parseVoucherQr(decodedText);
-        applyVoucher({
-            num: parseInt(String(nr ?? '').trim(), 10),
-            displayNr: nr ?? '',
-            token,
-            fromScan: true,
-        });
     };
 
     const remaining = voucher?.remaining_value ?? 0;
@@ -220,6 +168,16 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
 
     return (
         <div className="p-4 md:p-6 max-w-md mx-auto space-y-4">
+            {/* ── Ganz oben: bestehenden Gutschein scannen ── */}
+            <VoucherScanBar
+                vouchers={vouchers}
+                redemptions={redemptions}
+                currentUser={currentUser}
+                onRedeem={onRedeem}
+                autoScan={searchParams.get('scan') === '1'}
+                onAutoScanHandled={clearScanParam}
+            />
+
             <div>
                 <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
                     <Ticket className="w-5 h-5 md:w-6 md:h-6 text-primary" />
@@ -237,47 +195,20 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                     <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                     <p className="text-[11px] leading-snug text-muted-foreground">{REDEEM_STEPS_HINT}</p>
                 </div>
-                {/* Mobile: QR-Button in Vollbreite über dem manuellen Feld */}
-                <Button type="button" onClick={() => setScanOpen(true)} className="w-full h-12 mb-2.5 md:hidden">
-                    <QrCode className="w-4 h-4 mr-1.5" />
-                    QR scannen
-                </Button>
                 <form onSubmit={handleSearch} className="space-y-2.5">
-                    <div className="flex gap-2">
-                        <Input
-                            ref={searchRef}
-                            type="text"
-                            inputMode="numeric"
-                            autoFocus
-                            placeholder="Gutschein-Nummer"
-                            value={query}
-                            onChange={(e) => { setQuery(e.target.value); setHighlightSearch(false); }}
-                            className={cn(
-                                'h-14 flex-1 text-center text-2xl font-bold tabular-nums tracking-wider',
-                                highlightSearch && 'ring-2 ring-primary border-primary',
-                            )}
-                        />
-                        <Button type="button" onClick={() => setScanOpen(true)} className="hidden md:flex h-14 px-5 shrink-0">
-                            <QrCode className="w-4 h-4 mr-1.5" />
-                            QR scannen
-                        </Button>
-                    </div>
-                    {highlightSearch && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 justify-center">
-                            <AlertTriangle className="w-3.5 h-3.5" />
-                            Kamera nicht verfügbar — Nummer bitte eintippen
-                        </p>
-                    )}
+                    <Input
+                        type="text"
+                        inputMode="numeric"
+                        autoFocus
+                        placeholder="Gutschein-Nummer"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        className="h-14 w-full text-center text-2xl font-bold tabular-nums tracking-wider"
+                    />
                     <Button type="submit" className="w-full h-11" disabled={!String(query).trim()}>
                         <Search className="w-4 h-4 mr-1.5" />
                         Suchen
                     </Button>
-                    {scanWarning && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 justify-center pt-0.5">
-                            <AlertTriangle className="w-3.5 h-3.5" />
-                            {scanWarning}
-                        </p>
-                    )}
                     {notFound && (
                         <p className="text-xs text-destructive flex items-center gap-1.5 justify-center pt-0.5">
                             <AlertTriangle className="w-3.5 h-3.5" />
@@ -339,7 +270,6 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                             <label className="space-y-1 block">
                                 <span className="text-[11px] font-medium text-muted-foreground">Betrag (€) *</span>
                                 <Input
-                                    ref={amountRef}
                                     type="number"
                                     step="0.01"
                                     min="0.01"
@@ -395,17 +325,6 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                     </Button>
                 </Card>
             )}
-
-            <BarcodeScanner
-                open={scanOpen}
-                onClose={closeScanner}
-                onScan={handleScan}
-                onError={handleScanFailure}
-                title="Gutschein-QR scannen"
-                hint="QR auf Beleg oder Handy-Karte scannen"
-                manualLabel="Gutschein-Nummer"
-                manualPlaceholder="z. B. 320"
-            />
 
             {print62 && (
                 <Voucher62PrintDialog

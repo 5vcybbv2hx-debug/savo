@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { Camera, Keyboard, RefreshCw, X, AlertCircle } from 'lucide-react';
+import { Camera, Keyboard, RefreshCw, X, AlertCircle, Flashlight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -29,7 +29,7 @@ const contextLabels = {
     default:   { title: 'Barcode scannen',  hint: 'Halte den Code vor die Kamera' },
 };
 
-export default function BarcodeScanner({ onScan, open, onClose, onError, title, hint, mode = 'default', manualLabel, manualPlaceholder = 'Code manuell eingeben…' }) {
+export default function BarcodeScanner({ onScan, open, onClose, onError, title, hint, mode = 'default', manualLabel, manualPlaceholder = 'Code manuell eingeben…', highResolution = false }) {
     const ctx         = contextLabels[mode] || contextLabels.default;
     const dialogTitle = title || ctx.title;
     const dialogHint  = hint  || ctx.hint;
@@ -38,6 +38,23 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
     const [errorMsg,   setErrorMsg]   = useState('');
     const [manualInput, setManualInput] = useState('');
     const [showManual,  setShowManual]  = useState(false);
+    // Taschenlampe (Kellerlicht/Bardunkelheit) — nur wenn die Kamera sie kann
+    const [torchOn,         setTorchOn]         = useState(false);
+    const [torchAvailable,  setTorchAvailable]  = useState(false);
+    const videoTrackRef = useRef(null);
+
+    const toggleTorch = async () => {
+        const track = videoTrackRef.current;
+        if (!track) return;
+        const next = !torchOn;
+        try {
+            await track.applyConstraints({ advanced: [{ torch: next }] });
+            setTorchOn(next);
+        } catch (_) {
+            // Gerät unterstützt die Lampe nicht wirklich → Button ausblenden
+            setTorchAvailable(false);
+        }
+    };
 
     // Refs that survive re-renders without triggering them
     const qrcodeRef   = useRef(null); // Html5Qrcode instance
@@ -53,6 +70,9 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
         const instance = qrcodeRef.current;
         qrcodeRef.current = null;
         cleanupDone.current = true;
+        videoTrackRef.current = null;
+        setTorchOn(false);
+        setTorchAvailable(false);
         try {
             const state = instance.getState();
             // State 2 = SCANNING, state 3 = PAUSED
@@ -92,9 +112,17 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
 
         // Camera constraints — prefer rear camera; fallback to any camera
         // iOS PWA requires exact constraint format
-        const constraints = {
-            facingMode: { ideal: 'environment' },
-        };
+        // Volle Auflösung nur wenn angefordert (z. B. Gutschein-QR) — sonst
+        // bleibt der Scanner schnell auf älteren Geräten.
+        const constraints = highResolution
+            ? {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+            }
+            : {
+                facingMode: { ideal: 'environment' },
+            };
 
         const config = {
             fps: 15,
@@ -161,6 +189,11 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
                 video.play().catch(() => {});
             }
 
+            // Taschenlampe nur anbieten, wenn der Kamerastream sie unterstützt
+            const track = video?.srcObject?.getVideoTracks?.()?.[0] || null;
+            videoTrackRef.current = track;
+            setTorchAvailable(!!track?.getCapabilities?.().torch);
+
             setScanStatus('scanning');
         } catch (err) {
             cleanupDone.current = true;
@@ -185,7 +218,7 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
             }
             onErrorRef.current?.();
         }
-    }, [onScan, onClose, stopCamera]);
+    }, [onScan, onClose, stopCamera, highResolution]);
 
     // ── Lifecycle: open/close dialog ────────────────────────────────────────
     useEffect(() => {
@@ -257,6 +290,22 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
                         className="w-full h-full"
                         style={{ minHeight: '260px' }}
                     />
+
+                    {/* Taschenlampe (Bardunkelheit / Kellerlicht) */}
+                    {scanStatus === 'scanning' && torchAvailable && (
+                        <button
+                            type="button"
+                            onClick={toggleTorch}
+                            className={`absolute top-3 right-3 z-10 flex items-center gap-1.5 h-10 px-3 rounded-xl border text-xs font-semibold backdrop-blur transition-colors ${
+                                torchOn
+                                    ? 'bg-amber-500 text-black border-amber-300'
+                                    : 'bg-black/60 text-white border-white/25'
+                            }`}
+                        >
+                            <Flashlight className="w-4 h-4" />
+                            {torchOn ? 'Licht aus' : 'Licht an'}
+                        </button>
+                    )}
 
                     {/* Loading overlay */}
                     {scanStatus === 'loading' && (

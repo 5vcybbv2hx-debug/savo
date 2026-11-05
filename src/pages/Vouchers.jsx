@@ -28,6 +28,7 @@ import { createNotification } from '@/utils/createNotification';
 import VoucherReceipt from '@/components/vouchers/VoucherReceipt';
 import Voucher62PrintDialog from '@/components/vouchers/Voucher62PrintDialog';
 import VoucherRedeemView from '@/components/vouchers/VoucherRedeemView';
+import VoucherScanBar from '@/components/vouchers/VoucherScanBar';
 import { useNavigate } from 'react-router-dom';
 import {
     Ticket, Plus, Loader2, X, AlertTriangle, CheckCircle2,
@@ -207,6 +208,7 @@ export default function Vouchers() {
         return (
             <VoucherRedeemView
                 vouchers={vouchers}
+                redemptions={redemptions}
                 currentUser={currentUser}
                 isPending={redeemMutation.isPending}
                 onRedeem={(payload) => redeemMutation.mutateAsync(payload)}
@@ -216,6 +218,14 @@ export default function Vouchers() {
 
     return (
         <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+            {/* ── Ganz oben: bestehenden Gutschein scannen ── */}
+            <VoucherScanBar
+                vouchers={vouchers}
+                redemptions={redemptions}
+                currentUser={currentUser}
+                onRedeem={(payload) => redeemMutation.mutateAsync(payload)}
+            />
+
             {/* ── Header ── */}
             <div className="flex items-start justify-between gap-3">
                 <div>
