@@ -26,6 +26,7 @@ import {
 } from '@/lib/vouchers';
 import { createNotification } from '@/utils/createNotification';
 import VoucherReceipt from '@/components/vouchers/VoucherReceipt';
+import Voucher62PrintDialog from '@/components/vouchers/Voucher62PrintDialog';
 import VoucherRedeemView from '@/components/vouchers/VoucherRedeemView';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -68,6 +69,7 @@ export default function Vouchers() {
     const queryClient = useQueryClient();
     const permissions = usePermissions();
     const [receiptVoucher, setReceiptVoucher] = useState(null);   // 80mm-Beleg
+    const [print62, setPrint62] = useState(null);                 // 62mm: { voucher } oder { batch: true }
     const navigate = useNavigate();
     const [filter, setFilter] = useState('offen');
     const [search, setSearch] = useState('');
@@ -225,10 +227,16 @@ export default function Vouchers() {
                         {vouchers.length} Gutscheine · {kpis.openCount} offen
                     </p>
                 </div>
-                <Button size="sm" onClick={() => setShowCreate(true)} className="shrink-0">
-                    <Plus className="w-4 h-4 mr-1.5" />
-                    Neuer Gutschein
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                    <Button size="sm" variant="secondary" onClick={() => setPrint62({ batch: true })}>
+                        <Printer className="w-4 h-4 mr-1.5" />
+                        Gutschein drucken
+                    </Button>
+                    <Button size="sm" onClick={() => setShowCreate(true)}>
+                        <Plus className="w-4 h-4 mr-1.5" />
+                        Neuer Gutschein
+                    </Button>
+                </div>
             </div>
 
             {/* ── KPI-Karten ── */}
@@ -320,8 +328,15 @@ export default function Vouchers() {
                                                 {STATUS_LABEL[v.status] || v.status}
                                             </Badge>
                                             <button
+                                                onClick={() => setPrint62({ voucher: v })}
+                                                title="Gutschein drucken (62 mm)"
+                                                className="text-muted-foreground hover:text-foreground p-0.5"
+                                            >
+                                                <Ticket className="w-4 h-4" />
+                                            </button>
+                                            <button
                                                 onClick={() => setReceiptVoucher(v)}
-                                                title="Beleg drucken"
+                                                title="80-mm-Beleg (Sam4s) drucken"
                                                 className="text-muted-foreground hover:text-foreground p-0.5"
                                             >
                                                 <Printer className="w-4 h-4" />
@@ -420,6 +435,18 @@ export default function Vouchers() {
                     error={createMutation.error}
                     onClose={() => setShowCreate(false)}
                     onSubmit={(data) => createMutation.mutate(data)}
+                />
+            )}
+
+            {/* ── 62mm-Gutschein (Brother QL-800) ── */}
+            {print62 && (
+                <Voucher62PrintDialog
+                    open
+                    onClose={() => setPrint62(null)}
+                    vouchers={vouchers}
+                    redemptions={redemptions}
+                    single={print62.voucher || null}
+                    defaultKind={print62.voucher?.status === 'eingelöst' ? 'redeem' : 'gift'}
                 />
             )}
 

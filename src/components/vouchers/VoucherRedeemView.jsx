@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import BarcodeScanner from '@/components/restock/BarcodeScanner';
+import Voucher62PrintDialog from '@/components/vouchers/Voucher62PrintDialog';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,7 @@ import {
     AMOUNT_HINT, REDEEM_STEPS_HINT,
 } from '@/lib/vouchers';
 import {
-    Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft, QrCode, Info,
+    Ticket, Search, Loader2, CheckCircle2, AlertTriangle, Euro, ArrowLeft, QrCode, Info, Printer,
 } from 'lucide-react';
 
 const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
@@ -51,6 +52,8 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
     const [scanWarning, setScanWarning] = useState(null);
     const [focusAmount, setFocusAmount] = useState(false);
     const [highlightSearch, setHighlightSearch] = useState(false);
+    // 62-mm-Druck: { voucher, redeemed? } — null = Dialog zu
+    const [print62, setPrint62] = useState(null);
     const amountRef = useRef(null);
     const searchRef = useRef(null);
     const [searchParams, setSearchParams] = useSearchParams();
@@ -145,7 +148,12 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
         setErrorText(null);
         try {
             const res = await onRedeem({ voucher, amount: amt, reference: reference.trim(), redeemedBy });
-            setDone({ voucher, newRemaining: res?.newRemaining ?? 0, reference: reference.trim() });
+            setDone({
+                voucher,
+                amount: amt,
+                newRemaining: res?.newRemaining ?? 0,
+                reference: reference.trim(),
+            });
         } catch (err) {
             setErrorText(String(err?.message || err));
         }
@@ -174,11 +182,37 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Neuer Restwert</p>
                         <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{fmtEUR(done.newRemaining)}</p>
                     </div>
+                    <Button
+                        variant="secondary"
+                        className="w-full"
+                        onClick={() => setPrint62({
+                            voucher: done.voucher,
+                            redeemed: {
+                                amount: done.amount,
+                                remaining: done.newRemaining,
+                                at: new Date().toISOString(),
+                            },
+                        })}
+                    >
+                        <Printer className="w-4 h-4 mr-1.5" />
+                        Einlösebeleg drucken (62 mm)
+                    </Button>
                     <Button className="w-full" onClick={reset}>
                         <ArrowLeft className="w-4 h-4 mr-1.5" />
                         Zurück
                     </Button>
                 </Card>
+
+                {print62 && (
+                    <Voucher62PrintDialog
+                        open
+                        onClose={() => setPrint62(null)}
+                        vouchers={vouchers}
+                        single={print62.voucher}
+                        redeemed={print62.redeemed}
+                        defaultKind="redeem"
+                    />
+                )}
             </div>
         );
     }
@@ -350,6 +384,10 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                         </form>
                     )}
 
+                    <Button variant="secondary" className="w-full h-9" onClick={() => setPrint62({ voucher })}>
+                        <Printer className="w-4 h-4 mr-1.5" />
+                        Gutschein drucken (62 mm)
+                    </Button>
                     <Button variant="secondary" className="w-full h-9" onClick={reset}>
                         <ArrowLeft className="w-4 h-4 mr-1.5" />
                         Zurück
@@ -367,6 +405,17 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                 manualLabel="Gutschein-Nummer"
                 manualPlaceholder="z. B. 320"
             />
+
+            {print62 && (
+                <Voucher62PrintDialog
+                    open
+                    onClose={() => setPrint62(null)}
+                    vouchers={vouchers}
+                    single={print62.voucher}
+                    redeemed={print62.redeemed}
+                    defaultKind="gift"
+                />
+            )}
         </div>
     );
 }
