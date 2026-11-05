@@ -439,7 +439,13 @@ export default function Layout({ children, currentPageName }) {
                 {/* Mobile Bottom Navigation — Stack-aware + Optimistic */}
                 <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 border-t border-border/50 pb-safe shadow-2xl backdrop-blur-xl">
                     <div className="flex items-stretch justify-around px-1 pt-1.5 pb-1">
-                        {currentNavItems.map(item => {
+                        {permissions.isLoading && [0, 1, 2, 3].map(i => (
+                            <div key={`ph-${i}`} className="flex flex-col items-center justify-center gap-1 py-1.5 flex-1 min-h-[52px]">
+                                <div className="w-5 h-5 rounded-md bg-surface" />
+                                <div className="w-9 h-2 rounded bg-surface" />
+                            </div>
+                        ))}
+                        {!permissions.isLoading && currentNavItems.map(item => {
                             if (!permissions[item.permission]) return null;
                             const active = isTabActive(item.page);
                             return (
