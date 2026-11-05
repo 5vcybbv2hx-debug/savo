@@ -1,14 +1,16 @@
 // notifyCleaningShortfall
-// Kurze Meldung an Manager, wenn an einem Bedarfstag unter 80 % der fälligen
-// Putzaufgaben erledigt sind. Sonntag und Werktage bleiben stumm.
+// Kurze Meldung an Manager, wenn in einer Bedarfsnacht unter 80 % der fälligen
+// Putzaufgaben erledigt sind. Werktagsnächte und Sonntagnächte bleiben stumm.
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import {
-  dateInTimeZone,
-  demandReason,
+  addDays,
+  demandNightReason,
   dueTasksOn,
-  isDemandDay,
-  weekdayIndex,
+  isCompletedInNight,
+  isDemandNight,
+  nightDateFor,
+  nightWindow,
   weekdayName,
 } from '../../shared/cleaningSchedule.ts';
 
@@ -22,32 +24,32 @@ export default async function (req: Request): Promise<Response> {
     if (user.role !== 'admin') return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
 
     const db = base44.asServiceRole.entities;
-    const todayStr = dateInTimeZone();
+    const now = new Date();
+    const nightDate = nightDateFor(now); // laufende Schicht (nach 05:00 = heutiger Abend)
 
-    if (weekdayIndex(todayStr) === 0) {
-      return Response.json({ success: true, skipped: true, reason: 'Sonntag — keine Warnung', date: todayStr });
-    }
+    const calendarDays = await db.BusinessCalendarDay.filter({ date: { $in: [nightDate, addDays(nightDate, 1)] } });
+    const calNight = calendarDays.find((d: any) => d.date === nightDate);
+    const calNext = calendarDays.find((d: any) => d.date === addDays(nightDate, 1));
 
-    const calendarDays = await db.BusinessCalendarDay.filter({ date: todayStr });
-    const calendarDay = calendarDays[0];
-    if (!isDemandDay(todayStr, calendarDay)) {
-      return Response.json({ success: true, skipped: true, reason: 'Werktag ohne Bedarf — bleibt stumm', date: todayStr });
+    if (!isDemandNight(nightDate, calNight, calNext)) {
+      return Response.json({ success: true, skipped: true, reason: 'Nacht ohne Bedarf — bleibt stumm', business_night_date: nightDate });
     }
 
     const tasks = await db.CleaningTask.filter({ is_active: true });
-    const due = dueTasksOn(tasks, todayStr, calendarDay);
+    const due = dueTasksOn(tasks, nightDate, calNight);
     if (due.length === 0) {
-      return Response.json({ success: true, skipped: true, reason: 'Keine Aufgaben fällig', date: todayStr });
+      return Response.json({ success: true, skipped: true, reason: 'Keine Aufgaben in dieser Nacht fällig', business_night_date: nightDate });
     }
 
-    const done = due.filter((t: any) => t.is_completed === true);
+    const done = due.filter((t: any) => isCompletedInNight(t.completed_at, nightDate));
     const rate = Math.round((done.length / due.length) * 100);
     if (rate >= THRESHOLD) {
-      return Response.json({ success: true, skipped: true, reason: `Quote ${rate}% erreicht`, rate, date: todayStr });
+      return Response.json({ success: true, skipped: true, reason: `Quote ${rate}% erreicht`, rate, business_night_date: nightDate });
     }
 
     const openByArea: Record<string, number> = {};
-    due.filter((t: any) => t.is_completed !== true).forEach((t: any) => {
+    due.forEach((t: any) => {
+      if (isCompletedInNight(t.completed_at, nightDate)) return;
       openByArea[t.area] = (openByArea[t.area] || 0) + 1;
     });
     const areaSummary = Object.entries(openByArea)
@@ -56,7 +58,7 @@ export default async function (req: Request): Promise<Response> {
       .map(([area, count]) => `${area} (${count})`)
       .join(', ');
 
-    const title = `Putzliste ${weekdayName(todayStr)}: ${rate}% erledigt`;
+    const title = `Putzliste ${weekdayName(nightDate)}nacht: ${rate}% erledigt`;
     const message = `${done.length} von ${due.length} Aufgaben erledigt, ${due.length - done.length} offen${areaSummary ? ` — ${areaSummary}` : ''}.`;
 
     await db.Notification.create({
@@ -72,8 +74,9 @@ export default async function (req: Request): Promise<Response> {
     return Response.json({
       success: true,
       notified: true,
-      date: todayStr,
-      demand_reason: demandReason(todayStr, calendarDay),
+      business_night_date: nightDate,
+      night_window: nightWindow(nightDate),
+      night_demand_reason: demandNightReason(nightDate, calNight, calNext),
       rate,
       due: due.length,
       done: done.length,

@@ -1,15 +1,20 @@
 // resetDailyCleaning
-// Setzt erledigte Putzaufgaben nach ihrer Fälligkeit zurück (täglich, am Wochenende,
-// wöchentlich, alle zwei Wochen, monatlich, an Sonderöffnungstagen) und schreibt
-// vorher den Tagesbericht für gestern — inkl. Kennzeichnung "Bedarfstag" / "kein Bedarf".
-// Wird vom Workflow "Putzliste — Reset nach Fälligkeit" aufgerufen.
+// Schließt die gerade beendete Nachtschicht ab und setzt erledigte Putzaufgaben
+// nach ihrer Fälligkeit zurück (täglich, am Wochenende, wöchentlich, alle zwei Wochen,
+// monatlich, an Sonderöffnungstagen).
+// Zählfenster einer Nacht: business_night_date 05:00 bis Folgetag 05:00.
+// Ein Bericht entsteht nur an Bedarfsnächten (Freitag, Samstag, Vorfeiertag, Abend vor Feiertag).
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
 import {
+  addDays,
   dateInTimeZone,
-  demandReason,
+  demandNightReason,
   dueTasksOn,
-  isDemandDay,
+  isCompletedInNight,
+  isDemandNight,
+  nightDateFor,
+  nightWindow,
   weekdayName,
 } from '../../shared/cleaningSchedule.ts';
 
@@ -21,42 +26,59 @@ export default async function (req: Request): Promise<Response> {
     if (user.role !== 'admin') return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
 
     const db = base44.asServiceRole.entities;
-    const todayStr = dateInTimeZone();
-    const yesterdayStr = dateInTimeZone(new Date(Date.now() - 86400000));
+    const now = new Date();
+    const todayStr = dateInTimeZone(now);
+    const currentNight = nightDateFor(now);
+    const closedNight = addDays(currentNight, -1);
+    const closedNightNextDay = addDays(closedNight, 1);
 
     const tasks = await db.CleaningTask.filter({ is_active: true });
-    const calendarDays = await db.BusinessCalendarDay.filter({ date: { $in: [todayStr, yesterdayStr] } });
+    const calendarDays = await db.BusinessCalendarDay.filter({
+      date: { $in: [closedNight, closedNightNextDay, todayStr] },
+    });
+    const calClosedNight = calendarDays.find((d: any) => d.date === closedNight);
+    const calClosedNextDay = calendarDays.find((d: any) => d.date === closedNightNextDay);
     const calToday = calendarDays.find((d: any) => d.date === todayStr);
-    const calYesterday = calendarDays.find((d: any) => d.date === yesterdayStr);
 
-    // ── 1) Tagesbericht für gestern ──────────────────────────────────────────
-    const dueYesterday = dueTasksOn(tasks, yesterdayStr, calYesterday);
-    const doneYesterday = dueYesterday.filter((t: any) => t.is_completed === true);
-    const required = isDemandDay(yesterdayStr, calYesterday);
-    const completionRate = dueYesterday.length > 0
-      ? Math.round((doneYesterday.length / dueYesterday.length) * 100)
+    // ── 1) Bericht für die gerade beendete Nacht (nur mit Bedarf) ────────────
+    const demand = isDemandNight(closedNight, calClosedNight, calClosedNextDay);
+    const dueNight = dueTasksOn(tasks, closedNight, calClosedNight);
+    const doneNight = dueNight.filter((t: any) => isCompletedInNight(t.completed_at, closedNight));
+    const completionRate = dueNight.length > 0
+      ? Math.round((doneNight.length / dueNight.length) * 100)
       : 0;
 
-    const existingReports = await db.CleaningReport.filter({ week_start: yesterdayStr });
     let reportCreated = false;
-    if (existingReports.length === 0 && dueYesterday.length > 0) {
-      await db.CleaningReport.create({
-        week_start: yesterdayStr,
-        week_end: yesterdayStr,
-        required,
-        demand_reason: required ? demandReason(yesterdayStr, calYesterday) : 'kein Bedarf',
-        total_tasks: dueYesterday.length,
-        completed_tasks: doneYesterday.length,
-        completion_rate: completionRate,
-        report_data: doneYesterday.map((t: any) => ({
-          area: t.area,
-          task_title: t.title,
-          completed_at: t.completed_at,
-          completed_by: t.completed_by,
-          frequency: t.frequency,
-        })),
-      });
-      reportCreated = true;
+    let reportSkipped: string | null = null;
+
+    if (!demand) {
+      reportSkipped = 'Nacht ohne Bedarf — kein Bericht erzeugt';
+    } else if (dueNight.length === 0) {
+      reportSkipped = 'Keine Aufgaben in dieser Nacht fällig';
+    } else {
+      const existingReports = await db.CleaningReport.filter({ week_start: closedNight });
+      if (existingReports.length === 0) {
+        await db.CleaningReport.create({
+          week_start: closedNight,
+          week_end: closedNight,
+          business_night_date: closedNight,
+          required: true,
+          demand_reason: demandNightReason(closedNight, calClosedNight, calClosedNextDay),
+          total_tasks: dueNight.length,
+          completed_tasks: doneNight.length,
+          completion_rate: completionRate,
+          report_data: doneNight.map((t: any) => ({
+            area: t.area,
+            task_title: t.title,
+            completed_at: t.completed_at,
+            completed_by: t.completed_by,
+            frequency: t.frequency,
+          })),
+        });
+        reportCreated = true;
+      } else {
+        reportSkipped = 'Bericht für diese Nacht existiert bereits';
+      }
     }
 
     // ── 2) Reset nach Fälligkeit ─────────────────────────────────────────────
@@ -86,20 +108,22 @@ export default async function (req: Request): Promise<Response> {
       success: true,
       today: todayStr,
       weekday: weekdayName(todayStr),
-      is_demand_day: isDemandDay(todayStr, calToday),
+      business_night_date: closedNight,
+      night_weekday: weekdayName(closedNight),
+      night_window: nightWindow(closedNight),
+      night_demand: demand,
+      night_demand_reason: demand ? demandNightReason(closedNight, calClosedNight, calClosedNextDay) : 'kein Bedarf',
+      night_stats: {
+        due_tasks: dueNight.length,
+        completed_tasks: doneNight.length,
+        completion_rate: completionRate,
+      },
+      report_created: reportCreated,
+      report_skipped: reportSkipped,
       due_today: dueToday.length,
       reset_count: toReset.length,
       reset_by_frequency: resetByFrequency,
       reset_titles: toReset.slice(0, 15).map((t: any) => t.title),
-      report_created: reportCreated,
-      report_for_date: yesterdayStr,
-      report_required: required,
-      report_demand_reason: required ? demandReason(yesterdayStr, calYesterday) : 'kein Bedarf',
-      report_stats: {
-        due_tasks: dueYesterday.length,
-        completed_tasks: doneYesterday.length,
-        completion_rate: completionRate,
-      },
     });
   } catch (error: any) {
     return Response.json({ error: error?.message || String(error) }, { status: 500 });

@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import AreasManager from '@/components/cleaning/AreasManager';
 import OpenTasksToday from '@/components/cleaning/OpenTasksToday';
-import { isDemandDay, demandReason } from '@/lib/cleaningSchedule';
+import { currentNightDate, nextDay, isCompletedInNight, isDemandNight } from '@/lib/cleaningSchedule';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { getUserDisplayName } from '@/lib/userDisplayName';
 import { toast } from 'sonner';
@@ -90,11 +90,12 @@ export default function Cleaning() {
         queryFn: () => base44.entities.CleaningArea.list('order'),
         staleTime: STALE.SLOW,
     });
-    // Betriebskalender von heute — entscheidet, ob heute ein Bedarfstag ist
-    const todayDateStr = format(new Date(), 'yyyy-MM-dd');
-    const { data: todayCalendar = [] } = useQuery({
-        queryKey: ['business-calendar-day', todayDateStr],
-        queryFn: () => base44.entities.BusinessCalendarDay.filter({ date: todayDateStr }),
+    // Laufende Nachtschicht (05:00–05:00) und ihre Einstufung als Bedarfsnacht
+    const nightDate = currentNightDate();
+    const nightNextDay = nextDay(nightDate);
+    const { data: nightCalendar = [] } = useQuery({
+        queryKey: ['business-calendar-night', nightDate],
+        queryFn: () => base44.entities.BusinessCalendarDay.filter({ date: { $in: [nightDate, nightNextDay] } }),
         staleTime: STALE.MEDIUM,
     });
 
@@ -133,6 +134,13 @@ export default function Cleaning() {
     const averageDemandRate = demandReports.length > 0
         ? Math.round(demandReports.reduce((sum, r) => sum + (r.completion_rate || 0), 0) / demandReports.length)
         : null;
+
+    // Beschriftung der Berichtskarte: "Freitagnacht · 06.11.2026"
+    const reportNightLabel = (report) => {
+        const dateStr = report.business_night_date || report.week_start;
+        const d = new Date(`${dateStr}T12:00:00`);
+        return `${format(d, 'EEEE', { locale: de })}nacht · ${format(d, 'dd.MM.yyyy')}`;
+    };
 
     // Aufgaben nach Bereich gruppieren (für Bulk-Button je Bereich)
     const groupedTasks = useMemo(() => {
@@ -229,18 +237,22 @@ export default function Cleaning() {
         setEndDayLoading(true);
         try {
             const today = new Date();
-            const completedTasks = tasks.filter(t =>
-                t.is_completed && t.completed_at &&
-                format(new Date(t.completed_at), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
-            );
-            const dailyTasksTotal = tasks.filter(t => t.frequency === 'täglich');
+            // Zählfenster der Schicht: nightDate 05:00 bis Folgetag 05:00
+            const completedTasks = tasks.filter(t => isCompletedInNight(t.completed_at, nightDate));
+            const calNight = nightCalendar.find(d => d.date === nightDate);
+            const calNext = nightCalendar.find(d => d.date === nightNextDay);
+            const isRequired = isDemandNight(nightDate, calNight, calNext);
+            const nightWeekday = format(new Date(`${nightDate}T12:00:00`), 'EEEE', { locale: de });
             await base44.entities.CleaningReport.create({
-                week_start: format(today, 'yyyy-MM-dd'),
-                week_end: format(today, 'yyyy-MM-dd'),
+                business_night_date: nightDate,
+                week_start: nightDate,
+                week_end: nightDate,
                 report_data: completedTasks.map(t => ({ task_title: t.title, area: t.area, frequency: t.frequency, completed_by: t.completed_by, completed_at: t.completed_at })),
-                total_tasks: dailyTasksTotal.length,
+                total_tasks: tasks.length,
                 completed_tasks: completedTasks.length,
-                completion_rate: dailyTasksTotal.length > 0 ? Math.round((completedTasks.length / dailyTasksTotal.length) * 100) : 0
+                completion_rate: tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0,
+                required: isRequired,
+                demand_reason: isRequired ? `${nightWeekday}nacht` : 'kein Bedarf'
             });
             const dailyTasks = tasks.filter(t => t.frequency === 'täglich' && t.is_completed);
             for (const task of dailyTasks) {
@@ -480,7 +492,7 @@ export default function Cleaning() {
                 {/* ── Berichte Modal ───────────────────────────────────── */}
                 <Dialog open={reportsModalOpen} onOpenChange={setReportsModalOpen}>
                     <DialogContent className="sm:max-w-md">
-                        <DialogHeader><DialogTitle>Tagesberichte</DialogTitle></DialogHeader>
+                        <DialogHeader><DialogTitle>Nachtberichte</DialogTitle></DialogHeader>
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                             {reports.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">Noch keine Berichte</p>}
                             {averageDemandRate !== null && (
@@ -491,7 +503,7 @@ export default function Cleaning() {
                             {reports.map(r => (
                                 <div key={r.id} className="rounded-lg border bg-card p-3">
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="font-medium text-sm">{format(new Date(r.week_start), "dd. MMM yyyy", { locale: de })}</span>
+                                        <span className="font-medium text-sm">{reportNightLabel(r)}</span>
                                         {r.required === false ? (
                                             <Badge variant="outline" className="text-muted-foreground">kein Bedarf</Badge>
                                         ) : (
@@ -501,7 +513,7 @@ export default function Cleaning() {
                                         )}
                                     </div>
                                     {r.required === false ? (
-                                        <p className="text-xs text-muted-foreground">Werktag ohne Bedarf — zählt nicht in die Quote</p>
+                                        <p className="text-xs text-muted-foreground">Nacht ohne Bedarf — zählt nicht in die Quote</p>
                                     ) : (
                                         <p className="text-xs text-muted-foreground">
                                             {r.completed_tasks ?? 0}/{r.total_tasks ?? 0} Aufgaben erledigt{r.demand_reason ? ` · ${r.demand_reason}` : ''}

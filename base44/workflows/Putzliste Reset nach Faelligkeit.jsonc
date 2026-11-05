@@ -1,13 +1,13 @@
 {
   "name": "Putzliste Reset nach Faelligkeit",
-  "description": "Setzt erledigte Putzaufgaben t\u00e4glich um 00:10 nach ihrer F\u00e4lligkeit zur\u00fcck (t\u00e4glich, Wochenende, w\u00f6chentlich, alle zwei Wochen, monatlich) und schreibt den Tagesbericht f\u00fcr gestern inkl. Bedarfstag-Kennzeichnung.",
+  "description": "L\u00e4uft morgens um 05:10, also nach Schichtende: schlie\u00dft die Nachtschicht (05:00\u201305:00) ab, schreibt den Bericht nur an Bedarfsn\u00e4chten (business_night_date) und setzt erledigte Aufgaben nach ihrer F\u00e4lligkeit zur\u00fcck.",
   "trigger": {
     "condition": null,
     "config": {
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "10 0 * * *",
+      "cron_expression": "10 5 * * *",
       "one_time_date": null,
       "timezone": "Europe/Berlin",
       "interval_value": null,

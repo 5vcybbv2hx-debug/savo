@@ -1,10 +1,9 @@
 // markCleaningReportDemandDays
-// Markiert bestehende CleaningReports rückwirkend als "kein Bedarf",
-// wenn sie an einem Werktag (kein Samstag/Sonntag, kein Vorfeiertag/Feiertag/Eventtag)
-// mit 0 % Erledigung entstanden sind. So bleibt die Historie unverfälscht.
+// Ergänzt bestehende CleaningReports um business_night_date und markiert
+// Null-Berichte an Nächten ohne Bedarf rückwirkend als "kein Bedarf".
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.54';
-import { demandReason, isDemandDay } from '../../shared/cleaningSchedule.ts';
+import { addDays, demandNightReason, isDemandNight } from '../../shared/cleaningSchedule.ts';
 
 export default async function (req: Request): Promise<Response> {
   try {
@@ -19,30 +18,31 @@ export default async function (req: Request): Promise<Response> {
     const calendarByDate = new Map(calendarDays.map((d: any) => [d.date, d]));
 
     const updates: any[] = [];
-    let alreadyOk = 0;
+    let unchanged = 0;
 
     for (const report of reports) {
-      const dateStr = String(report.week_start || '').slice(0, 10);
-      if (!dateStr) continue;
-      const calendarDay = calendarByDate.get(dateStr);
-      const required = isDemandDay(dateStr, calendarDay);
+      const nightDate = String(report.business_night_date || report.week_start || '').slice(0, 10);
+      if (!nightDate) continue;
+      const calNight = calendarByDate.get(nightDate);
+      const calNext = calendarByDate.get(addDays(nightDate, 1));
+      const demand = isDemandNight(nightDate, calNight, calNext);
       const rate = typeof report.completion_rate === 'number' ? report.completion_rate : 0;
 
-      if (!required && rate === 0) {
-        if (report.required === false) { alreadyOk++; continue; }
-        updates.push({
-          id: report.id,
-          required: false,
-          demand_reason: 'kein Bedarf',
-        });
-      } else if (required && report.required === undefined) {
-        updates.push({
-          id: report.id,
-          required: true,
-          demand_reason: demandReason(dateStr, calendarDay),
-        });
+      const patch: any = {};
+      if (!report.business_night_date) patch.business_night_date = nightDate;
+
+      if (!demand && rate === 0 && report.required !== false) {
+        patch.required = false;
+        patch.demand_reason = 'kein Bedarf';
+      } else if (demand && report.required === undefined) {
+        patch.required = true;
+        patch.demand_reason = demandNightReason(nightDate, calNight, calNext) || 'Bedarfsnacht';
+      }
+
+      if (Object.keys(patch).length > 0) {
+        updates.push({ id: report.id, ...patch });
       } else {
-        alreadyOk++;
+        unchanged++;
       }
     }
 
@@ -53,9 +53,11 @@ export default async function (req: Request): Promise<Response> {
     return Response.json({
       success: true,
       checked: reports.length,
+      updated: updates.length,
       marked_no_need: updates.filter((u) => u.required === false).length,
       marked_need: updates.filter((u) => u.required === true).length,
-      unchanged: alreadyOk,
+      night_date_filled: updates.filter((u) => u.business_night_date).length,
+      unchanged,
     });
   } catch (error: any) {
     return Response.json({ error: error?.message || String(error) }, { status: 500 });
