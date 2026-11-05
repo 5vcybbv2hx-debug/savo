@@ -1022,7 +1022,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                         <div className="space-y-3">
                             {/* Name */}
                             <div className="space-y-1.5">
-                                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name *</Label>
+                                <Label className="text-[12px] font-medium text-muted-foreground">Name *</Label>
                                 <Input className="h-10 text-base" placeholder="z.B. Mojito, Aperol Spritz…"
                                     value={formData.name}
                                     onChange={e => setFormData(f => ({ ...f, name: e.target.value }))} />
@@ -1032,7 +1032,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                             {formData.recipe_type === 'slushy' ? (
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Spirituose</Label>
+                                        <Label className="text-[12px] font-medium text-muted-foreground">Spirituose</Label>
                                         <Select value={formData.slushy_spirit_base}
                                             onValueChange={v => setFormData(f => ({ ...f, slushy_spirit_base: v }))}>
                                             <SelectTrigger className="h-9"><SelectValue placeholder="Wählen…" /></SelectTrigger>
@@ -1042,7 +1042,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         </Select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Originalmenge (L)</Label>
+                                        <Label className="text-[12px] font-medium text-muted-foreground">Originalmenge (L)</Label>
                                         <Input className="h-9" type="number" step="0.1" placeholder="z.B. 9.5"
                                             value={formData.slushy_original_volume_liters ?? ''}
                                             onChange={e => setFormData(f => ({ ...f, slushy_original_volume_liters: e.target.value === '' ? null : parseFloat(e.target.value) || null }))} />
@@ -1052,7 +1052,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                             ) : (
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kategorie</Label>
+                                        <Label className="text-[12px] font-medium text-muted-foreground">Kategorie</Label>
                                         <Select value={formData.category}
                                             onValueChange={v => setFormData(f => ({ ...f, category: v }))}>
                                             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
@@ -1062,7 +1062,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                         </Select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Portionen</Label>
+                                        <Label className="text-[12px] font-medium text-muted-foreground">Portionen</Label>
                                         <Input className="h-9" type="number" min="1"
                                             value={formData.servings}
                                             onChange={e => setFormData(f => ({ ...f, servings: parseInt(e.target.value) || 1 }))} />
@@ -1074,7 +1074,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                         {/* ── Zutaten ── */}
                         <div className="pt-3 border-t border-border/60 space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Zutaten</Label>
+                                <Label className="text-[12px] font-medium text-muted-foreground">Zutaten</Label>
                                 <Button type="button" variant="outline" size="sm"
                                     onClick={suggestIngredients}
                                     disabled={suggestingIngredients || !formData.name}
@@ -1095,7 +1095,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                             <div className="pt-3 border-t border-border/60 space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Mischvarianten</Label>
+                                        <Label className="text-[12px] font-medium text-muted-foreground">Mischvarianten</Label>
                                         <p className="text-[10px] text-muted-foreground mt-0.5">Variable Softdrink-Optionen — Basis-Zutaten oben</p>
                                     </div>
                                     <Button type="button" variant="outline" size="sm"
@@ -1157,7 +1157,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
                         {/* ── Zubereitung ── */}
                         <div className="pt-3 border-t border-border/60 space-y-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Zubereitung</Label>
+                            <Label className="text-[12px] font-medium text-muted-foreground">Zubereitung</Label>
                             <Textarea placeholder="Minze muddeln, Eis hinzufügen, Limettensaft…" rows={3}
                                 value={formData.preparation}
                                 onChange={e => setFormData(f => ({ ...f, preparation: e.target.value }))} />
@@ -1165,7 +1165,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
                         {/* ── Details ── */}
                         <div className="pt-3 border-t border-border/60 space-y-3">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Details</Label>
+                            <Label className="text-[12px] font-medium text-muted-foreground">Details</Label>
                             <div className="grid grid-cols-2 gap-3">
                                 {/* Glasart — Select */}
                                 <div className="space-y-1.5">
@@ -1207,7 +1207,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
                         {/* ── Bild ── */}
                         <div className="pt-3 border-t border-border/60 space-y-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Bild (optional)</Label>
+                            <Label className="text-[12px] font-medium text-muted-foreground">Bild (optional)</Label>
                             {formData.image_url ? (
                                 <div className="relative w-full h-36 rounded-xl overflow-hidden border border-border/50 group">
                                     <img src={formData.image_url} alt="Vorschau" className="w-full h-full object-cover" />
@@ -1298,7 +1298,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
                         {/* Standard-Rezepte */}
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Standard-Rezepte</p>
+                            <p className="text-[12px] font-medium text-muted-foreground mb-2">Standard-Rezepte</p>
                             <div className="flex flex-wrap gap-2">
                                 {standardCategories.map(cat => (
                                     <span key={cat} className={cn(
@@ -1324,7 +1324,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
                         {/* Slushies */}
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Slushies</p>
+                            <p className="text-[12px] font-medium text-muted-foreground mb-2">Slushies</p>
                             <div className="flex flex-wrap gap-2">
                                 {slushyCategories.map(cat => (
                                     <span key={cat} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-blue-500/10 text-blue-400 border-blue-500/25">
@@ -1346,7 +1346,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
                         {/* Neue Kategorie hinzufügen */}
                         <div className="pt-3 border-t border-border space-y-3">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Neue Kategorie</p>
+                            <p className="text-[12px] font-medium text-muted-foreground">Neue Kategorie</p>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
@@ -1375,7 +1375,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                         {/* Rezepte ohne gültige Kategorie */}
                         {recipes.filter(r => !standardCategories.includes(r.category) && !slushyCategories.includes(r.category)).length > 0 && (
                             <div className="pt-2 border-t border-border">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Ohne gültige Kategorie</p>
+                                <p className="text-[12px] font-medium text-muted-foreground mb-2">Ohne gültige Kategorie</p>
                                 <div className="space-y-1">
                                     {recipes
                                         .filter(r => !standardCategories.includes(r.category) && !slushyCategories.includes(r.category))

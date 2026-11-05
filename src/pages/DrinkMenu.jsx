@@ -471,7 +471,7 @@ export default function DrinkMenuPage() {
                     <div className="border border-border/50 rounded-xl p-4 mt-2 print:mt-4">
                         <div className="flex items-center gap-2 mb-3">
                             <Info className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Legende</span>
+                            <span className="text-[12px] font-medium text-muted-foreground">Legende</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {usedAllergens.length > 0 && (

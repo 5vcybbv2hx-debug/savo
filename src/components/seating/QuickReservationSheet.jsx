@@ -193,7 +193,7 @@ export default function QuickReservationSheet({ table, reservations, tables, onC
                 {mode === 'info' && dayReservations.length > 0 && (
                     <div className="p-5 space-y-3">
                         {dayReservations.length > 1 && (
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            <p className="text-[12px] font-medium text-muted-foreground">
                                 {dayReservations.length} Reservierungen heute
                             </p>
                         )}

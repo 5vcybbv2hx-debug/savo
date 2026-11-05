@@ -136,7 +136,7 @@ function TaskEditModal({ task, categories, onSave, onClose }) {
                 <div className="flex-1 overflow-y-auto p-5 space-y-4">
                     {/* Kategorie */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">Kategorie</label>
+                        <label className="text-[12px] font-medium text-muted-foreground block mb-1.5">Kategorie</label>
                         <Select value={category} onValueChange={setCategory}>
                             <SelectTrigger className="w-full h-10">
                                 <SelectValue placeholder="Kategorie wählen" />
@@ -151,7 +151,7 @@ function TaskEditModal({ task, categories, onSave, onClose }) {
 
                     {/* Titel */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">Titel *</label>
+                        <label className="text-[12px] font-medium text-muted-foreground block mb-1.5">Titel *</label>
                         <Input
                             value={title}
                             onChange={e => setTitle(e.target.value)}
@@ -162,7 +162,7 @@ function TaskEditModal({ task, categories, onSave, onClose }) {
 
                     {/* Kurzbeschreibung */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">Kurzbeschreibung <span className="font-normal text-muted-foreground">(optional)</span></label>
+                        <label className="text-[12px] font-medium text-muted-foreground block mb-1.5">Kurzbeschreibung <span className="font-normal text-muted-foreground">(optional)</span></label>
                         <Input
                             value={description}
                             onChange={e => setDescription(e.target.value)}
@@ -173,7 +173,7 @@ function TaskEditModal({ task, categories, onSave, onClose }) {
 
                     {/* Anleitung */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">
+                        <label className="text-[12px] font-medium text-muted-foreground block mb-1.5">
                             Anleitung <span className="font-normal text-muted-foreground">(optional, für Mitarbeiter ausklappbar)</span>
                         </label>
                         <textarea
@@ -225,13 +225,13 @@ function CategoryEditModal({ category, onSave, onClose }) {
                 <div className="p-5 space-y-4">
                     {/* Name */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">Name *</label>
+                        <label className="text-[12px] font-medium text-muted-foreground block mb-1.5">Name *</label>
                         <Input value={name} onChange={e => setName(e.target.value)} placeholder="z.B. Zapfanlage" className="h-10" />
                     </div>
 
                     {/* Icon */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">Icon</label>
+                        <label className="text-[12px] font-medium text-muted-foreground block mb-1.5">Icon</label>
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-10 h-10 rounded-xl border border-border bg-secondary/30 flex items-center justify-center text-xl">{icon}</div>
                             <Input value={icon} onChange={e => setIcon(e.target.value)} className="h-10 w-20 text-center text-lg" maxLength={2} />
@@ -248,7 +248,7 @@ function CategoryEditModal({ category, onSave, onClose }) {
 
                     {/* Farbe */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">Farbe</label>
+                        <label className="text-[12px] font-medium text-muted-foreground block mb-1.5">Farbe</label>
                         <div className="flex gap-2 flex-wrap">
                             {COLOR_OPTIONS.map(c => (
                                 <button key={c.key} onClick={() => setColor(c.key)}

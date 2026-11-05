@@ -54,7 +54,7 @@ export default function ClosedRoundsList({ rounds = [] }) {
     return (
         <Card className="border-border/60">
             <CardContent className="pt-4 pb-4 space-y-2.5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Abgeschlossene Runden</p>
+                <p className="text-[12px] font-medium text-muted-foreground">Abgeschlossene Runden</p>
                 {closed.map((round) => (
                     <div key={round.id} className="rounded-lg border border-border/60 p-2.5 space-y-2">
                         <div className="flex items-start justify-between gap-2">

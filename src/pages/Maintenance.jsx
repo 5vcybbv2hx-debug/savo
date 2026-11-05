@@ -50,7 +50,7 @@ function CompleteModal({ task, onConfirm, onClose }) {
                         <p className="text-xs text-muted-foreground mt-0.5">{task.task_description}</p>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">
+                        <label className="text-[12px] font-medium text-muted-foreground block mb-1.5">
                             Notiz <span className="font-normal">(optional)</span>
                         </label>
                         <textarea

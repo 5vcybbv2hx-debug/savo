@@ -296,7 +296,7 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
                     {/* Session log */}
                     {sessionLog.length > 0 && (
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                            <p className="text-[12px] font-medium text-muted-foregroundr mb-2">
                                 Sitzungsprotokoll ({sessionLog.length})
                             </p>
                             <div className="space-y-1 max-h-44 overflow-y-auto">

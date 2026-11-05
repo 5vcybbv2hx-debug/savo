@@ -641,7 +641,7 @@ export default function Restock() {
                                 <div key={category}>
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="w-2 h-2 rounded-full bg-primary" />
-                                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                                        <span className="text-[12px] font-medium text-muted-foregroundr px-1">
                                             {category}
                                         </span>
                                     </div>

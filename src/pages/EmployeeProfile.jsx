@@ -67,7 +67,7 @@ function Field({ label, children }) {
 function Section({ title, children }) {
   return (
     <div className="space-y-4">
-      {title && <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest pt-2">{title}</p>}
+      {title && <p className="text-[12px] font-medium text-muted-foregroundst pt-2">{title}</p>}
       <div className="space-y-4">{children}</div>
     </div>
   );

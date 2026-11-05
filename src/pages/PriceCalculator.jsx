@@ -362,7 +362,7 @@ function SingleMode({ articles, onResult }) {
 
                     {/* Übernahme in Getränkekarte */}
                     <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        <p className="text-[12px] font-medium text-muted-foreground mb-2">
                             In Getränkekarte übernehmen
                         </p>
                         {linkedMenuItems.length > 0 ? (

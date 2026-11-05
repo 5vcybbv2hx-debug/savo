@@ -146,7 +146,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                     {/* Datum */}
                     {canEdit && (
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Datum</p>
+                            <p className="text-[12px] font-medium text-muted-foreground mb-1.5">Datum</p>
                             <input
                                 type="date"
                                 value={dateStr}
@@ -167,7 +167,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                         <>
                             {/* Tagesart — Chip-Grid */}
                             <div>
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Tagesart</p>
+                                <p className="text-[12px] font-medium text-muted-foreground mb-2">Tagesart</p>
                                 <div className="grid grid-cols-2 gap-1.5">
                                     {DAY_TYPES.map(dt => (
                                         <button
@@ -189,7 +189,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
 
                             {/* Bezeichnung */}
                             <div>
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Bezeichnung <span className="font-normal normal-case">(optional)</span></p>
+                                <p className="text-[12px] font-medium text-muted-foreground mb-1.5">Bezeichnung <span className="font-normal normal-case">(optional)</span></p>
                                 <input
                                     value={form.title}
                                     onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
@@ -201,7 +201,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                             {/* Sonderöffnungszeiten */}
                             {!isClosed && (
                                 <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Sonderöffnungszeiten <span className="font-normal normal-case">(optional)</span></p>
+                                    <p className="text-[12px] font-medium text-muted-foreground mb-1.5">Sonderöffnungszeiten <span className="font-normal normal-case">(optional)</span></p>
                                     <div className="flex items-center gap-3">
                                         <div className="flex-1">
                                             <label className="text-xs text-muted-foreground mb-1 block">Von</label>
@@ -223,7 +223,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                             {/* Terrassen-Aufgaben */}
                             {isSaison && terrassenTasks.length > 0 && (
                                 <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                    <p className="text-[12px] font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
                                         <Leaf className="w-3.5 h-3.5 text-green-400" />
                                         Terrassen-Aufgaben
                                     </p>
@@ -246,7 +246,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
 
                             {/* Notiz */}
                             <div>
-                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Interne Notiz <span className="font-normal normal-case">(optional)</span></p>
+                                <p className="text-[12px] font-medium text-muted-foreground mb-1.5">Interne Notiz <span className="font-normal normal-case">(optional)</span></p>
                                 <textarea
                                     value={form.notes}
                                     onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
@@ -704,7 +704,7 @@ export default function BusinessCalendar() {
 
                 {/* ── Kommende Sondertage ──────────────────────────────── */}
                 <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    <p className="text-[12px] font-medium text-muted-foreground mb-2">
                         Nächste Sondertage
                     </p>
                     <UpcomingList specialDays={specialDays} onDayClick={handleDayClick} />
@@ -712,7 +712,7 @@ export default function BusinessCalendar() {
 
                 {/* ── Feiertage BW ─────────────────────────────────────── */}
                 <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    <p className="text-[12px] font-medium text-muted-foreground mb-2">
                         Nächste Feiertage (BW)
                     </p>
                     <HolidayList />
@@ -720,7 +720,7 @@ export default function BusinessCalendar() {
 
                 {/* ── Legende kompakt ──────────────────────────────────── */}
                 <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Legende</p>
+                    <p className="text-[12px] font-medium text-muted-foreground mb-2">Legende</p>
                     <div className="grid grid-cols-2 gap-1">
                         {DAY_TYPES.filter(d => d.id !== 'normal').map(dt => (
                             <div key={dt.id} className="flex items-center gap-2">

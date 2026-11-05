@@ -646,7 +646,7 @@ export default function Todos() {
                         <div className="rounded-xl border border-border bg-card p-3 space-y-3 animate-fadeIn">
                             {allCategories.length > 0 && (
                                 <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Kategorie</p>
+                                    <p className="text-[12px] font-medium text-muted-foreground mb-2">Kategorie</p>
                                     <div className="flex gap-1.5 flex-wrap">
                                         {['alle', ...allCategories].map(cat => (
                                             <button key={cat}
@@ -665,7 +665,7 @@ export default function Todos() {
                             )}
                             {allAssignees.length > 0 && (
                                 <div>
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Person</p>
+                                    <p className="text-[12px] font-medium text-muted-foreground mb-2">Person</p>
                                     <div className="flex gap-1.5 flex-wrap">
                                         <button onClick={() => setPersonFilter('alle')}
                                             className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-all',

@@ -135,14 +135,14 @@ function NewsEditor({ open, onClose, editItem, currentUser, employees }) {
 
                     {/* Title */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Titel</label>
+                        <label className="text-[12px] font-medium text-muted-foreground">Titel</label>
                         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Was gibt's Neues?"
                             className="mt-1 w-full h-11 px-3 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
                     </div>
 
                     {/* Body */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Details (optional)</label>
+                        <label className="text-[12px] font-medium text-muted-foreground">Details (optional)</label>
                         <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Zusätzliche Infos…"
                             rows={3}
                             className="mt-1 w-full px-3 py-2 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none" />
@@ -150,7 +150,7 @@ function NewsEditor({ open, onClose, editItem, currentUser, employees }) {
 
                     {/* Priority */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Priorität</label>
+                        <label className="text-[12px] font-medium text-muted-foreground">Priorität</label>
                         <div className="mt-1 flex gap-2">
                             {Object.entries(PRIORITY_CONFIG).map(([key, cfg]) => (
                                 <button key={key} onClick={() => setPriority(key)}
@@ -165,12 +165,12 @@ function NewsEditor({ open, onClose, editItem, currentUser, employees }) {
                     {/* Time Window */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sichtbar ab</label>
+                            <label className="text-[12px] font-medium text-muted-foreground">Sichtbar ab</label>
                             <input type="datetime-local" value={showFrom} onChange={e => setShowFrom(e.target.value)}
                                 className="mt-1 w-full h-10 px-2 rounded-xl border border-input bg-transparent text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-ring" />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sichtbar bis (optional)</label>
+                            <label className="text-[12px] font-medium text-muted-foreground">Sichtbar bis (optional)</label>
                             <input type="datetime-local" value={showUntil} onChange={e => setShowUntil(e.target.value)}
                                 className="mt-1 w-full h-10 px-2 rounded-xl border border-input bg-transparent text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-ring" />
                         </div>
@@ -179,7 +179,7 @@ function NewsEditor({ open, onClose, editItem, currentUser, employees }) {
                     {/* Recurrence */}
                     {type === 'task' && (
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                            <label className="text-[12px] font-medium text-muted-foreground flex items-center gap-1">
                                 <Repeat className="w-3 h-3" />Wiederholung
                             </label>
                             <div className="mt-1 flex gap-2">

@@ -12,7 +12,7 @@ export default function AttachmentGallery({ attachments = [], onDelete = null, r
     return (
         <>
             <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <p className="text-[12px] font-medium text-muted-foreground">
                     Anhänge ({attachments.length})
                 </p>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">

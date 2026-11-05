@@ -385,7 +385,7 @@ export default function PermissionsNew() {
 
                 {/* ── Rollen-Schnellauswahl ──────────────────────────────── */}
                 <div className="px-4 py-4 border-b border-border">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  <p className="text-[12px] font-medium text-muted-foregroundr mb-3">
                     Rolle anwenden
                   </p>
                   <div className="grid grid-cols-2 gap-2">

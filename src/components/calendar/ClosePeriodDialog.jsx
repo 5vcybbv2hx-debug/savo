@@ -94,19 +94,19 @@ export default function ClosePeriodDialog({ open, onOpenChange, existingDays = [
                 <div className="space-y-4 pt-1">
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Von</label>
+                            <label className="text-[12px] font-medium text-muted-foreground mb-1.5 block">Von</label>
                             <input type="date" value={from} onChange={e => setFrom(e.target.value)}
                                 className="w-full px-3 py-2.5 rounded-xl bg-secondary/50 border border-border text-foreground text-sm" />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5 block">Bis</label>
+                            <label className="text-[12px] font-medium text-muted-foreground mb-1.5 block">Bis</label>
                             <input type="date" value={to} min={from} onChange={e => setTo(e.target.value)}
                                 className="w-full px-3 py-2.5 rounded-xl bg-secondary/50 border border-border text-foreground text-sm" />
                         </div>
                     </div>
 
                     <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Grund</p>
+                        <p className="text-[12px] font-medium text-muted-foreground mb-2">Grund</p>
                         <div className="grid grid-cols-2 gap-1.5">
                             {REASONS.map(r => (
                                 <button key={r} onClick={() => setReason(r)}
@@ -123,7 +123,7 @@ export default function ClosePeriodDialog({ open, onOpenChange, existingDays = [
                     </div>
 
                     <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                        <p className="text-[12px] font-medium text-muted-foreground mb-1.5">
                             Eigener Titel <span className="font-normal normal-case">(optional)</span>
                         </p>
                         <input value={customTitle} onChange={e => setCustomTitle(e.target.value)}
@@ -132,7 +132,7 @@ export default function ClosePeriodDialog({ open, onOpenChange, existingDays = [
                     </div>
 
                     <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+                        <p className="text-[12px] font-medium text-muted-foreground mb-1.5">
                             Beschreibung <span className="font-normal normal-case">(optional)</span>
                         </p>
                         <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2}

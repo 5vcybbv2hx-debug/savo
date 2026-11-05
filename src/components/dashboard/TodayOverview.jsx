@@ -39,7 +39,7 @@ export default function TodayOverview({ shifts = [], events = [], reservations =
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <p className="text-xs text-muted-foreground mb-2 uppercase flex items-center gap-2">
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2 flex items-center gap-2">
                         <Clock className="w-4 h-4" />
                         Schichten ({shifts.length})
                     </p>
@@ -63,7 +63,7 @@ export default function TodayOverview({ shifts = [], events = [], reservations =
                 </div>
 
                 <div>
-                    <p className="text-xs text-muted-foreground mb-2 uppercase">Events ({events.length})</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">Events ({events.length})</p>
                     <div className="space-y-2">
                         {eventsToShow.map((event, idx) => (
                             <div key={event.id} className="flex items-start gap-2 text-sm animate-stagger" style={{ '--delay': `${idx * 35}ms` }}>
@@ -79,7 +79,7 @@ export default function TodayOverview({ shifts = [], events = [], reservations =
                 </div>
 
                 <div>
-                    <p className="text-xs text-muted-foreground mb-2 uppercase">Reservierungen ({reservations.length})</p>
+                    <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">Reservierungen ({reservations.length})</p>
                     <div className="space-y-2">
                         {reservationsToShow.map((res, idx) => (
                             <div key={res.id} className="flex items-start gap-2 text-sm animate-stagger" style={{ '--delay': `${idx * 35}ms` }}>

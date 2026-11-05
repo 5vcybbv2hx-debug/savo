@@ -105,7 +105,7 @@ export default function GuestHubTodayTab({
                 </div>
             ) : (
                 <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <p className="text-[12px] font-medium text-muted-foregroundr mb-3 flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5" />
                         {format(new Date(), "EEEE, d. MMMM", { locale: de })} — Zeitlinie
                     </p>

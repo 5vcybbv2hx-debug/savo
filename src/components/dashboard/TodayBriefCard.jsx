@@ -220,7 +220,7 @@ function BriefRow({ icon: Icon, label, children, accent }) {
         <div className="flex items-start gap-2.5 py-1.5">
             <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', accent || 'text-muted-foreground')} />
             <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+                <span className="text-[13.5px] font-medium text-foreground tracking-tight">{label}</span>
                 <div className="text-sm text-foreground leading-snug">{children}</div>
             </div>
         </div>

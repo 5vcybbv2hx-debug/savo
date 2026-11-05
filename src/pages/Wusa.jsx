@@ -65,7 +65,7 @@ function SaladLine({ line, onChange, onRemove, canRemove }) {
     return (
         <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2.5">
             <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <span className="text-[12px] font-medium text-muted-foreground">
                     Salat {line.index}
                 </span>
                 {canRemove && (
@@ -257,12 +257,12 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
                     {/* Customer Name & Phone */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name *</label>
+                            <label className="text-[12px] font-medium text-muted-foreground">Name *</label>
                             <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Müller"
                                 className="mt-1 w-full h-11 px-3 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Telefon</label>
+                            <label className="text-[12px] font-medium text-muted-foreground">Telefon</label>
                             <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="optional"
                                 className="mt-1 w-full h-11 px-3 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
                         </div>
@@ -271,7 +271,7 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
                     {/* Pickup */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Abholung / Vor Ort</label>
+                            <label className="text-[12px] font-medium text-muted-foreground">Abholung / Vor Ort</label>
                             <div className="mt-1 flex gap-2">
                                 <button onClick={() => setPickupType('abholung')}
                                     className={cn('flex-1 py-2.5 rounded-xl border text-xs font-medium transition-all',
@@ -286,7 +286,7 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
                             </div>
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Abholzeit</label>
+                            <label className="text-[12px] font-medium text-muted-foreground">Abholzeit</label>
                             <input type="time" value={pickupTime} onChange={e => setPickupTime(e.target.value)}
                                 className="mt-1 w-full h-11 px-3 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
                         </div>
@@ -295,7 +295,7 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
                     {/* Salad Lines */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sorten</label>
+                            <label className="text-[12px] font-medium text-muted-foreground">Sorten</label>
                             <button onClick={addLine} className="text-xs text-primary font-medium flex items-center gap-1">
                                 <Plus className="w-3.5 h-3.5" />Weitere Sorte
                             </button>
@@ -316,7 +316,7 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
                     {/* Source (Manager only) */}
                     {isManager && (
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Quelle</label>
+                            <label className="text-[12px] font-medium text-muted-foreground">Quelle</label>
                             <div className="mt-1 flex gap-2 flex-wrap">
                                 {[
                                     { val: 'persoenlich', label: 'Persönlich' },
@@ -336,7 +336,7 @@ function OrderModal({ open, onClose, editItem, orderDate, isManager, onSaveAndPr
 
                     {/* Notes */}
                     <div>
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Notiz</label>
+                        <label className="text-[12px] font-medium text-muted-foreground">Notiz</label>
                         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="z.B. ohne Salatsoße, extra scharf…" rows={2}
                             className="mt-1 w-full px-3 py-2 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none" />
                     </div>

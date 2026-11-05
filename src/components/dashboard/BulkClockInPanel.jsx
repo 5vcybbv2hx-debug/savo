@@ -152,7 +152,7 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
 
                         {/* Time selector */}
                         <div className="mx-5 mt-4 space-y-2">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Startzeit</p>
+                            <p className="text-[12px] font-medium text-muted-foreground">Startzeit</p>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setUseCurrentTime(true)}
@@ -190,7 +190,7 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
 
                         {/* Employee list */}
                         <div className="mx-5 mt-4 overflow-y-auto flex-1">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                            <p className="text-[12px] font-medium text-muted-foreground mb-2">
                                 Betroffene Mitarbeiter ({missingEmployees.length})
                             </p>
                             <div className="space-y-2">

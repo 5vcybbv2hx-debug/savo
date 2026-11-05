@@ -532,7 +532,7 @@ export default function ModuleCenter() {
                             {selectedCategory === 'alle' && (
                                 <div className="flex items-center gap-2 px-4 py-2 mt-2">
                                     <span className="text-base">{CATEGORIES[cat]?.emoji}</span>
-                                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    <span className="text-[12px] font-medium text-muted-foregroundr">
                                         {CATEGORIES[cat]?.name}
                                     </span>
                                     <div className="flex-1 h-px bg-border" />

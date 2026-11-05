@@ -178,7 +178,7 @@ export default function CleaningChecklist() {
                 {/* Done tasks */}
                 {doneTasks.length > 0 && (
                     <div className="mt-6 space-y-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                        <p className="text-[12px] font-medium text-muted-foregroundr px-1">
                             Erledigt ({doneTasks.length})
                         </p>
                         {doneTasks.map(task => (

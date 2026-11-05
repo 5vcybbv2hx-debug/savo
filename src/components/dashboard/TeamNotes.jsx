@@ -159,7 +159,7 @@ function NoteForm({ initial, onSave, onClose, isManager }) {
     return (
         <div className="space-y-4">
             <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nachricht *</label>
+                <label className="text-[12px] font-medium text-muted-foreground">Nachricht *</label>
                 <Textarea
                     value={form.message}
                     onChange={e => setForm({ ...form, message: e.target.value })}
@@ -170,7 +170,7 @@ function NoteForm({ initial, onSave, onClose, isManager }) {
                 />
             </div>
             <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Titel (optional)</label>
+                <label className="text-[12px] font-medium text-muted-foreground">Titel (optional)</label>
                 <Input
                     value={form.title}
                     onChange={e => setForm({ ...form, title: e.target.value })}
@@ -180,7 +180,7 @@ function NoteForm({ initial, onSave, onClose, isManager }) {
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Kategorie</label>
+                    <label className="text-[12px] font-medium text-muted-foreground">Kategorie</label>
                     <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
                         <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -191,7 +191,7 @@ function NoteForm({ initial, onSave, onClose, isManager }) {
                     </Select>
                 </div>
                 <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Priorität</label>
+                    <label className="text-[12px] font-medium text-muted-foreground">Priorität</label>
                     <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
                         <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                         <SelectContent>
