@@ -23,7 +23,6 @@ import { useActiveNavigation } from '@/components/navigation/useActiveNavigation
 import { getTopPages } from '@/hooks/usePageTracking';
 import { useTabNavigation } from '@/hooks/useTabNavigation';
 import NotificationBell from '@/components/notifications/NotificationBell';
-import ClockChip from '@/components/navigation/ClockChip';
 import { useSwapInboxCount } from '@/components/shifts/ShiftSwapInboxCard';
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from 'react';
@@ -241,7 +240,7 @@ export default function Layout({ children, currentPageName }) {
             // Admin/Manager: Übersicht, Gäste & Tische, Schichtplan, Aufgaben
             return ['Dashboard', 'GuestHub', 'Calendar', 'Todos'];
         }
-        // Aushilfe: Stempeln über ClockChip im Header; Putzliste + Stationsplan = tägliche Werkzeuge
+        // Aushilfe: Stempeln über die Karte auf dem Dashboard; Putzliste + Stationsplan = tägliche Werkzeuge
         if (permissions.employeeRole === 'Aushilfe') {
             return ['Dashboard', 'MyShifts', 'Cleaning', 'Stationsplan'];
         }
@@ -311,19 +310,10 @@ export default function Layout({ children, currentPageName }) {
                         <h1 className="text-lg font-bold text-foreground flex-1">
                             {getPageName(currentPageName)}
                         </h1>
-                        {currentUser && <ClockChip />}
-                        {currentUser && (
-                            <NotificationBell userEmail={currentUser.email} userRole={currentUser.role} employeeId={permissions.employeeId} />
-                        )}
-                        <button
-                            onClick={() => setSearchOpen(true)}
-                            className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-accent/50 active:bg-accent text-muted-foreground hover:text-foreground transition-all"
-                            title="Suche (Strg+K)"
-                        >
-                            <Search className="w-5 h-5" />
-                        </button>
-                        {/* Hinweis: 'Mehr'-Drawer ist über den Mehr-Tab in der Bottom-Nav erreichbar
-                            — zusätzlicher Zahnrad-Button hier war redundant und wurde entfernt */}
+                        {/* Mobile Kopfzeile bewusst reduziert: nur Seitenname und Zurück.
+                            Stempeln steht als Karte auf dem Dashboard, Suche und
+                            Benachrichtigungen liegen im 'Mehr'-Bereich. */}
+
                     </div>
                 </header>
 
