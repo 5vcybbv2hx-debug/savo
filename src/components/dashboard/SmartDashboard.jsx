@@ -698,8 +698,8 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                             {isManager && <WhatsAppMessageGenerator employees={employees} />}
-                            <div className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold', phase.bg, phase.color)}>
-                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                <span className="w-1.5 h-1.5 rounded-full bg-status-ok" />
                                 {phase.label}
                             </div>
                         </div>
@@ -754,7 +754,7 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
                             className={cn(
                                 'flex-1 py-2.5 px-2 rounded-lg text-sm font-semibold transition-all relative',
                                 activeTab === tab.id
-                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    ? 'bg-surface text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground'
                             )}
                         >
