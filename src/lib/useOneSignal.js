@@ -94,12 +94,9 @@ export function useOneSignal({ employeeId, isAuthenticated }) {
                     permission: perm,
                 };
 
-                // 5) Sichtbares Feedback
-                if (loginOk) {
-                    const displayId = externalId || onesignalId || String(employeeId);
-                    const shortId = String(displayId).slice(0, 8);
-                    toast.success(`Push aktiv ✓ (ID: ${shortId}…)`);
-                } else {
+                // 5) Feedback nur bei Fehler
+                // Erfolg bleibt still (Status steht in MyArea/Einstellungen), nur Fehler melden
+                if (!loginOk) {
                     toast.error(`Push fehlgeschlagen: ${loginErr?.message || 'unbekannt'}`);
                 }
             } catch (err) {
