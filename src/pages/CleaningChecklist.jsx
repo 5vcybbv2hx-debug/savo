@@ -7,6 +7,7 @@ import { CheckCircle2, Circle, ClipboardList, Loader2, CheckCheck } from 'lucide
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { isTaskDueToday, todayStr } from '@/lib/cleaningSchedule';
 
 export default function CleaningChecklist() {
     const params = new URLSearchParams(window.location.search);
@@ -20,7 +21,7 @@ export default function CleaningChecklist() {
         staleTime: STALE.SLOW
     });
 
-    const { data: tasks = [], isLoading } = useQuery({
+    const { data: allTasks = [], isLoading } = useQuery({
         queryKey: ['cleaning-tasks-area', area],
         queryFn: () => base44.entities.CleaningTask.filter({ area, is_active: true }, 'title'),
         enabled: !!area,
@@ -64,6 +65,8 @@ export default function CleaningChecklist() {
         return () => window.removeEventListener('online', handleOnline);
     }, [queryClient, area]);
 
+    // Nur heute fällige Aufgaben (Wochentag + KW-Parität) — nichts Dauerhaft-Offenes
+    const tasks = allTasks.filter(t => isTaskDueToday(t, todayStr()));
     const activeTasks = tasks.filter(t => !t.is_completed);
     const doneTasks = tasks.filter(t => t.is_completed);
     const allDone = tasks.length > 0 && activeTasks.length === 0;

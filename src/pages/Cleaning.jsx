@@ -25,7 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import AreasManager from '@/components/cleaning/AreasManager';
 import OpenTasksToday from '@/components/cleaning/OpenTasksToday';
-import { currentNightDate, nextDay, isCompletedInNight, isDemandNight } from '@/lib/cleaningSchedule';
+import { currentNightDate, nextDay, isCompletedInNight, isDemandNight, isTaskDueToday, shiftDays, todayStr } from '@/lib/cleaningSchedule';
+import WeekdayTasksSection from '@/components/cleaning/WeekdayTasksSection';
 import { usePermissions } from '@/components/auth/usePermissions';
 import { getUserDisplayName } from '@/lib/userDisplayName';
 import { toast } from 'sonner';
@@ -99,16 +100,24 @@ export default function Cleaning() {
         staleTime: STALE.MEDIUM,
     });
 
-    const todayName = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'][new Date().getDay()];
     const currentMonth = new Date().getMonth() + 1;
     const isSeason = currentMonth >= 4 && currentMonth <= 10;
     const areas = allAreas.filter(area => !area.seasonal || isSeason);
 
-    const tasks = allTasks.filter(t => {
-        if (t.area === 'Wochentagsaufgaben') return false;
-        if (t.due_weekdays && t.due_weekdays.length > 0 && !t.due_weekdays.includes(todayName)) return false;
-        return true;
-    });
+    // Fälligkeit: wöchentliche Aufgaben nur an ihrem Wochentag, bei
+    // biweekly_pattern zusätzlich nur in ihrer KW-Parität (_1 ungerade, _2 gerade).
+    const today = todayStr();
+    const tasks = allTasks.filter(t => isTaskDueToday(t, today));
+
+    // Wochentagsaufgaben erscheinen in einem eigenen Block — mit Hinweis,
+    // welche Aufgaben derselben Wochentage in der anderen Parität dran sind.
+    const weekdayTasks = tasks.filter(t => t.area === 'Wochentagsaufgaben');
+    const regularTasks = tasks.filter(t => t.area !== 'Wochentagsaufgaben');
+    const weekdayTasksNextWeek = allTasks.filter(t =>
+        t.area === 'Wochentagsaufgaben' &&
+        !isTaskDueToday(t, today) &&
+        isTaskDueToday(t, shiftDays(today, 7))
+    );
 
     // Bereiche aus aktiven Aufgaben ableiten
     const taskAreas = useMemo(() => {
@@ -361,12 +370,20 @@ export default function Cleaning() {
                 </div>
 
                 {view === 'open' && (
-                    <OpenTasksToday
-                        tasks={tasks}
-                        onComplete={handleComplete}
-                        onBulkComplete={handleBulkComplete}
-                        disabled={permissions.isTerminal}
-                    />
+                    <>
+                        <WeekdayTasksSection
+                            tasks={weekdayTasks}
+                            nextWeekTasks={weekdayTasksNextWeek}
+                            onComplete={handleComplete}
+                            disabled={permissions.isTerminal}
+                        />
+                        <OpenTasksToday
+                            tasks={regularTasks}
+                            onComplete={handleComplete}
+                            onBulkComplete={handleBulkComplete}
+                            disabled={permissions.isTerminal}
+                        />
+                    </>
                 )}
 
                 {/* ── Bereich-Tabs ─────────────────────────────────────── */}

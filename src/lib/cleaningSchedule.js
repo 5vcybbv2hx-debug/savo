@@ -4,6 +4,64 @@
 // Bedarfsnacht = Freitag, Samstag, Vorfeiertags-Abend oder Abend vor einem Feiertag.
 
 export const NIGHT_START_HOUR = 5;
+export const WEEKDAYS_DE = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+
+/** ISO-Kalenderwoche (Montag–Sonntag) eines Datums. */
+export function isoWeek(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  const day = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - day + 3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const firstDay = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDay + 3);
+  return 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 86400000));
+}
+
+/** Parität der Kalenderwoche: 1 = ungerade KW, 2 = gerade KW. */
+export function weekParity(dateStr) {
+  return isoWeek(dateStr) % 2 === 1 ? 1 : 2;
+}
+
+export function shiftDays(dateStr, days) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Fälligkeit einer wöchentlichen Aufgabe an einem Tag:
+ * due_weekday muss passen, und bei biweekly_pattern entscheidet die
+ * KW-Parität (_1 = ungerade KW, _2 = gerade KW).
+ */
+export function isWeeklyTaskDue(task, dateStr) {
+  const dow = new Date(`${dateStr}T12:00:00`).getDay();
+  const dayName = WEEKDAYS_DE[dow];
+  const weekdays = Array.isArray(task?.due_weekdays) ? task.due_weekdays : [];
+  const biweekly = String(task?.biweekly_pattern || '');
+  const patternDow = biweekly.startsWith('mi') ? 3 : biweekly.startsWith('do') ? 4 : -1;
+
+  if (weekdays.length > 0) {
+    if (!weekdays.includes(dayName)) return false;
+  } else if (patternDow !== -1) {
+    if (dow !== patternDow) return false;
+  } else if (task?.due_date) {
+    return String(task.due_date).slice(0, 10) === dateStr;
+  } else if (dow !== 1) {
+    return false; // Standard: Montag
+  }
+
+  if (!biweekly) return true;
+  return weekParity(dateStr) === Number(biweekly.split('_')[1] || 1);
+}
+
+/** Ist die Aufgabe an diesem Tag überhaupt dran? */
+export function isTaskDueToday(task, dateStr) {
+  const isWeekly = task?.frequency === 'wöchentlich' || task?.frequency === 'alle zwei Wochen';
+  if (isWeekly) return isWeeklyTaskDue(task, dateStr);
+  const weekdays = Array.isArray(task?.due_weekdays) ? task.due_weekdays : [];
+  if (weekdays.length === 0) return true;
+  return weekdays.includes(WEEKDAYS_DE[new Date(`${dateStr}T12:00:00`).getDay()]);
+}
 
 export function nextDay(dateStr) {
   const d = new Date(`${dateStr}T12:00:00`);

@@ -43,6 +43,31 @@ export function weekdayName(dateStr: string): string {
   return WEEKDAYS[weekdayIndex(dateStr)];
 }
 
+/** ISO-Kalenderwoche (Montag–Sonntag) eines Datums. */
+export function isoWeek(dateStr: string): number {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  const day = (d.getUTCDay() + 6) % 7; // Montag = 0
+  d.setUTCDate(d.getUTCDate() - day + 3); // Donnerstag dieser Woche
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const firstDay = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDay + 3);
+  return 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 86400000));
+}
+
+/** Parität der Kalenderwoche: 1 = ungerade KW, 2 = gerade KW. */
+export function weekParity(dateStr: string): 1 | 2 {
+  return isoWeek(dateStr) % 2 === 1 ? 1 : 2;
+}
+
+/** Letzter Fälligkeitstag dieser Aufgabe am oder vor dateStr. */
+export function lastDueOnOrBefore(task: any, dateStr: string, maxDays = 70): string | null {
+  for (let i = 0; i <= maxDays; i++) {
+    const d = addDays(dateStr, -i);
+    if (isTaskDueOn(task, d)) return d;
+  }
+  return null;
+}
+
 /**
  * Zu welchem Abend gehört ein Zeitpunkt? Alles vor 05:00 zählt noch zum Abend davor,
  * damit ein Haken um 01:30 am Samstag zur Freitags-Schicht gehört.
@@ -104,7 +129,8 @@ export function demandNightReason(nightDate: string, calendarOfNight?: any, cale
 /**
  * Ist die Aufgabe an diesem Abend fällig?
  * Berücksichtigt frequency, due_weekdays, due_date und biweekly_pattern.
- * Biweekly: mi_1/do_1 = erste Ausprägung im Monat (Tag 1–7), mi_2/do_2 = zweite (Tag 8–14).
+ * Biweekly: _1 = ungerade ISO-Kalenderwoche, _2 = gerade ISO-Kalenderwoche —
+ * mi_1 und mi_2 wechseln sich also Woche für Woche ab und treffen nie zusammen.
  */
 export function isTaskDueOn(task: any, dateStr: string, calendarDay?: any): boolean {
   const dow = weekdayIndex(dateStr);
@@ -120,17 +146,15 @@ export function isTaskDueOn(task: any, dateStr: string, calendarDay?: any): bool
 
   if (frequency === 'am Wochenende') return dow === 0 || dow === 6;
 
-  // Zweiwochen-Muster greift auch, wenn die Aufgabe als "wöchentlich" angelegt ist
+  // 14-Tage-Rhythmus: greift auch, wenn die Aufgabe als "wöchentlich" angelegt ist
   // (Bestandsdaten, z. B. "Kühlschubladen putzen" mit Muster do_2).
+  // _1 = ungerade KW, _2 = gerade KW.
   const biweekly = String(task?.biweekly_pattern || '');
   if ((frequency === 'wöchentlich' || frequency === 'alle zwei Wochen') && biweekly) {
     const [patternDay, occurrence] = biweekly.split('_');
     const targetDow = patternDay === 'mi' ? 3 : patternDay === 'do' ? 4 : -1;
-    if (targetDow !== -1) {
-      if (dow !== targetDow) return false;
-      const occurrenceInMonth = Math.floor((dayOfMonth - 1) / 7) + 1;
-      return occurrenceInMonth === Number(occurrence || 1);
-    }
+    if (targetDow !== -1 && weekdays.length === 0 && dow !== targetDow) return false;
+    return weekParity(dateStr) === Number(occurrence || 1);
   }
 
   if (frequency === 'wöchentlich') {

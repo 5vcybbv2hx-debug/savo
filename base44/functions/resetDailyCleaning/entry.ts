@@ -13,6 +13,7 @@ import {
   dueTasksOn,
   isCompletedInNight,
   isDemandNight,
+  lastDueOnOrBefore,
   nightDateFor,
   nightWindow,
   weekdayName,
@@ -81,20 +82,37 @@ export default async function (req: Request): Promise<Response> {
       }
     }
 
-    // ── 2) Reset nach Fälligkeit ─────────────────────────────────────────────
-    // Eine Aufgabe wird zurückgesetzt, wenn sie heute fällig ist, erledigt ist
-    // und heute noch nicht zurückgesetzt wurde. Damit greifen auch Wochen-,
-    // Zwei-Wochen-, Monats- und Wochenend-Aufgaben (nicht nur "täglich").
+    // ── 2) Reset nach der Fälligkeitsnacht ───────────────────────────────────
+    // (a) Aufgabe ist heute fällig → erledigt und heute noch nicht zurückgesetzt:
+    //     sie startet offen in ihren Fälligkeitstag.
+    // (b) Aufgabe war an einem früheren Tag fällig (nicht heute): ihre Schicht ist
+    //     vorbei (Fenster 05:00–05:00) → erledigte Aufgabe wird nach dieser Nacht
+    //     zurückgesetzt. Nicht fällige Aufgaben bleiben unberührt.
     const dueToday = dueTasksOn(tasks, todayStr, calToday);
-    const toReset = dueToday.filter((t: any) => t.is_completed === true && t.last_reset !== todayStr);
+    const dueTodayIds = new Set(dueToday.map((t: any) => t.id));
+
+    const resetPlan = tasks
+      .filter((t: any) => t.is_completed === true)
+      .map((t: any) => {
+        if (dueTodayIds.has(t.id)) {
+          return t.last_reset === todayStr ? null : { task: t, day: todayStr };
+        }
+        const lastDue = lastDueOnOrBefore(t, todayStr);
+        if (!lastDue || lastDue >= todayStr) return null;
+        if (t.last_reset && t.last_reset >= lastDue) return null;
+        return { task: t, day: lastDue };
+      })
+      .filter(Boolean) as Array<{ task: any; day: string }>;
+
+    const toReset = resetPlan.map((p) => p.task);
 
     if (toReset.length > 0) {
-      await db.CleaningTask.bulkUpdate(toReset.map((t: any) => ({
-        id: t.id,
+      await db.CleaningTask.bulkUpdate(resetPlan.map((p) => ({
+        id: p.task.id,
         is_completed: false,
         completed_by: null,
         completed_at: null,
-        last_reset: todayStr,
+        last_reset: p.day,
       })));
     }
 
@@ -123,6 +141,7 @@ export default async function (req: Request): Promise<Response> {
       due_today: dueToday.length,
       reset_count: toReset.length,
       reset_by_frequency: resetByFrequency,
+      reset_details: resetPlan.slice(0, 15).map((p) => ({ title: p.task.title, due_day: p.day })),
       reset_titles: toReset.slice(0, 15).map((t: any) => t.title),
     });
   } catch (error: any) {

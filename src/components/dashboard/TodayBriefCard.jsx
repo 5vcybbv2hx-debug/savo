@@ -22,6 +22,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { isHoliday, isHolidayEve, getHolidayName, getHolidayEveInfo } from '@/lib/germanHolidays';
+import { isTaskDueToday } from '@/lib/cleaningSchedule';
 
 const TODAY = format(new Date(), 'yyyy-MM-dd');
 const YESTERDAY = format(subDays(new Date(), 1), 'yyyy-MM-dd');
@@ -175,17 +176,15 @@ function useOpenRestockCount() {
     });
 }
 
-/** Putzliste-Fortschritt heute. */
+/** Putzliste-Fortschritt heute — nur Aufgaben, die heute laut Wochentag/KW dran sind. */
 function useCleaningTodayProgress() {
     return useQuery({
-        queryKey: ['brief-cleaning', TODAY_WEEKDAY],
+        queryKey: ['brief-cleaning', TODAY],
         queryFn: async () => {
             const items = await base44.entities.CleaningTask.filter({ is_active: true });
             const tasks = (items || []).filter(t => {
-                if (t.area === 'Wochentagsaufgaben') return false;
                 if (t.is_active === false) return false;
-                if (t.due_weekdays && t.due_weekdays.length > 0 && !t.due_weekdays.includes(TODAY_WEEKDAY)) return false;
-                return true;
+                return isTaskDueToday(t, TODAY);
             });
             return {
                 done: tasks.filter(t => t.is_completed).length,
