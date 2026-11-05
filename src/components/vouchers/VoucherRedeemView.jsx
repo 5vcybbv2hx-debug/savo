@@ -210,6 +210,7 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                         vouchers={vouchers}
                         single={print62.voucher}
                         redeemed={print62.redeemed}
+                        defaultFormat="einloese_beleg"
                         defaultKind="redeem"
                     />
                 )}
@@ -413,6 +414,7 @@ export default function VoucherRedeemView({ vouchers = [], currentUser, isPendin
                     vouchers={vouchers}
                     single={print62.voucher}
                     redeemed={print62.redeemed}
+                    defaultFormat="geschenkgutschein"
                     defaultKind="gift"
                 />
             )}

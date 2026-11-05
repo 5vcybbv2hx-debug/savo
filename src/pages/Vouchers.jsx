@@ -328,7 +328,10 @@ export default function Vouchers() {
                                                 {STATUS_LABEL[v.status] || v.status}
                                             </Badge>
                                             <button
-                                                onClick={() => setPrint62({ voucher: v })}
+                                                onClick={() => setPrint62({
+                                                    voucher: v,
+                                                    format: v.status === 'eingelöst' ? 'einloese_beleg' : 'geschenkgutschein',
+                                                })}
                                                 title="Gutschein drucken (62 mm)"
                                                 className="text-muted-foreground hover:text-foreground p-0.5"
                                             >
@@ -446,6 +449,7 @@ export default function Vouchers() {
                     vouchers={vouchers}
                     redemptions={redemptions}
                     single={print62.voucher || null}
+                    defaultFormat={print62.format || null}
                     defaultKind={print62.voucher?.status === 'eingelöst' ? 'redeem' : 'gift'}
                 />
             )}
@@ -455,6 +459,7 @@ export default function Vouchers() {
                 <VoucherReceipt
                     voucher={receiptVoucher}
                     onClose={() => setReceiptVoucher(null)}
+                    onPrint62={(v) => { setReceiptVoucher(null); setPrint62({ voucher: v, format: 'verkaufsbeleg' }); }}
                 />
             )}
         </div>

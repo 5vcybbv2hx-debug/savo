@@ -1,10 +1,13 @@
 /**
- * Voucher62PrintDialog — Druck der 62 × 100 mm Gutschein-Ausgaben (Brother QL-800).
+ * Voucher62PrintDialog — Druck der 62-mm-Gutschein-Ausgaben (Brother QL-800).
  *
- * Zwei Ausgaben, Auswahl vor dem Druck:
- *  a) Geschenkgutschein (Verkauf)
- *  b) Einlösebeleg (nach Einlösung)
- * Zusätzlich: alle offenen Gutscheine in einem Rutsch (Nachdruck), Anzahl vorab sichtbar.
+ * Format-Selector mit vier Standardformaten (Registry in voucherPrint62):
+ *   geschenkgutschein · einloese_beleg · siegel · verkaufsbeleg
+ * Vorauswahl je Kontext über defaultFormat bzw. defaultKind:
+ *   nach Verkauf → verkaufsbeleg · nach Einlösung → einloese_beleg ·
+ *   aus der Gutschein-Ansicht → geschenkgutschein
+ * Sammeldruck: mehrere Gutscheine im gewählten Format, je eine Seite,
+ * Anzahl steht vor dem Druck im Dialog.
  * Der 80-mm-Beleg für den Sam4s bleibt davon unberührt.
  */
 import React, { useEffect, useState } from 'react';
@@ -15,35 +18,40 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { generateVoucherAccessToken } from '@/lib/vouchers';
-import { buildVoucherPdf, voucherQrPayload } from '@/lib/voucherPrint62';
+import {
+    buildVoucherPdf, voucherQrPayload, VOUCHER_FORMAT_LIST, getVoucherFormat,
+} from '@/lib/voucherPrint62';
 import { openPdfForPrint } from '@/lib/slotLabels';
 import Voucher62Preview from '@/components/vouchers/Voucher62Preview';
 import { Printer, Loader2, AlertTriangle, RotateCcw, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
-const KINDS = [
-    { key: 'gift', label: 'Geschenkgutschein', hint: 'Verkauf · 62 × 100 mm' },
-    { key: 'redeem', label: 'Einlösebeleg', hint: 'nach Einlösung · 62 × 100 mm' },
-];
+const FORMAT_BY_KIND = {
+    gift: 'geschenkgutschein',
+    redeem: 'einloese_beleg',
+};
 
 const isOpenStatus = (v) => v.status === 'offen' || v.status === 'teilweise_eingelöst';
 
 export default function Voucher62PrintDialog({
-    open, onClose, vouchers = [], redemptions = [], single = null, defaultKind = 'gift', redeemed = null,
+    open, onClose, vouchers = [], redemptions = [], single = null,
+    defaultKind = 'gift', defaultFormat = null, redeemed = null,
 }) {
     const queryClient = useQueryClient();
-    const [kind, setKind] = useState(defaultKind);
+    const initialFormat = defaultFormat || FORMAT_BY_KIND[defaultKind] || 'geschenkgutschein';
+    const [format, setFormat] = useState(initialFormat);
     const [stage, setStage] = useState('choose');   // choose | done
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const [previewQr, setPreviewQr] = useState(null);
     const [lastCount, setLastCount] = useState(0);
+    const [lastFormat, setLastFormat] = useState(initialFormat);
 
     useEffect(() => {
         if (!open) return;
-        setKind(defaultKind);
+        setFormat(initialFormat);
         setStage('choose');
         setError(null);
-    }, [open, defaultKind, single?.id]);
+    }, [open, initialFormat, single?.id]);
 
     // QR nur für die Einzel-Vorschau (Batch zeigt nur die Anzahl)
     useEffect(() => {
@@ -57,10 +65,13 @@ export default function Voucher62PrintDialog({
         return () => { alive = false; };
     }, [open, single?.id, single?.access_token]);
 
+    const fmt = getVoucherFormat(format);
+    const isRedeem = format === 'einloese_beleg';
+
     // ── Ziel-Liste ────────────────────────────────────────────────────────
     const openVouchers = vouchers.filter(isOpenStatus);
     const redeemableHistory = vouchers.filter((v) => v.status === 'teilweise_eingelöst' || v.status === 'eingelöst');
-    const batchList = kind === 'gift' ? openVouchers : redeemableHistory;
+    const batchList = isRedeem ? redeemableHistory : openVouchers;
     const targets = single ? [single] : batchList;
 
     // ── Einlöse-Daten ermitteln ───────────────────────────────────────────
@@ -111,13 +122,16 @@ export default function Voucher62PrintDialog({
         setError(null);
         try {
             const withTokens = await ensureTokens(targets);
-            const items = withTokens.map((v) => (kind === 'redeem'
-                ? { kind: 'redeem', voucher: v, ...redeemInfoFor(v) }
-                : { kind: 'gift', voucher: v }));
+            const items = withTokens.map((v) => ({
+                format,
+                voucher: v,
+                ...(isRedeem ? redeemInfoFor(v) : {}),
+            }));
 
             const doc = await buildVoucherPdf(items);
-            openPdfForPrint(doc);
+            if (doc) openPdfForPrint(doc);
             setLastCount(items.length);
+            setLastFormat(format);
             setStage('done');
         } catch (err) {
             setError(String(err?.message || err));
@@ -127,7 +141,7 @@ export default function Voucher62PrintDialog({
     };
 
     const previewVoucher = single || null;
-    const previewInfo = previewVoucher && kind === 'redeem' ? redeemInfoFor(previewVoucher) : null;
+    const previewInfo = previewVoucher && isRedeem ? redeemInfoFor(previewVoucher) : null;
 
     return (
         <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -146,7 +160,10 @@ export default function Voucher62PrintDialog({
                             <p className="text-sm font-semibold text-foreground mt-1.5">
                                 {lastCount === 1 ? '1 Seite gedruckt' : `${lastCount} Seiten gedruckt`}
                             </p>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">62 × 100 mm · im Druckdialog 100 % wählen</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                                {getVoucherFormat(lastFormat).label} · {getVoucherFormat(lastFormat).width} × {getVoucherFormat(lastFormat).height} mm ·
+                                im Druckdialog 100 % wählen
+                            </p>
                         </div>
                         <div className="flex gap-2">
                             <Button variant="secondary" className="flex-1" onClick={() => setStage('choose')}>
@@ -161,33 +178,40 @@ export default function Voucher62PrintDialog({
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {/* Ausgabe wählen */}
-                        <div className="grid grid-cols-2 gap-2">
-                            {KINDS.map((k) => (
-                                <button
-                                    key={k.key}
-                                    type="button"
-                                    onClick={() => setKind(k.key)}
-                                    className={cn(
-                                        'rounded-xl border px-2 py-2.5 text-left transition-all',
-                                        kind === k.key
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-border hover:border-primary/40'
-                                    )}
-                                >
-                                    <p className={cn('text-xs font-semibold', kind === k.key ? 'text-primary' : 'text-foreground')}>
-                                        {k.label}
-                                    </p>
-                                    <p className="text-[10px] text-muted-foreground mt-0.5">{k.hint}</p>
-                                </button>
-                            ))}
+                        {/* Format wählen */}
+                        <div>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
+                                Format
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {VOUCHER_FORMAT_LIST.map((f) => (
+                                    <button
+                                        key={f.key}
+                                        type="button"
+                                        onClick={() => setFormat(f.key)}
+                                        className={cn(
+                                            'rounded-xl border px-2 py-2 text-left transition-all',
+                                            format === f.key
+                                                ? 'border-primary bg-primary/10'
+                                                : 'border-border hover:border-primary/40'
+                                        )}
+                                    >
+                                        <p className={cn('text-xs font-semibold', format === f.key ? 'text-primary' : 'text-foreground')}>
+                                            {f.label}
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                            {f.hint} · {f.width} × {f.height} mm
+                                        </p>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Einzel-Vorschau / Batch-Anzahl */}
                         {previewVoucher ? (
                             <div className="rounded-xl bg-muted/40 py-3">
                                 <Voucher62Preview
-                                    kind={kind}
+                                    format={format}
                                     voucher={previewVoucher}
                                     amount={previewInfo?.amount}
                                     remaining={previewInfo?.remaining}
@@ -202,10 +226,10 @@ export default function Voucher62PrintDialog({
                             </div>
                         ) : (
                             <div className="rounded-xl bg-muted/40 px-4 py-3 text-center">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Vorschau</p>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sammeldruck</p>
                                 <p className="text-2xl font-bold text-foreground mt-1 tabular-nums">{targets.length}</p>
                                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                                    {kind === 'gift' ? 'offene Gutscheine' : 'eingelöste Gutscheine'} · je 62 × 100 mm,
+                                    {isRedeem ? 'eingelöste Gutscheine' : 'offene Gutscheine'} · je {fmt.width} × {fmt.height} mm,
                                     ein Gutschein pro Seite
                                 </p>
                             </div>

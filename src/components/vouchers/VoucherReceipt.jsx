@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { Button } from '@/components/ui/button';
-import { Printer, X } from 'lucide-react';
+import { Printer, X, Ticket } from 'lucide-react';
 import { voucherQrUrl } from '@/lib/vouchers';
 
 const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
@@ -38,7 +38,7 @@ const RECEIPT_CSS = `
 }
 `;
 
-export default function VoucherReceipt({ voucher, onClose }) {
+export default function VoucherReceipt({ voucher, onClose, onPrint62 }) {
     const [qr, setQr] = useState(null);
 
     useEffect(() => {
@@ -105,6 +105,12 @@ export default function VoucherReceipt({ voucher, onClose }) {
                         <Printer className="w-4 h-4 mr-1.5" />
                         Drucken
                     </Button>
+                    {onPrint62 && (
+                        <Button variant="secondary" onClick={() => onPrint62(voucher)}>
+                            <Ticket className="w-4 h-4 mr-1.5" />
+                            62 mm
+                        </Button>
+                    )}
                 </div>
             </div>
         </div>
