@@ -81,7 +81,7 @@
     "baseline_locked": {
       "type": "boolean",
       "default": false,
-      "description": "Basis ist gesperrt. \u00c4nderungen nur \u00fcber 'Basis neu aufnehmen' (alte Basis wandert nach baseline_history)."
+      "description": "Basis gesperrt. \u00c4nderungen nur \u00fcber 'Basis neu aufnehmen'."
     },
     "baseline_segments": {
       "type": "array",
@@ -98,7 +98,8 @@
             "description": "Leer = Segment ist frei/leer"
           },
           "article_name": {
-            "type": "string"
+            "type": "string",
+            "description": "Artikelname im Segment"
           },
           "baseline_count": {
             "type": "number",
@@ -110,7 +111,7 @@
           },
           "x_from": {
             "type": "number",
-            "description": "Segmente links als Anteil der Bildbreite (0-1)"
+            "description": "Segment links als Anteil der Bildbreite (0-1)"
           },
           "x_to": {
             "type": "number",
