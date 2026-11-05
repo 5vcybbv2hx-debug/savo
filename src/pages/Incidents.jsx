@@ -61,7 +61,7 @@ export default function Incidents() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
-            <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+            <div className="max-w-2xl mx-auto px-5 py-4 space-y-3">
                 <div className="flex items-center gap-3">
                     <Link to="/" className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-all">
                         <ArrowLeft className="w-4 h-4" />

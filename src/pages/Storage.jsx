@@ -28,7 +28,7 @@ export default function Storage() {
   if (!permissions.canViewWarehouse && !permissions.isManager) return <PermissionDenied />;
 
   return (
-    <div className="max-w-3xl mx-auto px-3 py-4 pb-32 md:pb-8">
+    <div className="max-w-3xl mx-auto px-5 py-4 pb-32 md:pb-8">
       <div className="flex items-start justify-between gap-3 mb-5">
         <div>
           <h1 className="page-title">Lagerplätze</h1>

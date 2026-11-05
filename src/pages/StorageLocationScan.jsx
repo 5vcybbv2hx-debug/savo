@@ -310,7 +310,7 @@ export default function StorageLocationScan() {
       </div>
 
       {/* ── Article list ─────────────────────────────────────────────── */}
-      <div className="max-w-lg mx-auto px-4 pt-5 space-y-2">
+      <div className="max-w-lg mx-auto px-5 pt-4 space-y-3">
 
         {assignments.length > 0 && (
           <p className="text-[11px] text-muted-foreground text-center pb-1">

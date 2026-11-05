@@ -445,7 +445,7 @@ export default function PriceCalculator() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="max-w-2xl mx-auto px-4 py-6">
+            <div className="max-w-2xl mx-auto px-5 py-4">
                 {/* Header */}
                 <div className="mb-5">
                     <h1 className="page-title">Schnellkalkulation</h1>

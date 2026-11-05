@@ -71,7 +71,7 @@ export default function BetriebHub() {
     const openCleaningCount = cleaningTasks.filter(t => !t.is_completed).length;
 
     return (
-        <div className="max-w-2xl mx-auto px-4 py-6 pb-32 md:pb-8">
+        <div className="max-w-2xl mx-auto px-5 py-4 pb-32 md:pb-8">
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-foreground">Betrieb</h1>
                 <p className="text-muted-foreground text-sm mt-1">Gäste, Aufgaben & tägliche Abläufe</p>

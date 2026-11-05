@@ -415,7 +415,7 @@ export default function Inventory() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+            <div className="max-w-6xl mx-auto px-5 py-4 sm:py-6">
                 {/* Header */}
                 <div className="flex flex-col gap-3 mb-6">
                     <div className="flex items-center justify-between">

@@ -144,7 +144,7 @@ export default function CleaningChecklist() {
                 )}
             </div>
 
-            <div className="max-w-lg mx-auto px-4 py-6 space-y-3">
+            <div className="max-w-lg mx-auto px-5 py-4 space-y-3">
                 {isLoading && (
                     <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
                         <Loader2 className="w-5 h-5 animate-spin" />

@@ -612,7 +612,7 @@ export default function ExternalBusiness() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
-            <div className="max-w-lg mx-auto px-4 py-5 space-y-5">
+            <div className="max-w-lg mx-auto px-5 py-5 space-y-3">
 
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">

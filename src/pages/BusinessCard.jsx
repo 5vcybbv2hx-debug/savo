@@ -38,7 +38,7 @@ export default function BusinessCardPage() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-0">
-            <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+            <div className="max-w-4xl mx-auto px-5 py-4 sm:py-6">
                 <div className="mb-6 flex items-start justify-between">
                     <div>
                         <h1 className="page-title flex items-center gap-2">

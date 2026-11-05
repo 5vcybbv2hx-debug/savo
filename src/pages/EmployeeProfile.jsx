@@ -241,7 +241,7 @@ export default function EmployeeProfile() {
 
   return (
     <div className="min-h-screen bg-background pb-28 md:pb-8">
-      <div className="max-w-2xl mx-auto px-3 py-4">
+      <div className="max-w-2xl mx-auto px-5 py-4">
 
         {/* ── Top bar ─────────────────────────────────────────────── */}
         <div className="flex items-center gap-3 mb-5">

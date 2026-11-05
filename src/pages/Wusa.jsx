@@ -546,7 +546,7 @@ export default function Wusa() {
                     @page { margin: 5mm; }
                 }
             `}</style>
-            <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+            <div className="max-w-2xl mx-auto px-5 py-4 sm:py-6 space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                     <div>

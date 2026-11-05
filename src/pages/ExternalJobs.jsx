@@ -57,7 +57,7 @@ export default function ExternalJobs() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto px-4 py-6 pb-32 md:pb-8">
+        <div className="max-w-2xl mx-auto px-5 py-4 pb-32 md:pb-8">
             <div className="flex items-start justify-between gap-3 mb-5">
                 <div>
                     <h1 className="page-title">Außeneinsätze</h1>

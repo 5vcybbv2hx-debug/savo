@@ -138,7 +138,7 @@ export default function EventLanding() {
         <div className="min-h-screen bg-background text-foreground" style={{
             backgroundImage: 'radial-gradient(ellipse 70% 50% at 50% -10%, hsl(187 92% 50% / 0.14) 0%, transparent 60%)',
         }}>
-            <div className="max-w-lg mx-auto px-4 py-8 sm:py-12 space-y-6">
+            <div className="max-w-lg mx-auto px-5 py-8 sm:py-12 space-y-3">
 
                 {/* Brand */}
                 <div className="text-center">

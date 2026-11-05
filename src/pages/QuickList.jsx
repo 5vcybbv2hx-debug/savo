@@ -238,7 +238,7 @@ export default function QuickList() {
             await queryClient.invalidateQueries({ queryKey: ['quicklist-items'] });
             await queryClient.invalidateQueries({ queryKey: ['articles'] });
         }}>
-        <div className="max-w-2xl mx-auto px-3 py-4 pb-32 md:pb-8">
+        <div className="max-w-2xl mx-auto px-5 py-4 pb-32 md:pb-8">
             {/* Header */}
             <div className="flex items-start justify-between gap-3 mb-3">
                 <div>

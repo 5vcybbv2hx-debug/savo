@@ -489,7 +489,7 @@ export default function Restock() {
         <div className="min-h-screen bg-background pb-24 md:pb-8">
             {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
-            <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+            <div className="max-w-2xl mx-auto px-5 py-4 sm:py-6 space-y-3">
 
                 {/* ── Header ────────────────────────────────────────────── */}
                 <div className="flex items-start justify-between gap-3">

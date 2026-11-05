@@ -65,7 +65,7 @@ export default function ReserviertSchilder() {
       </div>
 
       {/* Vorschau der Vorlage */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      <div className="max-w-2xl mx-auto px-5 py-4">
         <img
           src={RESERVIERT_VORLAGE_URL}
           alt="Reserviert-Schilder Vorlage A4 mit 4 Schildern"

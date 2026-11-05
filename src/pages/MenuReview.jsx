@@ -90,7 +90,7 @@ export default function MenuReview() {
 
     if (permissions.isLoading || isLoading) {
         return (
-            <div className="min-h-screen bg-background p-4 space-y-4 max-w-lg mx-auto">
+            <div className="min-h-screen bg-background p-5 space-y-3 max-w-lg mx-auto">
                 <ListSkeleton count={1} height="h-10" />
                 <ListSkeleton count={3} height="h-32" />
             </div>

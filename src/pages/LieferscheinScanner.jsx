@@ -326,7 +326,7 @@ export default function LieferscheinScanner() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <div className="max-w-6xl mx-auto px-5 py-4 sm:py-6">
         <div className="mb-5">
           <h1 className="page-title">Lieferschein-Scanner</h1>
           <p className="text-muted-foreground text-sm mt-1">

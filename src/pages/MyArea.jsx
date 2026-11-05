@@ -96,7 +96,7 @@ export default function MyAreaPage() {
 
     return (
         <div className="min-h-screen bg-background pb-24 md:pb-8">
-            <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+            <div className="max-w-4xl mx-auto px-5 py-4 sm:py-6">
                 {/* Header */}
                 <div className="mb-4 sm:mb-6">
                     <h1 className="page-title">Mein Bereich</h1>
