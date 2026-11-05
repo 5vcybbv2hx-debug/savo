@@ -253,9 +253,9 @@ function ClockCard({ currentEmployee }) {
 function SectionHeader({ label, to, linkLabel = 'Alle' }) {
     return (
         <div className="flex items-center justify-between mb-1.5">
-            <p className="text-[10px] font-semibold text-muted-foreground/90 uppercase tracking-wider">{label}</p>
+            <p className="text-[13.5px] font-medium text-foreground tracking-tight">{label}</p>
             {to && (
-                <Link to={createPageUrl(to)} className="flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground">
+                <Link to={createPageUrl(to)} className="flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground">
                     {linkLabel} <ChevronRight className="w-3 h-3" />
                 </Link>
             )}
@@ -693,7 +693,7 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
                                 {getGreeting()}{currentEmployee ? `, ${currentEmployee.name.split(' ')[0]}` : ''}!
                             </h1>
                             <p className="page-subtitle">
-                                {format(new Date(), "EEEE, d. MMMM yyyy", { locale: de })}
+                                {format(new Date(), "EEEE, d. MMMM", { locale: de })}
                             </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -728,20 +728,20 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
 
                     {/* Personal Stats — nur wenn Employee verknüpft */}
                     {currentEmployee && (
-                        <div className="grid grid-cols-3 gap-2">
-                            {[
-                                { label: 'Stunden', value: `${hoursThisWeek.toFixed(1)}h`, sub: 'diese Woche' },
-                                { label: 'Urlaub',  value: remainingVacationDays,          sub: 'Tage übrig' },
-                                { label: 'Schichten', value: myUpcomingShifts.length,      sub: 'kommend' },
-                            ].map(s => (
-                                <Card key={s.label} className="bg-card border-border">
-                                    <CardContent className="p-3 text-center">
-                                        <p className="text-lg font-bold text-foreground leading-none">{s.value}</p>
-                                        <p className="text-[10px] text-muted-foreground mt-1">{s.sub}</p>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        <Card className="p-4">
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { label: 'Std. diese Woche',  value: `${hoursThisWeek.toFixed(1)}h` },
+                                    { label: 'Urlaubstage übrig', value: remainingVacationDays },
+                                    { label: 'Schichten kommend', value: myUpcomingShifts.length },
+                                ].map(s => (
+                                    <div key={s.label} className="rounded-xl bg-surface px-3 py-3 text-center">
+                                        <p className="stat-value">{s.value}</p>
+                                        <p className="stat-label mt-1.5">{s.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
                     )}
                 </div>
 
