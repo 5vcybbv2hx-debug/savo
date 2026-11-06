@@ -44,7 +44,7 @@ export default function EventArchive({ events, onEdit, onDelete }) {
         <div className="space-y-4">
             {Object.entries(groupedEvents).map(([monthKey, monthEvents]) => (
                 <div key={monthKey}>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
+                    <h3 className="text-[12px] font-medium text-muted-foregroundr mb-3 px-1">
                         {monthKey}
                     </h3>
                     <div className="space-y-2">
@@ -90,7 +90,7 @@ export default function EventArchive({ events, onEdit, onDelete }) {
                                     <CardContent className="pb-4 pt-0 space-y-3 border-t border-border">
                                         {event.start_time && (
                                             <div>
-                                                <p className="text-xs text-foreground0 uppercase">Zeit</p>
+                                                <p className="text-[12px] text-muted-foreground">Zeit</p>
                                                 <p className="text-sm text-foreground/75">
                                                     {event.start_time}{event.end_time && ` - ${event.end_time}`}
                                                 </p>
@@ -99,21 +99,21 @@ export default function EventArchive({ events, onEdit, onDelete }) {
 
                                         {event.description && (
                                             <div>
-                                                <p className="text-xs text-foreground0 uppercase">Beschreibung</p>
+                                                <p className="text-[12px] text-muted-foreground">Beschreibung</p>
                                                 <p className="text-sm text-foreground/75">{event.description}</p>
                                             </div>
                                         )}
 
                                         {event.expected_guests && (
                                             <div>
-                                                <p className="text-xs text-foreground0 uppercase">Erwartete Gäste</p>
+                                                <p className="text-[12px] text-muted-foreground">Erwartete Gäste</p>
                                                 <p className="text-sm text-foreground/75">{event.expected_guests}</p>
                                             </div>
                                         )}
 
                                         {event.notes && (
                                             <div>
-                                                <p className="text-xs text-foreground0 uppercase">Notizen</p>
+                                                <p className="text-[12px] text-muted-foreground">Notizen</p>
                                                 <p className="text-sm text-foreground/75 italic">{event.notes}</p>
                                             </div>
                                         )}

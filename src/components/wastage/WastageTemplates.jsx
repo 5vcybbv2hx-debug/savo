@@ -183,7 +183,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
 
             {templates.length === 0 ? (
                 <Card className="p-4 bg-card border-border border-dashed text-center">
-                    <p className="text-foreground0 text-sm">Noch keine Vorlagen. Erstelle Vorlagen für häufige Schwund-Einträge.</p>
+                    <p className="text-muted-foreground text-sm">Noch keine Vorlagen. Erstelle Vorlagen für häufige Schwund-Einträge.</p>
                 </Card>
             ) : (
                 <div className="flex flex-wrap gap-2">
@@ -196,10 +196,10 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                                     <p className="text-xs text-muted-foreground">{count} Artikel</p>
                                 </div>
                                 <div className="flex gap-1 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openEdit(template)} className="p-1 text-foreground0 hover:text-foreground/75">
+                                    <button onClick={() => openEdit(template)} className="p-1 text-muted-foreground hover:text-foreground/75">
                                         <Pencil className="w-3.5 h-3.5" />
                                     </button>
-                                    <button onClick={() => handleDelete(template.id)} className="p-1 text-foreground0 hover:text-status-danger">
+                                    <button onClick={() => handleDelete(template.id)} className="p-1 text-muted-foreground hover:text-status-danger">
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
@@ -281,7 +281,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                                 return (
                                     <div key={idx} className="p-3 bg-background rounded-lg border border-border space-y-2 relative">
                                         {items.length > 1 && (
-                                            <button onClick={() => removeItem(idx)} className="absolute top-2 right-2 text-foreground0 hover:text-status-danger">
+                                            <button onClick={() => removeItem(idx)} className="absolute top-2 right-2 text-muted-foreground hover:text-status-danger">
                                                 <X className="w-4 h-4" />
                                             </button>
                                         )}

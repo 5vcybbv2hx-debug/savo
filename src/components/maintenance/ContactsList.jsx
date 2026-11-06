@@ -37,7 +37,7 @@ export default function ContactsList({ contacts = [], onChange }) {
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                <h3 className="text-[13.5px] font-medium text-foreground tracking-tight">
                     Wartungsfirma / Kontakte
                 </h3>
                 {!isAdding && (

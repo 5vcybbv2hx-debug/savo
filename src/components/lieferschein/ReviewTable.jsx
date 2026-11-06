@@ -27,7 +27,7 @@ export default function ReviewTable({ positions, articles, openItems, onChange, 
 
   return (
     <div className="space-y-2">
-      <div className="hidden lg:grid grid-cols-[minmax(0,1.3fr)_minmax(0,1.5fr)_70px_104px_84px_94px_74px_32px] gap-2 px-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="hidden lg:grid grid-cols-[minmax(0,1.3fr)_minmax(0,1.5fr)_70px_104px_84px_94px_74px_32px] gap-2 px-3 text-[11.5px] font-medium text-muted-foreground">
         <span>Lieferschein</span>
         <span>Artikel</span>
         <span>Menge</span>
@@ -79,7 +79,7 @@ export default function ReviewTable({ positions, articles, openItems, onChange, 
           )}
         </div>
         <div className="text-right">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Summe netto</p>
+          <p className="text-[11.5px] text-muted-foreground">Summe netto</p>
           {priced.length > 0 ? (
             <p className="text-lg font-bold text-foreground num">{totalNet.toFixed(2)} €</p>
           ) : (

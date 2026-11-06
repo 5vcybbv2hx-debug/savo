@@ -249,7 +249,7 @@ export default function DailyRevenueList({ revenues, timeEntries, tipDistributio
             {/* ── Section header + search ────────────────────────────────── */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">Verlauf</h2>
+                    <h2 className="text-[13.5px] font-medium text-foreground tracking-tight">Verlauf</h2>
                     <span className="text-xs text-muted-foreground">{revenues.length} Einträge</span>
                 </div>
 

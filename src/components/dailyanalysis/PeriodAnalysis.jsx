@@ -179,7 +179,7 @@ export default function PeriodAnalysis({ period, selectedDate, dailyRevenues, ti
             <div className="grid grid-cols-2 gap-3">
                 <Card className="bg-card border-border col-span-2">
                     <CardContent className="px-4 py-4">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                        <p className="text-[12px] text-muted-foreground mb-1 flex items-center gap-1.5">
                             <DollarSign className="w-3.5 h-3.5 text-status-ok" />Gesamtumsatz
                         </p>
                         <p className="text-3xl font-bold text-status-ok">{totalRevenue.toFixed(2)} €</p>
@@ -214,7 +214,7 @@ export default function PeriodAnalysis({ period, selectedDate, dailyRevenues, ti
                 <Card className={cn('border-2 col-span-2', netRevenue >= 0 ? 'border-status-ok/30 bg-status-ok/5' : 'border-status-danger/30 bg-status-danger/5')}>
                     <CardContent className="px-4 py-3 flex items-center justify-between gap-4">
                         <div>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wide">Umsatz − Aushilfen</p>
+                            <p className="text-[12px] text-muted-foreground">Umsatz − Aushilfen</p>
                             <p className="text-xs text-muted-foreground">⌀ {(netRevenue / Math.max(daysWithRevenue, 1)).toFixed(2)} € / Tag</p>
                         </div>
                         <p className={cn('text-2xl font-bold shrink-0', netRevenue >= 0 ? 'text-status-ok' : 'text-status-danger')}>{netRevenue.toFixed(2)} €</p>
@@ -235,7 +235,7 @@ export default function PeriodAnalysis({ period, selectedDate, dailyRevenues, ti
             {/* Best / Worst */}
             <Card className="bg-card border-border">
                 <CardHeader className="pb-2 pt-4 px-4">
-                    <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                    <CardTitle className="text-[12px] font-medium text-muted-foreground flex items-center gap-1.5">
                         <Award className="w-3.5 h-3.5" />Highlights
                     </CardTitle>
                 </CardHeader>

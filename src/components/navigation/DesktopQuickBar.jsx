@@ -71,7 +71,7 @@ export default function DesktopQuickBar() {
             className="hidden md:flex fixed bottom-0 right-0 z-40 items-center justify-center gap-1 px-6 py-2 bg-card/90 border-t border-border/50 backdrop-blur-xl transition-all duration-300"
             style={{ left: sidebarWidth }}
         >
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest mr-3 shrink-0">Schnellzugriff</span>
+            <span className="text-[11.5px] text-muted-foreground mr-3 shrink-0">Schnellzugriff</span>
             <ClockChip />
             {permissions.canViewAnalytics && (
                 <Link

@@ -33,7 +33,7 @@ export default function ContactForm({ contact, onSave, onCancel, isPrimary, onTo
     return (
         <form onSubmit={handleSubmit} className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
             <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                <h4 className="text-[13.5px] font-medium text-foreground tracking-tight">
                     {contact ? 'Kontakt bearbeiten' : 'Neuer Kontakt'}
                 </h4>
                 <button

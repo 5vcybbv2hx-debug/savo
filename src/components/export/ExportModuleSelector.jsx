@@ -42,7 +42,7 @@ export default function ExportModuleSelector({ selected, onChange, onStartExport
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Module auswählen</h3>
+                <h3 className="text-[13.5px] font-medium text-foreground tracking-tight">Module auswählen</h3>
                 <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={selectAll} className="text-xs border-border">Alle</Button>
                     <Button size="sm" variant="outline" onClick={clearAll} className="text-xs border-border">Keine</Button>

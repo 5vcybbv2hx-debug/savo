@@ -127,7 +127,7 @@ export default function ExportValidation() {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Datenvalidierung</h3>
+                    <h3 className="text-[13.5px] font-medium text-foreground tracking-tight">Datenvalidierung</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">Prüft Datenkonsistenz vor dem Export</p>
                 </div>
                 <Button

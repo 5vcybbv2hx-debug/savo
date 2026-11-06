@@ -25,21 +25,21 @@ export default function BookingResult({ result, onReset }) {
         <div className={result.counts.leergut > 0 ? 'grid grid-cols-2 sm:grid-cols-4 gap-2' : 'grid grid-cols-3 gap-2'}>
           <div className="rounded-xl border border-border bg-card p-3 text-center">
             <p className="text-lg font-bold text-foreground num">{result.counts.booked ?? 0}</p>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Positionen Ware gebucht</p>
+            <p className="text-[11.5px] text-muted-foreground">Positionen Ware gebucht</p>
           </div>
           {result.counts.leergut > 0 && (
             <div className="rounded-xl border border-border bg-card p-3 text-center">
               <p className="text-lg font-bold text-status-warn num">{result.counts.leergut}</p>
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Leergut (nicht gebucht)</p>
+              <p className="text-[11.5px] text-muted-foreground">Leergut (nicht gebucht)</p>
             </div>
           )}
           <div className="rounded-xl border border-border bg-card p-3 text-center">
             <p className="text-lg font-bold text-status-ok num">{result.counts.withPrice ?? 0}</p>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">mit Preis übernommen</p>
+            <p className="text-[11.5px] text-muted-foreground">mit Preis übernommen</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-3 text-center">
             <p className="text-lg font-bold text-muted-foreground num">{result.counts.withoutPrice ?? 0}</p>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">ohne Preis</p>
+            <p className="text-[11.5px] text-muted-foreground">ohne Preis</p>
           </div>
         </div>
       )}

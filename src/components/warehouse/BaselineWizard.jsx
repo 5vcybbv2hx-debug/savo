@@ -233,7 +233,7 @@ export default function BaselineWizard({ open, slots = [], assignments = [], ini
       <div className="flex flex-col h-full w-full sm:h-auto sm:max-h-[94vh] sm:max-w-lg bg-background sm:rounded-2xl sm:border sm:border-border overflow-hidden">
         <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-border/40 shrink-0">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Fach-Basis aufnehmen</p>
+            <p className="text-[13.5px] font-medium text-primary tracking-tight">Fach-Basis aufnehmen</p>
             <h2 className="text-base font-bold text-foreground truncate">
               {slot ? (slot.full_name || slot.name) : 'Fach wählen'}
             </h2>

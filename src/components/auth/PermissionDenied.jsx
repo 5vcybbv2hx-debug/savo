@@ -11,7 +11,7 @@ export default function PermissionDenied({ message }) {
                 <p className="text-muted-foreground">
                     {message || 'Du hast keine Berechtigung, diese Seite zu sehen.'}
                 </p>
-                <p className="text-sm text-foreground0 mt-4">
+                <p className="text-sm text-muted-foreground mt-4">
                     Wende dich an einen Manager, wenn du Zugriff benötigst.
                 </p>
             </Card>

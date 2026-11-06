@@ -118,7 +118,7 @@ export default function MyShiftsCalendarSync({ employeeId, existingToken }) {
 
             {/* Anleitungen kompakt */}
             <div className="space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">So einrichten:</p>
+                <p className="text-[12px] font-medium text-muted-foreground">So einrichten:</p>
 
                 <div className="rounded-xl border border-border divide-y divide-border/50 overflow-hidden">
                     {[

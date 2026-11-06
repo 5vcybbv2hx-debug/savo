@@ -107,14 +107,14 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                     <div className="space-y-4">
                         {/* Umsatzdaten */}
                         <div className="bg-card rounded-xl p-4 space-y-3">
-                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                            <h3 className="text-[13.5px] font-medium text-muted-foreground tracking-tight flex items-center gap-2">
                                 <DollarSign className="w-4 h-4" /> Z-Abschlag
                             </h3>
                             {rows.map(({ label, key, value, color, icon: Icon, required }) => (
                                 editing ? (
                                     <div key={key} className="flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2 text-foreground/75 text-sm w-32 shrink-0">
-                                            <Icon className="w-4 h-4 text-foreground0" />
+                                            <Icon className="w-4 h-4 text-muted-foreground" />
                                             {label}
                                         </div>
                                         <Input
@@ -130,7 +130,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                                 ) : (
                                     <div key={key} className="flex items-center justify-between">
                                         <div className="flex items-center gap-2 text-foreground/75 text-sm">
-                                            <Icon className="w-4 h-4 text-foreground0" />
+                                            <Icon className="w-4 h-4 text-muted-foreground" />
                                             {label}
                                         </div>
                                         {value != null ? (
@@ -156,7 +156,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                                 </div>
                             ) : revenue.notes ? (
                                 <div className="pt-2 border-t border-border">
-                                    <p className="text-xs text-foreground0 mb-1">Notizen</p>
+                                    <p className="text-xs text-muted-foreground mb-1">Notizen</p>
                                     <p className="text-foreground/75 text-sm">{revenue.notes}</p>
                                 </div>
                             ) : null}
@@ -164,7 +164,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
 
                         {/* Personalkosten */}
                         <div className="bg-card rounded-xl p-4 space-y-2">
-                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                            <h3 className="text-[13.5px] font-medium text-muted-foreground tracking-tight flex items-center gap-2">
                                 <Users className="w-4 h-4" /> Personal
                             </h3>
                             <div className="flex justify-between">
@@ -188,7 +188,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                         {/* Trinkgeld */}
                         {tipDistribution && (
                             <div className="bg-card rounded-xl p-4 space-y-2">
-                                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                <h3 className="text-[13.5px] font-medium text-muted-foreground tracking-tight flex items-center gap-2">
                                     <Gift className="w-4 h-4" /> Trinkgeld
                                 </h3>
                                 <div className="flex justify-between">
@@ -209,7 +209,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
 
                     {/* Rechte Spalte: PDF Vorschau */}
                     <div className="flex flex-col">
-                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <h3 className="text-[13.5px] font-medium text-muted-foreground tracking-tight mb-3 flex items-center gap-2">
                             <FileText className="w-4 h-4" /> Z-Abschlag PDF
                         </h3>
                         {revenue.pdf_url ? (
@@ -222,7 +222,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                                 />
                             </div>
                         ) : (
-                            <div className="flex-1 bg-card rounded-xl flex flex-col items-center justify-center text-foreground0 min-h-[200px]">
+                            <div className="flex-1 bg-card rounded-xl flex flex-col items-center justify-center text-muted-foreground min-h-[200px]">
                                 <FileText className="w-12 h-12 mb-3 opacity-30" />
                                 <p className="text-sm">Kein PDF hochgeladen</p>
                             </div>

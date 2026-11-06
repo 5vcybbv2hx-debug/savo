@@ -146,24 +146,24 @@ function MaintenanceCard({ task, onEdit, onComplete, canEdit, employees }) {
                 {/* Meta-Grid */}
                 <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
                     <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Nächste Wartung</p>
+                        <p className="text-[11.5px] font-medium text-muted-foreground">Nächste Wartung</p>
                         <p className={cn("text-sm font-bold", cfg.text)}>{nextLabel}</p>
                     </div>
                     {task.last_maintenance && (
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Zuletzt</p>
+                            <p className="text-[11.5px] font-medium text-muted-foreground">Zuletzt</p>
                             <p className="text-sm text-foreground">
                                 {new Date(task.last_maintenance).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </p>
                         </div>
                     )}
                     <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Intervall</p>
+                        <p className="text-[11.5px] font-medium text-muted-foreground">Intervall</p>
                         <p className="text-sm text-foreground capitalize">{task.frequency}</p>
                     </div>
                     {task.responsible && (
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Zuständig</p>
+                            <p className="text-[11.5px] font-medium text-muted-foreground">Zuständig</p>
                             <p className="text-sm text-foreground flex items-center gap-1">
                                 <User className="w-3 h-3 shrink-0" />{task.responsible}
                             </p>
@@ -171,7 +171,7 @@ function MaintenanceCard({ task, onEdit, onComplete, canEdit, employees }) {
                     )}
                     {task.completion_notes && (
                         <div className="col-span-2">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Letzte Notiz</p>
+                            <p className="text-[11.5px] font-medium text-muted-foreground">Letzte Notiz</p>
                             <p className="text-sm text-foreground italic">„{task.completion_notes}"</p>
                         </div>
                     )}

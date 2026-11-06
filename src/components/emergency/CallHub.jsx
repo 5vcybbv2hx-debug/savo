@@ -151,7 +151,7 @@ function IncidentCapture({ onClose }) {
 
     return (
         <div className="rounded-xl bg-card border border-border p-4 space-y-3">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Vorfall erfassen (optional)</p>
+            <p className="text-[12px] font-medium text-muted-foreground">Vorfall erfassen (optional)</p>
 
             <div className="grid grid-cols-2 gap-2">
                 {INCIDENT_TYPES.map(t => {

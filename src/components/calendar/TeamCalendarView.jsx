@@ -142,7 +142,7 @@ export default function TeamCalendarView({
                             >
                                 <div className={cn(
                                     "text-[10px] md:text-sm font-medium mb-1 md:mb-2 text-center md:text-left",
-                                    isToday ? "text-amber-400" : isCurrentMonth ? "text-foreground" : "text-foreground0"
+                                    isToday ? "text-amber-400" : isCurrentMonth ? "text-foreground" : "text-muted-foreground"
                                 )}>
                                     {format(day, 'd')}
                                 </div>

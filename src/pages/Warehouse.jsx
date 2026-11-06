@@ -199,7 +199,7 @@ export default function Warehouse() {
                         </div>
                     )}
 
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Tagesgeschäft</p>
+                    <p className="text-[12px] font-medium text-muted-foreground mb-2 px-1">Tagesgeschäft</p>
                     <div className="space-y-2 mb-6">
                         {permissions.canViewRestock && (
                             <NavCard
@@ -257,7 +257,7 @@ export default function Warehouse() {
                         )}
                     </div>
 
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Stammdaten</p>
+                    <p className="text-[12px] font-medium text-muted-foreground mb-2 px-1">Stammdaten</p>
                     <div className="space-y-2 mb-6">
                         {permissions.canViewWarehouse && (
                             <NavCard

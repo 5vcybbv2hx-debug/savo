@@ -966,7 +966,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                     <div key={label}>
                                         {/* Kategorie-Header mit Trennlinie */}
                                         <div className="flex items-center gap-3 mb-3">
-                                            <h2 className="text-sm font-bold text-foreground uppercase tracking-wide shrink-0">
+                                            <h2 className="text-[13.5px] font-medium text-foreground tracking-tight shrink-0">
                                                 {label}
                                             </h2>
                                             <div className="flex-1 h-px bg-border/50" />
@@ -1113,7 +1113,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                             {/* Varianten-Header */}
                                             <div className="flex items-center justify-between px-3 pt-2 pb-1.5 border-b border-border/40">
                                                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide shrink-0">Variante:</span>
+                                                    <span className="text-[11.5px] font-medium text-muted-foreground shrink-0">Variante:</span>
                                                     <input
                                                         className="flex-1 min-w-0 bg-transparent text-sm font-medium text-foreground placeholder:text-muted-foreground/50 focus:outline-none border-b border-transparent focus:border-primary/50 transition-colors py-0.5"
                                                         placeholder="z.B. mit Cola, mit Sprite…"

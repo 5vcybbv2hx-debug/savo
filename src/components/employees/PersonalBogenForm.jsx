@@ -116,7 +116,7 @@ function ColorField({ label, field, formData, onChange, disabled }) {
 }
 
 function SectionTitle({ children }) {
-  return <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest pt-4 pb-1 first:pt-0">{children}</h3>;
+  return <h3 className="text-[12px] font-medium text-muted-foreground pt-4 pb-1 first:pt-0">{children}</h3>;
 }
 
 export default function PersonalBogenForm({ employee, onSave, isLoading = false, isEditable = true }) {

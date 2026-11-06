@@ -62,7 +62,7 @@ export default function OpeningHoursEditor({ value, onChange }) {
                                 />
                             </div>
                         ) : (
-                            <span className="text-sm text-foreground0 italic">Geschlossen</span>
+                            <span className="text-sm text-muted-foreground italic">Geschlossen</span>
                         )}
                     </div>
                 );

@@ -399,7 +399,7 @@ function SectionHeader({ criticalCount, total }) {
     return (
         <div className="flex items-center gap-2 mb-3">
             <ShieldAlert className={cn('w-4 h-4', criticalCount > 0 ? 'text-status-danger' : 'text-muted-foreground')} />
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex-1">Alarm-Panel</h3>
+            <h3 className="text-[13.5px] font-medium text-foreground tracking-tight flex-1">Alarm-Panel</h3>
             {criticalCount > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-danger/15 border border-status-danger/30 text-xs font-semibold text-status-danger animate-pop">
                     <span className="status-dot status-dot-red animate-pulse-dot" />

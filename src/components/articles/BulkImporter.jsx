@@ -148,7 +148,7 @@ export default function BulkImporter() {
                                 <p className="text-sm font-medium text-foreground">
                                     {file ? file.name : 'Datei auswählen'}
                                 </p>
-                                <p className="text-xs text-foreground0">
+                                <p className="text-xs text-muted-foreground">
                                     CSV, Excel oder JSON
                                 </p>
                             </label>

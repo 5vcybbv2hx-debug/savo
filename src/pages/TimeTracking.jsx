@@ -755,7 +755,7 @@ export default function TimeTracking() {
                 {/* ── TRENNLINIE ────────────────────────────────────────────── */}
                 <div className="flex items-center gap-3 my-6">
                     <div className="flex-1 h-px bg-border" />
-                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider px-1">Zeiterfassung</span>
+                    <span className="text-[12px] font-medium text-muted-foregroundr px-1">Zeiterfassung</span>
                     <div className="flex-1 h-px bg-border" />
                 </div>
 
@@ -763,12 +763,12 @@ export default function TimeTracking() {
                 {/* Eigene Stats — immer 2 Karten */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                     <Card className="p-4 bg-secondary/40 border-border">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Monat</p>
+                        <p className="text-[11.5px] text-muted-foregroundr mb-1">Monat</p>
                         <p className="text-2xl font-bold text-foreground">{myMonthHours.toFixed(1)}h</p>
                         <p className="text-xs text-status-ok mt-0.5">{myApprovedHours.toFixed(1)}h genehmigt</p>
                     </Card>
                     <Card className="p-4 bg-secondary/40 border-border">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Offen</p>
+                        <p className="text-[11.5px] text-muted-foregroundr mb-1">Offen</p>
                         <p className="text-2xl font-bold text-foreground">
                             {myEntries.filter(e => e.status === 'eingereicht' || e.status === 'entwurf').length}
                         </p>

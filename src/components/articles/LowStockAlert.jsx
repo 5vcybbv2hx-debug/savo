@@ -135,7 +135,7 @@ export default function LowStockAlert() {
                                             </div>
 
                                             {article.suppliers?.length > 0 && (
-                                                <p className="text-xs text-foreground0 mt-2">
+                                                <p className="text-xs text-muted-foreground mt-2">
                                                     📦 {article.suppliers.join(', ')}
                                                 </p>
                                             )}

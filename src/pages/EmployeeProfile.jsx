@@ -57,7 +57,7 @@ const TABS = [
 function Field({ label, children }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</Label>
+      <Label className="text-[12px] font-medium text-muted-foreground">{label}</Label>
       {children}
     </div>
   );
@@ -67,7 +67,7 @@ function Field({ label, children }) {
 function Section({ title, children }) {
   return (
     <div className="space-y-4">
-      {title && <p className="text-[12px] font-medium text-muted-foregroundst pt-2">{title}</p>}
+      {title && <p className="text-[12px] font-medium text-muted-foreground pt-2">{title}</p>}
       <div className="space-y-4">{children}</div>
     </div>
   );

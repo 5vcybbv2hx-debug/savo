@@ -59,7 +59,7 @@ export default function SpecialDayRules({ rules = {}, onChange }) {
 
             {open && (
                 <div className="mt-2 px-3 py-3 rounded-xl bg-secondary/20 border border-border space-y-2">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-bold mb-3">
+                    <p className="text-[11.5px] text-muted-foreground font-bold mb-3">
                         Aufgabe erscheint zusätzlich wenn…
                     </p>
                     {SPECIAL_RULE_OPTIONS.map(opt => (

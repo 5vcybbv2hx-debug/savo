@@ -312,7 +312,7 @@ Regeln:
                     {/* Multi Messages */}
                     {multiMessages.length > 0 && (
                         <div className="space-y-3">
-                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                            <p className="text-[12px] font-medium text-muted-foreground">
                                 {multiMessages.length} personalisierte Nachrichten
                             </p>
                             {multiMessages.map((item, idx) => (

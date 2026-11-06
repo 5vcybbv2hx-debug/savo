@@ -46,7 +46,7 @@ function KpiCard({ icon: Icon, label, value, sub, trend, accent }) {
         <Card className="bg-card border-border">
             <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
+                    <p className="text-[11.5px] font-medium text-muted-foreground">{label}</p>
                     <Icon className={cn('w-3.5 h-3.5', accent || 'text-muted-foreground')} />
                 </div>
                 <p className="text-lg font-bold text-foreground leading-tight">{value}</p>

@@ -22,7 +22,7 @@ export default function DeprecatedEntitiesAudit() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 border-l-4 border-l-red-500">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Deprecated</p>
+          <p className="text-[12px] text-muted-foreground">Deprecated</p>
           <p className="text-3xl font-bold text-foreground mt-2">
             {DEPRECATED_ENTITIES.filter(e => e.status === 'DEPRECATED').length}
           </p>
@@ -30,7 +30,7 @@ export default function DeprecatedEntitiesAudit() {
         </Card>
 
         <Card className="p-4 border-l-4 border-l-amber-500">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">In Progress</p>
+          <p className="text-[12px] text-muted-foreground">In Progress</p>
           <p className="text-3xl font-bold text-foreground mt-2">
             {DEPRECATED_ENTITIES.filter(e => e.status === 'SEMI-DEPRECATED').length}
           </p>
@@ -38,7 +38,7 @@ export default function DeprecatedEntitiesAudit() {
         </Card>
 
         <Card className="p-4 border-l-4 border-l-green-500">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">Löschbar</p>
+          <p className="text-[12px] text-muted-foreground">Löschbar</p>
           <p className="text-3xl font-bold text-foreground mt-2">{deletable.length}</p>
           <p className="text-xs text-muted-foreground mt-1">Ohne Daten-Verlust</p>
         </Card>
@@ -78,7 +78,7 @@ export default function DeprecatedEntitiesAudit() {
 
               {/* Migration Steps */}
               <div className="mb-3">
-                <p className="text-xs text-muted-foreground font-medium uppercase mb-2">Migration-Schritte:</p>
+                <p className="text-[12px] text-muted-foreground mb-2">Migration-Schritte:</p>
                 <ol className="space-y-1 text-xs">
                   {entity.migrationPath.map((step, i) => (
                     <li key={i} className="text-muted-foreground pl-4 relative">

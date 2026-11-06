@@ -36,7 +36,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, onCancel, isPend
 
             {/* ── Stammdaten ───────────────────────────────────────────────── */}
             <section className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Stammdaten</h3>
+                <h3 className="text-[12px] font-medium text-muted-foreground">Stammdaten</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <TextField name="name"      label="Name"         required form={form} className="col-span-2" />
                     <TextField name="short_name" label="Spitzname (z.B. Ana, An Na)" form={form} className="col-span-2" />
@@ -68,7 +68,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, onCancel, isPend
 
             {/* ── Kontakt ──────────────────────────────────────────────────── */}
             <section className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Kontakt</h3>
+                <h3 className="text-[12px] font-medium text-muted-foreground">Kontakt</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <TextField name="email" label="E-Mail" form={form} type="email" className="col-span-2" />
                     <TextField name="phone" label="Telefon" form={form} />
@@ -81,7 +81,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, onCancel, isPend
 
             {/* ── Bankdaten ────────────────────────────────────────────────── */}
             <section className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Bankverbindung</h3>
+                <h3 className="text-[12px] font-medium text-muted-foreground">Bankverbindung</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <TextField name="bank_name" label="Bank"  form={form} className="col-span-2" />
                     <TextField name="iban"      label="IBAN"  form={form} className="col-span-2" placeholder="DE00 0000 0000 0000 0000 00" />
@@ -92,7 +92,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, onCancel, isPend
 
             {/* ── Sonstiges ────────────────────────────────────────────────── */}
             <section className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Sonstiges</h3>
+                <h3 className="text-[12px] font-medium text-muted-foreground">Sonstiges</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <SelectField name="tshirt_size" label="T-Shirt Größe" form={form} options={TSHIRT_OPTIONS} />
                     <TextField   name="color"       label="Farbe (Hex)"   form={form} type="color" />

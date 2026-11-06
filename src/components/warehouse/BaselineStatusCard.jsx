@@ -53,7 +53,7 @@ export default function BaselineStatusCard({ slots = [], assignments = [] }) {
           </p>
 
           <div className="space-y-1.5">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Ohne Basis</p>
+            <p className="text-[11.5px] font-medium text-muted-foreground">Ohne Basis</p>
             {without.length === 0 ? (
               <p className="text-xs text-muted-foreground py-1">Alle Fächer haben eine Basis.</p>
             ) : (
@@ -77,7 +77,7 @@ export default function BaselineStatusCard({ slots = [], assignments = [] }) {
 
           {withBaseline.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Basis vorhanden</p>
+              <p className="text-[11.5px] font-medium text-muted-foreground">Basis vorhanden</p>
               {withBaseline.map((slot) => (
                 <div key={slot.id} className="flex items-center gap-2 py-1.5 border-b border-border/30 last:border-0">
                   <div className="min-w-0 flex-1">

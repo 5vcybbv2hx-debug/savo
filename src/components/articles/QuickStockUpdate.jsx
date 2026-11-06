@@ -86,7 +86,7 @@ export default function QuickStockUpdate({ open, onClose, article, onUpdate }) {
                                 placeholder="z.B. 10 oder -3"
                                 step="any"
                             />
-                            <p className="text-xs text-foreground0">
+                            <p className="text-xs text-muted-foreground">
                                 Positiv zum Hinzufügen, negativ zum Entfernen
                             </p>
                         </div>

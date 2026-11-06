@@ -14,7 +14,7 @@ const MATCH_BADGES = {
 };
 
 const FieldLabel = ({ children }) => (
-  <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1 lg:hidden">
+  <span className="block text-[11.5px] font-medium text-muted-foreground mb-1 lg:hidden">
     {children}
   </span>
 );

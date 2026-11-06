@@ -37,7 +37,7 @@ function SlotDetail({ slot, assignments, onBack }) {
       </Card>
 
       <div>
-        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+        <p className="text-[12px] font-medium text-muted-foreground mb-2">
           Inhalt ({slotAssignments.length} Artikel)
         </p>
         {slotAssignments.length === 0 ? (

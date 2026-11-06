@@ -262,7 +262,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
         {/* Kopf */}
         <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-border/40 shrink-0">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Foto-Zählung</p>
+            <p className="text-[13.5px] font-medium text-primary tracking-tight">Foto-Zählung</p>
             <h2 className="text-base font-bold text-foreground truncate">{slotLabel}</h2>
             <p className="text-[11px] text-muted-foreground">
               {assignments.length} Artikel

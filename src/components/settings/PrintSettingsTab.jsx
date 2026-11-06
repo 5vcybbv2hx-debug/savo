@@ -72,7 +72,7 @@ export default function PrintSettingsTab() {
 
             {/* Pro-Bereich Auswahl */}
             <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Bereich → Format</h3>
+                <h3 className="text-[12px] font-medium text-muted-foreground">Bereich → Format</h3>
                 <div className="rounded-2xl border border-border overflow-hidden divide-y divide-border">
                     {Object.entries(AREA_LABELS).map(([area, label]) => {
                         const current = local[area] || AREA_MAPPING[area];

@@ -56,12 +56,12 @@ export default function UnavailabilityManager() {
         <div className="space-y-6">
             {/* Ausstehend */}
             <div>
-                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h3 className="text-[13.5px] font-medium text-muted-foreground tracking-tight mb-3 flex items-center gap-2">
                     <Clock className="w-4 h-4 text-status-warn" />
                     Wünsche ausstehend ({pending.length})
                 </h3>
                 {pending.length === 0 ? (
-                    <p className="text-sm text-foreground0 text-center py-4">Keine ausstehenden Wunschtage</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">Keine ausstehenden Wunschtage</p>
                 ) : (
                     <div className="space-y-2">
                         {pending.map(req => (
@@ -112,7 +112,7 @@ export default function UnavailabilityManager() {
                                     }
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-foreground/75">{getFullName(req)} – {format(parseISO(req.date), 'dd. MMM', { locale: de })}</p>
-                                        <p className="text-xs text-foreground0 truncate">{req.reason}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{req.reason}</p>
                                     </div>
                                     <Badge className={req.status === 'genehmigt'
                                         ? 'bg-status-ok/20 text-status-ok border-status-ok/30 text-xs'

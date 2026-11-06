@@ -222,7 +222,7 @@ export default function AccountingDashboard() {
                         ? 'bg-status-ok/5 border-status-ok/30'
                         : 'bg-status-danger/5 border-status-danger/30'
                 )}>
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
+                    <p className="text-[12px] font-medium text-muted-foreground mb-1">
                         Rohgewinn {monthLabel}
                     </p>
                     <p className={cn(

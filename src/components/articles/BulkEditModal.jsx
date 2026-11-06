@@ -151,7 +151,7 @@ export default function BulkEditModal({ open, onClose, selectedArticles, onClear
                                 onChange={(e) => setNewSupplier(e.target.value)}
                                 placeholder="z.B. C+C, Metro..."
                             />
-                            <p className="text-xs text-foreground0">
+                            <p className="text-xs text-muted-foreground">
                                 Der Lieferant wird zu allen ausgewählten Artikeln hinzugefügt
                             </p>
                         </div>

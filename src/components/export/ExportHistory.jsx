@@ -46,7 +46,7 @@ export default function ExportHistory() {
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Export-Verlauf</h3>
+                <h3 className="text-[13.5px] font-medium text-foreground tracking-tight">Export-Verlauf</h3>
                 <Button
                     size="sm"
                     variant="ghost"

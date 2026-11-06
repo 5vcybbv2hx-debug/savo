@@ -554,7 +554,7 @@ export default function Articles() {
                     <div key={cat.id} className="space-y-2">
                         {/* Kategorie-Header */}
                         <div className="flex items-center gap-2 px-0.5">
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                            <p className="text-[12px] font-medium text-muted-foregroundr">
                                 {cat.name}
                             </p>
                             <span className="text-[10px] text-muted-foreground/50">({items.length})</span>

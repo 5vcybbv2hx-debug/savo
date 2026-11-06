@@ -180,7 +180,7 @@ export default function MobileTeamCalendarView({
                                     isWeekendDay && "bg-card/50",
                                     isToday && "ring-inset ring-2 ring-amber-500",
                                     isSelected && "ring-inset ring-2 ring-blue-500 bg-card",
-                                    isToday && !isSelected ? "text-amber-400" : isCurrentMonth ? "text-foreground" : "text-foreground0"
+                                    isToday && !isSelected ? "text-amber-400" : isCurrentMonth ? "text-foreground" : "text-muted-foreground"
                                 )}
                             >
                                 <div>{format(day, 'd')}</div>

@@ -41,7 +41,7 @@ function Section({ title, icon, children, className = "" }) {
             {title && (
                 <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/40 bg-muted/30">
                     {icon && <span className="text-muted-foreground">{icon}</span>}
-                    <span className="text-sm font-bold text-foreground uppercase tracking-wide">{title}</span>
+                    <span className="text-[13.5px] font-medium text-foreground tracking-tight">{title}</span>
                 </div>
             )}
             <div className="p-4 space-y-4">

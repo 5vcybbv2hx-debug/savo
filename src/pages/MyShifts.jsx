@@ -341,7 +341,7 @@ function MonthTab({ shifts, onSwap }) {
             {/* Schicht-Liste des Monats */}
             {monthStats.shifts.length > 0 && (
                 <div className="space-y-2">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-0.5">
+                    <p className="text-[12px] font-medium text-muted-foregroundr px-0.5">
                         Schichten im {format(selectedDate, 'MMMM', { locale: de })}
                     </p>
                     {monthStats.shifts

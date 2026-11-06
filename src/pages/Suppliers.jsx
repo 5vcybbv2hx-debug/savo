@@ -199,7 +199,7 @@ function SupplierCard({ supplier, linkedArticles, onEdit, onToggleActive }) {
             {/* Verknüpfte Artikel (aufklappbar) */}
             {articlesOpen && linkedArticles.length > 0 && (
                 <div className="border-t border-border/50 px-3.5 py-3 bg-secondary/10">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Verknüpfte Artikel</p>
+                    <p className="text-[11.5px] font-medium text-muted-foreground mb-2">Verknüpfte Artikel</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         {linkedArticles.map(a => {
                             const detail    = (a.supplier_details || []).find(s => s.supplier_name === supplier.name);

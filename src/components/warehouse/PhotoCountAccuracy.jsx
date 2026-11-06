@@ -75,23 +75,23 @@ export default function PhotoCountAccuracy() {
             <>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-xl bg-muted/30 px-2 py-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Trefferquote</p>
+                  <p className="text-[11.5px] text-muted-foreground">Trefferquote</p>
                   <p className="text-base font-bold text-foreground tabular-nums">{pct(overall.hitRate)}</p>
                 </div>
                 <div className="rounded-xl bg-muted/30 px-2 py-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Ø Abweichung</p>
+                  <p className="text-[11.5px] text-muted-foreground">Ø Abweichung</p>
                   <p className="text-base font-bold text-foreground tabular-nums">
                     {overall.avgDeviation == null ? '–' : overall.avgDeviation.toFixed(1)}
                   </p>
                 </div>
                 <div className="rounded-xl bg-muted/30 px-2 py-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">conf. &lt; 0,5</p>
+                  <p className="text-[11.5px] text-muted-foreground">conf. &lt; 0,5</p>
                   <p className="text-base font-bold text-foreground tabular-nums">{pct(overall.lowConfRate)}</p>
                 </div>
               </div>
 
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Je Fach</p>
+                <p className="text-[11.5px] font-medium text-muted-foreground">Je Fach</p>
                 {slots.map((slot) => (
                   <div key={slot.key} className="flex items-center gap-2 text-xs py-1 border-b border-border/30 last:border-0">
                     <span className="flex-1 min-w-0 truncate text-foreground">{slot.key}</span>

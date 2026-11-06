@@ -112,11 +112,11 @@ export default function KellerTab({ badgeCount }) {
             {/* Info-Header */}
             <div className="flex items-center justify-between p-3 bg-muted/40 rounded-xl border border-border/50">
                 <div>
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Heute</p>
+                    <p className="text-[11.5px] font-medium text-muted-foreground">Heute</p>
                     <p className="text-sm font-bold text-foreground">{format(new Date(), 'dd.MM.yyyy')}</p>
                 </div>
                 <div className="text-right">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Offene Artikel</p>
+                    <p className="text-[11.5px] font-medium text-muted-foreground">Offene Artikel</p>
                     <div className="flex items-center gap-1.5 justify-end mt-0.5">
                         {kellerGroups.length > 0 && (
                             <span className="inline-flex h-2 w-2 rounded-full bg-primary animate-pulse" />

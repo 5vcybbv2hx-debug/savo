@@ -261,7 +261,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
             <div className="grid grid-cols-7 border-b border-border bg-background/30">
                 {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day, idx) => (
                     <div key={idx} className="py-2 text-center border-r border-border last:border-r-0">
-                        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{day}</span>
+                        <span className="text-[12px] font-medium text-muted-foregroundr">{day}</span>
                     </div>
                 ))}
             </div>

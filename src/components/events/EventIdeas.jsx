@@ -176,7 +176,7 @@ export default function EventIdeas({
                             </div>
 
                             {idea.notes && (
-                                <p className="text-xs text-foreground0 italic">
+                                <p className="text-xs text-muted-foreground italic">
                                     {idea.notes}
                                 </p>
                             )}

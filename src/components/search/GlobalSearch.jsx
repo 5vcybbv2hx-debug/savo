@@ -300,7 +300,7 @@ export default function GlobalSearch({ open, onClose }) {
                                     if (!section.items?.length) return null;
                                     return (
                                         <div key={section.key}>
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 pt-3 pb-1">{section.label}</p>
+                                            <p className="text-[11.5px] font-medium text-muted-foreground px-3 pt-3 pb-1">{section.label}</p>
                                             {section.items.map(item => {
                                                 const idx = globalIdx++;
                                                 return section.render(item, idx, focusedIdx === idx);

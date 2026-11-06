@@ -335,7 +335,7 @@ export default function DrinkMenuPage() {
                             <div key={category}>
                                 {/* Kategorie-Header */}
                                 <div className="flex items-center gap-3 mb-2.5">
-                                    <h2 className="text-sm font-bold text-foreground uppercase tracking-wide">
+                                    <h2 className="text-[13.5px] font-medium text-foreground tracking-tight">
                                         {category}
                                     </h2>
                                     <div className="flex-1 h-px bg-border/50" />

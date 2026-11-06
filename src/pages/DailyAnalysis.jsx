@@ -853,7 +853,7 @@ export default function DailyAnalysis() {
                     <CardContent className="px-4 py-4">
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                                <p className="text-[11.5px] font-medium text-muted-foreground flex items-center gap-1.5">
                                     <TrendingDown className="w-3.5 h-3.5" />
                                     Bar minus Aushilfen-Personal
                                 </p>
@@ -899,7 +899,7 @@ export default function DailyAnalysis() {
             {todayRevenue && (todayRevenue.revenue_cash || todayRevenue.revenue_ec || todayRevenue.vat || todayRevenue.own_consumption) && (
                 <Card className="bg-card border-border">
                     <CardHeader className="pb-2 pt-4 px-4">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Umsatz Aufschlüsselung</CardTitle>
+                        <CardTitle className="text-[12px] font-medium text-muted-foreground">Umsatz Aufschlüsselung</CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-4 grid grid-cols-2 gap-2">
                         {todayRevenue.revenue_cash > 0 && (
@@ -990,7 +990,7 @@ export default function DailyAnalysis() {
             {todayTimeEntriesWithRates.length > 0 && (
                 <Card className="bg-card border-border">
                     <CardHeader className="pb-2 pt-4 px-4">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Personalkosten Details</CardTitle>
+                        <CardTitle className="text-[12px] font-medium text-muted-foreground">Personalkosten Details</CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-4 space-y-2">
                         {dailyPaidEntries.length > 0 && (
@@ -1032,7 +1032,7 @@ export default function DailyAnalysis() {
             {todayTipDistribution && (
                 <Card className="bg-card border-border">
                     <CardHeader className="pb-2 pt-4 px-4">
-                        <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                        <CardTitle className="text-[12px] font-medium text-muted-foreground flex items-center gap-1.5">
                             <Gift className="w-3.5 h-3.5" /> Trinkgeldverteilung
                         </CardTitle>
                     </CardHeader>

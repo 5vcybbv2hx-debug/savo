@@ -469,7 +469,7 @@ export default function UnifiedCalendarView({
                         {/* Role Filter */}
                         {availableRoles.length > 0 && (
                             <div>
-                                <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Nach Rolle</h4>
+                                <h4 className="text-[13.5px] font-medium mb-3 text-muted-foreground tracking-tight">Nach Rolle</h4>
                                 <div className="space-y-2">
                                     {availableRoles.map(role => (
                                         <div key={role} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors">
@@ -492,7 +492,7 @@ export default function UnifiedCalendarView({
 
                         {/* Employee Filter */}
                         <div>
-                            <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Nach Mitarbeiter</h4>
+                            <h4 className="text-[13.5px] font-medium mb-3 text-muted-foreground tracking-tight">Nach Mitarbeiter</h4>
                             <Input
                                 placeholder="Suchen..."
                                 value={searchQuery}

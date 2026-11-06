@@ -115,7 +115,7 @@ export default function AreasManager({ trigger, open: openProp, onOpenChange }) 
                             <h3 className="text-sm font-semibold text-foreground">Vorhandene Bereiche</h3>
                             <div className="space-y-2 max-h-64 overflow-y-auto">
                                 {areas.length === 0 ? (
-                                    <p className="text-sm text-foreground0 text-center py-4">Noch keine Bereiche vorhanden</p>
+                                    <p className="text-sm text-muted-foreground text-center py-4">Noch keine Bereiche vorhanden</p>
                                 ) : (
                                     areas.map((area) => (
                                         <div 
