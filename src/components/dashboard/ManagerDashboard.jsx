@@ -53,7 +53,7 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                 <div className="page-header flex-col sm:flex-row sm:items-start">
                     <div>
                         <h1 className="page-title">Dashboard</h1>
-                        <p className="page-subtitle">{format(new Date(), "EEEE, d. MMMM yyyy", { locale: de })}</p>
+                        <p className="page-subtitle">{format(new Date(), "EEEE, d. MMMM", { locale: de })}</p>
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={onSwitchToEmployee} className="border-border text-muted-foreground hover:bg-accent">
@@ -68,38 +68,22 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                 {currentEmployee && (
                     <>
                         <Card className="p-4">
-                            <h2 className="text-base font-semibold text-foreground mb-4 flex items-center gap-2">
+                            <h2 className="text-[13.5px] font-medium text-foreground mb-3 flex items-center gap-2">
                                 <Users className="w-5 h-5 text-primary" />
                                 Mein Bereich
                             </h2>
-                            <div className="grid sm:grid-cols-3 gap-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center border border-blue-500/20">
-                                        <Clock className="w-8 h-8 text-blue-400" />
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    { icon: Clock,    value: `${hoursThisWeek?.toFixed(1) ?? '0.0'}h`, label: 'Std. diese Woche' },
+                                    { icon: Umbrella, value: remainingVacationDays,                     label: 'Urlaubstage übrig' },
+                                    { icon: Calendar, value: myUpcomingShifts?.length ?? 0,            label: 'Schichten kommend' },
+                                ].map(({ icon: Icon, value, label }) => (
+                                    <div key={label} className="rounded-xl bg-surface px-3 py-3 text-center">
+                                        <Icon className="w-4 h-4 mx-auto mb-1.5 text-muted-foreground" />
+                                        <p className="stat-value">{value}</p>
+                                        <p className="stat-label mt-1.5">{label}</p>
                                     </div>
-                                    <div>
-                                        <p className="text-3xl font-bold text-foreground">{hoursThisWeek?.toFixed(1)}h</p>
-                                        <p className="text-sm text-muted-foreground">Diese Woche</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/20">
-                                        <Umbrella className="w-8 h-8 text-purple-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-3xl font-bold text-foreground">{remainingVacationDays}</p>
-                                        <p className="text-sm text-muted-foreground">Urlaubstage übrig</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center border border-green-500/20">
-                                        <Calendar className="w-8 h-8 text-green-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-3xl font-bold text-foreground">{myUpcomingShifts?.length}</p>
-                                        <p className="text-sm text-muted-foreground">Kommende Schichten</p>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </Card>
                         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />

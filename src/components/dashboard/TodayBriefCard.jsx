@@ -404,12 +404,12 @@ export default function TodayBriefCard() {
     ];
 
     return (
-        <Card className="bg-card border-border shadow-lg">
+        <Card className="bg-card border-border">
             <CardContent className="p-4">
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-3">
                     <CalendarDays className="w-5 h-5 text-primary" />
-                    <h2 className="text-base font-bold text-foreground">{headerLabel}</h2>
+                    <h2 className="text-[13.5px] font-medium text-foreground">{headerLabel}</h2>
                 </div>
 
                 {/* Segmented Control */}
@@ -421,7 +421,7 @@ export default function TodayBriefCard() {
                             className={cn(
                                 'flex-1 py-1.5 text-xs font-semibold rounded-md transition-all',
                                 tab === t.key
-                                    ? 'bg-primary text-primary-foreground shadow'
+                                    ? 'bg-surface text-foreground shadow-sm'
                                     : 'text-muted-foreground hover:text-foreground'
                             )}
                         >
