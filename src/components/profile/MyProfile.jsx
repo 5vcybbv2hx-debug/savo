@@ -21,18 +21,23 @@ import {
 export default function MyProfilePage() {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-    const { data: currentUser } = useQuery({
+    const { data: currentUser, isLoading: userLoading, error: userError } = useQuery({
         queryKey: ['current-user'],
-        queryFn: () => base44.auth.me()
+        queryFn: () => base44.auth.me(),
+        retry: 1,
     });
 
-    const { data: myEmployee } = useQuery({
+    // Mitarbeitereintrag robust suchen: erst per E-Mail (case-insensitiv),
+    // damit ein abweichend gespeicherter Eintrag die Seite nicht blockiert.
+    const { data: myEmployee, isLoading: employeeLoading, error: employeeError } = useQuery({
         queryKey: ['my-employee', currentUser?.email],
         queryFn: async () => {
-            const employees = await base44.entities.Employee.filter({ email: currentUser.email });
-            return employees[0];
+            const email = String(currentUser?.email || '').toLowerCase();
+            const employees = await base44.entities.Employee.list('-created_date', 300);
+            return employees.find(e => String(e.email || '').toLowerCase() === email) || null;
         },
-        enabled: !!currentUser
+        enabled: !!currentUser?.email,
+        retry: 1,
     });
 
     const deleteDataMutation = useMutation({
@@ -50,10 +55,47 @@ export default function MyProfilePage() {
         }
     });
 
-    if (!currentUser || !myEmployee) {
+    if (userLoading || employeeLoading) {
         return (
             <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-                <div className="text-foreground">Lädt...</div>
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-7 h-7 border-2 border-track border-t-primary rounded-full animate-spin" />
+                    <p className="text-[12px] text-muted-foreground">Profil wird geladen…</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (userError || !currentUser) {
+        return (
+            <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+                <div className="max-w-md text-center space-y-3">
+                    <AlertTriangle className="w-6 h-6 mx-auto text-status-warn" />
+                    <p className="text-foreground font-medium">Anmeldung konnte nicht geladen werden</p>
+                    <p className="text-[12px] text-muted-foreground">
+                        {userError?.message || 'Bitte die Seite neu laden. Bleibt es dabei, hilft ein Logout und Login.'}
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Neu laden</Button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!myEmployee) {
+        return (
+            <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+                <div className="max-w-md text-center space-y-3">
+                    <UserCircle className="w-6 h-6 mx-auto text-muted-foreground" />
+                    <p className="text-foreground font-medium">Kein Mitarbeitereintrag zu dieser Anmeldung</p>
+                    <p className="text-[12px] text-muted-foreground">
+                        Angemeldet als <span className="text-foreground">{currentUser.email}</span>. In der Mitarbeiterliste
+                        gibt es dazu keinen Eintrag. Ein Manager kann die E-Mail-Adresse im Team-Bereich ergänzen, danach
+                        lädt dieses Profil wieder.
+                    </p>
+                    <p className="text-[11.5px] text-muted-foreground">
+                        {employeeError ? `Abfragefehler: ${employeeError.message}` : 'Die Abfrage war erfolgreich, es fehlt nur der Eintrag.'}
+                    </p>
+                </div>
             </div>
         );
     }
