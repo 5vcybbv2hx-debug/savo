@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameDay, isSameMonth, isWeekend } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Filter, X, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, X, SlidersHorizontal, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -315,6 +315,16 @@ export default function UnifiedCalendarView({
                                 )}>
                                     {format(day, 'd')}
                                 </div>
+
+                                {/* Wunsch möglich: kleiner "+"-Hinweis in der Zelle */}
+                                {inWishRange && (
+                                    <div
+                                        title="Wunsch eintragen möglich"
+                                        className="absolute top-2 right-2 flex items-center justify-center w-4 h-4 rounded-full border border-primary/40 bg-primary/15 text-primary"
+                                    >
+                                        <Plus className="w-3 h-3" strokeWidth={3} />
+                                    </div>
+                                )}
 
                                 {/* Eigene Wunschschichten */}
                                 {dayWishes.length > 0 && (

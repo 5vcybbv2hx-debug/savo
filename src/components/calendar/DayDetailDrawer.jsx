@@ -60,7 +60,7 @@ export default function DayDetailDrawer({
                     {wishAvailable && (
                         <button
                             onClick={onWish}
-                            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-status-warn/70 hover:bg-status-warn/70 text-muted-foreground text-sm font-semibold transition-colors"
+                            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-status-warn/15 border border-status-warn/40 text-status-warn hover:bg-status-warn/25 text-sm font-semibold transition-colors"
                         >
                             <PenLine className="w-4 h-4" />
                             Wunsch eintragen

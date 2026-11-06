@@ -164,14 +164,9 @@ export default function TeamMonthView() {
             && dayStr >= activeAccess.start_date && dayStr <= activeAccess.end_date;
     };
 
+    // Alle Rollen sehen beim Tippen zuerst den Tag mit allen Schichten.
+    // Der Wunsch steckt im Drawer — dort öffnet sich das Wunsch-Sheet.
     const handleDayClick   = day   => {
-        // Manager behalten das Tagesdetail — der Wunsch-Button steckt dort im Drawer
-        if (!isManager && canWishOn(day)) {
-            haptics.selection();
-            setWishDate(day);
-            setShowWishSheet(true);
-            return;
-        }
         setSelectedDay(day);
         setShowDayDrawer(true);
     };
@@ -243,6 +238,7 @@ export default function TeamMonthView() {
                 day={selectedDay}
                 wishAvailable={canWishOn(selectedDay)}
                 onWish={() => {
+                    haptics.selection();
                     setShowDayDrawer(false);
                     setWishDate(selectedDay);
                     setShowWishSheet(true);
