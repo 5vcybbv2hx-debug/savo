@@ -27,6 +27,18 @@
       "type": "number",
       "description": "Eigenbedarf in Euro"
     },
+    "revenue_voucher": {
+      "type": "number",
+      "description": "Umsatz aus Gutschein-Einl\u00f6sungen in Euro"
+    },
+    "revenue_external": {
+      "type": "number",
+      "description": "Umsatz aus externer Zahlart (Extern) in Euro"
+    },
+    "revenue_tips": {
+      "type": "number",
+      "description": "Trinkgeld gesamt in Euro (bar und Karte)"
+    },
     "manual_labor_cost_daily": {
       "type": "number",
       "description": "Manuelle Personalkosten Aushilfen (\u00fcberschreibt berechnete Werte)"

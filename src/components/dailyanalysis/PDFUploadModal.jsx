@@ -17,6 +17,9 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
     const [revenueEC, setRevenueEC] = useState('');
     const [vat, setVat] = useState('');
     const [ownConsumption, setOwnConsumption] = useState('');
+    const [revenueVoucher, setRevenueVoucher] = useState('');
+    const [revenueExternal, setRevenueExternal] = useState('');
+    const [revenueTips, setRevenueTips] = useState('');
     const [notes, setNotes] = useState('');
     const [analyzing, setAnalyzing] = useState(false);
     const [analysisError, setAnalysisError] = useState(null);
@@ -33,6 +36,9 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
             setRevenueEC('');
             setVat('');
             setOwnConsumption('');
+            setRevenueVoucher('');
+            setRevenueExternal('');
+            setRevenueTips('');
             setNotes('');
             setError(null);
             setAnalysisError(null);
@@ -51,7 +57,7 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                 pdfUrl = uploadResponse.file_url;
             }
 
-            await base44.entities.DailyRevenue.create({
+            const basePayload = {
                 date: date,
                 revenue: parseFloat(revenue),
                 revenue_cash: revenueCash ? parseFloat(revenueCash) : undefined,
@@ -60,7 +66,26 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                 own_consumption: ownConsumption ? parseFloat(ownConsumption) : undefined,
                 pdf_url: pdfUrl,
                 notes: notes || undefined
-            });
+            };
+            const paymentPayload = {
+                ...basePayload,
+                revenue_voucher: revenueVoucher ? parseFloat(revenueVoucher) : undefined,
+                revenue_external: revenueExternal ? parseFloat(revenueExternal) : undefined,
+                revenue_tips: revenueTips ? parseFloat(revenueTips) : undefined,
+            };
+
+            try {
+                await base44.entities.DailyRevenue.create(paymentPayload);
+            } catch (e) {
+                // Falls die neuen Zahlarten-Felder im Schema noch nicht aktiv sind:
+                // Buchung nie blockieren, Grund sichtbar machen.
+                if (paymentPayload.revenue_voucher || paymentPayload.revenue_external || paymentPayload.revenue_tips) {
+                    await base44.entities.DailyRevenue.create(basePayload);
+                    setError('Gespeichert, aber Gutschein/Extern/Trinkgeld konnten nicht abgelegt werden (Schema noch nicht aktiv). Bitte in die Notiz schreiben.');
+                    return;
+                }
+                throw e;
+            }
         },
         onSuccess: () => {
             onOpenChange(false);
@@ -85,9 +110,16 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                 - Gesamtumsatz / Tagesumsatz (in Euro, Brutto)
                 - Umsatz Bar (Bargeld-Umsatz)
                 - Umsatz EC / Kartenzahlung
+                - Umsatz Gutschein (Einlösungen über Gutschein)
+                - Umsatz Externe Zahlung (Zahlart "Extern")
+                - Trinkgeld (Tip, bar und über Karte zusammen)
                 - Umsatzsteuer (MwSt.)
                 - Eigenbedarf / Eigenverbrauch
                 - Besondere Notizen
+
+                Wichtig: Die Zahlarten stehen in der Zahlungsübersicht der PDF, oft
+                blockweise als Bargeld, Karte, Gutschein, Extern, Trinkgeld. Wenn eine
+                Zahlart nicht vorkommt, lasse das Feld weg statt 0 zu schätzen.
 
                 Gib die Antwort als JSON zurück.`,
                 file_urls: [uploadResponse.file_url],
@@ -99,6 +131,9 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                         revenue_ec: { type: 'number', description: 'Umsatz EC/Karte in Euro' },
                         vat: { type: 'number', description: 'Umsatzsteuer in Euro' },
                         own_consumption: { type: 'number', description: 'Eigenbedarf/Eigenverbrauch in Euro' },
+                        revenue_voucher: { type: 'number', description: 'Umsatz Gutschein in Euro' },
+                        revenue_external: { type: 'number', description: 'Umsatz externe Zahlung in Euro' },
+                        revenue_tips: { type: 'number', description: 'Trinkgeld gesamt in Euro' },
                         notes: { type: 'string', description: 'Zusätzliche Notizen' }
                     },
                     required: ['revenue']
@@ -111,6 +146,9 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                 if (analysisResponse.revenue_ec) setRevenueEC(analysisResponse.revenue_ec.toString());
                 if (analysisResponse.vat) setVat(analysisResponse.vat.toString());
                 if (analysisResponse.own_consumption) setOwnConsumption(analysisResponse.own_consumption.toString());
+                if (analysisResponse.revenue_voucher) setRevenueVoucher(analysisResponse.revenue_voucher.toString());
+                if (analysisResponse.revenue_external) setRevenueExternal(analysisResponse.revenue_external.toString());
+                if (analysisResponse.revenue_tips) setRevenueTips(analysisResponse.revenue_tips.toString());
                 if (analysisResponse.notes) setNotes(analysisResponse.notes);
                 setActiveTab('review');
             } else {
@@ -185,6 +223,18 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                             <div>
                                 <Label className="text-foreground/75 text-sm">Eigenbedarf (€)</Label>
                                 <Input type="number" step="0.01" placeholder="optional" value={ownConsumption} onChange={(e) => setOwnConsumption(e.target.value)} className="bg-secondary border-border/70 text-foreground mt-1" />
+                            </div>
+                            <div>
+                                <Label className="text-foreground/75 text-sm">Gutschein (€)</Label>
+                                <Input type="number" step="0.01" placeholder="optional" value={revenueVoucher} onChange={(e) => setRevenueVoucher(e.target.value)} className="bg-secondary border-border/70 text-foreground mt-1" />
+                            </div>
+                            <div>
+                                <Label className="text-foreground/75 text-sm">Externe Zahlung (€)</Label>
+                                <Input type="number" step="0.01" placeholder="optional" value={revenueExternal} onChange={(e) => setRevenueExternal(e.target.value)} className="bg-secondary border-border/70 text-foreground mt-1" />
+                            </div>
+                            <div>
+                                <Label className="text-foreground/75 text-sm">Trinkgeld (€)</Label>
+                                <Input type="number" step="0.01" placeholder="optional" value={revenueTips} onChange={(e) => setRevenueTips(e.target.value)} className="bg-secondary border-border/70 text-foreground mt-1" />
                             </div>
                         </div>
 
@@ -302,6 +352,18 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                                     <div>
                                         <Label className="text-xs text-muted-foreground">Eigenbedarf (€)</Label>
                                         <Input type="number" step="0.01" placeholder="optional" value={ownConsumption} onChange={(e) => setOwnConsumption(e.target.value)} className="bg-card border-border/70 text-foreground mt-1" disabled={analyzing} />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-muted-foreground">Gutschein (€)</Label>
+                                        <Input type="number" step="0.01" placeholder="optional" value={revenueVoucher} onChange={(e) => setRevenueVoucher(e.target.value)} className="bg-card border-border/70 text-foreground mt-1" disabled={analyzing} />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-muted-foreground">Externe Zahlung (€)</Label>
+                                        <Input type="number" step="0.01" placeholder="optional" value={revenueExternal} onChange={(e) => setRevenueExternal(e.target.value)} className="bg-card border-border/70 text-foreground mt-1" disabled={analyzing} />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-muted-foreground">Trinkgeld (€)</Label>
+                                        <Input type="number" step="0.01" placeholder="optional" value={revenueTips} onChange={(e) => setRevenueTips(e.target.value)} className="bg-card border-border/70 text-foreground mt-1" disabled={analyzing} />
                                     </div>
                                 </div>
                                 <div>

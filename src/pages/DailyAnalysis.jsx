@@ -425,7 +425,7 @@ export default function DailyAnalysis() {
             const record = withPDF[i];
             try {
                 const result = await base44.integrations.Core.InvokeLLM({
-                    prompt: `Analysiere diese Z-Abschlag PDF. Extrahiere: Gesamtumsatz, Bar-Umsatz, EC-Umsatz, MwSt, Eigenbedarf. Gib JSON zurück.`,
+                    prompt: `Analysiere diese Z-Abschlag PDF. Extrahiere: Gesamtumsatz, Bar-Umsatz, EC-Umsatz, Gutschein-Umsatz, Externe Zahlung, Trinkgeld, MwSt, Eigenbedarf. Gib JSON zurück.`,
                     file_urls: [record.pdf_url],
                     response_json_schema: {
                         type: 'object',
@@ -433,6 +433,9 @@ export default function DailyAnalysis() {
                             revenue: { type: 'number' }, revenue_cash: { type: 'number' },
                             revenue_ec: { type: 'number' }, vat: { type: 'number' },
                             own_consumption: { type: 'number' },
+                            revenue_voucher: { type: 'number' },
+                            revenue_external: { type: 'number' },
+                            revenue_tips: { type: 'number' },
                         },
                         required: ['revenue']
                     }
@@ -444,6 +447,9 @@ export default function DailyAnalysis() {
                         revenue_ec: result.revenue_ec ?? record.revenue_ec,
                         vat: result.vat ?? record.vat,
                         own_consumption: result.own_consumption ?? record.own_consumption,
+                        revenue_voucher: result.revenue_voucher ?? record.revenue_voucher,
+                        revenue_external: result.revenue_external ?? record.revenue_external,
+                        revenue_tips: result.revenue_tips ?? record.revenue_tips,
                     });
                 } else {
                     errors.push(`${record.date}: Kein Umsatz erkannt`);
@@ -896,7 +902,7 @@ export default function DailyAnalysis() {
             )}
 
             {/* Revenue breakdown */}
-            {todayRevenue && (todayRevenue.revenue_cash || todayRevenue.revenue_ec || todayRevenue.vat || todayRevenue.own_consumption) && (
+            {todayRevenue && (todayRevenue.revenue_cash || todayRevenue.revenue_ec || todayRevenue.vat || todayRevenue.own_consumption || todayRevenue.revenue_voucher || todayRevenue.revenue_external || todayRevenue.revenue_tips) && (
                 <Card className="bg-card border-border">
                     <CardHeader className="pb-2 pt-4 px-4">
                         <CardTitle className="text-[12px] font-medium text-muted-foreground">Umsatz Aufschlüsselung</CardTitle>
@@ -920,12 +926,49 @@ export default function DailyAnalysis() {
                                 <p className="font-bold text-foreground">{todayRevenue.vat.toFixed(2)} €</p>
                             </div>
                         )}
+                        {todayRevenue.revenue_voucher > 0 && (
+                            <div className="bg-secondary/50 rounded-lg p-2.5">
+                                <p className="text-xs text-muted-foreground">Gutschein</p>
+                                <p className="font-bold text-foreground">{todayRevenue.revenue_voucher.toFixed(2)} €</p>
+                            </div>
+                        )}
+                        {todayRevenue.revenue_external > 0 && (
+                            <div className="bg-secondary/50 rounded-lg p-2.5">
+                                <p className="text-xs text-muted-foreground">Externe Zahlung</p>
+                                <p className="font-bold text-foreground">{todayRevenue.revenue_external.toFixed(2)} €</p>
+                            </div>
+                        )}
+                        {todayRevenue.revenue_tips > 0 && (
+                            <div className="bg-secondary/50 rounded-lg p-2.5">
+                                <p className="text-xs text-muted-foreground">Trinkgeld</p>
+                                <p className="font-bold text-foreground">{todayRevenue.revenue_tips.toFixed(2)} €</p>
+                            </div>
+                        )}
                         {todayRevenue.own_consumption > 0 && (
                             <div className="bg-secondary/50 rounded-lg p-2.5">
                                 <p className="text-xs text-muted-foreground">Eigenbedarf</p>
                                 <p className="font-bold text-foreground">{todayRevenue.own_consumption.toFixed(2)} €</p>
                             </div>
                         )}
+                        {(() => {
+                            const summe =
+                                (todayRevenue.revenue_cash || 0) +
+                                (todayRevenue.revenue_ec || 0) +
+                                (todayRevenue.revenue_voucher || 0) +
+                                (todayRevenue.revenue_external || 0);
+                            const diff = +(summe - (todayRevenue.revenue || 0)).toFixed(2);
+                            if (!summe) return null;
+                            return (
+                                <div className="col-span-2 rounded-lg bg-surface px-3 py-2">
+                                    <p className="text-[11.5px] text-muted-foreground">
+                                        Zahlarten zusammen {summe.toFixed(2)} €
+                                        {Math.abs(diff) < 0.01
+                                            ? ' · stimmt mit dem Tagesumsatz überein'
+                                            : ` · Differenz zum Tagesumsatz ${diff > 0 ? '+' : ''}${diff.toFixed(2)} €`}
+                                    </p>
+                                </div>
+                            );
+                        })()}
                     </CardContent>
                 </Card>
             )}
