@@ -75,14 +75,14 @@ function NextShiftHero({ shifts }) {
     return (
         <div className={cn(
             'rounded-2xl p-5 border',
-            isToday ? 'bg-status-warn/10 border-status-warn/40' : 'bg-card border-border'
+            isToday ? 'bg-amber-500/10 border-amber-500/40' : 'bg-card border-border'
         )}>
             <p className="text-[13.5px] font-medium text-foreground tracking-tight text-muted-foreground mb-3">
                 {isToday ? '⚡ Nächste Schicht — Heute' : 'Nächste Schicht'}
             </p>
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <p className={cn('text-2xl font-bold', isToday ? 'text-status-warn' : 'text-foreground')}>
+                    <p className={cn('text-2xl font-bold', isToday ? 'text-amber-400' : 'text-foreground')}>
                         {label}
                     </p>
                     <p className="text-sm text-muted-foreground mt-0.5">
@@ -95,7 +95,7 @@ function NextShiftHero({ shifts }) {
                 </div>
                 <div className={cn(
                     'w-14 h-14 rounded-2xl flex flex-col items-center justify-center shrink-0',
-                    isToday ? 'bg-status-warn/70 text-muted-foreground' : 'bg-secondary text-foreground'
+                    isToday ? 'bg-amber-500 text-slate-900' : 'bg-secondary text-foreground'
 
                 )}>
                     <span className="text-[10px] font-semibold">{format(shiftDate, 'MMM', { locale: de })}</span>
@@ -112,11 +112,11 @@ function ShiftRow({ shift, highlight = false, onSwap }) {
     return (
         <div className={cn(
             'flex items-center gap-3 px-3 py-2.5 rounded-xl border',
-            highlight ? 'border-status-warn/30 bg-status-warn/8' : 'border-border bg-card'
+            highlight ? 'border-amber-500/30 bg-amber-500/8' : 'border-border bg-card'
         )}>
             <div className={cn(
                 'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                highlight ? 'bg-status-warn/70 text-muted-foreground' : 'bg-secondary text-muted-foreground'
+                highlight ? 'bg-amber-500 text-slate-900' : 'bg-secondary text-muted-foreground'
 
             )}>
                 <Clock className="w-3.5 h-3.5" />
@@ -133,7 +133,7 @@ function ShiftRow({ shift, highlight = false, onSwap }) {
             {onSwap && (
                 <button
                     onClick={(e) => { e.stopPropagation(); onSwap(shift); }}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-status-warn/15 text-status-warn border border-status-warn/25 hover:bg-status-warn/25 transition-all text-xs font-semibold shrink-0 min-h-[32px]"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/25 hover:bg-amber-500/25 transition-all text-xs font-semibold shrink-0 min-h-[32px]"
                 >
                     <RepeatIcon className="w-3.5 h-3.5" />
                     Tauschen
@@ -192,18 +192,18 @@ function WeekTab({ shifts, onSwap }) {
                         <div key={date.toISOString()}
                             className={cn(
                                 'rounded-xl border overflow-hidden',
-                                isToday ? 'border-status-warn/40' : 'border-border/50',
+                                isToday ? 'border-amber-500/40' : 'border-border/50',
                                 isFree && !isToday && 'opacity-40'
                             )}>
                             {/* Tag-Header */}
                             <div className={cn(
                                 'flex items-center justify-between px-3 py-2',
-                                isToday ? 'bg-status-warn/10' : 'bg-secondary/30'
+                                isToday ? 'bg-amber-500/10' : 'bg-secondary/30'
                             )}>
                                 <div className="flex items-center gap-2">
                                     <span className={cn(
                                         'text-sm font-bold',
-                                        isToday ? 'text-status-warn' : 'text-foreground'
+                                        isToday ? 'text-amber-400' : 'text-foreground'
                                     )}>
                                         {format(date, 'EEE', { locale: de })}
                                     </span>
@@ -212,7 +212,7 @@ function WeekTab({ shifts, onSwap }) {
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {isToday && <Badge className="bg-status-warn/70 text-muted-foreground text-[10px] px-1.5 py-0 h-4">Heute</Badge>}
+                                    {isToday && <Badge className="bg-amber-500 text-slate-900 text-[10px] px-1.5 py-0 h-4">Heute</Badge>}
                                     {isFree && <span className="text-[10px] text-muted-foreground/50">Frei</span>}
                                     {dayShifts.length > 0 && (
                                         <span className="text-[10px] text-muted-foreground">
@@ -316,21 +316,21 @@ function MonthTab({ shifts, onSwap }) {
                                 className={cn(
                                     'aspect-square rounded-lg flex flex-col items-center justify-center relative',
                                     !isCurrentMonth && 'opacity-20',
-                                    isToday && 'bg-status-warn/70',
-                                    !isToday && hasShifts && 'bg-status-warn/15 border border-status-warn/30',
+                                    isToday && 'bg-amber-500',
+                                    !isToday && hasShifts && 'bg-amber-500/15 border border-amber-500/30',
                                     !isToday && !hasShifts && 'bg-transparent'
                                 )}>
                                 <span className={cn(
                                     'text-xs font-semibold',
-                                    isToday ? 'text-muted-foreground' : 'text-foreground'
+                                    isToday ? 'text-slate-900' : 'text-foreground'
                                 )}>
                                     {format(date, 'd')}
                                 </span>
                                 {hasShifts && !isToday && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-status-warn/70 mt-0.5" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-0.5" />
                                 )}
                                 {hasShifts && isToday && (
-                                    <span className="text-[9px] font-bold text-muted-foreground">{ds.length}×</span>
+                                    <span className="text-[9px] font-bold text-slate-900/70">{ds.length}×</span>
                                 )}
                             </div>
                         );
@@ -353,16 +353,16 @@ function MonthTab({ shifts, onSwap }) {
                                 <div key={shift.id}
                                     className={cn(
                                         'flex items-center gap-3 p-3 rounded-xl border',
-                                        isToday ? 'border-status-warn/30 bg-status-warn/8' : 'border-border bg-card'
+                                        isToday ? 'border-amber-500/30 bg-amber-500/8' : 'border-border bg-card'
                                     )}>
                                     <div className={cn(
                                         'w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0',
-                                        isToday ? 'bg-status-warn/70' : 'bg-secondary'
+                                        isToday ? 'bg-amber-500' : 'bg-secondary'
                                     )}>
-                                        <span className={cn('text-[10px] font-semibold', isToday ? 'text-muted-foreground' : 'text-muted-foreground')}>
+                                        <span className={cn('text-[10px] font-semibold', isToday ? 'text-slate-900' : 'text-muted-foreground')}>
                                 {format(d, 'EEE', { locale: de })}
                             </span>
-                            <span className={cn('text-sm font-bold', isToday ? 'text-muted-foreground' : 'text-foreground')}>
+                            <span className={cn('text-sm font-bold', isToday ? 'text-slate-900' : 'text-foreground')}>
 
                                             {format(d, 'd')}
                                         </span>
@@ -379,7 +379,7 @@ function MonthTab({ shifts, onSwap }) {
                                     {onSwap && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onSwap(shift); }}
-                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-status-warn/15 text-status-warn border border-status-warn/25 hover:bg-status-warn/25 transition-all text-xs font-semibold shrink-0 min-h-[32px]"
+                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/25 hover:bg-amber-500/25 transition-all text-xs font-semibold shrink-0 min-h-[32px]"
                                         >
                                             <RepeatIcon className="w-3.5 h-3.5" />
                                             Tauschen
@@ -443,22 +443,22 @@ function TeamTab({ myEmployeeId }) {
                     <div key={dateStr}
                         className={cn(
                             'rounded-xl border overflow-hidden',
-                            isToday ? 'border-status-warn/40' : 'border-border/50',
+                            isToday ? 'border-amber-500/40' : 'border-border/50',
                             dayShifts.length === 0 && 'opacity-40'
                         )}>
                         {/* Header */}
                         <div className={cn(
                             'flex items-center justify-between px-3 py-2',
-                            isToday ? 'bg-status-warn/10' : 'bg-secondary/30'
+                            isToday ? 'bg-amber-500/10' : 'bg-secondary/30'
                         )}>
                             <div className="flex items-center gap-2">
-                                <span className={cn('text-sm font-bold', isToday ? 'text-status-warn' : 'text-foreground')}>
+                                <span className={cn('text-sm font-bold', isToday ? 'text-amber-400' : 'text-foreground')}>
                                     {format(date, 'EEE', { locale: de })}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{format(date, 'dd.MM.')}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                {isToday && <Badge className="bg-status-warn/70 text-muted-foreground text-[10px] px-1.5 py-0 h-4">Heute</Badge>}
+                                {isToday && <Badge className="bg-amber-500 text-slate-900 text-[10px] px-1.5 py-0 h-4">Heute</Badge>}
                                 <span className="text-[10px] text-muted-foreground">
                                     {dayShifts.length > 0 ? `${dayShifts.length} Schichten` : 'Niemand'}
                                 </span>
@@ -474,16 +474,16 @@ function TeamTab({ myEmployeeId }) {
                                         <div key={shift.id}
                                             className={cn(
                                                 'flex items-center gap-2.5 px-2.5 py-2 rounded-lg',
-                                                isMe ? 'bg-status-warn/10 border border-status-warn/25' : 'bg-secondary/40'
+                                                isMe ? 'bg-amber-500/10 border border-amber-500/25' : 'bg-secondary/40'
                                             )}>
-                                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-status-warn to-status-warn flex items-center justify-center shrink-0">
-                                                <span className="text-muted-foreground font-bold text-[10px]">
+                                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0">
+                                                <span className="text-slate-900 font-bold text-[10px]">
 
                                                     {shift.employee_name?.charAt(0)?.toUpperCase() || '?'}
                                                 </span>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className={cn('text-xs font-semibold truncate', isMe ? 'text-status-warn' : 'text-foreground')}>
+                                                <p className={cn('text-xs font-semibold truncate', isMe ? 'text-amber-400' : 'text-foreground')}>
                                                     {shift.employee_name}{isMe && ' (Du)'}
                                                 </p>
                                                 <p className="text-[10px] text-muted-foreground">
@@ -556,7 +556,7 @@ export default function MyShiftsPage() {
                         onClick={() => setSyncOpen(true)}
                         className="gap-1.5 min-h-[44px] text-xs"
                     >
-                        <Calendar className="w-4 h-4 text-status-warn" />
+                        <Calendar className="w-4 h-4 text-amber-500" />
                         <span>Kalender</span>
                     </Button>
                 </div>
@@ -564,7 +564,7 @@ export default function MyShiftsPage() {
                 {/* ── Urlaub-Direktlink ─────────────────────────────────── */}
                 {permissions.canViewVacation && (
                     <div className="flex justify-end -mt-1">
-                        <Link to={createPageUrl('MyArea') + '?tab=urlaub'} className="text-xs text-status-warn/80 hover:text-status-warn transition-colors flex items-center gap-1">
+                        <Link to={createPageUrl('MyArea') + '?tab=urlaub'} className="text-xs text-amber-500/80 hover:text-amber-500 transition-colors flex items-center gap-1">
                             <Umbrella className="w-3 h-3" />
                             Urlaub beantragen
                         </Link>
@@ -582,15 +582,15 @@ export default function MyShiftsPage() {
                 <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })}>
                     <TabsList className="grid grid-cols-3 w-full bg-secondary/50 border border-border/50">
                         <TabsTrigger value="week"
-                            className="data-[state=active]:bg-status-warn/70 data-[state=active]:text-muted-foreground text-xs">
+                            className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 text-xs">
                             Diese Woche
                         </TabsTrigger>
                         <TabsTrigger value="month"
-                            className="data-[state=active]:bg-status-warn/70 data-[state=active]:text-muted-foreground text-xs">
+                            className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 text-xs">
                             Monat
                         </TabsTrigger>
                         <TabsTrigger value="team"
-                            className="data-[state=active]:bg-status-warn/70 data-[state=active]:text-muted-foreground text-xs">
+                            className="data-[state=active]:bg-amber-500 data-[state=active]:text-slate-900 text-xs">
                             Team
                         </TabsTrigger>
                     </TabsList>
@@ -630,7 +630,7 @@ export default function MyShiftsPage() {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-status-warn" />
+                            <Calendar className="w-4 h-4 text-amber-500" />
                             Kalender-Sync
                         </DialogTitle>
                     </DialogHeader>

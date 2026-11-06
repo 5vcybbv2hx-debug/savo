@@ -276,7 +276,7 @@ export default function Calendar() {
                     <select
                         value={filters.employee}
                         onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
-                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-status-warn/70"
+                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-amber-600"
                     >
                         <option value="all">Alle Mitarbeiter</option>
                         {employees.map(emp => (
@@ -289,7 +289,7 @@ export default function Calendar() {
                     <select
                         value={filters.shiftType}
                         onChange={(e) => setFilters({ ...filters, shiftType: e.target.value })}
-                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-status-warn/70"
+                        className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-amber-600"
                     >
                         <option value="all">Alle Schichttypen</option>
                         <option value="Aufmachen">Aufmachen</option>
@@ -356,7 +356,7 @@ export default function Calendar() {
                             <Button
                                 size="sm"
                                 onClick={() => handleAddShift(new Date())}
-                                className="bg-status-warn/70 hover:bg-status-warn/70 text-muted-foreground flex-shrink-0 h-9"
+                                className="bg-amber-500 hover:bg-amber-600 text-slate-900 flex-shrink-0 h-9"
                             >
                                 <Plus className="w-4 h-4 mr-1" />
                                 Schicht
@@ -395,7 +395,7 @@ export default function Calendar() {
                         <div className="p-4 overflow-y-auto h-full">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                                    <Zap className="w-4 h-4 text-status-warn" />
+                                    <Zap className="w-4 h-4 text-amber-400" />
                                     Schnellplanung
                                 </h2>
                                 <button
@@ -420,7 +420,7 @@ export default function Calendar() {
                         <div className="p-4 overflow-y-auto h-full">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                                    <CalendarDays className="w-4 h-4 text-status-warn" />
+                                    <CalendarDays className="w-4 h-4 text-amber-400" />
                                     Schichtwünsche
                                 </h2>
                                 <button
@@ -584,7 +584,7 @@ export default function Calendar() {
                                 {format(selectedDate, "EEEE, d. MMMM yyyy", { locale: de })}
                             </h3>
                             {permissions.canEditShifts && (
-                                <Button size="sm" className="bg-status-warn/70 hover:bg-status-warn/70" onClick={() => handleAddShift(selectedDate)}>
+                                <Button size="sm" className="bg-amber-600 hover:bg-amber-700" onClick={() => handleAddShift(selectedDate)}>
                                     <Plus className="w-4 h-4 mr-2" />
                                     Schicht hinzufügen
                                 </Button>
@@ -602,7 +602,7 @@ export default function Calendar() {
                                             onTouchMove={longPressHandlers.onTouchMove}
                                             onTouchEnd={longPressHandlers.onTouchEnd}
                                             onClick={() => { if (longPressHandlers.didFire()) return; permissions.canEditShifts && handleSelectShift(shift); }}
-                                            className={`flex items-center gap-3 p-3 rounded-lg bg-muted transition-colors border border-border ${permissions.canEditShifts ? 'cursor-pointer hover:bg-accent hover:border-status-warn/70' : 'cursor-default'}`}
+                                            className={`flex items-center gap-3 p-3 rounded-lg bg-muted transition-colors border border-border ${permissions.canEditShifts ? 'cursor-pointer hover:bg-accent hover:border-amber-600' : 'cursor-default'}`}
                                         >
                                             <div
                                                 className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
@@ -614,7 +614,7 @@ export default function Calendar() {
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-semibold text-foreground truncate">{shift.employee_name}</p>
                                                     {shift.shift_type && (
-                                                        <Badge className="bg-status-warn/20 text-status-warn border-status-warn/30 text-[10px]">
+                                                        <Badge className="bg-amber-600/20 text-amber-400 border-amber-600/30 text-[10px]">
                                                             {shift.shift_type}
                                                         </Badge>
                                                     )}

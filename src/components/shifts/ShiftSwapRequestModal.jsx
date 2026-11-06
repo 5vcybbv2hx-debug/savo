@@ -167,22 +167,22 @@ export default function ShiftSwapRequestModal({ shift, open, onOpenChange, onSuc
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <RepeatIcon className="w-5 h-5 text-primary" />
+                        <RepeatIcon className="w-5 h-5 text-blue-600" />
                         Schichttausch anfragen
                     </DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-4 mt-4">
-                    <div className="p-4 bg-primary/15 rounded-lg border border-primary/25">
-                        <p className="text-sm font-medium text-primary mb-2">Deine Schicht:</p>
-                        <p className="text-sm text-primary font-semibold">
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm font-medium text-blue-900 mb-2">Deine Schicht:</p>
+                        <p className="text-sm text-blue-800 font-semibold">
                             {format(parseISO(shift.date), 'EEEE, d. MMMM yyyy', { locale: de })}
                         </p>
-                        <p className="text-sm text-primary">
+                        <p className="text-sm text-blue-700">
                             {shift.start_time} - {shift.end_time}
                         </p>
                         {shift.shift_type && (
-                            <p className="text-xs text-primary mt-1">{shift.shift_type}</p>
+                            <p className="text-xs text-blue-600 mt-1">{shift.shift_type}</p>
                         )}
                     </div>
 
@@ -196,8 +196,8 @@ export default function ShiftSwapRequestModal({ shift, open, onOpenChange, onSuc
                                      onClick={() => setMode('marketplace')}
                                      className={`flex-1 px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
                                          mode === 'marketplace'
-                                             ? 'bg-primary/15 border-primary/70 text-primary'
-                                             : 'bg-card border-border text-muted-foreground hover:border-border'
+                                             ? 'bg-blue-50 border-blue-500 text-blue-700'
+                                             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                                      }`}
                                  >
                                      Marketplace
@@ -207,14 +207,14 @@ export default function ShiftSwapRequestModal({ shift, open, onOpenChange, onSuc
                                      onClick={() => setMode('direct')}
                                      className={`flex-1 px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium ${
                                          mode === 'direct'
-                                             ? 'bg-primary/15 border-primary/70 text-primary'
-                                             : 'bg-card border-border text-muted-foreground hover:border-border'
+                                             ? 'bg-blue-50 border-blue-500 text-blue-700'
+                                             : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                                      }`}
                                  >
                                      Direkt anfragen
                                  </button>
                              </div>
-                             <p className="text-xs text-muted-foreground">
+                             <p className="text-xs text-slate-500">
                                  {mode === 'marketplace'
                                      ? 'Andere Mitarbeiter können sich bewerben'
                                      : 'Direkt an einen Mitarbeiter fragen'}
@@ -266,7 +266,7 @@ export default function ShiftSwapRequestModal({ shift, open, onOpenChange, onSuc
                             </Button>
                             <Button 
                                 type="submit"
-                                className="flex-1 bg-primary/70 hover:bg-primary/70"
+                                className="flex-1 bg-blue-600 hover:bg-blue-700"
                                 disabled={createMutation.isPending}
                             >
                                 {createMutation.isPending ? (

@@ -26,7 +26,7 @@ function ShiftSwapInline({ shift, onClose }) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setOpen(true)}
-                className="text-primary hover:text-primary/25 hover:bg-primary/10"
+                className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
             >
                 <span className="w-4 h-4 mr-1">⇄</span>
                 Tausch anfragen
@@ -354,7 +354,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                         <Users className="w-4 h-4" />
                                         Mitarbeiter wählen
                                     </Label>
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-xs text-slate-500">
                                         {selectedEmployees.length} ausgewählt
                                     </span>
                                 </div>
@@ -387,7 +387,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                                 <div 
                                                     className={cn(
                                                         "w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0",
-                                                        isSelected && "ring-2 ring-status-warn/70 ring-offset-2"
+                                                        isSelected && "ring-2 ring-amber-500 ring-offset-2"
                                                     )}
                                                     style={{ backgroundColor: emp.color }}
                                                 >
@@ -398,7 +398,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                                     {skills.length > 0 && (
                                                         <div className="flex gap-1 flex-wrap mt-0.5">
                                                             {skills.map(s => (
-                                                                <span key={s} className="text-[9px] px-1 py-0.5 rounded bg-status-warn/20 text-status-warn/25 font-medium">{s}</span>
+                                                                <span key={s} className="text-[9px] px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 font-medium">{s}</span>
                                                             ))}
                                                         </div>
                                                     )}
@@ -420,7 +420,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                 });
                                 if (unavailableSelected.length === 0) return null;
                                 return (
-                                    <div className="flex items-start gap-2 p-3 rounded-lg bg-status-warn/10 border border-status-warn/30 text-status-warn dark:text-status-warn">
+                                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
                                         <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                                         <div className="text-xs space-y-0.5">
                                             <p className="font-medium">
@@ -524,7 +524,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                 const unavailable = isEmployeeUnavailable(unavailabilities, formData.employee_id, formData.date);
                                 if (!onVacation && !unavailable) return null;
                                 return (
-                                    <div className="flex items-start gap-2 p-3 rounded-lg bg-status-warn/10 border border-status-warn/30 text-status-warn dark:text-status-warn">
+                                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
                                         <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                                         <div className="text-xs space-y-0.5">
                                             <p className="font-medium">
@@ -570,7 +570,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                                 <span className="font-medium text-sm">{type.name}</span>
                                             </div>
                                             {type.start_time && (
-                                                <p className="text-xs text-muted-foreground">
+                                                <p className="text-xs text-slate-500">
                                                     {type.start_time} - {type.end_time}
                                                 </p>
                                             )}
@@ -591,7 +591,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                         onCheckedChange={setIsRecurring}
                                         id="recurring-switch"
                                     />
-                                    <Label htmlFor="recurring-switch" className="text-xs text-muted-foreground cursor-pointer">
+                                    <Label htmlFor="recurring-switch" className="text-xs text-slate-600 cursor-pointer">
                                         Wiederkehrend
                                     </Label>
                                 </div>
@@ -685,7 +685,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                                 const dayRequirements = requirements.filter(r => r.day_of_week === dayOfWeek);
                                 
                                 if (dayRequirements.length === 0) {
-                                    return <p className="text-xs text-muted-foreground italic">Keine Anforderungen für {dayOfWeek}</p>;
+                                    return <p className="text-xs text-slate-500 italic">Keine Anforderungen für {dayOfWeek}</p>;
                                 }
                                 
                                 return (
@@ -750,7 +750,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="text-status-danger hover:text-status-danger hover:bg-status-danger/15"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                 onClick={() => {
                                     haptics.light();
                                     onDelete(shift.id);
@@ -764,7 +764,7 @@ export default function ShiftModal({ open, onClose, shift, employees, selectedDa
                         </Button>
                         <Button 
                             type="submit" 
-                            className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
+                            className="flex-1 bg-amber-600 hover:bg-amber-700"
                             disabled={!shift && selectedEmployees.length === 0}
                         >
                             {shift ? 'Speichern' : `${selectedEmployees.length} Schicht${selectedEmployees.length !== 1 ? 'en' : ''} erstellen`}

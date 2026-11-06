@@ -85,23 +85,23 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
     if (isLoading || directRequests.length === 0) return null;
 
     return (
-        <Card className="overflow-hidden bg-card border-status-warn/30">
+        <Card className="overflow-hidden bg-card border-orange-500/30">
             <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-                <div className="w-8 h-8 rounded-lg bg-status-warn/20 flex items-center justify-center shrink-0">
-                    <RepeatIcon className="w-4 h-4 text-status-warn" />
+                <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
+                    <RepeatIcon className="w-4 h-4 text-orange-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm leading-tight">Schichttausch-Anfragen</p>
                     <p className="text-xs text-muted-foreground">Direkte Anfragen an dich</p>
                 </div>
-                <Badge className="bg-status-warn/20 text-status-warn border-status-warn/30 text-xs shrink-0">
+                <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 text-xs shrink-0">
                     {directRequests.length} offen
                 </Badge>
             </div>
 
             <div className="px-4 pb-4 pt-1 space-y-3">
                 {directRequests.map((request, idx) => (
-                    <div key={request.id} style={{ '--delay': `${idx*50}ms` }} className="p-3 rounded-xl animate-stagger bg-status-warn/5 border border-status-warn/20">
+                    <div key={request.id} style={{ '--delay': `${idx*50}ms` }} className="p-3 rounded-xl animate-stagger bg-orange-500/5 border border-orange-500/20">
                         <div className="flex items-start gap-3 mb-3">
                             <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-white text-sm font-bold shrink-0 mt-0.5">
                                 {request.requesting_employee_name?.charAt(0)}
@@ -122,7 +122,7 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
                                             : request.shift_time || 'Keine Zeitangabe'}
                                     </span>
                                     {request.shift_type && (
-                                        <Badge className="text-[10px] bg-primary/20 text-primary/25 border-primary/30 px-1.5 py-0">
+                                        <Badge className="text-[10px] bg-blue-500/20 text-blue-300 border-blue-500/30 px-1.5 py-0">
                                             {request.shift_type}
                                         </Badge>
                                     )}
@@ -132,7 +132,7 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
                                 )}
                                 {request.is_mutual_swap && (
                                     <div className="mt-2 p-2 rounded-lg bg-secondary/50 border border-border/50">
-                                        <p className="text-[10px] font-semibold text-status-warn mb-1">🔁 Gegenseitiger Tausch — du gibst dafür ab:</p>
+                                        <p className="text-[10px] font-semibold text-orange-400 mb-1">🔁 Gegenseitiger Tausch — du gibst dafür ab:</p>
                                         <p className="text-xs text-foreground">
                                             {request.partner_shift_date && format(parseISO(request.partner_shift_date), 'EEEE, dd.MM.yyyy', { locale: de })}
                                             {request.partner_shift_time ? ` • ${request.partner_shift_time}` : ''}
@@ -148,7 +148,7 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
                                 onClick={() => respondMutation.mutate({ request, accepted: false })}
                                 disabled={respondMutation.isPending}
                                 variant="outline"
-                                className="flex-1 h-9 border-status-danger/40 text-status-danger hover:bg-status-danger/10 text-xs gap-1.5"
+                                className="flex-1 h-9 border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs gap-1.5"
                             >
                                 <X className="w-3.5 h-3.5" /> Ablehnen
                             </Button>
@@ -156,7 +156,7 @@ export default function ShiftSwapInboxCard({ currentEmployee }) {
                                 size="sm"
                                 onClick={() => respondMutation.mutate({ request, accepted: true })}
                                 disabled={respondMutation.isPending}
-                                className="flex-1 h-9 bg-status-ok/70 hover:bg-status-ok/70 text-white text-xs gap-1.5"
+                                className="flex-1 h-9 bg-green-600 hover:bg-green-700 text-white text-xs gap-1.5"
                             >
                                 <Check className="w-3.5 h-3.5" /> Annehmen
                             </Button>

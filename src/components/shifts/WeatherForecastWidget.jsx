@@ -94,8 +94,8 @@ function getBusynessLevel(dow, averages, maxAvg, busyness, allowRevenueFallback 
   // Prefer busyness_level data (1-5) if available
   if (busyness && busyness[dayName] != null) {
     const avg = busyness[dayName];
-    if (avg >= 4) return { level: 'high', label: 'Stark', icon: TrendingUp, color: 'text-status-ok' };
-    if (avg >= 2.5) return { level: 'medium', label: 'Mittel', icon: Minus, color: 'text-status-warn' };
+    if (avg >= 4) return { level: 'high', label: 'Stark', icon: TrendingUp, color: 'text-emerald-400' };
+    if (avg >= 2.5) return { level: 'medium', label: 'Mittel', icon: Minus, color: 'text-amber-400' };
     return { level: 'low', label: 'Ruhig', icon: TrendingDown, color: 'text-muted-foreground' };
   }
 
@@ -104,8 +104,8 @@ function getBusynessLevel(dow, averages, maxAvg, busyness, allowRevenueFallback 
   const avg = averages?.[dayName];
   if (avg == null || !maxAvg) return null;
   const ratio = avg / maxAvg;
-  if (ratio >= 0.75) return { level: 'high', label: 'Stark', icon: TrendingUp, color: 'text-status-ok' };
-  if (ratio >= 0.40) return { level: 'medium', label: 'Mittel', icon: Minus, color: 'text-status-warn' };
+  if (ratio >= 0.75) return { level: 'high', label: 'Stark', icon: TrendingUp, color: 'text-emerald-400' };
+  if (ratio >= 0.40) return { level: 'medium', label: 'Mittel', icon: Minus, color: 'text-amber-400' };
   return { level: 'low', label: 'Ruhig', icon: TrendingDown, color: 'text-muted-foreground' };
 }
 
@@ -223,8 +223,8 @@ export default function WeatherForecastWidget({ isManager }) {
 
                 <Icon className={cn(
                   'w-5 h-5',
-                  day.code === 0 ? 'text-status-warn' :
-                  day.precip > 0 ? 'text-primary' :
+                  day.code === 0 ? 'text-amber-400' :
+                  day.precip > 0 ? 'text-blue-400' :
                   'text-muted-foreground'
                 )} />
 
@@ -236,7 +236,7 @@ export default function WeatherForecastWidget({ isManager }) {
                 </span>
 
                 {day.precip > 0 && (
-                  <span className="text-[9px] text-primary leading-none flex items-center gap-0.5">
+                  <span className="text-[9px] text-blue-400 leading-none flex items-center gap-0.5">
                     <Droplets className="w-2.5 h-2.5" />{day.precip}
                   </span>
                 )}
@@ -254,12 +254,12 @@ export default function WeatherForecastWidget({ isManager }) {
                   </span>
                 )}
                 {getReservationsForDate(reservations, day.date).length > 0 && (
-                  <span className="text-[8px] text-status-ok leading-none mt-0.5" title="Reservierungen">
+                  <span className="text-[8px] text-emerald-400 leading-none mt-0.5" title="Reservierungen">
                     🍽️ {getReservationGuests(reservations, day.date)}P
                   </span>
                 )}
                 {getSchoolVacation(day.date) && (
-                  <span className="text-[8px] text-primary leading-none mt-0.5" title={getSchoolVacation(day.date).name}>
+                  <span className="text-[8px] text-cyan-400 leading-none mt-0.5" title={getSchoolVacation(day.date).name}>
                     🏫 {getSchoolVacation(day.date).name}
                   </span>
                 )}
@@ -275,10 +275,10 @@ export default function WeatherForecastWidget({ isManager }) {
               Auslastung aus Ø Betriebsamkeit & Umsatz pro Wochentag
             </span>
             <div className="flex gap-2">
-              <span className="flex items-center gap-0.5 text-[9px] text-status-ok">
+              <span className="flex items-center gap-0.5 text-[9px] text-emerald-400">
                 <TrendingUp className="w-2.5 h-2.5" />Stark
               </span>
-              <span className="flex items-center gap-0.5 text-[9px] text-status-warn">
+              <span className="flex items-center gap-0.5 text-[9px] text-amber-400">
                 <Minus className="w-2.5 h-2.5" />Mittel
               </span>
               <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground">

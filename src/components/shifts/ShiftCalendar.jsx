@@ -224,7 +224,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                         onClick={() => setViewMode(viewMode === 'week' ? 'month' : 'week')}
                         className={cn(
                             "text-xs h-7",
-                            viewMode === 'week' && "bg-status-warn/70 hover:bg-status-warn/70"
+                            viewMode === 'week' && "bg-amber-600 hover:bg-amber-700"
                         )}
                     >
                         <CalendarIcon className="w-3 h-3 mr-1" />
@@ -244,11 +244,11 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
             {/* Legend */}
             <div className="flex flex-wrap gap-3 px-3 py-2 bg-background/40 border-b border-border text-[10px]">
                 <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded bg-status-ok/70"></div>
+                    <div className="w-3 h-3 rounded bg-green-500"></div>
                     <span className="text-muted-foreground">Bestätigt</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <div className="w-3 h-3 rounded border-2 border-dashed border-status-warn/70 bg-status-warn/20"></div>
+                    <div className="w-3 h-3 rounded border-2 border-dashed border-yellow-400 bg-yellow-400/20"></div>
                     <span className="text-muted-foreground">Vorläufig</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -267,7 +267,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
             </div>
 
             {/* Calendar Grid */}
-            <div className="grid grid-cols-7 divide-x divide-y border-border">
+            <div className="grid grid-cols-7 divide-x divide-y divide-slate-700">
                 {calendarDays.map((day, idx) => {
                     const dayShifts = getShiftsForDay(day);
                     const dayProvisional = getProvisionalForDay(day);
@@ -298,9 +298,9 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                             className={cn(
                                 "relative group cursor-pointer transition-all",
                                 viewMode === 'week' ? "min-h-[110px]" : "min-h-[80px]",
-                                isToday && "bg-status-warn/5 ring-2 ring-inset ring-status-warn/30",
-                                isSelected && "bg-status-warn/10 ring-2 ring-inset ring-status-warn/70",
-                                understaffed && "bg-status-danger/5",
+                                isToday && "bg-amber-500/5 ring-2 ring-inset ring-amber-500/30",
+                                isSelected && "bg-amber-600/10 ring-2 ring-inset ring-amber-600",
+                                understaffed && "bg-red-500/5",
                                 !isCurrentMonth && "opacity-40 bg-background/30"
                             )}
                             onClick={() => setSelectedDate(day)}
@@ -311,7 +311,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                             <div className="absolute top-1.5 right-1.5 z-10">
                                 <div className={cn(
                                     "flex items-center gap-1 px-1.5 py-0.5 rounded-md",
-                                    isToday ? "bg-status-warn/70 text-foreground" : "bg-background/50 text-foreground/75"
+                                    isToday ? "bg-amber-600 text-foreground" : "bg-background/50 text-foreground/75"
                                 )}>
                                     <span className="text-sm font-bold">
                                         {format(day, 'd')}
@@ -322,8 +322,8 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                                             className={cn(
                                                 "text-[9px] px-1 h-3.5 border",
                                                 understaffed 
-                                                    ? "bg-status-danger/10 border-status-danger/70 text-status-danger" 
-                                                    : "bg-status-ok/10 border-status-ok/70 text-status-ok"
+                                                    ? "bg-red-500/10 border-red-500 text-red-400" 
+                                                    : "bg-green-500/10 border-green-500 text-green-400"
                                             )}
                                         >
                                             {dayShifts.length}/{required}
@@ -337,7 +337,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                                 <div className="absolute top-1.5 left-1.5 z-10 flex flex-col gap-0.5">
                                     {birthdays.map(emp => (
                                         <div key={emp.id}
-                                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/80 text-foreground shadow-sm max-w-[90px]">
+                                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-pink-500/80 text-foreground shadow-sm max-w-[90px]">
                                             <span className="text-[9px]">🎂</span>
                                             <span className="text-[9px] font-semibold truncate leading-tight">{emp.name.split(' ')[0]}</span>
                                         </div>
@@ -348,7 +348,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                             {/* Feiertag Banner */}
                             {holidayName && (
                                 <div className="absolute top-1.5 left-1.5 right-16 z-10">
-                                    <div className="bg-status-danger/70 text-foreground text-[9px] px-1.5 py-0.5 rounded font-semibold truncate shadow-sm">
+                                    <div className="bg-red-600 text-foreground text-[9px] px-1.5 py-0.5 rounded font-semibold truncate shadow-sm">
                                         {holidayName}
                                     </div>
                                 </div>
@@ -401,8 +401,8 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                                             req.status === 'abgelehnt'
                                                 ? "bg-secondary/40 border-border/50 text-muted-foreground opacity-60"
                                                 : req.status === 'bestätigt'
-                                                ? "bg-status-ok/30 border-status-ok/70 text-status-ok/25"
-                                                : "bg-status-warn/15 border-status-warn/70 text-status-warn/25"
+                                                ? "bg-green-600/30 border-green-500 text-green-300"
+                                                : "bg-yellow-500/15 border-yellow-400 text-yellow-300"
                                         )}
                                         title={permissions.isManager && req.status === 'ausstehend' ? 'Klicken zum Bestätigen/Ablehnen' : `${req.employee_name} – ${req.status}`}
                                     >
@@ -418,7 +418,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
 
                                 {/* Unavailability indicators */}
                                 {unavailables.length > 0 && (
-                                    <div className="px-1.5 py-0.5 bg-status-warn/15 border border-status-warn/30 rounded text-[9px] text-status-warn/25 flex items-center gap-1 flex-shrink-0">
+                                    <div className="px-1.5 py-0.5 bg-orange-500/15 border border-orange-500/30 rounded text-[9px] text-orange-300 flex items-center gap-1 flex-shrink-0">
                                         <span>⚠</span>
                                         <span className="truncate">
                                             {unavailables.length === 1
@@ -433,7 +433,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                                     <Link
                                         to={createPageUrl('MyArea') + '?tab=urlaub'}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="px-1.5 py-0.5 bg-status-warn/20 border border-status-warn/30 rounded text-[9px] text-status-warn flex items-center gap-1 hover:bg-status-warn/30 transition-colors font-medium flex-shrink-0"
+                                        className="px-1.5 py-0.5 bg-amber-600/20 border border-amber-600/30 rounded text-[9px] text-amber-400 flex items-center gap-1 hover:bg-amber-600/30 transition-colors font-medium flex-shrink-0"
                                     >
                                         <Palmtree className="w-2.5 h-2.5" />
                                         <span className="truncate">
@@ -447,7 +447,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
 
                                 {/* Swap Request Badges */}
                                 {daySwapRequests.length > 0 && (
-                                    <div className="px-1.5 py-0.5 bg-primary/15 border border-primary/30 rounded text-[9px] text-primary/25 flex items-center gap-1 flex-shrink-0">
+                                    <div className="px-1.5 py-0.5 bg-blue-500/15 border border-blue-500/30 rounded text-[9px] text-blue-300 flex items-center gap-1 flex-shrink-0">
                                         <span>🔄</span>
                                         <span className="truncate">
                                             {daySwapRequests.length === 1
@@ -464,7 +464,7 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="w-full h-6 rounded-none bg-background/90 hover:bg-status-warn/70 text-muted-foreground hover:text-foreground border-t border-border"
+                                        className="w-full h-6 rounded-none bg-background/90 hover:bg-amber-600 text-muted-foreground hover:text-foreground border-t border-border"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             onAddShift(day, null, null);
@@ -485,13 +485,13 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
         {provisionalPopup && (
             <div
                 ref={popupRef}
-                className="fixed z-50 bg-card border border-status-warn/40 rounded-xl shadow-2xl p-3 min-w-[220px]"
+                className="fixed z-50 bg-card border border-yellow-500/40 rounded-xl shadow-2xl p-3 min-w-[220px]"
                 style={{ top: Math.min(provisionalPopup.y, window.innerHeight - 160), left: Math.min(provisionalPopup.x, window.innerWidth - 240) }}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="mb-2.5">
                     <p className="font-bold text-foreground text-sm">{provisionalPopup.req.employee_name}</p>
-                    <p className="text-status-warn/25 text-xs">{provisionalPopup.req.date} · {provisionalPopup.req.start_time}–{provisionalPopup.req.end_time}</p>
+                    <p className="text-yellow-300 text-xs">{provisionalPopup.req.date} · {provisionalPopup.req.start_time}–{provisionalPopup.req.end_time}</p>
                     {provisionalPopup.req.shift_type && <p className="text-muted-foreground text-xs">{provisionalPopup.req.shift_type}</p>}
                     {provisionalPopup.req.comment && <p className="text-muted-foreground text-[10px] italic mt-1">"{provisionalPopup.req.comment}"</p>}
                 </div>
@@ -499,14 +499,14 @@ export default function ShiftCalendar({ shifts, allShifts, employees, requiremen
                     <button
                         disabled={provisionalMutation.isPending}
                         onClick={() => provisionalMutation.mutate({ req: provisionalPopup.req, action: 'abgelehnt' })}
-                        className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-status-danger/80 hover:bg-status-danger/70 text-foreground text-xs font-medium transition-colors"
+                        className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-red-600/80 hover:bg-red-600 text-foreground text-xs font-medium transition-colors"
                     >
                         <XCircle className="w-3.5 h-3.5" /> Ablehnen
                     </button>
                     <button
                         disabled={provisionalMutation.isPending}
                         onClick={() => provisionalMutation.mutate({ req: provisionalPopup.req, action: 'bestätigt' })}
-                        className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-status-ok/70 hover:bg-status-ok/70 text-foreground text-xs font-medium transition-colors"
+                        className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-green-600 hover:bg-green-700 text-foreground text-xs font-medium transition-colors"
                     >
                         <CheckCircle2 className="w-3.5 h-3.5" /> Bestätigen
                     </button>

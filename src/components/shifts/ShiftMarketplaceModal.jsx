@@ -131,7 +131,7 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
       <DialogContent className="w-full max-w-2xl max-h-[85vh] overflow-y-auto p-0 sm:p-6">
         <DialogHeader className="p-4 sm:p-0 sticky top-0 z-10 bg-background border-b border-border sm:border-0">
           <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <Users className="w-5 h-5 text-primary" />
+            <Users className="w-5 h-5 text-blue-600" />
             Schichttausch-Marktplatz
           </DialogTitle>
         </DialogHeader>
@@ -196,8 +196,8 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                     </div>
 
                     {/* Schicht-Info */}
-                    <div className="bg-primary/10 rounded-lg p-3 border border-primary/20">
-                      <p className="text-xs font-medium text-primary mb-2">Schicht:</p>
+                    <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
+                      <p className="text-xs font-medium text-blue-400 mb-2">Schicht:</p>
                       <p className="text-sm font-semibold text-foreground">
                         {format(parseISO(shift.shift_date), 'EEEE, d. MMMM yyyy', { locale: de })}
                       </p>
@@ -223,8 +223,8 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                         className={cn(
                           "text-xs sm:text-sm h-10 sm:h-auto",
                           myReaction?.status === 'annehmen'
-                            ? 'bg-status-ok/70 hover:bg-status-ok/70'
-                            : 'bg-status-ok/20 text-status-ok border border-status-ok/30 hover:bg-status-ok/30'
+                            ? 'bg-green-600 hover:bg-green-700'
+                            : 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
                         )}
                       >
                         {bidMutation.isPending ? (
@@ -244,8 +244,8 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                         className={cn(
                           "text-xs sm:text-sm h-10 sm:h-auto",
                           myReaction?.status === 'unter_umständen'
-                            ? 'bg-status-warn/70 hover:bg-status-warn/70'
-                            : 'bg-status-warn/20 text-status-warn border border-status-warn/30 hover:bg-status-warn/30'
+                            ? 'bg-yellow-600 hover:bg-yellow-700'
+                            : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/30'
                         )}
                       >
                         {bidMutation.isPending ? (
@@ -266,8 +266,8 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                         className={cn(
                           "text-xs sm:text-sm h-10 sm:h-auto",
                           myReaction?.status === 'ablehnen'
-                            ? 'bg-status-danger/70 hover:bg-status-danger/70'
-                            : 'bg-status-danger/20 text-status-danger border border-status-danger/30 hover:bg-status-danger/30'
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
                         )}
                       >
                         {bidMutation.isPending ? (
@@ -285,7 +285,7 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                     {sortedBids.length > 0 && (
                       <button
                         onClick={() => setExpandedRequest(isExpanded ? null : shift.id)}
-                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-surface hover:bg-surface transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 transition-colors"
                       >
                         <span className="text-xs font-medium text-muted-foreground">
                           {sortedBids.length} Reaktionen
@@ -301,11 +301,11 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
 
                   {/* Bewerber-Detail (aufklappbar) */}
                   {isExpanded && sortedBids.length > 0 && (
-                    <div className="border-t border-border px-4 py-3 bg-surface space-y-2">
+                    <div className="border-t border-border px-4 py-3 bg-slate-500/5 space-y-2">
                       {/* Annehmen */}
                       {groupedBids.annehmen.length > 0 && (
                         <div>
-                          <p className="text-xs font-medium text-status-ok mb-2 flex items-center gap-1">
+                          <p className="text-xs font-medium text-green-400 mb-2 flex items-center gap-1">
                             <Check className="w-3 h-3" />
                             {groupedBids.annehmen.length} möchte übernehmen
                           </p>
@@ -314,7 +314,7 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                               <div key={bid.id} className="flex items-center justify-between text-xs">
                                 <span className="text-foreground">
                                   {bid.bidding_employee_name}
-                                  {idx === 0 && <span className="ml-2 text-status-ok">⭐ Erste</span>}
+                                  {idx === 0 && <span className="ml-2 text-green-400">⭐ Erste</span>}
                                 </span>
                                 <span className="text-muted-foreground">
                                   {formatBidTime(bid.created_at)}
@@ -328,7 +328,7 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                       {/* Unter Umständen */}
                       {groupedBids.unter_umständen.length > 0 && (
                         <div>
-                          <p className="text-xs font-medium text-status-warn mb-2 flex items-center gap-1">
+                          <p className="text-xs font-medium text-yellow-400 mb-2 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" />
                             {groupedBids.unter_umständen.length} ist interessiert, aber unsicher
                           </p>
@@ -350,7 +350,7 @@ export default function ShiftMarketplaceModal({ open, onOpenChange }) {
                       {/* Ablehnen */}
                       {groupedBids.ablehnen.length > 0 && (
                         <div>
-                          <p className="text-xs font-medium text-status-danger mb-2 flex items-center gap-1">
+                          <p className="text-xs font-medium text-red-400 mb-2 flex items-center gap-1">
                             <X className="w-3 h-3" />
                             {groupedBids.ablehnen.length} kein Interesse
                           </p>

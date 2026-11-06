@@ -231,7 +231,7 @@ export default function ShiftSwapManager({ compact = false }) {
             {compact ? (
                 <button
                     onClick={() => setModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-status-warn/10 border border-status-warn/20 text-status-warn text-xs font-medium hover:bg-status-warn/20 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition-colors"
                 >
                     <RepeatIcon className="w-3.5 h-3.5" />
                     {pendingRequests.length} Tauschanträge — prüfen
@@ -240,12 +240,12 @@ export default function ShiftSwapManager({ compact = false }) {
                 <Button
                     variant="outline"
                     onClick={() => setModalOpen(true)}
-                    className="border-border hover:bg-surface text-muted-foreground relative"
+                    className="border-slate-600 hover:bg-slate-700 text-slate-300 relative"
                 >
                     <RepeatIcon className="w-4 h-4 mr-2" />
                     Tauschanfragen
                     {pendingRequests.length > 0 && (
-                        <Badge className="ml-2 bg-status-danger/70 text-white">{pendingRequests.length}</Badge>
+                        <Badge className="ml-2 bg-red-500 text-white">{pendingRequests.length}</Badge>
                     )}
                 </Button>
             )}
@@ -269,45 +269,45 @@ export default function ShiftSwapManager({ compact = false }) {
                         <TabsContent value="pending" className="space-y-3 mt-4">
                             {pendingRequests.length > 0 ? (
                                 pendingRequests.map(request => (
-                                    <Card key={request.id} className="p-4 bg-card">
+                                    <Card key={request.id} className="p-4 bg-slate-50">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <Badge className={request.status === 'angenommen' ? "bg-primary/15 text-primary" : "bg-status-warn/15 text-status-warn"}>
+                                                    <Badge className={request.status === 'angenommen' ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}>
                                                         <Clock className="w-3 h-3 mr-1" />
                                                         {request.status === 'angenommen' ? 'Akzeptiert – wartet auf Bestätigung' : 'Ausstehend'}
                                                     </Badge>
-                                                    <span className="text-xs text-muted-foreground">
+                                                    <span className="text-xs text-slate-500">
                                                         {format(new Date(request.created_date), 'dd.MM.yyyy HH:mm', { locale: de })}
                                                     </span>
                                                 </div>
                                                 
                                                 <div className="space-y-2">
                                                     <div>
-                                                        <p className="text-sm font-medium text-muted-foreground">
+                                                        <p className="text-sm font-medium text-slate-700">
                                                             {request.requesting_employee_name} → {request.target_employee_name}
                                                         </p>
-                                                        <p className="text-sm text-muted-foreground">
+                                                        <p className="text-sm text-slate-600">
                                                             {format(new Date(request.shift_date), 'EEEE, d. MMMM', { locale: de })} • {request.shift_time}
                                                         </p>
                                                     </div>
                                                     
                                                     {request.reason && (
-                                                        <div className="p-2 bg-card rounded border border-border">
-                                                            <p className="text-xs text-muted-foreground mb-1">Grund:</p>
-                                                            <p className="text-sm text-muted-foreground">{request.reason}</p>
+                                                        <div className="p-2 bg-white rounded border border-slate-200">
+                                                            <p className="text-xs text-slate-500 mb-1">Grund:</p>
+                                                            <p className="text-sm text-slate-700">{request.reason}</p>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
 
-                                                        <div className="flex gap-2 mt-4 pt-3 border-t border-border">
+                                                        <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => handleReject(request)}
-                                                className="flex-1 border-status-danger/25 text-status-danger hover:bg-status-danger/15"
+                                                className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
                                             >
                                                 <X className="w-4 h-4 mr-1" />
                                                 Ablehnen
@@ -315,7 +315,7 @@ export default function ShiftSwapManager({ compact = false }) {
                                             <Button
                                                 size="sm"
                                                 onClick={() => handleApprove(request)}
-                                                className="flex-1 bg-status-ok/70 hover:bg-status-ok/70"
+                                                className="flex-1 bg-green-600 hover:bg-green-700"
                                             >
                                                 <Check className="w-4 h-4 mr-1" />
                                                 {request.is_mutual_swap
@@ -326,7 +326,7 @@ export default function ShiftSwapManager({ compact = false }) {
                                     </Card>
                                 ))
                             ) : (
-                                <div className="text-center py-12 text-muted-foreground">
+                                <div className="text-center py-12 text-slate-500">
                                     <RepeatIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
                                     <p>Keine ausstehenden Anfragen</p>
                                 </div>
@@ -336,12 +336,12 @@ export default function ShiftSwapManager({ compact = false }) {
                         <TabsContent value="processed" className="space-y-3 mt-4">
                             {processedRequests.length > 0 ? (
                                 processedRequests.map(request => (
-                                    <Card key={request.id} className="p-4 bg-card">
+                                    <Card key={request.id} className="p-4 bg-slate-50">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Badge className={cn(
                                                 request.status === 'genehmigt' 
-                                                    ? "bg-status-ok/15 text-status-ok" 
-                                                    : "bg-status-danger/15 text-status-danger"
+                                                    ? "bg-green-100 text-green-700" 
+                                                    : "bg-red-100 text-red-700"
                                             )}>
                                                 {request.status === 'genehmigt' ? (
                                                     <Check className="w-3 h-3 mr-1" />
@@ -350,27 +350,27 @@ export default function ShiftSwapManager({ compact = false }) {
                                                 )}
                                                 {request.status === 'genehmigt' ? 'Genehmigt' : 'Abgelehnt'}
                                             </Badge>
-                                            <span className="text-xs text-muted-foreground">
+                                            <span className="text-xs text-slate-500">
                                                 {format(new Date(request.response_date || request.created_date), 'dd.MM.yyyy', { locale: de })}
                                             </span>
                                         </div>
                                         
-                                        <p className="text-sm text-muted-foreground">
+                                        <p className="text-sm text-slate-700">
                                             {request.requesting_employee_name} → {request.target_employee_name}
                                         </p>
-                                        <p className="text-sm text-muted-foreground">
+                                        <p className="text-sm text-slate-600">
                                             {format(new Date(request.shift_date), 'dd.MM.yyyy', { locale: de })} • {request.shift_time}
                                         </p>
                                         
                                         {request.approved_by && (
-                                            <p className="text-xs text-muted-foreground mt-2">
+                                            <p className="text-xs text-slate-500 mt-2">
                                                 von {request.approved_by}
                                             </p>
                                         )}
                                     </Card>
                                 ))
                             ) : (
-                                <div className="text-center py-12 text-muted-foreground">
+                                <div className="text-center py-12 text-slate-500">
                                     <p>Keine bearbeiteten Anfragen</p>
                                 </div>
                             )}

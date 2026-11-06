@@ -35,11 +35,11 @@ const EVENT_BOOST = {
 const RESERVATION_BOOST_THRESHOLD = 30; // ab 30 Reservierungs-Personen → +1
 
 const BUSYNESS_LABELS = {
-    1: { label: 'Ruhig', color: 'text-primary', bg: 'bg-primary/10' },
-    2: { label: 'Entspannt', color: 'text-primary', bg: 'bg-primary/10' },
-    3: { label: 'Normal', color: 'text-status-warn', bg: 'bg-status-warn/10' },
-    4: { label: 'Lebhaft', color: 'text-status-warn', bg: 'bg-status-warn/10' },
-    5: { label: 'Stark', color: 'text-status-danger', bg: 'bg-status-danger/10' },
+    1: { label: 'Ruhig', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    2: { label: 'Entspannt', color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
+    3: { label: 'Normal', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    4: { label: 'Lebhaft', color: 'text-orange-400', bg: 'bg-orange-500/10' },
+    5: { label: 'Stark', color: 'text-red-400', bg: 'bg-red-500/10' },
 };
 
 function getWeatherIcon(code) {
@@ -577,17 +577,17 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                                 {day.closedLabel ? (
                                     <>
                                         <p className="text-[11px] leading-none mt-0.5">🏖️</p>
-                                        <p className="text-[8px] text-primary font-semibold leading-none mt-0.5">Ferien</p>
+                                        <p className="text-[8px] text-pink-400 font-semibold leading-none mt-0.5">Ferien</p>
                                     </>
                                 ) : day.recommendation != null ? (
                                     <>
                                         <p className={cn(
                                             'text-sm font-bold leading-none mt-0.5',
-                                            day.holidayEveInfo?.level === 3 ? 'text-primary' :
-                                            day.holidayEveInfo?.level === 2 ? 'text-primary' :
-                                            day.plannedCount > day.recommendation ? 'text-status-danger' :
-                                            day.plannedCount > 0 && day.plannedCount === day.recommendation ? 'text-status-ok' :
-                                            'text-status-warn'
+                                            day.holidayEveInfo?.level === 3 ? 'text-purple-400' :
+                                            day.holidayEveInfo?.level === 2 ? 'text-blue-400' :
+                                            day.plannedCount > day.recommendation ? 'text-red-400' :
+                                            day.plannedCount > 0 && day.plannedCount === day.recommendation ? 'text-emerald-400' :
+                                            'text-amber-400'
                                         )}>
                                             {day.holidayEveInfo ? day.holidayEveInfo.emoji : day.recommendation}
                                         </p>
@@ -617,12 +617,12 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                             // Betriebsferien / geschlossen — kein Personalvorschlag
                             if (day.closedLabel) {
                                 return (
-                                    <div key={day.date} className="flex items-center gap-2 py-2 px-2 rounded-lg bg-primary/10 border border-primary/25">
-                                        <Palmtree className="w-3.5 h-3.5 text-primary shrink-0" />
+                                    <div key={day.date} className="flex items-center gap-2 py-2 px-2 rounded-lg bg-pink-500/10 border border-pink-500/25">
+                                        <Palmtree className="w-3.5 h-3.5 text-pink-400 shrink-0" />
                                         <span className="text-xs text-foreground flex-1">
                                             {day.dayName}, {format(day.dateObj, 'dd.MM.')}
                                         </span>
-                                        <span className="text-[10px] font-semibold text-primary text-right leading-tight">
+                                        <span className="text-[10px] font-semibold text-pink-400 text-right leading-tight">
                                             {day.closedLabel} · geschlossen
                                         </span>
                                     </div>
@@ -643,7 +643,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                                                 </div>
                                                 <span className="text-[9px] text-muted-foreground max-w-[120px] leading-tight">
                                                     {day.reasonText}
-                                                    {day.shortageWarning && <span className="text-status-danger font-medium"> ({day.shortageWarning})</span>}
+                                                    {day.shortageWarning && <span className="text-red-400 font-medium"> ({day.shortageWarning})</span>}
                                                 </span>
                                             </div>
                                         ) : (
@@ -662,9 +662,9 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                             return (
                                 <div key={day.date} className={cn(
                                     'rounded-lg border p-2.5',
-                                    overstaffed ? 'border-status-danger/20 bg-status-danger/5' :
-                                    understaffed ? 'border-status-warn/20 bg-status-warn/5' :
-                                    perfect ? 'border-status-ok/20 bg-status-ok/5' :
+                                    overstaffed ? 'border-red-500/20 bg-red-500/5' :
+                                    understaffed ? 'border-amber-500/20 bg-amber-500/5' :
+                                    perfect ? 'border-emerald-500/20 bg-emerald-500/5' :
                                     'border-border bg-card'
                                 )}>
                                     {/* Day header */}
@@ -676,33 +676,33 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                                             {day.holidayEveInfo && day.holidayEveInfo.level >= 2 && (
                                                 <span className={cn(
                                                     'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
-                                                    day.holidayEveInfo.level === 3 ? 'bg-primary/15 text-primary' : 'bg-primary/15 text-primary'
+                                                    day.holidayEveInfo.level === 3 ? 'bg-purple-500/15 text-purple-400' : 'bg-blue-500/15 text-blue-400'
                                                 )}>
                                                     {day.holidayEveInfo.emoji} {day.holidayEveInfo.label}
                                                 </span>
                                             )}
                                             {day.holidayName && (
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-status-danger/15 text-status-danger font-medium">
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400 font-medium">
                                                     {day.holidayName}
                                                 </span>
                                             )}
                                             {day.bridgeDay && (
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-medium">
                                                     🔗 Brückentag
                                                 </span>
                                             )}
                                             {day.ownEventBoost > 0 && (
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-medium">
                                                     🎤 +{day.ownEventBoost}
                                                 </span>
                                             )}
                                             {day.reservationCount > 0 && (
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-status-ok/15 text-status-ok font-medium">
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">
                                                     🍽️ {day.reservationCount}·{day.reservationGuests}P
                                                 </span>
                                             )}
                                             {day.schoolVacation && (
-                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 font-medium">
                                                     🏫 {day.schoolVacation.name}
                                                 </span>
                                             )}
@@ -746,9 +746,9 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                                         <div className="flex items-center gap-2">
                                             <div className={cn(
                                                 'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                                                overstaffed ? 'bg-status-danger/15' :
-                                                understaffed ? 'bg-status-warn/15' :
-                                                perfect ? 'bg-status-ok/15' :
+                                                overstaffed ? 'bg-red-500/15' :
+                                                understaffed ? 'bg-amber-500/15' :
+                                                perfect ? 'bg-emerald-500/15' :
                                                 'bg-primary/15'
                                             )}>
                                                 <span className="text-sm font-bold text-foreground">
@@ -762,7 +762,7 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                                                 </p>
                                                 )}
                                                 {day.shortageWarning && (
-                                                    <p className="text-[10px] text-status-danger font-medium leading-tight mt-0.5 flex items-center gap-0.5">
+                                                    <p className="text-[10px] text-red-400 font-medium leading-tight mt-0.5 flex items-center gap-0.5">
                                                         <AlertCircle className="w-2.5 h-2.5 shrink-0" />
                                                         {day.shortageWarning}
                                                     </p>
@@ -774,9 +774,9 @@ export default function SmartStaffingSuggestions({ weekStart, employees, isManag
                                             {day.plannedCount > 0 && (
                                                 <div className={cn(
                                                     'text-[10px] font-semibold px-2 py-0.5 rounded',
-                                                    overstaffed ? 'text-status-danger bg-status-danger/10' :
-                                                    understaffed ? 'text-status-warn bg-status-warn/10' :
-                                                    'text-status-ok bg-status-ok/10'
+                                                    overstaffed ? 'text-red-400 bg-red-500/10' :
+                                                    understaffed ? 'text-amber-400 bg-amber-500/10' :
+                                                    'text-emerald-400 bg-emerald-500/10'
                                                 )}>
                                                     {day.plannedCount} geplant
                                                 </div>
