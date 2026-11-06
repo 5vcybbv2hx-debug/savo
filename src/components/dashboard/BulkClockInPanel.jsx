@@ -21,9 +21,7 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
     const [done, setDone] = useState(false);
     const queryClient = useQueryClient();
 
-    const today = format(new Date(), 'yyyy-MM-dd');
-
-    // Fetch all clock entries for today to determine who's already in
+    // Fetch recent clock entries to determine who's already clocked in
     const { data: clockEntries = [] } = useQuery({
         queryKey: ['clock-entries-today'],
         queryFn: () => base44.entities.ClockEntry.list('-clock_in', 200),
@@ -32,13 +30,14 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
     });
 
     const alreadyClockedInIds = useMemo(() => {
-        const todayStart = new Date(today + 'T00:00:00');
+        // Nachtschicht: laufende Stempel von vor Mitternacht gelten weiter als eingestempelt.
+        const windowStart = Date.now() - 24 * 60 * 60 * 1000;
         return new Set(
             clockEntries
-                .filter(e => e.status === 'clocked_in' && new Date(e.clock_in) >= todayStart)
+                .filter(e => e.status === 'clocked_in' && new Date(e.clock_in).getTime() >= windowStart)
                 .map(e => e.employee_id)
         );
-    }, [clockEntries, today]);
+    }, [clockEntries]);
 
     // Employees with shifts today but not yet clocked in
     const missingEmployees = useMemo(() => {

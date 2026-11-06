@@ -5,8 +5,7 @@
 import React, { useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { format, differenceInMinutes } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { format } from 'date-fns';
 import { Clock, Coffee, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -14,8 +13,6 @@ import { STALE } from '@/lib/queryUtils';
 import { isActiveEntry, formatDuration, calcWorkMinutes } from '@/lib/nightUtils';
 
 export default function ActiveClockPanel({ currentEmployee, employees = [] }) {
-    const today = format(new Date(), 'yyyy-MM-dd');
-
     const { data: clockEntries = [] } = useQuery({
         queryKey: ['clock-entries-active-team'],
         queryFn: () => base44.entities.ClockEntry.list('-clock_in', 200),
@@ -23,12 +20,14 @@ export default function ActiveClockPanel({ currentEmployee, employees = [] }) {
         staleTime: 20000,
     });
 
+    // Nachtschicht: kein Schnitt um Mitternacht. Ein um 22:00 gestarteter Stempel
+    // bleibt auch um 01:00 sichtbar — Fenster sind die letzten 24 Stunden.
     const activeEntries = useMemo(() => {
-        const todayStart = new Date(today + 'T00:00:00');
+        const windowStart = Date.now() - 24 * 60 * 60 * 1000;
         return clockEntries
-            .filter(e => isActiveEntry(e) && new Date(e.clock_in) >= todayStart)
+            .filter(e => isActiveEntry(e) && new Date(e.clock_in).getTime() >= windowStart)
             .sort((a, b) => new Date(a.clock_in) - new Date(b.clock_in));
-    }, [clockEntries, today]);
+    }, [clockEntries]);
 
     if (activeEntries.length === 0) return null;
 
