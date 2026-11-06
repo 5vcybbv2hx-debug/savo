@@ -29,18 +29,18 @@ import { toast } from 'sonner';
 
 export const DAY_TYPES = [
     { id: 'normal',                    label: 'Normaler Betrieb',     emoji: '✅', color: 'bg-secondary/80',   textColor: 'text-foreground/70',  dot: 'bg-muted-foreground',   short: ''          },
-    { id: 'sonderoeffnung',            label: 'Sonderöffnung',        emoji: '⭐', color: 'bg-amber-600',      textColor: 'text-amber-300',      dot: 'bg-amber-400',          short: 'Sonder'    },
-    { id: 'vorfeiertag',               label: 'Vorfeiertag',          emoji: '🌟', color: 'bg-orange-600',     textColor: 'text-orange-300',     dot: 'bg-orange-400',         short: 'Vor-FT'    },
-    { id: 'feiertag',                  label: 'Feiertag',             emoji: '🎉', color: 'bg-red-600',        textColor: 'text-red-300',        dot: 'bg-red-400',            short: 'FT'        },
-    { id: 'eventtag',                  label: 'Eventtag',             emoji: '🎵', color: 'bg-purple-600',     textColor: 'text-purple-300',     dot: 'bg-purple-400',         short: 'Event'     },
-    { id: 'lange_nacht',               label: 'Lange Nacht',          emoji: '🌙', color: 'bg-indigo-600',     textColor: 'text-indigo-300',     dot: 'bg-indigo-400',         short: 'Nacht'     },
-    { id: 'inventurtag',               label: 'Inventurtag',          emoji: '📦', color: 'bg-cyan-600',       textColor: 'text-cyan-300',       dot: 'bg-cyan-400',           short: 'Invent.'   },
+    { id: 'sonderoeffnung',            label: 'Sonderöffnung',        emoji: '⭐', color: 'bg-primary/15',      textColor: 'text-primary',      dot: 'bg-primary',          short: 'Sonder'    },
+    { id: 'vorfeiertag',               label: 'Vorfeiertag',          emoji: '🌟', color: 'bg-primary/15',     textColor: 'text-primary',     dot: 'bg-primary',         short: 'Vor-FT'    },
+    { id: 'feiertag',                  label: 'Feiertag',             emoji: '🎉', color: 'bg-primary/15',        textColor: 'text-primary',        dot: 'bg-primary',            short: 'FT'        },
+    { id: 'eventtag',                  label: 'Eventtag',             emoji: '🎵', color: 'bg-primary/15',     textColor: 'text-primary',     dot: 'bg-primary',         short: 'Event'     },
+    { id: 'lange_nacht',               label: 'Lange Nacht',          emoji: '🌙', color: 'bg-primary/15',     textColor: 'text-primary',     dot: 'bg-primary',         short: 'Nacht'     },
+    { id: 'inventurtag',               label: 'Inventurtag',          emoji: '📦', color: 'bg-status-warn/15',       textColor: 'text-status-warn',       dot: 'bg-status-warn',           short: 'Invent.'   },
     { id: 'geschlossen',               label: 'Geschlossen',          emoji: '🔒', color: 'bg-muted',         textColor: 'text-muted-foreground', dot: 'bg-muted-foreground', short: 'Geschl.'   },
-    { id: 'geschlossen_mit_reinigung', label: 'Geschl. + Reinigung',  emoji: '🧹', color: 'bg-teal-700',       textColor: 'text-teal-300',       dot: 'bg-teal-400',           short: 'Reinig.'   },
-    { id: 'saisonstart',               label: 'Saisonstart',          emoji: '🌿', color: 'bg-green-600',      textColor: 'text-green-300',      dot: 'bg-green-400',          short: 'Saison↑'   },
-    { id: 'saisonende',                label: 'Saisonende',           emoji: '🍂', color: 'bg-yellow-700',     textColor: 'text-yellow-300',     dot: 'bg-yellow-400',         short: 'Saison↓'   },
-    { id: 'betriebsferien',            label: 'Betriebsferien',       emoji: '🏖️', color: 'bg-pink-700',       textColor: 'text-pink-300',       dot: 'bg-pink-400',           short: 'Ferien'    },
-    { id: 'wartungstag',               label: 'Wartungstag',          emoji: '🔧', color: 'bg-muted',         textColor: 'text-foreground/70',  dot: 'bg-muted-foreground',   short: 'Wartung'   },
+    { id: 'geschlossen_mit_reinigung', label: 'Geschl. + Reinigung',  emoji: '🧹', color: 'bg-muted',       textColor: 'text-muted-foreground',       dot: 'bg-muted-foreground',           short: 'Reinig.'   },
+    { id: 'saisonstart',               label: 'Saisonstart',          emoji: '🌿', color: 'bg-primary/15',      textColor: 'text-primary',      dot: 'bg-primary',          short: 'Saison↑'   },
+    { id: 'saisonende',                label: 'Saisonende',           emoji: '🍂', color: 'bg-muted',     textColor: 'text-muted-foreground',     dot: 'bg-muted-foreground',         short: 'Saison↓'   },
+    { id: 'betriebsferien',            label: 'Betriebsferien',       emoji: '🏖️', color: 'bg-muted',       textColor: 'text-muted-foreground',       dot: 'bg-muted-foreground',           short: 'Ferien'    },
+    { id: 'wartungstag',               label: 'Wartungstag',          emoji: '🔧', color: 'bg-status-warn/15',         textColor: 'text-status-warn',  dot: 'bg-status-warn',   short: 'Wartung'   },
 ];
 
 export function getDayTypeConfig(id) {
@@ -646,7 +646,7 @@ export default function BusinessCalendar() {
                     {canEdit && (
                         <div className="flex flex-wrap gap-2 justify-end">
                             <Button variant="outline" size="sm" onClick={() => setPeriodOpen(true)}
-                                className="h-9 gap-1.5 text-xs border-pink-500/40 text-pink-400 hover:bg-pink-500/10 hover:text-pink-300">
+                                className="h-9 gap-1.5 text-xs border-border text-foreground hover:bg-accent">
                                 <Palmtree className="w-3.5 h-3.5" />
                                 Zeitraum schließen
                             </Button>
