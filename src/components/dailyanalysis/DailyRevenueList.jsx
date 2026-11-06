@@ -191,7 +191,8 @@ export default function DailyRevenueList({ revenues, timeEntries, tipDistributio
     const [search, setSearch] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [filter, setFilter] = useState('all'); // all | warnings | pdf | tips | no-pdf
-    const [collapsedMonths, setCollapsedMonths] = useState(new Set());
+    // Monate sind standardmäßig eingeklappt; nur geöffnete Monate stehen im Set.
+    const [expandedMonths, setExpandedMonths] = useState(new Set());
 
     const employeeMap = useMemo(() => new Map(employees.map(e => [e.id, e])), [employees]);
 
@@ -233,7 +234,7 @@ export default function DailyRevenueList({ revenues, timeEntries, tipDistributio
     }, [filtered]);
 
     const toggleMonth = (key) => {
-        setCollapsedMonths(prev => {
+        setExpandedMonths(prev => {
             const next = new Set(prev);
             next.has(key) ? next.delete(key) : next.add(key);
             return next;
@@ -304,7 +305,7 @@ export default function DailyRevenueList({ revenues, timeEntries, tipDistributio
                 {/* Month groups */}
                 <div className="space-y-4">
                     {grouped.map(({ key, label, days }, groupIdx) => {
-                        const isOpen = !collapsedMonths.has(key);
+                        const isOpen = expandedMonths.has(key);
                         return (
                             <div key={key}>
                                 <MonthHeader
