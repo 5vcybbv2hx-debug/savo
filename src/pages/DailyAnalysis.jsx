@@ -14,6 +14,7 @@ import { Activity, History } from 'lucide-react';
 import BusynessBackfill from '@/components/dailyanalysis/BusynessBackfill';
 import { de } from 'date-fns/locale';
 import PDFUploadModal from '@/components/dailyanalysis/PDFUploadModal.jsx';
+import StaffDrinkInvoiceCard from '@/components/dailyanalysis/StaffDrinkInvoiceCard.jsx';
 import TipCalculator from '@/components/dailyanalysis/TipCalculator.jsx';
 import DailyRevenueList from '@/components/dailyanalysis/DailyRevenueList.jsx';
 import InsightsPanel from '@/components/dailyanalysis/InsightsPanel.jsx';
@@ -972,6 +973,9 @@ export default function DailyAnalysis() {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Arbeitsgetränke / Eigenbedarf — separate Rechnung, nicht Teil des Tagesumsatzes */}
+            <StaffDrinkInvoiceCard selectedDate={selectedDate} />
 
             {/* Manual time entry import */}
             <Card className="bg-card border-border">
