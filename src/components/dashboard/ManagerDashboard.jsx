@@ -4,8 +4,8 @@ import { createPageUrl } from '@/utils';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import {
-    Calendar, Clock, CheckSquare, AlertCircle, ArrowRight, Users, ShoppingCart,
-    Sparkles, Package, AlertTriangle, CalendarCheck, Umbrella, TrendingUp, Wrench, Euro, ReceiptText, Printer
+    Calendar, Clock, ArrowRight, Users,
+    AlertTriangle, Umbrella, Wrench
 } from 'lucide-react';
 import { getTaskStatus } from '@/lib/maintenanceUtils';
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,7 +26,6 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
     const todayReservations = reservations.filter(r => r.date === today && r.status !== 'storniert');
     const openTodos = todos.filter(t => t.status !== 'erledigt');
     const urgentTodos = openTodos.filter(t => t.priority === 'dringend' || t.priority === 'hoch');
-    const openShoppingItems = shoppingList.filter(i => i.status === 'offen');
     const lowStockArticles = articles.filter(a => a.min_stock && a.current_stock <= a.min_stock);
     // War bisher fälschlich = die komplette timeEntries-Liste (bis zu 1000
     // Records, davon fast alle schon 'genehmigt') — dadurch zeigte das
@@ -43,9 +42,6 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
     const soonMaintenance   = maintenanceTasks.filter(t => getTaskStatus(t) === 'bald fällig');
     const maintenanceAlert  = urgentMaintenance.length + soonMaintenance.length;
 
-    const cleaningProgress = cleaningTasks.length > 0
-        ? Math.round((cleaningTasks.filter(t => t.is_completed).length / cleaningTasks.length) * 100)
-        : 0;
 
     return (
         <div className="min-h-screen bg-background p-3 sm:p-8 pb-24 md:pb-0">
@@ -171,29 +167,6 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                             </Card>
                         </Link>
                     )}
-                </div>
-
-                {/* Quick Tiles */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {[
-                        { page: 'Shopping', color: 'bg-orange-600', icon: ShoppingCart, label: 'Einkauf', sub: `${openShoppingItems.length} offen` },
-                        { page: 'Cleaning', color: 'bg-pink-600', icon: Sparkles, label: 'Putzen', sub: `${cleaningProgress}% erledigt` },
-                        { page: 'AccountingDashboard', color: 'bg-emerald-600', icon: TrendingUp, label: 'Buchhaltung', sub: 'Übersicht' },
-                        { page: 'Warehouse', color: 'bg-teal-600', icon: Package, label: 'Lager', sub: `${articles.length} Artikel` },
-                        { page: 'ReserviertSchilder', color: 'bg-sky-600', icon: Printer, label: 'Reserviert-Schilder', sub: 'drucken' },
-                    ].map(({ page, color, icon: Icon, label, sub }, idx) => (
-                        <Link key={label} to={createPageUrl(page)}>
-                            <Card className="bg-card border-border hover:bg-accent/50 transition-colors card-pressable animate-stagger" style={{ '--delay': `${idx * 55}ms` }}>
-                                <CardContent className="p-4 text-center">
-                                    <div className={`w-12 h-12 rounded-lg ${color} mb-3 mx-auto flex items-center justify-center`}>
-                                        <Icon className="w-6 h-6 text-white" />
-                                    </div>
-                                    <p className="text-sm font-medium text-foreground mb-1">{label}</p>
-                                    <p className="text-xs text-muted-foreground">{sub}</p>
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    ))}
                 </div>
 
                 {/* Zeiterfassung genehmigen */}
