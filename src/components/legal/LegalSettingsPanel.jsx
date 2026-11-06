@@ -28,9 +28,9 @@ export default function LegalSettingsPanel() {
 
       {/* Warning if new consent needed */}
       {needsNewConsent && (
-        <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800 dark:text-amber-200">
+        <Alert className="border-status-warn/25 bg-status-warn/15 dark:bg-status-warn/20">
+          <AlertCircle className="h-4 w-4 text-status-warn" />
+          <AlertDescription className="text-status-warn dark:text-status-warn/25">
             Unsere Datenschutzerklärung wurde aktualisiert. Bitte bestätigen Sie die neue Version.
           </AlertDescription>
         </Alert>
@@ -80,7 +80,7 @@ export default function LegalSettingsPanel() {
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <FileText className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                   <div className="space-y-1 flex-1">
                     <h4 className="font-semibold text-sm text-foreground">
                       📋 Datenschutzerklärung
@@ -112,7 +112,7 @@ export default function LegalSettingsPanel() {
             <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <FileText className="w-5 h-5 text-status-ok flex-shrink-0 mt-0.5" />
                   <div className="space-y-1 flex-1">
                     <h4 className="font-semibold text-sm text-foreground">
                       🏢 Impressum
@@ -143,11 +143,11 @@ export default function LegalSettingsPanel() {
       {(permissions.isAdmin || permissions.isManager) && (
         <div className="pt-6 border-t border-border/50 space-y-3">
           <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-4 h-4 text-amber-500" />
+            <Shield className="w-4 h-4 text-status-warn" />
             <h3 className="text-sm font-semibold text-foreground">Admin-Bereich</h3>
           </div>
-          <Card className="bg-amber-500/10 border-amber-500/20 p-4">
-            <p className="text-xs text-amber-200 mb-3">
+          <Card className="bg-status-warn/10 border-status-warn/20 p-4">
+            <p className="text-xs text-status-warn/25 mb-3">
               Zugriffs- und Änderungsprotokoll für Compliance & Audits
             </p>
             <Button

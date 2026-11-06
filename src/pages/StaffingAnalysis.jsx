@@ -83,10 +83,10 @@ function WeatherRevenueRow({ day }) {
 
 function InsightCard({ icon: Icon, title, text, variant = 'default' }) {
     return (
-        <Card className={cn('border', variant === 'warning' ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-card')}>
+        <Card className={cn('border', variant === 'warning' ? 'border-status-warn/40 bg-status-warn/5' : 'border-border bg-card')}>
             <CardContent className="p-3 flex gap-3">
                 <Icon className={cn('w-4 h-4 shrink-0 mt-0.5',
-                    variant === 'warning' ? 'text-amber-500' : 'text-primary')} />
+                    variant === 'warning' ? 'text-status-warn' : 'text-primary')} />
                 <div>
                     <p className="text-xs font-semibold text-foreground">{title}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{text}</p>
@@ -327,9 +327,9 @@ export default function StaffingAnalysis() {
                     <>
                         {/* KPI Cards */}
                         <div className="grid grid-cols-3 gap-2">
-                            <KpiCard icon={TrendingUp} label="Ø Umsatz/Tag" value={`${data.avgRevenue.toFixed(0)}€`} sub={`${data.totalDays} Tage`} accent="text-green-500" />
+                            <KpiCard icon={TrendingUp} label="Ø Umsatz/Tag" value={`${data.avgRevenue.toFixed(0)}€`} sub={`${data.totalDays} Tage`} accent="text-status-ok" />
                             <KpiCard icon={Target} label="Spitzentag" value={`${data.maxRevenue.toFixed(0)}€`} sub={`Beste Tag-Einnahme`} accent="text-primary" />
-                            <KpiCard icon={Thermometer} label="Wetter-Abdeckung" value={`${data.totalDays > 0 ? Math.round(data.weatherCoverage / data.totalDays * 100) : 0}%`} sub={`${data.weatherCoverage} Tage`} accent="text-blue-400" />
+                            <KpiCard icon={Thermometer} label="Wetter-Abdeckung" value={`${data.totalDays > 0 ? Math.round(data.weatherCoverage / data.totalDays * 100) : 0}%`} sub={`${data.weatherCoverage} Tage`} accent="text-primary" />
                         </div>
 
                         {/* Insights */}
@@ -439,12 +439,12 @@ export default function StaffingAnalysis() {
                                     </div>
                                     <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-around text-center">
                                         <div>
-                                            <CloudRain className="w-4 h-4 mx-auto text-blue-400 mb-1" />
+                                            <CloudRain className="w-4 h-4 mx-auto text-primary mb-1" />
                                             <p className="text-[10px] text-muted-foreground">Regen Ø</p>
                                             <p className="text-sm font-bold text-foreground">{data.rainVsDry.rain.count > 0 ? `${data.rainVsDry.rain.avg.toFixed(0)}€` : '—'}</p>
                                         </div>
                                         <div>
-                                            <Sun className="w-4 h-4 mx-auto text-amber-400 mb-1" />
+                                            <Sun className="w-4 h-4 mx-auto text-status-warn mb-1" />
                                             <p className="text-[10px] text-muted-foreground">Trocken Ø</p>
                                             <p className="text-sm font-bold text-foreground">{data.rainVsDry.dry.count > 0 ? `${data.rainVsDry.dry.avg.toFixed(0)}€` : '—'}</p>
                                         </div>
@@ -491,9 +491,9 @@ export default function StaffingAnalysis() {
 
                         {/* Weather Data Status */}
                         {data.weatherCoverage < data.totalDays && (
-                            <Card className="border-amber-500/40 bg-amber-500/5">
+                            <Card className="border-status-warn/40 bg-status-warn/5">
                                 <CardContent className="p-3 flex gap-3 items-start">
-                                    <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                    <Info className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
                                     <div>
                                         <p className="text-xs font-semibold text-foreground">Wetterdaten unvollständig</p>
                                         <p className="text-xs text-muted-foreground mt-0.5">

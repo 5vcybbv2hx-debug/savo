@@ -77,7 +77,7 @@ export default function PostenKarte({ posten, onMarkPaid, onPriorityChange, isPe
                     <p className="text-xs text-muted-foreground mt-0.5">{posten.glaeubiger || 'Gläubiger unbekannt'}</p>
 
                     <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
-                        <span className={cn('inline-flex items-center gap-1', overdue ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-muted-foreground')}>
+                        <span className={cn('inline-flex items-center gap-1', overdue ? 'text-status-danger dark:text-status-danger font-semibold' : 'text-muted-foreground')}>
                             <CalendarClock className="w-3 h-3" />
                             {posten.faelligkeit ? `Fällig ${fmtDate(posten.faelligkeit)}` : 'Keine Frist gesetzt'}
                             {overdue && ' · überfällig'}

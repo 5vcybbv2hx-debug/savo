@@ -25,9 +25,9 @@ import { toast } from 'sonner';
 
 function StatusBadge({ status }) {
     if (status === 'freigegeben')
-        return <Badge className="bg-green-500/20 text-green-400 border border-green-500/30 text-xs"><CheckCircle className="w-3 h-3 mr-1" />Freigegeben</Badge>;
+        return <Badge className="bg-status-ok/20 text-status-ok border border-status-ok/30 text-xs"><CheckCircle className="w-3 h-3 mr-1" />Freigegeben</Badge>;
     if (status === 'wartet_auf_freigabe')
-        return <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs"><Clock className="w-3 h-3 mr-1" />Wartet auf Freigabe</Badge>;
+        return <Badge className="bg-status-warn/20 text-status-warn border border-status-warn/30 text-xs"><Clock className="w-3 h-3 mr-1" />Wartet auf Freigabe</Badge>;
     return <Badge className="bg-secondary text-muted-foreground border border-border text-xs">Entwurf</Badge>;
 }
 
@@ -102,14 +102,14 @@ function ProtocolTextRenderer({ text }) {
                     return (
                         <div key={si} className={cn(
                             'rounded-xl border p-3.5 space-y-2',
-                            isMassnahmen ? 'border-green-500/20 bg-green-500/5' :
-                            isOffen      ? 'border-amber-500/20 bg-amber-500/5' :
+                            isMassnahmen ? 'border-status-ok/20 bg-status-ok/5' :
+                            isOffen      ? 'border-status-warn/20 bg-status-warn/5' :
                                            'border-border bg-secondary/20'
                         )}>
                             <p className={cn(
                                 'text-[10px] font-bold uppercase tracking-wider',
-                                isMassnahmen ? 'text-green-500' :
-                                isOffen      ? 'text-amber-500' :
+                                isMassnahmen ? 'text-status-ok' :
+                                isOffen      ? 'text-status-warn' :
                                                'text-muted-foreground'
                             )}>
                                 {isMassnahmen ? '✅ ' : isOffen ? '⏭️ ' : ''}{section.title}
@@ -119,7 +119,7 @@ function ProtocolTextRenderer({ text }) {
                                     if (line.type === 'empty') return null;
                                     if (line.type === 'action') return (
                                         <div key={li} className="flex items-start gap-2 text-sm">
-                                            <span className="text-green-500 font-bold mt-0.5 shrink-0">→</span>
+                                            <span className="text-status-ok font-bold mt-0.5 shrink-0">→</span>
                                             <span className="text-foreground">{line.text}</span>
                                         </div>
                                     );
@@ -205,7 +205,7 @@ function ProtocolDetailModal({ protocol, isManager, onClose, onDeleted }) {
                     <DialogHeader>
                         <div className="flex items-center justify-between pr-8">
                             <DialogTitle className="flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-amber-400" />
+                                <FileText className="w-5 h-5 text-status-warn" />
                                 Protokoll — {format(new Date(protocol.meeting_date), 'dd. MMMM yyyy', { locale: de })}
                             </DialogTitle>
                             {/* Manager-Aktionen */}
@@ -289,7 +289,7 @@ function ProtocolDetailModal({ protocol, isManager, onClose, onDeleted }) {
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <p className="text-sm font-semibold text-foreground">Agenda-Snapshot</p>
-                                    <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px]">
+                                    <Badge className="bg-status-warn/20 text-status-warn border border-status-warn/30 text-[10px]">
                                         <Lock className="w-2.5 h-2.5 mr-1" />Nur Manager
                                     </Badge>
                                 </div>
@@ -304,7 +304,7 @@ function ProtocolDetailModal({ protocol, isManager, onClose, onDeleted }) {
                                                 <span className="text-xs text-muted-foreground ml-auto">von {item.employee_name}</span>
                                             </div>
                                             {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
-                                            {item.manager_notes && <p className="text-xs text-amber-400 mt-1">📝 {item.manager_notes}</p>}
+                                            {item.manager_notes && <p className="text-xs text-status-warn mt-1">📝 {item.manager_notes}</p>}
                                         </div>
                                     ))}
                                 </div>
@@ -372,7 +372,7 @@ export default function MeetingProtocolList({ isManager }) {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-status-warn/70 border-t-transparent rounded-full animate-spin" />
             </div>
         );
     }
@@ -396,8 +396,8 @@ export default function MeetingProtocolList({ isManager }) {
                     onClick={() => setSelectedProtocol(protocol)}
                 >
                     <CardContent className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
-                            <FileText className="w-5 h-5 text-amber-400" />
+                        <div className="w-10 h-10 rounded-xl bg-status-warn/10 border border-status-warn/30 flex items-center justify-center shrink-0">
+                            <FileText className="w-5 h-5 text-status-warn" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5 flex-wrap">

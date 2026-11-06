@@ -16,9 +16,9 @@ export default function MobileStatCard({
 }) {
   const variantStyles = {
     default: 'bg-card border-border/50',
-    success: 'bg-green-500/10 border-green-500/30',
-    warning: 'bg-amber-500/10 border-amber-500/30',
-    alert: 'bg-red-500/10 border-red-500/30',
+    success: 'bg-status-ok/10 border-status-ok/30',
+    warning: 'bg-status-warn/10 border-status-warn/30',
+    alert: 'bg-status-danger/10 border-status-danger/30',
   };
 
   return (

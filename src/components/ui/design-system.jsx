@@ -59,7 +59,7 @@ export function DesignSystemShowcase() {
             <h3 className="text-lg font-semibold text-foreground mb-2">Standard Card</h3>
             <p className="text-muted-foreground text-sm">Verwendet bg-card mit border-border</p>
           </Card>
-          <Card className="p-6 border-amber-500/30 bg-amber-500/5">
+          <Card className="p-6 border-status-warn/30 bg-status-warn/5">
             <h3 className="text-lg font-semibold text-foreground mb-2">Accent Card</h3>
             <p className="text-muted-foreground text-sm">Mit custom Accent-Border</p>
           </Card>
@@ -74,8 +74,8 @@ export function DesignSystemShowcase() {
           <Badge variant="secondary">Secondary</Badge>
           <Badge variant="outline">Outline</Badge>
           <Badge variant="destructive">Destructive</Badge>
-          <Badge className="bg-amber-500/15 text-amber-400 border-amber-600/30">Custom Brand</Badge>
-          <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-600/30">Success</Badge>
+          <Badge className="bg-status-warn/15 text-status-warn border-status-warn/30">Custom Brand</Badge>
+          <Badge className="bg-status-ok/15 text-status-ok border-status-ok/30">Success</Badge>
         </div>
       </section>
 
@@ -83,17 +83,17 @@ export function DesignSystemShowcase() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold text-foreground">Status States</h2>
         <div className="space-y-3">
-          <div className="flex items-start gap-3 p-4 rounded-lg border border-green-500/30 bg-green-500/5">
-            <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-3 p-4 rounded-lg border border-status-ok/30 bg-status-ok/5">
+            <CheckCircle2 className="w-5 h-5 text-status-ok mt-0.5 shrink-0" />
             <div>
-              <p className="font-medium text-green-500">Success</p>
-              <p className="text-sm text-muted-foreground">Verwendung: bg-green-500/5, border-green-500/30, text-green-500</p>
+              <p className="font-medium text-status-ok">Success</p>
+              <p className="text-sm text-muted-foreground">Verwendung: bg-status-ok/5, border-status-ok/30, text-status-ok</p>
             </div>
           </div>
-          <div className="flex items-start gap-3 p-4 rounded-lg border border-red-500/30 bg-red-500/5">
-            <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-3 p-4 rounded-lg border border-status-danger/30 bg-status-danger/5">
+            <AlertCircle className="w-5 h-5 text-status-danger mt-0.5 shrink-0" />
             <div>
-              <p className="font-medium text-red-500">Error/Destructive</p>
+              <p className="font-medium text-status-danger">Error/Destructive</p>
               <p className="text-sm text-muted-foreground">Verwendung: bg-destructive/5, border-destructive/30, text-destructive</p>
             </div>
           </div>
@@ -135,7 +135,7 @@ export function DesignSystemShowcase() {
           </div>
           <div>
             <p className="font-semibold text-foreground">❌ Vermeide hardcoded Farben:</p>
-            <code className="text-xs bg-secondary p-2 rounded block mt-1 text-red-400">
+            <code className="text-xs bg-secondary p-2 rounded block mt-1 text-status-danger">
               &lt;div className="bg-[#ffffff] text-[#000000]"&gt;
             </code>
           </div>
@@ -181,7 +181,7 @@ export function ProgressBar({ value = 0, max = 100, className = '' }) {
   return (
     <div className={`w-full bg-secondary rounded-full overflow-hidden h-2 ${className}`}>
       <div
-        className="bg-amber-500 h-full transition-all duration-300"
+        className="bg-status-warn/70 h-full transition-all duration-300"
         style={{ width: `${percentage}%` }}
       />
     </div>

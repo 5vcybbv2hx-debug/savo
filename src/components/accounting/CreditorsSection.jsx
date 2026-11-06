@@ -30,10 +30,10 @@ const PAY_METHODS  = ['Bar', 'EC', 'Überweisung', 'Sonstiges'];
 const CATEGORIES   = ['Getränke', 'Lebensmittel', 'Reinigung', 'Personal', 'Miete', 'Energie', 'GEMA', 'Versicherung', 'Software', 'Büro', 'Marketing', 'Sonstiges'];
 
 const STATUS_CONFIG = {
-    offen:       { label: 'Offen',      color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/20',   icon: Clock         },
-    teilbezahlt: { label: 'Teilbezahlt',color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20',  icon: AlertTriangle  },
-    überfällig:  { label: 'Überfällig', color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/20',    icon: AlertTriangle  },
-    bezahlt:     { label: 'Bezahlt',    color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/20',  icon: CheckCircle2   },
+    offen:       { label: 'Offen',      color: 'text-primary',   bg: 'bg-primary/10',   border: 'border-primary/20',   icon: Clock         },
+    teilbezahlt: { label: 'Teilbezahlt',color: 'text-status-warn',  bg: 'bg-status-warn/10',  border: 'border-status-warn/20',  icon: AlertTriangle  },
+    überfällig:  { label: 'Überfällig', color: 'text-status-danger',    bg: 'bg-status-danger/10',    border: 'border-status-danger/20',    icon: AlertTriangle  },
+    bezahlt:     { label: 'Bezahlt',    color: 'text-status-ok',  bg: 'bg-status-ok/10',  border: 'border-status-ok/20',  icon: CheckCircle2   },
 };
 
 const EMPTY_FORM = {
@@ -142,7 +142,7 @@ function InvoiceCard({ invoice, onEdit, onPay, onDelete }) {
                     </p>
                     {invoice.due_date && invoice.payment_status !== 'bezahlt' && (
                         <p className={cn('text-[11px] font-medium',
-                            daysOverdue > 0 ? 'text-red-400' : 'text-muted-foreground'
+                            daysOverdue > 0 ? 'text-status-danger' : 'text-muted-foreground'
                         )}>
                             · {daysOverdue > 0
                                 ? `${daysOverdue}d überfällig`
@@ -160,7 +160,7 @@ function InvoiceCard({ invoice, onEdit, onPay, onDelete }) {
                 <p className="text-sm font-bold text-foreground">{fmt(invoice.amount_gross)} €</p>
                 {invoice.payment_status !== 'bezahlt' && (
                     <button onClick={e => { e.stopPropagation(); onPay(); }}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/20 hover:bg-green-500/25 transition-all min-h-[22px]">
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-status-ok/15 text-status-ok border border-status-ok/20 hover:bg-status-ok/25 transition-all min-h-[22px]">
                         Bezahlt ✓
                     </button>
                 )}
@@ -341,7 +341,7 @@ export default function CreditorsSection({ onTotalsChange }) {
                         {searchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
                     </button>
                     <Button onClick={() => { setFormData(EMPTY_FORM); setModalOpen(true); }}
-                        className="h-9 bg-red-600 hover:bg-red-700 text-white gap-1.5">
+                        className="h-9 bg-status-danger/70 hover:bg-status-danger/70 text-white gap-1.5">
                         <Plus className="w-4 h-4" /> Rechnung
                     </Button>
                 </div>
@@ -362,8 +362,8 @@ export default function CreditorsSection({ onTotalsChange }) {
                             'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                             statusFilter === f.key
                                 ? f.key === 'überfällig'
-                                    ? 'bg-red-600 border-red-600 text-white'
-                                    : 'bg-amber-600 border-amber-600 text-white'
+                                    ? 'bg-status-danger/70 border-status-danger/70 text-white'
+                                    : 'bg-status-warn/70 border-status-warn/70 text-white'
                                 : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                         )}>
                         {f.label}
@@ -408,7 +408,7 @@ export default function CreditorsSection({ onTotalsChange }) {
                         <Button variant="outline" onClick={() => setModalOpen(false)}>Abbrechen</Button>
                         <Button onClick={handleCreate}
                             disabled={createMutation.isPending}
-                            className="bg-red-600 hover:bg-red-700 text-white flex-1">
+                            className="bg-status-danger/70 hover:bg-status-danger/70 text-white flex-1">
                             {createMutation.isPending ? 'Speichert…' : 'Erfassen'}
                         </Button>
                     </DialogFooter>
@@ -432,7 +432,7 @@ export default function CreditorsSection({ onTotalsChange }) {
                         </Button>
                         <Button onClick={handleUpdate}
                             disabled={updateMutation.isPending}
-                            className="bg-red-600 hover:bg-red-700 text-white flex-1 h-9">
+                            className="bg-status-danger/70 hover:bg-status-danger/70 text-white flex-1 h-9">
                             {updateMutation.isPending ? 'Speichert…' : 'Speichern'}
                         </Button>
                     </DialogFooter>
@@ -473,7 +473,7 @@ export default function CreditorsSection({ onTotalsChange }) {
                         <Button variant="outline" onClick={() => setPayOpen(false)}>Abbrechen</Button>
                         <Button onClick={handlePay}
                             disabled={updateMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700 text-white flex-1">
+                            className="bg-status-ok/70 hover:bg-status-ok/70 text-white flex-1">
                             <CheckCircle2 className="w-4 h-4 mr-1.5" />
                             {updateMutation.isPending ? 'Speichert…' : 'Als bezahlt markieren'}
                         </Button>

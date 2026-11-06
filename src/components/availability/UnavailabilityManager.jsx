@@ -57,7 +57,7 @@ export default function UnavailabilityManager() {
             {/* Ausstehend */}
             <div>
                 <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-yellow-400" />
+                    <Clock className="w-4 h-4 text-status-warn" />
                     Wünsche ausstehend ({pending.length})
                 </h3>
                 {pending.length === 0 ? (
@@ -65,15 +65,15 @@ export default function UnavailabilityManager() {
                 ) : (
                     <div className="space-y-2">
                         {pending.map(req => (
-                            <Card key={req.id} className="p-4 bg-yellow-500/5 border-yellow-500/20 cursor-pointer hover:border-yellow-500/40 transition-all"
+                            <Card key={req.id} className="p-4 bg-status-warn/5 border-status-warn/20 cursor-pointer hover:border-status-warn/40 transition-all"
                                 onClick={() => { setSelectedReq(req); setResponseNote(''); }}>
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
                                             <p className="font-semibold text-foreground text-sm">{getFullName(req)}</p>
-                                            <Badge className="bg-yellow-600/20 text-yellow-400 border-yellow-600/30 text-xs">Ausstehend</Badge>
+                                            <Badge className="bg-status-warn/20 text-status-warn border-status-warn/30 text-xs">Ausstehend</Badge>
                                         </div>
-                                        <p className="text-sm text-amber-300 font-medium">
+                                        <p className="text-sm text-status-warn/25 font-medium">
                                             {format(parseISO(req.date), 'EEE, dd. MMM yyyy', { locale: de })}
                                             {req.end_date && req.end_date !== req.date && (
                                                 <span className="text-muted-foreground"> – {format(parseISO(req.end_date), 'dd. MMM', { locale: de })}</span>
@@ -82,11 +82,11 @@ export default function UnavailabilityManager() {
                                         <p className="text-sm text-foreground/75 mt-1">{req.reason}</p>
                                     </div>
                                     <div className="flex gap-2 shrink-0">
-                                        <Button size="sm" className="bg-green-700 hover:bg-green-600 text-foreground gap-1 text-xs px-2"
+                                        <Button size="sm" className="bg-status-ok/70 hover:bg-status-ok/70 text-foreground gap-1 text-xs px-2"
                                             onClick={e => { e.stopPropagation(); updateMutation.mutate({ id: req.id, status: 'genehmigt', note: '' }); }}>
                                             <CheckCircle2 className="w-3.5 h-3.5" /> Einplanen
                                         </Button>
-                                        <Button size="sm" className="bg-red-700 hover:bg-red-600 text-foreground gap-1 text-xs px-2"
+                                        <Button size="sm" className="bg-status-danger/70 hover:bg-status-danger/70 text-foreground gap-1 text-xs px-2"
                                             onClick={e => { e.stopPropagation(); setSelectedReq(req); setResponseNote(''); }}>
                                             <XCircle className="w-3.5 h-3.5" /> Ablehnen
                                         </Button>
@@ -107,16 +107,16 @@ export default function UnavailabilityManager() {
                             <Card key={req.id} className="p-3 bg-background border-border opacity-75">
                                 <div className="flex items-center gap-3">
                                     {req.status === 'genehmigt'
-                                        ? <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-                                        : <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                                        ? <CheckCircle2 className="w-4 h-4 text-status-ok shrink-0" />
+                                        : <XCircle className="w-4 h-4 text-status-danger shrink-0" />
                                     }
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-foreground/75">{getFullName(req)} – {format(parseISO(req.date), 'dd. MMM', { locale: de })}</p>
                                         <p className="text-xs text-foreground0 truncate">{req.reason}</p>
                                     </div>
                                     <Badge className={req.status === 'genehmigt'
-                                        ? 'bg-green-600/20 text-green-400 border-green-600/30 text-xs'
-                                        : 'bg-red-600/20 text-red-400 border-red-600/30 text-xs'}>
+                                        ? 'bg-status-ok/20 text-status-ok border-status-ok/30 text-xs'
+                                        : 'bg-status-danger/20 text-status-danger border-status-danger/30 text-xs'}>
                                         {req.status}
                                     </Badge>
                                 </div>
@@ -136,7 +136,7 @@ export default function UnavailabilityManager() {
                         <div className="space-y-4 mt-2">
                             <div className="p-4 bg-card rounded-lg space-y-1">
                                 <p className="font-semibold text-foreground">{getFullName(selectedReq)}</p>
-                                <p className="text-amber-400 text-sm font-medium">
+                                <p className="text-status-warn text-sm font-medium">
                                     {format(parseISO(selectedReq.date), 'EEE, dd. MMM yyyy', { locale: de })}
                                     {selectedReq.end_date && selectedReq.end_date !== selectedReq.date && (
                                         <span> – {format(parseISO(selectedReq.end_date), 'dd. MMM', { locale: de })}</span>
@@ -157,7 +157,7 @@ export default function UnavailabilityManager() {
                                 <Button variant="outline" className="flex-1" onClick={() => { setSelectedReq(null); setResponseNote(''); }}>
                                     Abbrechen
                                 </Button>
-                                <Button className="flex-1 bg-red-700 hover:bg-red-600 gap-2" onClick={() => handleDecide('abgelehnt')}>
+                                <Button className="flex-1 bg-status-danger/70 hover:bg-status-danger/70 gap-2" onClick={() => handleDecide('abgelehnt')}>
                                     <XCircle className="w-4 h-4" /> Ablehnen
                                 </Button>
                             </div>

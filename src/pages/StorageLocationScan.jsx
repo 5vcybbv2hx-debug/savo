@@ -50,8 +50,8 @@ function QuantityRow({ assignment, onUpdate }) {
   return (
     <div className={[
       'flex items-center gap-3 p-4 rounded-xl border transition-all duration-200',
-      checked ? 'border-green-500/50 bg-green-500/5'  :
-      isLow   ? 'border-red-500/40 bg-red-500/5'      :
+      checked ? 'border-status-ok/50 bg-status-ok/5'  :
+      isLow   ? 'border-status-danger/40 bg-status-danger/5'      :
                 'border-border bg-card',
     ].join(' ')}>
 
@@ -62,7 +62,7 @@ function QuantityRow({ assignment, onUpdate }) {
         aria-label="Abhaken"
       >
         {checked
-          ? <CheckCircle2 className="w-6 h-6 text-green-500" />
+          ? <CheckCircle2 className="w-6 h-6 text-status-ok" />
           : <Circle       className="w-6 h-6 text-muted-foreground/40" />
         }
       </button>
@@ -90,7 +90,7 @@ function QuantityRow({ assignment, onUpdate }) {
         </p>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           {isLow && !checked && (
-            <span className="flex items-center gap-1 text-[11px] text-red-500 font-medium">
+            <span className="flex items-center gap-1 text-[11px] text-status-danger font-medium">
               <AlertTriangle className="w-3 h-3" />
               Nachfüllen
             </span>
@@ -205,7 +205,7 @@ export default function StorageLocationScan() {
   // ── States ────────────────────────────────────────────────────────────────
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-status-warn/70 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -231,12 +231,12 @@ export default function StorageLocationScan() {
 
       {/* ── Hero Header ─────────────────────────────────────────────── */}
       <div
-        className="bg-gradient-to-br from-amber-500/20 to-orange-500/10 border-b border-border px-4 pb-5"
+        className="bg-gradient-to-br from-status-warn/20 to-status-warn/10 border-b border-border px-4 pb-5"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}
       >
         <div className="max-w-lg mx-auto">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-3xl shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-status-warn/20 border border-status-warn/30 flex items-center justify-center text-3xl shrink-0">
               📦
             </div>
             <div className="flex-1 min-w-0">
@@ -268,18 +268,18 @@ export default function StorageLocationScan() {
             </div>
             <div className={[
               'rounded-xl p-3 text-center border',
-              lowCount > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-card border-border',
+              lowCount > 0 ? 'bg-status-danger/10 border-status-danger/30' : 'bg-card border-border',
             ].join(' ')}>
-              <p className={['text-xl font-bold leading-none', lowCount > 0 ? 'text-red-500' : 'text-foreground'].join(' ')}>
+              <p className={['text-xl font-bold leading-none', lowCount > 0 ? 'text-status-danger' : 'text-foreground'].join(' ')}>
                 {lowCount}
               </p>
               <p className="text-[10px] text-muted-foreground mt-1">Nachfüllen</p>
             </div>
             <div className={[
               'rounded-xl p-3 text-center border',
-              okPct === 100 ? 'bg-green-500/10 border-green-500/30' : 'bg-card border-border',
+              okPct === 100 ? 'bg-status-ok/10 border-status-ok/30' : 'bg-card border-border',
             ].join(' ')}>
-              <p className={['text-xl font-bold leading-none', okPct === 100 ? 'text-green-500' : 'text-foreground'].join(' ')}>
+              <p className={['text-xl font-bold leading-none', okPct === 100 ? 'text-status-ok' : 'text-foreground'].join(' ')}>
                 {okPct}%
               </p>
               <p className="text-[10px] text-muted-foreground mt-1">OK</p>
@@ -331,10 +331,10 @@ export default function StorageLocationScan() {
 
         {/* Low stock alert summary */}
         {lowCount > 0 && (
-          <div className="mt-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+          <div className="mt-3 p-3.5 rounded-xl bg-status-danger/10 border border-status-danger/30 flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-status-danger shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-red-500">
+              <p className="text-sm font-semibold text-status-danger">
                 {lowCount} {lowCount === 1 ? 'Artikel' : 'Artikel'} unter Mindestbestand
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">Bitte zeitnah nachfüllen</p>

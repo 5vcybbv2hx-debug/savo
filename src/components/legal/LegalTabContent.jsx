@@ -21,7 +21,7 @@ export default function LegalTabContent() {
       {/* Status: fehlende Pflichtfelder */}
       <section>
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <Shield className="w-5 h-5 text-amber-500" />
+          <Shield className="w-5 h-5 text-status-warn" />
           Rechtlicher Status
         </h2>
         <LegalStatusPanel />
@@ -41,7 +41,7 @@ export default function LegalTabContent() {
       {/* Compliance-Checklist */}
       <section>
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <CheckSquare className="w-5 h-5 text-emerald-500" />
+          <CheckSquare className="w-5 h-5 text-status-ok" />
           Compliance-Checkliste
         </h2>
         <ComplianceChecklist />
@@ -50,7 +50,7 @@ export default function LegalTabContent() {
       {/* Zustimmungen & Dokumente (Dialoge) */}
       <section>
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <FileText className="w-5 h-5 text-blue-500" />
+          <FileText className="w-5 h-5 text-primary" />
           Zustimmungen & Dokumente
         </h2>
         <LegalSettingsPanel />

@@ -83,13 +83,13 @@ export default function PrivacyCenter() {
   return (
     <div className="space-y-6">
       {/* Privacy Header */}
-      <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20">
+      <Card className="border-status-warn/25 dark:border-status-warn/70 bg-status-warn/15 dark:bg-status-warn/20">
         <CardHeader>
           <div className="flex items-start gap-4">
-            <Shield className="w-6 h-6 text-amber-600 mt-1 shrink-0" />
+            <Shield className="w-6 h-6 text-status-warn mt-1 shrink-0" />
             <div>
               <CardTitle>Datenschutz & Ihre Rechte</CardTitle>
-              <CardDescription className="text-amber-700 dark:text-amber-300 mt-2">
+              <CardDescription className="text-status-warn dark:text-status-warn/25 mt-2">
                 Gemäß DSGVO (Datenschutz-Grundverordnung) haben Sie Rechte auf Auskunft, Berichtigung, Löschung und Datenübertragung.
               </CardDescription>
             </div>
@@ -196,19 +196,19 @@ export default function PrivacyCenter() {
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground space-y-2">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <CheckCircle2 className="w-4 h-4 text-status-ok" />
                     <span>Personalbogendaten</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <CheckCircle2 className="w-4 h-4 text-status-ok" />
                     <span>Zeiterfassungsdaten</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <CheckCircle2 className="w-4 h-4 text-status-ok" />
                     <span>Hochgeladene Dokumente</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <CheckCircle2 className="w-4 h-4 text-status-ok" />
                     <span>Schichtpläne & Verfügbarkeit</span>
                   </div>
                 </CardContent>
@@ -263,9 +263,9 @@ export default function PrivacyCenter() {
             </DialogDescription>
           </DialogHeader>
 
-          <Alert className="border-red-500/20 bg-red-50 dark:bg-red-950/20">
-            <AlertCircle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-700 dark:text-red-300 text-sm">
+          <Alert className="border-status-danger/20 bg-status-danger/15 dark:bg-status-danger/20">
+            <AlertCircle className="h-4 w-4 text-status-danger" />
+            <AlertDescription className="text-status-danger dark:text-status-danger/25 text-sm">
               Geben Sie zur Bestätigung <strong>"LÖSCHEN"</strong> ein.
             </AlertDescription>
           </Alert>

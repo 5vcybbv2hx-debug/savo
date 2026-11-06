@@ -45,9 +45,9 @@ const PAYMENT_METHODS = ['Überweisung', 'Lastschrift', 'Bar', 'Kreditkarte', 'S
 const TAX_TREATMENTS  = ['Betriebsausgabe', 'Nicht abzugsfähig', 'Gemischt', 'Privatanteil'];
 
 const STATUS_CFG = {
-    bezahlt:     { label: 'Bezahlt',    color: 'text-green-400',  bg: 'bg-green-500/10',  dot: 'bg-green-400'  },
-    beleg_fehlt: { label: 'Beleg fehlt',color: 'text-amber-400',  bg: 'bg-amber-500/10',  dot: 'bg-amber-400'  },
-    überfällig:  { label: 'Überfällig', color: 'text-red-400',    bg: 'bg-red-500/10',    dot: 'bg-red-500'    },
+    bezahlt:     { label: 'Bezahlt',    color: 'text-status-ok',  bg: 'bg-status-ok/10',  dot: 'bg-status-ok/70'  },
+    beleg_fehlt: { label: 'Beleg fehlt',color: 'text-status-warn',  bg: 'bg-status-warn/10',  dot: 'bg-status-warn/70'  },
+    überfällig:  { label: 'Überfällig', color: 'text-status-danger',    bg: 'bg-status-danger/10',    dot: 'bg-status-danger/70'    },
     erwartet:    { label: 'Erwartet',   color: 'text-muted-foreground', bg: 'bg-secondary/50', dot: 'bg-muted-foreground' },
 };
 
@@ -465,7 +465,7 @@ export default function AccountingFixedCosts() {
                         <p className="text-xs text-muted-foreground mt-0.5">Wiederkehrende Ausgaben · monatliche Übersicht</p>
                     </div>
                     <Button onClick={openAdd}
-                        className="h-9 bg-orange-600 hover:bg-orange-700 text-white gap-1.5">
+                        className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                         <Plus className="w-4 h-4" /> Neu
                     </Button>
                 </div>
@@ -477,16 +477,16 @@ export default function AccountingFixedCosts() {
                             const days = differenceInDays(new Date(e.contract_end_date), now);
                             return (
                                 <div key={e.id}
-                                    className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-amber-500/25 bg-amber-500/8 cursor-pointer hover:bg-amber-500/12 transition-all"
+                                    className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-status-warn/25 bg-status-warn/8 cursor-pointer hover:bg-status-warn/12 transition-all"
                                     onClick={() => openEdit(e)}>
-                                    <CalendarClock className="w-4 h-4 text-amber-400 shrink-0" />
-                                    <p className="text-xs font-semibold text-amber-400 flex-1">
+                                    <CalendarClock className="w-4 h-4 text-status-warn shrink-0" />
+                                    <p className="text-xs font-semibold text-status-warn flex-1">
                                         {e.title} läuft in {days} Tag{days !== 1 ? 'en' : ''} aus
                                         {e.notice_period_days && days <= e.notice_period_days
                                             ? ' — Kündigung jetzt fällig!'
                                             : ''}
                                     </p>
-                                    <p className="text-xs text-amber-400/70 shrink-0">
+                                    <p className="text-xs text-status-warn/70 shrink-0">
                                         {format(new Date(e.contract_end_date), 'dd.MM.yy')}
                                     </p>
                                 </div>
@@ -529,14 +529,14 @@ export default function AccountingFixedCosts() {
                                 <p className="text-sm font-bold text-foreground">{monthOccurrences.length}</p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5">Positionen</p>
                             </div>
-                            <div className="bg-green-500/8 border border-green-500/20 rounded-xl p-3 text-center">
-                                <p className="text-sm font-bold text-green-400">{fmt(totals.paid)} €</p>
+                            <div className="bg-status-ok/8 border border-status-ok/20 rounded-xl p-3 text-center">
+                                <p className="text-sm font-bold text-status-ok">{fmt(totals.paid)} €</p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5">Bezahlt</p>
                             </div>
                             <div className={cn('border rounded-xl p-3 text-center',
-                                totals.open > 0 ? 'bg-amber-500/8 border-amber-500/20' : 'bg-secondary/40 border-transparent'
+                                totals.open > 0 ? 'bg-status-warn/8 border-status-warn/20' : 'bg-secondary/40 border-transparent'
                             )}>
-                                <p className={cn('text-sm font-bold', totals.open > 0 ? 'text-amber-400' : 'text-muted-foreground')}>
+                                <p className={cn('text-sm font-bold', totals.open > 0 ? 'text-status-warn' : 'text-muted-foreground')}>
                                     {fmt(totals.total - totals.paid)} €
                                 </p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5">Offen</p>
@@ -551,7 +551,7 @@ export default function AccountingFixedCosts() {
                                         className={cn(
                                             'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                                             catFilter === cat
-                                                ? 'bg-orange-600 border-orange-600 text-white'
+                                                ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                                 : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                                         )}>
                                         {cat === 'alle' ? `Alle (${monthOccurrences.length})` : cat}
@@ -600,7 +600,7 @@ export default function AccountingFixedCosts() {
                                                     className={cn(
                                                         'w-8 h-8 rounded-lg flex items-center justify-center border transition-all min-h-[44px] min-w-[44px]',
                                                         occ.status === 'bezahlt'
-                                                            ? 'bg-green-500/15 border-green-500/30 text-green-400 hover:bg-green-500/25'
+                                                            ? 'bg-status-ok/15 border-status-ok/30 text-status-ok hover:bg-status-ok/25'
                                                             : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                                                     )}>
                                                     <CheckCircle2 className="w-4 h-4" />
@@ -649,7 +649,7 @@ export default function AccountingFixedCosts() {
                                             {exp.contract_end_date && (
                                                 <span className={cn('ml-1',
                                                     differenceInDays(new Date(exp.contract_end_date), now) <= 90
-                                                        ? 'text-amber-400 font-medium' : ''
+                                                        ? 'text-status-warn font-medium' : ''
                                                 )}>
                                                     · Ende: {format(new Date(exp.contract_end_date), 'dd.MM.yy')}
                                                     {exp.auto_renewal ? ' ↺' : ''}
@@ -691,7 +691,7 @@ export default function AccountingFixedCosts() {
                         )}
                         <Button onClick={handleSave}
                             disabled={createExpenseMutation.isPending || updateExpenseMutation.isPending}
-                            className="bg-orange-600 hover:bg-orange-700 text-white flex-1 h-9">
+                            className="bg-status-warn/70 hover:bg-status-warn/70 text-white flex-1 h-9">
                             {createExpenseMutation.isPending || updateExpenseMutation.isPending ? 'Speichert…' : 'Speichern'}
                         </Button>
                     </DialogFooter>

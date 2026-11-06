@@ -41,9 +41,9 @@ const COLORS = [
 
 const roleColors = {
   'Aushilfe': 'bg-muted/80 text-muted-foreground border border-border',
-  'Vollzeit':  'bg-blue-500/15 text-blue-400 border border-blue-500/30',
-  'Manager':   'bg-purple-500/15 text-purple-400 border border-purple-500/30',
-  'Teilzeit':  'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30',
+  'Vollzeit':  'bg-primary/15 text-primary border border-primary/30',
+  'Manager':   'bg-primary/15 text-primary border border-primary/30',
+  'Teilzeit':  'bg-primary/15 text-primary border border-primary/30',
 };
 
 const TABS = [
@@ -225,7 +225,7 @@ export default function EmployeeProfile() {
   // ── Loading / error states ─────────────────────────────────────────────
   if (isLoading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+      <Loader2 className="w-8 h-8 animate-spin text-status-warn" />
     </div>
   );
 
@@ -269,10 +269,10 @@ export default function EmployeeProfile() {
                     {form.role}
                   </Badge>
                   {completion < 100 && (
-                    <span className="text-[10px] text-amber-400">{completion}% vollständig</span>
+                    <span className="text-[10px] text-status-warn">{completion}% vollständig</span>
                   )}
                   {completion === 100 && (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-status-ok" />
                   )}
                 </div>
               )}
@@ -311,7 +311,7 @@ export default function EmployeeProfile() {
               disabled={saveMut.isPending || !dirty}
               className={cn(
                 'shrink-0 min-h-[44px] transition-all',
-                dirty ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-secondary text-muted-foreground'
+                dirty ? 'bg-status-warn/70 hover:bg-status-warn/70 text-white' : 'bg-secondary text-muted-foreground'
               )}
             >
               {saveMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -331,7 +331,7 @@ export default function EmployeeProfile() {
                   <Phone className="w-4 h-4 shrink-0" /> {form.phone}
                 </a>
                 <a href={`https://wa.me/${form.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 text-sm min-h-[44px] whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-status-ok/15 border border-status-ok/30 text-status-ok text-sm min-h-[44px] whitespace-nowrap"
                 >
                   <MessageCircle className="w-4 h-4 shrink-0" /> WhatsApp
                 </a>
@@ -363,7 +363,7 @@ export default function EmployeeProfile() {
               className={cn(
                 'flex-1 flex flex-col items-center gap-1 py-2.5 px-1 rounded-lg text-xs font-medium transition-all min-h-[52px] touch-manipulation',
                 activeTab === tab.id
-                  ? 'bg-amber-600 text-white shadow'
+                  ? 'bg-status-warn/70 text-white shadow'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -646,15 +646,15 @@ export default function EmployeeProfile() {
                 {form.email && (
                   <Button
                     onClick={handleInvite}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white min-h-[44px]"
+                    className="w-full bg-gradient-to-r from-status-ok to-status-ok hover:from-status-ok hover:to-status-ok text-white min-h-[44px]"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     App-Zugang senden an {form.email}
                   </Button>
                 )}
                 {!form.email && (
-                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                    <p className="text-sm text-amber-400 font-medium">Keine E-Mail hinterlegt</p>
+                  <div className="p-3 rounded-xl bg-status-warn/10 border border-status-warn/30">
+                    <p className="text-sm text-status-warn font-medium">Keine E-Mail hinterlegt</p>
                     <p className="text-xs text-muted-foreground mt-0.5">Bitte im Profil-Tab nachtragen, dann kann eine Einladung versendet werden.</p>
                   </div>
                 )}

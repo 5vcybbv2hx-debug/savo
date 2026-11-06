@@ -17,7 +17,7 @@ export default function EventDetailsModal({ event, open, onClose, onShiftSwap })
                 <DialogContent className="sm:max-w-md bg-background border-border">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-foreground">
-                            <Calendar className="w-5 h-5 text-amber-500" />
+                            <Calendar className="w-5 h-5 text-status-warn" />
                             {format(event.date, 'dd. MMMM yyyy', { locale: de })}
                         </DialogTitle>
                     </DialogHeader>
@@ -61,7 +61,7 @@ export default function EventDetailsModal({ event, open, onClose, onShiftSwap })
                 <DialogContent className="sm:max-w-md bg-background border-border">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-foreground">
-                            <Clock className="w-5 h-5 text-blue-500" />
+                            <Clock className="w-5 h-5 text-primary" />
                             Schicht Details
                         </DialogTitle>
                     </DialogHeader>
@@ -125,7 +125,7 @@ export default function EventDetailsModal({ event, open, onClose, onShiftSwap })
                                     onShiftSwap?.(data);
                                     onClose();
                                 }}
-                                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                             >
                                 <RepeatIcon className="w-4 h-4 mr-2" />
                                 Tauschen
@@ -148,7 +148,7 @@ export default function EventDetailsModal({ event, open, onClose, onShiftSwap })
                 <DialogContent className="sm:max-w-md bg-background border-border">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-foreground">
-                            <Plane className="w-5 h-5 text-purple-500" />
+                            <Plane className="w-5 h-5 text-primary" />
                             Urlaub Details
                         </DialogTitle>
                     </DialogHeader>
@@ -181,9 +181,9 @@ export default function EventDetailsModal({ event, open, onClose, onShiftSwap })
                             <div>
                                 <div className="text-sm font-medium text-foreground/75">Typ</div>
                                 <Badge className={cn(
-                                    data.type === 'Urlaub' ? 'bg-blue-600' :
-                                    data.type === 'Krankheit' ? 'bg-red-600' :
-                                    'bg-green-600'
+                                    data.type === 'Urlaub' ? 'bg-primary/70' :
+                                    data.type === 'Krankheit' ? 'bg-status-danger/70' :
+                                    'bg-status-ok/70'
                                 )}>
                                     {data.type || 'Urlaub'}
                                 </Badge>
@@ -217,7 +217,7 @@ export default function EventDetailsModal({ event, open, onClose, onShiftSwap })
                 <DialogContent className="sm:max-w-md bg-background border-border">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-foreground">
-                            <PartyPopper className="w-5 h-5 text-red-500" />
+                            <PartyPopper className="w-5 h-5 text-status-danger" />
                             Feiertag
                         </DialogTitle>
                     </DialogHeader>
@@ -228,7 +228,7 @@ export default function EventDetailsModal({ event, open, onClose, onShiftSwap })
                             <div className="text-foreground/75 font-medium">
                                 {format(data.date, 'dd. MMMM yyyy', { locale: de })}
                             </div>
-                            <Badge className="mt-4 bg-red-600 text-foreground">
+                            <Badge className="mt-4 bg-status-danger/70 text-foreground">
                                 Gesetzlicher Feiertag
                             </Badge>
                         </div>

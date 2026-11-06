@@ -13,9 +13,9 @@ export default function MobileCard({
   interactive = false
 }) {
   const statusStyles = {
-    completed: 'bg-green-500/5 border-green-500/30',
-    pending: 'bg-amber-500/5 border-amber-500/30',
-    alert: 'bg-red-500/5 border-red-500/30',
+    completed: 'bg-status-ok/5 border-status-ok/30',
+    pending: 'bg-status-warn/5 border-status-warn/30',
+    alert: 'bg-status-danger/5 border-status-danger/30',
   };
 
   return (

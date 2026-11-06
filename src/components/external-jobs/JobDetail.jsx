@@ -17,10 +17,10 @@ import JobBillingTab from './JobBillingTab';
 
 const STATUS_STYLES = {
     anfrage: 'bg-secondary text-muted-foreground border-border',
-    angebot: 'bg-blue-500/10 text-blue-500 border-blue-500/30',
+    angebot: 'bg-primary/10 text-primary border-primary/30',
     auftrag: 'bg-primary/10 text-primary border-primary/30',
-    durchgefuehrt: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30',
-    abgerechnet: 'bg-emerald-600/10 text-emerald-600 border-emerald-600/30',
+    durchgefuehrt: 'bg-status-ok/10 text-status-ok border-status-ok/30',
+    abgerechnet: 'bg-status-ok/10 text-status-ok border-status-ok/30',
     storniert: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 

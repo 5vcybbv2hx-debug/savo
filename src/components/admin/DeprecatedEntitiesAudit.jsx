@@ -57,7 +57,7 @@ export default function DeprecatedEntitiesAudit() {
                     <h3 className="text-lg font-bold text-foreground">{entity.name}</h3>
                     <Badge
                       variant={entity.safeToDelete ? 'outline' : 'default'}
-                      className={entity.safeToDelete ? 'bg-green-500/10 text-green-500 border-green-500/30' : 'bg-red-500/10 text-red-500 border-red-500/30'}
+                      className={entity.safeToDelete ? 'bg-status-ok/10 text-status-ok border-status-ok/30' : 'bg-status-danger/10 text-status-danger border-status-danger/30'}
                     >
                       {entity.status}
                     </Badge>
@@ -66,7 +66,7 @@ export default function DeprecatedEntitiesAudit() {
                 </div>
 
                 {entity.safeToDelete && (
-                  <Trash2 className="w-5 h-5 text-green-500 shrink-0 ml-2" />
+                  <Trash2 className="w-5 h-5 text-status-ok shrink-0 ml-2" />
                 )}
               </div>
 
@@ -90,8 +90,8 @@ export default function DeprecatedEntitiesAudit() {
 
               {/* Dependencies */}
               {entity.dependencies.length > 0 && (
-                <div className="mb-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Dependencies:</p>
+                <div className="mb-3 p-3 bg-status-warn/5 border border-status-warn/20 rounded-lg">
+                  <p className="text-xs text-status-warn dark:text-status-warn font-medium">Dependencies:</p>
                   <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
                     {entity.dependencies.map((dep, i) => (
                       <li key={i}>• {dep}</li>
@@ -104,7 +104,7 @@ export default function DeprecatedEntitiesAudit() {
               <div className="flex justify-between items-center text-xs text-muted-foreground border-t border-border pt-3">
                 <div>Last Used: {entity.lastUsed}</div>
                 {entity.safeToDelete && (
-                  <Badge variant="outline" className="bg-green-500/10 text-green-500">
+                  <Badge variant="outline" className="bg-status-ok/10 text-status-ok">
                     ✓ Sicher zu löschen
                   </Badge>
                 )}
@@ -121,11 +121,11 @@ export default function DeprecatedEntitiesAudit() {
           {checklist.map(item => (
             <div key={item.entity} className="pb-4 border-b border-border last:border-0 last:pb-0">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-amber-500" />
+                <Clock className="w-4 h-4 text-status-warn" />
                 <h3 className="font-bold text-foreground">{item.entity}</h3>
                 <Badge
                   variant="outline"
-                  className={item.priority === 'high' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-blue-500/10 text-blue-500 border-blue-500/30'}
+                  className={item.priority === 'high' ? 'bg-status-danger/10 text-status-danger border-status-danger/30' : 'bg-primary/10 text-primary border-primary/30'}
                 >
                   {item.priority.toUpperCase()}
                 </Badge>
@@ -146,13 +146,13 @@ export default function DeprecatedEntitiesAudit() {
         {deletable.length > 0 ? (
           <div className="space-y-2">
             {deletable.map(entity => (
-              <Card key={entity.name} className="p-4 border-l-4 border-l-green-500 bg-green-500/5">
+              <Card key={entity.name} className="p-4 border-l-4 border-l-green-500 bg-status-ok/5">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="font-bold text-foreground">{entity.name}</h3>
                     <p className="text-sm text-muted-foreground mt-1">{entity.notes}</p>
                   </div>
-                  <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0 ml-2" />
+                  <CheckCircle2 className="w-6 h-6 text-status-ok shrink-0 ml-2" />
                 </div>
               </Card>
             ))}
@@ -169,7 +169,7 @@ export default function DeprecatedEntitiesAudit() {
         <h2 className="text-2xl font-bold text-foreground">Nächste Schritte</h2>
         <Card className="p-6 space-y-3">
           <div className="flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-foreground">1. Exportiere alle Daten</p>
               <p className="text-sm text-muted-foreground">Sicherung aller deprecated Entities vor Migration</p>
@@ -177,7 +177,7 @@ export default function DeprecatedEntitiesAudit() {
           </div>
 
           <div className="flex gap-3">
-            <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-foreground">2. Führe Migration durch</p>
               <p className="text-sm text-muted-foreground">Folge den Schritten in der Migration Checklist</p>
@@ -185,7 +185,7 @@ export default function DeprecatedEntitiesAudit() {
           </div>
 
           <div className="flex gap-3">
-            <AlertCircle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-foreground">3. Validiere Dependencies</p>
               <p className="text-sm text-muted-foreground">Stelle sicher, dass alle Verknüpfungen aktualisiert sind</p>
@@ -193,7 +193,7 @@ export default function DeprecatedEntitiesAudit() {
           </div>
 
           <div className="flex gap-3">
-            <Trash2 className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <Trash2 className="w-5 h-5 text-status-danger shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-foreground">4. Lösche veraltete Entities</p>
               <p className="text-sm text-muted-foreground">Nur Entities ohne Dependencies</p>

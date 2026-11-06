@@ -174,12 +174,12 @@ export default function QuickScheduler({ employees, shiftTypes, shifts, onCreate
                                     return (
                                         <th key={i} className={cn(
                                             'px-2 py-2 text-xs font-bold text-center min-w-[90px]',
-                                            isToday ? 'text-amber-400' : 'text-muted-foreground'
+                                            isToday ? 'text-status-warn' : 'text-muted-foreground'
                                         )}>
                                             <div>{DAYS[i]}</div>
                                             <div className={cn(
                                                 'text-[11px] font-normal mt-0.5',
-                                                isToday && 'text-amber-400 font-bold'
+                                                isToday && 'text-status-warn font-bold'
                                             )}>
                                                 {format(day, 'd.M.')}
                                             </div>
@@ -218,7 +218,7 @@ export default function QuickScheduler({ employees, shiftTypes, shifts, onCreate
                                                             className={cn(
                                                                 'min-h-[52px] rounded-lg p-1 transition-colors',
                                                                 snapshot.isDraggingOver
-                                                                    ? 'bg-amber-500/20 border border-dashed border-amber-500'
+                                                                    ? 'bg-status-warn/20 border border-dashed border-status-warn/70'
                                                                     : 'border border-transparent'
                                                             )}
                                                         >
@@ -266,7 +266,7 @@ export default function QuickScheduler({ employees, shiftTypes, shifts, onCreate
 
                 <div className="rounded-xl border border-border bg-card p-4">
                     <div className="flex items-center gap-2 mb-3">
-                        <CalendarCheck className="w-4 h-4 text-amber-400" />
+                        <CalendarCheck className="w-4 h-4 text-status-warn" />
                         <h3 className="text-sm font-bold text-foreground">Mitarbeiter</h3>
                         <span className="text-xs text-muted-foreground">— auf eine Schicht ziehen zum Einplanen</span>
                     </div>
@@ -290,7 +290,7 @@ export default function QuickScheduler({ employees, shiftTypes, shifts, onCreate
                                                         'flex items-center gap-2 px-3 py-2 rounded-xl border cursor-grab active:cursor-grabbing select-none transition-all',
                                                         snapshot.isDragging
                                                             ? 'shadow-lg scale-105 opacity-90 z-50'
-                                                            : 'hover:border-amber-500/50',
+                                                            : 'hover:border-status-warn/50',
                                                         isScheduled
                                                             ? 'border-border bg-muted/40 opacity-60'
                                                             : 'border-border bg-secondary/60'
@@ -306,7 +306,7 @@ export default function QuickScheduler({ employees, shiftTypes, shifts, onCreate
                                                         {emp.short_name || emp.name?.split(' ')[0]}
                                                     </span>
                                                     {isScheduled && (
-                                                        <Badge className="text-[9px] px-1 py-0 h-4 bg-green-500/20 text-green-400 border-green-500/30">
+                                                        <Badge className="text-[9px] px-1 py-0 h-4 bg-status-ok/20 text-status-ok border-status-ok/30">
                                                             ✓
                                                         </Badge>
                                                     )}

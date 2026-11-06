@@ -26,19 +26,19 @@ import { toast } from 'sonner';
 
 // ── Fallback-Bereiche (nur für Ersteinrichtung) ───────────────────────────────
 const DEFAULT_AREAS = [
-    { name: 'Nichtraucher', roles: ['Service', 'Theke', 'Nachschub', 'Spülen', 'Zusatz'],        color: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',    badge: 'bg-blue-500/15 text-blue-400',    sort_order: 0 },
-    { name: 'Raucher',      roles: ['Service', 'Theke', 'Nachschub', 'Spülen', 'Türe', 'Zusatz'], color: 'from-orange-500/20 to-orange-600/10 border-orange-500/30', badge: 'bg-orange-500/15 text-orange-400', sort_order: 1 },
-    { name: 'Tunnel',       roles: ['Service', 'Theke', 'Nachschub', 'Spülen', 'Zusatz'],        color: 'from-purple-500/20 to-purple-600/10 border-purple-500/30', badge: 'bg-purple-500/15 text-purple-400', sort_order: 2 },
+    { name: 'Nichtraucher', roles: ['Service', 'Theke', 'Nachschub', 'Spülen', 'Zusatz'],        color: 'from-primary/20 to-primary/10 border-primary/30',    badge: 'bg-primary/15 text-primary',    sort_order: 0 },
+    { name: 'Raucher',      roles: ['Service', 'Theke', 'Nachschub', 'Spülen', 'Türe', 'Zusatz'], color: 'from-status-warn/20 to-status-warn/10 border-status-warn/30', badge: 'bg-status-warn/15 text-status-warn', sort_order: 1 },
+    { name: 'Tunnel',       roles: ['Service', 'Theke', 'Nachschub', 'Spülen', 'Zusatz'],        color: 'from-primary/20 to-primary/10 border-primary/30', badge: 'bg-primary/15 text-primary', sort_order: 2 },
 ];
 
 const AREA_COLORS = [
-    { color: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',    badge: 'bg-blue-500/15 text-blue-400' },
-    { color: 'from-orange-500/20 to-orange-600/10 border-orange-500/30', badge: 'bg-orange-500/15 text-orange-400' },
-    { color: 'from-purple-500/20 to-purple-600/10 border-purple-500/30', badge: 'bg-purple-500/15 text-purple-400' },
-    { color: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30', badge: 'bg-emerald-500/15 text-emerald-400' },
-    { color: 'from-red-500/20 to-red-600/10 border-red-500/30',        badge: 'bg-red-500/15 text-red-400' },
-    { color: 'from-cyan-500/20 to-cyan-600/10 border-cyan-500/30',     badge: 'bg-cyan-500/15 text-cyan-400' },
-    { color: 'from-pink-500/20 to-pink-600/10 border-pink-500/30',     badge: 'bg-pink-500/15 text-pink-400' },
+    { color: 'from-primary/20 to-primary/10 border-primary/30',    badge: 'bg-primary/15 text-primary' },
+    { color: 'from-status-warn/20 to-status-warn/10 border-status-warn/30', badge: 'bg-status-warn/15 text-status-warn' },
+    { color: 'from-primary/20 to-primary/10 border-primary/30', badge: 'bg-primary/15 text-primary' },
+    { color: 'from-status-ok/20 to-status-ok/10 border-status-ok/30', badge: 'bg-status-ok/15 text-status-ok' },
+    { color: 'from-status-danger/20 to-status-danger/10 border-status-danger/30',        badge: 'bg-status-danger/15 text-status-danger' },
+    { color: 'from-primary/20 to-primary/10 border-primary/30',     badge: 'bg-primary/15 text-primary' },
+    { color: 'from-primary/20 to-primary/10 border-primary/30',     badge: 'bg-primary/15 text-primary' },
 ];
 
 function slotKey(area, role) { return `${area}||${role}`; }
@@ -53,10 +53,10 @@ function EmployeeChip({ name, onRemove, onClick, selected }) {
                 onClick ? 'cursor-pointer active:scale-95' : '',
                 selected
                     ? 'bg-primary text-primary-foreground border border-primary'
-                    : 'bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30'
+                    : 'bg-status-warn/20 border border-status-warn/30 text-status-warn/25 hover:bg-status-warn/30'
             )}
         >
-            <div className="w-5 h-5 rounded-full bg-amber-500/40 flex items-center justify-center text-[10px] font-bold text-amber-200 shrink-0">
+            <div className="w-5 h-5 rounded-full bg-status-warn/40 flex items-center justify-center text-[10px] font-bold text-status-warn/25 shrink-0">
                 {name?.charAt(0)}
             </div>
             <span className="truncate max-w-[80px]">{name?.split(' ')[0]}</span>
@@ -371,12 +371,12 @@ export default function Stationsplan() {
             {/* ── HEADER ───────────────────────────────────────────────────── */}
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                    <MapPin className="w-5 h-5 text-amber-400 shrink-0" />
+                    <MapPin className="w-5 h-5 text-status-warn shrink-0" />
                     <h1 className="page-title">Stationsplan</h1>
                     {currentPlan && (
                         <Badge className={cn('text-xs shrink-0', currentPlan.status === 'published'
-                            ? 'bg-emerald-500/15 text-emerald-400'
-                            : 'bg-amber-500/15 text-amber-400'
+                            ? 'bg-status-ok/15 text-status-ok'
+                            : 'bg-status-warn/15 text-status-warn'
                         )}>
                             {currentPlan.status === 'published' ? '✓ Veröffentlicht' : '● Entwurf'}
                         </Badge>
@@ -396,7 +396,7 @@ export default function Stationsplan() {
                         size="sm"
                         onClick={() => saveMutation.mutate('published')}
                         disabled={saveMutation.isPending}
-                        className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white min-h-[36px]"
+                        className="gap-1.5 bg-status-ok/70 hover:bg-status-ok/70 text-white min-h-[36px]"
                     >
                         <Send className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Veröffentlichen</span>
@@ -461,8 +461,8 @@ export default function Stationsplan() {
                         <button key={i}
                             onClick={() => hint.target && scrollToArea(hint.target)}
                             className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-all',
-                                'bg-amber-500/10 border-amber-500/20 text-amber-400',
-                                hint.target ? 'hover:bg-amber-500/20 cursor-pointer' : 'cursor-default'
+                                'bg-status-warn/10 border-status-warn/20 text-status-warn',
+                                hint.target ? 'hover:bg-status-warn/20 cursor-pointer' : 'cursor-default'
                             )}
                         >
                             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
@@ -494,7 +494,7 @@ export default function Stationsplan() {
                         <div className="flex items-center gap-2 mb-3">
                             <Users className="w-4 h-4 text-muted-foreground" />
                             <span className="text-sm font-semibold text-foreground">Heute im Dienst</span>
-                            <Badge className={cn('text-xs', unassigned.length === 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400')}>
+                            <Badge className={cn('text-xs', unassigned.length === 0 ? 'bg-status-ok/15 text-status-ok' : 'bg-status-warn/15 text-status-warn')}>
                                 {unassigned.length === 0 ? '✓ Alle eingeteilt' : `${unassigned.length} nicht eingeteilt`}
                             </Badge>
                             {selectedEmpId && (
@@ -514,7 +514,7 @@ export default function Stationsplan() {
                                             selected={isSelected}
                                         />
                                         {isAssigned && !isSelected && (
-                                            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-status-ok/70 flex items-center justify-center">
                                                 <Check className="w-2 h-2 text-white" />
                                             </div>
                                         )}
@@ -592,7 +592,7 @@ export default function Stationsplan() {
                                     <Card key={emp.employee_id} className="p-3 sm:p-4 border-border bg-card">
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                <div className="w-9 h-9 rounded-full bg-amber-500/20 flex items-center justify-center font-bold text-amber-400 text-sm shrink-0">
+                                                <div className="w-9 h-9 rounded-full bg-status-warn/20 flex items-center justify-center font-bold text-status-warn text-sm shrink-0">
                                                     {emp.employee_name?.charAt(0)}
                                                 </div>
                                                 <div>
@@ -647,7 +647,7 @@ export default function Stationsplan() {
                                                 />
                                             </div>
                                             {(asgn.area || asgn.role) && (
-                                                <Badge className="bg-emerald-500/15 text-emerald-400 text-xs shrink-0">
+                                                <Badge className="bg-status-ok/15 text-status-ok text-xs shrink-0">
                                                     {[asgn.area, asgn.role].filter(Boolean).join(' / ')}
                                                 </Badge>
                                             )}

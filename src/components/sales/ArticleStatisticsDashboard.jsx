@@ -97,7 +97,7 @@ export default function ArticleStatisticsDashboard({ articles = [] }) {
                 <p className="text-muted-foreground text-sm">Gesamtumsatz</p>
                 <p className="text-3xl font-bold text-foreground mt-1">{totalRevenue.toFixed(2)} €</p>
               </div>
-              <TrendingUp className="w-10 h-10 text-amber-500 opacity-50" />
+              <TrendingUp className="w-10 h-10 text-status-warn opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -108,7 +108,7 @@ export default function ArticleStatisticsDashboard({ articles = [] }) {
                 <p className="text-muted-foreground text-sm">Gesamtmenge</p>
                 <p className="text-3xl font-bold text-foreground mt-1">{totalQuantity}</p>
               </div>
-              <Package className="w-10 h-10 text-cyan-500 opacity-50" />
+              <Package className="w-10 h-10 text-primary opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -192,25 +192,25 @@ export default function ArticleStatisticsDashboard({ articles = [] }) {
                 <h3 className="text-lg font-bold text-foreground">{mainGroup.name}</h3>
                 <div className="flex gap-4 mt-2 text-sm">
                   <span className="text-muted-foreground">
-                    Umsatz: <span className="text-amber-400 font-semibold">{mainGroup.totalRevenue.toFixed(2)} €</span>
+                    Umsatz: <span className="text-status-warn font-semibold">{mainGroup.totalRevenue.toFixed(2)} €</span>
                   </span>
                   <span className="text-muted-foreground">
-                    Menge: <span className="text-cyan-400 font-semibold">{mainGroup.totalQuantity}</span>
+                    Menge: <span className="text-primary font-semibold">{mainGroup.totalQuantity}</span>
                   </span>
                   <span className="text-muted-foreground">
-                    Anteil: <span className="text-green-400 font-semibold">{mainGroup.totalPercentage}%</span>
+                    Anteil: <span className="text-status-ok font-semibold">{mainGroup.totalPercentage}%</span>
                   </span>
                 </div>
               </div>
               <div className="text-right">
-                <Badge className="bg-amber-600/80 text-foreground">
+                <Badge className="bg-status-warn/80 text-foreground">
                   {Object.keys(mainGroup.items).length} Gruppen
                 </Badge>
               </div>
             </div>
 
             {expandedCategory === mainGroup.name && (
-              <div className="border-t border-border divide-y divide-slate-700">
+              <div className="border-t border-border divide-y border-border">
                 {Object.values(mainGroup.items).map(subGroup => (
                   <div key={subGroup.name} className="px-6 py-4 bg-background/40">
                     <div className="flex items-center justify-between mb-3">
@@ -227,10 +227,10 @@ export default function ArticleStatisticsDashboard({ articles = [] }) {
                           <p className="text-foreground font-medium text-sm truncate">{article.name}</p>
                           <div className="flex justify-between mt-2 text-xs">
                             <span className="text-muted-foreground">
-                              Umsatz: <span className="text-amber-400">{article.revenue?.toFixed(2) || 0} €</span>
+                              Umsatz: <span className="text-status-warn">{article.revenue?.toFixed(2) || 0} €</span>
                             </span>
                             <span className="text-muted-foreground">
-                              Menge: <span className="text-cyan-400">{article.quantity || 0}</span>
+                              Menge: <span className="text-primary">{article.quantity || 0}</span>
                             </span>
                           </div>
                         </div>

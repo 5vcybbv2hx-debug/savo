@@ -24,9 +24,9 @@ function PriceChangeRow({ entry }) {
                 <div className="flex items-center gap-2 min-w-0">
                     {hasOld ? (
                         isIncrease ? (
-                            <TrendingUp className="w-4 h-4 text-red-400 shrink-0" />
+                            <TrendingUp className="w-4 h-4 text-status-danger shrink-0" />
                         ) : isDecrease ? (
-                            <TrendingDown className="w-4 h-4 text-green-400 shrink-0" />
+                            <TrendingDown className="w-4 h-4 text-status-ok shrink-0" />
                         ) : (
                             <Minus className="w-4 h-4 text-muted-foreground shrink-0" />
                         )
@@ -40,8 +40,8 @@ function PriceChangeRow({ entry }) {
                                 <span className="mx-1.5 text-muted-foreground">→</span>
                                 <span className={cn(
                                     'font-bold',
-                                    isIncrease && 'text-red-400',
-                                    isDecrease && 'text-green-400',
+                                    isIncrease && 'text-status-danger',
+                                    isDecrease && 'text-status-ok',
                                     !isIncrease && !isDecrease && 'text-foreground'
                                 )}>{formatPrice(entry.new_price)}</span>
                             </span>

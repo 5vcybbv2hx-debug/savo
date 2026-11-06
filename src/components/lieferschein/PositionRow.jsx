@@ -8,7 +8,7 @@ import { UNIT_CODES, quantityUnits, unitBreakdown, unitLabel } from '@/lib/deliv
 import { cn } from '@/lib/utils';
 
 const MATCH_BADGES = {
-  artikelnummer: { label: 'Art.-Nr.', className: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
+  artikelnummer: { label: 'Art.-Nr.', className: 'bg-status-ok/15 text-status-ok dark:text-status-ok' },
   name: { label: 'Name', className: 'bg-muted text-muted-foreground' },
   manuell: { label: 'manuell', className: 'bg-primary/15 text-primary' },
 };
@@ -27,7 +27,7 @@ function DeltaBadge({ delta }) {
   return (
     <span className={cn(
       'inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-xs font-semibold',
-      up ? 'bg-destructive/15 text-destructive' : 'bg-emerald-500/15 text-emerald-500'
+      up ? 'bg-destructive/15 text-destructive' : 'bg-status-ok/15 text-status-ok'
     )}>
       {up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
       {up ? '+' : ''}{rounded} %
@@ -87,12 +87,12 @@ export default function PositionRow({ position, index, articles, openItems, othe
             </span>
           )}
           {(delta !== null && Math.abs(delta) > 5) && (
-            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-amber-500">
+            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-status-warn">
               <AlertTriangle className="w-3 h-3" /> Preisänderung {delta > 0 ? '+' : ''}{Math.round(delta * 10) / 10} %
             </span>
           )}
           {qtyMismatch && (
-            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-amber-500">
+            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-status-warn">
               <AlertTriangle className="w-3 h-3" /> Bestellt: {shoppingItem.quantity}
             </span>
           )}

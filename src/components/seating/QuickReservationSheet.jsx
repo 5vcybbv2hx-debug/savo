@@ -54,18 +54,18 @@ export function getTableStatus(table, reservations, checkDate, checkTime) {
 }
 
 export const STATUS_CONFIG = {
-    free:     { label: 'Frei',         color: 'bg-green-500/20 border-green-500/50 text-green-400',  dot: 'bg-green-400' },
-    reserved: { label: 'Reserviert',   color: 'bg-red-500/20 border-red-500/50 text-red-400',        dot: 'bg-red-400' },
-    soon:     { label: 'Bald belegt',  color: 'bg-amber-500/20 border-amber-500/50 text-amber-400',  dot: 'bg-amber-400' },
+    free:     { label: 'Frei',         color: 'bg-status-ok/20 border-status-ok/50 text-status-ok',  dot: 'bg-status-ok/70' },
+    reserved: { label: 'Reserviert',   color: 'bg-status-danger/20 border-status-danger/50 text-status-danger',        dot: 'bg-status-danger/70' },
+    soon:     { label: 'Bald belegt',  color: 'bg-status-warn/20 border-status-warn/50 text-status-warn',  dot: 'bg-status-warn/70' },
     inactive: { label: 'Gesperrt',     color: 'bg-secondary/50 border-border text-muted-foreground', dot: 'bg-muted-foreground' },
 };
 
 // Reservierungsstatus-Farben für Tischkarten
 export const RES_STATUS_CONFIG = {
-    vorgemerkt: { label: 'Vorgemerkt', emoji: '🔵', color: 'bg-blue-500/20 border-blue-500/50 text-blue-400',   dot: 'bg-blue-400' },
-    bestätigt:  { label: 'Bestätigt',  emoji: '🟡', color: 'bg-amber-400/20 border-amber-400/50 text-amber-300', dot: 'bg-amber-300' },
-    erschienen: { label: 'Erschienen', emoji: '🟢', color: 'bg-green-500/20 border-green-500/50 text-green-400', dot: 'bg-green-400' },
-    'no-show':  { label: 'No-Show',    emoji: '🔴', color: 'bg-red-600/20 border-red-600/50 text-red-400',       dot: 'bg-red-500' },
+    vorgemerkt: { label: 'Vorgemerkt', emoji: '🔵', color: 'bg-primary/20 border-primary/50 text-primary',   dot: 'bg-primary/70' },
+    bestätigt:  { label: 'Bestätigt',  emoji: '🟡', color: 'bg-status-warn/20 border-status-warn/50 text-status-warn/25', dot: 'bg-status-warn/25' },
+    erschienen: { label: 'Erschienen', emoji: '🟢', color: 'bg-status-ok/20 border-status-ok/50 text-status-ok', dot: 'bg-status-ok/70' },
+    'no-show':  { label: 'No-Show',    emoji: '🔴', color: 'bg-status-danger/20 border-status-danger/50 text-status-danger',       dot: 'bg-status-danger/70' },
     storniert:  { label: 'Storniert',  emoji: '⚪', color: 'bg-secondary/50 border-border text-muted-foreground', dot: 'bg-muted-foreground' },
 };
 
@@ -203,7 +203,7 @@ export default function QuickReservationSheet({ table, reservations, tables, onC
                             return (
                                 <div key={res.id} className={cn(
                                     'rounded-xl border p-4 space-y-3',
-                                    isActive ? 'border-red-500/40 bg-red-500/10' : 'border-border bg-secondary/30'
+                                    isActive ? 'border-status-danger/40 bg-status-danger/10' : 'border-border bg-secondary/30'
                                 )}>
                                     <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2">
@@ -212,7 +212,7 @@ export default function QuickReservationSheet({ table, reservations, tables, onC
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {isActive && (
-                                                <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">Jetzt</span>
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-status-danger/20 text-status-danger border border-status-danger/30">Jetzt</span>
                                             )}
                                             {/* Status-Badge mit Dropdown (nur Manager) */}
                                             <div className="relative" onClick={e => e.stopPropagation()}>
@@ -220,10 +220,10 @@ export default function QuickReservationSheet({ table, reservations, tables, onC
                                                     onClick={() => isManager && setStatusMenuOpen(statusMenuOpen === res.id ? null : res.id)}
                                                     className={cn(
                                                         'flex items-center gap-1 text-xs px-2 py-1 rounded-full border min-h-[28px]',
-                                                        res.status === 'vorgemerkt' && 'bg-blue-500/20 border-blue-500/40 text-blue-400',
-                                                        res.status === 'bestätigt'  && 'bg-amber-400/20 border-amber-400/40 text-amber-300',
-                                                        res.status === 'erschienen' && 'bg-green-500/20 border-green-500/40 text-green-400',
-                                                        res.status === 'no-show'    && 'bg-red-600/20 border-red-600/40 text-red-400',
+                                                        res.status === 'vorgemerkt' && 'bg-primary/20 border-primary/40 text-primary',
+                                                        res.status === 'bestätigt'  && 'bg-status-warn/20 border-status-warn/40 text-status-warn/25',
+                                                        res.status === 'erschienen' && 'bg-status-ok/20 border-status-ok/40 text-status-ok',
+                                                        res.status === 'no-show'    && 'bg-status-danger/20 border-status-danger/40 text-status-danger',
                                                         res.status === 'storniert'  && 'bg-secondary/50 border-border text-muted-foreground',
                                                     )}
                                                 >
@@ -261,7 +261,7 @@ export default function QuickReservationSheet({ table, reservations, tables, onC
                                     </div>
                                     {res.phone && (
                                         <a href={`tel:${res.phone}`}
-                                            className="flex items-center gap-2 text-sm text-blue-400 min-h-[44px]">
+                                            className="flex items-center gap-2 text-sm text-primary min-h-[44px]">
                                             <Phone className="w-4 h-4" />{res.phone}
                                         </a>
                                     )}
@@ -287,7 +287,7 @@ export default function QuickReservationSheet({ table, reservations, tables, onC
                 {mode === 'new' && (
                     <div className="p-5 space-y-4">
                         <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-amber-400" />
+                            <Sparkles className="w-4 h-4 text-status-warn" />
                             Reservierung für Tisch {table.table_number}
                         </p>
 
@@ -345,7 +345,7 @@ export default function QuickReservationSheet({ table, reservations, tables, onC
                         </div>
 
                         {form.guests > table.capacity && (
-                            <p className="text-xs text-amber-400 flex items-center gap-1">
+                            <p className="text-xs text-status-warn flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" />Über Tischkapazität ({table.capacity} Pl.)
                             </p>
                         )}

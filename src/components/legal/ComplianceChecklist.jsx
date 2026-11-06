@@ -41,11 +41,11 @@ const ComplianceChecklist = () => {
   const getIcon = (status) => {
     switch (status) {
       case 'done':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-status-ok" />;
       case 'partial':
-        return <Clock className="w-4 h-4 text-amber-500" />;
+        return <Clock className="w-4 h-4 text-status-warn" />;
       case 'todo':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-status-danger" />;
       default:
         return null;
     }
@@ -79,19 +79,19 @@ const ComplianceChecklist = () => {
       ))}
 
       {/* Quick Stats */}
-      <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+      <Card className="bg-gradient-to-br from-status-ok/10 to-status-ok/10 border-status-ok/20">
         <CardContent className="pt-6">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-green-500">8</p>
+              <p className="text-2xl font-bold text-status-ok">8</p>
               <p className="text-xs text-muted-foreground">Implementiert</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-amber-500">4</p>
+              <p className="text-2xl font-bold text-status-warn">4</p>
               <p className="text-xs text-muted-foreground">In Progress</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-500">4</p>
+              <p className="text-2xl font-bold text-status-danger">4</p>
               <p className="text-xs text-muted-foreground">Optional</p>
             </div>
           </div>

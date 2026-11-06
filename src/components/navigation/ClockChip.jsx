@@ -35,7 +35,7 @@ export default function ClockChip() {
             className={cn(
                 'flex items-center gap-1.5 rounded-full transition-all active:scale-95 h-8 px-2.5 text-xs font-medium shrink-0',
                 active
-                    ? 'bg-green-500/15 text-green-400 border border-green-500/30'
+                    ? 'bg-status-ok/15 text-status-ok border border-status-ok/30'
                     : 'bg-muted text-muted-foreground border border-border',
                 isLoading && 'opacity-60'
             )}

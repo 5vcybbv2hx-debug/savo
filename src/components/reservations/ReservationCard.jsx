@@ -13,11 +13,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 
 const STATUS_STYLES = {
-    'vorgemerkt': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    'bestätigt':  'bg-green-500/15 text-green-400 border-green-500/30',
-    'erschienen': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-    'storniert':  'bg-slate-500/15 text-slate-400 border-slate-500/30',
-    'no-show':    'bg-red-500/15 text-red-400 border-red-500/30',
+    'vorgemerkt': 'bg-primary/15 text-primary border-primary/30',
+    'bestätigt':  'bg-status-ok/15 text-status-ok border-status-ok/30',
+    'erschienen': 'bg-status-ok/15 text-status-ok border-status-ok/30',
+    'storniert':  'bg-surface text-muted-foreground border-border',
+    'no-show':    'bg-status-danger/15 text-status-danger border-status-danger/30',
 };
 
 const STATUS_LABELS = {
@@ -63,7 +63,7 @@ export default function ReservationCard({
                     <h3 className="font-semibold text-foreground text-base truncate">{res.customer_name}</h3>
                     {res.phone && (
                         <a href={`tel:${res.phone}`}
-                            className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5 hover:text-amber-400 transition-colors">
+                            className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5 hover:text-status-warn transition-colors">
                             <Phone className="w-3 h-3" />{res.phone}
                         </a>
                     )}
@@ -73,7 +73,7 @@ export default function ReservationCard({
                         {STATUS_LABELS[res.status] ?? res.status}
                     </Badge>
                     {res.is_archived && (
-                        <Badge className="text-xs border border-slate-600 text-slate-400 bg-slate-500/10">Archiv</Badge>
+                        <Badge className="text-xs border border-border text-muted-foreground bg-surface">Archiv</Badge>
                     )}
                 </div>
             </div>
@@ -81,24 +81,24 @@ export default function ReservationCard({
             {/* ── Info pills ─────────────────────────────────────────────── */}
             <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-4 pb-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-amber-400" />{dateStr}
+                    <Calendar className="w-3.5 h-3.5 text-status-warn" />{dateStr}
                 </span>
                 {res.time && (
                     <span className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-amber-400" />{res.time} Uhr
+                        <Clock className="w-3.5 h-3.5 text-status-warn" />{res.time} Uhr
                     </span>
                 )}
                 <span className="flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-amber-400" />
+                    <Users className="w-3.5 h-3.5 text-status-warn" />
                     {res.guests} {res.guests === 1 ? 'Person' : 'Personen'}
                 </span>
                 {tableDisplay && (
                     <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-amber-400" />{tableDisplay}
+                        <MapPin className="w-3.5 h-3.5 text-status-warn" />{tableDisplay}
                     </span>
                 )}
                 {res.is_recurring && res.recurring_pattern && (
-                    <span className="flex items-center gap-1.5 text-blue-400">
+                    <span className="flex items-center gap-1.5 text-primary">
                         <Repeat className="w-3.5 h-3.5" />
                         {PATTERN_LABELS[res.recurring_pattern] ?? res.recurring_pattern}
                     </span>
@@ -125,14 +125,14 @@ export default function ReservationCard({
                     {res.status === 'vorgemerkt' && !res.is_archived && (
                         <Button variant="ghost" size="sm"
                             onClick={() => onConfirm?.(res.id)}
-                            className="flex-1 h-9 text-xs text-green-400 hover:text-green-300 hover:bg-green-500/10 gap-1.5">
+                            className="flex-1 h-9 text-xs text-status-ok hover:text-status-ok/25 hover:bg-status-ok/10 gap-1.5">
                             <CheckCircle className="w-3.5 h-3.5" />Bestätigen
                         </Button>
                     )}
                     {res.status === 'bestätigt' && !res.is_archived && (
                         <Button variant="ghost" size="sm"
                             onClick={() => onCancel?.(res.id)}
-                            className="flex-1 h-9 text-xs text-slate-400 hover:text-slate-300 hover:bg-slate-500/10 gap-1.5">
+                            className="flex-1 h-9 text-xs text-muted-foreground hover:text-muted-foreground hover:bg-surface gap-1.5">
                             <XCircle className="w-3.5 h-3.5" />Stornieren
                         </Button>
                     )}
@@ -161,7 +161,7 @@ export default function ReservationCard({
                                 <>
                                     <div className="border-t border-border my-1" />
                                     <button onClick={() => { onDelete?.(res.id); setMenuOpen(false); }}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-status-danger hover:bg-status-danger/10 transition-colors">
                                         <Trash2 className="w-4 h-4" />Löschen
                                     </button>
                                 </>

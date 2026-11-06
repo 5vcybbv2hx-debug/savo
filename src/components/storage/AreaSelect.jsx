@@ -118,7 +118,7 @@ export default function AreaSelect({ value, onChange, className }) {
                 type="button"
                 onClick={handleCreate}
                 disabled={!newAreaName.trim() || createMutation.isPending}
-                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+                className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white"
               >
                 {createMutation.isPending ? 'Wird erstellt...' : 'Erstellen'}
               </Button>

@@ -47,10 +47,10 @@ function AccessBadge({ level }) {
     <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">–</span>
   );
   if (level === 'view') return (
-    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-500 font-medium">Lesen</span>
+    <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">Lesen</span>
   );
   return (
-    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-500 font-medium">Voll</span>
+    <span className="text-[10px] px-1.5 py-0.5 rounded bg-status-ok/15 text-status-ok font-medium">Voll</span>
   );
 }
 
@@ -76,7 +76,7 @@ function PermToggle({ permKey, value, onChange, actions }) {
           className={cn(
             'px-2 py-1 rounded text-[10px] font-medium transition-all min-h-[28px]',
             value === 'view'
-              ? 'bg-blue-500/20 text-blue-500 ring-1 ring-blue-500/40'
+              ? 'bg-primary/20 text-primary ring-1 ring-primary/40'
               : 'text-muted-foreground hover:bg-muted/60'
           )}
         >Lesen</button>
@@ -87,7 +87,7 @@ function PermToggle({ permKey, value, onChange, actions }) {
           className={cn(
             'px-2 py-1 rounded text-[10px] font-medium transition-all min-h-[28px]',
             value === 'edit'
-              ? 'bg-emerald-500/20 text-emerald-500 ring-1 ring-emerald-500/40'
+              ? 'bg-status-ok/20 text-status-ok ring-1 ring-status-ok/40'
               : 'text-muted-foreground hover:bg-muted/60'
           )}
         >Voll</button>
@@ -297,7 +297,7 @@ export default function PermissionsNew() {
                       <div
                         className={cn(
                           'h-full rounded-full transition-all',
-                          pct === 0 ? 'bg-muted' : pct < 40 ? 'bg-amber-500' : 'bg-emerald-500'
+                          pct === 0 ? 'bg-muted' : pct < 40 ? 'bg-status-warn/70' : 'bg-status-ok/70'
                         )}
                         style={{ width: `${pct}%` }}
                       />
@@ -357,11 +357,11 @@ export default function PermissionsNew() {
                 }) : [];
                 if (wrongOverrides.length === 0) return null;
                 return (
-                  <div className="mx-4 mt-3 flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <div className="mx-4 mt-3 flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-status-warn/10 border border-status-warn/30">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-amber-500 text-lg">⚠️</span>
+                      <span className="text-status-warn text-lg">⚠️</span>
                       <div>
-                        <p className="text-xs font-semibold text-amber-500">
+                        <p className="text-xs font-semibold text-status-warn">
                           {wrongOverrides.length} Berechtigungen fälschlicherweise gesperrt
                         </p>
                         <p className="text-[10px] text-muted-foreground">
@@ -371,7 +371,7 @@ export default function PermissionsNew() {
                     </div>
                     <button
                       onClick={handleResetToRoleDefault}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-colors min-h-[36px]"
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-status-warn/70 hover:bg-status-warn/70 text-white text-xs font-semibold transition-colors min-h-[36px]"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       Zurücksetzen
@@ -440,7 +440,7 @@ export default function PermissionsNew() {
                       : <ChevronDown className="w-3.5 h-3.5 ml-1" />
                     }
                     {advancedMode && (
-                      <span className="ml-auto text-[10px] bg-amber-500/15 text-amber-500 px-1.5 py-0.5 rounded">
+                      <span className="ml-auto text-[10px] bg-status-warn/15 text-status-warn px-1.5 py-0.5 rounded">
                         Erweitert
                       </span>
                     )}

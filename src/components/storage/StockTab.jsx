@@ -44,8 +44,8 @@ export default function StockTab() {
           <p className="text-2xl font-bold text-foreground">{isLoading ? '—' : (assignments?.length ?? 0)}</p>
           <p className="text-xs text-muted-foreground mt-1">Zuordnungen gesamt</p>
         </Card>
-        <Card className={`p-3 text-center ${!isLoading && lowCount > 0 ? 'border-red-500/50 bg-red-500/5' : ''}`}>
-          <p className={`text-2xl font-bold ${!isLoading && lowCount > 0 ? 'text-red-500' : 'text-foreground'}`}>{isLoading ? '—' : lowCount}</p>
+        <Card className={`p-3 text-center ${!isLoading && lowCount > 0 ? 'border-status-danger/50 bg-status-danger/5' : ''}`}>
+          <p className={`text-2xl font-bold ${!isLoading && lowCount > 0 ? 'text-status-danger' : 'text-foreground'}`}>{isLoading ? '—' : lowCount}</p>
           <p className="text-xs text-muted-foreground mt-1">Unter Mindestbestand</p>
         </Card>
       </div>
@@ -66,7 +66,7 @@ export default function StockTab() {
           </Select>
           <button
             onClick={() => setFilterLow(v => !v)}
-            className={`px-3 h-10 rounded-lg border text-xs font-medium transition-all flex items-center gap-1 shrink-0 ${filterLow ? 'bg-red-500 text-white border-red-500' : 'border-border text-muted-foreground hover:bg-accent'}`}
+            className={`px-3 h-10 rounded-lg border text-xs font-medium transition-all flex items-center gap-1 shrink-0 ${filterLow ? 'bg-status-danger/70 text-white border-status-danger/70' : 'border-border text-muted-foreground hover:bg-accent'}`}
           >
             <AlertTriangle className="w-3 h-3" /> Nur kritisch
           </button>
@@ -84,7 +84,7 @@ export default function StockTab() {
           {filtered.map(a => {
             const isLow = a.min_stock != null && a.quantity < a.min_stock;
             return (
-              <Card key={a.id} className={`p-3 flex items-center gap-3 ${isLow ? 'border-red-500/40' : ''}`}>
+              <Card key={a.id} className={`p-3 flex items-center gap-3 ${isLow ? 'border-status-danger/40' : ''}`}>
                 {a.article_image_url ? (
                   <img src={a.article_image_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
                 ) : (
@@ -99,7 +99,7 @@ export default function StockTab() {
                   </div>
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{a.storage_slot_name}</p>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className={`text-sm font-bold ${isLow ? 'text-red-500' : 'text-foreground'}`}>
+                    <span className={`text-sm font-bold ${isLow ? 'text-status-danger' : 'text-foreground'}`}>
                       {a.quantity} {a.unit}
                     </span>
                     {a.min_stock != null && <span className="text-xs text-muted-foreground">Min: {a.min_stock}</span>}

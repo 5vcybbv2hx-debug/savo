@@ -53,13 +53,13 @@ export default function LegalStatusPanel() {
 
   return (
     <>
-      <Card className={`bg-card border-border ${isIncomplete ? 'border-amber-500/50 bg-amber-500/5' : 'border-green-500/50 bg-green-500/5'}`}>
+      <Card className={`bg-card border-border ${isIncomplete ? 'border-status-warn/50 bg-status-warn/5' : 'border-status-ok/50 bg-status-ok/5'}`}>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             {isIncomplete ? (
-              <AlertCircle className="w-5 h-5 text-amber-500" />
+              <AlertCircle className="w-5 h-5 text-status-warn" />
             ) : (
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <CheckCircle2 className="w-5 h-5 text-status-ok" />
             )}
             <CardTitle className="text-base">
               {isIncomplete ? 'Rechtliche Angaben unvollständig' : 'Rechtliche Angaben vollständig'}
@@ -79,9 +79,9 @@ export default function LegalStatusPanel() {
 
           {/* Fehlende Pflichtfelder */}
           {missing.required.length > 0 && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 space-y-1">
-              <p className="text-xs font-medium text-red-600">Pflichtangaben fehlen:</p>
-              <ul className="text-xs text-red-600 space-y-0.5">
+            <div className="bg-status-danger/10 border border-status-danger/20 rounded-lg p-2.5 space-y-1">
+              <p className="text-xs font-medium text-status-danger">Pflichtangaben fehlen:</p>
+              <ul className="text-xs text-status-danger space-y-0.5">
                 {missing.required.map(field => (
                   <li key={field} className="flex items-center gap-2">
                     <span>•</span>
@@ -94,9 +94,9 @@ export default function LegalStatusPanel() {
 
           {/* Fehlende empfohlene Felder */}
           {missing.recommended.length > 0 && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 space-y-1">
-              <p className="text-xs font-medium text-amber-700">Empfohlene Angaben:</p>
-              <ul className="text-xs text-amber-700 space-y-0.5">
+            <div className="bg-status-warn/10 border border-status-warn/20 rounded-lg p-2.5 space-y-1">
+              <p className="text-xs font-medium text-status-warn">Empfohlene Angaben:</p>
+              <ul className="text-xs text-status-warn space-y-0.5">
                 {missing.recommended.map(field => (
                   <li key={field} className="flex items-center gap-2">
                     <span>•</span>

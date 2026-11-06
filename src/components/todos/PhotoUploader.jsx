@@ -37,7 +37,7 @@ export default function PhotoUploader({ onPhotoAdded, isLoading }) {
                 <Button
                     onClick={() => setShowOptions(true)}
                     disabled={isLoading || uploading}
-                    className="w-full h-12 rounded-xl gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    className="w-full h-12 rounded-xl gap-2 bg-primary/70 hover:bg-primary/70 text-white font-semibold"
                 >
                     {uploading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

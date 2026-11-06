@@ -20,10 +20,10 @@ function StatusBadge({ status, managerApprovedBy }) {
   // status='genehmigt' aber kein manager_approved_by → gilt als ausstehend
   const effectiveStatus = (status === 'genehmigt' && !managerApprovedBy) ? 'ausstehend' : status;
   const cfg = {
-    eingereicht: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    ausstehend: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    genehmigt: 'bg-green-500/20 text-green-400 border-green-500/30',
-    abgelehnt: 'bg-red-500/20 text-red-400 border-red-500/30',
+    eingereicht: 'bg-status-warn/20 text-status-warn border-status-warn/30',
+    ausstehend: 'bg-status-warn/20 text-status-warn border-status-warn/30',
+    genehmigt: 'bg-status-ok/20 text-status-ok border-status-ok/30',
+    abgelehnt: 'bg-status-danger/20 text-status-danger border-status-danger/30',
   };
   const labels = { eingereicht: 'Eingereicht', ausstehend: 'Ausstehend', genehmigt: 'Genehmigt', abgelehnt: 'Abgelehnt' };
   return (
@@ -74,7 +74,7 @@ function EditForm({ entry, onSave, onCancel }) {
       <p className="text-xs text-muted-foreground">Berechnet: <strong className="text-foreground">{calcHours()}h</strong></p>
       <div className="flex gap-2">
         <Button size="sm" variant="outline" onClick={onCancel} className="flex-1 h-9 text-xs"><X className="w-3 h-3 mr-1" />Abbrechen</Button>
-        <Button size="sm" onClick={() => onSave({ ...form, total_hours: calcHours() })} className="flex-1 h-9 bg-amber-600 hover:bg-amber-700 text-white text-xs">Speichern</Button>
+        <Button size="sm" onClick={() => onSave({ ...form, total_hours: calcHours() })} className="flex-1 h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white text-xs">Speichern</Button>
       </div>
     </div>
   );
@@ -152,7 +152,7 @@ export default function TimeApprovalPanel() {
     return (
       <Card key={entry.id} className={cn(
         'border',
-        (entry.status === 'genehmigt' && !!entry.manager_approved_by) ? 'border-green-500/20 bg-green-500/5' : 'border-border bg-card'
+        (entry.status === 'genehmigt' && !!entry.manager_approved_by) ? 'border-status-ok/20 bg-status-ok/5' : 'border-border bg-card'
       )}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
@@ -162,7 +162,7 @@ export default function TimeApprovalPanel() {
                 <StatusBadge status={entry.status} managerApprovedBy={entry.manager_approved_by} />
                 {warn && (
                   <Badge className={cn('text-[10px] border flex items-center gap-1',
-                    warn === 'danger' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                    warn === 'danger' ? 'bg-status-danger/20 text-status-danger border-status-danger/30' : 'bg-status-warn/20 text-status-warn border-status-warn/30'
                   )}>
                     <AlertTriangle className="w-2.5 h-2.5" />
                     {warn === 'danger' ? '10h+' : '8h+'}
@@ -186,7 +186,7 @@ export default function TimeApprovalPanel() {
                 </Button>
                 <Button size="sm" onClick={() => approveMutation.mutate(entry.id)}
                   disabled={approveMutation.isPending}
-                  className="h-8 bg-green-600 hover:bg-green-700 text-white gap-1 text-xs px-2">
+                  className="h-8 bg-status-ok/70 hover:bg-status-ok/70 text-white gap-1 text-xs px-2">
                   <CheckCircle2 className="w-3 h-3" />OK
                 </Button>
               </div>
@@ -226,7 +226,7 @@ export default function TimeApprovalPanel() {
       {/* Pending */}
       {pending.length === 0 ? (
         <Card className="p-6 text-center bg-card border-border">
-          <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+          <CheckCircle2 className="w-8 h-8 text-status-ok mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">Alle Zeiten genehmigt</p>
         </Card>
       ) : (

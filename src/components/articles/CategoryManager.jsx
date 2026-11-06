@@ -110,7 +110,7 @@ export default function CategoryManager() {
                     {/* Existing Categories */}
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                         {categories.map(cat => (
-                            <div key={cat.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                            <div key={cat.id} className="flex items-center gap-3 p-3 bg-card rounded-lg">
                                 <div 
                                     className="w-6 h-6 rounded-full"
                                     style={{ backgroundColor: cat.color || '#64748b' }}
@@ -128,7 +128,7 @@ export default function CategoryManager() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleDelete(cat.id)}
-                                    className="h-8 w-8 text-red-600"
+                                    className="h-8 w-8 text-status-danger"
                                 >
                                     <Trash2 className="w-3 h-3" />
                                 </Button>
@@ -161,7 +161,7 @@ export default function CategoryManager() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, color })}
                                         className={`w-8 h-8 rounded-full transition-transform ${
-                                            formData.color === color ? 'ring-2 ring-offset-2 ring-slate-400 scale-110' : ''
+                                            formData.color === color ? 'ring-2 ring-offset-2 border-border scale-110' : ''
                                         }`}
                                         style={{ backgroundColor: color }}
                                     />
@@ -173,7 +173,7 @@ export default function CategoryManager() {
                             <Button type="button" variant="outline" onClick={closeModal} className="flex-1">
                                 Abbrechen
                             </Button>
-                            <Button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700">
+                            <Button type="submit" className="flex-1 bg-status-warn/70 hover:bg-status-warn/70">
                                 {selectedCategory ? 'Speichern' : 'Hinzufügen'}
                             </Button>
                         </div>

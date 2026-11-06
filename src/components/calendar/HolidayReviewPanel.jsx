@@ -26,7 +26,7 @@ export default function HolidayReviewPanel({ days = [], canEdit = false }) {
             <div className="flex items-start justify-between gap-2">
                 <div>
                     <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                        <PartyPopper className="w-4 h-4 text-red-400" />
+                        <PartyPopper className="w-4 h-4 text-status-danger" />
                         Feiertage prüfen
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">

@@ -14,9 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const statusConfig = {
-    ausstehend: { label: 'Ausstehend – wird eingeplant wenn möglich', color: 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30', icon: Clock },
-    genehmigt: { label: 'Eingeplant ✓', color: 'bg-green-600/20 text-green-400 border-green-600/30', icon: CheckCircle2 },
-    abgelehnt: { label: 'Leider nicht möglich', color: 'bg-red-600/20 text-red-400 border-red-600/30', icon: XCircle },
+    ausstehend: { label: 'Ausstehend – wird eingeplant wenn möglich', color: 'bg-status-warn/20 text-status-warn border-status-warn/30', icon: Clock },
+    genehmigt: { label: 'Eingeplant ✓', color: 'bg-status-ok/20 text-status-ok border-status-ok/30', icon: CheckCircle2 },
+    abgelehnt: { label: 'Leider nicht möglich', color: 'bg-status-danger/20 text-status-danger border-status-danger/30', icon: XCircle },
 };
 
 export default function UnavailabilityList() {
@@ -78,7 +78,7 @@ export default function UnavailabilityList() {
                 <p className="text-sm text-muted-foreground">
                     Trage Tage ein, an denen du gerne arbeiten würdest. Der Manager berücksichtigt deine Wünsche bei der Schichtplanung.
                 </p>
-                <Button onClick={() => setModalOpen(true)} size="sm" className="bg-amber-600 hover:bg-amber-700 gap-2 shrink-0">
+                <Button onClick={() => setModalOpen(true)} size="sm" className="bg-status-warn/70 hover:bg-status-warn/70 gap-2 shrink-0">
                     <Plus className="w-4 h-4" /> Wunschtag eintragen
                 </Button>
             </div>
@@ -115,7 +115,7 @@ export default function UnavailabilityList() {
                                         )}
                                     </div>
                                     {req.status === 'ausstehend' && (
-                                        <Button variant="ghost" size="sm" className="text-red-400 hover:bg-red-500/10 shrink-0"
+                                        <Button variant="ghost" size="sm" className="text-status-danger hover:bg-status-danger/10 shrink-0"
                                             onClick={() => deleteMutation.mutate(req.id)}>
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
@@ -169,7 +169,7 @@ export default function UnavailabilityList() {
                         </div>
                         <div className="flex gap-2 pt-1">
                             <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="flex-1">Abbrechen</Button>
-                            <Button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700" disabled={createMutation.isPending}>
+                            <Button type="submit" className="flex-1 bg-status-warn/70 hover:bg-status-warn/70" disabled={createMutation.isPending}>
                                 Eintragen
                             </Button>
                         </div>

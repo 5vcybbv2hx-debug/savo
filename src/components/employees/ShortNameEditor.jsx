@@ -88,7 +88,7 @@ export default function ShortNameEditor({ employee, isManager, currentUser, onUp
             <CardContent className="p-4 space-y-4">
                 {/* Header */}
                 <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-amber-400 shrink-0" />
+                    <Tag className="w-4 h-4 text-status-warn shrink-0" />
                     <h3 className="text-sm font-bold text-foreground">Kurzname / Kürzel</h3>
                     {!isManager && (
                         <Badge variant="outline" className="text-[10px] text-muted-foreground border-border ml-auto">
@@ -102,7 +102,7 @@ export default function ShortNameEditor({ employee, isManager, currentUser, onUp
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 flex-1">
                             {/* Badge-Anzeige */}
-                            <span className="inline-flex items-center justify-center min-w-[48px] h-10 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-base tracking-wide">
+                            <span className="inline-flex items-center justify-center min-w-[48px] h-10 px-3 rounded-xl bg-status-warn/15 border border-status-warn/30 text-status-warn font-bold text-base tracking-wide">
                                 {currentShortName}
                             </span>
                             {!employee?.short_name && (
@@ -140,7 +140,7 @@ export default function ShortNameEditor({ employee, isManager, currentUser, onUp
                                     <button
                                         type="button"
                                         onClick={() => setValue(suggestion)}
-                                        className="flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300"
+                                        className="flex items-center gap-1 text-[10px] text-status-warn hover:text-status-warn/25"
                                     >
                                         <Lightbulb className="w-3 h-3" />
                                         Vorschlag: {suggestion}
@@ -151,9 +151,9 @@ export default function ShortNameEditor({ employee, isManager, currentUser, onUp
 
                         {/* Duplicate warning */}
                         {duplicate && (
-                            <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                                <p className="text-xs text-amber-300">
+                            <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-status-warn/10 border border-status-warn/30">
+                                <AlertTriangle className="w-3.5 h-3.5 text-status-warn shrink-0 mt-0.5" />
+                                <p className="text-xs text-status-warn/25">
                                     Kürzel bereits verwendet von: <strong>{duplicate.name}</strong>. Doppelungen möglich, werden nicht gesperrt.
                                 </p>
                             </div>
@@ -182,7 +182,7 @@ export default function ShortNameEditor({ employee, isManager, currentUser, onUp
                                 size="sm"
                                 onClick={() => saveMutation.mutate()}
                                 disabled={saveMutation.isPending || !value.trim()}
-                                className="flex-1 h-10 bg-amber-600 hover:bg-amber-700 text-white"
+                                className="flex-1 h-10 bg-status-warn/70 hover:bg-status-warn/70 text-white"
                             >
                                 <Check className="w-3.5 h-3.5 mr-1" />Speichern
                             </Button>

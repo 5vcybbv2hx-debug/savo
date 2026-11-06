@@ -29,16 +29,16 @@ const FIRST_AID = [
 ];
 
 const COLOR_STYLES = {
-    red:    'bg-red-600 hover:bg-red-500 text-white',
-    orange: 'bg-orange-600 hover:bg-orange-500 text-white',
-    yellow: 'bg-yellow-600 hover:bg-yellow-500 text-white',
+    red:    'bg-status-danger/70 hover:bg-status-danger/70 text-white',
+    orange: 'bg-status-warn/70 hover:bg-status-warn/70 text-white',
+    yellow: 'bg-status-warn/70 hover:bg-status-warn/70 text-white',
 };
 
 function CallButton({ href, label, subtitle, color, training, onClick }) {
     const cls = {
-        red: 'bg-red-600 hover:bg-red-500',
-        blue: 'bg-blue-600 hover:bg-blue-500',
-        green: 'bg-green-600 hover:bg-green-500',
+        red: 'bg-status-danger/70 hover:bg-status-danger/70',
+        blue: 'bg-primary/70 hover:bg-primary/70',
+        green: 'bg-status-ok/70 hover:bg-status-ok/70',
     }[color];
     return (
         <a
@@ -156,7 +156,7 @@ export default function EmergencyModal({ open, onClose }) {
                         {/* Header: Timer + Close + Training toggle */}
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2 text-white">
-                                <Clock className="w-5 h-5 text-red-400" />
+                                <Clock className="w-5 h-5 text-status-danger" />
                                 <span className="text-lg font-mono font-bold tabular-nums">⏱️ {mmss}</span>
                             </div>
                             <div className="flex items-center gap-3">
@@ -165,7 +165,7 @@ export default function EmergencyModal({ open, onClose }) {
                                         onClick={() => setTraining(t => !t)}
                                         className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
                                             training
-                                                ? 'bg-yellow-500 text-black border-yellow-400'
+                                                ? 'bg-status-warn/70 text-foreground border-status-warn/70'
                                                 : 'bg-transparent text-white/70 border-white/30 hover:text-white'
                                         }`}
                                     >
@@ -186,8 +186,8 @@ export default function EmergencyModal({ open, onClose }) {
                         </div>
 
                         {/* Überfall-Tipp */}
-                        <div className="rounded-xl bg-yellow-500/15 border border-yellow-500/40 px-4 py-3 mb-4">
-                            <p className="text-sm text-yellow-100 font-medium leading-snug">
+                        <div className="rounded-xl bg-status-warn/15 border border-status-warn/40 px-4 py-3 mb-4">
+                            <p className="text-sm text-status-warn/15 font-medium leading-snug">
                                 ⚠️ <strong>Überfall:</strong> Geld herausgeben. Nicht heldenhaft sein. Tresor nicht öffnen. Täter beschreiben, nicht verfolgen. Nach Tataufgang 110 rufen.
                             </p>
                         </div>
@@ -245,7 +245,7 @@ export default function EmergencyModal({ open, onClose }) {
                                     <input
                                         value={who} onChange={e => setWho(e.target.value)}
                                         placeholder="z.B. Gast, männlich, ca. 30 Jahre"
-                                        className="w-full rounded-lg bg-white/10 border border-white/15 px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-red-400"
+                                        className="w-full rounded-lg bg-white/10 border border-white/15 px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-status-danger/70"
                                     />
                                 </div>
                                 <div>
@@ -253,22 +253,22 @@ export default function EmergencyModal({ open, onClose }) {
                                     <textarea
                                         value={what} onChange={e => setWhat(e.target.value)} rows={2}
                                         placeholder="Kurze Beschreibung..."
-                                        className="w-full rounded-lg bg-white/10 border border-white/15 px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-red-400 resize-none"
+                                        className="w-full rounded-lg bg-white/10 border border-white/15 px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-status-danger/70 resize-none"
                                     />
                                 </div>
                                 <div>
                                     <label className="text-xs text-white/60 mb-1 block">Wo?</label>
                                     <select
                                         value={where} onChange={e => setWhere(e.target.value)}
-                                        className="w-full rounded-lg bg-white/10 border border-white/15 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-red-400"
+                                        className="w-full rounded-lg bg-white/10 border border-white/15 px-3 py-2.5 text-sm text-white focus:outline-none focus:border-status-danger/70"
                                     >
-                                        <option value="" className="bg-zinc-900">— wählen —</option>
-                                        <option value="Innen" className="bg-zinc-900">Innen</option>
-                                        <option value="Außen / Raucherbereich" className="bg-zinc-900">Außen / Raucherbereich</option>
-                                        <option value="WC" className="bg-zinc-900">WC</option>
-                                        <option value="Eingang" className="bg-zinc-900">Eingang</option>
-                                        <option value="Theke" className="bg-zinc-900">Theke</option>
-                                        <option value="Sonstiges" className="bg-zinc-900">Sonstiges</option>
+                                        <option value="" className="bg-surface">— wählen —</option>
+                                        <option value="Innen" className="bg-surface">Innen</option>
+                                        <option value="Außen / Raucherbereich" className="bg-surface">Außen / Raucherbereich</option>
+                                        <option value="WC" className="bg-surface">WC</option>
+                                        <option value="Eingang" className="bg-surface">Eingang</option>
+                                        <option value="Theke" className="bg-surface">Theke</option>
+                                        <option value="Sonstiges" className="bg-surface">Sonstiges</option>
                                     </select>
                                 </div>
                             </motion.div>
@@ -286,7 +286,7 @@ export default function EmergencyModal({ open, onClose }) {
                             <button
                                 onClick={handleSave}
                                 disabled={saving || !selectedType}
-                                className="w-full rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold py-3 transition-all active:scale-95 disabled:opacity-50"
+                                className="w-full rounded-xl bg-status-danger/70 hover:bg-status-danger/70 text-white font-bold py-3 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 {saving ? 'Speichern…' : 'Vorfall speichern'}
                             </button>

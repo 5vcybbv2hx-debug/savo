@@ -107,9 +107,9 @@ export default function HolidayReviewRow({ day, canEdit }) {
                 onClick={() => setOpen(o => !o)}
                 className="w-full flex items-center gap-3 p-3 text-left hover:bg-accent/40 transition-colors"
             >
-                <div className="w-10 h-10 rounded-xl bg-red-500/15 flex flex-col items-center justify-center shrink-0">
-                    <span className="text-sm font-bold text-red-300 leading-none">{format(date, 'd')}</span>
-                    <span className="text-[9px] text-red-300/70">{format(date, 'MMM', { locale: de })}</span>
+                <div className="w-10 h-10 rounded-xl bg-status-danger/15 flex flex-col items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-status-danger/25 leading-none">{format(date, 'd')}</span>
+                    <span className="text-[9px] text-status-danger/70">{format(date, 'MMM', { locale: de })}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{day.title || 'Feiertag'}</p>

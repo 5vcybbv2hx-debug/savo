@@ -66,11 +66,11 @@ export default function DayDetailModal({
                 <div className="space-y-6 pt-2">
                     {/* Feiertage */}
                     {dayHolidays.length > 0 && (
-                        <Section icon={Star} title="Feiertage" color="text-rose-400">
+                        <Section icon={Star} title="Feiertage" color="text-primary">
                             {dayHolidays.map(h => (
-                                <div key={h.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-sm">
-                                    <Star className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-                                    <span className="font-medium text-rose-300">{h.name}</span>
+                                <div key={h.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                                    <Star className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                                    <span className="font-medium text-primary">{h.name}</span>
                                 </div>
                             ))}
                         </Section>
@@ -78,12 +78,12 @@ export default function DayDetailModal({
 
                     {/* Events */}
                     {dayEvents.length > 0 && (
-                        <Section icon={Calendar} title="Events" color="text-purple-400">
+                        <Section icon={Calendar} title="Events" color="text-primary">
                             {dayEvents.map(ev => (
-                                <div key={ev.id} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-sm">
-                                    <Calendar className="w-3.5 h-3.5 text-purple-400 mt-0.5 flex-shrink-0" />
+                                <div key={ev.id} className="flex items-start gap-3 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                                    <Calendar className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
                                     <div>
-                                        <p className="font-semibold text-purple-300">{ev.title}</p>
+                                        <p className="font-semibold text-primary">{ev.title}</p>
                                         {ev.start_time && <p className="text-xs text-muted-foreground">{ev.start_time} Uhr</p>}
                                         {ev.event_type && <Badge variant="outline" className="text-[10px] mt-1">{ev.event_type}</Badge>}
                                     </div>
@@ -94,11 +94,11 @@ export default function DayDetailModal({
 
                     {/* Schichten */}
                     {dayShifts.length > 0 && (
-                        <Section icon={Clock} title={`Schichten (${dayShifts.length})`} color="text-amber-400">
+                        <Section icon={Clock} title={`Schichten (${dayShifts.length})`} color="text-status-warn">
                             {dayShifts.map(shift => {
                                 const emp = employees.find(e => e.id === shift.employee_id);
                                 return (
-                                    <div key={shift.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                    <div key={shift.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-status-warn/10 border border-status-warn/20">
                                         <div
                                             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
                                             style={{ backgroundColor: emp?.color || '#64748b' }}
@@ -109,14 +109,14 @@ export default function DayDetailModal({
                                             <p className="text-sm font-semibold">{shift.employee_name}</p>
                                             <p className="text-xs text-muted-foreground font-mono">{shift.start_time} – {shift.end_time}</p>
                                             {shift.shift_type && (
-                                                <Badge className="text-[10px] mt-0.5 bg-amber-600/20 text-amber-400 border-amber-600/30">{shift.shift_type}</Badge>
+                                                <Badge className="text-[10px] mt-0.5 bg-status-warn/20 text-status-warn border-status-warn/30">{shift.shift_type}</Badge>
                                             )}
                                             {shift.notes && <p className="text-xs text-muted-foreground italic mt-1 truncate">{shift.notes}</p>}
                                         </div>
                                         {onShiftSwap && (
                                             <button
                                                 onClick={() => { onShiftSwap(shift); onClose(); }}
-                                                className="text-xs text-amber-400 hover:text-amber-300 border border-amber-500/30 px-2 py-1 rounded-md hover:bg-amber-500/10 transition-colors"
+                                                className="text-xs text-status-warn hover:text-status-warn/25 border border-status-warn/30 px-2 py-1 rounded-md hover:bg-status-warn/10 transition-colors"
                                             >
                                                 Tausch
                                             </button>
@@ -129,11 +129,11 @@ export default function DayDetailModal({
 
                     {/* Urlaube */}
                     {dayVacations.length > 0 && (
-                        <Section icon={Umbrella} title={`Urlaub (${dayVacations.length})`} color="text-emerald-400">
+                        <Section icon={Umbrella} title={`Urlaub (${dayVacations.length})`} color="text-status-ok">
                             {dayVacations.map(v => (
-                                <div key={v.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                    <div className="w-8 h-8 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0">
-                                        <Umbrella className="w-4 h-4 text-emerald-300" />
+                                <div key={v.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-status-ok/10 border border-status-ok/20">
+                                    <div className="w-8 h-8 rounded-full bg-status-ok/70 flex items-center justify-center flex-shrink-0">
+                                        <Umbrella className="w-4 h-4 text-status-ok/25" />
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-sm font-semibold">{v.employee_name}</p>
@@ -149,11 +149,11 @@ export default function DayDetailModal({
 
                     {/* Reservierungen */}
                     {dayReservations.length > 0 && (
-                        <Section icon={CalendarCheck} title={`Reservierungen (${dayReservations.length})`} color="text-blue-400">
+                        <Section icon={CalendarCheck} title={`Reservierungen (${dayReservations.length})`} color="text-primary">
                             {dayReservations.map(r => (
-                                <div key={r.id} className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                    <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center flex-shrink-0">
-                                        <User className="w-4 h-4 text-blue-300" />
+                                <div key={r.id} className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-primary/10 border border-primary/20">
+                                    <div className="w-8 h-8 rounded-full bg-primary/70 flex items-center justify-center flex-shrink-0">
+                                        <User className="w-4 h-4 text-primary/25" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold">{r.customer_name}</p>
@@ -163,7 +163,7 @@ export default function DayDetailModal({
                                             {r.table && <span className="text-xs text-muted-foreground">· Tisch {r.table}</span>}
                                         </div>
                                         {r.notes && <p className="text-xs text-muted-foreground italic mt-1 truncate">{r.notes}</p>}
-                                        <Badge className={cn("text-[10px] mt-1", r.status === 'bestätigt' ? 'bg-green-600/20 text-green-400 border-green-600/30' : 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30')}>
+                                        <Badge className={cn("text-[10px] mt-1", r.status === 'bestätigt' ? 'bg-status-ok/20 text-status-ok border-status-ok/30' : 'bg-status-warn/20 text-status-warn border-status-warn/30')}>
                                             {r.status}
                                         </Badge>
                                     </div>

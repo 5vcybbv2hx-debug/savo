@@ -1,7 +1,7 @@
 export default function PriceLabelPreview({ price, name, volume, qrUrl }) {
     return (
         <div
-            className="bg-white text-zinc-900"
+            className="bg-card text-muted-foreground"
             style={{
                 width: '62mm',
                 height: '30mm',

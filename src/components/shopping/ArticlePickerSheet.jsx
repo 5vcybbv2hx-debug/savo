@@ -117,7 +117,7 @@ export default function ArticlePickerSheet({ open, onClose, articles, suppliers,
                                             {article.current_stock != null && (
                                                 <span className={cn(
                                                     'text-[10px] font-medium',
-                                                    isLowStock ? 'text-red-400' : 'text-green-400'
+                                                    isLowStock ? 'text-status-danger' : 'text-status-ok'
                                                 )}>
                                                     {isLowStock && <AlertTriangle className="inline w-3 h-3 mr-0.5" />}
                                                     Bestand: {article.current_stock} {article.content_unit || ''}
@@ -143,7 +143,7 @@ export default function ArticlePickerSheet({ open, onClose, articles, suppliers,
                                         </button>
                                         <button
                                             onClick={() => handleAdd(article)}
-                                            className="ml-1 h-9 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-sm transition-colors flex items-center gap-1"
+                                            className="ml-1 h-9 px-3 rounded-xl bg-status-warn/70 hover:bg-status-warn/70 text-muted-foreground font-bold text-sm transition-colors flex items-center gap-1"
                                         >
                                             <Plus className="w-4 h-4" />
                                         </button>

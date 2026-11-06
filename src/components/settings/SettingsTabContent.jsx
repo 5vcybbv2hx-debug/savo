@@ -18,13 +18,13 @@ import { usePermissions } from '@/components/auth/usePermissions';
 import LiveSyncInstructions from '@/components/calendar/LiveSyncInstructions';
 
 const notificationTypes = [
-    { key: 'tasks_assigned', icon: CheckSquare, title: 'Aufgaben zugewiesen', description: 'Benachrichtigung wenn dir eine neue Aufgabe zugewiesen wurde', color: 'text-blue-400' },
-    { key: 'tasks_deadline', icon: AlertTriangle, title: 'Fällige Aufgaben', description: 'Erinnerung an Aufgaben die bald fällig sind (1 Tag vorher)', color: 'text-red-400' },
-    { key: 'shifts_reminder', icon: Calendar, title: 'Schicht-Erinnerung', description: 'Erinnerung an deine nächste Schicht (4 Stunden vorher)', color: 'text-amber-400' },
-    { key: 'shifts_swap', icon: Users, title: 'Schichttausch', description: 'Benachrichtigung bei neuen Schichttausch-Anfragen', color: 'text-purple-400' },
-    { key: 'cleaning_overdue', icon: Sparkles, title: 'Überfällige Reinigung', description: 'Hinweis wenn Reinigungsaufgaben überfällig sind', color: 'text-green-400' },
-    { key: 'inventory_low', icon: Package, title: 'Niedriger Bestand', description: 'Warnung bei Artikeln unter Mindestbestand', color: 'text-orange-400' },
-    { key: 'maintenance_due', icon: AlertTriangle, title: 'Wartung fällig', description: 'Erinnerung an fällige Wartungsaufgaben (7 Tage vorher)', color: 'text-yellow-400' },
+    { key: 'tasks_assigned', icon: CheckSquare, title: 'Aufgaben zugewiesen', description: 'Benachrichtigung wenn dir eine neue Aufgabe zugewiesen wurde', color: 'text-primary' },
+    { key: 'tasks_deadline', icon: AlertTriangle, title: 'Fällige Aufgaben', description: 'Erinnerung an Aufgaben die bald fällig sind (1 Tag vorher)', color: 'text-status-danger' },
+    { key: 'shifts_reminder', icon: Calendar, title: 'Schicht-Erinnerung', description: 'Erinnerung an deine nächste Schicht (4 Stunden vorher)', color: 'text-status-warn' },
+    { key: 'shifts_swap', icon: Users, title: 'Schichttausch', description: 'Benachrichtigung bei neuen Schichttausch-Anfragen', color: 'text-primary' },
+    { key: 'cleaning_overdue', icon: Sparkles, title: 'Überfällige Reinigung', description: 'Hinweis wenn Reinigungsaufgaben überfällig sind', color: 'text-status-ok' },
+    { key: 'inventory_low', icon: Package, title: 'Niedriger Bestand', description: 'Warnung bei Artikeln unter Mindestbestand', color: 'text-status-warn' },
+    { key: 'maintenance_due', icon: AlertTriangle, title: 'Wartung fällig', description: 'Erinnerung an fällige Wartungsaufgaben (7 Tage vorher)', color: 'text-status-warn' },
     { key: 'general_updates', icon: Bell, title: 'Allgemeine Updates', description: 'Wichtige Ankündigungen und Systemnachrichten', color: 'text-muted-foreground' }
 ];
 
@@ -259,8 +259,8 @@ export default function SettingsTabContent() {
                 <CalendarExportTab activeTab="calendar" />
                 <Card className="p-6 bg-card border-border mt-4">
                     <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center shrink-0">
-                            <Calendar className="w-6 h-6 text-blue-500" />
+                        <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                            <Calendar className="w-6 h-6 text-primary" />
                         </div>
                         <div className="flex-1">
                             <h3 className="font-semibold text-foreground mb-2">Live-Synchronisation</h3>
@@ -388,13 +388,13 @@ export default function SettingsTabContent() {
                     </Card>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Card className="p-4 bg-red-500/10 border-red-500/20 cursor-pointer hover:bg-red-500/20 transition-colors">
+                            <Card className="p-4 bg-status-danger/10 border-status-danger/20 cursor-pointer hover:bg-status-danger/20 transition-colors">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <Label className="text-sm font-medium text-red-400">Account löschen</Label>
-                                        <p className="text-xs text-red-300/70 mt-1">Löscht deinen Account und alle Daten</p>
+                                        <Label className="text-sm font-medium text-status-danger">Account löschen</Label>
+                                        <p className="text-xs text-status-danger/70 mt-1">Löscht deinen Account und alle Daten</p>
                                     </div>
-                                    <Trash2 className="w-4 h-4 text-red-400" />
+                                    <Trash2 className="w-4 h-4 text-status-danger" />
                                 </div>
                             </Card>
                         </AlertDialogTrigger>

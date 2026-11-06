@@ -62,7 +62,7 @@ export default function MyProfilePage() {
         <div>
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="flex items-center gap-4">
-                    <UserCircle className="w-12 h-12 text-amber-500" />
+                    <UserCircle className="w-12 h-12 text-status-warn" />
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Mein Profil</h1>
                         <p className="text-muted-foreground">Persönliche Informationen und Einstellungen</p>
@@ -82,7 +82,7 @@ export default function MyProfilePage() {
 
                             <div>
                                 <div className="text-sm text-muted-foreground mb-1">Position</div>
-                                <Badge className="bg-amber-600">{myEmployee.role}</Badge>
+                                <Badge className="bg-status-warn/70">{myEmployee.role}</Badge>
                             </div>
 
                             {myEmployee.email && (
@@ -132,17 +132,17 @@ export default function MyProfilePage() {
                     existingToken={myEmployee.calendar_token}
                 />
 
-                <Card className="bg-red-900/10 border-red-800/50">
+                <Card className="bg-status-danger/10 border-status-danger/50">
                     <CardHeader>
                         <CardTitle className="text-white flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                            <AlertTriangle className="w-5 h-5 text-status-danger" />
                             Gefahrenzone
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-red-800/30">
+                        <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-status-danger/30">
                             <div>
-                                <div className="font-medium text-foreground mb-1">Account löschen <span className="text-xs text-red-400 font-normal">(Art. 17 DSGVO)</span></div>
+                                <div className="font-medium text-foreground mb-1">Account löschen <span className="text-xs text-status-danger font-normal">(Art. 17 DSGVO)</span></div>
                                 <div className="text-sm text-muted-foreground">
                                     Formale Lösch-Anfrage: Ihr Profil und alle personenbezogenen Daten werden dauerhaft gelöscht.
                                 </div>
@@ -150,7 +150,7 @@ export default function MyProfilePage() {
                             <Button
                                 onClick={() => setShowDeleteDialog(true)}
                                 variant="destructive"
-                                className="bg-red-600 hover:bg-red-700"
+                                className="bg-status-danger/70 hover:bg-status-danger/70"
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Account löschen
@@ -164,7 +164,7 @@ export default function MyProfilePage() {
                 <AlertDialogContent className="bg-card border-border">
                 <AlertDialogHeader>
                     <AlertDialogTitle className="text-foreground flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5 text-red-500" />
+                        <AlertTriangle className="w-5 h-5 text-status-danger" />
                         Account löschen (Art. 17 DSGVO)?
                     </AlertDialogTitle>
                     <AlertDialogDescription className="text-foreground/80">
@@ -175,7 +175,7 @@ export default function MyProfilePage() {
                             <li>Alle Schichten, Zeiteinträge und Stempelzeiten</li>
                             <li>Alle zugehörigen personenbezogenen Daten</li>
                         </ul>
-                        <div className="mt-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg text-red-200">
+                        <div className="mt-4 p-3 bg-status-danger/20 border border-status-danger/30 rounded-lg text-status-danger/25">
                             <strong>Bitte beachten:</strong> Die Lösch-Anfrage wird verarbeitet. Sie erhalten eine
                             Bestätigungs-E-Mail und werden anschließend abgemeldet.
                         </div>
@@ -188,7 +188,7 @@ export default function MyProfilePage() {
                         <AlertDialogAction
                             onClick={() => deleteDataMutation.mutate()}
                             disabled={deleteDataMutation.isPending}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-status-danger/70 hover:bg-status-danger/70 text-white"
                         >
                             {deleteDataMutation.isPending ? 'Anfrage wird gesendet…' : 'Ja, Account löschen'}
                         </AlertDialogAction>

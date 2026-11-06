@@ -76,7 +76,7 @@ export default function TableGridWithLayout({ tables, reservations, getTableRese
             {/* Background-Foto/PDF wenn vorhanden */}
             {backgroundUrl && (
                 <div
-                    className="relative bg-slate-100 border border-border rounded-lg overflow-hidden mb-4"
+                    className="relative bg-card border border-border rounded-lg overflow-hidden mb-4"
                     style={{
                         height: '500px',
                         backgroundImage: `url(${backgroundUrl})`,
@@ -109,8 +109,8 @@ export default function TableGridWithLayout({ tables, reservations, getTableRese
                                     'absolute rounded-lg flex items-center justify-center text-xs font-bold transition-all shadow-md border-2',
                                     sizeClasses,
                                     reservation
-                                        ? 'bg-amber-500/80 border-amber-600 hover:bg-amber-500 text-white'
-                                        : 'bg-green-500/80 border-green-600 hover:bg-green-500 text-white'
+                                        ? 'bg-status-warn/80 border-status-warn/70 hover:bg-status-warn/70 text-white'
+                                        : 'bg-status-ok/80 border-status-ok/70 hover:bg-status-ok/70 text-white'
                                 )}
                                 style={{
                                     left: `${tp.x}px`,
@@ -153,8 +153,8 @@ export default function TableGridWithLayout({ tables, reservations, getTableRese
                                     'absolute rounded-lg flex items-center justify-center text-xs font-bold transition-all shadow-md border-2',
                                     sizeClasses,
                                     reservation
-                                        ? 'bg-amber-500/80 border-amber-600 hover:bg-amber-500 text-white'
-                                        : 'bg-green-500/80 border-green-600 hover:bg-green-500 text-white'
+                                        ? 'bg-status-warn/80 border-status-warn/70 hover:bg-status-warn/70 text-white'
+                                        : 'bg-status-ok/80 border-status-ok/70 hover:bg-status-ok/70 text-white'
                                 )}
                                 style={{
                                     left: `${tp.x}px`,

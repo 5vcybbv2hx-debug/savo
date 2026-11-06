@@ -198,7 +198,7 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                                     onChange={(e) => setFile(e.target.files?.[0] || null)}
                                     className="text-sm text-muted-foreground w-full"
                                 />
-                                {file && <p className="text-sm text-green-400 mt-2">✓ {file.name}</p>}
+                                {file && <p className="text-sm text-status-ok mt-2">✓ {file.name}</p>}
                             </div>
                         </div>
 
@@ -215,9 +215,9 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                         </div>
 
                         {error && (
-                            <Alert className="bg-red-900/20 border-red-800">
-                                <AlertCircle className="h-4 w-4 text-red-400" />
-                                <AlertDescription className="text-red-300">{error}</AlertDescription>
+                            <Alert className="bg-status-danger/20 border-status-danger/70">
+                                <AlertCircle className="h-4 w-4 text-status-danger" />
+                                <AlertDescription className="text-status-danger/25">{error}</AlertDescription>
                             </Alert>
                         )}
 
@@ -229,7 +229,7 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                                 type="button"
                                 onClick={handleSave}
                                 disabled={mutation.isPending || !date || !revenue}
-                                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                             >
                                 {mutation.isPending ? (
                                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Wird gespeichert...</>
@@ -265,7 +265,7 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                                     className="text-sm text-muted-foreground w-full"
                                 />
                                 {file && (
-                                    <p className="text-sm text-green-400 mt-2 flex items-center gap-1">
+                                    <p className="text-sm text-status-ok mt-2 flex items-center gap-1">
                                         <CheckCircle2 className="w-4 h-4" />{file.name}
                                     </p>
                                 )}
@@ -273,9 +273,9 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                         </div>
 
                         {analysisError && (
-                            <Alert className="bg-red-900/20 border-red-800">
-                                <AlertCircle className="h-4 w-4 text-red-400" />
-                                <AlertDescription className="text-red-300">{analysisError}</AlertDescription>
+                            <Alert className="bg-status-danger/20 border-status-danger/70">
+                                <AlertCircle className="h-4 w-4 text-status-danger" />
+                                <AlertDescription className="text-status-danger/25">{analysisError}</AlertDescription>
                             </Alert>
                         )}
 
@@ -312,8 +312,8 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                         </div>
 
                         {revenue && (
-                            <div className="bg-secondary rounded-lg p-4 space-y-2 border border-green-600/30">
-                                <h3 className="font-semibold text-green-400 flex items-center gap-2">
+                            <div className="bg-secondary rounded-lg p-4 space-y-2 border border-status-ok/30">
+                                <h3 className="font-semibold text-status-ok flex items-center gap-2">
                                     <CheckCircle2 className="w-4 h-4" />Vorschau
                                 </h3>
                                 <div className="space-y-1.5 text-sm">
@@ -323,7 +323,7 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Tagesumsatz:</span>
-                                        <span className="text-green-400 font-bold text-lg">{parseFloat(revenue).toFixed(2)} €</span>
+                                        <span className="text-status-ok font-bold text-lg">{parseFloat(revenue).toFixed(2)} €</span>
                                     </div>
                                     {notes && (
                                         <div className="flex justify-between pt-2 border-t border-border/70">
@@ -336,9 +336,9 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                         )}
 
                         {error && (
-                            <Alert className="bg-red-900/20 border-red-800">
-                                <AlertCircle className="h-4 w-4 text-red-400" />
-                                <AlertDescription className="text-red-300">{error}</AlertDescription>
+                            <Alert className="bg-status-danger/20 border-status-danger/70">
+                                <AlertCircle className="h-4 w-4 text-status-danger" />
+                                <AlertDescription className="text-status-danger/25">{error}</AlertDescription>
                             </Alert>
                         )}
 
@@ -356,7 +356,7 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                                 type="button"
                                 onClick={handleAnalyzePDF}
                                 disabled={analyzing || !file}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                className="flex-1 bg-primary/70 hover:bg-primary/70"
                             >
                                 {analyzing ? (
                                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analysiert...</>
@@ -369,7 +369,7 @@ export default function PDFUploadModal({ open, onOpenChange, selectedDate, onSuc
                                 type="button"
                                 onClick={handleSave}
                                 disabled={mutation.isPending || !date || !revenue}
-                                className="w-full bg-amber-600 hover:bg-amber-700"
+                                className="w-full bg-status-warn/70 hover:bg-status-warn/70"
                             >
                                 {mutation.isPending ? (
                                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Wird gespeichert...</>

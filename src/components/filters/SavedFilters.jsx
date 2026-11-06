@@ -52,17 +52,17 @@ export default function SavedFilters({ storageKey, currentFilters, onApplyFilter
                 <Badge
                     key={filter.id}
                     variant="outline"
-                    className="pl-2 pr-1 py-1 cursor-pointer hover:bg-slate-700"
+                    className="pl-2 pr-1 py-1 cursor-pointer hover:bg-surface"
                     onClick={() => onApplyFilter(filter.filters)}
                 >
-                    <Star className="w-3 h-3 mr-1 fill-amber-500 text-amber-500" />
+                    <Star className="w-3 h-3 mr-1 fill-status-warn text-status-warn" />
                     {filter.name}
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             deleteFilter(filter.id);
                         }}
-                        className="ml-1 hover:text-red-400"
+                        className="ml-1 hover:text-status-danger"
                     >
                         <X className="w-3 h-3" />
                     </button>

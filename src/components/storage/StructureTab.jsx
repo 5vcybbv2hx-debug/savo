@@ -86,7 +86,7 @@ function SlotRow({ slot, canEdit, onEdit, onDelete, onPrintLabel, onMoveUp, onMo
         <div className="flex gap-0.5 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
           <Button size="icon" variant="ghost"
             className={cn('h-6 w-auto px-1.5 gap-1 text-[10px] font-semibold',
-              slot.baseline_photo_url ? 'text-emerald-500 hover:text-emerald-400' : 'text-primary hover:text-primary')}
+              slot.baseline_photo_url ? 'text-status-ok hover:text-status-ok' : 'text-primary hover:text-primary')}
             title={slot.baseline_photo_url ? `Basis-Foto vorhanden (${slot.baseline_date || 'ohne Datum'})` : 'Basis-Foto aufnehmen'}
             onClick={() => onBaseline(slot)}>
             <Camera className="w-3 h-3" />
@@ -416,7 +416,7 @@ export default function StructureTab({ permissions }) {
         </p>
         {canEdit && (
           <Button size="sm" onClick={openAddArea}
-            className="bg-amber-600 hover:bg-amber-700 text-white h-8 text-xs">
+            className="bg-status-warn/70 hover:bg-status-warn/70 text-white h-8 text-xs">
             <Plus className="w-3.5 h-3.5 mr-1" />Bereich anlegen
           </Button>
         )}
@@ -424,7 +424,7 @@ export default function StructureTab({ permissions }) {
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-status-warn" />
         </div>
       ) : areas.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
@@ -448,8 +448,8 @@ export default function StructureTab({ permissions }) {
                 {/* ── Bereich Header ── */}
                 <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-secondary/30 transition-colors"
                   onClick={() => toggleArea(area.id)}>
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                    <Layers className="w-4 h-4 text-amber-500" />
+                  <div className="w-9 h-9 rounded-xl bg-status-warn/15 flex items-center justify-center shrink-0">
+                    <Layers className="w-4 h-4 text-status-warn" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-foreground">{area.name}</p>
@@ -579,7 +579,7 @@ export default function StructureTab({ permissions }) {
 
                     {canEdit && (
                       <button onClick={() => openAddFur(area.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-amber-500 hover:bg-amber-500/5 transition-colors font-semibold">
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-status-warn hover:bg-status-warn/5 transition-colors font-semibold">
                         <Plus className="w-3.5 h-3.5" />Möbel hinzufügen
                       </button>
                     )}
@@ -619,7 +619,7 @@ export default function StructureTab({ permissions }) {
             <Button onClick={() => {
               if (!areaForm.name.trim()) { toast.error('Name erforderlich'); return; }
               saveAreaMut.mutate({ name: areaForm.name.trim(), description: areaForm.description, is_active: true, restock_enabled: areaForm.restock_enabled !== false });
-            }} disabled={saveAreaMut.isPending} className="bg-amber-600 hover:bg-amber-700 text-white">
+            }} disabled={saveAreaMut.isPending} className="bg-status-warn/70 hover:bg-status-warn/70 text-white">
               {saveAreaMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
             </Button>
           </DialogFooter>
@@ -687,7 +687,7 @@ export default function StructureTab({ permissions }) {
               const area = areas.find(a => a.id === furForm.area_id);
               if (!furForm.name.trim() || !furForm.type || !area) { toast.error('Bitte alle Felder ausfüllen'); return; }
               saveFurMut.mutate({ name: furForm.name.trim(), type: furForm.type, area_id: area.id, area_name: area.name, notes: furForm.notes, grid_rows: parseInt(furForm.grid_rows) || 3, grid_cols: parseInt(furForm.grid_cols) || 4, is_active: true, restock_enabled: furForm.restock_enabled !== false });
-            }} disabled={saveFurMut.isPending} className="bg-amber-600 hover:bg-amber-700 text-white">
+            }} disabled={saveFurMut.isPending} className="bg-status-warn/70 hover:bg-status-warn/70 text-white">
               {saveFurMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
             </Button>
           </DialogFooter>

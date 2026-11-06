@@ -34,7 +34,7 @@ export default function GuestHubReservationsTab({
                         className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all',
                             resTab === key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
                         {label}
-                        <span className={cn('inline-flex items-center justify-center min-w-[1.25rem] h-5 rounded-full text-xs px-1.5', resTab === key ? 'bg-amber-500 text-slate-900 font-bold' : 'bg-muted text-muted-foreground')}>{count}</span>
+                        <span className={cn('inline-flex items-center justify-center min-w-[1.25rem] h-5 rounded-full text-xs px-1.5', resTab === key ? 'bg-status-warn/70 text-muted-foreground font-bold' : 'bg-muted text-muted-foreground')}>{count}</span>
                     </button>
                 ))}
             </div>
@@ -43,7 +43,7 @@ export default function GuestHubReservationsTab({
                 {STATUS_FILTERS.map(f => (
                     <button key={f.value} onClick={() => setStatusFilter(f.value)}
                         className={cn('shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all min-h-[36px]',
-                            statusFilter === f.value ? 'bg-amber-500 border-amber-500 text-slate-900' : 'border-border text-muted-foreground hover:border-foreground')}>
+                            statusFilter === f.value ? 'bg-status-warn/70 border-status-warn/70 text-muted-foreground' : 'border-border text-muted-foreground hover:border-foreground')}>
                         {f.label}
                     </button>
                 ))}
@@ -66,7 +66,7 @@ export default function GuestHubReservationsTab({
                     <p className="text-sm">Keine Einträge</p>
                     {resTab === 'aktiv' && !searchTerm && statusFilter === 'alle' && permissions.canEditReservations && (
                         <Button size="sm" onClick={onAddReservation}
-                            className="bg-amber-500 hover:bg-amber-600 text-slate-900">
+                            className="bg-status-warn/70 hover:bg-status-warn/70 text-muted-foreground">
                             <Plus className="w-4 h-4 mr-1.5" />Erste Reservierung
                         </Button>
                     )}

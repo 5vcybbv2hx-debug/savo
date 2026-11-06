@@ -51,9 +51,9 @@ function getGreeting() {
 
 function getOperationPhase() {
     const h = new Date().getHours();
-    if (h >= 6  && h < 11) return { label: 'Vorbereitung',  color: 'text-amber-400',          bg: 'bg-amber-500/10 border-amber-500/30' };
-    if (h >= 11 && h < 15) return { label: 'Mittagsbetrieb',color: 'text-green-400',           bg: 'bg-green-500/10 border-green-500/30' };
-    if (h >= 15 && h < 18) return { label: 'Ruhephase',     color: 'text-blue-400',            bg: 'bg-blue-500/10 border-blue-500/30' };
+    if (h >= 6  && h < 11) return { label: 'Vorbereitung',  color: 'text-status-warn',          bg: 'bg-status-warn/10 border-status-warn/30' };
+    if (h >= 11 && h < 15) return { label: 'Mittagsbetrieb',color: 'text-status-ok',           bg: 'bg-status-ok/10 border-status-ok/30' };
+    if (h >= 15 && h < 18) return { label: 'Ruhephase',     color: 'text-primary',            bg: 'bg-primary/10 border-primary/30' };
     if (h >= 18 && h < 23) return { label: 'Abendbetrieb',  color: 'text-primary',             bg: 'bg-primary/10 border-primary/30' };
     return                         { label: 'Nachtschicht',  color: 'text-muted-foreground',    bg: 'bg-secondary/50 border-border/50' };
 }
@@ -115,7 +115,7 @@ function ClockCard({ currentEmployee }) {
         <>
         <Card className={cn(
             'border transition-colors select-none',
-            isOnBreak ? 'border-amber-500/40 bg-amber-500/5' : active ? 'border-green-500/40 bg-green-500/5' : 'border-border bg-card'
+            isOnBreak ? 'border-status-warn/40 bg-status-warn/5' : active ? 'border-status-ok/40 bg-status-ok/5' : 'border-border bg-card'
         )}>
             <CardContent className="p-4 space-y-3" onTouchEnd={handleCardDoubleTap}>
                 <div className="flex items-center gap-4">
@@ -127,8 +127,8 @@ function ClockCard({ currentEmployee }) {
                         {active ? (
                             <>
                                 <div className="flex items-center gap-1.5">
-                                    <span className={cn('w-2 h-2 rounded-full animate-pulse', isOnBreak ? 'bg-amber-400' : 'bg-green-400')} />
-                                    <p className={cn('text-sm font-semibold', isOnBreak ? 'text-amber-400' : 'text-green-400')}>
+                                    <span className={cn('w-2 h-2 rounded-full animate-pulse', isOnBreak ? 'bg-status-warn/70' : 'bg-status-ok/70')} />
+                                    <p className={cn('text-sm font-semibold', isOnBreak ? 'text-status-warn' : 'text-status-ok')}>
                                         {isOnBreak ? 'Pause' : 'Eingestempelt'}
                                     </p>
                                 </div>
@@ -151,26 +151,26 @@ function ClockCard({ currentEmployee }) {
                         <Button size="sm"
                             onClick={() => clockIn()}
                             disabled={isClockingIn}
-                            className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5">
+                            className="h-10 px-4 bg-status-ok/70 hover:bg-status-ok/70 text-white gap-1.5">
                             <LogIn className="w-4 h-4" />Ein
                         </Button>
                     ) : isOnBreak ? (
                         <Button size="sm"
                             onClick={handleEndBreak}
-                            className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white gap-1.5">
+                            className="h-10 px-4 bg-status-ok/70 hover:bg-status-ok/70 text-white gap-1.5">
                             <Play className="w-4 h-4" />Beenden
                         </Button>
                     ) : (
                         <div className="flex gap-2">
                             <Button size="sm" variant="outline"
                                 onClick={handleStartBreak}
-                                className="h-10 px-3 border-amber-500/50 text-amber-500 hover:bg-amber-500/10 gap-1.5">
+                                className="h-10 px-3 border-status-warn/50 text-status-warn hover:bg-status-warn/10 gap-1.5">
                                 <Pause className="w-4 h-4" />Pause
                             </Button>
                             <Button size="sm"
                                 onClick={() => clockOut(active.id)}
                                 disabled={isClockingOut}
-                                className="h-10 px-4 bg-red-600 hover:bg-red-700 text-white gap-1.5">
+                                className="h-10 px-4 bg-status-danger/70 hover:bg-status-danger/70 text-white gap-1.5">
                                 <LogOut className="w-4 h-4" />Aus
                             </Button>
                         </div>
@@ -474,11 +474,11 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                             {/* Unterschrift Banner */}
                             {currentEmployee && !currentEmployee.sig_employee && (
                                 <Link to={createPageUrl('Employees') + `?employee=${currentEmployee.id}`}>
-                                    <Card className="bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/15 transition-colors">
+                                    <Card className="bg-primary/10 border-primary/30 hover:bg-primary/15 transition-colors">
                                         <CardContent className="p-3 flex items-center gap-3">
-                                            <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                                            <p className="text-sm font-medium text-blue-400 flex-1">Unterschrift erforderlich</p>
-                                            <ArrowRight className="w-4 h-4 text-blue-400 shrink-0" />
+                                            <FileText className="w-4 h-4 text-primary shrink-0" />
+                                            <p className="text-sm font-medium text-primary flex-1">Unterschrift erforderlich</p>
+                                            <ArrowRight className="w-4 h-4 text-primary shrink-0" />
                                         </CardContent>
                                     </Card>
                                 </Link>
@@ -494,12 +494,12 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                                         'border card-pressable transition-colors',
                                         dailyClosingDone
                                             ? 'bg-card border-border/50 opacity-60'
-                                            : 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/15'
+                                            : 'bg-status-warn/10 border-status-warn/40 hover:bg-status-warn/15'
                                     )}>
                                         <CardContent className="p-3 flex items-center gap-3">
                                             <div className={cn(
                                                 'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                                                dailyClosingDone ? 'bg-muted text-muted-foreground' : 'bg-amber-500/20 text-amber-400'
+                                                dailyClosingDone ? 'bg-muted text-muted-foreground' : 'bg-status-warn/20 text-status-warn'
                                             )}>
                                                 <BarChart3 className="w-4 h-4" />
                                             </div>
@@ -662,9 +662,9 @@ export default function SmartDashboard({ currentUser, currentEmployee, isManager
     const alerts = useMemo(() => {
         const list = [];
         if (urgentMaintenance.length > 0)
-            list.push({ icon: Wrench, label: `${urgentMaintenance.length} Wartung überfällig`, to: 'Maintenance', color: 'text-red-300', bg: 'bg-red-500/10 border-red-500/30' });
+            list.push({ icon: Wrench, label: `${urgentMaintenance.length} Wartung überfällig`, to: 'Maintenance', color: 'text-status-danger/25', bg: 'bg-status-danger/10 border-status-danger/30' });
         if (lowStockArticles.length > 0)
-            list.push({ icon: TrendingDown, label: `${lowStockArticles.length} Artikel niedrig`, to: 'Articles', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' });
+            list.push({ icon: TrendingDown, label: `${lowStockArticles.length} Artikel niedrig`, to: 'Articles', color: 'text-status-warn', bg: 'bg-status-warn/10 border-status-warn/30' });
         if (pendingVacationRequests.length > 0)
             list.push({ icon: Calendar, label: `${pendingVacationRequests.length} Urlaubsantrag${pendingVacationRequests.length > 1 ? 'e' : ''}`, to: 'MyArea?tab=urlaub', color: 'text-primary', bg: 'bg-primary/10 border-primary/30' });
         return list;

@@ -16,42 +16,42 @@ import { buildWishUsage, capacityFor, usageFor, waitlistPosition } from '@/lib/w
 
 // Farben der eigenen Wunschschichten im Kalender
 const WISH_STYLES = {
-    ausstehend: 'bg-amber-500/15 border-amber-500/40 text-amber-300',
-    bestätigt: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300',
-    abgelehnt: 'bg-rose-500/10 border-rose-500/20 text-rose-300/60 line-through',
-    warteliste: 'bg-amber-500/5 border-dashed border-amber-500/60 text-amber-300',
+    ausstehend: 'bg-status-warn/15 border-status-warn/40 text-status-warn/25',
+    bestätigt: 'bg-status-ok/15 border-status-ok/40 text-status-ok/25',
+    abgelehnt: 'bg-primary/10 border-primary/20 text-primary/60 line-through',
+    warteliste: 'bg-status-warn/5 border-dashed border-status-warn/60 text-status-warn/25',
 };
 
 const EVENT_STYLES = {
     shift: {
-        bg: 'bg-amber-500/20 border-l-2 border-amber-500 hover:bg-amber-500/30',
-        dot: 'bg-amber-400',
-        text: 'text-amber-200',
+        bg: 'bg-status-warn/20 border-l-2 border-status-warn/70 hover:bg-status-warn/30',
+        dot: 'bg-status-warn/70',
+        text: 'text-status-warn/25',
     },
     vacation: {
-        bg: 'bg-emerald-500/20 border-l-2 border-emerald-500 hover:bg-emerald-500/30',
-        dot: 'bg-emerald-400',
-        text: 'text-emerald-200',
+        bg: 'bg-status-ok/20 border-l-2 border-status-ok/70 hover:bg-status-ok/30',
+        dot: 'bg-status-ok/70',
+        text: 'text-status-ok/25',
     },
     holiday: {
-        bg: 'bg-rose-500/20 border-l-2 border-rose-500 hover:bg-rose-500/30',
-        dot: 'bg-rose-400',
-        text: 'text-rose-200',
+        bg: 'bg-primary/20 border-l-2 border-primary hover:bg-primary/30',
+        dot: 'bg-primary',
+        text: 'text-primary',
     },
     maintenance: {
-        bg: 'bg-blue-500/20 border-l-2 border-blue-500 hover:bg-blue-500/30',
-        dot: 'bg-blue-400',
-        text: 'text-blue-200',
+        bg: 'bg-primary/20 border-l-2 border-primary/70 hover:bg-primary/30',
+        dot: 'bg-primary/70',
+        text: 'text-primary/25',
     },
     event: {
-        bg: 'bg-pink-500/20 border-l-2 border-pink-500 hover:bg-pink-500/30',
-        dot: 'bg-pink-400',
-        text: 'text-pink-200',
+        bg: 'bg-primary/20 border-l-2 border-primary hover:bg-primary/30',
+        dot: 'bg-primary',
+        text: 'text-primary',
     },
     birthday: {
-        bg: 'bg-purple-500/20 border-l-2 border-purple-500 hover:bg-purple-500/30',
-        dot: 'bg-purple-400',
-        text: 'text-purple-200',
+        bg: 'bg-primary/20 border-l-2 border-primary hover:bg-primary/30',
+        dot: 'bg-primary',
+        text: 'text-primary',
     },
 };
 
@@ -198,7 +198,7 @@ export default function UnifiedCalendarView({
                     variant={activeFilters > 0 ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setShowFilterModal(true)}
-                    className={cn('gap-2', activeFilters > 0 && 'bg-amber-600 hover:bg-amber-700 border-amber-600')}
+                    className={cn('gap-2', activeFilters > 0 && 'bg-status-warn/70 hover:bg-status-warn/70 border-status-warn/70')}
                 >
                     <SlidersHorizontal className="w-4 h-4" />
                     Filter
@@ -212,7 +212,7 @@ export default function UnifiedCalendarView({
             {activeFilters > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {selectedRoles.map(role => (
-                        <Badge key={role} className="bg-amber-600/20 text-amber-300 border-amber-600/40 gap-1 pr-1">
+                        <Badge key={role} className="bg-status-warn/20 text-status-warn/25 border-status-warn/40 gap-1 pr-1">
                             {role}
                             <button onClick={() => onRoleToggle(selectedRoles.filter(r => r !== role))} className="hover:opacity-70 ml-1">
                                 <X className="w-3 h-3" />
@@ -222,7 +222,7 @@ export default function UnifiedCalendarView({
                     {selectedEmployees.map(empId => {
                         const emp = employees.find(e => e.id === empId);
                         return emp ? (
-                            <Badge key={empId} className="bg-blue-600/20 text-blue-300 border-blue-600/40 gap-1 pr-1">
+                            <Badge key={empId} className="bg-primary/20 text-primary/25 border-primary/40 gap-1 pr-1">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: emp.color || '#64748b' }} />
                                 {emp.name}
                                 <button onClick={() => onEmployeeToggle(selectedEmployees.filter(id => id !== empId))} className="hover:opacity-70 ml-1">
@@ -298,7 +298,7 @@ export default function UnifiedCalendarView({
                                     'min-h-[120px] md:min-h-[130px] p-2',
                                     !isCurrentMonth && 'bg-muted/10 opacity-40',
                                     isWeekendDay && isCurrentMonth && 'bg-secondary/30',
-                                    isToday && 'bg-amber-500/5',
+                                    isToday && 'bg-status-warn/5',
                                     isCurrentMonth && 'cursor-pointer hover:bg-accent/30',
                                     inWishRange && 'hover:bg-primary/10',
                                 )}
@@ -307,7 +307,7 @@ export default function UnifiedCalendarView({
                                 <div className={cn(
                                     'flex items-center justify-center w-8 h-8 md:w-7 md:h-7 rounded-full text-sm font-bold mb-2 transition-all',
                                     isToday
-                                        ? 'bg-amber-500 text-foreground'
+                                        ? 'bg-status-warn/70 text-foreground'
                                         : 'text-foreground group-hover:bg-accent/50'
                                 )}>
                                     {format(day, 'd')}
@@ -348,7 +348,7 @@ export default function UnifiedCalendarView({
                                             />
                                         ))}
                                         {dayWaitlist.length > 2 && (
-                                            <div className="text-[10px] text-amber-400/80 pl-1 font-medium">
+                                            <div className="text-[10px] text-status-warn/80 pl-1 font-medium">
                                                 +{dayWaitlist.length - 2} auf Warteliste
                                             </div>
                                         )}
@@ -414,31 +414,31 @@ export default function UnifiedCalendarView({
             {/* Legend */}
             <div className="flex flex-wrap gap-4 pt-1 pl-1">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-3 h-3 rounded-sm bg-amber-500/30 border-l-2 border-amber-500" />
+                    <div className="w-3 h-3 rounded-sm bg-status-warn/30 border-l-2 border-status-warn/70" />
                     Schicht
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-3 h-3 rounded-sm bg-emerald-500/30 border-l-2 border-emerald-500" />
+                    <div className="w-3 h-3 rounded-sm bg-status-ok/30 border-l-2 border-status-ok/70" />
                     Urlaub
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-3 h-3 rounded-sm bg-rose-500/30 border-l-2 border-rose-500" />
+                    <div className="w-3 h-3 rounded-sm bg-primary/30 border-l-2 border-primary" />
                     Feiertag
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-3 h-3 rounded-sm bg-blue-500/30 border-l-2 border-blue-500" />
+                    <div className="w-3 h-3 rounded-sm bg-primary/30 border-l-2 border-primary/70" />
                     Wartung
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-3 h-3 rounded-sm bg-pink-500/30 border-l-2 border-pink-500" />
+                    <div className="w-3 h-3 rounded-sm bg-primary/30 border-l-2 border-primary" />
                     Event
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-3 h-3 rounded-sm bg-purple-500/30 border-l-2 border-purple-500" />
+                    <div className="w-3 h-3 rounded-sm bg-primary/30 border-l-2 border-primary" />
                     Geburtstag
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className="w-3 h-3 rounded-sm border border-dashed border-amber-500/70 text-[8px] font-bold text-amber-300 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-sm border border-dashed border-status-warn/70 text-[8px] font-bold text-status-warn/25 flex items-center justify-center">
                         W
                     </div>
                     Warteliste

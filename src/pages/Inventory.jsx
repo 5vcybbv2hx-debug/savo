@@ -427,9 +427,9 @@ export default function Inventory() {
                         </div>
                         <div className="flex items-center gap-2">
                             {isOnline ? (
-                                <Cloud className="w-5 h-5 text-green-500" />
+                                <Cloud className="w-5 h-5 text-status-ok" />
                             ) : (
-                                <CloudOff className="w-5 h-5 text-amber-500" />
+                                <CloudOff className="w-5 h-5 text-status-warn" />
                             )}
                             <span className="text-xs text-muted-foreground">
                                 {isOnline ? 'Online' : 'Offline'}
@@ -443,7 +443,7 @@ export default function Inventory() {
                                 setScanMode(!scanMode);
                                 if (!scanMode) setScannerOpen(true);
                             }}
-                            className={scanMode ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}
+                            className={scanMode ? "bg-status-ok/70 hover:bg-status-ok/70" : "bg-primary/70 hover:bg-primary/70"}
                         >
                             <Camera className="w-4 h-4 mr-2" />
                             {scanMode ? 'Scannen aktiv' : 'Scanner starten'}
@@ -467,13 +467,13 @@ export default function Inventory() {
                                 { label: 'Gesamtwert (€)', render: (a) => a.total_value?.toFixed(2) || '-' }
                             ]}
                             variant="outline"
-                            className="border-purple-600 text-foreground bg-purple-600 hover:bg-purple-700"
+                            className="border-primary text-foreground bg-primary hover:bg-primary"
                             disabled={!hasAnyCounts}
                         />
                         <Button
                             onClick={handleSave}
                             disabled={!hasAnyCounts}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-status-ok/70 hover:bg-status-ok/70"
                         >
                             <Save className="w-4 h-4 mr-2" />
                             Speichern ({totalItemsCounted})
@@ -481,7 +481,7 @@ export default function Inventory() {
                         <Button
                             onClick={() => setResetDialogOpen(true)}
                             variant="outline"
-                            className="border-red-600 text-foreground bg-red-600 hover:bg-red-700"
+                            className="border-status-danger/70 text-foreground bg-status-danger/70 hover:bg-status-danger/70"
                         >
                             <RotateCcw className="w-4 h-4 mr-2" />
                             Zurücksetzen
@@ -491,12 +491,12 @@ export default function Inventory() {
 
                 {/* Last Scanned Notification */}
                 {lastScanned && (
-                    <div className="mb-4 p-4 bg-green-600 rounded-lg border-2 border-green-400 animate-pulse">
+                    <div className="mb-4 p-4 bg-status-ok/70 rounded-lg border-2 border-status-ok/70 animate-pulse">
                         <div className="flex items-center gap-2">
                             <Camera className="w-5 h-5 text-foreground" />
                             <div>
                                 <p className="font-semibold text-foreground">{lastScanned.name}</p>
-                                <p className="text-sm text-green-100">
+                                <p className="text-sm text-status-ok/15">
                                     Menge: {lastScanned.count}
                                     {lastScanned.slot && ` · ${lastScanned.slot}`}
                                 </p>
@@ -513,11 +513,11 @@ export default function Inventory() {
                     </Card>
                     <Card className="p-4 bg-card border-border">
                         <p className="text-sm text-muted-foreground mb-1">Fächer offen</p>
-                        <p className="text-2xl font-bold text-amber-500">{totalSlots - countedSlots}</p>
+                        <p className="text-2xl font-bold text-status-warn">{totalSlots - countedSlots}</p>
                     </Card>
                     <Card className="p-4 bg-card border-border">
                         <p className="text-sm text-muted-foreground mb-1">Differenzen</p>
-                        <p className="text-2xl font-bold text-red-500">{totalDiff}</p>
+                        <p className="text-2xl font-bold text-status-danger">{totalDiff}</p>
                     </Card>
                 </div>
 

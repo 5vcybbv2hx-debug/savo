@@ -55,7 +55,7 @@ export default function OfflineSyncManager() {
 
   if (!isOnline) {
     return (
-      <div className="fixed bottom-[5.5rem] md:bottom-4 right-4 z-40 bg-amber-500/90 text-amber-900 px-4 py-3 rounded-lg shadow-lg border border-amber-400/50 backdrop-blur-sm max-w-xs">
+      <div className="fixed bottom-[5.5rem] md:bottom-4 right-4 z-40 bg-status-warn/90 text-status-warn px-4 py-3 rounded-lg shadow-lg border border-status-warn/50 backdrop-blur-sm max-w-xs">
         <p className="text-sm font-semibold">Offline Mode</p>
         {pendingCount > 0 && (
           <p className="text-xs mt-1 opacity-90">
@@ -68,7 +68,7 @@ export default function OfflineSyncManager() {
 
   if (isSyncing) {
     return (
-      <div className="fixed bottom-[5.5rem] md:bottom-4 right-4 z-40 bg-blue-500/90 text-blue-900 px-4 py-3 rounded-lg shadow-lg border border-blue-400/50 backdrop-blur-sm flex items-center gap-2">
+      <div className="fixed bottom-[5.5rem] md:bottom-4 right-4 z-40 bg-primary/90 text-primary px-4 py-3 rounded-lg shadow-lg border border-primary/50 backdrop-blur-sm flex items-center gap-2">
         <Loader2 className="w-4 h-4 animate-spin" />
         <span className="text-sm font-semibold">Synchronisiere...</span>
       </div>
@@ -77,7 +77,7 @@ export default function OfflineSyncManager() {
 
   if (lastSyncStatus?.synced > 0) {
     return (
-      <div className="fixed bottom-[5.5rem] md:bottom-4 right-4 z-40 bg-green-500/90 text-green-900 px-4 py-3 rounded-lg shadow-lg border border-green-400/50 backdrop-blur-sm flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+      <div className="fixed bottom-[5.5rem] md:bottom-4 right-4 z-40 bg-status-ok/90 text-status-ok px-4 py-3 rounded-lg shadow-lg border border-status-ok/50 backdrop-blur-sm flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
         <CheckCircle2 className="w-4 h-4" />
         <span className="text-sm font-semibold">
           {lastSyncStatus.synced} Änderung{lastSyncStatus.synced > 1 ? 'en' : ''} synced
@@ -88,7 +88,7 @@ export default function OfflineSyncManager() {
 
   if (lastSyncStatus?.error || (lastSyncStatus?.failed > 0)) {
     return (
-      <div className="fixed bottom-[5.5rem] md:bottom-4 right-4 z-40 bg-red-500/90 text-red-900 px-4 py-3 rounded-lg shadow-lg border border-red-400/50 backdrop-blur-sm flex items-center gap-2">
+      <div className="fixed bottom-[5.5rem] md:bottom-4 right-4 z-40 bg-status-danger/90 text-status-danger px-4 py-3 rounded-lg shadow-lg border border-status-danger/50 backdrop-blur-sm flex items-center gap-2">
         <AlertCircle className="w-4 h-4" />
         <span className="text-sm font-semibold">Sync-Fehler</span>
       </div>

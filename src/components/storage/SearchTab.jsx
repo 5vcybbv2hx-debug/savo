@@ -13,7 +13,7 @@ import { useLocalPreferences } from '@/lib/useLocalPreferences';
 function Highlight({ text, query }) {
   const { before, match, after } = highlightMatch(text || '', query || '');
   if (!match) return <span>{text}</span>;
-  return <span>{before}<strong className="text-amber-400">{match}</strong>{after}</span>;
+  return <span>{before}<strong className="text-status-warn">{match}</strong>{after}</span>;
 }
 
 // ── Slot Detail View ─────────────────────────────────────────────────────────
@@ -26,8 +26,8 @@ function SlotDetail({ slot, assignments, onBack }) {
       </button>
       <Card className="p-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-            <MapPin className="w-5 h-5 text-amber-500" />
+          <div className="w-10 h-10 rounded-xl bg-status-warn/10 flex items-center justify-center shrink-0">
+            <MapPin className="w-5 h-5 text-status-warn" />
           </div>
           <div>
             <p className="font-bold text-foreground">{slot.full_name || slot.name}</p>
@@ -47,7 +47,7 @@ function SlotDetail({ slot, assignments, onBack }) {
             {slotAssignments.map(a => {
               const isLow = a.min_stock != null && a.quantity < a.min_stock;
               return (
-                <Card key={a.id} className={`p-4 flex items-center gap-3 ${isLow ? 'border-red-500/40' : ''}`}>
+                <Card key={a.id} className={`p-4 flex items-center gap-3 ${isLow ? 'border-status-danger/40' : ''}`}>
                   {a.article_image_url ? (
                     <img src={a.article_image_url} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
                   ) : (
@@ -58,7 +58,7 @@ function SlotDetail({ slot, assignments, onBack }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground">{a.article_name}</p>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
-                      <span className={`text-sm font-bold ${isLow ? 'text-red-500' : 'text-foreground'}`}>
+                      <span className={`text-sm font-bold ${isLow ? 'text-status-danger' : 'text-foreground'}`}>
                         {a.quantity} {a.unit}
                       </span>
                       {a.min_stock != null && <span className="text-xs text-muted-foreground">Min: {a.min_stock}</span>}
@@ -95,7 +95,7 @@ function ArticleResult({ article, articleAssignments, slots, onSelectSlot, query
         <div className="flex-1 text-left min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-bold text-foreground"><Highlight text={article.name} query={query} /></p>
-            {frequency > 3 && <TrendingUp className="w-3 h-3 text-amber-500 shrink-0" title="Häufig gesucht" />}
+            {frequency > 3 && <TrendingUp className="w-3 h-3 text-status-warn shrink-0" title="Häufig gesucht" />}
           </div>
           <p className="text-xs text-muted-foreground">{articleAssignments.length} Lagerplatz{articleAssignments.length !== 1 ? 'e' : ''}</p>
         </div>
@@ -113,13 +113,13 @@ function ArticleResult({ article, articleAssignments, slots, onSelectSlot, query
               return (
                 <button key={a.id} onClick={() => slot && onSelectSlot(slot)}
                   className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors text-left ${i > 0 ? 'border-t border-border/50' : ''}`}>
-                  <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                  <MapPin className="w-4 h-4 text-status-warn shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">
                       {slot?.full_name || a.storage_slot_name || '—'}
                     </p>
                     <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                      <span className={`text-xs font-medium ${isLow ? 'text-red-500' : 'text-muted-foreground'}`}>
+                      <span className={`text-xs font-medium ${isLow ? 'text-status-danger' : 'text-muted-foreground'}`}>
                         {a.quantity} {a.unit}{a.min_stock != null ? ` (Min: ${a.min_stock})` : ''}
                       </span>
                       {slot?.short_code && <span className="text-xs font-mono text-muted-foreground">{slot.short_code}</span>}
@@ -212,7 +212,7 @@ export default function SearchTab() {
           </button>
         )}
         <Input
-          className="pl-12 pr-10 h-14 text-base rounded-xl border-2 focus-visible:border-amber-500"
+          className="pl-12 pr-10 h-14 text-base rounded-xl border-2 focus-visible:border-status-warn/70"
           placeholder="Artikel suchen… z.B. Gin, Wodka, Soda"
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -281,7 +281,7 @@ export default function SearchTab() {
           {matchingSlots.map(slot => (
             <Card key={slot.id} className="overflow-hidden">
               <button onClick={() => handleSelectSlot(slot)} className="w-full flex items-center gap-3 p-4 hover:bg-accent/30 transition-colors text-left">
-                <MapPin className="w-5 h-5 text-amber-500 shrink-0" />
+                <MapPin className="w-5 h-5 text-status-warn shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground truncate">
                     <Highlight text={slot.full_name || slot.name} query={search} />

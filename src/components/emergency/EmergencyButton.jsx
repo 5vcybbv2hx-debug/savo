@@ -14,7 +14,7 @@ export default function EmergencyButton() {
             <button
                 onClick={() => setOpen(true)}
                 aria-label="Notfall"
-                className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 active:scale-95 transition-all shadow-lg shadow-red-900/40 flex items-center justify-center animate-pulse"
+                className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-14 h-14 rounded-full bg-status-danger/70 hover:bg-status-danger/70 active:scale-95 transition-all shadow-lg shadow-red-900/40 flex items-center justify-center animate-pulse"
             >
                 <ShieldAlert className="w-7 h-7 text-white" strokeWidth={2.2} />
             </button>

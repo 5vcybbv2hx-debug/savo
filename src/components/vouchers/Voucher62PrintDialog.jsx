@@ -155,8 +155,8 @@ export default function Voucher62PrintDialog({
 
                 {stage === 'done' ? (
                     <div className="space-y-3">
-                        <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-center">
-                            <CheckCircle2 className="w-6 h-6 text-green-500 mx-auto" />
+                        <div className="rounded-xl border border-status-ok/30 bg-status-ok/10 px-4 py-3 text-center">
+                            <CheckCircle2 className="w-6 h-6 text-status-ok mx-auto" />
                             <p className="text-sm font-semibold text-foreground mt-1.5">
                                 {lastCount === 1 ? '1 Seite gedruckt' : `${lastCount} Seiten gedruckt`}
                             </p>

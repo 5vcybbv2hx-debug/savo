@@ -16,19 +16,19 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const categoryConfig = {
-    concert: { label: 'Konzert', icon: '🎵', color: 'bg-pink-100 text-pink-700 border-pink-200' },
-    festival: { label: 'Festival', icon: '🎪', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    sports: { label: 'Sport', icon: '⚽', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-    market: { label: 'Markt', icon: '🛒', color: 'bg-green-100 text-green-700 border-green-200' },
-    community: { label: 'Stadt/Community', icon: '🏘️', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-    holiday: { label: 'Feiertag', icon: '🎉', color: 'bg-red-100 text-red-700 border-red-200' },
+    concert: { label: 'Konzert', icon: '🎵', color: 'bg-primary text-primary border-primary' },
+    festival: { label: 'Festival', icon: '🎪', color: 'bg-primary text-primary border-primary' },
+    sports: { label: 'Sport', icon: '⚽', color: 'bg-primary/15 text-primary border-primary/25' },
+    market: { label: 'Markt', icon: '🛒', color: 'bg-status-ok/15 text-status-ok border-status-ok/25' },
+    community: { label: 'Stadt/Community', icon: '🏘️', color: 'bg-status-warn/15 text-status-warn border-status-warn/25' },
+    holiday: { label: 'Feiertag', icon: '🎉', color: 'bg-status-danger/15 text-status-danger border-status-danger/25' },
     other: { label: 'Sonstiges', icon: '📍', color: 'bg-muted text-foreground border-border' },
 };
 
 const impactConfig = {
-    small: { label: 'Wenig', color: 'text-green-600' },
-    medium: { label: 'Mittel', color: 'text-amber-600' },
-    large: { label: 'Groß!', color: 'text-red-600' },
+    small: { label: 'Wenig', color: 'text-status-ok' },
+    medium: { label: 'Mittel', color: 'text-status-warn' },
+    large: { label: 'Groß!', color: 'text-status-danger' },
 };
 
 const recurrenceLabels = {
@@ -167,11 +167,11 @@ export default function LocalEventsTab() {
                                                 </span>
                                             )}
                                         </div>
-                                        {recDesc && <p className="text-xs text-blue-600 mt-1 flex items-center gap-1"><Repeat className="w-3 h-3" />{recDesc}</p>}
+                                        {recDesc && <p className="text-xs text-primary mt-1 flex items-center gap-1"><Repeat className="w-3 h-3" />{recDesc}</p>}
                                         {event.staff_adjustment != null && event.staff_adjustment !== 0 && (
                                             <div className="mt-1.5 flex items-center gap-1">
-                                                {event.staff_adjustment > 0 ? <TrendingUp className="w-3.5 h-3.5 text-green-600" /> : <TrendingDown className="w-3.5 h-3.5 text-red-600" />}
-                                                <span className={cn('text-xs font-medium', event.staff_adjustment > 0 ? 'text-green-600' : 'text-red-600')}>
+                                                {event.staff_adjustment > 0 ? <TrendingUp className="w-3.5 h-3.5 text-status-ok" /> : <TrendingDown className="w-3.5 h-3.5 text-status-danger" />}
+                                                <span className={cn('text-xs font-medium', event.staff_adjustment > 0 ? 'text-status-ok' : 'text-status-danger')}>
                                                     {event.staff_adjustment > 0 ? '+' : ''}{event.staff_adjustment} Personal
                                                 </span>
                                             </div>
@@ -368,7 +368,7 @@ function EventModal({ open, onOpenChange, editingEvent, onSave, isLoading }) {
                                         </div>
                                     </div>
                                 )}
-                                <p className="text-xs text-blue-600">System schlägt das nächste Datum automatisch vor, wenn das aktuelle vorbei ist.</p>
+                                <p className="text-xs text-primary">System schlägt das nächste Datum automatisch vor, wenn das aktuelle vorbei ist.</p>
                             </div>
                         )}
                     </div>

@@ -138,7 +138,7 @@ export default function AssignTab({ permissions }) {
       <Card className="p-4 space-y-3">
         <p className="font-semibold text-foreground">1. Artikel wählen</p>
         {aE ? <ErrorState text="Artikel konnten nicht geladen werden." /> : selectedArticle ? (
-          <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+          <div className="flex items-center justify-between bg-status-warn/10 border border-status-warn/30 rounded-lg p-3">
             <div className="flex items-center gap-3">
               {selectedArticle.image_url && <img src={selectedArticle.image_url} alt="" className="w-8 h-8 rounded object-cover" />}
               <div>
@@ -175,7 +175,7 @@ export default function AssignTab({ permissions }) {
                   <div className="py-2 space-y-2">
                     <p className="text-sm text-muted-foreground">Kein Artikel gefunden</p>
                     <button onClick={() => { setNewArticleForm({ name: articleSearch, category: '' }); setNewArticleModal(true); }}
-                      className="w-full flex items-center gap-2 p-2.5 rounded-lg border border-dashed border-amber-500/50 hover:bg-amber-500/10 text-amber-500 text-sm font-medium transition-colors">
+                      className="w-full flex items-center gap-2 p-2.5 rounded-lg border border-dashed border-status-warn/50 hover:bg-status-warn/10 text-status-warn text-sm font-medium transition-colors">
                       <Plus className="w-4 h-4" /> "{articleSearch}" neu anlegen
                     </button>
                   </div>
@@ -213,7 +213,7 @@ export default function AssignTab({ permissions }) {
       <Card className="p-4 space-y-3">
         <p className="font-semibold text-foreground">2. Lagerplatz wählen</p>
         {sE ? <ErrorState text="Lagerplätze konnten nicht geladen werden." /> : selectedSlot ? (
-          <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+          <div className="flex items-center justify-between bg-status-warn/10 border border-status-warn/30 rounded-lg p-3">
             <div>
               <p className="text-sm font-semibold text-foreground">{selectedSlot.full_name || selectedSlot.name}</p>
               <p className="text-xs text-muted-foreground">{selectedSlot.short_code}</p>
@@ -290,11 +290,11 @@ export default function AssignTab({ permissions }) {
             <Input className="h-11" placeholder="Hinweise zur Lagerung" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
           </div>
           {saveSuccess && (
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-sm text-green-600 font-medium">
+            <div className="bg-status-ok/10 border border-status-ok/30 rounded-lg p-3 text-sm text-status-ok font-medium">
               ✅ Zuordnung gespeichert!
             </div>
           )}
-          <Button onClick={handleSave} disabled={saveMut.isPending || !form.quantity} className="w-full bg-amber-600 hover:bg-amber-700 text-white h-11">
+          <Button onClick={handleSave} disabled={saveMut.isPending || !form.quantity} className="w-full bg-status-warn/70 hover:bg-status-warn/70 text-white h-11">
             {saveMut.isPending ? 'Speichert…' : 'Zuordnung speichern'}
           </Button>
         </Card>
@@ -303,7 +303,7 @@ export default function AssignTab({ permissions }) {
       {/* New Article Modal */}
       <Dialog open={newArticleModal} onOpenChange={v => !v && setNewArticleModal(false)}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="w-4 h-4 text-amber-500" />Neuen Artikel anlegen</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="w-4 h-4 text-status-warn" />Neuen Artikel anlegen</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-2">
               <Label>Name *</Label>
@@ -321,7 +321,7 @@ export default function AssignTab({ permissions }) {
             <Button variant="outline" onClick={() => setNewArticleModal(false)} disabled={createArticleMut.isPending}>Abbrechen</Button>
             <Button onClick={() => createArticleMut.mutate({ name: newArticleForm.name.trim(), category: newArticleForm.category.trim() || null, is_active: true })}
               disabled={!newArticleForm.name.trim() || createArticleMut.isPending}
-              className="bg-amber-600 hover:bg-amber-700 text-white">
+              className="bg-status-warn/70 hover:bg-status-warn/70 text-white">
               {createArticleMut.isPending ? 'Anlegen…' : 'Artikel anlegen & wählen'}
             </Button>
           </DialogFooter>

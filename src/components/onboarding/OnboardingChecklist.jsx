@@ -111,8 +111,8 @@ export function OnboardingChecklist() {
     <div className="max-w-2xl mx-auto p-4">
       {/* Header */}
       <div className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 mb-4">
-          <Trophy className="w-8 h-8 text-slate-900" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-status-warn to-status-warn mb-4">
+          <Trophy className="w-8 h-8 text-muted-foreground" />
         </div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Onboarding-Quest</h2>
         <p className="text-muted-foreground">Willkommen im Team! Komplettiere deine erste Woche.</p>
@@ -124,13 +124,13 @@ export function OnboardingChecklist() {
           <span className="text-sm font-medium text-foreground">
             {completedCount} von {tasks.length} Aufgaben
           </span>
-          <span className="text-sm font-bold text-amber-500">
+          <span className="text-sm font-bold text-status-warn">
             {earnedPoints} / {totalPoints} Punkte
           </span>
         </div>
         <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+            className="h-full bg-gradient-to-r from-status-warn to-status-warn transition-all duration-500"
             style={{ width: `${(completedCount / tasks.length) * 100}%` }}
           />
         </div>
@@ -144,7 +144,7 @@ export function OnboardingChecklist() {
             className={cn(
               'p-4 rounded-lg border transition-all',
               task.completed
-                ? 'bg-green-500/10 border-green-500/30'
+                ? 'bg-status-ok/10 border-status-ok/30'
                 : 'bg-card border-border hover:border-primary/50 cursor-pointer'
             )}
             onClick={() => !task.completed && task.action && (window.location.href = task.action)}
@@ -158,7 +158,7 @@ export function OnboardingChecklist() {
                 className="mt-0.5 transition-transform hover:scale-110"
               >
                 {task.completed ? (
-                  <CheckCircle2 className="w-6 h-6 text-green-500" />
+                  <CheckCircle2 className="w-6 h-6 text-status-ok" />
                 ) : (
                   <Circle className="w-6 h-6 text-muted-foreground hover:text-primary" />
                 )}
@@ -175,10 +175,10 @@ export function OnboardingChecklist() {
               </div>
 
               <div className="flex items-center gap-2 ml-auto">
-                <span className="text-sm font-bold text-amber-500">
+                <span className="text-sm font-bold text-status-warn">
                   +{task.points}
                 </span>
-                <Zap className="w-4 h-4 text-amber-500" />
+                <Zap className="w-4 h-4 text-status-warn" />
               </div>
             </div>
           </div>
@@ -187,8 +187,8 @@ export function OnboardingChecklist() {
 
       {/* Completion Message */}
       {completedCount === tasks.length && (
-        <div className="p-6 rounded-lg bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 text-center">
-          <h3 className="text-lg font-bold text-green-500 mb-2">🎉 Super gemacht!</h3>
+        <div className="p-6 rounded-lg bg-gradient-to-br from-status-ok/10 to-status-ok/10 border border-status-ok/30 text-center">
+          <h3 className="text-lg font-bold text-status-ok mb-2">🎉 Super gemacht!</h3>
           <p className="text-sm text-muted-foreground">
             Du hast dein Onboarding abgeschlossen. Viel Spaß bei der Arbeit!
           </p>
@@ -196,8 +196,8 @@ export function OnboardingChecklist() {
       )}
 
       {/* Tips */}
-      <div className="mt-8 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-        <h4 className="text-sm font-bold text-blue-400 mb-2">💡 Tipp</h4>
+      <div className="mt-8 p-4 rounded-lg bg-primary/10 border border-primary/30">
+        <h4 className="text-sm font-bold text-primary mb-2">💡 Tipp</h4>
         <p className="text-sm text-muted-foreground">
           Du kannst diese Liste jederzeit in deinen Einstellungen erneut ansehen.
         </p>

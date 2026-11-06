@@ -38,7 +38,7 @@ export default function OpenTasksToday({ tasks = [], onComplete, onBulkComplete,
         return (
             <div className="text-center py-12 text-muted-foreground">
                 <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="font-medium text-emerald-500">Alles erledigt — {doneCount} Aufgaben</p>
+                <p className="font-medium text-status-ok">Alles erledigt — {doneCount} Aufgaben</p>
             </div>
         );
     }
@@ -54,7 +54,7 @@ export default function OpenTasksToday({ tasks = [], onComplete, onBulkComplete,
                     <div className="flex items-center justify-between mb-2 px-1">
                         <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-sm text-foreground">{group.area}</h3>
-                            <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-500">
+                            <Badge variant="outline" className="text-xs border-status-warn/50 text-status-warn">
                                 {group.tasks.length} offen
                             </Badge>
                         </div>
@@ -73,7 +73,7 @@ export default function OpenTasksToday({ tasks = [], onComplete, onBulkComplete,
                             <SwipeRow
                                 key={task.id}
                                 onSwipeRight={() => onComplete(task)}
-                                revealColorRight="bg-emerald-600"
+                                revealColorRight="bg-status-ok/70"
                                 revealIconRight={Check}
                                 disabled={disabled}
                                 contentClassName="rounded-xl"

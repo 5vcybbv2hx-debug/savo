@@ -34,7 +34,7 @@ const isDailyPaid = (employee) => {
 
 function KpiCard({ icon: Icon, label, value, sub, color = 'text-foreground', highlight = false, children }) {
     return (
-        <Card className={cn('bg-card border-border', highlight && 'border-amber-500/50 bg-amber-500/5')}>
+        <Card className={cn('bg-card border-border', highlight && 'border-status-warn/50 bg-status-warn/5')}>
             <CardHeader className="pb-1 pt-4 px-4">
                 <CardTitle className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 uppercase tracking-wide">
                     {Icon && <Icon className="w-3.5 h-3.5" />}
@@ -514,15 +514,15 @@ export default function DailyAnalysis() {
                             )}
                         </div>
                         <div className="w-full bg-secondary rounded-full h-1.5">
-                            <div className="bg-amber-500 h-1.5 rounded-full transition-all"
+                            <div className="bg-status-warn/70 h-1.5 rounded-full transition-all"
                                 style={{ width: `${reanalyzeProgress.total ? (reanalyzeProgress.done / reanalyzeProgress.total) * 100 : 0}%` }} />
                         </div>
                         {!reanalyzingAll && reanalyzeProgress.errors.length === 0 && (
-                            <p className="text-xs text-green-400 flex items-center gap-1">
+                            <p className="text-xs text-status-ok flex items-center gap-1">
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Alle PDFs erfolgreich analysiert.
                             </p>
                         )}
-                        {reanalyzeProgress.errors.map((e, i) => <p key={i} className="text-xs text-red-400">⚠️ {e}</p>)}
+                        {reanalyzeProgress.errors.map((e, i) => <p key={i} className="text-xs text-status-danger">⚠️ {e}</p>)}
                     </div>
                 )}
 
@@ -536,7 +536,7 @@ export default function DailyAnalysis() {
                     </button>
 
                     <label className="relative flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-card border border-border text-foreground cursor-pointer">
-                        <CalendarDays className="w-4 h-4 text-amber-400 shrink-0" />
+                        <CalendarDays className="w-4 h-4 text-status-warn shrink-0" />
                         <span className="font-medium text-sm flex-1 text-center">
                             {isToday(parseISO(selectedDate))
                                 ? 'Heute'
@@ -556,7 +556,7 @@ export default function DailyAnalysis() {
 
                     {!isToday(parseISO(selectedDate)) && (
                         <button onClick={() => setSelectedDate(format(new Date(), 'yyyy-MM-dd'))}
-                            className="px-3 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 text-sm whitespace-nowrap">
+                            className="px-3 py-2 rounded-xl bg-status-warn/20 border border-status-warn/40 text-status-warn text-sm whitespace-nowrap">
                             Heute
                         </button>
                     )}
@@ -609,8 +609,8 @@ export default function DailyAnalysis() {
             {!todayRevenue && (
                 <Card className="border-dashed border-border bg-card">
                     <CardContent className="py-10 flex flex-col items-center gap-3 text-center">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                            <Upload className="w-6 h-6 text-amber-400" />
+                        <div className="w-12 h-12 rounded-2xl bg-status-warn/10 flex items-center justify-center">
+                            <Upload className="w-6 h-6 text-status-warn" />
                         </div>
                         <div>
                             <p className="font-semibold text-foreground">Kein Z-Abschlag für diesen Tag</p>
@@ -618,7 +618,7 @@ export default function DailyAnalysis() {
                         </div>
                         <Button
                             onClick={() => setUploadModalOpen(true)}
-                            className="bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                            className="bg-status-warn/70 hover:bg-status-warn/70 text-white gap-2"
                         >
                             <Upload className="w-4 h-4" /> Z-Abschlag hochladen
                         </Button>
@@ -629,7 +629,7 @@ export default function DailyAnalysis() {
             {/* KPI Grid */}
             <div className="grid grid-cols-2 gap-3">
                 {/* Revenue */}
-                <KpiCard icon={DollarSign} label="Tagesumsatz" value={revenue > 0 ? `${revenue.toFixed(2)} €` : '–'} color="text-green-400"
+                <KpiCard icon={DollarSign} label="Tagesumsatz" value={revenue > 0 ? `${revenue.toFixed(2)} €` : '–'} color="text-status-ok"
                     sub={todayRevenue?.revenue_cash ? `Bar: ${todayRevenue.revenue_cash.toFixed(2)} €` : undefined}>
                     <Button size="sm" variant="outline" className="mt-2 w-full h-8 text-xs" onClick={() => setUploadModalOpen(true)}>
                         <Upload className="w-3 h-3 mr-1" /> Z-Abschlag
@@ -638,7 +638,7 @@ export default function DailyAnalysis() {
                 </KpiCard>
 
                 {/* Tip */}
-                <KpiCard icon={Gift} label="Trinkgeld" value={todayTipDistribution ? `${todayTipDistribution.total_tips.toFixed(2)} €` : '–'} color="text-purple-400"
+                <KpiCard icon={Gift} label="Trinkgeld" value={todayTipDistribution ? `${todayTipDistribution.total_tips.toFixed(2)} €` : '–'} color="text-primary"
                     sub={todayTipDistribution ? `${todayTipDistribution.tip_per_person.toFixed(2)} € / Person` : undefined}>
                     <Button size="sm" variant="outline" className="mt-2 w-full h-8 text-xs"
                         onClick={() => setTipCalculatorOpen(true)}
@@ -650,7 +650,7 @@ export default function DailyAnalysis() {
                 {/* Daily paid labor */}
                 <KpiCard icon={Users} label="Aushilfen Personal"
                     value={`${dailyLaborCost.toFixed(2)} €`}
-                    color="text-amber-400"
+                    color="text-status-warn"
                     sub={hasManualdaily ? '✎ Manuell eingetragen' : (dailyPaidEntries.length > 0
                         ? `${new Set(dailyPaidEntries.map(e => e.employee_id)).size} Pers. · ${dailyPaidEntries.reduce((s, e) => s + (e.total_hours || 0) + Math.min(e.break_minutes || 0, 45) / 60, 0).toFixed(1)}h${dailyRatio !== null ? ` · ${dailyRatio.toFixed(1)}%` : ''}`
                         : 'Keine Zeiteinträge')}>
@@ -660,7 +660,7 @@ export default function DailyAnalysis() {
                                 className="h-8 text-sm flex-1" placeholder="0.00"
                                 value={manualInput} onChange={e => setManualInput(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') saveManualCost('daily'); if (e.key === 'Escape') setEditingManual(null); }} />
-                            <Button size="icon" className="h-8 w-8 bg-green-600 hover:bg-green-700" onClick={() => saveManualCost('daily')} disabled={savingManual}>
+                            <Button size="icon" className="h-8 w-8 bg-status-ok/70 hover:bg-status-ok/70" onClick={() => saveManualCost('daily')} disabled={savingManual}>
                                 <Check className="w-3 h-3" />
                             </Button>
                             <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setEditingManual(null)}>
@@ -685,7 +685,7 @@ export default function DailyAnalysis() {
                 {/* Full-time labor */}
                 <KpiCard icon={Users} label="Festangestellte"
                     value={`${fullTimeLaborCost.toFixed(2)} €`}
-                    color="text-blue-400"
+                    color="text-primary"
                     sub={hasManualFulltime ? '✎ Manuell eingetragen' : (fullTimeEntries.length > 0
                         ? `${new Set(fullTimeEntries.map(e => e.employee_id)).size} Pers. · nur Info`
                         : 'Keine Zeiteinträge')}>
@@ -695,7 +695,7 @@ export default function DailyAnalysis() {
                                 className="h-8 text-sm flex-1" placeholder="0.00"
                                 value={manualInput} onChange={e => setManualInput(e.target.value)}
                                 onKeyDown={e => { if (e.key === 'Enter') saveManualCost('fulltime'); if (e.key === 'Escape') setEditingManual(null); }} />
-                            <Button size="icon" className="h-8 w-8 bg-green-600 hover:bg-green-700" onClick={() => saveManualCost('fulltime')} disabled={savingManual}>
+                            <Button size="icon" className="h-8 w-8 bg-status-ok/70 hover:bg-status-ok/70" onClick={() => saveManualCost('fulltime')} disabled={savingManual}>
                                 <Check className="w-3 h-3" />
                             </Button>
                             <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setEditingManual(null)}>
@@ -731,12 +731,12 @@ export default function DailyAnalysis() {
                             {schoolVacationForSelected && (
                                 <button
                                     onClick={toggleVacation}
-                                    className="flex items-center gap-1.5 text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors"
+                                    className="flex items-center gap-1.5 text-[11px] text-primary hover:text-primary transition-colors"
                                     title="Schulferien BW — automatisch vorbefüllt. Klick zum Überschreiben."
                                 >
                                     <span className={cn(
                                         'w-3.5 h-3.5 rounded border flex items-center justify-center transition-all',
-                                        isVacationActual ? 'bg-cyan-500 border-cyan-500 text-white' : 'border-cyan-500/40 text-transparent'
+                                        isVacationActual ? 'bg-primary border-primary text-white' : 'border-primary/40 text-transparent'
                                     )}>
                                         {isVacationActual && <Check className="w-2.5 h-2.5" />}
                                     </span>
@@ -754,11 +754,11 @@ export default function DailyAnalysis() {
                     </div>
                     <div className="flex gap-1.5">
                         {[
-                            { level: 1, label: 'Ruhig', color: 'bg-blue-500/15 text-blue-400 border-blue-500/30', desc: 'Kaum Gäste' },
-                            { level: 2, label: 'Entspannt', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30', desc: 'Locker' },
-                            { level: 3, label: 'Normal', color: 'bg-amber-500/15 text-amber-400 border-amber-500/30', desc: 'Üblich' },
-                            { level: 4, label: 'Lebhaft', color: 'bg-orange-500/15 text-orange-400 border-orange-500/30', desc: 'Viel los' },
-                            { level: 5, label: 'Stark', color: 'bg-red-500/15 text-red-400 border-red-500/30', desc: 'Grenzbereich' },
+                            { level: 1, label: 'Ruhig', color: 'bg-primary/15 text-primary border-primary/30', desc: 'Kaum Gäste' },
+                            { level: 2, label: 'Entspannt', color: 'bg-primary/15 text-primary border-primary/30', desc: 'Locker' },
+                            { level: 3, label: 'Normal', color: 'bg-status-warn/15 text-status-warn border-status-warn/30', desc: 'Üblich' },
+                            { level: 4, label: 'Lebhaft', color: 'bg-status-warn/15 text-status-warn border-status-warn/30', desc: 'Viel los' },
+                            { level: 5, label: 'Stark', color: 'bg-status-danger/15 text-status-danger border-status-danger/30', desc: 'Grenzbereich' },
                         ].map(({ level, label, color, desc }) => {
                             const selected = todayRevenue?.busyness_level === level;
                             return (
@@ -795,18 +795,18 @@ export default function DailyAnalysis() {
                 <Card className={cn(
                     'border transition-all',
                     alreadyTransferred
-                        ? 'border-green-500/30 bg-green-500/5'
-                        : 'border-blue-500/30 bg-blue-500/5'
+                        ? 'border-status-ok/30 bg-status-ok/5'
+                        : 'border-primary/30 bg-primary/5'
                 )}>
                     <CardContent className="px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                                    alreadyTransferred ? 'bg-green-500/15' : 'bg-blue-500/15'
+                                    alreadyTransferred ? 'bg-status-ok/15' : 'bg-primary/15'
                                 )}>
                                     {alreadyTransferred
-                                        ? <CheckCircle2 className="w-4 h-4 text-green-400" />
-                                        : <BookOpen className="w-4 h-4 text-blue-400" />
+                                        ? <CheckCircle2 className="w-4 h-4 text-status-ok" />
+                                        : <BookOpen className="w-4 h-4 text-primary" />
                                     }
                                 </div>
                                 <div className="min-w-0">
@@ -820,7 +820,7 @@ export default function DailyAnalysis() {
                                 </div>
                             </div>
                             {alreadyTransferred ? (
-                                <Badge className="bg-green-500/15 text-green-400 border-green-500/30 shrink-0">
+                                <Badge className="bg-status-ok/15 text-status-ok border-status-ok/30 shrink-0">
                                     ✓ Übertragen
                                 </Badge>
                             ) : (
@@ -828,7 +828,7 @@ export default function DailyAnalysis() {
                                     size="sm"
                                     onClick={handleTransferToCashbook}
                                     disabled={transferring}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shrink-0 min-h-[36px]"
+                                    className="bg-primary/70 hover:bg-primary/70 text-white gap-1.5 shrink-0 min-h-[36px]"
                                 >
                                     {transferring
                                         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -847,8 +847,8 @@ export default function DailyAnalysis() {
                 <Card className={cn(
                     'border-2',
                     barMinusPersonnel !== null && barMinusPersonnel >= 0
-                        ? 'border-green-500/40 bg-green-500/5'
-                        : 'border-red-500/40 bg-red-500/5'
+                        ? 'border-status-ok/40 bg-status-ok/5'
+                        : 'border-status-danger/40 bg-status-danger/5'
                 )}>
                     <CardContent className="px-4 py-4">
                         <div className="flex items-center justify-between gap-3">
@@ -862,7 +862,7 @@ export default function DailyAnalysis() {
                                 </p>
                             </div>
                             <div className={cn('text-2xl font-bold shrink-0',
-                                barMinusPersonnel !== null && barMinusPersonnel >= 0 ? 'text-green-400' : 'text-red-400'
+                                barMinusPersonnel !== null && barMinusPersonnel >= 0 ? 'text-status-ok' : 'text-status-danger'
                             )}>
                                 {barMinusPersonnel !== null ? `${barMinusPersonnel.toFixed(2)} €` : '–'}
                             </div>
@@ -871,14 +871,14 @@ export default function DailyAnalysis() {
                             <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-2 gap-2 text-sm">
                                 <div>
                                     <span className="text-muted-foreground text-xs">Gesamtpersonalquote</span>
-                                    <p className={cn('font-bold', totalRatio > 35 ? 'text-red-400' : totalRatio > 25 ? 'text-amber-400' : 'text-green-400')}>
+                                    <p className={cn('font-bold', totalRatio > 35 ? 'text-status-danger' : totalRatio > 25 ? 'text-status-warn' : 'text-status-ok')}>
                                         {totalRatio.toFixed(1)} %
                                     </p>
                                 </div>
                                 {dailyRatio !== null && dailyRatio !== totalRatio && (
                                     <div>
                                         <span className="text-muted-foreground text-xs">Quote Aushilfen</span>
-                                        <p className={cn('font-bold', dailyRatio > 25 ? 'text-amber-400' : 'text-green-400')}>
+                                        <p className={cn('font-bold', dailyRatio > 25 ? 'text-status-warn' : 'text-status-ok')}>
                                             {dailyRatio.toFixed(1)} %
                                         </p>
                                     </div>
@@ -937,10 +937,10 @@ export default function DailyAnalysis() {
                     onClick={() => setShowTimeImport(s => !s)}
                 >
                     <div className="flex items-center gap-2">
-                        <RefreshCw className="w-4 h-4 text-amber-400" />
+                        <RefreshCw className="w-4 h-4 text-status-warn" />
                         <span className="text-sm font-semibold text-foreground">Zeiteinträge manuell abrufen</span>
                         {allTodayEntries.filter(e => e.status !== 'genehmigt').length > 0 && (
-                            <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            <span className="bg-status-warn/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                                 {allTodayEntries.filter(e => e.status !== 'genehmigt').length}
                             </span>
                         )}
@@ -966,14 +966,14 @@ export default function DailyAnalysis() {
                                             </p>
                                         </div>
                                         {isApproved ? (
-                                            <span className="flex items-center gap-1 text-xs text-green-400 font-semibold shrink-0">
+                                            <span className="flex items-center gap-1 text-xs text-status-ok font-semibold shrink-0">
                                                 <CheckCircle2 className="w-3.5 h-3.5" />Genehmigt
                                             </span>
                                         ) : (
                                             <Button size="sm"
                                                 onClick={() => approveEntryMutation.mutate(te.id)}
                                                 disabled={approveEntryMutation.isPending}
-                                                className="h-8 bg-green-600 hover:bg-green-700 text-white text-xs gap-1 shrink-0">
+                                                className="h-8 bg-status-ok/70 hover:bg-status-ok/70 text-white text-xs gap-1 shrink-0">
                                                 <Check className="w-3 h-3" />
                                                 Übernehmen
                                             </Button>
@@ -995,28 +995,28 @@ export default function DailyAnalysis() {
                     <CardContent className="px-4 pb-4 space-y-2">
                         {dailyPaidEntries.length > 0 && (
                             <div>
-                                <p className="text-xs font-semibold text-amber-400 mb-1.5">Aushilfen (fließen in Kalkulation ein)</p>
+                                <p className="text-xs font-semibold text-status-warn mb-1.5">Aushilfen (fließen in Kalkulation ein)</p>
                                 {dailyPaidEntries.map(te => (
                                     <div key={te.id} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
                                         <div>
                                             <p className="text-sm font-medium text-foreground">{te.employee_name}</p>
                                             <p className="text-xs text-muted-foreground">{((te.total_hours || 0) + Math.min(te.break_minutes || 0, 45) / 60).toFixed(1)}h × {te.hourly_rate.toFixed(2)} € (Pause bis 45 Min mitbezahlt)</p>
                                         </div>
-                                        <span className="font-bold text-amber-400">{te.cost.toFixed(2)} €</span>
+                                        <span className="font-bold text-status-warn">{te.cost.toFixed(2)} €</span>
                                     </div>
                                 ))}
                             </div>
                         )}
                         {fullTimeEntries.length > 0 && (
                             <div className={dailyPaidEntries.length > 0 ? 'pt-2' : ''}>
-                                <p className="text-xs font-semibold text-blue-400 mb-1.5">Festangestellte (nur Info, nicht in Tageskalkulation)</p>
+                                <p className="text-xs font-semibold text-primary mb-1.5">Festangestellte (nur Info, nicht in Tageskalkulation)</p>
                                 {fullTimeEntries.map(te => (
                                     <div key={te.id} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0 opacity-70">
                                         <div>
                                             <p className="text-sm font-medium text-foreground">{te.employee_name}</p>
                                             <p className="text-xs text-muted-foreground">{((te.total_hours || 0) + Math.min(te.break_minutes || 0, 45) / 60).toFixed(1)}h · {te._role || te._contractType}</p>
                                         </div>
-                                        <span className="font-bold text-blue-400">{te.cost.toFixed(2)} €</span>
+                                        <span className="font-bold text-primary">{te.cost.toFixed(2)} €</span>
                                     </div>
                                 ))}
                             </div>
@@ -1037,8 +1037,8 @@ export default function DailyAnalysis() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-4 space-y-2">
-                        <Alert className="bg-purple-900/20 border-purple-800 py-2">
-                            <AlertDescription className="text-purple-300 text-xs">
+                        <Alert className="bg-primary/20 border-primary py-2">
+                            <AlertDescription className="text-primary text-xs">
                                 {todayTipDistribution.tip_percentage}% von {todayTipDistribution.total_revenue.toFixed(2)} €
                                 = {todayTipDistribution.total_tips.toFixed(2)} € für {todayTipDistribution.employee_count} Personen
                             </AlertDescription>
@@ -1046,7 +1046,7 @@ export default function DailyAnalysis() {
                         {todayTipDistribution.distribution_details?.map((detail, idx) => (
                             <div key={idx} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
                                 <span className="text-sm font-medium text-foreground">{detail.employee_name}</span>
-                                <span className="font-bold text-purple-400">{detail.tip_amount.toFixed(2)} €</span>
+                                <span className="font-bold text-primary">{detail.tip_amount.toFixed(2)} €</span>
                             </div>
                         ))}
                     </CardContent>

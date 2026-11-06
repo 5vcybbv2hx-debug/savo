@@ -10,7 +10,7 @@ const isDailyPaid = (emp) => emp?.role === 'Aushilfe' || (emp?.hourly_rate > 0 &
 
 function StatRow({ label, value, sub, color = 'text-foreground', highlight }) {
     return (
-        <div className={cn('flex items-center justify-between py-2.5 border-b border-border/40 last:border-0', highlight && 'bg-amber-500/5 -mx-4 px-4 rounded')}>
+        <div className={cn('flex items-center justify-between py-2.5 border-b border-border/40 last:border-0', highlight && 'bg-status-warn/5 -mx-4 px-4 rounded')}>
             <div>
                 <p className="text-sm text-muted-foreground">{label}</p>
                 {sub && <p className="text-xs text-muted-foreground/70">{sub}</p>}
@@ -180,13 +180,13 @@ export default function PeriodAnalysis({ period, selectedDate, dailyRevenues, ti
                 <Card className="bg-card border-border col-span-2">
                     <CardContent className="px-4 py-4">
                         <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                            <DollarSign className="w-3.5 h-3.5 text-green-400" />Gesamtumsatz
+                            <DollarSign className="w-3.5 h-3.5 text-status-ok" />Gesamtumsatz
                         </p>
-                        <p className="text-3xl font-bold text-green-400">{totalRevenue.toFixed(2)} €</p>
+                        <p className="text-3xl font-bold text-status-ok">{totalRevenue.toFixed(2)} €</p>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                             <p className="text-xs text-muted-foreground">⌀ {avgDailyRevenue.toFixed(2)} € / Tag</p>
                             {revenueVsPrev !== null && (
-                                <span className={cn('flex items-center gap-0.5 text-xs font-semibold', revenueVsPrev >= 0 ? 'text-green-400' : 'text-red-400')}>
+                                <span className={cn('flex items-center gap-0.5 text-xs font-semibold', revenueVsPrev >= 0 ? 'text-status-ok' : 'text-status-danger')}>
                                     {revenueVsPrev >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                                     {revenueVsPrev >= 0 ? '+' : ''}{revenueVsPrev.toFixed(1)}% ggü. Vorperiode
                                 </span>
@@ -197,35 +197,35 @@ export default function PeriodAnalysis({ period, selectedDate, dailyRevenues, ti
 
                 <Card className="bg-card border-border">
                     <CardContent className="px-4 py-3">
-                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Users className="w-3 h-3 text-amber-400" />Aushilfen</p>
-                        <p className="text-xl font-bold text-amber-400">{totalDailyLabor.toFixed(2)} €</p>
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Users className="w-3 h-3 text-status-warn" />Aushilfen</p>
+                        <p className="text-xl font-bold text-status-warn">{totalDailyLabor.toFixed(2)} €</p>
                         {laborRatio !== null && <p className="text-xs text-muted-foreground">{laborRatio.toFixed(1)}% Quote</p>}
                     </CardContent>
                 </Card>
 
                 <Card className="bg-card border-border">
                     <CardContent className="px-4 py-3">
-                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Users className="w-3 h-3 text-blue-400" />Festangestellte</p>
-                        <p className="text-xl font-bold text-blue-400">{totalFullTimeLabor.toFixed(2)} €</p>
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Users className="w-3 h-3 text-primary" />Festangestellte</p>
+                        <p className="text-xl font-bold text-primary">{totalFullTimeLabor.toFixed(2)} €</p>
                         <p className="text-xs text-muted-foreground">nur Info</p>
                     </CardContent>
                 </Card>
 
-                <Card className={cn('border-2 col-span-2', netRevenue >= 0 ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5')}>
+                <Card className={cn('border-2 col-span-2', netRevenue >= 0 ? 'border-status-ok/30 bg-status-ok/5' : 'border-status-danger/30 bg-status-danger/5')}>
                     <CardContent className="px-4 py-3 flex items-center justify-between gap-4">
                         <div>
                             <p className="text-xs text-muted-foreground uppercase tracking-wide">Umsatz − Aushilfen</p>
                             <p className="text-xs text-muted-foreground">⌀ {(netRevenue / Math.max(daysWithRevenue, 1)).toFixed(2)} € / Tag</p>
                         </div>
-                        <p className={cn('text-2xl font-bold shrink-0', netRevenue >= 0 ? 'text-green-400' : 'text-red-400')}>{netRevenue.toFixed(2)} €</p>
+                        <p className={cn('text-2xl font-bold shrink-0', netRevenue >= 0 ? 'text-status-ok' : 'text-status-danger')}>{netRevenue.toFixed(2)} €</p>
                     </CardContent>
                 </Card>
 
                 {totalTips > 0 && (
                     <Card className="bg-card border-border">
                         <CardContent className="px-4 py-3">
-                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Gift className="w-3 h-3 text-purple-400" />Trinkgeld</p>
-                            <p className="text-xl font-bold text-purple-400">{totalTips.toFixed(2)} €</p>
+                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Gift className="w-3 h-3 text-primary" />Trinkgeld</p>
+                            <p className="text-xl font-bold text-primary">{totalTips.toFixed(2)} €</p>
                             <p className="text-xs text-muted-foreground">⌀ {(totalTips / Math.max(daysWithRevenue, 1)).toFixed(2)} €/Tag</p>
                         </CardContent>
                     </Card>
@@ -240,8 +240,8 @@ export default function PeriodAnalysis({ period, selectedDate, dailyRevenues, ti
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 space-y-0">
-                    {bestDay && <StatRow label="Bester Tag" value={`${bestDay.revenue.toFixed(2)} €`} sub={format(parseISO(bestDay.date), 'EEE, dd. MMM yyyy', { locale: de })} color="text-green-400" />}
-                    {worstDay && worstDay.date !== bestDay?.date && <StatRow label="Schwächster Tag" value={`${worstDay.revenue.toFixed(2)} €`} sub={format(parseISO(worstDay.date), 'EEE, dd. MMM yyyy', { locale: de })} color="text-amber-400" />}
+                    {bestDay && <StatRow label="Bester Tag" value={`${bestDay.revenue.toFixed(2)} €`} sub={format(parseISO(bestDay.date), 'EEE, dd. MMM yyyy', { locale: de })} color="text-status-ok" />}
+                    {worstDay && worstDay.date !== bestDay?.date && <StatRow label="Schwächster Tag" value={`${worstDay.revenue.toFixed(2)} €`} sub={format(parseISO(worstDay.date), 'EEE, dd. MMM yyyy', { locale: de })} color="text-status-warn" />}
                     <StatRow label="Gesamtpersonal (inkl. Fest)" value={`${totalLaborCost.toFixed(2)} €`} sub={totalRevenue > 0 ? `${((totalLaborCost / totalRevenue) * 100).toFixed(1)}% des Umsatzes` : undefined} color="text-foreground" />
                     {daysWithRevenue > 1 && <StatRow label="Tage analysiert" value={daysWithRevenue} />}
                 </CardContent>
@@ -251,7 +251,7 @@ export default function PeriodAnalysis({ period, selectedDate, dailyRevenues, ti
             <Card className="bg-card border-border">
                 <button className="w-full px-4 pt-4 pb-4 flex items-center justify-between" onClick={() => setShowDayBreakdown(s => !s)}>
                     <span className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <BarChart2 className="w-4 h-4 text-amber-400" />
+                        <BarChart2 className="w-4 h-4 text-status-warn" />
                         Tage im Überblick
                     </span>
                     <span className="text-xs text-muted-foreground">{showDayBreakdown ? 'Ausblenden' : 'Anzeigen'}</span>
@@ -262,12 +262,12 @@ export default function PeriodAnalysis({ period, selectedDate, dailyRevenues, ti
                             <div key={d.date} className="space-y-1.5">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-foreground font-medium">{format(parseISO(d.date), 'EEE, dd. MMM', { locale: de })}</span>
-                                    <span className={cn('font-semibold', d.ratio > 30 ? 'text-amber-400' : 'text-muted-foreground')}>
+                                    <span className={cn('font-semibold', d.ratio > 30 ? 'text-status-warn' : 'text-muted-foreground')}>
                                         {d.ratio > 0 ? `${d.ratio.toFixed(1)}%` : ''}
                                     </span>
                                 </div>
-                                <MiniBar label="Umsatz" value={d.revenue} max={maxRevenue} color="bg-green-500" />
-                                {d.labor > 0 && <MiniBar label="Aushilfen" value={d.labor} max={maxRevenue} color="bg-amber-500" />}
+                                <MiniBar label="Umsatz" value={d.revenue} max={maxRevenue} color="bg-status-ok/70" />
+                                {d.labor > 0 && <MiniBar label="Aushilfen" value={d.labor} max={maxRevenue} color="bg-status-warn/70" />}
                             </div>
                         ))}
                     </CardContent>

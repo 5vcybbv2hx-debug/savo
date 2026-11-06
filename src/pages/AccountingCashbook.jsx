@@ -51,12 +51,12 @@ const CATEGORIES = {
 };
 
 const TYPE_STYLE = {
-    Einnahme:       { color: 'text-green-400',  bg: 'bg-green-500/10',   icon: TrendingUp   },
-    Ausgabe:        { color: 'text-red-400',     bg: 'bg-red-500/10',     icon: TrendingDown },
-    Privatentnahme: { color: 'text-orange-400',  bg: 'bg-orange-500/10',  icon: TrendingDown },
-    Privateinlage:  { color: 'text-blue-400',    bg: 'bg-blue-500/10',    icon: TrendingUp   },
-    Trinkgeld:      { color: 'text-amber-400',   bg: 'bg-amber-500/10',   icon: TrendingUp   },
-    Kassensturz:    { color: 'text-purple-400',  bg: 'bg-purple-500/10',  icon: BookOpen     },
+    Einnahme:       { color: 'text-status-ok',  bg: 'bg-status-ok/10',   icon: TrendingUp   },
+    Ausgabe:        { color: 'text-status-danger',     bg: 'bg-status-danger/10',     icon: TrendingDown },
+    Privatentnahme: { color: 'text-status-warn',  bg: 'bg-status-warn/10',  icon: TrendingDown },
+    Privateinlage:  { color: 'text-primary',    bg: 'bg-primary/10',    icon: TrendingUp   },
+    Trinkgeld:      { color: 'text-status-warn',   bg: 'bg-status-warn/10',   icon: TrendingUp   },
+    Kassensturz:    { color: 'text-primary',  bg: 'bg-primary/10',  icon: BookOpen     },
     Sonstiges:      { color: 'text-muted-foreground', bg: 'bg-secondary/50', icon: BookOpen  },
 };
 
@@ -117,9 +117,9 @@ function EntryForm({ data, onChange }) {
                             className={cn(
                                 'px-3.5 py-2 rounded-xl border text-sm font-semibold transition-all min-h-[40px]',
                                 data.entry_type === t
-                                    ? t === 'Ausgabe'  ? 'bg-red-500/20 border-red-500/40 text-red-400'
-                                    : t === 'Einnahme' ? 'bg-green-500/20 border-green-500/40 text-green-400'
-                                    :                    'bg-amber-500/20 border-amber-500/40 text-amber-400'
+                                    ? t === 'Ausgabe'  ? 'bg-status-danger/20 border-status-danger/40 text-status-danger'
+                                    : t === 'Einnahme' ? 'bg-status-ok/20 border-status-ok/40 text-status-ok'
+                                    :                    'bg-status-warn/20 border-status-warn/40 text-status-warn'
                                     : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                             )}>
                             {t}
@@ -241,7 +241,7 @@ function EntryRow({ entry, onEdit, onDelete }) {
                         {entry.description || entry.category || entry.entry_type}
                     </p>
                     {isAuto && (
-                        <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/20 rounded px-1 py-0.5 shrink-0">
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-primary/15 text-primary border border-primary/20 rounded px-1 py-0.5 shrink-0">
                             <Zap className="w-2.5 h-2.5" />Auto
                         </span>
                     )}
@@ -255,13 +255,13 @@ function EntryRow({ entry, onEdit, onDelete }) {
             {entry.file_url && (
                 <a href={entry.file_url} target="_blank" rel="noopener noreferrer"
                     onClick={e => e.stopPropagation()}
-                    className="text-blue-400/60 hover:text-blue-400 p-1 shrink-0 transition-colors">
+                    className="text-primary/60 hover:text-primary p-1 shrink-0 transition-colors">
                     <FileText className="w-3.5 h-3.5" />
                 </a>
             )}
 
             <div className="text-right shrink-0">
-                <p className={cn('text-sm font-bold', income ? 'text-green-400' : 'text-red-400')}>
+                <p className={cn('text-sm font-bold', income ? 'text-status-ok' : 'text-status-danger')}>
                     {income ? '+' : '−'}{fmt(entry.amount)} €
                 </p>
             </div>
@@ -413,7 +413,7 @@ export default function AccountingCashbook() {
                         <p className="text-xs text-muted-foreground mt-0.5">Einnahmen & Ausgaben · DATEV-Vorbereitung</p>
                     </div>
                     <Button onClick={() => { setFormData(EMPTY_FORM); setModalOpen(true); }}
-                        className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                        className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                         <Plus className="w-4 h-4" /> Buchung
                     </Button>
                 </div>
@@ -425,13 +425,13 @@ export default function AccountingCashbook() {
                 <div className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-xl border',
                     kasssenstandBar >= 0
-                        ? 'bg-green-500/6 border-green-500/20'
-                        : 'bg-red-500/6 border-red-500/20'
+                        ? 'bg-status-ok/6 border-status-ok/20'
+                        : 'bg-status-danger/6 border-status-danger/20'
                 )}>
-                    <Wallet className={cn('w-5 h-5 shrink-0', kasssenstandBar >= 0 ? 'text-green-400' : 'text-red-400')} />
+                    <Wallet className={cn('w-5 h-5 shrink-0', kasssenstandBar >= 0 ? 'text-status-ok' : 'text-status-danger')} />
                     <div className="flex-1">
                         <p className="text-xs text-muted-foreground font-medium">Kassenstand Bar</p>
-                        <p className={cn('text-lg font-bold tabular-nums', kasssenstandBar >= 0 ? 'text-green-400' : 'text-red-400')}>
+                        <p className={cn('text-lg font-bold tabular-nums', kasssenstandBar >= 0 ? 'text-status-ok' : 'text-status-danger')}>
                             {fmt(kasssenstandBar)} €
                         </p>
                     </div>
@@ -442,19 +442,19 @@ export default function AccountingCashbook() {
 
                 {/* ── Monats-Summen ────────────────────────────────────────── */}
                 <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 text-center">
-                        <p className="text-[10px] text-green-400 font-semibold uppercase tracking-wide">Einnahmen</p>
-                        <p className="text-sm font-bold text-green-400 mt-0.5">{fmt(totals.income)} €</p>
+                    <div className="bg-status-ok/10 border border-status-ok/20 rounded-xl p-3 text-center">
+                        <p className="text-[10px] text-status-ok font-semibold uppercase tracking-wide">Einnahmen</p>
+                        <p className="text-sm font-bold text-status-ok mt-0.5">{fmt(totals.income)} €</p>
                     </div>
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-center">
-                        <p className="text-[10px] text-red-400 font-semibold uppercase tracking-wide">Ausgaben</p>
-                        <p className="text-sm font-bold text-red-400 mt-0.5">{fmt(totals.expense)} €</p>
+                    <div className="bg-status-danger/10 border border-status-danger/20 rounded-xl p-3 text-center">
+                        <p className="text-[10px] text-status-danger font-semibold uppercase tracking-wide">Ausgaben</p>
+                        <p className="text-sm font-bold text-status-danger mt-0.5">{fmt(totals.expense)} €</p>
                     </div>
                     <div className={cn('border rounded-xl p-3 text-center',
-                        totals.balance >= 0 ? 'bg-blue-500/10 border-blue-500/20' : 'bg-red-500/10 border-red-500/20'
+                        totals.balance >= 0 ? 'bg-primary/10 border-primary/20' : 'bg-status-danger/10 border-status-danger/20'
                     )}>
                         <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">Saldo</p>
-                        <p className={cn('text-sm font-bold mt-0.5', totals.balance >= 0 ? 'text-blue-400' : 'text-red-400')}>
+                        <p className={cn('text-sm font-bold mt-0.5', totals.balance >= 0 ? 'text-primary' : 'text-status-danger')}>
                             {fmt(totals.balance)} €
                         </p>
                     </div>
@@ -467,7 +467,7 @@ export default function AccountingCashbook() {
                             className={cn(
                                 'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                                 typeFilter === f.key
-                                    ? 'bg-amber-600 border-amber-600 text-white'
+                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                     : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                             )}>
                             {f.label}
@@ -505,7 +505,7 @@ export default function AccountingCashbook() {
                                         </p>
                                         <p className={cn(
                                             'text-xs font-bold tabular-nums',
-                                            dayBalance >= 0 ? 'text-green-400' : 'text-red-400'
+                                            dayBalance >= 0 ? 'text-status-ok' : 'text-status-danger'
                                         )}>
                                             {dayBalance >= 0 ? '+' : ''}{fmt(dayBalance)} €
                                         </p>
@@ -541,7 +541,7 @@ export default function AccountingCashbook() {
                         <Button variant="outline" onClick={() => setModalOpen(false)}>Abbrechen</Button>
                         <Button onClick={handleCreate}
                             disabled={createMutation.isPending || !formData.amount}
-                            className="bg-amber-600 hover:bg-amber-700 text-white flex-1">
+                            className="bg-status-warn/70 hover:bg-status-warn/70 text-white flex-1">
                             {createMutation.isPending ? 'Speichert…' : 'Speichern'}
                         </Button>
                     </DialogFooter>
@@ -559,7 +559,7 @@ export default function AccountingCashbook() {
                     <div className="py-1">
                         {selected?.source === 'z_abschlag' ? (
                             <div className="space-y-3">
-                                <div className="flex items-center gap-2 text-xs bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2 text-blue-400">
+                                <div className="flex items-center gap-2 text-xs bg-primary/10 border border-primary/20 rounded-xl px-3 py-2 text-primary">
                                     <Zap className="w-3.5 h-3.5 shrink-0" />
                                     Automatisch vom Tagesabschluss — nicht bearbeitbar
                                 </div>
@@ -580,7 +580,7 @@ export default function AccountingCashbook() {
                                     ))}
                                     {selected?.file_url && (
                                         <a href={selected.file_url} target="_blank" rel="noopener noreferrer"
-                                            className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 text-xs pt-2">
+                                            className="flex items-center gap-1.5 text-primary hover:text-primary/25 text-xs pt-2">
                                             <FileText className="w-3.5 h-3.5" /> Z-Bon PDF öffnen
                                         </a>
                                     )}
@@ -599,7 +599,7 @@ export default function AccountingCashbook() {
                             </Button>
                             <Button onClick={handleUpdate}
                                 disabled={updateMutation.isPending}
-                                className="bg-amber-600 hover:bg-amber-700 text-white flex-1 h-9">
+                                className="bg-status-warn/70 hover:bg-status-warn/70 text-white flex-1 h-9">
                                 {updateMutation.isPending ? 'Speichert…' : 'Speichern'}
                             </Button>
                         </DialogFooter>

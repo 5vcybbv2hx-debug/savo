@@ -48,13 +48,13 @@ export default function PerformanceAudit() {
             <Card key={i} className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-bold text-foreground">{strategy.name}</h3>
-                <Zap className="w-4 h-4 text-amber-500 shrink-0" />
+                <Zap className="w-4 h-4 text-status-warn shrink-0" />
               </div>
               <p className="text-sm text-muted-foreground mb-2">{strategy.description}</p>
               <code className="text-xs bg-secondary p-2 rounded block mb-2 font-mono">
                 {strategy.example}
               </code>
-              <p className="text-xs text-green-600 dark:text-green-400">✓ {strategy.benefit}</p>
+              <p className="text-xs text-status-ok dark:text-status-ok">✓ {strategy.benefit}</p>
             </Card>
           ))}
         </div>
@@ -96,7 +96,7 @@ export default function PerformanceAudit() {
             <Card key={i} className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-bold text-foreground font-mono text-sm">{opt.technique}</h3>
-                <Gauge className="w-4 h-4 text-green-500 shrink-0" />
+                <Gauge className="w-4 h-4 text-status-ok shrink-0" />
               </div>
               <p className="text-sm text-muted-foreground mb-2">
                 <strong>Wann:</strong> {opt.when}
@@ -104,7 +104,7 @@ export default function PerformanceAudit() {
               <code className="text-xs bg-secondary p-2 rounded block mb-2 font-mono">
                 {opt.code}
               </code>
-              <p className="text-xs text-green-600 dark:text-green-400">
+              <p className="text-xs text-status-ok dark:text-status-ok">
                 ⚡ {opt.impact}
               </p>
             </Card>
@@ -119,7 +119,7 @@ export default function PerformanceAudit() {
           {PERFORMANCE_CHECKLIST.map(section => (
             <Card key={section.category} className="p-4">
               <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-amber-500" />
+                <CheckCircle2 className="w-5 h-5 text-status-warn" />
                 {section.category}
               </h3>
               <ul className="space-y-1">
@@ -142,15 +142,15 @@ export default function PerformanceAudit() {
         <h2 className="text-2xl font-bold text-foreground">Häufige Performance-Probleme</h2>
         <div className="space-y-3">
           {COMMON_BOTTLENECKS.map((bottleneck, i) => (
-            <Card key={i} className="p-4 border-l-4 border-l-red-500 bg-red-500/5">
+            <Card key={i} className="p-4 border-l-4 border-l-red-500 bg-status-danger/5">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-status-danger shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <h3 className="font-bold text-foreground">{bottleneck.problem}</h3>
                   <p className="text-xs text-muted-foreground mt-1">
                     <strong>Symptom:</strong> {bottleneck.symptom}
                   </p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  <p className="text-xs text-status-ok dark:text-status-ok mt-1">
                     <strong>Fix:</strong> {bottleneck.fix}
                   </p>
                 </div>
@@ -165,7 +165,7 @@ export default function PerformanceAudit() {
         <h2 className="text-2xl font-bold text-foreground">Performance Messen</h2>
         <Card className="p-6 space-y-3">
           <div className="flex gap-3">
-            <BarChart3 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+            <BarChart3 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-foreground">React DevTools Profiler</p>
               <p className="text-sm text-muted-foreground">Chrome DevTools → Profiler Tab: Misst Render-Zeit pro Component</p>
@@ -173,7 +173,7 @@ export default function PerformanceAudit() {
           </div>
 
           <div className="flex gap-3">
-            <BarChart3 className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+            <BarChart3 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-foreground">Network Tab</p>
               <p className="text-sm text-muted-foreground">Chrome DevTools → Network: Request-Größe, Caching, Duplicates</p>
@@ -181,7 +181,7 @@ export default function PerformanceAudit() {
           </div>
 
           <div className="flex gap-3">
-            <TrendingDown className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+            <TrendingDown className="w-5 h-5 text-status-ok shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-foreground">Lighthouse</p>
               <p className="text-sm text-muted-foreground">Chrome DevTools → Lighthouse: Web Vitals, Performance Score (0-100)</p>
@@ -189,7 +189,7 @@ export default function PerformanceAudit() {
           </div>
 
           <div className="flex gap-3">
-            <Zap className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <Zap className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-foreground">React Query DevTools</p>
               <p className="text-sm text-muted-foreground">import ReactQueryDevtools: Zeigt Query-Status, Cache, Stale-Times</p>

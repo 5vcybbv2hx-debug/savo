@@ -71,15 +71,15 @@ export default function PayrollReportHistory() {
                             className={cn(
                                 'flex items-start gap-3 p-3 rounded-lg border',
                                 log.status === 'success'
-                                    ? 'bg-green-500/5 border-green-500/20'
-                                    : 'bg-red-500/5 border-red-500/20'
+                                    ? 'bg-status-ok/5 border-status-ok/20'
+                                    : 'bg-status-danger/5 border-status-danger/20'
                             )}
                         >
                             <div className="mt-0.5">
                                 {log.status === 'success' ? (
-                                    <Check className="w-5 h-5 text-green-600" />
+                                    <Check className="w-5 h-5 text-status-ok" />
                                 ) : (
-                                    <AlertCircle className="w-5 h-5 text-red-600" />
+                                    <AlertCircle className="w-5 h-5 text-status-danger" />
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -97,7 +97,7 @@ export default function PayrollReportHistory() {
                                     {format(new Date(log.sent_at), 'd. MMM yyyy, HH:mm', { locale: de })}
                                 </p>
                                 {log.status === 'failed' && log.error_message && (
-                                    <p className="text-xs text-red-600 mt-1">
+                                    <p className="text-xs text-status-danger mt-1">
                                         Fehler: {log.error_message}
                                     </p>
                                 )}
@@ -105,8 +105,8 @@ export default function PayrollReportHistory() {
                             <div className={cn(
                                 'text-xs font-medium whitespace-nowrap',
                                 log.status === 'success'
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
+                                    ? 'text-status-ok'
+                                    : 'text-status-danger'
                             )}>
                                 {log.status === 'success' ? 'Versendet' : 'Fehler'}
                             </div>

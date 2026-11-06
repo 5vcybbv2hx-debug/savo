@@ -87,13 +87,13 @@ export default function QRCodeGenerator({ itemId, itemName, type = 'recipe' }) {
         <div className="flex flex-col gap-4 items-center">
             <canvas 
                 ref={canvasRef} 
-                className="border-2 border-slate-700 rounded-lg p-2 bg-white"
+                className="border-2 border-border rounded-lg p-2 bg-card"
             />
             <div className="flex gap-2 flex-wrap justify-center">
                 <Button
                     size="sm"
                     onClick={handleDownload}
-                    className="gap-2 bg-blue-600 hover:bg-blue-700"
+                    className="gap-2 bg-primary/70 hover:bg-primary/70"
                 >
                     <Download className="w-4 h-4" />
                     Download

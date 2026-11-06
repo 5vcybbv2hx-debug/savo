@@ -58,7 +58,7 @@ export default function WeekdayTasksSection({ tasks = [], nextWeekTasks = [], on
                                     <SwipeRow
                                         key={task.id}
                                         onSwipeRight={() => onComplete(task)}
-                                        revealColorRight="bg-emerald-600"
+                                        revealColorRight="bg-status-ok/70"
                                         revealIconRight={Check}
                                         disabled={disabled}
                                         contentClassName="rounded-xl"
@@ -72,7 +72,7 @@ export default function WeekdayTasksSection({ tasks = [], nextWeekTasks = [], on
                                             }`}
                                         >
                                             <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                                                task.is_completed ? 'bg-emerald-500 border-emerald-500' : 'border-border'
+                                                task.is_completed ? 'bg-status-ok/70 border-status-ok/70' : 'border-border'
                                             }`}>
                                                 {task.is_completed && <Check className="w-4 h-4 text-white" />}
                                             </div>

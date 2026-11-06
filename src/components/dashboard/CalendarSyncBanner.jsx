@@ -69,13 +69,13 @@ export default function CalendarSyncBanner({ employee }) {
     if (dismissed || !employee) return null;
 
     return (
-        <div className="mx-3 mt-3 md:mx-0 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
+        <div className="mx-3 mt-3 md:mx-0 rounded-xl border border-status-warn/30 bg-status-warn/10 p-4 space-y-3">
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-amber-400 shrink-0" />
+                    <Calendar className="w-5 h-5 text-status-warn shrink-0" />
                     <div>
-                        <p className="text-sm font-semibold text-amber-300">📅 Neu: Kalender-Abo für deine Schichten</p>
-                        <p className="text-xs text-amber-400/80 mt-0.5">
+                        <p className="text-sm font-semibold text-status-warn/25">📅 Neu: Kalender-Abo für deine Schichten</p>
+                        <p className="text-xs text-status-warn/80 mt-0.5">
                             Abonniere deinen persönlichen Schichtkalender — inkl. Geburtstage & Teamsitzungen.
                         </p>
                     </div>
@@ -90,7 +90,7 @@ export default function CalendarSyncBanner({ employee }) {
                     size="sm"
                     onClick={() => generateMutation.mutate()}
                     disabled={generateMutation.isPending}
-                    className="bg-amber-600 hover:bg-amber-700 text-white w-full"
+                    className="bg-status-warn/70 hover:bg-status-warn/70 text-white w-full"
                 >
                     <Calendar className="w-4 h-4 mr-2" />
                     {generateMutation.isPending ? 'Erstelle Link…' : 'Meinen Kalender-Link erstellen'}
@@ -105,12 +105,12 @@ export default function CalendarSyncBanner({ employee }) {
                             className="flex-1 px-3 py-2 text-xs bg-background border border-border rounded-lg font-mono text-foreground"
                         />
                         <Button size="icon" variant="outline" onClick={copyUrl} className="shrink-0">
-                            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                            {copied ? <Check className="w-4 h-4 text-status-ok" /> : <Copy className="w-4 h-4" />}
                         </Button>
                     </div>
 
-                    <div className="text-xs text-amber-400/80 space-y-1">
-                        <p className="font-medium text-amber-300">So abonnieren (iPhone):</p>
+                    <div className="text-xs text-status-warn/80 space-y-1">
+                        <p className="font-medium text-status-warn/25">So abonnieren (iPhone):</p>
                         <p>Einstellungen → Kalender → Accounts → Account hinzufügen → Andere → Kalender-Abo hinzufügen → Link einfügen → Speichern</p>
                     </div>
 
@@ -118,7 +118,7 @@ export default function CalendarSyncBanner({ employee }) {
                         <Button
                             size="sm"
                             onClick={confirm}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                            className="flex-1 bg-status-ok/70 hover:bg-status-ok/70 text-white"
                         >
                             <Check className="w-4 h-4 mr-2" />
                             Habe ich abonniert ✓

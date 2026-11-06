@@ -85,7 +85,7 @@ export default function AreaManager({ permissions }) {
           />
         </div>
         {permissions.isManager && (
-          <Button onClick={openAdd} className="bg-amber-600 hover:bg-amber-700 text-white h-11">
+          <Button onClick={openAdd} className="bg-status-warn/70 hover:bg-status-warn/70 text-white h-11">
             <Plus className="w-4 h-4 mr-2" />
             Neuer Bereich
           </Button>
@@ -177,7 +177,7 @@ export default function AreaManager({ permissions }) {
             <Button
               onClick={handleSave}
               disabled={!formData.name.trim() || saveMutation.isPending}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-status-warn/70 hover:bg-status-warn/70 text-white"
             >
               {saveMutation.isPending ? 'Wird gespeichert...' : 'Speichern'}
             </Button>

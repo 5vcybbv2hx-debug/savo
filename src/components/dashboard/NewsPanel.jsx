@@ -45,9 +45,9 @@ function getNextOccurrence(item, completedAt = new Date()) {
 }
 
 const PRIORITY_CONFIG = {
-    info:      { icon: Info,          color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/30',     label: 'Info' },
-    wichtig:   { icon: AlertCircle,    color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/30',  label: 'Wichtig' },
-    dringend:  { icon: AlertCircle,    color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/30',      label: 'Dringend' },
+    info:      { icon: Info,          color: 'text-primary',   bg: 'bg-primary/10 border-primary/30',     label: 'Info' },
+    wichtig:   { icon: AlertCircle,    color: 'text-status-warn',  bg: 'bg-status-warn/10 border-status-warn/30',  label: 'Wichtig' },
+    dringend:  { icon: AlertCircle,    color: 'text-status-danger',    bg: 'bg-status-danger/10 border-status-danger/30',      label: 'Dringend' },
 };
 
 // ── Create/Edit Modal ────────────────────────────────────────────────────────
@@ -400,7 +400,7 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
                                                     onClick={() => handleComplete(item)}
                                                     className="mt-0.5 shrink-0 min-h-[28px] min-w-[28px] flex items-center justify-center"
                                                 >
-                                                    <Circle className="w-5 h-5 text-muted-foreground hover:text-green-400 transition-colors" />
+                                                    <Circle className="w-5 h-5 text-muted-foreground hover:text-status-ok transition-colors" />
                                                 </button>
                                             ) : (
                                                 <div className={cn('mt-0.5 shrink-0 w-7 h-7 rounded-lg flex items-center justify-center', cfg.bg)}>
@@ -489,8 +489,8 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
 
                                 let statusBadge;
                                 if (isInactive) statusBadge = <span className="text-[9px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Inaktiv</span>;
-                                else if (isCompleted) statusBadge = <span className="text-[9px] font-semibold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded">Erledigt</span>;
-                                else if (isFuture) statusBadge = <span className="text-[9px] font-semibold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">Geplant</span>;
+                                else if (isCompleted) statusBadge = <span className="text-[9px] font-semibold text-status-ok bg-status-ok/10 px-1.5 py-0.5 rounded">Erledigt</span>;
+                                else if (isFuture) statusBadge = <span className="text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Geplant</span>;
                                 else if (isVisible) statusBadge = <span className="text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Sichtbar</span>;
 
                                 return (
@@ -522,7 +522,7 @@ export default function NewsPanel({ currentUser, currentEmployee, isManager, emp
                                             {(isInactive || isCompleted) && (
                                                 <button onClick={() => reactivateMutation.mutate(item.id)}
                                                     title="Reaktivieren"
-                                                    className="text-muted-foreground hover:text-green-400 p-1 transition-colors">
+                                                    className="text-muted-foreground hover:text-status-ok p-1 transition-colors">
                                                     <RotateCcw className="w-3.5 h-3.5" />
                                                 </button>
                                             )}

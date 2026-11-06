@@ -209,13 +209,13 @@ export default function OfferCalculation({ record, setField, setPosition, addPos
                                 </div>
                                 <div>
                                     <span className="text-muted-foreground">DB: </span>
-                                    <span className={cn('font-medium', c.db >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive')}>
+                                    <span className={cn('font-medium', c.db >= 0 ? 'text-status-ok dark:text-status-ok' : 'text-destructive')}>
                                         {eur(c.db)}
                                     </span>
                                 </div>
                                 <div>
                                     <span className="text-muted-foreground">Marge: </span>
-                                    <span className={cn('font-medium', c.marge >= 0.5 ? 'text-emerald-600 dark:text-emerald-400' : c.marge >= 0.2 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
+                                    <span className={cn('font-medium', c.marge >= 0.5 ? 'text-status-ok dark:text-status-ok' : c.marge >= 0.2 ? 'text-status-warn dark:text-status-warn' : 'text-destructive')}>
                                         {pct(c.marge * 100)}%
                                     </span>
                                 </div>
@@ -245,13 +245,13 @@ export default function OfferCalculation({ record, setField, setPosition, addPos
                 </div>
                 <div className="flex justify-between font-bold pt-1 border-t border-border/50">
                     <span className="text-foreground">Deckungsbeitrag</span>
-                    <span className={calc.db >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}>
+                    <span className={calc.db >= 0 ? 'text-status-ok dark:text-status-ok' : 'text-destructive'}>
                         {eur(calc.db)} &euro;
                     </span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                     <span>DB-Marge</span>
-                    <span className={cn('font-medium', margeTotal >= 0.5 ? 'text-emerald-600 dark:text-emerald-400' : margeTotal >= 0.2 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
+                    <span className={cn('font-medium', margeTotal >= 0.5 ? 'text-status-ok dark:text-status-ok' : margeTotal >= 0.2 ? 'text-status-warn dark:text-status-warn' : 'text-destructive')}>
                         {pct(margeTotal * 100)}%
                     </span>
                 </div>

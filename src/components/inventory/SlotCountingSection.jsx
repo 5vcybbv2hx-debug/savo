@@ -118,8 +118,8 @@ export default function SlotCountingSection({
                             className="w-full flex items-center gap-3 p-3 hover:bg-secondary/30 transition-colors"
                             onClick={() => setExpandedAreas(prev => ({ ...prev, [area.id]: !prev[area.id] }))}
                         >
-                            <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                                <Layers className="w-4 h-4 text-amber-500" />
+                            <div className="w-9 h-9 rounded-xl bg-status-warn/15 flex items-center justify-center shrink-0">
+                                <Layers className="w-4 h-4 text-status-warn" />
                             </div>
                             <div className="flex-1 text-left min-w-0">
                                 <p className="font-semibold text-sm text-foreground">{area.name}</p>
@@ -241,7 +241,7 @@ function SlotGroup({ slot, expanded, onToggle, assignments, isCounted, slotValue
                 onClick={onToggle}
             >
                 {isCounted
-                    ? <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                    ? <CheckCircle2 className="w-4 h-4 text-status-ok shrink-0" />
                     : <Circle className="w-4 h-4 text-muted-foreground shrink-0" />}
                 <div className="flex-1 text-left min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{slot.name}</p>
@@ -277,14 +277,14 @@ function SlotGroup({ slot, expanded, onToggle, assignments, isCounted, slotValue
                                     <p className="text-[10px] text-muted-foreground">
                                         Letzte: {oldValue}{assignment.unit ? ` ${assignment.unit}` : ''}
                                         {hasMinStock && (
-                                            <span className="ml-2 text-blue-400">
+                                            <span className="ml-2 text-primary">
                                                 Soll: {assignment.min_stock}{assignment.unit ? ` ${assignment.unit}` : ''}
                                             </span>
                                         )}
                                         {hasChanged && value !== undefined && (
                                             <span className={cn(
                                                 'ml-2 font-medium',
-                                                value > oldValue ? 'text-green-400' : 'text-red-400'
+                                                value > oldValue ? 'text-status-ok' : 'text-status-danger'
                                             )}>
                                                 → {value}
                                             </span>

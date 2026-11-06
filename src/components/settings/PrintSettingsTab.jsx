@@ -41,7 +41,7 @@ export default function PrintSettingsTab() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
-                        <Printer className="w-4 h-4 text-amber-500" />
+                        <Printer className="w-4 h-4 text-status-warn" />
                         Druckformat-Einstellungen
                     </h2>
                     <p className="text-sm text-muted-foreground mt-0.5">
@@ -50,7 +50,7 @@ export default function PrintSettingsTab() {
                 </div>
                 {dirty && (
                     <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending}
-                        className="bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                        className="bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                         <Save className="w-4 h-4" />
                         Speichern
                     </Button>
@@ -88,7 +88,7 @@ export default function PrintSettingsTab() {
                                             className={cn(
                                                 'flex items-center gap-1 px-2 py-1 rounded-lg text-xs border transition-all',
                                                 current === fKey
-                                                    ? 'bg-amber-500 border-amber-500 text-white font-semibold'
+                                                    ? 'bg-status-warn/70 border-status-warn/70 text-white font-semibold'
                                                     : 'border-border text-muted-foreground hover:text-foreground bg-background'
                                             )}>
                                             {icon}

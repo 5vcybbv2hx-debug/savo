@@ -41,7 +41,7 @@ export default function VacationBalanceCard({ balance, year }) {
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-2">
                 <span className={cn(
                     'text-4xl font-bold tabular-nums leading-none',
-                    negative ? 'text-red-400' : 'text-primary',
+                    negative ? 'text-status-danger' : 'text-primary',
                 )}>
                     {fmt(available)}
                 </span>
@@ -62,13 +62,13 @@ export default function VacationBalanceCard({ balance, year }) {
             )}
 
             {negative && (
-                <div className="mt-4 flex items-start gap-2 text-xs text-red-400">
+                <div className="mt-4 flex items-start gap-2 text-xs text-status-danger">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>Konto überzogen — neuer Urlaub nur nach Rücksprache.</span>
                 </div>
             )}
             {low && (
-                <div className="mt-4 flex items-start gap-2 text-xs text-orange-400">
+                <div className="mt-4 flex items-start gap-2 text-xs text-status-warn">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>Weniger als 5 Tage verfügbar.</span>
                 </div>

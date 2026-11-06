@@ -72,7 +72,7 @@ export default function JobBillingTab({ job }) {
                 {deposit > 0 && (
                     <div className="p-3 flex justify-between text-sm">
                         <span className="text-muted-foreground">Anzahlung</span>
-                        <span className="text-emerald-500 font-medium num">− {eur(deposit)} €</span>
+                        <span className="text-status-ok font-medium num">− {eur(deposit)} €</span>
                     </div>
                 )}
                 <div className="p-4 flex justify-between">

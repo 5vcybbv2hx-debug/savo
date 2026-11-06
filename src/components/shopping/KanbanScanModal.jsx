@@ -13,9 +13,9 @@ import BarcodeScanner from '@/components/restock/BarcodeScanner';
 import { cn } from '@/lib/utils';
 
 const URGENCY = [
-    { value: 'dringend', label: 'Dringend', icon: Flame,         color: 'text-red-400',    bg: 'bg-red-500/15 border-red-500/30' },
-    { value: 'bald',     label: 'Bald',     icon: AlertTriangle, color: 'text-amber-400',  bg: 'bg-amber-500/15 border-amber-500/30' },
-    { value: 'normal',   label: 'Normal',   icon: Info,           color: 'text-blue-400',   bg: 'bg-blue-500/15 border-blue-500/30' },
+    { value: 'dringend', label: 'Dringend', icon: Flame,         color: 'text-status-danger',    bg: 'bg-status-danger/15 border-status-danger/30' },
+    { value: 'bald',     label: 'Bald',     icon: AlertTriangle, color: 'text-status-warn',  bg: 'bg-status-warn/15 border-status-warn/30' },
+    { value: 'normal',   label: 'Normal',   icon: Info,           color: 'text-primary',   bg: 'bg-primary/15 border-primary/30' },
 ];
 
 function UrgencyPicker({ value, onChange }) {
@@ -211,7 +211,7 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <QrCode className="w-5 h-5 text-amber-500" />
+                            <QrCode className="w-5 h-5 text-status-warn" />
                             Kanban-Scan
                         </DialogTitle>
                     </DialogHeader>
@@ -219,9 +219,9 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
                     {/* Feedback banner */}
                     {feedback && (
                         <div className={cn('flex items-center gap-3 p-3 rounded-lg text-sm font-medium border',
-                            feedback.type === 'added'    ? 'bg-green-500/15 text-green-400 border-green-500/30' :
-                            feedback.type === 'updated'  ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' :
-                                                           'bg-red-500/15 text-red-400 border-red-500/30'
+                            feedback.type === 'added'    ? 'bg-status-ok/15 text-status-ok border-status-ok/30' :
+                            feedback.type === 'updated'  ? 'bg-primary/15 text-primary border-primary/30' :
+                                                           'bg-status-danger/15 text-status-danger border-status-danger/30'
                         )}>
                             {feedback.type === 'added'    && <PlusCircle className="w-5 h-5 shrink-0" />}
                             {feedback.type === 'updated'  && <CheckCircle2 className="w-5 h-5 shrink-0" />}
@@ -246,7 +246,7 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
                                     )}
                                 </p>
                                 {pendingArticle.existing && (
-                                    <Badge variant="outline" className="mt-1 text-xs border-amber-500/40 text-amber-400">
+                                    <Badge variant="outline" className="mt-1 text-xs border-status-warn/40 text-status-warn">
                                         Bereits auf Liste ({pendingArticle.existing.quantity}×) – wird erhöht
                                     </Badge>
                                 )}
@@ -274,7 +274,7 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
                                     Abbrechen
                                 </Button>
                                 <Button
-                                    className={cn('flex-1 gap-2', urgency === 'dringend' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700')}
+                                    className={cn('flex-1 gap-2', urgency === 'dringend' ? 'bg-status-danger/70 hover:bg-status-danger/70' : 'bg-status-warn/70 hover:bg-status-warn/70')}
                                     onClick={handleConfirm}
                                     disabled={createMutation.isPending || updateMutation.isPending}
                                 >
@@ -286,7 +286,7 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
                     ) : (
                         <Button
                             onClick={() => setScannerOpen(true)}
-                            className="w-full h-16 text-base bg-amber-600 hover:bg-amber-700 gap-3"
+                            className="w-full h-16 text-base bg-status-warn/70 hover:bg-status-warn/70 gap-3"
                         >
                             <QrCode className="w-6 h-6" />
                             Barcode / QR-Code scannen
@@ -304,9 +304,9 @@ export default function KanbanScanModal({ open, onClose, suppliers = [] }) {
                                     const urg = URGENCY.find(u => u.value === log.urgency);
                                     return (
                                         <div key={i} className="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md bg-secondary/50">
-                                            {log.type === 'added'    && <PlusCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />}
-                                            {log.type === 'updated'  && <RefreshCw className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
-                                            {log.type === 'notfound' && <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
+                                            {log.type === 'added'    && <PlusCircle className="w-3.5 h-3.5 text-status-ok shrink-0" />}
+                                            {log.type === 'updated'  && <RefreshCw className="w-3.5 h-3.5 text-primary shrink-0" />}
+                                            {log.type === 'notfound' && <AlertCircle className="w-3.5 h-3.5 text-status-danger shrink-0" />}
                                             <span className="flex-1 truncate">{log.name}</span>
                                             {log.qty != null && <Badge variant="outline" className="text-xs shrink-0">{log.qty}×</Badge>}
                                             <span className="text-xs text-muted-foreground shrink-0">{log.time}</span>

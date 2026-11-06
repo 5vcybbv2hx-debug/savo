@@ -107,7 +107,7 @@ export default function DocumentManager({ employeeId, employeeName, canEdit = tr
     <div className="space-y-6">
       {/* Upload Bereich */}
       {canEdit && (
-        <Card className="border-amber-500/20 bg-amber-500/5">
+        <Card className="border-status-warn/20 bg-status-warn/5">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <FileUp className="w-5 h-5" />
@@ -207,8 +207,8 @@ export default function DocumentManager({ employeeId, employeeName, canEdit = tr
             <Card key={doc.id} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
-                    <File className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+                  <div className="p-2 rounded-lg bg-card dark:bg-surface">
+                    <File className="w-6 h-6 text-muted-foreground dark:text-muted-foreground" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -241,10 +241,10 @@ export default function DocumentManager({ employeeId, employeeName, canEdit = tr
                           toast.error('Fehler beim Abrufen: ' + error.message);
                         }
                       }}
-                      className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="p-2 rounded-lg hover:bg-card dark:hover:bg-surface transition-colors"
                       title="Öffnen"
                     >
-                      <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                      <Download className="w-5 h-5 text-muted-foreground dark:text-muted-foreground" />
                     </button>
                     {canEdit && (
                       <button
@@ -254,10 +254,10 @@ export default function DocumentManager({ employeeId, employeeName, canEdit = tr
                           }
                         }}
                         disabled={deleteMutation.isPending}
-                        className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+                        className="p-2 rounded-lg hover:bg-status-danger/15 dark:hover:bg-status-danger/30 transition-colors disabled:opacity-50"
                         title="Löschen"
                       >
-                        <Trash2 className="w-5 h-5 text-red-500" />
+                        <Trash2 className="w-5 h-5 text-status-danger" />
                       </button>
                     )}
                   </div>

@@ -130,8 +130,8 @@ export default function RegelGrid({
         });
         if (!hasMin || totalMin === 0) return 'bg-muted/20 border-border/40';
         const ratio = totalQty / totalMin;
-        if (ratio >= 1)   return 'bg-emerald-500/15 border-emerald-500/40';
-        if (ratio >= 0.5) return 'bg-amber-500/15 border-amber-500/40';
+        if (ratio >= 1)   return 'bg-status-ok/15 border-status-ok/40';
+        if (ratio >= 0.5) return 'bg-status-warn/15 border-status-warn/40';
         return 'bg-destructive/15 border-destructive/40';
     };
 
@@ -144,8 +144,8 @@ export default function RegelGrid({
         });
         if (!hasMin || totalMin === 0) return null;
         const ratio = totalQty / totalMin;
-        if (ratio >= 1)   return 'bg-emerald-500';
-        if (ratio >= 0.5) return 'bg-amber-500';
+        if (ratio >= 1)   return 'bg-status-ok/70';
+        if (ratio >= 0.5) return 'bg-status-warn/70';
         return 'bg-destructive';
     };
 
@@ -328,8 +328,8 @@ export default function RegelGrid({
                             {(() => {
                                 const ampel = getAmpelStatus(slotAssignments);
                                 if (ampel === 'red')    return <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-destructive" />;
-                                if (ampel === 'yellow') return <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-amber-500" />;
-                                if (ampel === 'green')  return <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-emerald-500" />;
+                                if (ampel === 'yellow') return <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-status-warn/70" />;
+                                if (ampel === 'green')  return <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-status-ok/70" />;
                                 // Edit-Modus oder keine Assignments: neutraler Bestands-Dot
                                 if (dotColor && !editMode) return <div className={cn('absolute top-1 left-1 w-2 h-2 rounded-full', dotColor)} />;
                                 return null;

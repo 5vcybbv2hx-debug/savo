@@ -109,7 +109,7 @@ export default function IncidentDetail() {
                         </p>
                     </div>
                     {form.is_training && (
-                        <span className="text-[10px] bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 rounded px-2 py-1 font-bold">TRAINING</span>
+                        <span className="text-[10px] bg-status-warn/15 text-status-warn border border-status-warn/30 rounded px-2 py-1 font-bold">TRAINING</span>
                     )}
                 </div>
 
@@ -243,7 +243,7 @@ export default function IncidentDetail() {
 
                 {/* Save */}
                 <div className="flex gap-2 pt-2">
-                    <Button onClick={handleSave} disabled={saving} className="flex-1 bg-amber-600 hover:bg-amber-700 text-white">
+                    <Button onClick={handleSave} disabled={saving} className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white">
                         {saving ? 'Speichern…' : 'Speichern'}
                     </Button>
                     <Button variant="outline" onClick={() => navigate('/incidents')} className="px-6">

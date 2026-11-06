@@ -122,7 +122,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                             confirmDelete ? (
                                 <button
                                     onClick={() => { onDelete(existing.id); setConfirmDelete(false); }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-semibold"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-status-danger/70 text-white text-xs font-semibold"
                                 >
                                     <Trash2 className="w-3.5 h-3.5" /> Löschen?
                                 </button>
@@ -224,7 +224,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
                             {isSaison && terrassenTasks.length > 0 && (
                                 <div>
                                     <p className="text-[12px] font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                                        <Leaf className="w-3.5 h-3.5 text-green-400" />
+                                        <Leaf className="w-3.5 h-3.5 text-status-ok" />
                                         Terrassen-Aufgaben
                                     </p>
                                     <div className="space-y-1.5">
@@ -258,7 +258,7 @@ function DayDrawer({ day, existing, open, onClose, onSave, onDelete, canEdit, cl
 
                             {/* Speichern */}
                             <Button onClick={handleSave}
-                                className="w-full bg-amber-600 hover:bg-amber-700 text-white min-h-[48px] font-semibold">
+                                className="w-full bg-status-warn/70 hover:bg-status-warn/70 text-white min-h-[48px] font-semibold">
                                 <Save className="w-4 h-4 mr-2" />
                                 {existing ? 'Änderungen speichern' : 'Sondertag anlegen'}
                             </Button>
@@ -356,18 +356,18 @@ function MonthCalendar({ currentMonth, specialDays, onDayClick, openingHours }) 
                                         className={cn(
                                             'relative flex flex-col items-center justify-start pt-1 pb-0.5 rounded-xl transition-all active:scale-95 min-h-[52px]',
                                             today && !special && !isHolidayDay
-                                                ? 'ring-2 ring-amber-500 bg-amber-500/10'
+                                                ? 'ring-2 ring-status-warn/70 bg-status-warn/10'
                                                 : '',
                                             special
                                                 ? `${cfg.color} text-white`
                                                 : isHolidayDay
-                                                    ? 'bg-red-500/15 text-red-300'
+                                                    ? 'bg-status-danger/15 text-status-danger/25'
                                                     : isRegularClosed
                                                         ? 'bg-secondary/30 text-muted-foreground/60'
                                                         : 'hover:bg-accent/50 text-foreground',
                                         )}
                                     >
-                                        <span className={cn('text-xs font-bold', today && !special ? 'text-amber-400' : '')}>
+                                        <span className={cn('text-xs font-bold', today && !special ? 'text-status-warn' : '')}>
                                             {format(day, 'd')}
                                         </span>
                                         {/* Inline-Label */}
@@ -393,7 +393,7 @@ function MonthCalendar({ currentMonth, specialDays, onDayClick, openingHours }) 
                         {segments.map((seg, si) => (
                             <div
                                 key={`bar-${si}`}
-                                className="pointer-events-none absolute bottom-0 h-1.5 rounded-full bg-pink-500"
+                                className="pointer-events-none absolute bottom-0 h-1.5 rounded-full bg-primary"
                                 style={{
                                     left: `calc(${(seg.from / 7) * 100}% + 2px)`,
                                     width: `calc(${((seg.to - seg.from + 1) / 7) * 100}% - 4px)`,
@@ -466,7 +466,7 @@ function UpcomingList({ specialDays, onDayClick }) {
                 const daysUntil = Math.round((date - new Date()) / 86400000);
                 return (
                     <button key={d.id} onClick={() => onDayClick(date, d)}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-amber-500/40 transition-all text-left active:scale-[0.98]">
+                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-status-warn/40 transition-all text-left active:scale-[0.98]">
                         <div className={cn('w-11 h-11 rounded-xl flex flex-col items-center justify-center shrink-0', cfg.color)}>
                             <span className="text-foreground font-bold text-sm leading-none">{format(date, 'd')}</span>
                             <span className="text-foreground/70 text-[9px]">{format(date, 'MMM', { locale: de })}</span>
@@ -489,7 +489,7 @@ function UpcomingList({ specialDays, onDayClick }) {
                         <div className="text-right shrink-0">
                             <span className={cn(
                                 'text-xs font-semibold',
-                                daysUntil === 0 ? 'text-amber-400' : daysUntil <= 3 ? 'text-orange-400' : 'text-muted-foreground'
+                                daysUntil === 0 ? 'text-status-warn' : daysUntil <= 3 ? 'text-status-warn' : 'text-muted-foreground'
                             )}>
                                 {daysUntil === 0 ? 'Heute' : daysUntil === 1 ? 'Morgen' : `in ${daysUntil}d`}
                             </span>
@@ -514,10 +514,10 @@ function HolidayList() {
     return (
         <div className="space-y-1.5">
             {holidays.map((h, i) => (
-                <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-red-500/8 border border-red-500/15">
-                    <div className="w-9 h-9 rounded-xl bg-red-500/20 flex flex-col items-center justify-center shrink-0">
-                        <span className="text-xs font-bold text-red-300 leading-none">{format(h.date, 'd')}</span>
-                        <span className="text-[9px] text-red-300/70">{format(h.date, 'MMM', { locale: de })}</span>
+                <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-status-danger/8 border border-status-danger/15">
+                    <div className="w-9 h-9 rounded-xl bg-status-danger/20 flex flex-col items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-status-danger/25 leading-none">{format(h.date, 'd')}</span>
+                        <span className="text-[9px] text-status-danger/70">{format(h.date, 'MMM', { locale: de })}</span>
                     </div>
                     <div>
                         <p className="text-sm font-semibold text-foreground">{h.name}</p>
@@ -635,8 +635,8 @@ export default function BusinessCalendar() {
                 {/* ── Header ──────────────────────────────────────────── */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
-                            <CalendarDays className="w-5 h-5 text-amber-500" />
+                        <div className="w-10 h-10 rounded-xl bg-status-warn/15 flex items-center justify-center">
+                            <CalendarDays className="w-5 h-5 text-status-warn" />
                         </div>
                         <div>
                             <h1 className="text-lg font-bold text-foreground">Betriebskalender</h1>
@@ -656,7 +656,7 @@ export default function BusinessCalendar() {
                                 {autoFilling ? 'Läuft…' : 'Auto-Fill'}
                             </Button>
                             <Button size="sm" onClick={() => handleDayClick(new Date(), null)}
-                                className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                                className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                                 <Plus className="w-4 h-4" />
                                 <span className="hidden sm:inline">Sondertag</span>
                             </Button>
@@ -732,9 +732,9 @@ export default function BusinessCalendar() {
                 </div>
 
                 {/* ── Info ─────────────────────────────────────────────── */}
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-500/8 border border-blue-500/15">
-                    <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-300">
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-primary/8 border border-primary/15">
+                    <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <p className="text-xs text-primary/25">
                         Zeiterfassung ist unabhängig vom Betriebskalender — Mitarbeiter können immer stempeln, auch an geschlossenen Tagen.
                     </p>
                 </div>

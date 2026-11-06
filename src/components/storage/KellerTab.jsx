@@ -209,8 +209,8 @@ export default function KellerTab({ badgeCount }) {
                                         className={cn(
                                             'ml-auto w-12 h-10 flex items-center justify-center rounded-lg border-2 transition-all active:scale-95 shrink-0',
                                             missing > 0
-                                                ? 'border-amber-500/60 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10'
-                                                : 'border-border bg-card text-muted-foreground hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/5'
+                                                ? 'border-status-warn/60 bg-status-warn/5 text-status-warn hover:bg-status-warn/10'
+                                                : 'border-border bg-card text-muted-foreground hover:border-status-ok/70 hover:text-status-ok hover:bg-status-ok/5'
                                         )}
                                         title={missing > 0 ? `Erledigt — ${missing} Stück fehlen, Manager wird benachrichtigt` : 'Erledigt — Menge geholt'}
                                     >
@@ -220,7 +220,7 @@ export default function KellerTab({ badgeCount }) {
 
                                 {/* Hinweis: fehlende Menge */}
                                 {missing > 0 && (
-                                    <p className="text-xs text-amber-500 dark:text-amber-400 font-medium mt-2">
+                                    <p className="text-xs text-status-warn dark:text-status-warn font-medium mt-2">
                                         ⚠ {missing} Stück fehlen im Keller
                                     </p>
                                 )}

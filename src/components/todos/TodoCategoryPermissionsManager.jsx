@@ -121,7 +121,7 @@ export default function TodoCategoryPermissionsManager({ open, onClose }) {
                           )}
                           <div className="flex flex-wrap gap-1 mt-2">
                             {(cat.visible_roles || []).map(role => (
-                              <span key={role} className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                              <span key={role} className="px-2 py-1 text-xs rounded-full bg-primary/20 text-primary border border-primary/30">
                                 {role}
                               </span>
                             ))}
@@ -146,7 +146,7 @@ export default function TodoCategoryPermissionsManager({ open, onClose }) {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-red-400 hover:text-red-500"
+                            className="text-status-danger hover:text-status-danger"
                             onClick={() => {
                               if (confirm(`Kategorie "${cat.name}" wirklich löschen?`)) {
                                 deleteMutation.mutate(cat.id);
@@ -206,7 +206,7 @@ export default function TodoCategoryPermissionsManager({ open, onClose }) {
               <Button
                 onClick={handleCreateCategory}
                 disabled={createMutation.isPending || !newCategoryName.trim()}
-                className="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white"
+                className="w-full bg-gradient-to-r from-status-ok to-status-ok hover:from-status-ok hover:to-status-ok text-white"
               >
                 {createMutation.isPending ? (
                   <>

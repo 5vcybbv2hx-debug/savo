@@ -57,11 +57,11 @@ export default function LowStockAlert() {
             <Button
                 variant="outline"
                 onClick={() => setOpen(true)}
-                className="border-red-600 text-red-600 hover:bg-red-50 relative"
+                className="border-status-danger/70 text-status-danger hover:bg-status-danger/15 relative"
             >
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Bestandsalarm
-                <Badge className="ml-2 bg-red-600 text-foreground">
+                <Badge className="ml-2 bg-status-danger/70 text-foreground">
                     {lowStockArticles.length}
                 </Badge>
             </Button>
@@ -69,7 +69,7 @@ export default function LowStockAlert() {
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                        <DialogTitle className="flex items-center gap-2 text-status-danger">
                             <AlertTriangle className="w-5 h-5" />
                             Niedrige Lagerbestände
                         </DialogTitle>
@@ -83,7 +83,7 @@ export default function LowStockAlert() {
                             <Button
                                 onClick={addAllToShopping}
                                 size="sm"
-                                className="bg-amber-600 hover:bg-amber-700"
+                                className="bg-status-warn/70 hover:bg-status-warn/70"
                             >
                                 <ShoppingCart className="w-4 h-4 mr-2" />
                                 Alle zur Einkaufsliste
@@ -92,7 +92,7 @@ export default function LowStockAlert() {
 
                         <div className="space-y-3">
                             {lowStockArticles.map(article => (
-                                <Card key={article.id} className="p-4 bg-red-50 border-red-200">
+                                <Card key={article.id} className="p-4 bg-status-danger/15 border-status-danger/25">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-2">
@@ -104,7 +104,7 @@ export default function LowStockAlert() {
                                                     />
                                                 )}
                                                 <div>
-                                                    <h4 className="font-semibold text-slate-800">
+                                                    <h4 className="font-semibold text-muted-foreground">
                                                         {article.name}
                                                     </h4>
                                                     <p className="text-xs text-muted-foreground">
@@ -116,7 +116,7 @@ export default function LowStockAlert() {
                                             <div className="flex items-center gap-4 text-sm">
                                                 <div>
                                                     <span className="text-muted-foreground">Aktuell: </span>
-                                                    <span className="font-semibold text-red-600">
+                                                    <span className="font-semibold text-status-danger">
                                                         {article.current_stock || 0}
                                                     </span>
                                                 </div>
@@ -128,7 +128,7 @@ export default function LowStockAlert() {
                                                 </div>
                                                 <div>
                                                     <span className="text-muted-foreground">Fehlend: </span>
-                                                    <span className="font-semibold text-orange-600">
+                                                    <span className="font-semibold text-status-warn">
                                                         {article.min_stock - (article.current_stock || 0)}
                                                     </span>
                                                 </div>

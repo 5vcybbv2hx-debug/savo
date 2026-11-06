@@ -55,13 +55,13 @@ export function ErrorFallback({
   const errorInfo = handleError(error, 'ErrorFallback');
   
   return (
-    <Card className={`p-6 border-red-500/40 ${isDark ? 'bg-red-500/5' : 'bg-red-50'}`}>
+    <Card className={`p-6 border-status-danger/40 ${isDark ? 'bg-status-danger/5' : 'bg-status-danger/15'}`}>
       <div className="flex items-start gap-4">
         <div className="flex-shrink-0">
-          <AlertCircle className="w-6 h-6 text-red-500" />
+          <AlertCircle className="w-6 h-6 text-status-danger" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-red-700 dark:text-red-400">{title}</h3>
+          <h3 className="font-semibold text-status-danger dark:text-status-danger">{title}</h3>
           <p className="text-sm text-muted-foreground mt-1">
             {errorInfo.message}
           </p>
@@ -75,7 +75,7 @@ export function ErrorFallback({
               onClick={onRetry}
               size="sm"
               variant="outline"
-              className="mt-3 text-red-600 border-red-500/40 hover:bg-red-500/10"
+              className="mt-3 text-status-danger border-status-danger/40 hover:bg-status-danger/10"
             >
               <RefreshCw className="w-3 h-3 mr-2" />
               Erneut versuchen

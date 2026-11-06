@@ -92,7 +92,7 @@ export default function EmployeesCSVExport({ employees }) {
         <Button
             onClick={handleExport}
             variant="outline"
-            className="border-slate-700 text-slate-300 hover:bg-slate-800"
+            className="border-border text-muted-foreground hover:bg-surface"
         >
             <Download className="w-4 h-4 mr-2" />
             CSV für Steuerberater

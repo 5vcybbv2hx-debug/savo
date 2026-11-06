@@ -76,7 +76,7 @@ export function SalesForecast({ salesData }) {
         <Card className="bg-card border-border">
             <CardHeader>
                 <CardTitle className="text-foreground flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-emerald-400" />
+                    <TrendingUp className="w-5 h-5 text-status-ok" />
                     7-Tage Umsatz-Prognose
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
@@ -105,9 +105,9 @@ export function SalesForecast({ salesData }) {
                     <div className="bg-background/50 rounded-lg p-4 col-span-2">
                         <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
                             {trend === 'up' ? (
-                                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                                <TrendingUp className="w-4 h-4 text-status-ok" />
                             ) : trend === 'down' ? (
-                                <TrendingDown className="w-4 h-4 text-red-400" />
+                                <TrendingDown className="w-4 h-4 text-status-danger" />
                             ) : (
                                 <TrendingUp className="w-4 h-4 text-muted-foreground" />
                             )}
@@ -115,7 +115,7 @@ export function SalesForecast({ salesData }) {
                         </div>
                         <div className={cn(
                             "text-2xl font-bold",
-                            trend === 'up' ? "text-emerald-400" : trend === 'down' ? "text-red-400" : "text-muted-foreground"
+                            trend === 'up' ? "text-status-ok" : trend === 'down' ? "text-status-danger" : "text-muted-foreground"
                         )}>
                             {trend === 'up' ? '+' : trend === 'down' ? '-' : '±'}{trendPercent}%
                         </div>
@@ -176,15 +176,15 @@ export function SalesForecast({ salesData }) {
                 {/* Legend */}
                 <div className="flex items-center justify-center gap-6 text-sm">
                     <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-emerald-400 rounded"></div>
+                        <div className="w-3 h-3 bg-status-ok/70 rounded"></div>
                         <span className="text-muted-foreground">Optimistisch (+15%)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-blue-400 rounded"></div>
+                        <div className="w-3 h-3 bg-primary/70 rounded"></div>
                         <span className="text-muted-foreground">Prognose</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-red-400 rounded"></div>
+                        <div className="w-3 h-3 bg-status-danger/70 rounded"></div>
                         <span className="text-muted-foreground">Konservativ (-15%)</span>
                     </div>
                 </div>

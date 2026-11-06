@@ -417,8 +417,8 @@ export default function Layout({ children, currentPageName }) {
                                 </div>
                             )}
                             {!sidebarCollapsed && (
-                                <div className="px-4 py-3 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20 backdrop-blur">
-                                    <p className="text-sm font-bold text-amber-500">Bar Management</p>
+                                <div className="px-4 py-3 rounded-xl bg-gradient-to-br from-status-warn/10 to-status-warn/10 border border-status-warn/20 backdrop-blur">
+                                    <p className="text-sm font-bold text-status-warn">Bar Management</p>
                                     <p className="text-xs text-muted-foreground mt-0.5">
                                         {permissions.employeeRole || 'Alles im Griff'}
                                     </p>

@@ -58,7 +58,7 @@ export default function UnavailabilityForm({ open, onClose, currentUser, default
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <CalendarOff className="w-5 h-5 text-amber-400" />
+                        <CalendarOff className="w-5 h-5 text-status-warn" />
                         Nicht verfügbar melden
                     </DialogTitle>
                 </DialogHeader>
@@ -93,7 +93,7 @@ export default function UnavailabilityForm({ open, onClose, currentUser, default
                     <div className="grid grid-cols-2 gap-3">
                         <Button type="button" variant="outline" onClick={onClose} className="h-12">Abbrechen</Button>
                         <Button type="submit" disabled={mutation.isPending}
-                            className="h-12 bg-amber-500 hover:bg-amber-600 text-foreground font-bold">
+                            className="h-12 bg-status-warn/70 hover:bg-status-warn/70 text-foreground font-bold">
                             {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Melden'}
                         </Button>
                     </div>

@@ -46,9 +46,9 @@ function PriorityBadge({ priority }) {
 
 function StatusBadge({ status }) {
     const map = {
-        offen:      'bg-amber-500/15 text-amber-500 border-amber-500/30',
-        besprochen: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-        erledigt:   'bg-green-500/15 text-green-500 border-green-500/30',
+        offen:      'bg-status-warn/15 text-status-warn border-status-warn/30',
+        besprochen: 'bg-primary/15 text-primary border-primary/30',
+        erledigt:   'bg-status-ok/15 text-status-ok border-status-ok/30',
     };
     const icons = { offen: Clock, besprochen: MessageSquare, erledigt: CheckCircle };
     const Icon = icons[status] || Clock;
@@ -101,7 +101,7 @@ function TopicCard({ topic, isManager, onOpen, onStatusChange, onDelete }) {
                             <span>{format(new Date(topic.created_date), 'd. MMM', { locale: de })}</span>
                         )}
                         {topic.manager_notes && (
-                            <span className="text-amber-500 flex items-center gap-1">
+                            <span className="text-status-warn flex items-center gap-1">
                                 <Pencil className="w-2.5 h-2.5" /> Notiz
                             </span>
                         )}
@@ -118,13 +118,13 @@ function TopicCard({ topic, isManager, onOpen, onStatusChange, onDelete }) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuItem onClick={e => { e.stopPropagation(); onStatusChange(topic, 'besprochen'); }}>
-                                <MessageSquare className="w-4 h-4 mr-2 text-purple-400" /> Als besprochen
+                                <MessageSquare className="w-4 h-4 mr-2 text-primary" /> Als besprochen
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={e => { e.stopPropagation(); onStatusChange(topic, 'erledigt'); }}>
-                                <CheckCircle className="w-4 h-4 mr-2 text-green-500" /> Als erledigt
+                                <CheckCircle className="w-4 h-4 mr-2 text-status-ok" /> Als erledigt
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={e => { e.stopPropagation(); onStatusChange(topic, 'offen'); }}>
-                                <RotateCcw className="w-4 h-4 mr-2 text-amber-500" /> Wieder öffnen
+                                <RotateCcw className="w-4 h-4 mr-2 text-status-warn" /> Wieder öffnen
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -172,7 +172,7 @@ function ScheduleCard({ schedule, rsvpData, currentEmployee, onRsvp, isManager }
                             onClick={() => setShowRsvpList(v => !v)}
                             className="flex gap-3 mt-2 text-xs hover:opacity-80 transition-opacity"
                         >
-                            <span className="text-green-500">✓ {zusagen.length} Zusagen</span>
+                            <span className="text-status-ok">✓ {zusagen.length} Zusagen</span>
                             <span className="text-destructive">✗ {absagen.length} Absagen</span>
                             <span className="text-muted-foreground">{showRsvpList ? '▲' : '▼'}</span>
                         </button>
@@ -187,8 +187,8 @@ function ScheduleCard({ schedule, rsvpData, currentEmployee, onRsvp, isManager }
                             className={cn(
                                 'min-h-[44px] min-w-[44px] rounded-xl border text-sm font-semibold transition-all px-3',
                                 myRsvp === 'zusage'
-                                    ? 'bg-green-500 border-green-500 text-white'
-                                    : 'border-border text-muted-foreground hover:border-green-500/50 hover:text-green-500'
+                                    ? 'bg-status-ok/70 border-status-ok/70 text-white'
+                                    : 'border-border text-muted-foreground hover:border-status-ok/50 hover:text-status-ok'
                             )}
                         >
                             ✓
@@ -213,7 +213,7 @@ function ScheduleCard({ schedule, rsvpData, currentEmployee, onRsvp, isManager }
                 <div className="border-t border-border/50 pt-3 grid grid-cols-2 gap-3">
                     {zusagen.length > 0 && (
                         <div>
-                            <p className="text-[10px] font-bold text-green-500 uppercase tracking-wider mb-1.5">
+                            <p className="text-[10px] font-bold text-status-ok uppercase tracking-wider mb-1.5">
                                 ✓ Zusagen ({zusagen.length})
                             </p>
                             <div className="space-y-1">
@@ -503,7 +503,7 @@ export default function TeamMeeting() {
                                     </DropdownMenuItem>
                                     {currentSchedule && (
                                         <DropdownMenuItem onClick={handleWhatsApp}>
-                                            <Send className="w-4 h-4 mr-2 text-green-500" /> WhatsApp Erinnerung
+                                            <Send className="w-4 h-4 mr-2 text-status-ok" /> WhatsApp Erinnerung
                                         </DropdownMenuItem>
                                     )}
                                     <DropdownMenuSeparator />
@@ -511,7 +511,7 @@ export default function TeamMeeting() {
                                         <FileText className="w-4 h-4 mr-2" /> Agenda drucken
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setProtocolModalOpen(true)}>
-                                        <ClipboardList className="w-4 h-4 mr-2 text-amber-400" /> Protokoll erstellen
+                                        <ClipboardList className="w-4 h-4 mr-2 text-status-warn" /> Protokoll erstellen
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -519,7 +519,7 @@ export default function TeamMeeting() {
 
                         {/* Protokoll für Protokollanten */}
                         {!permissions.isManager && isScribe && (
-                            <Button size="sm" onClick={() => setProtocolModalOpen(true)} className="bg-amber-600 hover:bg-amber-700 h-9">
+                            <Button size="sm" onClick={() => setProtocolModalOpen(true)} className="bg-status-warn/70 hover:bg-status-warn/70 h-9">
                                 <ClipboardList className="w-4 h-4 mr-1.5" /> Protokoll
                             </Button>
                         )}
@@ -552,7 +552,7 @@ export default function TeamMeeting() {
                         <TabsTrigger value="agenda" className="text-xs gap-1.5">
                             <MessageSquare className="w-3.5 h-3.5" />
                             Agenda
-                            {openCount > 0 && <span className="ml-1 bg-amber-500 text-white text-[9px] font-bold rounded-full px-1.5">{openCount}</span>}
+                            {openCount > 0 && <span className="ml-1 bg-status-warn/70 text-white text-[9px] font-bold rounded-full px-1.5">{openCount}</span>}
                         </TabsTrigger>
                         <TabsTrigger value="schichtwünsche" className="text-xs gap-1.5">
                             <CalendarDays className="w-3.5 h-3.5" /> Wünsche
@@ -771,13 +771,13 @@ export default function TeamMeeting() {
                                 {permissions.isManager && (
                                     <div className="flex flex-wrap gap-2 pt-1">
                                         <Button size="sm" variant="outline" onClick={() => { handleStatusChange(selectedTopic, 'besprochen'); setDetailModalOpen(false); }}>
-                                            <MessageSquare className="w-3.5 h-3.5 mr-1.5 text-purple-400" /> Besprochen
+                                            <MessageSquare className="w-3.5 h-3.5 mr-1.5 text-primary" /> Besprochen
                                         </Button>
                                         <Button size="sm" variant="outline" onClick={() => { handleStatusChange(selectedTopic, 'erledigt'); setDetailModalOpen(false); }}>
-                                            <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-green-500" /> Erledigt
+                                            <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-status-ok" /> Erledigt
                                         </Button>
                                         <Button size="sm" variant="outline" onClick={() => { handleStatusChange(selectedTopic, 'offen'); setDetailModalOpen(false); }}>
-                                            <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-amber-500" /> Wieder öffnen
+                                            <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-status-warn" /> Wieder öffnen
                                         </Button>
                                         <Button size="sm" variant="ghost" onClick={() => setEditMode(true)}>
                                             <Pencil className="w-3.5 h-3.5 mr-1.5" /> Bearbeiten
@@ -804,7 +804,7 @@ export default function TeamMeeting() {
                     </DialogHeader>
                     <div className="space-y-4 mt-2">
                         {currentSchedule && (
-                            <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 text-xs text-amber-500">
+                            <div className="flex items-start gap-2 rounded-lg bg-status-warn/10 border border-status-warn/20 px-3 py-2.5 text-xs text-status-warn">
                                 <span className="mt-0.5 shrink-0">⚠️</span>
                                 <span>Beim Ändern werden alle bisherigen Zu- und Absagen zurückgesetzt, damit das Team neu abstimmen kann.</span>
                             </div>

@@ -164,11 +164,11 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
     };
 
     return (
-        <Card className="border-blue-600 bg-blue-900/40">
+        <Card className="border-primary/70 bg-primary/40">
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-white">
-                        <Sparkles className="w-5 h-5 text-blue-400" />
+                        <Sparkles className="w-5 h-5 text-primary" />
                         Wochenspecial
                     </CardTitle>
                     <div className="flex gap-2 flex-wrap">
@@ -181,13 +181,13 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                                 { value: '4', label: '4 Getränke' },
                                 { value: '5', label: '5 Getränke' },
                             ]}
-                            triggerClassName="w-auto min-w-[120px] h-9 bg-slate-800 border-blue-600 text-white"
+                            triggerClassName="w-auto min-w-[120px] h-9 bg-surface border-primary/70 text-white"
                         />
                         <Button
                             size="sm"
                             onClick={generateRandomSelection}
                             disabled={isGenerating}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            className="bg-primary/70 hover:bg-primary/70 text-white"
                         >
                             <Shuffle className="w-4 h-4 mr-2" />
                             {isGenerating ? 'Generiert...' : 'Neu auswählen'}
@@ -196,7 +196,7 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                             size="sm"
                             variant="outline"
                             onClick={() => window.open('https://savo-lounge-live.base44.app/getraenke', '_blank')}
-                            className="border-blue-600 text-blue-400 hover:bg-blue-600/10"
+                            className="border-primary/70 text-primary hover:bg-primary/10"
                         >
                             <ExternalLink className="w-4 h-4 mr-2" />
                             Display
@@ -207,7 +207,7 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
 
             <CardContent>
                 {specialItems.length === 0 ? (
-                    <p className="text-sm text-slate-300 text-center py-6">
+                    <p className="text-sm text-muted-foreground text-center py-6">
                         Klick auf "Neu auswählen" um Wochenspecials vorzuschlagen
                     </p>
                 ) : (
@@ -215,18 +215,18 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                         {specialItems
                             .sort((a, b) => a.display_order - b.display_order)
                             .map((item) => (
-                                <div key={item.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                                <div key={item.id} className="bg-surface rounded-lg p-4 border border-border">
                                     <div className="flex justify-between items-start gap-3">
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-semibold text-white text-sm">{item.menu_item_name}</h3>
                                             <div className="flex gap-2 mt-2 text-xs flex-wrap">
-                                                <Badge variant="outline" className="text-slate-300">
+                                                <Badge variant="outline" className="text-muted-foreground">
                                                     Original: {Number(item.original_price).toFixed(2)}€
                                                 </Badge>
-                                                <Badge className="bg-blue-600 text-white">
+                                                <Badge className="bg-primary/70 text-white">
                                                     {item.discount_type === 'percent' ? `${item.discount_value}% Rabatt` : 'Spezialpreis'}
                                                 </Badge>
-                                                <Badge className="bg-green-600 text-white font-bold">
+                                                <Badge className="bg-status-ok/70 text-white font-bold">
                                                     {Number(item.final_price).toFixed(2)}€
                                                 </Badge>
                                             </div>
@@ -236,7 +236,7 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                                                 size="sm"
                                                 variant="ghost"
                                                 onClick={() => replaceItem(item)}
-                                                className="text-blue-400 hover:bg-blue-600/20"
+                                                className="text-primary hover:bg-primary/20"
                                             >
                                                 <Shuffle className="w-4 h-4" />
                                             </Button>
@@ -251,7 +251,7 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                                                     });
                                                     setShowEditDialog(true);
                                                 }}
-                                                className="text-slate-400 hover:bg-slate-700"
+                                                className="text-muted-foreground hover:bg-surface"
                                             >
                                                 <Edit2 className="w-4 h-4" />
                                             </Button>
@@ -259,7 +259,7 @@ export default function WeeklySpecialGenerator({ menuItems = [] }) {
                                                 size="sm"
                                                 variant="ghost"
                                                 onClick={() => deleteItemMutation.mutate(item.id)}
-                                                className="text-red-400 hover:bg-red-600/20"
+                                                className="text-status-danger hover:bg-status-danger/20"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>

@@ -300,7 +300,7 @@ export default function LayoutTab({ permissions }) {
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center gap-3 py-16">
-                <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-status-warn/30 border-t-amber-500 rounded-full animate-spin" />
                 <p className="text-sm text-muted-foreground">Lade Regal-Layout…</p>
             </div>
         );
@@ -324,8 +324,8 @@ export default function LayoutTab({ permissions }) {
             {!canEdit && (
                 <p className="text-xs text-muted-foreground/70 px-1">
                     Artikel antippen → zur Auffüllliste hinzufügen.&nbsp;
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">Grün</span> = voll ·&nbsp;
-                    <span className="text-amber-600 dark:text-amber-400 font-medium">Gelb</span> = knapp ·&nbsp;
+                    <span className="text-status-ok dark:text-status-ok font-medium">Grün</span> = voll ·&nbsp;
+                    <span className="text-status-warn dark:text-status-warn font-medium">Gelb</span> = knapp ·&nbsp;
                     <span className="text-destructive font-medium">Rot</span> = leer
                 </p>
             )}
@@ -338,8 +338,8 @@ export default function LayoutTab({ permissions }) {
                     <div key={area.id} className="space-y-3">
                         {/* Bereich-Header */}
                         <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                                <Layers className="w-3.5 h-3.5 text-amber-500" />
+                            <div className="w-7 h-7 rounded-lg bg-status-warn/15 flex items-center justify-center shrink-0">
+                                <Layers className="w-3.5 h-3.5 text-status-warn" />
                             </div>
                             <h3 className="text-sm font-semibold text-foreground">{area.name}</h3>
                         </div>
@@ -508,13 +508,13 @@ export default function LayoutTab({ permissions }) {
                                 const needed = hasMin ? Math.max(0, a.min_stock - val) : 0;
                                 
                                 // Bedarfs-Farbe berechnen
-                                let demandColor = "text-emerald-600 dark:text-emerald-400";
+                                let demandColor = "text-status-ok dark:text-status-ok";
                                 if (hasMin) {
                                     const ratio = a.min_stock > 0 ? (val / a.min_stock) : 1;
                                     if (ratio >= 1) {
-                                        demandColor = "text-emerald-600 dark:text-emerald-400";
+                                        demandColor = "text-status-ok dark:text-status-ok";
                                     } else if (ratio >= 0.5) {
-                                        demandColor = "text-amber-600 dark:text-amber-400";
+                                        demandColor = "text-status-warn dark:text-status-warn";
                                     } else {
                                         demandColor = "text-destructive";
                                     }
@@ -579,7 +579,7 @@ export default function LayoutTab({ permissions }) {
                                         {hasAnyMin && hasAnyNeeded && (
                                             <Button 
                                                 variant="outline" 
-                                                className="w-full h-9 text-sm border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                                                className="w-full h-9 text-sm border-status-warn/30 text-status-warn dark:text-status-warn hover:bg-status-warn/10"
                                                 disabled={saveIstMutation.isPending}
                                                 onClick={() => handleSaveIst(true)}
                                             >

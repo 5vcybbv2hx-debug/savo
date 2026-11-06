@@ -237,7 +237,7 @@ function ShiftsRow({ shifts }) {
             {shifts.map(s => {
                 const hasNote = s.notes && s.notes.trim().length > 0;
                 return (
-                    <span key={s.id} className={cn('inline-flex items-center gap-1', hasNote && 'text-amber-400')}>
+                    <span key={s.id} className={cn('inline-flex items-center gap-1', hasNote && 'text-status-warn')}>
                         {s.employee_name || '—'}
                         <span className="text-muted-foreground">
                             {s.start_time || '?'}-{s.end_time || '?'}
@@ -297,11 +297,11 @@ export default function TodayBriefCard() {
         <div className="divide-y divide-border/40">
             <BriefRow icon={Receipt} label="Umsatz">
                 {!yesterdayRev
-                    ? <span className="text-amber-400">Tagesabschluss fehlt</span>
+                    ? <span className="text-status-warn">Tagesabschluss fehlt</span>
                     : <span>
                         {yesterdayRev.revenue != null ? eur.format(yesterdayRev.revenue) : '—'}
                         {yesterdayRev.source === 'tagesabschluss'
-                            && <span className="text-emerald-400"> · Tagesabschluss ✓</span>}
+                            && <span className="text-status-ok"> · Tagesabschluss ✓</span>}
                     </span>}
             </BriefRow>
             {yesterdayRev?.busyness_level != null && (
@@ -334,7 +334,7 @@ export default function TodayBriefCard() {
             );
         }
         const openContent = openParts.length === 0
-            ? <span className="text-emerald-400">Alles erledigt ✓</span>
+            ? <span className="text-status-ok">Alles erledigt ✓</span>
             : <span className="flex flex-wrap gap-x-3 gap-y-1">{openParts.map((p, i) => <React.Fragment key={i}>{p}{i < openParts.length - 1 && <span className="text-muted-foreground">·</span>}</React.Fragment>)}</span>;
 
         return (
@@ -343,7 +343,7 @@ export default function TodayBriefCard() {
                 {todayWeather && (
                     <BriefRow icon={getWeatherInfo(todayWeather.code).icon} label="Wetter">
                         {todayWeather.tempMax}°C, {getWeatherInfo(todayWeather.code).label}
-                        {todayWeather.precip > 0 && <span className="text-blue-400"> · {todayWeather.precip}mm</span>}
+                        {todayWeather.precip > 0 && <span className="text-primary"> · {todayWeather.precip}mm</span>}
                     </BriefRow>
                 )}
                 <BriefRow icon={PartyPopper} label="Events & Feiertage">{eventsContent}</BriefRow>
@@ -365,17 +365,17 @@ export default function TodayBriefCard() {
                 {tomorrowWeather && (
                     <BriefRow icon={getWeatherInfo(tomorrowWeather.code).icon} label="Wetter">
                         {tomorrowWeather.tempMax}°C, {getWeatherInfo(tomorrowWeather.code).label}
-                        {tomorrowWeather.precip > 0 && <span className="text-blue-400"> · {tomorrowWeather.precip}mm</span>}
+                        {tomorrowWeather.precip > 0 && <span className="text-primary"> · {tomorrowWeather.precip}mm</span>}
                     </BriefRow>
                 )}
                 {(isTomorrowHoliday || isTomorrowHolidayEve) && (
-                    <BriefRow icon={PartyPopper} label="Feiertag" accent="text-amber-400">
+                    <BriefRow icon={PartyPopper} label="Feiertag" accent="text-status-warn">
                         <div className="flex flex-col gap-0.5">
                             {isTomorrowHoliday && holidayName && (
-                                <span className="font-semibold text-amber-400">Feiertag: {holidayName}</span>
+                                <span className="font-semibold text-status-warn">Feiertag: {holidayName}</span>
                             )}
                             {isTomorrowHolidayEve && holidayEveInfo && (
-                                <span className="text-amber-400">
+                                <span className="text-status-warn">
                                     Feiertags-Vorabend → Partyabend-Potenzial ({holidayEveInfo.holidayName})
                                 </span>
                             )}

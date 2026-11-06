@@ -19,7 +19,7 @@ export default function ArticleCountRow({ article, counted, categories, isActive
             id={`article-${article.id}`}
             className={cn(
                 "p-4 bg-card border-border transition-all mx-0 my-1",
-                isActive && "ring-2 ring-blue-500",
+                isActive && "ring-2 ring-primary/70",
                 counted !== undefined && "bg-card/50"
             )}
         >
@@ -66,8 +66,8 @@ export default function ArticleCountRow({ article, counted, categories, isActive
                     {counted !== undefined && (
                         <div className={cn(
                             "text-center min-w-[50px]",
-                            diff > 0 && "text-green-400",
-                            diff < 0 && "text-red-400",
+                            diff > 0 && "text-status-ok",
+                            diff < 0 && "text-status-danger",
                             diff === 0 && "text-muted-foreground"
                         )}>
                             <p className="text-sm mb-1">Diff</p>

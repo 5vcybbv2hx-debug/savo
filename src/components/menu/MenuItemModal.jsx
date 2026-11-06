@@ -406,8 +406,8 @@ export default function MenuItemModal({ item, open, onClose, onNavigate, navPosi
                             <div className={cn(
                                 "rounded-xl border p-3.5 space-y-3",
                                 rating === 'bad'  && "bg-destructive/10 border-destructive/30",
-                                rating === 'ok'   && "bg-amber-500/10 border-amber-500/30",
-                                rating === 'good' && "bg-emerald-500/10 border-emerald-500/30",
+                                rating === 'ok'   && "bg-status-warn/10 border-status-warn/30",
+                                rating === 'good' && "bg-status-ok/10 border-status-ok/30",
                                 rating == null    && "bg-muted/40 border-border/60"
                             )}>
                                 <div className="flex items-center justify-between text-sm">
@@ -428,8 +428,8 @@ export default function MenuItemModal({ item, open, onClose, onNavigate, navPosi
                                             <span className={cn(
                                                 "text-lg font-bold",
                                                 rating === 'bad'  && "text-destructive",
-                                                rating === 'ok'   && "text-amber-500",
-                                                rating === 'good' && "text-emerald-600 dark:text-emerald-400"
+                                                rating === 'ok'   && "text-status-warn",
+                                                rating === 'good' && "text-status-ok dark:text-status-ok"
                                             )}>
                                                 {foodCostPct.toFixed(1)}%
                                             </span>

@@ -43,9 +43,9 @@ const STATUS_TABS = [
 
 const PRIORITY_FILTERS = [
     { value: 'alle',     label: 'Alle',     dot: null },
-    { value: 'dringend', label: 'Dringend', dot: 'bg-red-500' },
-    { value: 'hoch',     label: 'Hoch',     dot: 'bg-orange-500' },
-    { value: 'mittel',   label: 'Mittel',   dot: 'bg-blue-500' },
+    { value: 'dringend', label: 'Dringend', dot: 'bg-status-danger/70' },
+    { value: 'hoch',     label: 'Hoch',     dot: 'bg-status-warn/70' },
+    { value: 'mittel',   label: 'Mittel',   dot: 'bg-primary/70' },
     { value: 'niedrig',  label: 'Niedrig',  dot: 'bg-muted-foreground' },
 ];
 
@@ -460,7 +460,7 @@ export default function Todos() {
                                             className={cn(
                                                 'px-2.5 py-1 rounded-full text-xs font-medium border transition-all',
                                                 quickCategory === cat
-                                                    ? 'bg-amber-500 border-amber-500 text-white'
+                                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                                     : 'border-border text-muted-foreground hover:text-foreground bg-background'
                                             )}>
                                             {cat}
@@ -480,7 +480,7 @@ export default function Todos() {
                                             className={cn(
                                                 'px-2.5 py-1 rounded-full text-xs font-medium border transition-all',
                                                 quickDue === d.value
-                                                    ? 'bg-blue-500 border-blue-500 text-white'
+                                                    ? 'bg-primary/70 border-primary/70 text-white'
                                                     : 'border-border text-muted-foreground hover:text-foreground bg-background'
                                             )}>
                                             {d.label}
@@ -492,7 +492,7 @@ export default function Todos() {
                                         onChange={e => setQuickDue(e.target.value)}
                                         className={cn(
                                             'px-2.5 py-1 rounded-full text-xs font-medium border transition-all bg-background text-muted-foreground',
-                                            quickDue && !['heute','morgen'].includes(quickDue) ? 'border-blue-500 text-blue-500' : 'border-border'
+                                            quickDue && !['heute','morgen'].includes(quickDue) ? 'border-primary/70 text-primary' : 'border-border'
                                         )}
                                     />
                                 </div>
@@ -508,7 +508,7 @@ export default function Todos() {
                                             className={cn(
                                                 'px-2.5 py-1 rounded-full text-xs font-medium border transition-all',
                                                 quickAssignees.includes(name)
-                                                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                                                    ? 'bg-status-ok/70 border-status-ok/70 text-white'
                                                     : 'border-border text-muted-foreground hover:text-foreground bg-background'
                                             )}>
                                             {name.split(' ')[0]}
@@ -583,7 +583,7 @@ export default function Todos() {
                                     className={cn(
                                         'shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border transition-all',
                                         statusFilter === value
-                                            ? 'bg-amber-500 border-amber-500 text-white'
+                                            ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                             : 'border-border text-muted-foreground hover:text-foreground bg-card'
                                     )}>
                                     {label}
@@ -625,7 +625,7 @@ export default function Todos() {
                             className={cn(
                                 'shrink-0 flex items-center gap-1 h-8 px-2.5 rounded-lg border text-xs font-medium transition-all',
                                 (showFilters || hasActiveFilters)
-                                    ? 'bg-amber-500 border-amber-500 text-white'
+                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                     : 'border-border text-muted-foreground hover:text-foreground bg-card'
                             )}>
                             Filter
@@ -654,7 +654,7 @@ export default function Todos() {
                                                 className={cn(
                                                     'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
                                                     categoryFilter === cat
-                                                        ? 'bg-blue-500 border-blue-500 text-white'
+                                                        ? 'bg-primary/70 border-primary/70 text-white'
                                                         : 'border-border text-muted-foreground hover:text-foreground'
                                                 )}>
                                                 {cat === 'alle' ? 'Alle' : cat}
@@ -669,7 +669,7 @@ export default function Todos() {
                                     <div className="flex gap-1.5 flex-wrap">
                                         <button onClick={() => setPersonFilter('alle')}
                                             className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
-                                                personFilter === 'alle' ? 'bg-purple-500 border-purple-500 text-white' : 'border-border text-muted-foreground hover:text-foreground')}>
+                                                personFilter === 'alle' ? 'bg-primary border-primary text-white' : 'border-border text-muted-foreground hover:text-foreground')}>
                                             Alle
                                         </button>
                                         {allAssignees.map(p => (
@@ -678,7 +678,7 @@ export default function Todos() {
                                                 className={cn(
                                                     'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
                                                     personFilter === p
-                                                        ? 'bg-purple-500 border-purple-500 text-white'
+                                                        ? 'bg-primary border-primary text-white'
                                                         : 'border-border text-muted-foreground hover:text-foreground'
                                                 )}>
                                                 {p.split(' ')[0]}
@@ -689,7 +689,7 @@ export default function Todos() {
                             )}
                             {hasActiveFilters && (
                                 <button onClick={resetFilters}
-                                    className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1">
+                                    className="text-xs text-status-warn hover:text-status-warn/25 flex items-center gap-1">
                                     <X className="w-3.5 h-3.5" />Alle Filter zurücksetzen
                                 </button>
                             )}
@@ -700,7 +700,7 @@ export default function Todos() {
                 {/* Auswahl-Modus: Alle auswählen */}
                 {selectMode && !showArchived && (
                     <button onClick={selectAll}
-                        className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1.5">
+                        className="text-xs text-status-warn hover:text-status-warn/25 flex items-center gap-1.5">
                         <CheckCheck className="w-3.5 h-3.5" />
                         Alle auswählen ({filteredTodos.length})
                     </button>
@@ -745,7 +745,7 @@ export default function Todos() {
                             {hasActiveFilters ? 'Keine Einträge entsprechen den Filtern.' : 'Alles erledigt — gut gemacht!'}
                         </p>
                         {hasActiveFilters && (
-                            <button onClick={resetFilters} className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline">
+                            <button onClick={resetFilters} className="mt-3 text-xs text-status-warn hover:text-status-warn/25 underline">
                                 Filter zurücksetzen
                             </button>
                         )}
@@ -776,7 +776,7 @@ export default function Todos() {
                                                 {category}
                                             </span>
                                             {hasDringend && (
-                                                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-500 font-bold">
+                                                <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-status-danger/15 text-status-danger font-bold">
                                                     Dringend
                                                 </span>
                                             )}
@@ -790,14 +790,14 @@ export default function Todos() {
                                                     <div
                                                         className={cn(
                                                             'h-full rounded-full transition-all duration-500',
-                                                            allDone ? 'bg-emerald-500' : 'bg-amber-500'
+                                                            allDone ? 'bg-status-ok/70' : 'bg-status-warn/70'
                                                         )}
                                                         style={{ width: totalCount > 0 ? `${(doneCount / totalCount) * 100}%` : '0%' }}
                                                     />
                                                 </div>
                                                 <span className={cn(
                                                     'text-xs font-semibold tabular-nums',
-                                                    allDone ? 'text-emerald-500' : 'text-muted-foreground'
+                                                    allDone ? 'text-status-ok' : 'text-muted-foreground'
                                                 )}>
                                                     {doneCount}/{totalCount}
                                                 </span>
@@ -823,7 +823,7 @@ export default function Todos() {
                                                         <button onClick={() => toggleSelect(todo.id)}
                                                             className="shrink-0 w-6 h-6 flex items-center justify-center">
                                                             {selectedIds.has(todo.id)
-                                                                ? <CheckSquare className="w-5 h-5 text-amber-400" />
+                                                                ? <CheckSquare className="w-5 h-5 text-status-warn" />
                                                                 : <Square className="w-5 h-5 text-muted-foreground" />}
                                                         </button>
                                                     )}
@@ -831,9 +831,9 @@ export default function Todos() {
                                                         className="flex-1 min-w-0"
                                                         onSwipeRight={todo.status !== 'erledigt' ? () => handleStatusChange(todo, 'erledigt') : undefined}
                                                         onSwipe={() => handleEdit(todo)}
-                                                        revealColorRight="bg-emerald-600"
+                                                        revealColorRight="bg-status-ok/70"
                                                         revealIconRight={Check}
-                                                        revealColor="bg-blue-600"
+                                                        revealColor="bg-primary/70"
                                                         revealIcon={Edit2}
                                                         disabled={selectMode}
                                                     >
@@ -868,7 +868,7 @@ export default function Todos() {
                                     <button onClick={() => toggleSelect(todo.id)}
                                         className="shrink-0 w-6 h-6 flex items-center justify-center">
                                         {selectedIds.has(todo.id)
-                                            ? <CheckSquare className="w-5 h-5 text-amber-400" />
+                                            ? <CheckSquare className="w-5 h-5 text-status-warn" />
                                             : <Square className="w-5 h-5 text-muted-foreground" />}
                                     </button>
                                 )}
@@ -906,12 +906,12 @@ export default function Todos() {
                         <div className="flex items-center gap-2 bg-card border border-border rounded-2xl shadow-2xl px-4 py-3 w-full">
                             <span className="text-sm font-semibold text-foreground mr-1">{selectedIds.size}×</span>
                             <Button size="sm" variant="outline" onClick={handleBulkDone}
-                                className="gap-1 h-8 text-xs text-green-400 border-green-500/30 hover:bg-green-500/10">
+                                className="gap-1 h-8 text-xs text-status-ok border-status-ok/30 hover:bg-status-ok/10">
                                 <CheckSquare className="w-3.5 h-3.5" />Erledigt
                             </Button>
                             <Button size="sm" variant="outline"
                                 onClick={() => setBulkCategoryOpen(o => !o)}
-                                className={cn('gap-1 h-8 text-xs', bulkCategoryOpen ? 'bg-blue-500/20 text-blue-400 border-blue-500/40' : 'text-blue-400 border-blue-500/30 hover:bg-blue-500/10')}>
+                                className={cn('gap-1 h-8 text-xs', bulkCategoryOpen ? 'bg-primary/20 text-primary border-primary/40' : 'text-primary border-primary/30 hover:bg-primary/10')}>
                                 <FolderInput className="w-3.5 h-3.5" />Kategorie
                             </Button>
                             <Button size="sm" variant="outline" onClick={handleBulkArchive}
@@ -919,7 +919,7 @@ export default function Todos() {
                                 <Archive className="w-3.5 h-3.5" />Archiv
                             </Button>
                             <Button size="sm" variant="outline" onClick={handleBulkDelete}
-                                className="gap-1 h-8 text-xs text-red-400 border-red-500/30 hover:bg-red-500/10">
+                                className="gap-1 h-8 text-xs text-status-danger border-status-danger/30 hover:bg-status-danger/10">
                                 <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                             <button onClick={clearSelection} className="ml-auto text-muted-foreground hover:text-foreground">

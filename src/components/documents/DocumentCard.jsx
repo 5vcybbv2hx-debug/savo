@@ -12,17 +12,17 @@ import { cn } from '@/lib/utils';
 
 // Semantic Tokens statt hardcodierter Farben
 const fileTypeBadge = {
-    'PDF':  'bg-red-500/15 text-red-400',
-    'DOCX': 'bg-blue-500/15 text-blue-400',
-    'DOC':  'bg-blue-500/15 text-blue-400',
-    'XLSX': 'bg-emerald-500/15 text-emerald-400',
-    'XLS':  'bg-emerald-500/15 text-emerald-400',
-    'PNG':  'bg-purple-500/15 text-purple-400',
-    'JPG':  'bg-purple-500/15 text-purple-400',
-    'JPEG': 'bg-purple-500/15 text-purple-400',
-    'GIF':  'bg-purple-500/15 text-purple-400',
-    'MP4':  'bg-cyan-500/15 text-cyan-400',
-    'MP3':  'bg-pink-500/15 text-pink-400',
+    'PDF':  'bg-status-danger/15 text-status-danger',
+    'DOCX': 'bg-primary/15 text-primary',
+    'DOC':  'bg-primary/15 text-primary',
+    'XLSX': 'bg-status-ok/15 text-status-ok',
+    'XLS':  'bg-status-ok/15 text-status-ok',
+    'PNG':  'bg-primary/15 text-primary',
+    'JPG':  'bg-primary/15 text-primary',
+    'JPEG': 'bg-primary/15 text-primary',
+    'GIF':  'bg-primary/15 text-primary',
+    'MP4':  'bg-primary/15 text-primary',
+    'MP3':  'bg-primary/15 text-primary',
 };
 
 export default function DocumentCard({ document, onDelete, onArchive, canEdit, onView }) {
@@ -37,16 +37,16 @@ export default function DocumentCard({ document, onDelete, onArchive, canEdit, o
         <Card className={cn(
             'border transition-all hover:shadow-md group bg-card',
             isExpired    ? 'border-destructive/40'   : 'border-border',
-            expiringSoon && !isExpired ? 'border-amber-500/40' : ''
+            expiringSoon && !isExpired ? 'border-status-warn/40' : ''
         )}>
             <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                     {/* Icon */}
                     <div className={cn(
                         'w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors',
-                        isExpired ? 'bg-destructive/10' : 'bg-amber-500/10'
+                        isExpired ? 'bg-destructive/10' : 'bg-status-warn/10'
                     )}>
-                        <FileText className={cn('w-5 h-5', isExpired ? 'text-destructive' : 'text-amber-400')} />
+                        <FileText className={cn('w-5 h-5', isExpired ? 'text-destructive' : 'text-status-warn')} />
                     </div>
 
                     {/* Content */}
@@ -74,7 +74,7 @@ export default function DocumentCard({ document, onDelete, onArchive, canEdit, o
                                 </Badge>
                             )}
                             {expiringSoon && !isExpired && (
-                                <Badge className="text-[10px] px-1.5 h-5 bg-amber-500/15 text-amber-400">
+                                <Badge className="text-[10px] px-1.5 h-5 bg-status-warn/15 text-status-warn">
                                     Läuft ab in {daysLeft}d
                                 </Badge>
                             )}
@@ -95,7 +95,7 @@ export default function DocumentCard({ document, onDelete, onArchive, canEdit, o
                                 </div>
                             )}
                             {document.expiry_date && (
-                                <div className={cn('flex items-center gap-1.5', isExpired ? 'text-destructive' : expiringSoon ? 'text-amber-400' : 'text-muted-foreground')}>
+                                <div className={cn('flex items-center gap-1.5', isExpired ? 'text-destructive' : expiringSoon ? 'text-status-warn' : 'text-muted-foreground')}>
                                     <Calendar className="w-3 h-3 shrink-0" />
                                     <span>
                                         {isExpired ? 'Abgelaufen ' : 'Läuft ab '}
@@ -130,7 +130,7 @@ export default function DocumentCard({ document, onDelete, onArchive, canEdit, o
                                     <Button size="sm" variant="ghost"
                                         onClick={() => onArchive(!document.is_archived)}
                                         title={document.is_archived ? 'Wiederherstellen' : 'Archivieren'}
-                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-400 min-h-[36px]"
+                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-status-warn min-h-[36px]"
                                     >
                                         {document.is_archived
                                             ? <ArchiveRestore className="w-3.5 h-3.5" />

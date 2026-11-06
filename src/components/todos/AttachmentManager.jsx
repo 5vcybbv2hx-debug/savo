@@ -49,7 +49,7 @@ export default function AttachmentManager({ attachments = [], onChange, isLoadin
                 <Button
                     onClick={() => setShowSketchCanvas(true)}
                     disabled={isLoading}
-                    className="h-12 rounded-xl gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                    className="h-12 rounded-xl gap-2 bg-primary hover:bg-primary text-white font-semibold"
                 >
                     <PenTool className="w-4 h-4" />
                     <span className="hidden sm:inline">Skizze</span>

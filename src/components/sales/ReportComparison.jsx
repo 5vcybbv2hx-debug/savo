@@ -37,9 +37,9 @@ export default function ReportComparison({ reports, open, onClose }) {
     const minDay = comparisonData.find(d => d.umsatz === minRevenue);
 
     const getTrendIcon = (value, avg) => {
-        if (value > avg * 1.05) return <TrendingUp className="w-4 h-4 text-green-600" />;
-        if (value < avg * 0.95) return <TrendingDown className="w-4 h-4 text-red-600" />;
-        return <Minus className="w-4 h-4 text-slate-400" />;
+        if (value > avg * 1.05) return <TrendingUp className="w-4 h-4 text-status-ok" />;
+        if (value < avg * 0.95) return <TrendingDown className="w-4 h-4 text-status-danger" />;
+        return <Minus className="w-4 h-4 text-muted-foreground" />;
     };
 
     return (
@@ -49,7 +49,7 @@ export default function ReportComparison({ reports, open, onClose }) {
                     <DialogTitle className="text-2xl">
                         Berichtsvergleich ({sortedReports.length} Berichte)
                     </DialogTitle>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-muted-foreground">
                         {comparisonData[0]?.date} - {comparisonData[comparisonData.length - 1]?.date}
                     </p>
                 </DialogHeader>
@@ -58,11 +58,11 @@ export default function ReportComparison({ reports, open, onClose }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-600">Ø Umsatz</CardTitle>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Ø Umsatz</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{avgRevenue.toFixed(2)} €</div>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                                 Max: {maxRevenue.toFixed(2)} € ({maxDay?.shortDate})
                             </p>
                         </CardContent>
@@ -70,11 +70,11 @@ export default function ReportComparison({ reports, open, onClose }) {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-600">Ø Transaktionen</CardTitle>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Ø Transaktionen</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{avgTransactions.toFixed(0)}</div>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                                 Gesamt: {comparisonData.reduce((s, d) => s + d.transaktionen, 0)}
                             </p>
                         </CardContent>
@@ -82,13 +82,13 @@ export default function ReportComparison({ reports, open, onClose }) {
 
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-600">Gesamtumsatz</CardTitle>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">Gesamtumsatz</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
                                 {comparisonData.reduce((s, d) => s + d.umsatz, 0).toFixed(2)} €
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                                 Spanne: {(maxRevenue - minRevenue).toFixed(2)} €
                             </p>
                         </CardContent>
@@ -99,7 +99,7 @@ export default function ReportComparison({ reports, open, onClose }) {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <DollarSign className="w-5 h-5 text-amber-600" />
+                            <DollarSign className="w-5 h-5 text-status-warn" />
                             Umsatz-Verlauf
                         </CardTitle>
                     </CardHeader>
@@ -130,7 +130,7 @@ export default function ReportComparison({ reports, open, onClose }) {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <CreditCard className="w-5 h-5 text-amber-600" />
+                            <CreditCard className="w-5 h-5 text-status-warn" />
                             Zahlungsarten im Vergleich
                         </CardTitle>
                     </CardHeader>
@@ -155,7 +155,7 @@ export default function ReportComparison({ reports, open, onClose }) {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <ShoppingCart className="w-5 h-5 text-amber-600" />
+                            <ShoppingCart className="w-5 h-5 text-status-warn" />
                             Detailvergleich
                         </CardTitle>
                     </CardHeader>
@@ -173,7 +173,7 @@ export default function ReportComparison({ reports, open, onClose }) {
                                 </thead>
                                 <tbody>
                                     {comparisonData.map((day, idx) => (
-                                        <tr key={idx} className="border-b hover:bg-slate-50">
+                                        <tr key={idx} className="border-b hover:bg-card">
                                             <td className="py-2 px-3 font-medium">{day.date}</td>
                                             <td className="py-2 px-3 text-right">
                                                 {day.umsatz.toFixed(2)} €

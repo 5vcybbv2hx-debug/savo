@@ -85,8 +85,8 @@ function EmployeeQualitySection({ employees }) {
     return (
         <div className="bg-card rounded-2xl border border-border overflow-hidden">
             <div className="flex items-center gap-3 p-4 border-b border-border">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-blue-400" />
+                <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-primary" />
                 </div>
                 <div className="flex-1">
                     <h2 className="text-sm font-bold text-foreground">Mitarbeiter-Personalbögen</h2>
@@ -94,7 +94,7 @@ function EmployeeQualitySection({ employees }) {
                         {issues.length} mit fehlenden Angaben · {complete} vollständig
                     </p>
                 </div>
-                {issues.length === 0 && <CheckCircle2 className="w-5 h-5 text-green-400" />}
+                {issues.length === 0 && <CheckCircle2 className="w-5 h-5 text-status-ok" />}
             </div>
 
             {issues.length === 0 ? (
@@ -116,9 +116,9 @@ function EmployeeQualitySection({ employees }) {
                                 </Link>
                                 <span className={cn(
                                     'text-xs font-bold px-2 py-0.5 rounded-full',
-                                    emp.completion >= 75 ? 'bg-amber-500/20 text-amber-400' :
-                                    emp.completion >= 50 ? 'bg-orange-500/20 text-orange-400' :
-                                    'bg-red-500/20 text-red-400'
+                                    emp.completion >= 75 ? 'bg-status-warn/20 text-status-warn' :
+                                    emp.completion >= 50 ? 'bg-status-warn/20 text-status-warn' :
+                                    'bg-status-danger/20 text-status-danger'
                                 )}>{emp.completion}%</span>
                             </div>
                             <Progress value={emp.completion} className="h-1.5 mb-2" />
@@ -127,7 +127,7 @@ function EmployeeQualitySection({ employees }) {
                                     <span key={section} className={cn(
                                         'text-[10px] px-2 py-0.5 rounded-full font-medium',
                                         section === 'lohn'
-                                            ? 'bg-amber-500/20 text-amber-400'
+                                            ? 'bg-status-warn/20 text-status-warn'
                                             : 'bg-secondary text-muted-foreground'
                                     )}>
                                         {section === 'lohn'
@@ -174,7 +174,7 @@ function CheckSection({ title, icon: Icon, iconColor, bgColor, items, checks, li
                     </p>
                 </div>
                 {totalOk === items.length && items.length > 0 && (
-                    <CheckCircle2 className="w-5 h-5 text-green-400" />
+                    <CheckCircle2 className="w-5 h-5 text-status-ok" />
                 )}
             </div>
 
@@ -186,15 +186,15 @@ function CheckSection({ title, icon: Icon, iconColor, bgColor, items, checks, li
                         className={cn(
                             'flex flex-col gap-1.5 p-3 rounded-xl border text-left transition-all min-h-[44px]',
                             stat.count === 0
-                                ? 'border-green-500/20 bg-green-500/5 opacity-60 cursor-default'
+                                ? 'border-status-ok/20 bg-status-ok/5 opacity-60 cursor-default'
                                 : activeFilter === stat.key
-                                    ? 'border-amber-500/50 bg-amber-500/15'
-                                    : 'border-border hover:border-amber-500/30 hover:bg-accent/50 cursor-pointer'
+                                    ? 'border-status-warn/50 bg-status-warn/15'
+                                    : 'border-border hover:border-status-warn/30 hover:bg-accent/50 cursor-pointer'
                         )}
                     >
                         <div className="flex items-center justify-between">
-                            <stat.icon className={cn('w-4 h-4', stat.count === 0 ? 'text-green-400' : 'text-amber-400')} />
-                            <span className={cn('text-lg font-bold', stat.count === 0 ? 'text-green-400' : 'text-foreground')}>
+                            <stat.icon className={cn('w-4 h-4', stat.count === 0 ? 'text-status-ok' : 'text-status-warn')} />
+                            <span className={cn('text-lg font-bold', stat.count === 0 ? 'text-status-ok' : 'text-foreground')}>
                                 {stat.count}
                             </span>
                         </div>
@@ -309,19 +309,19 @@ export default function DataQuality() {
                                 label="Mitarbeiter mit Lücken"
                                 value={empWithIssues}
                                 icon={Users}
-                                color={empWithIssues === 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}
+                                color={empWithIssues === 0 ? 'bg-status-ok/20 text-status-ok' : 'bg-status-danger/20 text-status-danger'}
                             />
                             <SummaryCard
                                 label="Artikel mit Problemen"
                                 value={artWithIssues}
                                 icon={Package}
-                                color={artWithIssues === 0 ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}
+                                color={artWithIssues === 0 ? 'bg-status-ok/20 text-status-ok' : 'bg-status-warn/20 text-status-warn'}
                             />
                             <SummaryCard
                                 label="Menüpunkte unvollständig"
                                 value={menuWithIssues}
                                 icon={Wine}
-                                color={menuWithIssues === 0 ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}
+                                color={menuWithIssues === 0 ? 'bg-status-ok/20 text-status-ok' : 'bg-status-warn/20 text-status-warn'}
                             />
                         </div>
 
@@ -331,8 +331,8 @@ export default function DataQuality() {
                         <CheckSection
                             title="Artikel-Datenqualität"
                             icon={Package}
-                            iconColor="text-amber-400"
-                            bgColor="bg-amber-500/20"
+                            iconColor="text-status-warn"
+                            bgColor="bg-status-warn/20"
                             items={articles}
                             checks={ARTICLE_CHECKS}
                             linkFn={(item) => `/Warehouse?search=${encodeURIComponent(item.name)}`}
@@ -342,8 +342,8 @@ export default function DataQuality() {
                         <CheckSection
                             title="Getränkekarte — Menüpunkte"
                             icon={Wine}
-                            iconColor="text-red-400"
-                            bgColor="bg-red-500/20"
+                            iconColor="text-status-danger"
+                            bgColor="bg-status-danger/20"
                             items={menuItems}
                             checks={MENU_CHECKS}
                             linkFn={(item) => `/DrinkMenu?highlight=${encodeURIComponent(item.name)}`}

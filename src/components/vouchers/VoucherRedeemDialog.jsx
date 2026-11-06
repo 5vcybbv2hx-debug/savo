@@ -29,9 +29,9 @@ const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
 const fmtDate = (d) => (d ? String(d).slice(0, 10).split('-').reverse().join('.') : '—');
 
 const STATUS_STYLES = {
-    'offen': 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    'teilweise_eingelöst': 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30',
-    'eingelöst': 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30',
+    'offen': 'bg-status-warn/15 text-status-warn dark:text-status-warn border-status-warn/30',
+    'teilweise_eingelöst': 'bg-status-warn/15 text-status-warn dark:text-status-warn border-status-warn/30',
+    'eingelöst': 'bg-status-ok/15 text-status-ok dark:text-status-ok border-status-ok/30',
     'ungültig': 'bg-muted text-muted-foreground border-border',
 };
 const STATUS_LABEL = {
@@ -92,7 +92,7 @@ export default function VoucherRedeemDialog({
                     <DialogContent className="max-w-sm">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                <CheckCircle2 className="w-4 h-4 text-status-ok" />
                                 Gutschein Nr. {voucher.voucher_number} eingelöst
                             </DialogTitle>
                         </DialogHeader>
@@ -156,7 +156,7 @@ export default function VoucherRedeemDialog({
                     </div>
 
                     {tokenWarning && (
-                        <p className="text-[11px] text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
+                        <p className="text-[11px] text-status-warn dark:text-status-warn flex items-start gap-1.5">
                             <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
                             Ohne Token gescannt — Nummer geprüft?
                         </p>

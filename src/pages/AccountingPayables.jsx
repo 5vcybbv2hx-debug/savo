@@ -54,23 +54,23 @@ export default function AccountingPayables() {
 
                 {/* ── Kombinierte Summary-Kachel ──────────────────────────── */}
                 <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-blue-500/8 border border-blue-500/20 rounded-xl p-3.5">
-                        <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wide flex items-center gap-1">
+                    <div className="bg-primary/8 border border-primary/20 rounded-xl p-3.5">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-wide flex items-center gap-1">
                             <Wallet className="w-3 h-3" /> Offene Posten gesamt
                         </p>
-                        <p className="text-lg font-bold text-blue-400 tabular-nums mt-0.5">{fmt(combinedOpen)} €</p>
+                        <p className="text-lg font-bold text-primary tabular-nums mt-0.5">{fmt(combinedOpen)} €</p>
                         <p className="text-[10px] text-muted-foreground">
                             {(creditorTotals.counts?.offen || 0) + (creditorTotals.counts?.teilbezahlt || 0) + (creditorTotals.counts?.überfällig || 0) + (liabilityTotals.counts?.aktiv || 0)} Positionen
                         </p>
                     </div>
                     <div className={cn('border rounded-xl p-3.5', combinedOverdue > 0
-                        ? 'bg-red-500/8 border-red-500/20'
+                        ? 'bg-status-danger/8 border-status-danger/20'
                         : 'bg-secondary/30 border-border/40'
                     )}>
-                        <p className={cn('text-[10px] font-bold uppercase tracking-wide flex items-center gap-1', combinedOverdue > 0 ? 'text-red-400' : 'text-muted-foreground')}>
+                        <p className={cn('text-[10px] font-bold uppercase tracking-wide flex items-center gap-1', combinedOverdue > 0 ? 'text-status-danger' : 'text-muted-foreground')}>
                             <AlertTriangle className="w-3 h-3" /> Überfällig
                         </p>
-                        <p className={cn('text-lg font-bold tabular-nums mt-0.5', combinedOverdue > 0 ? 'text-red-400' : 'text-muted-foreground')}>
+                        <p className={cn('text-lg font-bold tabular-nums mt-0.5', combinedOverdue > 0 ? 'text-status-danger' : 'text-muted-foreground')}>
                             {fmt(combinedOverdue)} €
                         </p>
                         <p className="text-[10px] text-muted-foreground">{combinedOverdueCount} Posten</p>

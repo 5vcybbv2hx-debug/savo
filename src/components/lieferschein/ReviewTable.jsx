@@ -72,7 +72,7 @@ export default function ReviewTable({ positions, articles, openItems, onChange, 
           {unassigned > 0 && (
             <>
               <span>·</span>
-              <span className="inline-flex items-center gap-1 text-amber-500 font-semibold">
+              <span className="inline-flex items-center gap-1 text-status-warn font-semibold">
                 <AlertTriangle className="w-3 h-3" /> {unassigned} ohne Artikel
               </span>
             </>

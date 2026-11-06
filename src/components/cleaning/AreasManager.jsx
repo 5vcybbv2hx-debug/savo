@@ -120,14 +120,14 @@ export default function AreasManager({ trigger, open: openProp, onOpenChange }) 
                                     areas.map((area) => (
                                         <div 
                                             key={area.id}
-                                            className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
+                                            className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border"
                                         >
                                             <GripVertical className="w-4 h-4 text-muted-foreground" />
                                             <div 
                                                 className="w-4 h-4 rounded-full"
                                                 style={{ backgroundColor: area.color }}
                                             />
-                                            <span className="flex-1 font-medium text-slate-800">
+                                            <span className="flex-1 font-medium text-muted-foreground">
                                                 {area.name}
                                             </span>
                                             <Button
@@ -140,7 +140,7 @@ export default function AreasManager({ trigger, open: openProp, onOpenChange }) 
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-red-500 hover:text-red-600"
+                                                className="text-status-danger hover:text-status-danger"
                                                 onClick={() => handleDelete(area.id)}
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -152,7 +152,7 @@ export default function AreasManager({ trigger, open: openProp, onOpenChange }) 
                         </div>
 
                         {/* Neuer Bereich Formular */}
-                        <div className="space-y-3 pt-4 border-t border-slate-200">
+                        <div className="space-y-3 pt-4 border-t border-border">
                             <h3 className="text-sm font-semibold text-foreground">
                                 {editingArea ? 'Bereich bearbeiten' : 'Neuer Bereich'}
                             </h3>
@@ -177,7 +177,7 @@ export default function AreasManager({ trigger, open: openProp, onOpenChange }) 
                                                 onClick={() => setFormData({ ...formData, color })}
                                                 className={cn(
                                                     "w-8 h-8 rounded-full transition-transform",
-                                                    formData.color === color && "ring-2 ring-offset-2 ring-slate-400 scale-110"
+                                                    formData.color === color && "ring-2 ring-offset-2 border-border scale-110"
                                                 )}
                                                 style={{ backgroundColor: color }}
                                             />
@@ -198,7 +198,7 @@ export default function AreasManager({ trigger, open: openProp, onOpenChange }) 
                                     )}
                                     <Button 
                                         type="submit"
-                                        className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                        className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                                     >
                                         {editingArea ? 'Speichern' : 'Hinzufügen'}
                                     </Button>

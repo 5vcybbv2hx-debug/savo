@@ -12,19 +12,19 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const TYPE_META = {
-    medizinisch:    { label: 'Medizinisch',    icon: Siren,        color: 'text-red-400 bg-red-500/10' },
-    gewalt:         { label: 'Gewalt',         icon: ShieldAlert,  color: 'text-red-400 bg-red-500/10' },
-    feuer:          { label: 'Feuer',          icon: Flame,        color: 'text-orange-400 bg-orange-500/10' },
-    ueberfall:      { label: 'Überfall',       icon: AlertTriangle,color: 'text-orange-400 bg-orange-500/10' },
-    diebstahl:      { label: 'Diebstahl',      icon: AlertTriangle,color: 'text-orange-400 bg-orange-500/10' },
-    drogen:         { label: 'Drogen',         icon: Pill,         color: 'text-yellow-400 bg-yellow-500/10' },
-    arbeitsunfall:  { label: 'Arbeitsunfall',  icon: HardHat,      color: 'text-yellow-400 bg-yellow-500/10' },
+    medizinisch:    { label: 'Medizinisch',    icon: Siren,        color: 'text-status-danger bg-status-danger/10' },
+    gewalt:         { label: 'Gewalt',         icon: ShieldAlert,  color: 'text-status-danger bg-status-danger/10' },
+    feuer:          { label: 'Feuer',          icon: Flame,        color: 'text-status-warn bg-status-warn/10' },
+    ueberfall:      { label: 'Überfall',       icon: AlertTriangle,color: 'text-status-warn bg-status-warn/10' },
+    diebstahl:      { label: 'Diebstahl',      icon: AlertTriangle,color: 'text-status-warn bg-status-warn/10' },
+    drogen:         { label: 'Drogen',         icon: Pill,         color: 'text-status-warn bg-status-warn/10' },
+    arbeitsunfall:  { label: 'Arbeitsunfall',  icon: HardHat,      color: 'text-status-warn bg-status-warn/10' },
 };
 
 const STATUS_BADGE = {
-    aktiv:        'bg-red-500/15 text-red-400 border-red-500/30',
-    dokumentiert: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    abgeschlossen:'bg-green-500/15 text-green-400 border-green-500/30',
+    aktiv:        'bg-status-danger/15 text-status-danger border-status-danger/30',
+    dokumentiert: 'bg-primary/15 text-primary border-primary/30',
+    abgeschlossen:'bg-status-ok/15 text-status-ok border-status-ok/30',
     archiviert:   'bg-muted text-muted-foreground border-border',
 };
 
@@ -79,7 +79,7 @@ export default function Incidents() {
                             className={cn(
                                 'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                                 filter === f.key
-                                    ? 'bg-amber-600 border-amber-600 text-white'
+                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                     : 'border-border text-muted-foreground hover:text-foreground'
                             )}>
                             {f.label}
@@ -112,7 +112,7 @@ export default function Incidents() {
                                         <div className="flex items-center gap-2">
                                             <p className="text-sm font-semibold text-foreground truncate">{meta.label}</p>
                                             {inc.is_training && (
-                                                <span className="text-[9px] bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 rounded px-1.5 py-0.5 font-bold shrink-0">TRAINING</span>
+                                                <span className="text-[9px] bg-status-warn/15 text-status-warn border border-status-warn/30 rounded px-1.5 py-0.5 font-bold shrink-0">TRAINING</span>
                                             )}
                                         </div>
                                         <p className="text-xs text-muted-foreground truncate mt-0.5">

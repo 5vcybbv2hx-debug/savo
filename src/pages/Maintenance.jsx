@@ -37,7 +37,7 @@ function CompleteModal({ task, onConfirm, onClose }) {
             <div className="w-full max-w-md bg-card border border-border rounded-2xl overflow-hidden shadow-2xl">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                     <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <CheckCircle2 className="w-5 h-5 text-status-ok" />
                         <h2 className="font-bold text-foreground">Wartung erledigt</h2>
                     </div>
                     <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 rounded-lg">
@@ -58,7 +58,7 @@ function CompleteModal({ task, onConfirm, onClose }) {
                             onChange={e => setNote(e.target.value)}
                             placeholder="z.B. Filter getauscht, Riemen geprüft…"
                             rows={3}
-                            className="w-full px-3 py-2.5 rounded-xl border border-border bg-secondary/30 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-green-500/40 placeholder:text-muted-foreground"
+                            className="w-full px-3 py-2.5 rounded-xl border border-border bg-secondary/30 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-status-ok/40 placeholder:text-muted-foreground"
                         />
                     </div>
                 </div>
@@ -66,7 +66,7 @@ function CompleteModal({ task, onConfirm, onClose }) {
                     <Button variant="outline" onClick={onClose} className="flex-1 h-11">Abbrechen</Button>
                     <Button
                         onClick={() => onConfirm(note.trim())}
-                        className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white"
+                        className="flex-1 h-11 bg-status-ok/70 hover:bg-status-ok/70 text-white"
                     >
                         <CheckCircle2 className="w-4 h-4 mr-1.5" />
                         Als erledigt markieren
@@ -116,9 +116,9 @@ function MaintenanceCard({ task, onEdit, onComplete, canEdit, employees }) {
 
             {/* Überfällig-Banner */}
             {status === 'überfällig' && (
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 border-b border-red-500/20">
-                    <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-                    <p className="text-sm font-bold text-red-500">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-status-danger/10 border-b border-status-danger/20">
+                    <AlertTriangle className="w-4 h-4 text-status-danger shrink-0" />
+                    <p className="text-sm font-bold text-status-danger">
                         Überfällig seit {overdueDays} {overdueDays === 1 ? 'Tag' : 'Tagen'}
                     </p>
                 </div>
@@ -194,7 +194,7 @@ function MaintenanceCard({ task, onEdit, onComplete, canEdit, employees }) {
                     <div className="mt-2 space-y-1.5">
                         {[...history].reverse().slice(0, 10).map((h, i) => (
                             <div key={i} className="flex gap-3 px-3 py-2 rounded-xl bg-secondary/30 text-xs">
-                                <div className="w-1 rounded-full bg-green-500/60 shrink-0 self-stretch" />
+                                <div className="w-1 rounded-full bg-status-ok/60 shrink-0 self-stretch" />
                                 <div className="flex-1 min-w-0">
                                     <p className="font-semibold text-foreground">
                                         {h.date ? new Date(h.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' }) : '–'}
@@ -215,7 +215,7 @@ function MaintenanceCard({ task, onEdit, onComplete, canEdit, employees }) {
                         <Button
                             size="sm"
                             onClick={() => { haptics.medium(); onComplete(task); }}
-                            className="flex-1 h-10 rounded-xl gap-1.5 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                            className="flex-1 h-10 rounded-xl gap-1.5 bg-status-ok/70 hover:bg-status-ok/70 text-white font-semibold"
                         >
                             <CheckCircle2 className="w-4 h-4" />
                             Erledigt
@@ -346,7 +346,7 @@ export default function MaintenancePage() {
                 <div className="flex items-center justify-between gap-3">
                     <div>
                         <h1 className="page-title flex items-center gap-2">
-                            <Wrench className="w-5 h-5 text-amber-500" />
+                            <Wrench className="w-5 h-5 text-status-warn" />
                             Wartung
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">Wartungsintervalle & Prüfpflichten</p>
@@ -354,7 +354,7 @@ export default function MaintenancePage() {
                     {permissions.canEditEmployees && (
                         <Button
                             onClick={() => openModal()}
-                            className="h-10 rounded-xl gap-2 bg-amber-500 hover:bg-amber-600 text-black font-semibold px-4 shrink-0"
+                            className="h-10 rounded-xl gap-2 bg-status-warn/70 hover:bg-status-warn/70 text-foreground font-semibold px-4 shrink-0"
                         >
                             <Plus className="w-4 h-4" />
                             Neu
@@ -367,7 +367,7 @@ export default function MaintenancePage() {
                     <StatPill
                         count={overdueCount}
                         label="Überfällig"
-                        colorClass="bg-red-500/10 text-red-500 border-red-500/30"
+                        colorClass="bg-status-danger/10 text-status-danger border-status-danger/30"
                         icon={AlertCircle}
                         active={activeFilter === 'überfällig'}
                         onClick={() => setActiveFilter(f => f === 'überfällig' ? 'alle' : 'überfällig')}
@@ -375,7 +375,7 @@ export default function MaintenancePage() {
                     <StatPill
                         count={dueSoonCount}
                         label="Bald fällig"
-                        colorClass="bg-yellow-500/10 text-yellow-500 border-yellow-500/30"
+                        colorClass="bg-status-warn/10 text-status-warn border-status-warn/30"
                         icon={Clock}
                         active={activeFilter === 'bald fällig'}
                         onClick={() => setActiveFilter(f => f === 'bald fällig' ? 'alle' : 'bald fällig')}
@@ -383,7 +383,7 @@ export default function MaintenancePage() {
                     <StatPill
                         count={okCount}
                         label="OK"
-                        colorClass="bg-green-500/10 text-green-500 border-green-500/30"
+                        colorClass="bg-status-ok/10 text-status-ok border-status-ok/30"
                         icon={CheckCircle2}
                         active={activeFilter === 'ok'}
                         onClick={() => setActiveFilter(f => f === 'ok' ? 'alle' : 'ok')}
@@ -446,17 +446,17 @@ export default function MaintenancePage() {
                                     {/* Status-Badges */}
                                     <div className="flex items-center gap-1.5 shrink-0">
                                         {catOverdue > 0 && (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-500/15 text-red-500">
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-status-danger/15 text-status-danger">
                                                 {catOverdue} ⚠
                                             </span>
                                         )}
                                         {catDueSoon > 0 && catOverdue === 0 && (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-500">
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-status-warn/15 text-status-warn">
                                                 {catDueSoon} bald
                                             </span>
                                         )}
                                         {catOverdue === 0 && catDueSoon === 0 && (
-                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-500">✓</span>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-status-ok/15 text-status-ok">✓</span>
                                         )}
                                         <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", isOpen && "rotate-90")} />
                                     </div>

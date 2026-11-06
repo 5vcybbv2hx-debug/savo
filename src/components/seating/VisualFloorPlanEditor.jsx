@@ -139,7 +139,7 @@ export default function VisualFloorPlanEditor({ roomId, roomName, onTablePositio
                     <p className="text-sm font-medium text-foreground">Tische platzieren – Drag & Drop</p>
                     <div
                         ref={canvasRef}
-                        className="relative bg-slate-900 border-2 border-border rounded-lg overflow-hidden"
+                        className="relative bg-surface border-2 border-border rounded-lg overflow-hidden"
                         style={{ height: '400px', cursor: draggingTableId ? 'grabbing' : 'grab' }}
                     >
                         <img
@@ -156,7 +156,7 @@ export default function VisualFloorPlanEditor({ roomId, roomName, onTablePositio
                                     key={tp.table_id}
                                     className={cn(
                                         "absolute w-12 h-12 rounded-lg flex flex-col items-center justify-center text-xs font-bold transition-all shadow-lg",
-                                        "bg-amber-500 text-white hover:bg-amber-600",
+                                        "bg-status-warn/70 text-white hover:bg-status-warn/70",
                                         draggingTableId === tp.table_id && "ring-2 ring-white scale-110"
                                     )}
                                     style={{

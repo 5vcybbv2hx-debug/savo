@@ -337,7 +337,7 @@ export default function PersonalBogenForm({ employee, onSave, isLoading = false,
               <div className="space-y-2">
                 <p className="text-sm font-medium text-foreground/80">Unterschrift Arbeitnehmer</p>
                 {formData.sig_employee && (
-                  <img src={formData.sig_employee} alt="Unterschrift AN" className="border rounded-lg max-h-24 bg-white" />
+                  <img src={formData.sig_employee} alt="Unterschrift AN" className="border rounded-lg max-h-24 bg-card" />
                 )}
                 {isEditable && (
                   <SignaturePad
@@ -349,7 +349,7 @@ export default function PersonalBogenForm({ employee, onSave, isLoading = false,
               <div className="space-y-2">
                 <p className="text-sm font-medium text-foreground/80">Unterschrift Arbeitgeber</p>
                 {formData.sig_employer && (
-                  <img src={formData.sig_employer} alt="Unterschrift AG" className="border rounded-lg max-h-24 bg-white" />
+                  <img src={formData.sig_employer} alt="Unterschrift AG" className="border rounded-lg max-h-24 bg-card" />
                 )}
                 {isEditable && (
                   <SignaturePad

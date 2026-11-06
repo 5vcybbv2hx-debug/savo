@@ -23,10 +23,10 @@ import { buildWishUsage } from '@/lib/wishShiftCapacity';
 const SHIFT_TYPES = ['Aufmachen', 'Frühschicht', 'Spätschicht', 'Sonderschicht'];
 
 const STATUS_CONFIG = {
-    ausstehend: { label: 'Ausstehend', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40' },
-    bestätigt:  { label: 'Bestätigt',  color: 'bg-green-500/20 text-green-300 border-green-500/40' },
-    abgelehnt:  { label: 'Abgelehnt',  color: 'bg-red-500/20 text-red-300 border-red-500/40' },
-    warteliste: { label: 'Warteliste', color: 'bg-amber-500/15 text-amber-300 border-amber-500/40' },
+    ausstehend: { label: 'Ausstehend', color: 'bg-status-warn/20 text-status-warn/25 border-status-warn/40' },
+    bestätigt:  { label: 'Bestätigt',  color: 'bg-status-ok/20 text-status-ok/25 border-status-ok/40' },
+    abgelehnt:  { label: 'Abgelehnt',  color: 'bg-status-danger/20 text-status-danger/25 border-status-danger/40' },
+    warteliste: { label: 'Warteliste', color: 'bg-status-warn/15 text-status-warn/25 border-status-warn/40' },
 };
 
 function formatDate(dateStr) {
@@ -43,14 +43,14 @@ function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProc
     return (
         <div className={cn(
             'rounded-2xl border transition-all',
-            isPending ? 'bg-card border-yellow-500/20' : 'bg-card/60 border-border/50',
-            req.status === 'bestätigt' && 'border-green-500/20',
-            req.status === 'abgelehnt' && 'opacity-60 border-red-500/20',
+            isPending ? 'bg-card border-status-warn/20' : 'bg-card/60 border-border/50',
+            req.status === 'bestätigt' && 'border-status-ok/20',
+            req.status === 'abgelehnt' && 'opacity-60 border-status-danger/20',
             compact ? 'p-4' : 'p-5'
         )}>
             {/* Header row */}
             <div className="flex items-start gap-3">
-                <div className="w-11 h-11 rounded-full bg-amber-500/20 flex items-center justify-center font-bold text-amber-400 shrink-0 text-base">
+                <div className="w-11 h-11 rounded-full bg-status-warn/20 flex items-center justify-center font-bold text-status-warn shrink-0 text-base">
                     {req.employee_name?.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -65,7 +65,7 @@ function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProc
                     <div className="flex items-center gap-1.5 mt-0.5 text-sm text-muted-foreground">
                         <Clock className="w-3.5 h-3.5 shrink-0" />
                         <span>{req.start_time} – {req.end_time}</span>
-                        {req.shift_type && <span className="text-amber-400 font-medium">• {req.shift_type}</span>}
+                        {req.shift_type && <span className="text-status-warn font-medium">• {req.shift_type}</span>}
                     </div>
                     {(weeklyHours != null || empStats) && (
                         <div className="mt-1 space-y-0.5">
@@ -85,7 +85,7 @@ function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProc
                         </p>
                     )}
                     {req.manager_note && (
-                        <p className="text-xs text-amber-400/80 mt-1">📋 {req.manager_note}</p>
+                        <p className="text-xs text-status-warn/80 mt-1">📋 {req.manager_note}</p>
                     )}
                 </div>
             </div>
@@ -107,7 +107,7 @@ function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProc
                         size="sm"
                         disabled={isProcessing}
                         onClick={() => onReject(req)}
-                        className="h-11 gap-1.5 text-sm font-medium bg-red-600/80 hover:bg-red-600 text-white col-span-1"
+                        className="h-11 gap-1.5 text-sm font-medium bg-status-danger/80 hover:bg-status-danger/70 text-white col-span-1"
                     >
                         <XCircle className="w-4 h-4" />
                         Ablehnen
@@ -116,7 +116,7 @@ function RequestCard({ req, onConfirm, onReject, onEdit, compact = false, isProc
                         size="sm"
                         disabled={isProcessing}
                         onClick={() => onConfirm(req)}
-                        className="h-11 gap-1.5 text-sm font-medium bg-green-600 hover:bg-green-700 text-white col-span-1"
+                        className="h-11 gap-1.5 text-sm font-medium bg-status-ok/70 hover:bg-status-ok/70 text-white col-span-1"
                     >
                         <CheckCircle2 className="w-4 h-4" />
                         OK
@@ -135,7 +135,7 @@ function QueueMode({ pending, onConfirm, onReject, onEdit, isProcessing, employe
     if (total === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-                <CheckCheck className="w-14 h-14 text-green-500 opacity-70" />
+                <CheckCheck className="w-14 h-14 text-status-ok opacity-70" />
                 <p className="text-lg font-bold text-foreground">Alle erledigt!</p>
                 <p className="text-sm text-muted-foreground">Keine ausstehenden Anfragen mehr.</p>
             </div>
@@ -168,7 +168,7 @@ function QueueMode({ pending, onConfirm, onReject, onEdit, isProcessing, employe
                             onClick={() => setIdx(i)}
                             className={cn(
                                 'w-2.5 h-2.5 rounded-full transition-all',
-                                i === idx ? 'bg-amber-500 scale-125' : 'bg-border hover:bg-muted-foreground'
+                                i === idx ? 'bg-status-warn/70 scale-125' : 'bg-border hover:bg-muted-foreground'
                             )}
                         />
                     ))}
@@ -178,7 +178,7 @@ function QueueMode({ pending, onConfirm, onReject, onEdit, isProcessing, employe
             {/* Progress bar */}
             <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
                 <div
-                    className="h-full bg-amber-500 rounded-full transition-all"
+                    className="h-full bg-status-warn/70 rounded-full transition-all"
                     style={{ width: `${((idx + 1) / total) * 100}%` }}
                 />
             </div>
@@ -231,8 +231,8 @@ function ListView({ filtered, onConfirm, onReject, onEdit, isProcessing, employe
             {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([date, reqs]) => (
                 <div key={date}>
                     <div className="flex items-center gap-2 mb-2 px-1">
-                        <CalendarDays className="w-4 h-4 text-amber-400" />
-                        <span className="text-sm font-bold text-amber-400">
+                        <CalendarDays className="w-4 h-4 text-status-warn" />
+                        <span className="text-sm font-bold text-status-warn">
                             {format(parseISO(date), 'EEEE, dd. MMMM yyyy', { locale: de })}
                         </span>
                         <span className="text-xs text-muted-foreground ml-1">({reqs.length})</span>
@@ -277,7 +277,7 @@ function EditModal({ req, open, onClose, onConfirm, onReject, isProcessing }) {
             <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Pencil className="w-4 h-4 text-amber-400" />
+                        <Pencil className="w-4 h-4 text-status-warn" />
                         Wunsch prüfen & anpassen
                     </DialogTitle>
                 </DialogHeader>
@@ -285,7 +285,7 @@ function EditModal({ req, open, onClose, onConfirm, onReject, isProcessing }) {
                 <div className="space-y-4 mt-1">
                     {/* Employee info */}
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50">
-                        <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center font-bold text-amber-400 shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-status-warn/20 flex items-center justify-center font-bold text-status-warn shrink-0">
                             {req.employee_name?.charAt(0)}
                         </div>
                         <div>
@@ -323,7 +323,7 @@ function EditModal({ req, open, onClose, onConfirm, onReject, isProcessing }) {
                                         className={cn(
                                             'px-3 py-1.5 rounded-lg text-sm font-medium border transition-all',
                                             form.shift_type === t
-                                                ? 'bg-amber-600 border-amber-600 text-white'
+                                                ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                                 : 'bg-secondary border-border text-muted-foreground hover:text-foreground'
                                         )}
                                     >
@@ -349,14 +349,14 @@ function EditModal({ req, open, onClose, onConfirm, onReject, isProcessing }) {
                         <Button
                             disabled={isProcessing}
                             onClick={() => onReject(req, note)}
-                            className="h-12 bg-red-600/80 hover:bg-red-600 text-white font-medium"
+                            className="h-12 bg-status-danger/80 hover:bg-status-danger/70 text-white font-medium"
                         >
                             <XCircle className="w-4 h-4 mr-2" /> Ablehnen
                         </Button>
                         <Button
                             disabled={isProcessing}
                             onClick={() => onConfirm(req, form, note)}
-                            className="h-12 bg-green-600 hover:bg-green-700 text-white font-medium"
+                            className="h-12 bg-status-ok/70 hover:bg-status-ok/70 text-white font-medium"
                         >
                             <CheckCircle2 className="w-4 h-4 mr-2" /> Bestätigen
                         </Button>
@@ -485,15 +485,15 @@ export default function ProvisionalReviewPanel() {
             <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
                     <h3 className="font-bold text-foreground text-lg flex items-center gap-2">
-                        <User className="w-5 h-5 text-amber-400" />
+                        <User className="w-5 h-5 text-status-warn" />
                         Wunschschichten prüfen
                     </h3>
                     {pending.length > 0 ? (
-                        <p className="text-sm text-amber-400 mt-0.5 font-medium">
+                        <p className="text-sm text-status-warn mt-0.5 font-medium">
                             {pending.length} ausstehende Anfrage{pending.length !== 1 ? 'n' : ''}
                         </p>
                     ) : (
-                        <p className="text-sm text-green-400 mt-0.5">Alle erledigt ✓</p>
+                        <p className="text-sm text-status-ok mt-0.5">Alle erledigt ✓</p>
                     )}
                 </div>
 
@@ -510,12 +510,12 @@ export default function ProvisionalReviewPanel() {
                     <button
                         onClick={() => { setViewMode('queue'); setStatusFilter('ausstehend'); }}
                         className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-                            viewMode === 'queue' ? 'bg-amber-600 text-white shadow' : 'text-muted-foreground hover:text-foreground'
+                            viewMode === 'queue' ? 'bg-status-warn/70 text-white shadow' : 'text-muted-foreground hover:text-foreground'
                         )}
                     >
                         <Zap className="w-3.5 h-3.5" /> Meeting
                         {pending.length > 0 && viewMode !== 'queue' && (
-                            <span className="bg-amber-500 text-slate-900 text-xs rounded-full px-1.5 font-bold">{pending.length}</span>
+                            <span className="bg-status-warn/70 text-muted-foreground text-xs rounded-full px-1.5 font-bold">{pending.length}</span>
                         )}
                     </button>
                 </div>
@@ -528,12 +528,12 @@ export default function ProvisionalReviewPanel() {
                         <button key={s} onClick={() => setStatusFilter(s)}
                             className={cn('px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 border',
                                 statusFilter === s
-                                    ? 'bg-amber-600 text-white border-amber-600'
+                                    ? 'bg-status-warn/70 text-white border-status-warn/70'
                                     : 'bg-secondary text-muted-foreground hover:text-foreground border-transparent'
                             )}>
                             {s === 'alle' ? 'Alle' : STATUS_CONFIG[s]?.label}
                             {s === 'ausstehend' && pending.length > 0 && (
-                                <span className="ml-2 bg-amber-400 text-slate-900 rounded-full px-1.5 text-xs font-bold">{pending.length}</span>
+                                <span className="ml-2 bg-status-warn/70 text-muted-foreground rounded-full px-1.5 text-xs font-bold">{pending.length}</span>
                             )}
                         </button>
                     ))}

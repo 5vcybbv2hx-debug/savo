@@ -266,7 +266,7 @@ export default function BaselineWizard({ open, slots = [], assignments = [], ini
                           slotId === s.id
                             ? 'border-primary bg-primary text-primary-foreground'
                             : s.baseline_photo_url
-                              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              ? 'border-status-ok/40 bg-status-ok/10 text-status-ok dark:text-status-ok'
                               : 'border-border bg-card text-foreground'
                         )}
                       >
@@ -290,9 +290,9 @@ export default function BaselineWizard({ open, slots = [], assignments = [], ini
                 ))}
               </select>
               {slot?.baseline_locked && (
-                <div className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-2.5">
-                  <Lock className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                <div className="flex items-start gap-2 rounded-xl border border-status-warn/40 bg-status-warn/10 p-2.5">
+                  <Lock className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+                  <p className="text-[11px] font-medium text-status-warn dark:text-status-warn">
                     Basis ist gesperrt (aufgenommen {slot.baseline_date || '–'}{slot.baseline_by ? ` von ${slot.baseline_by}` : ''}).
                     Eine neue Aufnahme verschiebt die alte Basis in den Verlauf.
                   </p>

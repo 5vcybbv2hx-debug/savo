@@ -42,7 +42,7 @@ export default function CleaningQRGenerator({ open, onClose }) {
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <QrCode className="w-5 h-5 text-amber-500" />
+                        <QrCode className="w-5 h-5 text-status-warn" />
                         Reinigungs-QR Codes
                     </DialogTitle>
                 </DialogHeader>
@@ -56,7 +56,7 @@ export default function CleaningQRGenerator({ open, onClose }) {
                                 onClick={() => setSelectedArea(area)}
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
                                     selectedArea === area
-                                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                                        ? 'bg-status-warn/20 border-status-warn/50 text-status-warn'
                                         : 'border-border text-muted-foreground hover:bg-accent/50'
                                 }`}
                             >
@@ -67,7 +67,7 @@ export default function CleaningQRGenerator({ open, onClose }) {
 
                     {selectedArea && (
                         <div className="flex flex-col items-center gap-3 pt-2">
-                            <div className="p-3 bg-white rounded-xl">
+                            <div className="p-3 bg-card rounded-xl">
                                 <canvas ref={canvasRef} />
                             </div>
                             <p className="text-xs text-muted-foreground text-center">

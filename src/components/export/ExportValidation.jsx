@@ -133,7 +133,7 @@ export default function ExportValidation() {
                 <Button
                     onClick={runValidation}
                     disabled={running}
-                    className="bg-blue-600 hover:bg-blue-700 text-white gap-2 text-sm"
+                    className="bg-primary/70 hover:bg-primary/70 text-white gap-2 text-sm"
                 >
                     {running ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
                     {running ? 'Prüfe…' : 'Validierung starten'}
@@ -141,11 +141,11 @@ export default function ExportValidation() {
             </div>
 
             {done && (
-                <Card className={cn('border', warnCount + errorCount === 0 ? 'border-green-500/30 bg-green-500/5' : 'border-amber-500/30 bg-amber-500/5')}>
+                <Card className={cn('border', warnCount + errorCount === 0 ? 'border-status-ok/30 bg-status-ok/5' : 'border-status-warn/30 bg-status-warn/5')}>
                     <CardContent className="p-4 flex items-center gap-4">
                         {warnCount + errorCount === 0
-                            ? <CheckCircle2 className="w-6 h-6 text-green-400" />
-                            : <AlertTriangle className="w-6 h-6 text-amber-400" />
+                            ? <CheckCircle2 className="w-6 h-6 text-status-ok" />
+                            : <AlertTriangle className="w-6 h-6 text-status-warn" />
                         }
                         <div>
                             <p className="font-semibold text-foreground text-sm">
@@ -165,19 +165,19 @@ export default function ExportValidation() {
                     <CardContent className="p-4 space-y-2">
                         {results.map((r, i) => (
                             <div key={i} className="flex items-center gap-3 py-1.5 border-b border-border/50 last:border-0">
-                                {r.status === 'running' && <Loader2 className="w-4 h-4 text-blue-400 animate-spin shrink-0" />}
-                                {r.status === 'ok' && <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />}
-                                {r.status === 'warn' && <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />}
-                                {r.status === 'error' && <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                                {r.status === 'running' && <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />}
+                                {r.status === 'ok' && <CheckCircle2 className="w-4 h-4 text-status-ok shrink-0" />}
+                                {r.status === 'warn' && <AlertTriangle className="w-4 h-4 text-status-warn shrink-0" />}
+                                {r.status === 'error' && <XCircle className="w-4 h-4 text-status-danger shrink-0" />}
                                 <span className="text-sm text-foreground flex-1">{r.label}</span>
                                 {r.count != null && <span className="text-xs text-muted-foreground">{r.count} Einträge</span>}
                                 {r.issues > 0 && (
-                                    <Badge className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">
+                                    <Badge className="text-[10px] bg-status-warn/20 text-status-warn border-status-warn/30">
                                         {r.issues} Problem{r.issues !== 1 ? 'e' : ''}
                                     </Badge>
                                 )}
                                 {r.status === 'ok' && (
-                                    <Badge className="text-[10px] bg-green-500/20 text-green-400 border-green-500/30">OK</Badge>
+                                    <Badge className="text-[10px] bg-status-ok/20 text-status-ok border-status-ok/30">OK</Badge>
                                 )}
                             </div>
                         ))}

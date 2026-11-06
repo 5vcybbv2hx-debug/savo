@@ -133,7 +133,7 @@ export default function TeamMeetingPrintView({ open, onClose, topics, schedule }
                 <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-[#111] border-b border-[#00bcd4]/30">
                     <span className="text-[#00bcd4] font-mono text-sm tracking-widest uppercase">Druckvorschau – Teamsitzung</span>
                     <div className="flex gap-2">
-                        <Button onClick={handlePrint} size="sm" className="bg-[#00bcd4] hover:bg-[#00acc1] text-black font-bold tracking-widest text-xs">
+                        <Button onClick={handlePrint} size="sm" className="bg-[#00bcd4] hover:bg-[#00acc1] text-foreground font-bold tracking-widest text-xs">
                             <Printer className="w-4 h-4 mr-2" />
                             DRUCKEN / PDF
                         </Button>

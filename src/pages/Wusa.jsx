@@ -403,7 +403,7 @@ function LabelView({ orders, onClose }) {
                     </div>
                     {abholOrders.map((order, idx) => (
                         <div key={order.id} className="label-print break-after-page pb-2" style={{ pageBreakAfter: 'always' }}>
-                            <div className="border border-black p-3 bg-white text-black rounded" style={{ width: '100%', maxWidth: '62mm', margin: '0 auto' }}>
+                            <div className="border border-black p-3 bg-card text-foreground rounded" style={{ width: '100%', maxWidth: '62mm', margin: '0 auto' }}>
                                 <div className="text-center font-bold text-sm mb-1.5 border-b border-black pb-1">
                                     🥗 Wurstsalat · To-Go
                                 </div>
@@ -607,19 +607,19 @@ export default function Wusa() {
                         </Card>
                         <Card className="bg-card border-border">
                             <CardContent className="p-2.5 text-center">
-                                <p className="text-base font-bold text-green-400 leading-none">{stats.gross}</p>
+                                <p className="text-base font-bold text-status-ok leading-none">{stats.gross}</p>
                                 <p className="text-[10px] text-muted-foreground mt-1">Groß</p>
                             </CardContent>
                         </Card>
                         <Card className="bg-card border-border">
                             <CardContent className="p-2.5 text-center">
-                                <p className="text-base font-bold text-blue-400 leading-none">{stats.klein}</p>
+                                <p className="text-base font-bold text-primary leading-none">{stats.klein}</p>
                                 <p className="text-[10px] text-muted-foreground mt-1">Klein</p>
                             </CardContent>
                         </Card>
                         <Card className="bg-card border-border">
                             <CardContent className="p-2.5 text-center">
-                                <p className="text-base font-bold text-amber-400 leading-none">{stats.abholung}</p>
+                                <p className="text-base font-bold text-status-warn leading-none">{stats.abholung}</p>
                                 <p className="text-[10px] text-muted-foreground mt-1">Abholung</p>
                             </CardContent>
                         </Card>
@@ -680,7 +680,7 @@ export default function Wusa() {
                                             <SwipeRow
                                                 key={order.id}
                                                 onSwipeRight={() => cycleStatus(order)}
-                                                revealColorRight="bg-blue-600"
+                                                revealColorRight="bg-primary/70"
                                                 revealIconRight={ChevronRight}
                                                 className="border-b border-border/50 last:border-0"
                                                 contentClassName="bg-card"
@@ -693,19 +693,19 @@ export default function Wusa() {
                                                                     #{idx + 1}{order.salad_name ? ` · ${order.salad_name}` : ''}
                                                                 </span>
                                                                 <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded',
-                                                                    order.size === 'gross' ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400')}>
+                                                                    order.size === 'gross' ? 'bg-status-ok/10 text-status-ok' : 'bg-primary/10 text-primary')}>
                                                                     {order.size === 'gross' ? 'Groß' : 'Klein'}
                                                                 </span>
                                                                 {order.status && order.status !== 'offen' && (
                                                                     <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded',
-                                                                        order.status === 'bereit' ? 'bg-amber-500/10 text-amber-400' : 'bg-green-500/10 text-green-400')}>
+                                                                        order.status === 'bereit' ? 'bg-status-warn/10 text-status-warn' : 'bg-status-ok/10 text-status-ok')}>
                                                                         {order.status === 'bereit' ? 'Bereit' : 'Abgeholt'}
                                                                     </span>
                                                                 )}
                                                                 <span className="text-xs text-muted-foreground">{ingsToDisplay(order.ingredients)}</span>
                                                             </div>
                                                             {order.notes && (
-                                                                <p className="text-xs text-amber-400/80 mt-1 italic">📝 {order.notes}</p>
+                                                                <p className="text-xs text-status-warn/80 mt-1 italic">📝 {order.notes}</p>
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-1 shrink-0">

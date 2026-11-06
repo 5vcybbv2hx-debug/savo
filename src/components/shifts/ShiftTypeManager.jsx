@@ -114,8 +114,8 @@ export default function ShiftTypeManager() {
                                     <button onClick={() => handleOpen(t)} className="p-2 hover:bg-accent rounded-lg transition-colors">
                                         <Edit2 className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                                     </button>
-                                    <button onClick={() => { if (confirm('Löschen?')) deleteMutation.mutate(t.id); }} className="p-2 hover:bg-red-500/10 rounded-lg transition-colors">
-                                        <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-400" />
+                                    <button onClick={() => { if (confirm('Löschen?')) deleteMutation.mutate(t.id); }} className="p-2 hover:bg-status-danger/10 rounded-lg transition-colors">
+                                        <Trash2 className="w-4 h-4 text-muted-foreground hover:text-status-danger" />
                                     </button>
                                 </div>
                             </Card>
@@ -158,7 +158,7 @@ export default function ShiftTypeManager() {
                             </div>
                             <div className="flex gap-2 pt-2">
                                 <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">Abbrechen</Button>
-                                <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 bg-amber-600 hover:bg-amber-700">
+                                <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending} className="flex-1 bg-status-warn/70 hover:bg-status-warn/70">
                                     {editing ? 'Speichern' : 'Erstellen'}
                                 </Button>
                             </div>

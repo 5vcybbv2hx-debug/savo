@@ -10,24 +10,24 @@ import { format, isToday, isTomorrow, isPast, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const priorityConfig = {
-  'niedrig': { color: 'bg-slate-500', label: 'Niedrig', cardBg: '', badge: 'text-slate-400' },
-  'mittel': { color: 'bg-blue-500', label: 'Mittel', cardBg: '', badge: 'text-blue-400' },
-  'hoch': { color: 'bg-orange-500', label: 'Hoch', cardBg: 'bg-orange-500/5 border-orange-500/20', badge: 'text-orange-400' },
-  'dringend': { color: 'bg-red-500', label: 'Dringend', cardBg: 'bg-red-500/10 border-red-500/30', badge: 'text-red-400' },
+  'niedrig': { color: 'bg-surface', label: 'Niedrig', cardBg: '', badge: 'text-muted-foreground' },
+  'mittel': { color: 'bg-primary/70', label: 'Mittel', cardBg: '', badge: 'text-primary' },
+  'hoch': { color: 'bg-status-warn/70', label: 'Hoch', cardBg: 'bg-status-warn/5 border-status-warn/20', badge: 'text-status-warn' },
+  'dringend': { color: 'bg-status-danger/70', label: 'Dringend', cardBg: 'bg-status-danger/10 border-status-danger/30', badge: 'text-status-danger' },
 };
 
 const categoryColors = {
-  'Einkauf': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-  'Reparatur': 'bg-orange-500/15 text-orange-400 border-orange-500/20',
-  'Event': 'bg-purple-500/15 text-purple-400 border-purple-500/20',
-  'Sonstiges': 'bg-slate-500/15 text-slate-400 border-slate-500/20',
+  'Einkauf': 'bg-status-ok/15 text-status-ok border-status-ok/20',
+  'Reparatur': 'bg-status-warn/15 text-status-warn border-status-warn/20',
+  'Event': 'bg-primary/15 text-primary border-primary/20',
+  'Sonstiges': 'bg-surface text-muted-foreground border-border',
 };
 
 const statusCycle = { 'offen': 'in_bearbeitung', 'in_bearbeitung': 'erledigt', 'erledigt': 'offen' };
 const statusConfig = {
-  'offen': { icon: Circle, color: 'text-slate-400', label: 'Offen' },
-  'in_bearbeitung': { icon: Loader, color: 'text-blue-400', label: 'In Bearbeitung' },
-  'erledigt': { icon: CheckCircle, color: 'text-green-500', label: 'Erledigt' }
+  'offen': { icon: Circle, color: 'text-muted-foreground', label: 'Offen' },
+  'in_bearbeitung': { icon: Loader, color: 'text-primary', label: 'In Bearbeitung' },
+  'erledigt': { icon: CheckCircle, color: 'text-status-ok', label: 'Erledigt' }
 };
 
 function formatDueDate(dateStr) {
@@ -63,7 +63,7 @@ export default function TodoCardWithCreator({
   const isInProgress = todo.status === 'in_bearbeitung';
   const pCfg = priorityConfig[todo.priority] || priorityConfig['mittel'];
   const StatusIcon = statusConfig[todo.status]?.icon || Circle;
-  const statusColor = statusConfig[todo.status]?.color || 'text-slate-400';
+  const statusColor = statusConfig[todo.status]?.color || 'text-muted-foreground';
 
   const isOverdue = todo.due_date && isPast(parseISO(todo.due_date)) && !isToday(parseISO(todo.due_date)) && !isCompleted;
   const isDueToday = todo.due_date && isToday(parseISO(todo.due_date)) && !isCompleted;
@@ -123,7 +123,7 @@ export default function TodoCardWithCreator({
                 )}>
                   {todo.title}
                   {todo.priority === 'dringend' && !isCompleted && (
-                    <span className="ml-1.5 text-sm text-red-400 font-bold">❗</span>
+                    <span className="ml-1.5 text-sm text-status-danger font-bold">❗</span>
                   )}
                 </h4>
                 {!isCompleted && todo.description && (
@@ -160,13 +160,13 @@ export default function TodoCardWithCreator({
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuLabel className="text-xs text-muted-foreground">Status</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => onStatusChange(todo, 'offen')}>
-                      <Circle className="w-4 h-4 mr-2 text-slate-400" /> Offen
+                      <Circle className="w-4 h-4 mr-2 text-muted-foreground" /> Offen
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onStatusChange(todo, 'in_bearbeitung')}>
-                      <Loader className="w-4 h-4 mr-2 text-blue-400" /> In Bearbeitung
+                      <Loader className="w-4 h-4 mr-2 text-primary" /> In Bearbeitung
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onStatusChange(todo, 'erledigt')}>
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-500" /> Erledigt
+                      <CheckCircle className="w-4 h-4 mr-2 text-status-ok" /> Erledigt
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel className="text-xs text-muted-foreground">Priorität ändern</DropdownMenuLabel>
@@ -203,10 +203,10 @@ export default function TodoCardWithCreator({
                     <DropdownMenuSeparator />
                     {showArchiveButton && (
                       <DropdownMenuItem onClick={() => onArchive(todo.id)}>
-                        <Archive className="w-4 h-4 mr-2 text-amber-400" /> Archivieren
+                        <Archive className="w-4 h-4 mr-2 text-status-warn" /> Archivieren
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={() => onDelete(todo.id)} className="text-red-400 focus:text-red-400">
+                    <DropdownMenuItem onClick={() => onDelete(todo.id)} className="text-status-danger focus:text-status-danger">
                       <Trash2 className="w-4 h-4 mr-2" /> Löschen
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -227,7 +227,7 @@ export default function TodoCardWithCreator({
               {todo.due_date && (
                 <span className={cn(
                   "flex items-center gap-1 font-medium",
-                  isOverdue ? "text-red-400" : isDueToday ? "text-orange-400" : "text-muted-foreground"
+                  isOverdue ? "text-status-danger" : isDueToday ? "text-status-warn" : "text-muted-foreground"
                 )}>
                   <Calendar className="w-3.5 h-3.5" />
                   {formatDueDate(todo.due_date)}
@@ -291,7 +291,7 @@ export default function TodoCardWithCreator({
                   >
                     <div className={cn("w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all",
                       sub.done
-                        ? "bg-green-500 border-green-500"
+                        ? "bg-status-ok/70 border-status-ok/70"
                         : "border-border group-hover:border-foreground"
                     )}>
                       {sub.done && <Check className="w-3 h-3 text-white" />}

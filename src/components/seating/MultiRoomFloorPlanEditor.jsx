@@ -177,7 +177,7 @@ export default function MultiRoomFloorPlanEditor({ onTableSelect = null }) {
             )}
 
             <div
-                className="relative bg-slate-100 border border-border rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"
+                className="relative bg-card border border-border rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"
                 style={{
                     height: '800px',
                     backgroundImage: pdfImage ? `url(${pdfImage})` : 'none',
@@ -204,10 +204,10 @@ export default function MultiRoomFloorPlanEditor({ onTableSelect = null }) {
                         className={cn(
                             'absolute w-12 h-12 rounded-lg flex items-center justify-center text-xs font-bold transition-all shadow-md border-2',
                             onTableSelect
-                                ? 'bg-amber-500 border-amber-600 hover:bg-amber-600 hover:scale-110 cursor-pointer'
+                                ? 'bg-status-warn/70 border-status-warn/70 hover:bg-status-warn/70 hover:scale-110 cursor-pointer'
                                 : draggingTable === tableId
-                                    ? 'bg-blue-500 border-blue-600 z-50 scale-110'
-                                    : 'bg-green-500/80 border-green-600 hover:bg-green-500 hover:scale-105 cursor-grab active:cursor-grabbing'
+                                    ? 'bg-primary/70 border-primary/70 z-50 scale-110'
+                                    : 'bg-status-ok/80 border-status-ok/70 hover:bg-status-ok/70 hover:scale-105 cursor-grab active:cursor-grabbing'
                         )}
                         style={{
                             left: `${pos.x}px`,
@@ -222,7 +222,7 @@ export default function MultiRoomFloorPlanEditor({ onTableSelect = null }) {
             </div>
 
             {!onTableSelect && unsavedChanges && (
-                <div className="text-sm text-amber-600 font-medium">
+                <div className="text-sm text-status-warn font-medium">
                     ⚠️ Ungespeicherte Änderungen – bitte Speichern klicken
                 </div>
             )}

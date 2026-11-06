@@ -8,14 +8,14 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 const fileTypeBadge = {
-    'PDF':  'bg-red-500/15 text-red-400',
-    'DOCX': 'bg-blue-500/15 text-blue-400',
-    'DOC':  'bg-blue-500/15 text-blue-400',
-    'XLSX': 'bg-emerald-500/15 text-emerald-400',
-    'XLS':  'bg-emerald-500/15 text-emerald-400',
-    'PNG':  'bg-purple-500/15 text-purple-400',
-    'JPG':  'bg-purple-500/15 text-purple-400',
-    'JPEG': 'bg-purple-500/15 text-purple-400',
+    'PDF':  'bg-status-danger/15 text-status-danger',
+    'DOCX': 'bg-primary/15 text-primary',
+    'DOC':  'bg-primary/15 text-primary',
+    'XLSX': 'bg-status-ok/15 text-status-ok',
+    'XLS':  'bg-status-ok/15 text-status-ok',
+    'PNG':  'bg-primary/15 text-primary',
+    'JPG':  'bg-primary/15 text-primary',
+    'JPEG': 'bg-primary/15 text-primary',
 };
 
 export default function DocumentViewerModal({ document, open, onClose }) {
@@ -57,7 +57,7 @@ export default function DocumentViewerModal({ document, open, onClose }) {
                         'flex items-center gap-2 px-4 py-2 text-xs border-b',
                         isExpired
                             ? 'bg-destructive/10 border-destructive/20 text-destructive'
-                            : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                            : 'bg-status-warn/10 border-status-warn/20 text-status-warn'
                     )}>
                         {isExpired ? <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> : <Clock className="w-3.5 h-3.5 shrink-0" />}
                         {isExpired
@@ -157,7 +157,7 @@ export default function DocumentViewerModal({ document, open, onClose }) {
                         <a
                             href={document.file_url}
                             download
-                            className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md bg-amber-600 hover:bg-amber-700 text-white transition-colors"
+                            className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md bg-status-warn/70 hover:bg-status-warn/70 text-white transition-colors"
                         >
                             <Download className="w-3.5 h-3.5" />
                             Download

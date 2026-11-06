@@ -70,11 +70,11 @@ export default function JobEquipmentTab({ job }) {
             ) : (
                 <div className="space-y-2">
                     {items.map(it => (
-                        <div key={it.id} className={cn('rounded-xl border bg-card p-3 flex items-center gap-3', it.is_checked ? 'border-emerald-500/30' : 'border-border/50')}>
+                        <div key={it.id} className={cn('rounded-xl border bg-card p-3 flex items-center gap-3', it.is_checked ? 'border-status-ok/30' : 'border-border/50')}>
                             <button
                                 onClick={() => updateItem.mutate({ id: it.id, data: { is_checked: !it.is_checked } })}
                                 className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-colors',
-                                    it.is_checked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border text-transparent hover:border-emerald-500/50')}
+                                    it.is_checked ? 'bg-status-ok/70 border-status-ok/70 text-white' : 'border-border text-transparent hover:border-status-ok/50')}
                             >
                                 <Check className="w-4 h-4" />
                             </button>

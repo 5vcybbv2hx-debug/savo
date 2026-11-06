@@ -93,17 +93,17 @@ function QrPreview({ slotId, slotName, slotCode, onClose }) {
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-amber-500" />
+            <QrCode className="w-5 h-5 text-status-warn" />
             {slotName || 'QR-Code'}
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center gap-3 py-1">
-          <div className="rounded-2xl overflow-hidden border border-border bg-white shadow-sm">
+          <div className="rounded-2xl overflow-hidden border border-border bg-card shadow-sm">
             <canvas ref={canvasRef} style={{ display: 'block', maxWidth: '100%' }} />
           </div>
           <p className="text-[11px] text-muted-foreground text-center break-all px-2">{url}</p>
           <div className="flex gap-2 w-full">
-            <Button size="sm" className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+            <Button size="sm" className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white"
               onClick={handleDownload} disabled={!ready}>
               <Download className="w-3.5 h-3.5 mr-1.5" />PNG laden
             </Button>
@@ -342,13 +342,13 @@ export default function SlotsTab({ permissions }) {
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide mb-2">
         <button onClick={() => { setFilterArea(ALL); setFilterFurniture(ALL); }}
           className={cn('shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
-            filterArea === ALL ? 'bg-amber-500 border-amber-500 text-white' : 'border-border text-muted-foreground bg-card hover:text-foreground')}>
+            filterArea === ALL ? 'bg-status-warn/70 border-status-warn/70 text-white' : 'border-border text-muted-foreground bg-card hover:text-foreground')}>
           Alle
         </button>
         {areas.map(a => (
           <button key={a.id} onClick={() => { setFilterArea(a.id); setFilterFurniture(ALL); }}
             className={cn('shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
-              filterArea === a.id ? 'bg-amber-500 border-amber-500 text-white' : 'border-border text-muted-foreground bg-card hover:text-foreground')}>
+              filterArea === a.id ? 'bg-status-warn/70 border-status-warn/70 text-white' : 'border-border text-muted-foreground bg-card hover:text-foreground')}>
             {a.name}
           </button>
         ))}
@@ -378,7 +378,7 @@ export default function SlotsTab({ permissions }) {
           {filteredSlots.length} Fach{filteredSlots.length !== 1 ? 'er' : ''}
         </p>
         {canEdit && (
-          <Button size="sm" onClick={openAdd} className="bg-amber-600 hover:bg-amber-700 text-white h-8 text-xs">
+          <Button size="sm" onClick={openAdd} className="bg-status-warn/70 hover:bg-status-warn/70 text-white h-8 text-xs">
             <Plus className="w-3.5 h-3.5 mr-1" />Fach hinzufügen
           </Button>
         )}
@@ -387,7 +387,7 @@ export default function SlotsTab({ permissions }) {
       {/* Fach-Liste */}
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-status-warn" />
         </div>
       ) : filteredSlots.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
@@ -412,8 +412,8 @@ export default function SlotsTab({ permissions }) {
               >
                 <div className="flex items-start gap-3">
                   {/* Icon */}
-                  <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Package className="w-4 h-4 text-amber-500" />
+                  <div className="w-9 h-9 rounded-lg bg-status-warn/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Package className="w-4 h-4 text-status-warn" />
                   </div>
 
                   {/* Info */}
@@ -439,7 +439,7 @@ export default function SlotsTab({ permissions }) {
                           <span key={i} className={cn(
                             'text-[10px] border rounded px-1.5 py-0.5',
                             a.min_stock != null && a.quantity != null && a.quantity < a.min_stock
-                              ? 'border-red-500/40 bg-red-500/8 text-red-400'
+                              ? 'border-status-danger/40 bg-status-danger/8 text-status-danger'
                               : 'bg-secondary text-muted-foreground border-border'
                           )}>
                             {a.article_name}
@@ -456,7 +456,7 @@ export default function SlotsTab({ permissions }) {
 
                     {/* Low-stock Warnung */}
                     {lowCount > 0 && (
-                      <p className="text-[10px] text-red-400 font-semibold mt-1.5">
+                      <p className="text-[10px] text-status-danger font-semibold mt-1.5">
                         ⚠ {lowCount} unter Mindestbestand
                       </p>
                     )}
@@ -464,7 +464,7 @@ export default function SlotsTab({ permissions }) {
 
                   {/* Actions */}
                   <div className="flex gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-amber-500 hover:bg-amber-500/10"
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-status-warn hover:bg-status-warn/10"
                       onClick={() => setQrSlot({ id: slot.id, name: slot.full_name || slot.name, code: slot.short_code })}
                       title="QR-Code">
                       <QrCode className="w-3.5 h-3.5" />
@@ -595,7 +595,7 @@ export default function SlotsTab({ permissions }) {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setModal({ open: false, data: null })}>Abbrechen</Button>
             <Button onClick={handleSave} disabled={saveMut.isPending}
-              className="bg-amber-600 hover:bg-amber-700 text-white">
+              className="bg-status-warn/70 hover:bg-status-warn/70 text-white">
               {saveMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Speichern'}
             </Button>
           </DialogFooter>

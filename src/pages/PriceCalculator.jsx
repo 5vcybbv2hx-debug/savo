@@ -71,9 +71,9 @@ function calcIngredientCost(article, amount, unit) {
 
 // ── Szenarien ─────────────────────────────────────────────────────────────────
 const SCENARIOS = [
-    { label: 'Günstig',  foodCostPct: 35, color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/30' },
-    { label: 'Standard', foodCostPct: 28, color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/30' },
-    { label: 'Premium',  foodCostPct: 20, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/30' },
+    { label: 'Günstig',  foodCostPct: 35, color: 'text-primary',   bg: 'bg-primary/10 border-primary/30' },
+    { label: 'Standard', foodCostPct: 28, color: 'text-status-warn',  bg: 'bg-status-warn/10 border-status-warn/30' },
+    { label: 'Premium',  foodCostPct: 20, color: 'text-primary', bg: 'bg-primary/10 border-primary/30' },
 ];
 
 // ── Sticky Ergebnis-Footer ────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ function StickyPriceFooter({ label, grossPrice, costPrice, foodCostPct, visible 
                 </div>
                 <div className="text-right shrink-0">
                     <p className="text-xs text-muted-foreground">Verkaufspreis</p>
-                    <p className="text-2xl font-bold text-amber-500">{fmt(grossPrice)} €</p>
+                    <p className="text-2xl font-bold text-status-warn">{fmt(grossPrice)} €</p>
                 </div>
             </div>
         </div>
@@ -181,7 +181,7 @@ function SingleMode({ articles, onResult }) {
             {/* Artikel */}
             <Card className="p-5 bg-card border-border space-y-3">
                 <div className="flex items-center gap-2">
-                    <Package className="w-4 h-4 text-amber-400" />
+                    <Package className="w-4 h-4 text-status-warn" />
                     <h3 className="font-semibold text-foreground text-sm">Artikel wählen</h3>
                 </div>
                 <SmartCombobox
@@ -196,7 +196,7 @@ function SingleMode({ articles, onResult }) {
                         {selectedArticle.purchase_price ? (
                             <Badge variant="secondary">EK: {fmt(selectedArticle.purchase_price)} €</Badge>
                         ) : (
-                            <Badge className="bg-red-500/12 text-red-400 border-red-500/25 gap-1">
+                            <Badge className="bg-status-danger/12 text-status-danger border-status-danger/25 gap-1">
                                 <AlertTriangle className="w-3 h-3" />Kein EK hinterlegt
                             </Badge>
                         )}
@@ -206,7 +206,7 @@ function SingleMode({ articles, onResult }) {
                             </Badge>
                         )}
                         {!selectedArticle.content_amount && (
-                            <Badge className="bg-orange-500/12 text-orange-400 border-orange-500/25 gap-1">
+                            <Badge className="bg-status-warn/12 text-status-warn border-status-warn/25 gap-1">
                                 <AlertTriangle className="w-3 h-3" />Keine Inhaltsmenge
                             </Badge>
                         )}
@@ -218,7 +218,7 @@ function SingleMode({ articles, onResult }) {
             <Card className="p-5 bg-card border-border space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Calculator className="w-4 h-4 text-blue-400" />
+                        <Calculator className="w-4 h-4 text-primary" />
                         <h3 className="font-semibold text-foreground text-sm">Kalkulation</h3>
                     </div>
                     {/* Vorwärts / Rückwärts Toggle */}
@@ -226,7 +226,7 @@ function SingleMode({ articles, onResult }) {
                         className={cn(
                             'flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full border transition-all',
                             reverseMode
-                                ? 'bg-blue-500/15 border-blue-500/40 text-blue-400'
+                                ? 'bg-primary/15 border-primary/40 text-primary'
                                 : 'border-border text-muted-foreground hover:text-foreground'
                         )}>
                         <ArrowLeftRight className="w-3.5 h-3.5" />
@@ -261,7 +261,7 @@ function SingleMode({ articles, onResult }) {
                             <Label className="text-xs text-muted-foreground">
                                 Wareneinsatz — Gastro-Standard 20–35%
                             </Label>
-                            <span className="text-sm font-bold text-amber-500">{foodCostPct}%</span>
+                            <span className="text-sm font-bold text-status-warn">{foodCostPct}%</span>
                         </div>
                         <input type="range" min="10" max="60" value={foodCostPct}
                             onChange={e => setFoodCostPct(e.target.value)}
@@ -310,11 +310,11 @@ function SingleMode({ articles, onResult }) {
                         'rounded-xl p-4 text-center',
                         reverseMode && reverseFoodCost != null
                             ? reverseFoodCost > 40
-                                ? 'bg-red-500/10 border border-red-500/30'
+                                ? 'bg-status-danger/10 border border-status-danger/30'
                                 : reverseFoodCost > 30
-                                    ? 'bg-amber-500/10 border border-amber-500/30'
-                                    : 'bg-green-500/10 border border-green-500/30'
-                            : 'bg-amber-500/10 border border-amber-500/30'
+                                    ? 'bg-status-warn/10 border border-status-warn/30'
+                                    : 'bg-status-ok/10 border border-status-ok/30'
+                            : 'bg-status-warn/10 border border-status-warn/30'
                     )}>
                         {reverseMode ? (
                             <>
@@ -324,7 +324,7 @@ function SingleMode({ articles, onResult }) {
                                 </p>
                                 {reverseFoodCost != null && (
                                     <p className={cn('text-xs mt-1 font-medium',
-                                        reverseFoodCost > 40 ? 'text-red-400' : reverseFoodCost > 30 ? 'text-amber-400' : 'text-green-400')}>
+                                        reverseFoodCost > 40 ? 'text-status-danger' : reverseFoodCost > 30 ? 'text-status-warn' : 'text-status-ok')}>
                                         {reverseFoodCost > 40 ? '⚠ Zu hoch — Verlust möglich'
                                             : reverseFoodCost > 30 ? 'Akzeptabel'
                                             : '✓ Sehr gut'}
@@ -333,7 +333,7 @@ function SingleMode({ articles, onResult }) {
                             </>
                         ) : (
                             <>
-                                <p className="text-xs text-amber-400 mb-1">Empfohlener Verkaufspreis (brutto)</p>
+                                <p className="text-xs text-status-warn mb-1">Empfohlener Verkaufspreis (brutto)</p>
                                 <p className="text-4xl font-bold text-foreground">{fmt(sellGross)} €</p>
                                 <p className="text-xs text-muted-foreground mt-1">
                                     Wareneinsatz: {actualFoodCost?.toFixed(1)}%
@@ -354,7 +354,7 @@ function SingleMode({ articles, onResult }) {
                         </div>
                         <div className="bg-secondary/40 rounded-xl p-3 text-center">
                             <p className="text-[10px] text-muted-foreground mb-1">Gewinn netto</p>
-                            <p className="text-sm font-bold text-green-400">
+                            <p className="text-sm font-bold text-status-ok">
                                 +{fmt(reverseMode ? reverseProfit : profit)} €
                             </p>
                         </div>
@@ -375,7 +375,7 @@ function SingleMode({ articles, onResult }) {
                                         </div>
                                         <Button size="sm" onClick={() => handleSaveToMenuItem(m)}
                                             disabled={saving || displayGross == null}
-                                            className="shrink-0 h-8 bg-amber-600 hover:bg-amber-700 text-white text-xs">
+                                            className="shrink-0 h-8 bg-status-warn/70 hover:bg-status-warn/70 text-white text-xs">
                                             <CheckCircle className="w-3 h-3 mr-1" />
                                             {fmt(displayGross)} € setzen
                                         </Button>
@@ -405,7 +405,7 @@ function SingleMode({ articles, onResult }) {
             {/* Kein EK / keine Inhaltsmenge */}
             {selectedArticle && costPerPortion == null && (
                 <Card className="p-5 bg-card border-border text-center space-y-2">
-                    <AlertTriangle className="w-8 h-8 text-orange-400 mx-auto" />
+                    <AlertTriangle className="w-8 h-8 text-status-warn mx-auto" />
                     <p className="text-sm font-semibold text-foreground">Kalkulation nicht möglich</p>
                     <p className="text-xs text-muted-foreground">
                         {!selectedArticle.purchase_price

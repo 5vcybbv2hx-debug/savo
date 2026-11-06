@@ -26,7 +26,7 @@ export default function ScanResultModal({
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <CheckCircle2 className="w-5 h-5 text-status-ok" />
               Artikel gefunden
             </DialogTitle>
           </DialogHeader>
@@ -60,7 +60,7 @@ export default function ScanResultModal({
                   onSelectArticle(matchResult.article);
                   onClose();
                 }}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-status-ok/70 hover:bg-status-ok/70"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Hinzufügen
@@ -79,7 +79,7 @@ export default function ScanResultModal({
         <DialogContent className="max-w-sm max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Search className="w-5 h-5 text-blue-500" />
+              <Search className="w-5 h-5 text-primary" />
               {allMatches.length} Artikel gefunden
             </DialogTitle>
           </DialogHeader>
@@ -123,7 +123,7 @@ export default function ScanResultModal({
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-amber-500" />
+            <AlertCircle className="w-5 h-5 text-status-warn" />
             Artikel nicht gefunden
           </DialogTitle>
         </DialogHeader>

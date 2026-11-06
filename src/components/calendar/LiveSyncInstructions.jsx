@@ -80,9 +80,9 @@ export default function LiveSyncInstructions() {
                 </DialogHeader>
                 
                 <div className="space-y-4 mt-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-                        <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                        <div className="text-sm text-blue-800">
+                    <div className="bg-primary/15 border border-primary/25 rounded-lg p-4 flex gap-3">
+                        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                        <div className="text-sm text-primary">
                             <p className="font-medium mb-1">Automatische Synchronisation</p>
                             <p>Alle Schichten, Reservierungen und Geburtstage werden automatisch in deinen Kalender synchronisiert. Änderungen werden innerhalb von 1 Stunde aktualisiert.</p>
                         </div>
@@ -90,11 +90,11 @@ export default function LiveSyncInstructions() {
 
                     {/* Token-Schutz: Kalender-URL nur mit gültigem Token */}
                     {!feedToken ? (
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
-                            <KeyRound className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="bg-status-warn/15 border border-status-warn/25 rounded-lg p-4 flex gap-3">
+                            <KeyRound className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
                             <div className="flex-1">
-                                <p className="text-sm font-medium text-amber-800 mb-1">Zugriffstoken erforderlich</p>
-                                <p className="text-sm text-amber-700 mb-3">
+                                <p className="text-sm font-medium text-status-warn mb-1">Zugriffstoken erforderlich</p>
+                                <p className="text-sm text-status-warn mb-3">
                                     Der Kalender-Feed ist durch ein persönliches Token geschützt, damit nur berechtigte Personen Zugriff auf Schicht- und Personaldaten haben.
                                 </p>
                                 <Button onClick={generateToken} disabled={generating} size="sm" className="gap-2">
@@ -111,14 +111,14 @@ export default function LiveSyncInstructions() {
                                     type="text"
                                     value={calendarUrl}
                                     readOnly
-                                    className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-muted-foreground"
+                                    className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-card text-muted-foreground"
                                 />
                                 <Button
                                     variant="outline"
                                     size="icon"
                                     onClick={copyUrl}
                                 >
-                                    {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                                    {copied ? <Check className="w-4 h-4 text-status-ok" /> : <Copy className="w-4 h-4" />}
                                 </Button>
                             </div>
                             <button
@@ -133,18 +133,18 @@ export default function LiveSyncInstructions() {
                     )}
 
                     <div className="space-y-4">
-                        <h3 className="font-semibold text-slate-800">Anleitung</h3>
+                        <h3 className="font-semibold text-muted-foreground">Anleitung</h3>
                         
                         {/* Google Calendar */}
-                        <Card className="p-4 border-slate-200">
+                        <Card className="p-4 border-border">
                             <div className="flex items-center gap-2 mb-3">
-                                <div className="w-8 h-8 rounded bg-blue-500 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded bg-primary/70 flex items-center justify-center">
                                     <span className="text-foreground font-bold text-sm">G</span>
                                 </div>
-                                <h4 className="font-semibold text-slate-800">Google Kalender</h4>
+                                <h4 className="font-semibold text-muted-foreground">Google Kalender</h4>
                             </div>
                             <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-                                <li>Öffne <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">Google Kalender <ExternalLink className="w-3 h-3" /></a></li>
+                                <li>Öffne <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">Google Kalender <ExternalLink className="w-3 h-3" /></a></li>
                                 <li>Klicke auf das <strong>+</strong> neben "Andere Kalender"</li>
                                 <li>Wähle <strong>"Per URL hinzufügen"</strong></li>
                                 <li>Füge die obige URL ein und klicke auf "Kalender hinzufügen"</li>
@@ -152,12 +152,12 @@ export default function LiveSyncInstructions() {
                         </Card>
 
                         {/* Apple Calendar */}
-                        <Card className="p-4 border-slate-200">
+                        <Card className="p-4 border-border">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="w-8 h-8 rounded bg-card flex items-center justify-center">
                                     <span className="text-foreground font-bold text-sm"></span>
                                 </div>
-                                <h4 className="font-semibold text-slate-800">Apple Kalender</h4>
+                                <h4 className="font-semibold text-muted-foreground">Apple Kalender</h4>
                             </div>
                             <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
                                 <li>Öffne die <strong>Kalender App</strong> auf Mac/iPhone</li>
@@ -168,8 +168,8 @@ export default function LiveSyncInstructions() {
                         </Card>
                     </div>
 
-                    <div className="bg-slate-50 rounded-lg p-4 text-sm text-muted-foreground">
-                        <p className="font-medium text-slate-800 mb-2">Was wird synchronisiert?</p>
+                    <div className="bg-card rounded-lg p-4 text-sm text-muted-foreground">
+                        <p className="font-medium text-muted-foreground mb-2">Was wird synchronisiert?</p>
                         <ul className="space-y-1 list-disc list-inside">
                             <li><strong>Schichten:</strong> Alle geplanten Mitarbeiter-Schichten</li>
                             <li><strong>Reservierungen:</strong> Alle bestätigten und vorgemerkten Reservierungen</li>

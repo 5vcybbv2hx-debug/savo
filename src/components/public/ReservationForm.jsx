@@ -170,7 +170,7 @@ export default function ReservationForm({ onSuccess }) {
 
                     <Button 
                         type="submit" 
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-lg h-12"
+                        className="w-full bg-status-warn/70 hover:bg-status-warn/70 text-lg h-12"
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? 'Wird gesendet...' : 'Jetzt reservieren'}

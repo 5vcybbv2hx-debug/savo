@@ -118,7 +118,7 @@ function AccountCard({ account, selected, onClick }) {
             onClick={onClick}
             className={cn(
                 'p-4 cursor-pointer transition-all',
-                selected ? 'border-blue-500/50 bg-blue-500/5' : 'border-border hover:border-border/80'
+                selected ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-border/80'
             )}
         >
             <div className="flex items-start justify-between gap-2">
@@ -129,7 +129,7 @@ function AccountCard({ account, selected, onClick }) {
                 </div>
                 <div className="text-right">
                     {account.current_balance != null && (
-                        <p className={cn('text-base font-bold', account.current_balance >= 0 ? 'text-green-400' : 'text-red-400')}>
+                        <p className={cn('text-base font-bold', account.current_balance >= 0 ? 'text-status-ok' : 'text-status-danger')}>
                             {fmt(account.current_balance)} €
                         </p>
                     )}
@@ -144,7 +144,7 @@ function AccountCard({ account, selected, onClick }) {
 
 function TransactionRow({ tx, onMatchToggle }) {
     const isIncoming = tx.amount > 0;
-    const matchColor = tx.match_status === 'matched' ? 'text-green-400' : tx.match_status === 'ignored' ? 'text-muted-foreground' : 'text-amber-400';
+    const matchColor = tx.match_status === 'matched' ? 'text-status-ok' : tx.match_status === 'ignored' ? 'text-muted-foreground' : 'text-status-warn';
     const MatchIcon = tx.match_status === 'matched' ? CheckCircle2 : tx.match_status === 'ignored' ? Minus : CircleDot;
 
     return (
@@ -152,10 +152,10 @@ function TransactionRow({ tx, onMatchToggle }) {
             'flex items-center gap-3 px-4 py-3 border-b border-border/50 hover:bg-accent/30 transition-colors',
             tx.match_status === 'ignored' && 'opacity-50'
         )}>
-            <div className={cn('w-8 h-8 rounded-full flex items-center justify-center shrink-0', isIncoming ? 'bg-green-500/15' : 'bg-red-500/15')}>
+            <div className={cn('w-8 h-8 rounded-full flex items-center justify-center shrink-0', isIncoming ? 'bg-status-ok/15' : 'bg-status-danger/15')}>
                 {isIncoming
-                    ? <ArrowDownCircle className="w-4 h-4 text-green-400" />
-                    : <ArrowUpCircle className="w-4 h-4 text-red-400" />
+                    ? <ArrowDownCircle className="w-4 h-4 text-status-ok" />
+                    : <ArrowUpCircle className="w-4 h-4 text-status-danger" />
                 }
             </div>
             <div className="flex-1 min-w-0">
@@ -164,7 +164,7 @@ function TransactionRow({ tx, onMatchToggle }) {
                 <p className="text-xs text-muted-foreground">{tx.booking_date}</p>
             </div>
             <div className="text-right shrink-0">
-                <p className={cn('text-sm font-bold', isIncoming ? 'text-green-400' : 'text-red-400')}>
+                <p className={cn('text-sm font-bold', isIncoming ? 'text-status-ok' : 'text-status-danger')}>
                     {isIncoming ? '+' : ''}{fmt(tx.amount)} €
                 </p>
                 <button onClick={() => onMatchToggle(tx)} className={cn('text-xs flex items-center gap-1 justify-end mt-0.5', matchColor)}>
@@ -268,10 +268,10 @@ export default function AccountingBank() {
             <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-5 py-3">
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                        <Building2 className="w-5 h-5 text-blue-400" />
+                        <Building2 className="w-5 h-5 text-primary" />
                         <h1 className="page-title">Bankkonten</h1>
                         {unmatchedCount > 0 && (
-                            <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-xs">{unmatchedCount} offen</Badge>
+                            <Badge className="bg-status-warn/15 text-status-warn border-status-warn/20 text-xs">{unmatchedCount} offen</Badge>
                         )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -299,7 +299,7 @@ export default function AccountingBank() {
                         <Card className="p-8 text-center text-muted-foreground col-span-2 border-dashed border-border">
                             <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
                             <p className="text-sm font-medium">Noch keine Bankkonten</p>
-                            <Button onClick={() => setShowAddAccount(true)} size="sm" className="mt-3 bg-blue-500 hover:bg-blue-600 text-primary-foreground">
+                            <Button onClick={() => setShowAddAccount(true)} size="sm" className="mt-3 bg-primary/70 hover:bg-primary/70 text-primary-foreground">
                                 <Plus className="w-4 h-4 mr-1" /> Konto hinzufügen
                             </Button>
                         </Card>
@@ -308,14 +308,14 @@ export default function AccountingBank() {
 
                 {/* CSV Import */}
                 {selectedAccount && (
-                    <Card className="p-4 border-dashed border-blue-500/30 bg-blue-500/5">
+                    <Card className="p-4 border-dashed border-primary/30 bg-primary/5">
                         <div className="flex items-center justify-between gap-3">
                             <div>
                                 <p className="text-sm font-semibold text-foreground">Kontoauszug importieren</p>
                                 <p className="text-xs text-muted-foreground mt-0.5">CSV-Export aus deinem Online-Banking (Sparkasse, Volksbank, DKB, N26 …)</p>
                             </div>
                             <label className="cursor-pointer">
-                                <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-primary-foreground gap-1.5 pointer-events-none">
+                                <Button size="sm" className="bg-primary/70 hover:bg-primary/70 text-primary-foreground gap-1.5 pointer-events-none">
                                     {importing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                                     CSV hochladen
                                 </Button>
@@ -337,7 +337,7 @@ export default function AccountingBank() {
                                 <Button size="sm" variant="outline" onClick={() => setImportPreview(null)}>
                                     <X className="w-4 h-4" />
                                 </Button>
-                                <Button size="sm" className="bg-green-500 hover:bg-green-600 text-primary-foreground gap-1"
+                                <Button size="sm" className="bg-status-ok/70 hover:bg-status-ok/70 text-primary-foreground gap-1"
                                     onClick={() => bulkCreateTransactions.mutate(importPreview.rows)}
                                     disabled={bulkCreateTransactions.isPending}>
                                     {bulkCreateTransactions.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -348,7 +348,7 @@ export default function AccountingBank() {
                         <div className="max-h-64 overflow-y-auto divide-y divide-border/50">
                             {importPreview.rows.slice(0, 20).map((row, i) => (
                                 <div key={i} className="flex items-center gap-3 px-4 py-2">
-                                    <span className={cn('text-xs w-20 shrink-0', row.amount > 0 ? 'text-green-400' : 'text-red-400')}>
+                                    <span className={cn('text-xs w-20 shrink-0', row.amount > 0 ? 'text-status-ok' : 'text-status-danger')}>
                                         {row.amount > 0 ? '+' : ''}{fmt(row.amount)} €
                                     </span>
                                     <span className="text-xs text-muted-foreground w-24 shrink-0">{row.booking_date}</span>
@@ -369,15 +369,15 @@ export default function AccountingBank() {
                         <div className="grid grid-cols-3 gap-3">
                             <Card className="p-3 border-border">
                                 <p className="text-xs text-muted-foreground">Eingänge</p>
-                                <p className="text-base font-bold text-green-400 mt-0.5">{fmt(totalIn)} €</p>
+                                <p className="text-base font-bold text-status-ok mt-0.5">{fmt(totalIn)} €</p>
                             </Card>
                             <Card className="p-3 border-border">
                                 <p className="text-xs text-muted-foreground">Ausgänge</p>
-                                <p className="text-base font-bold text-red-400 mt-0.5">{fmt(Math.abs(totalOut))} €</p>
+                                <p className="text-base font-bold text-status-danger mt-0.5">{fmt(Math.abs(totalOut))} €</p>
                             </Card>
                             <Card className="p-3 border-border">
                                 <p className="text-xs text-muted-foreground">Saldo</p>
-                                <p className={cn('text-base font-bold mt-0.5', (totalIn + totalOut) >= 0 ? 'text-green-400' : 'text-red-400')}>
+                                <p className={cn('text-base font-bold mt-0.5', (totalIn + totalOut) >= 0 ? 'text-status-ok' : 'text-status-danger')}>
                                     {fmt(totalIn + totalOut)} €
                                 </p>
                             </Card>
@@ -425,7 +425,7 @@ export default function AccountingBank() {
                 <div className="fixed inset-0 z-50 flex flex-col bg-background">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
                         <div className="flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-blue-400" />
+                            <Building2 className="w-5 h-5 text-primary" />
                             <span className="font-bold text-foreground">Bankkonto hinzufügen</span>
                         </div>
                         <button onClick={() => setShowAddAccount(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-accent">
@@ -477,7 +477,7 @@ export default function AccountingBank() {
                         <Button variant="outline" onClick={() => setShowAddAccount(false)} className="flex-1">Abbrechen</Button>
                         <Button
                             onClick={() => createAccount.mutate({ ...accountForm, current_balance: parseFloat(accountForm.current_balance) || null })}
-                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-primary-foreground"
+                            className="flex-1 bg-primary/70 hover:bg-primary/70 text-primary-foreground"
                             disabled={!accountForm.name || !accountForm.bank_name || createAccount.isPending}
                         >
                             {createAccount.isPending ? 'Speichern…' : 'Konto speichern'}

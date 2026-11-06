@@ -41,23 +41,23 @@ function smartRound(value) {
 }
 
 const spiritColors = {
-    'Vodka': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    'Rum': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    'Gin': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    'Whiskey': 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-    'Likör': 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    'Alkoholfrei': 'bg-green-500/20 text-green-300 border-green-500/30',
-    'Sonstiges': 'bg-slate-500/20 text-slate-300 border-slate-500/30',
+    'Vodka': 'bg-primary/20 text-primary/25 border-primary/30',
+    'Rum': 'bg-status-warn/20 text-status-warn/25 border-status-warn/30',
+    'Gin': 'bg-status-ok/20 text-status-ok/25 border-status-ok/30',
+    'Whiskey': 'bg-status-warn/20 text-status-warn/25 border-status-warn/30',
+    'Likör': 'bg-primary/20 text-primary border-primary/30',
+    'Alkoholfrei': 'bg-status-ok/20 text-status-ok/25 border-status-ok/30',
+    'Sonstiges': 'bg-surface text-muted-foreground border-border',
 };
 
 const spiritDots = {
-    'Vodka': 'bg-blue-400',
-    'Rum': 'bg-amber-400',
-    'Gin': 'bg-emerald-400',
-    'Whiskey': 'bg-orange-400',
-    'Likör': 'bg-purple-400',
-    'Alkoholfrei': 'bg-green-400',
-    'Sonstiges': 'bg-slate-400',
+    'Vodka': 'bg-primary/70',
+    'Rum': 'bg-status-warn/70',
+    'Gin': 'bg-status-ok/70',
+    'Whiskey': 'bg-status-warn/70',
+    'Likör': 'bg-primary',
+    'Alkoholfrei': 'bg-status-ok/70',
+    'Sonstiges': 'bg-muted',
 };
 
 function StarRating({ recipe, isManager }) {
@@ -101,14 +101,14 @@ function StarRating({ recipe, isManager }) {
                             <Star className={cn(
                                 'w-4 h-4 transition-colors',
                                 (hovered || current) >= star
-                                    ? 'fill-amber-400 text-amber-400'
+                                    ? 'fill-status-warn text-status-warn'
                                     : 'text-muted-foreground/40'
                             )} />
                         </button>
                     ))}
                 </div>
                 {current > 0 && (
-                    <span className="text-xs text-amber-400 font-semibold">{current}/5</span>
+                    <span className="text-xs text-status-warn font-semibold">{current}/5</span>
                 )}
                 {isManager && (
                     <button
@@ -132,7 +132,7 @@ function StarRating({ recipe, isManager }) {
                     />
                     <div className="flex gap-2">
                         <Button size="sm" onClick={handleSaveNotes} disabled={saving}
-                            className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white">
+                            className="h-7 text-xs bg-status-warn/70 hover:bg-status-warn/70 text-white">
                             Speichern
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setShowNotes(false)}
@@ -164,10 +164,10 @@ export default function SlushyRecipeCard({ recipe, onEdit, onDelete, isManager }
     return (
         <Card className={cn(
             'bg-card border-border overflow-hidden transition-all',
-            'hover:border-cyan-500/30'
+            'hover:border-primary/30'
         )}>
             {/* Color bar top */}
-            <div className={cn('h-1 w-full', spiritDots[spirit] || 'bg-slate-400')} />
+            <div className={cn('h-1 w-full', spiritDots[spirit] || 'bg-muted')} />
 
             <div className="p-4">
                 {/* Header */}
@@ -183,7 +183,7 @@ export default function SlushyRecipeCard({ recipe, onEdit, onDelete, isManager }
                                     {spirit}
                                 </Badge>
                             )}
-                            <Badge className="text-[10px] bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                            <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20">
                                 <Snowflake className="w-2.5 h-2.5 mr-1" />
                                 Slushy
                             </Badge>
@@ -197,7 +197,7 @@ export default function SlushyRecipeCard({ recipe, onEdit, onDelete, isManager }
                                     <Edit className="w-3.5 h-3.5" />
                                 </Button>
                                 <Button variant="ghost" size="icon" onClick={() => onDelete(recipe.id)}
-                                    className="h-7 w-7 text-red-500 hover:text-red-400 hover:bg-red-500/10">
+                                    className="h-7 w-7 text-status-danger hover:text-status-danger hover:bg-status-danger/10">
                                     <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                             </>
@@ -208,10 +208,10 @@ export default function SlushyRecipeCard({ recipe, onEdit, onDelete, isManager }
                 {/* Scaling info */}
                 {originalVolume && (
                     <div className="flex items-center gap-1.5 mb-3 text-xs text-muted-foreground bg-secondary/50 rounded-lg px-2.5 py-1.5">
-                        <Snowflake className="w-3 h-3 text-cyan-400 shrink-0" />
+                        <Snowflake className="w-3 h-3 text-primary shrink-0" />
                         <span>Original: <strong className="text-foreground">{originalVolume}L</strong></span>
                         <span className="text-border">→</span>
-                        <span className="text-cyan-400 font-semibold">{TARGET_VOLUME}L (Faktor {factor.toFixed(2)})</span>
+                        <span className="text-primary font-semibold">{TARGET_VOLUME}L (Faktor {factor.toFixed(2)})</span>
                     </div>
                 )}
 
@@ -221,7 +221,7 @@ export default function SlushyRecipeCard({ recipe, onEdit, onDelete, isManager }
                         {(expanded ? scaledIngredients : scaledIngredients.slice(0, 4)).map((ing, idx) => (
                             <div key={idx} className="flex justify-between items-center text-xs">
                                 <span className="text-muted-foreground">{ing.article_name}</span>
-                                <span className="text-cyan-400 font-semibold tabular-nums">
+                                <span className="text-primary font-semibold tabular-nums">
                                     {originalVolume
                                         ? `${ing.scaledAmount} ${ing.unit || 'L'}`
                                         : `${ing.amount} ${ing.unit || 'L'}`
@@ -245,7 +245,7 @@ export default function SlushyRecipeCard({ recipe, onEdit, onDelete, isManager }
 
                 {/* Garnish & Notes */}
                 {recipe.garnish && (
-                    <p className="text-xs text-amber-400 mt-2">🍋 {recipe.garnish}</p>
+                    <p className="text-xs text-status-warn mt-2">🍋 {recipe.garnish}</p>
                 )}
                 {recipe.notes && (
                     <p className="text-xs text-muted-foreground mt-1 italic">💡 {recipe.notes}</p>

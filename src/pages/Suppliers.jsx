@@ -36,11 +36,11 @@ import { toast } from 'sonner';
 
 // ── Typ-Config ────────────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
-    'Lieferant':         { color: 'bg-amber-500/15 text-amber-400 border-amber-500/30',    icon: Package,   emoji: '📦' },
-    'Steuerberater':     { color: 'bg-blue-500/15 text-blue-400 border-blue-500/30',       icon: Briefcase, emoji: '📊' },
-    'Anwalt':            { color: 'bg-violet-500/15 text-violet-400 border-violet-500/30', icon: Scale,     emoji: '⚖️' },
-    'Versicherung':      { color: 'bg-green-500/15 text-green-400 border-green-500/30',    icon: Shield,    emoji: '🛡️' },
-    'Sonstiger Kontakt': { color: 'bg-slate-500/15 text-slate-400 border-slate-500/30',    icon: Users,     emoji: '👤' },
+    'Lieferant':         { color: 'bg-status-warn/15 text-status-warn border-status-warn/30',    icon: Package,   emoji: '📦' },
+    'Steuerberater':     { color: 'bg-primary/15 text-primary border-primary/30',       icon: Briefcase, emoji: '📊' },
+    'Anwalt':            { color: 'bg-primary/15 text-primary border-primary/30', icon: Scale,     emoji: '⚖️' },
+    'Versicherung':      { color: 'bg-status-ok/15 text-status-ok border-status-ok/30',    icon: Shield,    emoji: '🛡️' },
+    'Sonstiger Kontakt': { color: 'bg-surface text-muted-foreground border-border',    icon: Users,     emoji: '👤' },
 };
 const ALL_TYPES = Object.keys(TYPE_CONFIG);
 
@@ -128,21 +128,21 @@ function SupplierCard({ supplier, linkedArticles, onEdit, onToggleActive }) {
                     <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                         {phone && (
                             <a href={`tel:${phone}`}
-                                className="flex items-center gap-1 text-xs text-amber-500 hover:text-amber-400 transition-colors">
+                                className="flex items-center gap-1 text-xs text-status-warn hover:text-status-warn transition-colors">
                                 <PhoneCall className="w-3 h-3" />
                                 {phone}
                             </a>
                         )}
                         {supplier.email && (
                             <a href={`mailto:${supplier.email}`}
-                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-amber-500 transition-colors truncate max-w-[160px]">
+                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-status-warn transition-colors truncate max-w-[160px]">
                                 <Mail className="w-3 h-3 shrink-0" />
                                 {supplier.email}
                             </a>
                         )}
                         {supplier.website && (
                             <a href={supplier.website} target="_blank" rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-amber-500 transition-colors">
+                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-status-warn transition-colors">
                                 <Globe className="w-3 h-3" />
                                 {supplier.website.replace(/^https?:\/\//, '').split('/')[0]}
                             </a>
@@ -154,7 +154,7 @@ function SupplierCard({ supplier, linkedArticles, onEdit, onToggleActive }) {
                         <div className="mt-2">
                             {linkedArticles.length > 0 ? (
                                 <button onClick={() => setArticlesOpen(o => !o)}
-                                    className="flex items-center gap-1.5 text-xs text-amber-500 hover:text-amber-400 transition-colors">
+                                    className="flex items-center gap-1.5 text-xs text-status-warn hover:text-status-warn transition-colors">
                                     <Package className="w-3 h-3" />
                                     <span className="font-medium">{linkedArticles.length} Artikel</span>
                                     <ChevronDown className={cn('w-3 h-3 transition-transform', articlesOpen && 'rotate-180')} />
@@ -186,7 +186,7 @@ function SupplierCard({ supplier, linkedArticles, onEdit, onToggleActive }) {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onToggleActive(supplier)}
-                            className={isInactive ? 'text-green-400 focus:text-green-400' : 'text-muted-foreground'}>
+                            className={isInactive ? 'text-status-ok focus:text-status-ok' : 'text-muted-foreground'}>
                             {isInactive
                                 ? <><Eye className="w-4 h-4 mr-2" />Reaktivieren</>
                                 : <><EyeOff className="w-4 h-4 mr-2" />Deaktivieren</>
@@ -208,7 +208,7 @@ function SupplierCard({ supplier, linkedArticles, onEdit, onToggleActive }) {
                             return (
                                 <div key={a.id} className={cn(
                                     'flex items-center gap-2 p-2 rounded-lg border text-xs',
-                                    isPrimary ? 'border-amber-500/30 bg-amber-500/5' : 'border-border bg-card'
+                                    isPrimary ? 'border-status-warn/30 bg-status-warn/5' : 'border-border bg-card'
                                 )}>
                                     {a.image_url
                                         ? <img src={a.image_url} alt={a.name} className="w-7 h-7 rounded object-cover shrink-0" />
@@ -219,7 +219,7 @@ function SupplierCard({ supplier, linkedArticles, onEdit, onToggleActive }) {
                                     <div className="flex-1 min-w-0">
                                         <p className="font-semibold text-foreground truncate">{a.name}</p>
                                         <p className="text-muted-foreground">
-                                            {isPrimary && <span className="text-amber-400 mr-1">★</span>}
+                                            {isPrimary && <span className="text-status-warn mr-1">★</span>}
                                             {price ? `${parseFloat(price).toFixed(2)} €` : ''}
                                             {detail?.article_number ? ` · ${detail.article_number}` : ''}
                                         </p>
@@ -426,7 +426,7 @@ export default function Suppliers() {
                             {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                         </Button>
                         <Button size="sm" onClick={() => openModal()}
-                            className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                            className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                             <Plus className="w-4 h-4" />
                             Neu
                         </Button>
@@ -451,7 +451,7 @@ export default function Suppliers() {
                             className={cn(
                                 'shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
                                 activeFilter === tab
-                                    ? 'bg-amber-500 border-amber-500 text-white'
+                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                     : 'border-border text-muted-foreground hover:text-foreground bg-card'
                             )}>
                             {tab}
@@ -631,7 +631,7 @@ export default function Suppliers() {
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-semibold text-foreground">Kontakt {i + 1}</p>
                                         <button type="button" onClick={() => removeContact(i)}
-                                            className="text-muted-foreground hover:text-red-400 transition-colors p-1">
+                                            className="text-muted-foreground hover:text-status-danger transition-colors p-1">
                                             <X className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
@@ -685,7 +685,7 @@ export default function Suppliers() {
                                     <div className="flex items-center justify-between">
                                         <p className="text-xs font-semibold text-foreground">Niederlassung {i + 1}</p>
                                         <button type="button" onClick={() => removeBranch(i)}
-                                            className="text-muted-foreground hover:text-red-400 transition-colors p-1">
+                                            className="text-muted-foreground hover:text-status-danger transition-colors p-1">
                                             <X className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
@@ -736,7 +736,7 @@ export default function Suppliers() {
                                 Abbrechen
                             </Button>
                             <Button type="submit" disabled={saving}
-                                className="flex-1 h-10 bg-amber-600 hover:bg-amber-700 text-white">
+                                className="flex-1 h-10 bg-status-warn/70 hover:bg-status-warn/70 text-white">
                                 {saving ? 'Speichern…' : 'Speichern'}
                             </Button>
                         </div>

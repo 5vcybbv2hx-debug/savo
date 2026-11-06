@@ -8,17 +8,17 @@ import { Edit, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const statusColors = {
-    'Bestätigt': 'bg-green-100 text-green-700',
-    'Abgesagt': 'bg-red-100 text-red-700'
+    'Bestätigt': 'bg-status-ok/15 text-status-ok',
+    'Abgesagt': 'bg-status-danger/15 text-status-danger'
 };
 
 const eventTypeColors = {
-    'Party': 'bg-purple-100 text-purple-700 border-purple-200',
-    'Livemusik': 'bg-pink-100 text-pink-700 border-pink-200',
-    'DJ-Night': 'bg-blue-100 text-blue-700 border-blue-200',
-    'Special Event': 'bg-amber-100 text-amber-700 border-amber-200',
-    'Private Feier': 'bg-green-100 text-green-700 border-green-200',
-    'Sonstiges': 'bg-secondary/50 text-foreground border-slate-200'
+    'Party': 'bg-primary text-primary border-primary',
+    'Livemusik': 'bg-primary text-primary border-primary',
+    'DJ-Night': 'bg-primary/15 text-primary border-primary/25',
+    'Special Event': 'bg-status-warn/15 text-status-warn border-status-warn/25',
+    'Private Feier': 'bg-status-ok/15 text-status-ok border-status-ok/25',
+    'Sonstiges': 'bg-secondary/50 text-foreground border-border'
 };
 
 export default function EventArchive({ events, onEdit, onDelete }) {
@@ -126,7 +126,7 @@ export default function EventArchive({ events, onEdit, onDelete }) {
                                                     e.stopPropagation();
                                                     onEdit(event);
                                                 }}
-                                                className="flex-1 text-foreground/75 hover:text-amber-400 hover:bg-amber-500/10"
+                                                className="flex-1 text-foreground/75 hover:text-status-warn hover:bg-status-warn/10"
                                             >
                                                 <Edit className="w-3 h-3 mr-1" />
                                                 Bearbeiten
@@ -138,7 +138,7 @@ export default function EventArchive({ events, onEdit, onDelete }) {
                                                     e.stopPropagation();
                                                     onDelete(event.id);
                                                 }}
-                                                className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                                className="flex-1 text-status-danger hover:text-status-danger/25 hover:bg-status-danger/10"
                                             >
                                                 <Trash2 className="w-3 h-3 mr-1" />
                                                 Löschen

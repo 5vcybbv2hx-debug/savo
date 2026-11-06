@@ -75,7 +75,7 @@ export default function ReserviertSchilder() {
         />
 
         {failed ? (
-          <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-600 dark:text-amber-400">
+          <div className="mt-3 rounded-lg border border-status-warn/30 bg-status-warn/5 p-3 text-xs text-status-warn dark:text-status-warn">
             Vorlage konnte nicht geladen werden.{' '}
             <button onClick={openTemplate} className="underline font-medium inline-flex items-center gap-1">
               Vorlage öffnen <ExternalLink className="w-3 h-3" />

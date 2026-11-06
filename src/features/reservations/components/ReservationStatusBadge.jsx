@@ -7,9 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const STATUS_CONFIG = {
-    'vorgemerkt': { label: 'Vorgemerkt', className: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
-    'bestätigt':  { label: 'Bestätigt',  className: 'bg-green-500/20  text-green-300  border-green-500/30'  },
-    'storniert':  { label: 'Storniert',  className: 'bg-red-500/20    text-red-300    border-red-500/30'    },
+    'vorgemerkt': { label: 'Vorgemerkt', className: 'bg-status-warn/20 text-status-warn/25 border-status-warn/30' },
+    'bestätigt':  { label: 'Bestätigt',  className: 'bg-status-ok/20  text-status-ok/25  border-status-ok/30'  },
+    'storniert':  { label: 'Storniert',  className: 'bg-status-danger/20    text-status-danger/25    border-status-danger/30'    },
 };
 
 export default function ReservationStatusBadge({ status, className }) {

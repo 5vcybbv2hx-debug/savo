@@ -108,7 +108,7 @@ export default function WorkTimeModelsManager() {
     return (
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50">
+                <Button variant="outline" className="border-primary/70 text-primary hover:bg-primary/15">
                     <Clock className="w-4 h-4 mr-2" />
                     Arbeitszeitmodelle
                 </Button>
@@ -116,14 +116,14 @@ export default function WorkTimeModelsManager() {
             <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-blue-600" />
+                        <Clock className="w-5 h-5 text-primary" />
                         Arbeitszeitmodelle verwalten
                     </DialogTitle>
                 </DialogHeader>
 
-                <Alert className="bg-blue-50 border-blue-200">
-                    <Info className="w-4 h-4 text-blue-600" />
-                    <AlertDescription className="text-blue-900 text-sm">
+                <Alert className="bg-primary/15 border-primary/25">
+                    <Info className="w-4 h-4 text-primary" />
+                    <AlertDescription className="text-primary text-sm">
                         Definiere Standard-Arbeitszeitmodelle mit Mindestlohn und empfohlenen Stundensätzen. 
                         Diese können bei der Mitarbeiteranlage automatisch übernommen werden.
                     </AlertDescription>
@@ -131,7 +131,7 @@ export default function WorkTimeModelsManager() {
 
                 <div className="flex justify-between items-center">
                     <h3 className="font-semibold">Verfügbare Modelle</h3>
-                    <Button onClick={() => openModal()} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={() => openModal()} size="sm" className="bg-primary/70 hover:bg-primary/70">
                         <Plus className="w-4 h-4 mr-1" />
                         Neues Modell
                     </Button>
@@ -139,11 +139,11 @@ export default function WorkTimeModelsManager() {
 
                 <div className="grid gap-3">
                     {models.filter(m => m.is_active !== false).map(model => (
-                        <Card key={model.id} className="p-4 bg-slate-50">
+                        <Card key={model.id} className="p-4 bg-card">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
-                                    <h4 className="font-semibold text-slate-900">{model.name}</h4>
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm text-slate-600">
+                                    <h4 className="font-semibold text-muted-foreground">{model.name}</h4>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
                                         {model.hours_per_week && (
                                             <p>Wochenstunden: {model.hours_per_week}</p>
                                         )}
@@ -159,7 +159,7 @@ export default function WorkTimeModelsManager() {
                                         )}
                                     </div>
                                     {model.notes && (
-                                        <p className="text-xs text-slate-500 mt-2">{model.notes}</p>
+                                        <p className="text-xs text-muted-foreground mt-2">{model.notes}</p>
                                     )}
                                 </div>
                                 <div className="flex gap-2">
@@ -178,7 +178,7 @@ export default function WorkTimeModelsManager() {
                                                 deleteMutation.mutate(model.id);
                                             }
                                         }}
-                                        className="text-red-600 hover:text-red-700"
+                                        className="text-status-danger hover:text-status-danger"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </Button>
@@ -237,7 +237,7 @@ export default function WorkTimeModelsManager() {
                                     onChange={(e) => setFormData({...formData, min_hourly_rate: e.target.value})}
                                     required
                                 />
-                                <p className="text-xs text-slate-500">Gesetzlicher Mindestlohn 2025: 12.41 €</p>
+                                <p className="text-xs text-muted-foreground">Gesetzlicher Mindestlohn 2025: 12.41 €</p>
                             </div>
 
                             <div className="space-y-2">
@@ -261,7 +261,7 @@ export default function WorkTimeModelsManager() {
                                 onChange={(e) => setFormData({...formData, max_monthly_earnings: e.target.value})}
                                 placeholder="z.B. 538 für Minijobs"
                             />
-                            <p className="text-xs text-slate-500">Nur für Minijobs relevant</p>
+                            <p className="text-xs text-muted-foreground">Nur für Minijobs relevant</p>
                         </div>
 
                         <div className="space-y-2">
@@ -278,7 +278,7 @@ export default function WorkTimeModelsManager() {
                             <Button type="button" variant="outline" onClick={closeModal} className="flex-1">
                                 Abbrechen
                             </Button>
-                            <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                            <Button type="submit" className="flex-1 bg-primary/70 hover:bg-primary/70">
                                 {selectedModel ? 'Speichern' : 'Erstellen'}
                             </Button>
                         </div>

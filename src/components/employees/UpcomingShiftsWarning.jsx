@@ -19,10 +19,10 @@ export default function UpcomingShiftsWarning({ employeeName, shifts = [], selec
     const allSelected = selectedIds.length === shifts.length;
 
     return (
-        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+        <div className="rounded-2xl border border-status-warn/40 bg-status-warn/10 p-3 space-y-2">
             <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <p className="text-xs font-medium text-amber-200">
+                <AlertTriangle className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+                <p className="text-xs font-medium text-status-warn/25">
                     ⚠️ {employeeName} hat noch {shifts.length} kommende {shifts.length === 1 ? 'Schicht' : 'Schichten'} (bis {format(parseISO(shifts[shifts.length - 1].date), 'dd.MM.yyyy')}).
                 </p>
             </div>
@@ -31,18 +31,18 @@ export default function UpcomingShiftsWarning({ employeeName, shifts = [], selec
                 <button
                     type="button"
                     onClick={onToggleAll}
-                    className="text-[11px] text-amber-300 underline underline-offset-2 min-h-[32px]"
+                    className="text-[11px] text-status-warn/25 underline underline-offset-2 min-h-[32px]"
                 >
                     {allSelected ? 'Alle abwählen' : 'Alle auswählen'}
                 </button>
-                <span className="text-[11px] text-amber-300/80">{selectedIds.length} von {shifts.length} gewählt</span>
+                <span className="text-[11px] text-status-warn/80">{selectedIds.length} von {shifts.length} gewählt</span>
             </div>
 
             <div className="max-h-52 overflow-y-auto space-y-1">
                 {visible.map(s => (
                     <label
                         key={s.id}
-                        className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-black/20 border border-amber-500/20 cursor-pointer"
+                        className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-black/20 border border-status-warn/20 cursor-pointer"
                     >
                         <input
                             type="checkbox"
@@ -56,7 +56,7 @@ export default function UpcomingShiftsWarning({ employeeName, shifts = [], selec
                                     {format(parseISO(s.date), 'EEEE, dd.MM.yyyy', { locale: de })}
                                 </span>
                                 {s.shift_type && (
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-500/30">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-status-warn/20 text-status-warn/25 border border-status-warn/30">
                                         {s.shift_type}
                                     </span>
                                 )}
@@ -70,7 +70,7 @@ export default function UpcomingShiftsWarning({ employeeName, shifts = [], selec
             </div>
 
             {rest > 0 && (
-                <p className="text-[11px] text-amber-300/80 px-1">
+                <p className="text-[11px] text-status-warn/80 px-1">
                     +{rest} weitere {rest === 1 ? 'Schicht' : 'Schichten'} — alle werden berücksichtigt.
                 </p>
             )}

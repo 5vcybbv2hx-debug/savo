@@ -34,12 +34,12 @@ export default function ActiveClockPanel({ currentEmployee, employees = [] }) {
     const now = new Date();
 
     return (
-        <Card className="border-green-500/20 bg-green-500/5">
+        <Card className="border-status-ok/20 bg-status-ok/5">
             <CardContent className="p-3 space-y-2">
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        <Users className="w-4 h-4 text-green-400" />
+                        <span className="w-2 h-2 rounded-full bg-status-ok/70 animate-pulse" />
+                        <Users className="w-4 h-4 text-status-ok" />
                     </div>
                     <p className="text-sm font-semibold text-foreground">
                         {activeEntries.length} {activeEntries.length === 1 ? 'Person' : 'Personen'} eingestempelt
@@ -78,7 +78,7 @@ export default function ActiveClockPanel({ currentEmployee, employees = [] }) {
                                             </span>
                                         )}
                                         {isOnBreak && (
-                                            <span className="flex items-center gap-0.5 text-[9px] font-semibold text-amber-500 bg-amber-500/10 px-1 py-0.5 rounded">
+                                            <span className="flex items-center gap-0.5 text-[9px] font-semibold text-status-warn bg-status-warn/10 px-1 py-0.5 rounded">
                                                 <Coffee className="w-2.5 h-2.5" />
                                                 Pause
                                             </span>
@@ -88,7 +88,7 @@ export default function ActiveClockPanel({ currentEmployee, employees = [] }) {
                                         <Clock className="w-2.5 h-2.5" />
                                         {format(new Date(entry.clock_in), 'HH:mm')}
                                         <span>·</span>
-                                        <span className={cn(isOnBreak && 'text-amber-400')}>
+                                        <span className={cn(isOnBreak && 'text-status-warn')}>
                                             {isOnBreak ? 'Pause' : elapsed}
                                         </span>
                                     </div>

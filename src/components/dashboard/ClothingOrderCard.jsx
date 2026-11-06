@@ -324,7 +324,7 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
                     </div>
                     <div className={cn(
                         'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
-                        hours < 2 ? 'bg-red-500/15 text-red-500' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                        hours < 2 ? 'bg-status-danger/15 text-status-danger' : 'bg-status-warn/15 text-status-warn dark:text-status-warn'
                     )}>
                         <Timer className="w-3.5 h-3.5" />
                         noch {countdownText}
@@ -345,7 +345,7 @@ export default function ClothingOrderCard({ currentEmployee, isManager }) {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-foreground">{label}</p>
                                     {existing ? (
-                                        <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                                        <p className="text-xs text-status-ok dark:text-status-ok flex items-center gap-1">
                                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                                             bestellt — {existing.quantity || 1}× Größe {existing.size}
                                         </p>

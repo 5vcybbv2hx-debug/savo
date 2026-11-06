@@ -138,11 +138,11 @@ export default function CompanyInfoEditor() {
     );
 
     if (!company) return (
-        <Card className="p-4 bg-amber-500/10 border-amber-500/30 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+        <Card className="p-4 bg-status-warn/10 border-status-warn/30 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
             <div>
-                <p className="text-sm font-semibold text-amber-600">Betriebsdaten nicht gefunden</p>
-                <p className="text-xs text-amber-600/80 mt-1">Lege hier die ersten Firmendaten an.</p>
+                <p className="text-sm font-semibold text-status-warn">Betriebsdaten nicht gefunden</p>
+                <p className="text-xs text-status-warn/80 mt-1">Lege hier die ersten Firmendaten an.</p>
             </div>
         </Card>
     );
@@ -152,10 +152,10 @@ export default function CompanyInfoEditor() {
 
             {/* ── Duplikat-Banner ────────────────────────────────────────── */}
             {hasDuplicates && (
-                <Card className="p-3 bg-amber-500/10 border-amber-500/30 flex items-start justify-between gap-3">
+                <Card className="p-3 bg-status-warn/10 border-status-warn/30 flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
-                        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                        <p className="text-sm text-amber-600">
+                        <AlertTriangle className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
+                        <p className="text-sm text-status-warn">
                             ⚠️ Mehrere Firmendatensätze gefunden ({companies.length} Einträge)
                         </p>
                     </div>
@@ -177,17 +177,17 @@ export default function CompanyInfoEditor() {
                 {/* ── Sticky Save-Bar ───────────────────────────────────── */}
                 <div className={`
                     px-4 py-3 flex items-center justify-between gap-3 border-b border-border
-                    transition-colors ${isDirty ? 'bg-amber-500/10' : 'bg-muted/30'}
+                    transition-colors ${isDirty ? 'bg-status-warn/10' : 'bg-muted/30'}
                 `}>
                     <div className="flex items-center gap-2 text-xs min-w-0">
                         {isDirty ? (
                             <>
-                                <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                                <span className="text-amber-600 font-medium">Ungespeicherte Änderungen</span>
+                                <AlertCircle className="w-3.5 h-3.5 text-status-warn shrink-0" />
+                                <span className="text-status-warn font-medium">Ungespeicherte Änderungen</span>
                             </>
                         ) : lastSaved ? (
                             <>
-                                <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                                <CheckCircle2 className="w-3.5 h-3.5 text-status-ok shrink-0" />
                                 <span className="text-muted-foreground">Gespeichert: {lastSaved}</span>
                             </>
                         ) : (
@@ -216,7 +216,7 @@ export default function CompanyInfoEditor() {
                             <TabsTrigger value="logo" className="py-2 text-xs flex items-center gap-1">
                                 <Upload className="w-3.5 h-3.5" />
                                 <span>Logo</span>
-                                {form.logo_url && <span className="w-1.5 h-1.5 rounded-full bg-green-500" />}
+                                {form.logo_url && <span className="w-1.5 h-1.5 rounded-full bg-status-ok/70" />}
                             </TabsTrigger>
                             <TabsTrigger value="finance" className="py-2 text-xs flex items-center gap-1">
                                 <CreditCard className="w-3.5 h-3.5" />

@@ -32,9 +32,9 @@ const FIRST_AID_STEPS = [
 
 function CallRow({ href, icon: Icon, label, subtitle, color, onAfter }) {
     const cls = {
-        green: 'bg-green-600 hover:bg-green-500',
-        blue: 'bg-blue-600 hover:bg-blue-500',
-        red: 'bg-red-600 hover:bg-red-500',
+        green: 'bg-status-ok/70 hover:bg-status-ok/70',
+        blue: 'bg-primary/70 hover:bg-primary/70',
+        red: 'bg-status-danger/70 hover:bg-status-danger/70',
         card: 'bg-card border border-border hover:bg-accent',
     }[color];
     const textCls = color === 'card' ? 'text-foreground' : 'text-white';
@@ -195,7 +195,7 @@ function IncidentCapture({ onClose }) {
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="w-full rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 transition-all active:scale-95 disabled:opacity-50"
+                    className="w-full rounded-lg bg-status-warn/70 hover:bg-status-warn/70 text-white font-bold py-2.5 transition-all active:scale-95 disabled:opacity-50"
                 >
                     {saving ? 'Speichern…' : 'Vorfall speichern'}
                 </button>
@@ -256,7 +256,7 @@ export default function CallHub({ open, onClose }) {
 
                         {/* Zone 2: Notfall — 112 + 110 */}
                         <div className="space-y-2 mb-5">
-                            <p className="text-xs font-bold text-red-400 uppercase tracking-wide mb-1">⚠️ Notfall</p>
+                            <p className="text-xs font-bold text-status-danger uppercase tracking-wide mb-1">⚠️ Notfall</p>
                             <CallRow
                                 href="tel:112"
                                 icon={Siren}
@@ -290,8 +290,8 @@ export default function CallHub({ open, onClose }) {
                         </AnimatePresence>
 
                         {/* Überfall-Tipp */}
-                        <div className="rounded-xl bg-yellow-500/15 border border-yellow-500/40 px-4 py-3 mb-5">
-                            <p className="text-xs text-yellow-100 font-medium leading-snug">
+                        <div className="rounded-xl bg-status-warn/15 border border-status-warn/40 px-4 py-3 mb-5">
+                            <p className="text-xs text-status-warn/15 font-medium leading-snug">
                                 ⚠️ <strong>Überfall:</strong> Geld herausgeben. Nicht heldenhaft sein. Tresor nicht öffnen.
                             </p>
                         </div>

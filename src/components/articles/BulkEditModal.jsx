@@ -135,7 +135,7 @@ export default function BulkEditModal({ open, onClose, selectedArticles, onClear
 
                         <Button 
                             onClick={handlePriceUpdate}
-                            className="w-full bg-amber-600 hover:bg-amber-700"
+                            className="w-full bg-status-warn/70 hover:bg-status-warn/70"
                             disabled={bulkUpdateMutation.isPending}
                         >
                             Preise aktualisieren
@@ -158,7 +158,7 @@ export default function BulkEditModal({ open, onClose, selectedArticles, onClear
 
                         <Button 
                             onClick={handleSupplierUpdate}
-                            className="w-full bg-amber-600 hover:bg-amber-700"
+                            className="w-full bg-status-warn/70 hover:bg-status-warn/70"
                             disabled={bulkUpdateMutation.isPending}
                         >
                             Lieferant hinzufügen
@@ -196,7 +196,7 @@ export default function BulkEditModal({ open, onClose, selectedArticles, onClear
 
                         <Button 
                             onClick={handleStockUpdate}
-                            className="w-full bg-amber-600 hover:bg-amber-700"
+                            className="w-full bg-status-warn/70 hover:bg-status-warn/70"
                             disabled={bulkUpdateMutation.isPending}
                         >
                             Bestand aktualisieren

@@ -312,13 +312,13 @@ export default function Cleaning() {
                         <span className="text-sm font-medium text-foreground">
                             {completedCount}/{tasks.length} erledigt
                         </span>
-                        <span className={`text-sm font-bold ${progress === 100 ? 'text-emerald-500' : progress >= 50 ? 'text-primary' : 'text-muted-foreground'}`}>
+                        <span className={`text-sm font-bold ${progress === 100 ? 'text-status-ok' : progress >= 50 ? 'text-primary' : 'text-muted-foreground'}`}>
                             {progress}%
                         </span>
                     </div>
                     <Progress value={progress} className="h-2 rounded-full" />
                     {progress === 100 && (
-                        <p className="text-xs text-emerald-500 mt-1.5 font-medium flex items-center gap-1">
+                        <p className="text-xs text-status-ok mt-1.5 font-medium flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Alles erledigt — super gemacht!
                         </p>
                     )}
@@ -389,7 +389,7 @@ export default function Cleaning() {
                                 >
                                     {area}
                                     {areaDone === areaTotal && areaTotal > 0 && (
-                                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                        <CheckCircle2 className="w-3 h-3 text-status-ok" />
                                     )}
                                 </button>
                             );
@@ -414,7 +414,7 @@ export default function Cleaning() {
                                     <Badge variant="outline" className={cn(
                                         "text-xs",
                                         group.done.length === group.tasks.length
-                                            ? "border-emerald-500 text-emerald-500"
+                                            ? "border-status-ok/70 text-status-ok"
                                             : "border-border/70 text-muted-foreground"
                                     )}>
                                         {group.done.length}/{group.tasks.length}
@@ -437,7 +437,7 @@ export default function Cleaning() {
                                     <SwipeRow
                                         key={task.id}
                                         onSwipeRight={() => handleComplete(task)}
-                                        revealColorRight="bg-emerald-600"
+                                        revealColorRight="bg-status-ok/70"
                                         revealIconRight={Check}
                                         disabled={permissions.isTerminal}
                                         contentClassName="rounded-xl"
@@ -463,7 +463,7 @@ export default function Cleaning() {
                                         onClick={() => handleComplete(task)}
                                         className="w-full flex items-center gap-3 p-4 rounded-xl border transition-all active:scale-[0.98] text-left bg-muted/50 border-border/50 opacity-60"
                                     >
-                                        <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all bg-emerald-500 border-emerald-500">
+                                        <div className="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all bg-status-ok/70 border-status-ok/70">
                                             <CheckCircle2 className="w-4 h-4 text-white" />
                                         </div>
                                         <div className="flex-1 min-w-0">

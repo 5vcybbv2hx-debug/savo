@@ -114,12 +114,12 @@ export default function PayrollReportSender() {
 
     if (!company?.payroll_email) {
         return (
-            <Card className="border-amber-500/20 bg-amber-500/5">
+            <Card className="border-status-warn/20 bg-status-warn/5">
                 <CardContent className="pt-6 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
                     <div className="flex-1">
-                        <p className="text-sm font-semibold text-amber-600">Lohnbüro-Email nicht konfiguriert</p>
-                        <p className="text-xs text-amber-600/80 mt-1">
+                        <p className="text-sm font-semibold text-status-warn">Lohnbüro-Email nicht konfiguriert</p>
+                        <p className="text-xs text-status-warn/80 mt-1">
                             Bitte trage die Email-Adresse des Lohnbüros in den Betriebsdaten ein (Einstellungen → Betriebsdaten).
                         </p>
                     </div>
@@ -132,7 +132,7 @@ export default function PayrollReportSender() {
         <div className="space-y-4">
         <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
             <AlertDialogTrigger asChild>
-                <Button className="gap-2 bg-amber-600 hover:bg-amber-700">
+                <Button className="gap-2 bg-status-warn/70 hover:bg-status-warn/70">
                     <Mail className="w-4 h-4" />
                     Zum Lohnbüro versenden
                 </Button>
@@ -140,7 +140,7 @@ export default function PayrollReportSender() {
             <AlertDialogContent className="max-w-md">
                 <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
-                        <Send className="w-5 h-5 text-amber-500" />
+                        <Send className="w-5 h-5 text-status-warn" />
                         Report zum Lohnbüro
                     </AlertDialogTitle>
                     <AlertDialogDescription>
@@ -156,7 +156,7 @@ export default function PayrollReportSender() {
                             <Button
                                 variant={reportType === 'month' ? 'default' : 'outline'}
                                 onClick={() => setReportType('month')}
-                                className={cn(reportType === 'month' && 'bg-amber-600 hover:bg-amber-700')}
+                                className={cn(reportType === 'month' && 'bg-status-warn/70 hover:bg-status-warn/70')}
                             >
                                 Monatlich
                             </Button>
@@ -164,7 +164,7 @@ export default function PayrollReportSender() {
                                 variant={reportType === 'day' ? 'default' : 'outline'}
                                 onClick={() => setReportType('day')}
                                 disabled={availableDays.length === 0}
-                                className={cn(reportType === 'day' && 'bg-amber-600 hover:bg-amber-700')}
+                                className={cn(reportType === 'day' && 'bg-status-warn/70 hover:bg-status-warn/70')}
                             >
                                 Täglich
                             </Button>
@@ -212,7 +212,7 @@ export default function PayrollReportSender() {
                                             key={day}
                                             variant={selectedDay === day ? 'default' : 'outline'}
                                             onClick={() => setSelectedDay(day)}
-                                            className={cn('w-full justify-start text-xs', selectedDay === day && 'bg-amber-600 hover:bg-amber-700')}
+                                            className={cn('w-full justify-start text-xs', selectedDay === day && 'bg-status-warn/70 hover:bg-status-warn/70')}
                                         >
                                             <Calendar className="w-3 h-3 mr-2" />
                                             {format(new Date(day + 'T00:00'), 'EEE, d. MMM yyyy', { locale: de })}
@@ -235,7 +235,7 @@ export default function PayrollReportSender() {
                     <AlertDialogAction
                         onClick={() => sendMutation.mutate()}
                         disabled={sendMutation.isPending || (reportType === 'day' && !selectedDay)}
-                        className="flex-1 bg-amber-600 hover:bg-amber-700"
+                        className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                     >
                         {sendMutation.isPending ? (
                             <>

@@ -58,7 +58,7 @@ function SimilarityWarning({ query, options }) {
     });
     if (!close) return null;
     return (
-        <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs">
+        <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-status-warn/10 border border-status-warn/30 text-status-warn text-xs">
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             Ähnlicher Eintrag vorhanden: <span className="font-semibold">{close}</span>
         </div>
@@ -169,12 +169,12 @@ export default function SmartCombobox({
             {multi && selectedValues.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
                     {selectedValues.map(v => (
-                        <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-sm font-medium">
+                        <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-status-warn/15 border border-status-warn/30 text-status-warn text-sm font-medium">
                             {v}
                             <button
                                 type="button"
                                 onClick={() => removeChip(v)}
-                                className="hover:text-red-400 transition-colors p-0.5"
+                                className="hover:text-status-danger transition-colors p-0.5"
                                 disabled={disabled}
                             >
                                 <X className="w-3 h-3" />
@@ -241,7 +241,7 @@ export default function SmartCombobox({
                                 type="button"
                                 onMouseDown={(e) => { e.preventDefault(); create(); }}
                                 onTouchEnd={(e) => { e.preventDefault(); create(); }}
-                                className="w-full flex items-center gap-2 px-4 py-3 text-sm text-amber-500 hover:bg-amber-500/10 active:bg-amber-500/20 transition-colors border-t border-border min-h-[44px]"
+                                className="w-full flex items-center gap-2 px-4 py-3 text-sm text-status-warn hover:bg-status-warn/10 active:bg-status-warn/20 transition-colors border-t border-border min-h-[44px]"
                             >
                                 <Plus className="w-4 h-4 shrink-0" />
                                 <span>Neu anlegen: <strong>{query.trim()}</strong></span>

@@ -78,7 +78,7 @@ export default function TeamCalendarView({
             <div className="flex flex-col gap-3 p-4 border-b border-border">
                 <div className="flex items-center justify-between">
                     <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 md:w-5 md:h-5 text-amber-400" />
+                        <CalendarIcon className="w-4 h-4 md:w-5 md:h-5 text-status-warn" />
                         <span className="hidden sm:inline">{format(currentDate, 'MMMM yyyy', { locale: de })}</span>
                         <span className="sm:hidden">{format(currentDate, 'MMM yyyy', { locale: de })}</span>
                     </h2>
@@ -137,12 +137,12 @@ export default function TeamCalendarView({
                                     "min-h-[60px] md:min-h-[100px] p-1 md:p-2 rounded md:rounded-lg border transition-all",
                                     isCurrentMonth ? "bg-background border-border" : "bg-background/50 border-border",
                                     isWeekendDay && "bg-card/50",
-                                    isToday && "ring-1 md:ring-2 ring-amber-500"
+                                    isToday && "ring-1 md:ring-2 ring-status-warn/70"
                                 )}
                             >
                                 <div className={cn(
                                     "text-[10px] md:text-sm font-medium mb-1 md:mb-2 text-center md:text-left",
-                                    isToday ? "text-amber-400" : isCurrentMonth ? "text-foreground" : "text-foreground0"
+                                    isToday ? "text-status-warn" : isCurrentMonth ? "text-foreground" : "text-foreground0"
                                 )}>
                                     {format(day, 'd')}
                                 </div>
@@ -162,7 +162,7 @@ export default function TeamCalendarView({
                                         {events.length > 4 && (
                                             <button
                                                 onClick={() => onEventClick?.({ type: 'multiple', events, date: day })}
-                                                className="w-1.5 h-1.5 rounded-full bg-slate-500"
+                                                className="w-1.5 h-1.5 rounded-full bg-surface"
                                                 title={`+${events.length - 4} weitere`}
                                             />
                                         )}
@@ -207,11 +207,11 @@ export default function TeamCalendarView({
                     <span className="text-muted-foreground">Schicht</span>
                 </div>
                 <div className="flex items-center gap-1.5 md:gap-2">
-                    <div className="w-2 h-2 md:w-3 md:h-3 rounded bg-purple-600"></div>
+                    <div className="w-2 h-2 md:w-3 md:h-3 rounded bg-primary"></div>
                     <span className="text-muted-foreground">Urlaub</span>
                 </div>
                 <div className="flex items-center gap-1.5 md:gap-2">
-                    <div className="w-2 h-2 md:w-3 md:h-3 rounded bg-red-600"></div>
+                    <div className="w-2 h-2 md:w-3 md:h-3 rounded bg-status-danger/70"></div>
                     <span className="text-muted-foreground">Feiertag</span>
                 </div>
             </div>

@@ -306,7 +306,7 @@ export default function ReportUploader({ onUploadComplete }) {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Upload className="w-5 h-5 text-amber-600" />
+                    <Upload className="w-5 h-5 text-status-warn" />
                     PDF-Bericht hochladen
                 </CardTitle>
                 <CardDescription>
@@ -344,12 +344,12 @@ export default function ReportUploader({ onUploadComplete }) {
                     {files.length > 0 && (
                         <div className="mt-2 space-y-1">
                             {files.map((file, idx) => (
-                                <div key={idx} className="flex items-center gap-2 text-sm text-slate-600">
+                                <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <FileText className="w-4 h-4" />
                                     {file.name}
                                 </div>
                             ))}
-                            <p className="text-xs text-slate-500 mt-2">
+                            <p className="text-xs text-muted-foreground mt-2">
                                 {files.length} Datei(en) ausgewählt
                             </p>
                         </div>
@@ -359,7 +359,7 @@ export default function ReportUploader({ onUploadComplete }) {
                 <Button
                     onClick={handleUpload}
                     disabled={files.length === 0 || !reportType || uploading}
-                    className="w-full bg-amber-600 hover:bg-amber-700"
+                    className="w-full bg-status-warn/70 hover:bg-status-warn/70"
                 >
                     {uploading ? (
                         <>
@@ -374,10 +374,10 @@ export default function ReportUploader({ onUploadComplete }) {
                     )}
                 </Button>
 
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="p-3 bg-primary/15 rounded-lg border border-primary/25">
                     <div className="flex items-start gap-2">
-                        <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div className="text-sm text-blue-800">
+                        <AlertCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-primary">
                             <strong>Bulk-Upload:</strong> Wähle mehrere PDFs gleichzeitig aus. Das Datum wird automatisch aus dem Bericht selbst extrahiert (perfekt für nach-Mitternacht-Berichte).
                         </div>
                     </div>

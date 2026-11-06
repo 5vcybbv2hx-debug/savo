@@ -7,7 +7,7 @@ export default function ContactCard({ contact, onEdit, onDelete, isPrimary }) {
     return (
         <div className={cn(
             "rounded-xl border p-4 space-y-3",
-            isPrimary ? "bg-amber-500/10 border-amber-500/30" : "bg-card border-border/50"
+            isPrimary ? "bg-status-warn/10 border-status-warn/30" : "bg-card border-border/50"
         )}>
             {/* Header mit Primary-Badge */}
             <div className="flex items-start justify-between gap-2">
@@ -15,7 +15,7 @@ export default function ContactCard({ contact, onEdit, onDelete, isPrimary }) {
                     <div className="flex items-center gap-2">
                         <h4 className="font-semibold text-foreground truncate">{contact.company_name}</h4>
                         {isPrimary && (
-                            <Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
+                            <Star className="w-4 h-4 text-status-warn fill-status-warn shrink-0" />
                         )}
                     </div>
                     {contact.contact_person && (

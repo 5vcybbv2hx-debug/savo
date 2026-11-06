@@ -11,9 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { format } from 'date-fns';
 
 const wastageTypes = [
-    { value: 'Bruch', label: 'Bruch', icon: '💥', color: 'bg-red-100 text-red-700' },
-    { value: 'Nachtwächter', label: 'Nachtwächter', icon: '🍺', color: 'bg-amber-100 text-amber-700' },
-    { value: 'Verderb', label: 'Verderb', icon: '🦠', color: 'bg-purple-100 text-purple-700' },
+    { value: 'Bruch', label: 'Bruch', icon: '💥', color: 'bg-status-danger/15 text-status-danger' },
+    { value: 'Nachtwächter', label: 'Nachtwächter', icon: '🍺', color: 'bg-status-warn/15 text-status-warn' },
+    { value: 'Verderb', label: 'Verderb', icon: '🦠', color: 'bg-primary text-primary' },
     { value: 'Sonstiges', label: 'Sonstiges', icon: '📋', color: 'bg-secondary/50 text-foreground' }
 ];
 
@@ -172,7 +172,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
         <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-400" />
+                    <Zap className="w-4 h-4 text-status-warn" />
                     <h2 className="text-sm font-semibold text-foreground/75 uppercase tracking-wider">Vorlagen</h2>
                 </div>
                 <Button size="sm" variant="outline" onClick={openCreate} className="border-border/70 text-foreground/75 hover:bg-secondary">
@@ -190,7 +190,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                     {templates.map(template => {
                         const count = getTemplateItemCount(template);
                         return (
-                            <Card key={template.id} className="bg-card border-border flex items-center gap-2 px-3 py-2 hover:border-amber-500/50 transition-colors group">
+                            <Card key={template.id} className="bg-card border-border flex items-center gap-2 px-3 py-2 hover:border-status-warn/50 transition-colors group">
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-foreground truncate">{template.name}</p>
                                     <p className="text-xs text-muted-foreground">{count} Artikel</p>
@@ -199,7 +199,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                                     <button onClick={() => openEdit(template)} className="p-1 text-foreground0 hover:text-foreground/75">
                                         <Pencil className="w-3.5 h-3.5" />
                                     </button>
-                                    <button onClick={() => handleDelete(template.id)} className="p-1 text-foreground0 hover:text-red-400">
+                                    <button onClick={() => handleDelete(template.id)} className="p-1 text-foreground0 hover:text-status-danger">
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
@@ -207,7 +207,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                                     size="sm"
                                     onClick={() => handleApplyClick(template)}
                                     disabled={applyMutation.isPending}
-                                    className="bg-amber-600 hover:bg-amber-700 text-foreground text-xs px-2 h-7"
+                                    className="bg-status-warn/70 hover:bg-status-warn/70 text-foreground text-xs px-2 h-7"
                                 >
                                     Eintragen
                                 </Button>
@@ -239,7 +239,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                         <Button
                             onClick={() => applyMutation.mutate({ template: pendingTemplate, date: applyDate })}
                             disabled={applyMutation.isPending || !applyDate}
-                            className="bg-amber-600 hover:bg-amber-700"
+                            className="bg-status-warn/70 hover:bg-status-warn/70"
                         >
                             Eintragen
                         </Button>
@@ -266,7 +266,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <Label className="text-foreground/75">Artikel</Label>
-                                <Button size="sm" variant="ghost" onClick={addItem} className="text-amber-400 hover:text-amber-300 h-7 px-2">
+                                <Button size="sm" variant="ghost" onClick={addItem} className="text-status-warn hover:text-status-warn/25 h-7 px-2">
                                     <Plus className="w-3.5 h-3.5 mr-1" /> Artikel hinzufügen
                                 </Button>
                             </div>
@@ -281,7 +281,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                                 return (
                                     <div key={idx} className="p-3 bg-background rounded-lg border border-border space-y-2 relative">
                                         {items.length > 1 && (
-                                            <button onClick={() => removeItem(idx)} className="absolute top-2 right-2 text-foreground0 hover:text-red-400">
+                                            <button onClick={() => removeItem(idx)} className="absolute top-2 right-2 text-foreground0 hover:text-status-danger">
                                                 <X className="w-4 h-4" />
                                             </button>
                                         )}
@@ -312,7 +312,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                                                     </div>
                                                 )}
                                             </div>
-                                            {item.article_name && <p className="text-xs text-amber-400">✓ {item.article_name}</p>}
+                                            {item.article_name && <p className="text-xs text-status-warn">✓ {item.article_name}</p>}
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div className="space-y-1">
@@ -359,7 +359,7 @@ export default function WastageTemplates({ articles, currentUser, onApply }) {
                         <Button
                             onClick={handleSave}
                             disabled={!templateName || items.every(i => !i.article_name)}
-                            className="bg-amber-600 hover:bg-amber-700"
+                            className="bg-status-warn/70 hover:bg-status-warn/70"
                         >
                             Speichern
                         </Button>

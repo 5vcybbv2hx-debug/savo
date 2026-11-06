@@ -87,7 +87,7 @@ export default function SendNotificationModal() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm h-9">
+                <Button className="bg-status-warn/70 hover:bg-status-warn/70 text-white text-xs sm:text-sm h-9">
                     <Bell className="w-4 h-4 mr-1" />
                     <span className="hidden sm:inline">Benachrichtigung</span>
                     <span className="sm:hidden">+</span>
@@ -96,7 +96,7 @@ export default function SendNotificationModal() {
             <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Bell className="w-5 h-5 text-amber-400" />
+                        <Bell className="w-5 h-5 text-status-warn" />
                         Benachrichtigung senden
                     </DialogTitle>
                 </DialogHeader>
@@ -123,7 +123,7 @@ export default function SendNotificationModal() {
                         />
                     </div>
 
-                    <div className="space-y-3 py-4 border-y border-slate-700">
+                    <div className="space-y-3 py-4 border-y border-border">
                         <Label className="text-sm font-medium">Zielgruppe</Label>
                         <div className="space-y-2">
                             {['admin', 'user'].map(role => (
@@ -132,7 +132,7 @@ export default function SendNotificationModal() {
                                         checked={targetRoles.includes(role)}
                                         onCheckedChange={() => toggleRole(role)}
                                     />
-                                    <span className="text-sm capitalize text-slate-300">
+                                    <span className="text-sm capitalize text-muted-foreground">
                                         {role === 'admin' ? 'Manager' : 'Mitarbeiter'}
                                     </span>
                                 </label>
@@ -140,20 +140,20 @@ export default function SendNotificationModal() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 p-3 bg-blue-900/20 border border-blue-800/30 rounded-lg">
+                    <div className="flex items-center gap-3 p-3 bg-primary/20 border border-primary/30 rounded-lg">
                         <Checkbox
                             id="push"
                             checked={sendPush}
                             onCheckedChange={setSendPush}
                         />
-                        <label htmlFor="push" className="text-sm text-blue-300 cursor-pointer flex-1">
+                        <label htmlFor="push" className="text-sm text-primary/25 cursor-pointer flex-1">
                             Auch als Push-Benachrichtigung senden
                         </label>
                     </div>
 
                     {sendPush && (
-                        <Alert className="bg-blue-900/20 border-blue-800/30">
-                            <AlertDescription className="text-blue-300 text-sm">
+                        <Alert className="bg-primary/20 border-primary/30">
+                            <AlertDescription className="text-primary/25 text-sm">
                                 Wird an alle Nutzer mit aktivierten Push-Benachrichtigungen versendet
                             </AlertDescription>
                         </Alert>
@@ -164,14 +164,14 @@ export default function SendNotificationModal() {
                             type="button"
                             variant="outline"
                             onClick={() => setOpen(false)}
-                            className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+                            className="flex-1 border-border text-muted-foreground hover:bg-surface"
                             disabled={sendMutation.isPending}
                         >
                             Abbrechen
                         </Button>
                         <Button
                             type="submit"
-                            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+                            className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white"
                             disabled={sendMutation.isPending}
                         >
                             {sendMutation.isPending ? (

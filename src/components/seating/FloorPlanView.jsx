@@ -53,11 +53,11 @@ function TableShape({ posX, posY, table, isReserved, isSelected, editMode, onMou
             <div className={cn(
                 'w-full h-full flex flex-col items-center justify-center border select-none shadow-sm transition-all hover:shadow-md',
                 isRound ? 'rounded-full' : 'rounded-lg',
-                editMode && 'ring-2 ring-amber-400/40 border-dashed border-amber-400/60',
-                isSelected ? 'ring-2 ring-amber-400/80 shadow-md' : '',
+                editMode && 'ring-2 ring-status-warn/40 border-dashed border-status-warn/60',
+                isSelected ? 'ring-2 ring-status-warn/80 shadow-md' : '',
                 isReserved
-                    ? 'bg-gradient-to-br from-rose-500/25 to-rose-500/15 border-rose-400/50 text-rose-300'
-                    : 'bg-gradient-to-br from-blue-500/15 to-blue-500/5 border-blue-400/40 text-blue-200'
+                    ? 'bg-gradient-to-br from-primary/25 to-primary/15 border-primary/50 text-primary'
+                    : 'bg-gradient-to-br from-primary/15 to-primary/5 border-primary/40 text-primary/25'
             )}>
                 <span className="text-sm font-semibold leading-tight text-center px-1">
                     {table.table_number}
@@ -80,7 +80,7 @@ function TableShape({ posX, posY, table, isReserved, isSelected, editMode, onMou
                 {editMode && !isSelected && <Move className="w-3 h-3 opacity-50 mt-0.5" />}
             </div>
             {isReserved && !editMode && (
-                <div className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-background" />
+                <div className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-primary rounded-full border-2 border-background" />
             )}
         </div>
     );
@@ -277,7 +277,7 @@ export default function FloorPlanView({ tables, getTableReservation, onTableClic
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3">
                     {editMode ? (
-                        <p className="text-xs text-amber-400 flex items-center gap-1.5">
+                        <p className="text-xs text-status-warn flex items-center gap-1.5">
                             <Move className="w-3.5 h-3.5" />
                             Bearbeitungsmodus: Tische per Drag verschieben (Snap-to-Grid). PDF bleibt als Referenz.
                         </p>
@@ -287,7 +287,7 @@ export default function FloorPlanView({ tables, getTableReservation, onTableClic
                     <Button
                         size="sm"
                         variant={editMode ? 'default' : 'outline'}
-                        className={cn("gap-1.5 text-xs h-7", editMode && "bg-amber-500 hover:bg-amber-600 text-black")}
+                        className={cn("gap-1.5 text-xs h-7", editMode && "bg-status-warn/70 hover:bg-status-warn/70 text-foreground")}
                         onClick={() => setEditMode(v => !v)}
                     >
                         {editMode ? <><Check className="w-3.5 h-3.5" /> Fertig</> : <><Pencil className="w-3.5 h-3.5" /> Layout bearbeiten</>}
@@ -297,11 +297,11 @@ export default function FloorPlanView({ tables, getTableReservation, onTableClic
                     <span className="text-foreground font-medium">{today}</span>
                     {!editMode && <>
                         <span className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-blue-400/60 border border-blue-400 inline-block" />
+                            <span className="w-3 h-3 rounded-full bg-primary/60 border border-primary/70 inline-block" />
                             Frei
                         </span>
                         <span className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-rose-400/60 border border-rose-400 inline-block" />
+                            <span className="w-3 h-3 rounded-full bg-primary/60 border border-primary inline-block" />
                             Reserviert
                         </span>
                     </>}
@@ -311,7 +311,7 @@ export default function FloorPlanView({ tables, getTableReservation, onTableClic
                 ref={canvasRef}
                 className={cn(
                     "relative w-full bg-card border rounded-xl overflow-hidden touch-none",
-                    editMode ? "border-amber-500/50 border-2" : "border-border",
+                    editMode ? "border-status-warn/50 border-2" : "border-border",
                     isPanning && "cursor-grabbing"
                 )}
                 style={{ height: '600px' }}

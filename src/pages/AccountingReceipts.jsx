@@ -132,7 +132,7 @@ function ReceiptCard({ receipt, onEdit, onDelete }) {
                 {isImage
                     ? <img src={receipt.file_url} alt="" className="w-full h-full object-cover" />
                     : hasImage
-                        ? <Receipt className="w-4 h-4 text-blue-400" />
+                        ? <Receipt className="w-4 h-4 text-primary" />
                         : <ImageOff className="w-3.5 h-3.5 text-muted-foreground/40" />
                 }
             </div>
@@ -146,7 +146,7 @@ function ReceiptCard({ receipt, onEdit, onDelete }) {
                     {receipt.receipt_date ? format(new Date(receipt.receipt_date), 'dd.MM.yyyy') : '—'}
                     {receipt.category && ` · ${receipt.category}`}
                     {!hasImage && (
-                        <span className="ml-1.5 text-amber-400/80 font-medium">· kein Bild</span>
+                        <span className="ml-1.5 text-status-warn/80 font-medium">· kein Bild</span>
                     )}
                 </p>
             </div>
@@ -155,7 +155,7 @@ function ReceiptCard({ receipt, onEdit, onDelete }) {
             {receipt.file_url?.endsWith('.pdf') && (
                 <a href={receipt.file_url} target="_blank" rel="noopener noreferrer"
                     onClick={e => e.stopPropagation()}
-                    className="text-blue-400/60 hover:text-blue-400 p-1 shrink-0 transition-colors">
+                    className="text-primary/60 hover:text-primary p-1 shrink-0 transition-colors">
                     <ExternalLink className="w-3.5 h-3.5" />
                 </a>
             )}
@@ -190,8 +190,8 @@ function UploadSheet({ open, onClose, onFile, onManual }) {
                     {/* Foto */}
                     <label className="cursor-pointer">
                         <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border hover:bg-accent/30 transition-all min-h-[56px]">
-                            <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                                <Camera className="w-4.5 h-4.5 text-amber-400" />
+                            <div className="w-9 h-9 rounded-xl bg-status-warn/15 flex items-center justify-center shrink-0">
+                                <Camera className="w-4.5 h-4.5 text-status-warn" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-foreground">Foto aufnehmen</p>
@@ -206,8 +206,8 @@ function UploadSheet({ open, onClose, onFile, onManual }) {
                     {/* Datei */}
                     <label className="cursor-pointer">
                         <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border hover:bg-accent/30 transition-all min-h-[56px]">
-                            <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
-                                <Upload className="w-4.5 h-4.5 text-blue-400" />
+                            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                                <Upload className="w-4.5 h-4.5 text-primary" />
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-foreground">Datei hochladen</p>
@@ -431,7 +431,7 @@ Antworte NUR mit validem JSON.`,
                         </button>
                         {/* Einziger Upload-Button */}
                         <Button onClick={() => setSheetOpen(true)}
-                            className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                            className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                             <Plus className="w-4 h-4" /> Beleg
                         </Button>
                     </div>
@@ -464,7 +464,7 @@ Antworte NUR mit validem JSON.`,
                             className={cn(
                                 'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                                 catFilter === 'alle'
-                                    ? 'bg-amber-600 border-amber-600 text-white'
+                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                     : 'border-border text-muted-foreground hover:border-foreground/30'
                             )}>
                             Alle ({monthReceipts.length})
@@ -474,8 +474,8 @@ Antworte NUR mit validem JSON.`,
                                 className={cn(
                                     'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                                     catFilter === 'kein_bild'
-                                        ? 'bg-amber-500 border-amber-500 text-white'
-                                        : 'border-amber-500/30 text-amber-400 hover:border-amber-500/60'
+                                        ? 'bg-status-warn/70 border-status-warn/70 text-white'
+                                        : 'border-status-warn/30 text-status-warn hover:border-status-warn/60'
                                 )}>
                                 ⚠ Kein Bild ({missingImages})
                             </button>
@@ -485,7 +485,7 @@ Antworte NUR mit validem JSON.`,
                                 className={cn(
                                     'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                                     catFilter === cat
-                                        ? 'bg-amber-600 border-amber-600 text-white'
+                                        ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                         : 'border-border text-muted-foreground hover:border-foreground/30'
                                 )}>
                                 {cat} ({monthReceipts.filter(r => r.category === cat).length})
@@ -534,8 +534,8 @@ Antworte NUR mit validem JSON.`,
 
                     {(uploading || aiProcessing) ? (
                         <div className="flex flex-col items-center justify-center py-12 gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-blue-500/15 flex items-center justify-center">
-                                <Sparkles className="w-8 h-8 text-blue-400 animate-pulse" />
+                            <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center">
+                                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
                             </div>
                             <div className="text-center">
                                 <p className="font-bold text-foreground">
@@ -554,13 +554,13 @@ Antworte NUR mit validem JSON.`,
                                     <img src={previewUrl} alt="Beleg"
                                         className="w-full h-40 object-contain rounded-xl border border-border/50 bg-secondary/20" />
                                     <a href={previewUrl} target="_blank" rel="noopener noreferrer"
-                                        className="absolute top-2 right-2 bg-background/80 backdrop-blur px-2 py-1 rounded-lg text-xs text-blue-400 flex items-center gap-1">
+                                        className="absolute top-2 right-2 bg-background/80 backdrop-blur px-2 py-1 rounded-lg text-xs text-primary flex items-center gap-1">
                                         <ExternalLink className="w-3 h-3" />
                                     </a>
                                 </div>
                             )}
                             {editData.supplier_name && (
-                                <div className="flex items-center gap-2 text-xs bg-green-500/8 border border-green-500/20 rounded-xl px-3 py-2 text-green-400">
+                                <div className="flex items-center gap-2 text-xs bg-status-ok/8 border border-status-ok/20 rounded-xl px-3 py-2 text-status-ok">
                                     <Sparkles className="w-3.5 h-3.5 shrink-0" />
                                     KI hat Daten erkannt — bitte prüfen und ggf. korrigieren
                                 </div>
@@ -576,7 +576,7 @@ Antworte NUR mit validem JSON.`,
                             </Button>
                             <Button onClick={handleSaveNew}
                                 disabled={createMutation.isPending}
-                                className="bg-amber-600 hover:bg-amber-700 text-white flex-1">
+                                className="bg-status-warn/70 hover:bg-status-warn/70 text-white flex-1">
                                 {createMutation.isPending ? 'Speichert…' : 'Speichern'}
                             </Button>
                         </DialogFooter>
@@ -595,7 +595,7 @@ Antworte NUR mit validem JSON.`,
                             <div className="relative">
                                 {selected.file_url.endsWith('.pdf') ? (
                                     <a href={selected.file_url} target="_blank" rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-blue-500/20 bg-blue-500/8 text-blue-400 text-sm">
+                                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-primary/20 bg-primary/8 text-primary text-sm">
                                         <Receipt className="w-4 h-4" /> PDF öffnen
                                         <ExternalLink className="w-3.5 h-3.5 ml-auto" />
                                     </a>
@@ -615,7 +615,7 @@ Antworte NUR mit validem JSON.`,
                         </Button>
                         <Button onClick={handleSaveEdit}
                             disabled={updateMutation.isPending}
-                            className="bg-amber-600 hover:bg-amber-700 text-white flex-1 h-9">
+                            className="bg-status-warn/70 hover:bg-status-warn/70 text-white flex-1 h-9">
                             {updateMutation.isPending ? 'Speichert…' : 'Speichern'}
                         </Button>
                     </DialogFooter>

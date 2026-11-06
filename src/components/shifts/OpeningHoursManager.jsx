@@ -116,7 +116,7 @@ export default function OpeningHoursManager() {
             <Button 
                 variant="outline" 
                 onClick={() => setModalOpen(true)}
-                className="border-slate-600 hover:bg-slate-700 text-slate-300"
+                className="border-border hover:bg-surface text-muted-foreground"
             >
                 <Clock className="w-4 h-4 mr-2" />
                 Öffnungszeiten
@@ -147,21 +147,21 @@ export default function OpeningHoursManager() {
                                         <button
                                             key={day}
                                             onClick={() => dayHour ? openModal(dayHour) : openModal(null, false)}
-                                            className="w-full p-4 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-all text-left group"
+                                            className="w-full p-4 bg-card hover:bg-card rounded-lg border border-border transition-all text-left group"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1">
-                                                    <p className="font-semibold text-slate-800 mb-1">{day}</p>
+                                                    <p className="font-semibold text-muted-foreground mb-1">{day}</p>
                                                     {dayHour ? (
                                                         dayHour.is_closed ? (
-                                                            <p className="text-sm text-red-500 font-medium">Geschlossen</p>
+                                                            <p className="text-sm text-status-danger font-medium">Geschlossen</p>
                                                         ) : (
-                                                            <p className="text-sm text-slate-600 font-medium">
+                                                            <p className="text-sm text-muted-foreground font-medium">
                                                                 {dayHour.open_time} - {dayHour.close_time}
                                                             </p>
                                                         )
                                                     ) : (
-                                                        <p className="text-sm text-slate-400">Nicht festgelegt - Klicken zum Hinzufügen</p>
+                                                        <p className="text-sm text-muted-foreground">Nicht festgelegt - Klicken zum Hinzufügen</p>
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -171,12 +171,12 @@ export default function OpeningHoursManager() {
                                                                 e.stopPropagation();
                                                                 handleDelete(dayHour.id);
                                                             }}
-                                                            className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 p-2 text-status-danger hover:bg-status-danger/15 rounded-lg transition-all"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     )}
-                                                    <Pencil className="w-4 h-4 text-slate-400" />
+                                                    <Pencil className="w-4 h-4 text-muted-foreground" />
                                                 </div>
                                             </div>
                                         </button>
@@ -191,17 +191,17 @@ export default function OpeningHoursManager() {
                                             <button
                                                 key={special.id}
                                                 onClick={() => openModal(special)}
-                                                className="w-full p-4 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-all text-left group"
+                                                className="w-full p-4 bg-status-warn/15 hover:bg-status-warn/15 border border-status-warn/25 rounded-lg transition-all text-left group"
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <Calendar className="w-4 h-4 text-amber-600" />
-                                                            <p className="font-semibold text-slate-800">
+                                                            <Calendar className="w-4 h-4 text-status-warn" />
+                                                            <p className="font-semibold text-muted-foreground">
                                                                 {special.special_name || 'Sonderöffnungstag'}
                                                             </p>
                                                         </div>
-                                                        <p className="text-sm text-slate-700 mb-1">
+                                                        <p className="text-sm text-muted-foreground mb-1">
                                                             {new Date(special.special_date).toLocaleDateString('de-DE', { 
                                                                 weekday: 'long', 
                                                                 day: 'numeric',
@@ -210,14 +210,14 @@ export default function OpeningHoursManager() {
                                                             })}
                                                         </p>
                                                         {special.is_closed ? (
-                                                            <p className="text-sm text-red-500 font-medium">Geschlossen</p>
+                                                            <p className="text-sm text-status-danger font-medium">Geschlossen</p>
                                                         ) : (
-                                                            <p className="text-sm text-slate-600 font-medium">
+                                                            <p className="text-sm text-muted-foreground font-medium">
                                                                 {special.open_time} - {special.close_time}
                                                             </p>
                                                         )}
                                                         {special.notes && (
-                                                            <p className="text-xs text-slate-500 mt-1 italic">{special.notes}</p>
+                                                            <p className="text-xs text-muted-foreground mt-1 italic">{special.notes}</p>
                                                         )}
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -226,11 +226,11 @@ export default function OpeningHoursManager() {
                                                                 e.stopPropagation();
                                                                 handleDelete(special.id);
                                                             }}
-                                                            className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                            className="opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 p-2 text-status-danger hover:bg-status-danger/15 rounded-lg transition-all"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
-                                                        <Pencil className="w-4 h-4 text-amber-600" />
+                                                        <Pencil className="w-4 h-4 text-status-warn" />
                                                     </div>
                                                 </div>
                                             </button>
@@ -239,7 +239,7 @@ export default function OpeningHoursManager() {
                                 )}
                                 <Button 
                                     onClick={() => openModal(null, true)}
-                                    className="w-full bg-amber-600 hover:bg-amber-700 h-12 text-base"
+                                    className="w-full bg-status-warn/70 hover:bg-status-warn/70 h-12 text-base"
                                 >
                                     <Plus className="w-5 h-5 mr-2" />
                                     Sonderöffnungstag hinzufügen
@@ -286,7 +286,7 @@ export default function OpeningHoursManager() {
                                 </div>
                             )}
 
-                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                            <div className="flex items-center justify-between p-4 bg-card rounded-lg">
                                 <Label className="text-base">Geschlossen</Label>
                                 <Switch
                                     checked={formData.is_closed}
@@ -338,7 +338,7 @@ export default function OpeningHoursManager() {
                                 </Button>
                                 <Button 
                                     type="submit"
-                                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                    className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                                 >
                                     {editingHour === 'new' ? 'Hinzufügen' : 'Speichern'}
                                 </Button>

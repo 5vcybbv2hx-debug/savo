@@ -79,7 +79,7 @@ export default function SignaturePad({ label, onSign }) {
                     <Trash2 className="w-3.5 h-3.5 mr-1" /> Löschen
                 </Button>
             </div>
-            <div className="border-2 border-dashed border-border rounded-lg overflow-hidden bg-white" style={{ touchAction: 'none' }}>
+            <div className="border-2 border-dashed border-border rounded-lg overflow-hidden bg-card" style={{ touchAction: 'none' }}>
                 <canvas
                     ref={canvasRef}
                     width={600}

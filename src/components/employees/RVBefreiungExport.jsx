@@ -120,7 +120,7 @@ export default function RVBefreiungExport({ employee, onEmployeeUpdate }) {
                 variant="outline"
                 size="sm"
                 onClick={handleOpen}
-                className="flex-1 border-slate-700/50 text-slate-300 hover:bg-slate-800/50"
+                className="flex-1 border-border text-muted-foreground hover:bg-surface"
             >
                 <ShieldOff className="w-4 h-4 mr-1" />
                 RV-Befreiung
@@ -161,10 +161,10 @@ export default function RVBefreiungExport({ employee, onEmployeeUpdate }) {
                                 className="w-full flex items-center justify-between px-4 py-3 bg-secondary/30 hover:bg-secondary/50 text-sm transition-colors"
                             >
                                 <span className="flex items-center gap-2">
-                                    <PenLine className="w-4 h-4 text-amber-400" />
+                                    <PenLine className="w-4 h-4 text-status-warn" />
                                     Unterschriften
                                     {(savedSigEmployee || savedSigEmployer) && (
-                                        <span className="text-xs text-green-400 flex items-center gap-1">
+                                        <span className="text-xs text-status-ok flex items-center gap-1">
                                             <CheckCircle2 className="w-3 h-3" />
                                             {savedSigEmployee && savedSigEmployer ? 'beide hinterlegt' : 'teilweise hinterlegt'}
                                         </span>
@@ -180,17 +180,17 @@ export default function RVBefreiungExport({ employee, onEmployeeUpdate }) {
                                         <div className="flex items-center justify-between mb-2">
                                             <p className="text-sm font-medium">Unterschrift Arbeitnehmer</p>
                                             {savedSigEmployee && (
-                                                <button onClick={() => handleClearSignature('employee')} className="text-xs text-red-400 flex items-center gap-1 hover:text-red-300">
+                                                <button onClick={() => handleClearSignature('employee')} className="text-xs text-status-danger flex items-center gap-1 hover:text-status-danger/25">
                                                     <Trash2 className="w-3 h-3" /> Löschen
                                                 </button>
                                             )}
                                         </div>
                                         {savedSigEmployee && !sigEmployee ? (
                                             <div className="space-y-2">
-                                                <div className="border border-green-500/30 rounded-lg bg-green-500/5 p-2">
+                                                <div className="border border-status-ok/30 rounded-lg bg-status-ok/5 p-2">
                                                     <img src={savedSigEmployee} alt="Unterschrift AN" className="max-h-16 w-full object-contain" />
                                                 </div>
-                                                <button onClick={() => setSigEmployee('__override__')} className="text-xs text-amber-400 hover:text-amber-300">
+                                                <button onClick={() => setSigEmployee('__override__')} className="text-xs text-status-warn hover:text-status-warn/25">
                                                     Neue Unterschrift hinterlegen
                                                 </button>
                                             </div>
@@ -204,17 +204,17 @@ export default function RVBefreiungExport({ employee, onEmployeeUpdate }) {
                                         <div className="flex items-center justify-between mb-2">
                                             <p className="text-sm font-medium">Unterschrift Arbeitgeber</p>
                                             {savedSigEmployer && (
-                                                <button onClick={() => handleClearSignature('employer')} className="text-xs text-red-400 flex items-center gap-1 hover:text-red-300">
+                                                <button onClick={() => handleClearSignature('employer')} className="text-xs text-status-danger flex items-center gap-1 hover:text-status-danger/25">
                                                     <Trash2 className="w-3 h-3" /> Löschen
                                                 </button>
                                             )}
                                         </div>
                                         {savedSigEmployer && !sigEmployer ? (
                                             <div className="space-y-2">
-                                                <div className="border border-green-500/30 rounded-lg bg-green-500/5 p-2">
+                                                <div className="border border-status-ok/30 rounded-lg bg-status-ok/5 p-2">
                                                     <img src={savedSigEmployer} alt="Unterschrift AG" className="max-h-16 w-full object-contain" />
                                                 </div>
-                                                <button onClick={() => setSigEmployer('__override__')} className="text-xs text-amber-400 hover:text-amber-300">
+                                                <button onClick={() => setSigEmployer('__override__')} className="text-xs text-status-warn hover:text-status-warn/25">
                                                     Neue Unterschrift hinterlegen
                                                 </button>
                                             </div>
@@ -227,7 +227,7 @@ export default function RVBefreiungExport({ employee, onEmployeeUpdate }) {
                                         <Button
                                             onClick={handleSaveSignatures}
                                             disabled={loading || sigSaved}
-                                            className="w-full bg-green-600 hover:bg-green-700"
+                                            className="w-full bg-status-ok/70 hover:bg-status-ok/70"
                                             size="sm"
                                         >
                                             {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
@@ -240,19 +240,19 @@ export default function RVBefreiungExport({ employee, onEmployeeUpdate }) {
 
                         {/* PDF generieren */}
                         {!pdfUrl ? (
-                            <Button onClick={handleGenerate} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700">
+                            <Button onClick={handleGenerate} disabled={loading} className="w-full bg-primary/70 hover:bg-primary/70">
                                 {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />PDF wird generiert...</> : 'PDF generieren'}
                             </Button>
                         ) : (
                             <>
-                                <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-sm text-green-400">
+                                <div className="p-3 bg-status-ok/10 border border-status-ok/30 rounded-lg text-sm text-status-ok">
                                     ✓ PDF erfolgreich generiert
                                 </div>
                                 <a
                                     href={pdfUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium transition-colors"
+                                    className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg bg-status-warn/70 hover:bg-status-warn/70 text-white font-medium transition-colors"
                                 >
                                     <FileDown className="w-4 h-4" />
                                     PDF herunterladen
@@ -269,7 +269,7 @@ export default function RVBefreiungExport({ employee, onEmployeeUpdate }) {
                                     <Button
                                         onClick={handleSendEmail}
                                         disabled={loading || !steuerberaterEmail || emailSent}
-                                        className="w-full bg-green-600 hover:bg-green-700"
+                                        className="w-full bg-status-ok/70 hover:bg-status-ok/70"
                                     >
                                         {emailSent ? '✓ E-Mail gesendet!' : 'E-Mail senden'}
                                     </Button>

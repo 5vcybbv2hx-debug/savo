@@ -229,9 +229,9 @@ export default function MarginCalculator({ menuItem }) {
 
     if (!calculatedData?.hasData) {
         return (
-            <Card className="border-slate-600 bg-slate-800/30">
+            <Card className="border-border bg-surface">
                 <CardContent className="p-4">
-                    <div className="flex items-center gap-2 text-slate-400 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
                         <AlertTriangle className="w-4 h-4" />
                         Keine Margenberechnung möglich - EK fehlt
                     </div>
@@ -244,9 +244,9 @@ export default function MarginCalculator({ menuItem }) {
     const isOkMargin = calculatedData.marginPercentage >= 200;
 
     return (
-        <Card className="border-slate-600 bg-gradient-to-br from-slate-800/50 to-slate-800/30">
+        <Card className="border-border bg-gradient-to-br from-slate-800/50 to-slate-800/30">
             <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Calculator className="w-4 h-4" />
                     Margenanalyse
                     <Badge variant="outline" className="ml-auto text-xs">
@@ -259,52 +259,52 @@ export default function MarginCalculator({ menuItem }) {
             <CardContent className="space-y-3">
                 <div className="grid grid-cols-4 gap-2">
                     <div>
-                        <p className="text-xs text-slate-400 mb-1">VK</p>
+                        <p className="text-xs text-muted-foreground mb-1">VK</p>
                         <p className="text-base font-bold text-white">
                             {menuItem.price?.toFixed(2)} €
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-slate-400 mb-1">EK</p>
-                        <p className="text-base font-bold text-slate-300">
+                        <p className="text-xs text-muted-foreground mb-1">EK</p>
+                        <p className="text-base font-bold text-muted-foreground">
                             {calculatedData.purchasePrice.toFixed(2)} €
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-slate-400 mb-1">Empf.</p>
-                        <p className="text-base font-bold text-blue-400">
+                        <p className="text-xs text-muted-foreground mb-1">Empf.</p>
+                        <p className="text-base font-bold text-primary">
                             {calculatedData.recommendedPrice.toFixed(2)} €
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-slate-400 mb-1">Gewinn</p>
-                        <p className="text-base font-bold text-green-400">
+                        <p className="text-xs text-muted-foreground mb-1">Gewinn</p>
+                        <p className="text-base font-bold text-status-ok">
                             {calculatedData.marginAbsolute.toFixed(2)} €
                         </p>
                     </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-700 space-y-2">
+                <div className="pt-2 border-t border-border space-y-2">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-400">Aufschlag</span>
+                        <span className="text-sm text-muted-foreground">Aufschlag</span>
                         <div className="flex items-center gap-2">
                             {isGoodMargin ? (
-                                <TrendingUp className="w-4 h-4 text-green-500" />
+                                <TrendingUp className="w-4 h-4 text-status-ok" />
                             ) : !isOkMargin ? (
-                                <TrendingDown className="w-4 h-4 text-red-500" />
+                                <TrendingDown className="w-4 h-4 text-status-danger" />
                             ) : (
-                                <TrendingUp className="w-4 h-4 text-yellow-500" />
+                                <TrendingUp className="w-4 h-4 text-status-warn" />
                             )}
                             <span className={`text-xl font-bold ${
-                                isGoodMargin ? 'text-green-400' : 
-                                isOkMargin ? 'text-yellow-400' : 
-                                'text-red-400'
+                                isGoodMargin ? 'text-status-ok' : 
+                                isOkMargin ? 'text-status-warn' : 
+                                'text-status-danger'
                             }`}>
                                 {calculatedData.marginPercentage.toFixed(0)}%
                             </span>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                         {isGoodMargin ? '✓ Sehr gut' : 
                          isOkMargin ? '⚠ OK' : 
                          '⚠ Zu niedrig'}
@@ -313,8 +313,8 @@ export default function MarginCalculator({ menuItem }) {
                     {Math.abs(menuItem.price - calculatedData.recommendedPrice) > 0.5 && (
                         <div className={`p-2 rounded-lg text-xs ${
                             menuItem.price < calculatedData.recommendedPrice
-                                ? 'bg-blue-900/30 border border-blue-800/50 text-blue-300'
-                                : 'bg-green-900/30 border border-green-800/50 text-green-300'
+                                ? 'bg-primary/30 border border-primary/50 text-primary/25'
+                                : 'bg-status-ok/30 border border-status-ok/50 text-status-ok/25'
                         }`}>
                             {menuItem.price < calculatedData.recommendedPrice 
                                 ? `💡 Potenzial: +${(calculatedData.recommendedPrice - menuItem.price).toFixed(2)} €`

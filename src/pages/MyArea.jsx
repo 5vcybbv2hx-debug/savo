@@ -27,7 +27,7 @@ function PushStatusLine() {
         return () => clearInterval(interval);
     }, []);
 
-    const dot = status.status === 'active' ? 'bg-green-500' : status.status === 'error' ? 'bg-red-500' : 'bg-muted-foreground/40';
+    const dot = status.status === 'active' ? 'bg-status-ok/70' : status.status === 'error' ? 'bg-status-danger/70' : 'bg-muted-foreground/40';
     const label = status.status === 'active' ? 'aktiv' : status.status === 'error' ? 'Fehler' : 'warte…';
 
     return (
@@ -48,7 +48,7 @@ function PushStatusLine() {
             {status.error && (
                 <>
                     <span className="text-muted-foreground/60">·</span>
-                    <span className="text-red-400 truncate max-w-[160px]" title={status.error}>{status.error}</span>
+                    <span className="text-status-danger truncate max-w-[160px]" title={status.error}>{status.error}</span>
                 </>
             )}
         </div>

@@ -198,17 +198,17 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                 <MobileModalContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {hasEventOnDate && isBlocked && (
-                        <Alert className="bg-red-500/10 border-red-500/30">
-                            <AlertCircle className="w-4 h-4 text-red-500" />
-                            <AlertDescription className="text-red-400">
+                        <Alert className="bg-status-danger/10 border-status-danger/30">
+                            <AlertCircle className="w-4 h-4 text-status-danger" />
+                            <AlertDescription className="text-status-danger">
                                 An diesem Tag findet ein Event statt. Reservierungen sind für Gäste gesperrt.
                             </AlertDescription>
                         </Alert>
                     )}
                     {hasEventOnDate && isManager && (
-                        <Alert className="bg-amber-500/10 border-amber-500/30">
-                            <AlertCircle className="w-4 h-4 text-amber-500" />
-                            <AlertDescription className="text-amber-400">
+                        <Alert className="bg-status-warn/10 border-status-warn/30">
+                            <AlertCircle className="w-4 h-4 text-status-warn" />
+                            <AlertDescription className="text-status-warn">
                                 Reservierungen sind für Gäste gesperrt. Als Manager kannst du trotzdem manuell eintragen.
                             </AlertDescription>
                         </Alert>
@@ -263,9 +263,9 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
 
                     {/* Kapazitätswarnung */}
                     {capacityWarning && (
-                        <Alert className="bg-amber-500/10 border-amber-500/30">
-                            <AlertCircle className="w-4 h-4 text-amber-500" />
-                            <AlertDescription className="text-amber-400">
+                        <Alert className="bg-status-warn/10 border-status-warn/30">
+                            <AlertCircle className="w-4 h-4 text-status-warn" />
+                            <AlertDescription className="text-status-warn">
                                 ⚠️ Gästeanzahl übersteigt Tischkapazität ({totalCapacity} Plätze)
                             </AlertDescription>
                         </Alert>
@@ -273,9 +273,9 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
 
                     {/* Kollisionswarnung */}
                     {collisionWarnings.length > 0 && (
-                        <Alert className="bg-orange-500/10 border-orange-500/30">
-                            <AlertCircle className="w-4 h-4 text-orange-400" />
-                            <AlertDescription className="text-orange-400">
+                        <Alert className="bg-status-warn/10 border-status-warn/30">
+                            <AlertCircle className="w-4 h-4 text-status-warn" />
+                            <AlertDescription className="text-status-warn">
                                 ⚠️ Tisch {collisionWarnings.join(', ')} ist um diese Zeit bereits belegt (±2h)
                             </AlertDescription>
                         </Alert>
@@ -329,7 +329,7 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                                             'flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all min-h-[40px]',
                                             isSelected
                                                 ? hasCollision
-                                                    ? 'bg-orange-500/20 border-orange-500/60 text-orange-300'
+                                                    ? 'bg-status-warn/20 border-status-warn/60 text-status-warn/25'
                                                     : 'bg-primary/20 border-primary/60 text-primary'
                                                 : 'bg-secondary/40 border-border text-muted-foreground hover:text-foreground hover:border-foreground/40'
                                         )}
@@ -416,7 +416,7 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                         <div className="space-y-3 p-4 bg-secondary/40 rounded-lg border border-border">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <RepeatIcon className="w-4 h-4 text-slate-600" />
+                                    <RepeatIcon className="w-4 h-4 text-muted-foreground" />
                                     <Label htmlFor="recurring" className="cursor-pointer">Wiederkehrend (z.B. Stammtisch)</Label>
                                 </div>
                                 <Switch
@@ -452,7 +452,7 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                                             onChange={(e) => setFormData({ ...formData, recurring_end_date: e.target.value })}
                                             min={formData.date}
                                         />
-                                        <p className="text-xs text-slate-500">Leer lassen für 6 Monate</p>
+                                        <p className="text-xs text-muted-foreground">Leer lassen für 6 Monate</p>
                                     </div>
                                 </div>
                             )}
@@ -470,7 +470,7 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                         <Button
                             type="button"
                             variant="outline"
-                            className="text-red-600 hover:text-red-700"
+                            className="text-status-danger hover:text-status-danger"
                             onClick={() => {
                                 haptics.light();
                                 onDelete(reservation.id);
@@ -497,7 +497,7 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                         )}
                         <Button
                             type="submit"
-                            className="h-11 px-4 flex-1 bg-amber-600 hover:bg-amber-700"
+                            className="h-11 px-4 flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                             disabled={isBlocked}
                             onClick={handleSubmit}
                         >

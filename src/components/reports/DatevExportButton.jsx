@@ -96,7 +96,7 @@ export default function DatevExportButton({ hoursByEmployee, employees, selected
             onClick={exportDatev}
             variant="outline"
             size="sm"
-            className="shrink-0 h-8 text-xs gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+            className="shrink-0 h-8 text-xs gap-1 border-status-warn/40 text-status-warn hover:bg-status-warn/10"
         >
             <Download className="w-3 h-3" />
             DATEV

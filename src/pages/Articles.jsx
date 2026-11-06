@@ -54,7 +54,7 @@ function ArticleRow({ article, isLowStock, onEdit, onToggleActive, isManager, as
                 article.is_active === false
                     ? 'opacity-40 bg-secondary/20 border-border/30'
                     : isLowStock
-                    ? 'bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40'
+                    ? 'bg-status-warn/5 border-status-warn/20 hover:border-status-warn/40'
                     : 'bg-card border-border/50 hover:border-border hover:bg-accent/20'
             )}>
             {/* Bild */}
@@ -76,7 +76,7 @@ function ArticleRow({ article, isLowStock, onEdit, onToggleActive, isManager, as
                     {/* Bestand */}
                     <span className={cn(
                         'text-xs font-medium',
-                        isLowStock ? 'text-orange-400' : 'text-muted-foreground'
+                        isLowStock ? 'text-status-warn' : 'text-muted-foreground'
                     )}>
                         {stock}{minStock > 0 ? ` / ${minStock}` : ''}
                         {article.content_unit ? ` ${article.content_unit}` : ''}
@@ -110,7 +110,7 @@ function ArticleRow({ article, isLowStock, onEdit, onToggleActive, isManager, as
                     <DropdownMenuContent align="end" className="w-44">
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onToggleActive(article); }}
                             className={article.is_active === false
-                                ? 'text-green-400 focus:text-green-400'
+                                ? 'text-status-ok focus:text-status-ok'
                                 : 'text-muted-foreground'}>
                             {article.is_active === false ? (
                                 <><Eye className="w-4 h-4 mr-2" />Reaktivieren</>
@@ -429,7 +429,7 @@ export default function Articles() {
                 <div className="flex items-center justify-between gap-3">
                     <div>
                         <h1 className="page-title flex items-center gap-2">
-                            <Package className="w-5 h-5 text-amber-500" />
+                            <Package className="w-5 h-5 text-status-warn" />
                             Artikeldatenbank
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -494,7 +494,7 @@ export default function Articles() {
                         )}
                         <Button size="sm"
                             onClick={handleAdd}
-                            className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                            className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                             <Plus className="w-4 h-4" />
                             Neu
                         </Button>
@@ -519,7 +519,7 @@ export default function Articles() {
                             className={cn(
                                 'shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
                                 filterCategory === (cat.id === 'all' ? 'all' : cat.name)
-                                    ? 'bg-amber-500 border-amber-500 text-white'
+                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                     : 'border-border text-muted-foreground hover:text-foreground bg-card'
                             )}>
                             {cat.name}
@@ -529,9 +529,9 @@ export default function Articles() {
 
                 {/* ── Low-Stock Alert ────────────────────────────────────── */}
                 {lowStockArticles.length > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-orange-500/25 bg-orange-500/8">
-                        <AlertTriangle className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                        <p className="text-xs text-orange-400 font-medium">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-status-warn/25 bg-status-warn/8">
+                        <AlertTriangle className="w-3.5 h-3.5 text-status-warn shrink-0" />
+                        <p className="text-xs text-status-warn font-medium">
                             {lowStockArticles.length} Artikel unter Mindestbestand
                         </p>
                         <button

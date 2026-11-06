@@ -59,7 +59,7 @@ export const DESIGN_TOKENS = {
   // ── Icons + UI-Pattern ────────────────────
   patterns: {
     // Spinner (Amber gradient)
-    spinner: 'border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin',
+    spinner: 'border-4 border-status-warn/30 border-t-amber-500 rounded-full animate-spin',
     
     // Card mit hover
     card: 'rounded-xl border bg-card text-card-foreground shadow hover:shadow-md transition-shadow',
@@ -80,11 +80,11 @@ export const DESIGN_TOKENS = {
 // ✅ RICHTIG:
 // <div className="bg-card text-card-foreground rounded-xl p-4 border border-border">
 // <button className="bg-primary text-primary-foreground hover:bg-primary/90">
-// <Badge className="bg-amber-500/15 text-amber-400">Special</Badge>
+// <Badge className="bg-status-warn/15 text-status-warn">Special</Badge>
 //
 // ❌ FALSCH:
 // <div className="bg-[#ffffff] text-[#000000]">  (hardcoded)
-// <button className="bg-red-500">  (wenn primary sein sollte)
-// <div className="border-2 border-gray-400">  (sollte border-border sein)
+// <button className="bg-status-danger/70">  (wenn primary sein sollte)
+// <div className="border-2 border-border">  (sollte border-border sein)
 
 export default DESIGN_TOKENS;

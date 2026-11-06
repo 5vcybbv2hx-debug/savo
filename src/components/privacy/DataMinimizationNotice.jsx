@@ -22,9 +22,9 @@ export const RequiredFieldNotice = ({ label, reason }) => (
 );
 
 export const DataCollectionBanner = ({ title, items }) => (
-  <Alert className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 mb-6">
-    <Info className="h-4 w-4 text-blue-600" />
-    <AlertDescription className="text-sm text-blue-700 dark:text-blue-300">
+  <Alert className="border-primary/25 dark:border-primary/70 bg-primary/15 dark:bg-primary/20 mb-6">
+    <Info className="h-4 w-4 text-primary" />
+    <AlertDescription className="text-sm text-primary dark:text-primary/25">
       <strong>{title}</strong>
       <ul className="mt-2 space-y-1 ml-4 list-disc">
         {items.map((item, idx) => (
@@ -36,21 +36,21 @@ export const DataCollectionBanner = ({ title, items }) => (
 );
 
 export const SensitiveDataWarning = ({ fields }) => (
-  <Alert className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20">
-    <AlertTriangle className="h-4 w-4 text-amber-600" />
-    <AlertDescription className="text-sm text-amber-700 dark:text-amber-300">
+  <Alert className="border-status-warn/25 dark:border-status-warn/70 bg-status-warn/15 dark:bg-status-warn/20">
+    <AlertTriangle className="h-4 w-4 text-status-warn" />
+    <AlertDescription className="text-sm text-status-warn dark:text-status-warn/25">
       <strong>Sensible Daten:</strong> {fields.join(', ')} sind besonders geschützt und nur für berechtigte Personen einsehbar.
     </AlertDescription>
   </Alert>
 );
 
 export const ConsentCheckbox = ({ checked, onChange, label }) => (
-  <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+  <div className="flex items-start gap-3 p-3 rounded-lg border border-border dark:border-border bg-card dark:bg-surface">
     <input
       type="checkbox"
       checked={checked}
       onChange={onChange}
-      className="w-5 h-5 rounded border-slate-300 mt-1 accent-amber-600 cursor-pointer"
+      className="w-5 h-5 rounded border-border mt-1 accent-amber-600 cursor-pointer"
     />
     <label className="text-sm text-foreground cursor-pointer">
       {label}

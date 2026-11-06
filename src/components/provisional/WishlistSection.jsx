@@ -53,10 +53,10 @@ export default function WishlistSection({ entries = [], usageMap = {}, shiftType
             {hints.length > 0 && (
                 <div className="space-y-2">
                     {hints.map(hint => (
-                        <div key={`hint-${hint.key}`} className="flex items-start gap-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5">
-                            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <div key={`hint-${hint.key}`} className="flex items-start gap-2.5 rounded-xl border border-status-warn/40 bg-status-warn/10 px-3 py-2.5">
+                            <AlertTriangle className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
                             <div className="min-w-0">
-                                <p className="text-sm font-semibold text-amber-300">
+                                <p className="text-sm font-semibold text-status-warn/25">
                                     Platz frei bei {hint.start_time} – {hint.waiting} auf der Warteliste
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -69,8 +69,8 @@ export default function WishlistSection({ entries = [], usageMap = {}, shiftType
             )}
 
             <div className="flex items-center gap-2 px-1">
-                <Hourglass className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-bold text-amber-400">Warteliste</span>
+                <Hourglass className="w-4 h-4 text-status-warn" />
+                <span className="text-sm font-bold text-status-warn">Warteliste</span>
                 <span className="text-xs text-muted-foreground">({sorted.length})</span>
             </div>
 
@@ -82,16 +82,16 @@ export default function WishlistSection({ entries = [], usageMap = {}, shiftType
                     return (
                         <div
                             key={req.id}
-                            className="rounded-2xl border border-dashed border-amber-500/50 bg-card/60 p-4"
+                            className="rounded-2xl border border-dashed border-status-warn/50 bg-card/60 p-4"
                         >
                             <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-full bg-amber-500/15 border border-dashed border-amber-500/60 flex items-center justify-center font-bold text-amber-300 shrink-0">
+                                <div className="w-10 h-10 rounded-full bg-status-warn/15 border border-dashed border-status-warn/60 flex items-center justify-center font-bold text-status-warn/25 shrink-0">
                                     {position > 0 ? position : 'W'}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="font-bold text-foreground text-base">{req.employee_name}</span>
-                                        <Badge className="text-xs border px-2 bg-amber-500/15 text-amber-300 border-amber-500/40">
+                                        <Badge className="text-xs border px-2 bg-status-warn/15 text-status-warn/25 border-status-warn/40">
                                             Warteliste{position > 0 ? ` · Platz ${position}` : ''}
                                         </Badge>
                                     </div>
@@ -102,7 +102,7 @@ export default function WishlistSection({ entries = [], usageMap = {}, shiftType
                                     <div className="flex items-center gap-1.5 mt-0.5 text-sm text-muted-foreground">
                                         <Clock className="w-3.5 h-3.5 shrink-0" />
                                         <span>{req.start_time} – {req.end_time}</span>
-                                        {req.shift_type && <span className="text-amber-400 font-medium">• {req.shift_type}</span>}
+                                        {req.shift_type && <span className="text-status-warn font-medium">• {req.shift_type}</span>}
                                     </div>
                                     {req.comment && (
                                         <p className="text-xs text-muted-foreground mt-1.5 italic bg-secondary/50 rounded-lg px-2.5 py-1.5">
@@ -117,7 +117,7 @@ export default function WishlistSection({ entries = [], usageMap = {}, shiftType
                                     size="sm"
                                     disabled={isProcessing}
                                     onClick={() => onReject(req)}
-                                    className="h-11 gap-1.5 text-sm font-medium bg-red-600/80 hover:bg-red-600 text-white"
+                                    className="h-11 gap-1.5 text-sm font-medium bg-status-danger/80 hover:bg-status-danger/70 text-white"
                                 >
                                     <XCircle className="w-4 h-4" />
                                     Ablehnen
@@ -126,7 +126,7 @@ export default function WishlistSection({ entries = [], usageMap = {}, shiftType
                                     size="sm"
                                     disabled={isProcessing}
                                     onClick={() => onConfirm(req)}
-                                    className="h-11 gap-1.5 text-sm font-medium bg-green-600 hover:bg-green-700 text-white"
+                                    className="h-11 gap-1.5 text-sm font-medium bg-status-ok/70 hover:bg-status-ok/70 text-white"
                                 >
                                     <CheckCircle2 className="w-4 h-4" />
                                     Bestätigen

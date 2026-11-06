@@ -26,18 +26,18 @@ import { haptics } from '@/components/utils/haptics';
 import { createNotification } from '@/utils/createNotification';
 
 const priorityConfig = {
-    normal: { label: 'Normal', color: 'bg-slate-600 text-slate-200', dot: 'bg-slate-400' },
-    wichtig: { label: 'Wichtig', color: 'bg-amber-500/20 text-amber-300 border border-amber-500/30', dot: 'bg-amber-400' },
-    dringend: { label: 'Dringend', color: 'bg-red-500/20 text-red-300 border border-red-500/30', dot: 'bg-red-400' }
+    normal: { label: 'Normal', color: 'bg-surface text-muted-foreground', dot: 'bg-muted' },
+    wichtig: { label: 'Wichtig', color: 'bg-status-warn/20 text-status-warn/25 border border-status-warn/30', dot: 'bg-status-warn/70' },
+    dringend: { label: 'Dringend', color: 'bg-status-danger/20 text-status-danger/25 border border-status-danger/30', dot: 'bg-status-danger/70' }
 };
 
 const categoryColors = {
-    Allgemein: 'text-slate-400',
-    Wichtig: 'text-amber-400',
-    Schicht: 'text-blue-400',
-    Lager: 'text-orange-400',
-    Gäste: 'text-green-400',
-    Sonstiges: 'text-purple-400'
+    Allgemein: 'text-muted-foreground',
+    Wichtig: 'text-status-warn',
+    Schicht: 'text-primary',
+    Lager: 'text-status-warn',
+    Gäste: 'text-status-ok',
+    Sonstiges: 'text-primary'
 };
 
 function NoteCard({ note, isManager, currentUserEmail, onEdit, onDelete, onPin, onDone, onArchive, onConvertToTask }) {
@@ -98,7 +98,7 @@ function NoteCard({ note, isManager, currentUserEmail, onEdit, onDelete, onPin, 
                         <Badge variant="outline" className="text-xs border-primary/40 text-primary">Nächste Schicht</Badge>
                     )}
                     {note.status === 'erledigt' && (
-                        <Badge variant="outline" className="text-xs border-green-500/40 text-green-300">Erledigt</Badge>
+                        <Badge variant="outline" className="text-xs border-status-ok/40 text-status-ok/25">Erledigt</Badge>
                     )}
                     {editedStr && (
                         <span className="text-xs text-muted-foreground italic">{editedStr}</span>
@@ -124,7 +124,7 @@ function NoteCard({ note, isManager, currentUserEmail, onEdit, onDelete, onPin, 
                             </Button>
                             {note.status !== 'erledigt' && (
                                 <Button size="sm" variant="ghost" onClick={() => onDone(note)}
-                                    className="h-8 px-2 text-xs text-muted-foreground hover:text-green-400">
+                                    className="h-8 px-2 text-xs text-muted-foreground hover:text-status-ok">
                                     <Check className="w-3 h-3 mr-1" />Erledigt
                                 </Button>
                             )}
@@ -135,7 +135,7 @@ function NoteCard({ note, isManager, currentUserEmail, onEdit, onDelete, onPin, 
                                 </Button>
                             )}
                             <Button size="sm" variant="ghost" onClick={() => onDelete(note.id)}
-                                className="h-8 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                                className="h-8 px-2 text-xs text-status-danger hover:text-status-danger/25 hover:bg-status-danger/10">
                                 <Trash2 className="w-3 h-3" />
                             </Button>
                         </>

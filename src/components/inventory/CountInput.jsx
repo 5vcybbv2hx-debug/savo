@@ -12,7 +12,7 @@ export default function CountInput({ value, onChange, placeholder = "—" }) {
             <button
                 type="button"
                 onClick={() => onChange(Math.max(0, (value || 0) - 1))}
-                className="w-8 h-8 flex items-center justify-center rounded bg-secondary hover:bg-secondary text-foreground transition-colors active:bg-slate-500"
+                className="w-8 h-8 flex items-center justify-center rounded bg-secondary hover:bg-secondary text-foreground transition-colors active:bg-surface"
             >
                 <Minus className="w-3.5 h-3.5" />
             </button>
@@ -27,7 +27,7 @@ export default function CountInput({ value, onChange, placeholder = "—" }) {
             <button
                 type="button"
                 onClick={() => onChange((value || 0) + 1)}
-                className="w-8 h-8 flex items-center justify-center rounded bg-secondary hover:bg-secondary text-foreground transition-colors active:bg-slate-500"
+                className="w-8 h-8 flex items-center justify-center rounded bg-secondary hover:bg-secondary text-foreground transition-colors active:bg-surface"
             >
                 <Plus className="w-3.5 h-3.5" />
             </button>

@@ -116,8 +116,8 @@ export default function DigitalBusinessCard({ companyInfo, openingHours = [] }) 
                                 <img src={companyInfo.logo_url} alt="Logo"
                                      className="h-12 object-contain mb-3" />
                             ) : (
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-3">
-                                    <span className="text-slate-900 font-bold text-lg">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-status-warn to-status-warn flex items-center justify-center mb-3">
+                                    <span className="text-muted-foreground font-bold text-lg">
                                         {(companyInfo.company_name || '?')[0].toUpperCase()}
                                     </span>
                                 </div>
@@ -136,26 +136,26 @@ export default function DigitalBusinessCard({ companyInfo, openingHours = [] }) 
                         <div className="px-6 py-4 space-y-3">
                             {companyInfo.phone && (
                                 <a href={`tel:${companyInfo.phone}`}
-                                   className="flex items-center gap-3 text-white/80 hover:text-amber-400 transition-colors">
-                                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                                        <Phone className="w-4 h-4 text-amber-400" />
+                                   className="flex items-center gap-3 text-white/80 hover:text-status-warn transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-status-warn/20 flex items-center justify-center shrink-0">
+                                        <Phone className="w-4 h-4 text-status-warn" />
                                     </div>
                                     <span className="text-sm">{companyInfo.phone}</span>
                                 </a>
                             )}
                             {companyInfo.email && (
                                 <a href={`mailto:${companyInfo.email}`}
-                                   className="flex items-center gap-3 text-white/80 hover:text-amber-400 transition-colors">
-                                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                                        <Mail className="w-4 h-4 text-amber-400" />
+                                   className="flex items-center gap-3 text-white/80 hover:text-status-warn transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-status-warn/20 flex items-center justify-center shrink-0">
+                                        <Mail className="w-4 h-4 text-status-warn" />
                                     </div>
                                     <span className="text-sm">{companyInfo.email}</span>
                                 </a>
                             )}
                             {(companyInfo.street || companyInfo.city) && (
                                 <div className="flex items-start gap-3 text-white/80">
-                                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                                        <MapPin className="w-4 h-4 text-amber-400" />
+                                    <div className="w-8 h-8 rounded-lg bg-status-warn/20 flex items-center justify-center shrink-0 mt-0.5">
+                                        <MapPin className="w-4 h-4 text-status-warn" />
                                     </div>
                                     <span className="text-sm leading-snug">
                                         {companyInfo.street && <>{companyInfo.street}<br /></>}
@@ -165,9 +165,9 @@ export default function DigitalBusinessCard({ companyInfo, openingHours = [] }) 
                             )}
                             {companyInfo.website && (
                                 <a href={companyInfo.website} target="_blank" rel="noopener noreferrer"
-                                   className="flex items-center gap-3 text-white/80 hover:text-amber-400 transition-colors">
-                                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                                        <Globe className="w-4 h-4 text-amber-400" />
+                                   className="flex items-center gap-3 text-white/80 hover:text-status-warn transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-status-warn/20 flex items-center justify-center shrink-0">
+                                        <Globe className="w-4 h-4 text-status-warn" />
                                     </div>
                                     <span className="text-sm truncate">{companyInfo.website.replace(/^https?:\/\//, '')}</span>
                                 </a>
@@ -179,7 +179,7 @@ export default function DigitalBusinessCard({ companyInfo, openingHours = [] }) 
                             <div className="px-6 pb-4">
                                 <div className="rounded-xl bg-white/5 border border-white/10 p-3">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                                        <Clock className="w-3.5 h-3.5 text-status-warn" />
                                         <span className="text-xs font-semibold text-white/70 uppercase tracking-wide">Öffnungszeiten</span>
                                     </div>
                                     <p className="text-xs text-white/60 whitespace-pre-line leading-relaxed">{hoursText}</p>
@@ -189,11 +189,11 @@ export default function DigitalBusinessCard({ companyInfo, openingHours = [] }) 
 
                         {/* Footer */}
                         <div className="px-6 pb-5">
-                            <div className="h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent mb-4" />
+                            <div className="h-px bg-gradient-to-r from-transparent via-status-warn/40 to-transparent mb-4" />
                             <div className="flex gap-2">
                                 <Button
                                     onClick={downloadVCard}
-                                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 font-semibold min-h-[44px] shadow-lg shadow-amber-500/20"
+                                    className="flex-1 bg-gradient-to-r from-status-warn to-status-warn hover:from-status-warn hover:to-status-warn text-muted-foreground font-semibold min-h-[44px] shadow-lg shadow-amber-500/20"
                                 >
                                     <Download className="w-4 h-4 mr-2" />
                                     Kontakt speichern
@@ -224,7 +224,7 @@ export default function DigitalBusinessCard({ companyInfo, openingHours = [] }) 
                         <>
                             <div className="rounded-2xl overflow-hidden p-6 flex items-center justify-center"
                                  style={{ background: 'linear-gradient(135deg, #1e2d45, #111827)' }}>
-                                <div className="bg-white rounded-xl p-4 shadow-xl">
+                                <div className="bg-card rounded-xl p-4 shadow-xl">
                                     <img src={qrCodeUrl} alt="QR Code" className="w-full max-w-[220px]" />
                                 </div>
                             </div>

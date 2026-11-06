@@ -156,8 +156,8 @@ export default function LocationManager({ permissions }) {
               }}
               className={`p-3 rounded-lg font-medium text-sm transition-all border ${
                 selectedArea === area.id
-                  ? 'bg-amber-600 text-white border-amber-600'
-                  : 'bg-card border-border hover:border-amber-500 text-foreground hover:bg-accent'
+                  ? 'bg-status-warn/70 text-white border-status-warn/70'
+                  : 'bg-card border-border hover:border-status-warn/70 text-foreground hover:bg-accent'
               }`}
             >
               {area.icon && <span className="mr-1">{area.icon}</span>}
@@ -182,8 +182,8 @@ export default function LocationManager({ permissions }) {
                   }}
                   className={`p-3 rounded-lg font-medium text-sm transition-all border ${
                     selectedContainer === container.id
-                      ? 'bg-amber-600 text-white border-amber-600'
-                      : 'bg-card border-border hover:border-amber-500 text-foreground hover:bg-accent'
+                      ? 'bg-status-warn/70 text-white border-status-warn/70'
+                      : 'bg-card border-border hover:border-status-warn/70 text-foreground hover:bg-accent'
                   }`}
                 >
                   {container.name}
@@ -206,7 +206,7 @@ export default function LocationManager({ permissions }) {
                   />
                 </div>
                 {permissions.isManager && (
-                  <Button onClick={openAdd} className="bg-amber-600 hover:bg-amber-700 text-white h-11">
+                  <Button onClick={openAdd} className="bg-status-warn/70 hover:bg-status-warn/70 text-white h-11">
                     <Plus className="w-4 h-4 mr-2" />
                     Neuer Platz
                   </Button>
@@ -365,7 +365,7 @@ export default function LocationManager({ permissions }) {
             <Button
               onClick={handleSave}
               disabled={saveMutation.isPending}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-status-warn/70 hover:bg-status-warn/70 text-white"
             >
               {saveMutation.isPending ? 'Wird gespeichert...' : 'Speichern'}
             </Button>

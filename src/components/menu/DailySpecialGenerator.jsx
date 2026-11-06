@@ -56,11 +56,11 @@ export default function DailySpecialGenerator({ menuItems = [] }) {
     };
 
     return (
-        <Card className="border-amber-600 bg-amber-900">
+        <Card className="border-status-warn/70 bg-status-warn/70">
             <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-white">
-                        <Sparkles className="w-5 h-5 text-amber-400" />
+                        <Sparkles className="w-5 h-5 text-status-warn" />
                         Tages-Specials
                     </CardTitle>
                     <div className="flex gap-2">
@@ -68,7 +68,7 @@ export default function DailySpecialGenerator({ menuItems = [] }) {
                             size="sm"
                             onClick={generateSpecials}
                             disabled={isGenerating}
-                            className="bg-amber-600 hover:bg-amber-700 text-white"
+                            className="bg-status-warn/70 hover:bg-status-warn/70 text-white"
                         >
                             {isGenerating ? 'Generiert...' : 'Neu generieren'}
                         </Button>
@@ -76,7 +76,7 @@ export default function DailySpecialGenerator({ menuItems = [] }) {
                             size="sm"
                             variant="outline"
                             onClick={() => window.open(createPageUrl('DailySpecialsDisplay'), '_blank')}
-                            className="border-amber-600 text-amber-400 hover:bg-amber-600/10"
+                            className="border-status-warn/70 text-status-warn hover:bg-status-warn/10"
                         >
                             <ExternalLink className="w-4 h-4 mr-2" />
                             Display
@@ -87,17 +87,17 @@ export default function DailySpecialGenerator({ menuItems = [] }) {
 
             <CardContent>
                 {specials.length === 0 ? (
-                    <p className="text-sm text-slate-300 text-center py-6">
+                    <p className="text-sm text-muted-foreground text-center py-6">
                         Klick auf "Neu generieren" um Aktionsgetränke vorzuschlagen
                     </p>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {specials.map((item) => (
-                            <div key={item.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                            <div key={item.id} className="bg-surface rounded-lg p-4 border border-border">
                                 <h3 className="font-semibold text-white text-sm mb-2">{item.name}</h3>
                                 <div className="flex justify-between items-center text-xs">
-                                    <span className="text-slate-300">Marge: {item.margin_percentage?.toFixed(1)}%</span>
-                                    <span className="font-bold text-amber-400">{item.price}€</span>
+                                    <span className="text-muted-foreground">Marge: {item.margin_percentage?.toFixed(1)}%</span>
+                                    <span className="font-bold text-status-warn">{item.price}€</span>
                                 </div>
                             </div>
                         ))}

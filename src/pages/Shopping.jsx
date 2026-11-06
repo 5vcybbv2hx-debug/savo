@@ -39,21 +39,21 @@ import { toast } from 'sonner';
 
 // ── Farben & Status-Config ────────────────────────────────────────────────────
 const SUPPLIER_COLORS = [
-    'bg-blue-500/15 text-blue-400 border-blue-500/25',
-    'bg-orange-500/15 text-orange-400 border-orange-500/25',
-    'bg-purple-500/15 text-purple-400 border-purple-500/25',
-    'bg-red-500/15 text-red-400 border-red-500/25',
-    'bg-green-500/15 text-green-400 border-green-500/25',
-    'bg-pink-500/15 text-pink-400 border-pink-500/25',
-    'bg-cyan-500/15 text-cyan-400 border-cyan-500/25',
+    'bg-primary/15 text-primary border-primary/25',
+    'bg-status-warn/15 text-status-warn border-status-warn/25',
+    'bg-primary/15 text-primary border-primary/25',
+    'bg-status-danger/15 text-status-danger border-status-danger/25',
+    'bg-status-ok/15 text-status-ok border-status-ok/25',
+    'bg-primary/15 text-primary border-primary/25',
+    'bg-primary/15 text-primary border-primary/25',
 ];
 const getSupplierColor = (idx) => SUPPLIER_COLORS[idx >= 0 ? idx % SUPPLIER_COLORS.length : 0];
 
 const STATUS_CFG = {
     offen:         { label: 'Offen',      icon: Package,      color: 'bg-muted text-muted-foreground border-border' },
-    bestellt:      { label: 'Bestellt',   icon: Send,         color: 'bg-blue-500/15 text-blue-400 border-blue-500/25' },
-    erhalten:      { label: 'Erhalten',   icon: Truck,        color: 'bg-amber-500/15 text-amber-400 border-amber-500/25' },
-    abgeschlossen: { label: 'Abgeschl.',  icon: CheckCircle2, color: 'bg-green-500/15 text-green-400 border-green-500/25' },
+    bestellt:      { label: 'Bestellt',   icon: Send,         color: 'bg-primary/15 text-primary border-primary/25' },
+    erhalten:      { label: 'Erhalten',   icon: Truck,        color: 'bg-status-warn/15 text-status-warn border-status-warn/25' },
+    abgeschlossen: { label: 'Abgeschl.',  icon: CheckCircle2, color: 'bg-status-ok/15 text-status-ok border-status-ok/25' },
 };
 
 function timeAgo(isoStr) {
@@ -75,11 +75,11 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
         <div className={cn(
             'px-3 py-2.5 rounded-xl border transition-all',
             isDone
-                ? 'bg-green-500/5 border-green-500/15 opacity-50'
+                ? 'bg-status-ok/5 border-status-ok/15 opacity-50'
                 : item.status === 'erhalten'
-                    ? 'bg-amber-500/5 border-amber-500/20'
+                    ? 'bg-status-warn/5 border-status-warn/20'
                     : item.status === 'bestellt'
-                        ? 'bg-blue-500/5 border-blue-500/15'
+                        ? 'bg-primary/5 border-primary/15'
                         : 'bg-card border-border/50 hover:border-border'
         )}>
             {/* Zeile 1: Name + Status-Badge */}
@@ -116,13 +116,13 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
                     {item.status === 'erhalten' || item.status === 'abgeschlossen' ? (
                         <span className="text-xs font-medium">
                             <span className={cn(
-                                isShort ? 'text-destructive' : isOver ? 'text-blue-400' : 'text-green-400'
+                                isShort ? 'text-destructive' : isOver ? 'text-primary' : 'text-status-ok'
                             )}>
                                 {item.delivered_quantity ?? '?'}{item.unit ? ` ${item.unit}` : ''}
                             </span>
                             <span className="text-muted-foreground"> / {item.quantity} best.</span>
                             {isShort && <span className="text-destructive ml-1">▼ {(item.quantity - item.delivered_quantity).toFixed(1)} fehlt</span>}
-                            {isOver  && <span className="text-blue-400 ml-1">▲ {(item.delivered_quantity - item.quantity).toFixed(1)} extra</span>}
+                            {isOver  && <span className="text-primary ml-1">▲ {(item.delivered_quantity - item.quantity).toFixed(1)} extra</span>}
                         </span>
                     ) : activeTab === 'offen' ? (
                         <div className="flex items-center gap-1">
@@ -171,17 +171,17 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
                         </Badge>
                     )}
                     {item.price_per_pack && item.status === 'offen' && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400 tabular-nums shrink-0">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-status-warn/25 bg-status-warn/10 text-status-warn tabular-nums shrink-0">
                             {(parseFloat(item.price_per_pack) * (parseFloat(item.quantity) || 1)).toFixed(2)} €
                         </Badge>
                     )}
                     {!item.price_per_pack && unitPrice && item.status === 'offen' && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/25 bg-amber-500/10 text-amber-400 tabular-nums shrink-0">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-status-warn/25 bg-status-warn/10 text-status-warn tabular-nums shrink-0">
                             ~{(unitPrice * (parseFloat(item.quantity) || 1)).toFixed(2)} €
                         </Badge>
                     )}
                     {item.delivery_note && (
-                        <span className="text-[10px] text-amber-400 italic truncate max-w-[100px]">
+                        <span className="text-[10px] text-status-warn italic truncate max-w-[100px]">
                             ⚠ {item.delivery_note}
                         </span>
                     )}
@@ -192,7 +192,7 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
                     {activeTab === 'bestellt' && (
                         <Button size="sm" variant="outline"
                             onClick={() => onOpenWareneingang(item)}
-                            className="h-8 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10 px-2.5">
+                            className="h-8 text-xs border-status-warn/30 text-status-warn hover:bg-status-warn/10 px-2.5">
                             <Truck className="w-3.5 h-3.5 mr-1" />
                             Eingang
                         </Button>
@@ -208,13 +208,13 @@ function ShoppingRow({ item, suppliers, onEdit, onDelete, onMarkBestellt, onOpen
                         <DropdownMenuContent align="end" className="w-48">
                             {item.status === 'offen' && (
                                 <DropdownMenuItem onClick={() => onMarkBestellt([item])}>
-                                    <Send className="w-4 h-4 mr-2 text-blue-400" />
+                                    <Send className="w-4 h-4 mr-2 text-primary" />
                                     Als bestellt markieren
                                 </DropdownMenuItem>
                             )}
                             {item.status === 'bestellt' && (
                                 <DropdownMenuItem onClick={() => onOpenWareneingang(item)}>
-                                    <Truck className="w-4 h-4 mr-2 text-amber-400" />
+                                    <Truck className="w-4 h-4 mr-2 text-status-warn" />
                                     Wareneingang quittieren
                                 </DropdownMenuItem>
                             )}
@@ -270,7 +270,7 @@ function WareneingangDialog({ item, open, onClose, onConfirm }) {
             <DialogContent className="max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Truck className="w-5 h-5 text-amber-500" />
+                        <Truck className="w-5 h-5 text-status-warn" />
                         Wareneingang quittieren
                     </DialogTitle>
                 </DialogHeader>
@@ -306,9 +306,9 @@ function WareneingangDialog({ item, open, onClose, onConfirm }) {
                     {deliveredQty !== '' && (
                         <div className={cn(
                             'rounded-lg px-3 py-2.5 text-sm font-medium flex items-center gap-2',
-                            isExact ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                            isExact ? 'bg-status-ok/10 text-status-ok border border-status-ok/20' :
                             isShort ? 'bg-destructive/10 text-destructive border border-destructive/20' :
-                                      'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                      'bg-primary/10 text-primary border border-primary/20'
                         )}>
                             {isExact && <><Check className="w-4 h-4" /> Vollständig geliefert</>}
                             {isShort && <><XCircle className="w-4 h-4" /> {Math.abs(diff).toFixed(1)} {item.unit || 'Stück'} fehlt</>}
@@ -335,7 +335,7 @@ function WareneingangDialog({ item, open, onClose, onConfirm }) {
                     <Button
                         onClick={() => onConfirm({ deliveredQty: delivered, note })}
                         disabled={deliveredQty === ''}
-                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white">
+                        className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white">
                         <Check className="w-4 h-4 mr-1.5" />
                         Quittieren
                     </Button>
@@ -845,7 +845,7 @@ export default function Shopping() {
                                     {orderSummary.totalGross.toFixed(2)} €
                                 </span>
                                 {orderSummary.itemsWithoutPrice > 0 && (
-                                    <span className="text-xs text-amber-400">
+                                    <span className="text-xs text-status-warn">
                                         + {orderSummary.itemsWithoutPrice} ohne Preis
                                     </span>
                                 )}
@@ -876,7 +876,7 @@ export default function Shopping() {
 
                 {/* ── Wareneingang abschließen Banner ───────────────────── */}
                 {activeTab === 'erhalten' && filteredItems.length > 0 && permissions.canEditShopping && (
-                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-green-500/25 bg-green-500/5">
+                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-status-ok/25 bg-status-ok/5">
                         <div>
                             <p className="text-sm font-semibold text-foreground">
                                 {filteredItems.length} Artikel quittiert
@@ -887,7 +887,7 @@ export default function Shopping() {
                         </div>
                         <Button
                             onClick={() => setCloseOrderConfirm(true)}
-                            className="h-10 shrink-0 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+                            className="h-10 shrink-0 gap-1.5 bg-status-ok/70 hover:bg-status-ok/70 text-white">
                             <ClipboardCheck className="w-4 h-4" />
                             Abschließen
                         </Button>
@@ -896,9 +896,9 @@ export default function Shopping() {
 
                 {/* ── Niedrigbestand-Hinweise ───────────────────────────── */}
                 {lowStockSuggestions.length > 0 && activeTab === 'offen' && (
-                    <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3">
+                    <div className="rounded-xl border border-status-warn/25 bg-status-warn/5 p-3">
                         <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                            <AlertTriangle className="w-4 h-4 text-status-warn shrink-0" />
                             <p className="text-sm font-semibold text-foreground">
                                 {lowStockSuggestions.length} Artikel unter Mindestbestand
                             </p>
@@ -931,7 +931,7 @@ export default function Shopping() {
                                             status:              'offen',
                                         });
                                     }}
-                                    className="text-xs px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 hover:bg-amber-500/25 transition-colors">
+                                    className="text-xs px-2.5 py-1 rounded-full bg-status-warn/15 text-status-warn border border-status-warn/25 hover:bg-status-warn/25 transition-colors">
                                     + {a.name}
                                 </button>
                             ))}
@@ -992,7 +992,7 @@ export default function Shopping() {
                 {activeTab === 'bestellt' && filteredItems.length > 0 && permissions.canEditShopping && (
                     <Button
                         onClick={() => setBulkWareneingangOpen(true)}
-                        className="w-full h-12 gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm shadow-md">
+                        className="w-full h-12 gap-2 bg-status-warn/70 hover:bg-status-warn/70 text-white font-semibold text-sm shadow-md">
                         <ClipboardList className="w-5 h-5" />
                         Alle wie bestellt übernehmen ({filteredItems.length} Artikel)
                     </Button>
@@ -1148,7 +1148,7 @@ export default function Shopping() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
-                            <Send className="w-5 h-5 text-blue-400" />
+                            <Send className="w-5 h-5 text-primary" />
                             Bestellung aufgeben?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
@@ -1170,7 +1170,7 @@ export default function Shopping() {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
-                            <ClipboardCheck className="w-5 h-5 text-green-400" />
+                            <ClipboardCheck className="w-5 h-5 text-status-ok" />
                             Bestellung abschließen?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
@@ -1181,7 +1181,7 @@ export default function Shopping() {
                         <AlertDialogCancel>Noch nicht</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleCloseOrder}
-                            className="bg-green-600 hover:bg-green-700 text-white">
+                            className="bg-status-ok/70 hover:bg-status-ok/70 text-white">
                             Abschließen
                         </AlertDialogAction>
                     </AlertDialogFooter>

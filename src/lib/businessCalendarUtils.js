@@ -90,18 +90,18 @@ export function getSpecialDayLabel(calendarEntry) {
  */
 export function getSpecialDayColor(dayType) {
     const colors = {
-        sonderoeffnung:           'bg-amber-500/20 text-amber-300 border-amber-500/30',
-        vorfeiertag:              'bg-orange-500/20 text-orange-300 border-orange-500/30',
-        feiertag:                 'bg-red-500/20 text-red-300 border-red-500/30',
-        eventtag:                 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-        lange_nacht:              'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
-        inventurtag:              'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-        geschlossen:              'bg-slate-500/20 text-slate-400 border-slate-500/30',
-        geschlossen_mit_reinigung:'bg-teal-500/20 text-teal-300 border-teal-500/30',
-        saisonstart:              'bg-green-500/20 text-green-300 border-green-500/30',
-        saisonende:               'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-        betriebsferien:           'bg-pink-500/20 text-pink-300 border-pink-500/30',
-        wartungstag:              'bg-zinc-500/20 text-zinc-300 border-zinc-500/30',
+        sonderoeffnung:           'bg-status-warn/20 text-status-warn/25 border-status-warn/30',
+        vorfeiertag:              'bg-status-warn/20 text-status-warn/25 border-status-warn/30',
+        feiertag:                 'bg-status-danger/20 text-status-danger/25 border-status-danger/30',
+        eventtag:                 'bg-primary/20 text-primary border-primary/30',
+        lange_nacht:              'bg-primary/20 text-primary border-primary/30',
+        inventurtag:              'bg-primary/20 text-primary border-primary/30',
+        geschlossen:              'bg-surface text-muted-foreground border-border',
+        geschlossen_mit_reinigung:'bg-primary/20 text-primary border-primary/30',
+        saisonstart:              'bg-status-ok/20 text-status-ok/25 border-status-ok/30',
+        saisonende:               'bg-status-warn/20 text-status-warn/25 border-status-warn/30',
+        betriebsferien:           'bg-primary/20 text-primary border-primary/30',
+        wartungstag:              'bg-surface text-muted-foreground border-border',
     };
     return colors[dayType] || '';
 }

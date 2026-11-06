@@ -233,7 +233,7 @@ BarManager System
         <>
             <Button
                 onClick={() => setOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary/70 hover:bg-primary/70"
             >
                 <User className="w-4 h-4 mr-2" />
                 Digitaler Personalbogen
@@ -248,7 +248,7 @@ BarManager System
                 <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-blue-600" />
+                            <FileText className="w-5 h-5 text-primary" />
                             Personalbogen Minijob - Schritt {step} von 5
                         </DialogTitle>
                     </DialogHeader>
@@ -345,7 +345,7 @@ BarManager System
                                     </div>
 
                                     <div className="pt-4 border-t">
-                                        <h4 className="font-semibold mb-3 text-sm text-slate-900">Für Personalakte (nicht an Steuerberater)</h4>
+                                        <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Für Personalakte (nicht an Steuerberater)</h4>
                                         
                                         <div className="space-y-3">
                                             <div className="space-y-2">
@@ -412,7 +412,7 @@ BarManager System
                                         </div>
                                     </div>
 
-                                    <Button type="button" onClick={nextStep} className="w-full bg-blue-600 hover:bg-blue-700">
+                                    <Button type="button" onClick={nextStep} className="w-full bg-primary/70 hover:bg-primary/70">
                                         Weiter
                                     </Button>
                                 </div>
@@ -545,7 +545,7 @@ BarManager System
                                         <Button type="button" variant="outline" onClick={prevStep} className="flex-1">
                                             Zurück
                                         </Button>
-                                        <Button type="button" onClick={nextStep} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                                        <Button type="button" onClick={nextStep} className="flex-1 bg-primary/70 hover:bg-primary/70">
                                             Weiter
                                         </Button>
                                     </div>
@@ -582,13 +582,13 @@ BarManager System
                                         />
                                     </div>
 
-                                    <div className="space-y-3 p-4 bg-slate-50 rounded-lg">
+                                    <div className="space-y-3 p-4 bg-card rounded-lg">
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <Checkbox
                                                 checked={formData.pension_exemption}
                                                 onCheckedChange={(checked) => setFormData({...formData, pension_exemption: checked})}
                                             />
-                                            <span className="text-sm text-slate-900">Befreiungsantrag Rentenversicherung wird gestellt</span>
+                                            <span className="text-sm text-muted-foreground">Befreiungsantrag Rentenversicherung wird gestellt</span>
                                         </label>
 
                                         <label className="flex items-center gap-2 cursor-pointer">
@@ -596,7 +596,7 @@ BarManager System
                                                 checked={formData.has_main_job}
                                                 onCheckedChange={(checked) => setFormData({...formData, has_main_job: checked})}
                                             />
-                                            <span className="text-sm text-slate-900">Versicherungspflichtige Beschäftigung wird ausgeübt</span>
+                                            <span className="text-sm text-muted-foreground">Versicherungspflichtige Beschäftigung wird ausgeübt</span>
                                         </label>
 
                                         <label className="flex items-center gap-2 cursor-pointer">
@@ -604,7 +604,7 @@ BarManager System
                                                 checked={formData.has_other_minijob}
                                                 onCheckedChange={(checked) => setFormData({...formData, has_other_minijob: checked})}
                                             />
-                                            <span className="text-sm text-slate-900">Weitere geringfügige Beschäftigung wird ausgeübt</span>
+                                            <span className="text-sm text-muted-foreground">Weitere geringfügige Beschäftigung wird ausgeübt</span>
                                         </label>
 
                                         {formData.has_other_minijob && (
@@ -621,7 +621,7 @@ BarManager System
                                         <Button type="button" variant="outline" onClick={prevStep} className="flex-1">
                                             Zurück
                                         </Button>
-                                        <Button type="button" onClick={nextStep} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                                        <Button type="button" onClick={nextStep} className="flex-1 bg-primary/70 hover:bg-primary/70">
                                             Weiter
                                         </Button>
                                     </div>
@@ -664,7 +664,7 @@ BarManager System
                                         <Button type="button" variant="outline" onClick={prevStep} className="flex-1">
                                             Zurück
                                         </Button>
-                                        <Button type="button" onClick={nextStep} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                                        <Button type="button" onClick={nextStep} className="flex-1 bg-primary/70 hover:bg-primary/70">
                                             Weiter
                                         </Button>
                                     </div>
@@ -676,9 +676,9 @@ BarManager System
                                 <div className="space-y-4">
                                     <h3 className="font-semibold text-lg border-b pb-2">Unterschriften & Bestätigung</h3>
                                     
-                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
-                                        <p className="text-sm text-blue-900 font-semibold mb-2">Unterschriften erforderlich:</p>
-                                        <p className="text-xs text-blue-800">Bitte sammeln Sie die Unterschriften des Arbeitnehmers und des Arbeitgebers (Manager).</p>
+                                    <div className="bg-primary/15 p-4 rounded-lg border border-primary/25 mb-4">
+                                        <p className="text-sm text-primary font-semibold mb-2">Unterschriften erforderlich:</p>
+                                        <p className="text-xs text-primary">Bitte sammeln Sie die Unterschriften des Arbeitnehmers und des Arbeitgebers (Manager).</p>
                                     </div>
 
                                     <SignaturePad 
@@ -702,9 +702,9 @@ BarManager System
                                         />
                                     </div>
 
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                        <p className="text-sm text-blue-900 font-semibold mb-2">Zusammenfassung:</p>
-                                        <ul className="text-xs text-blue-800 space-y-1">
+                                    <div className="bg-primary/15 border border-primary/25 rounded-lg p-4">
+                                        <p className="text-sm text-primary font-semibold mb-2">Zusammenfassung:</p>
+                                        <ul className="text-xs text-primary space-y-1">
                                             <li>• Name: {formData.vorname} {formData.name}</li>
                                             <li>• Eintrittsdatum: {formData.entry_date}</li>
                                             <li>• Tätigkeit: {formData.activity}</li>
@@ -713,24 +713,24 @@ BarManager System
                                         </ul>
                                     </div>
 
-                                    <div className="p-4 bg-slate-50 rounded-lg border">
+                                    <div className="p-4 bg-card rounded-lg border">
                                         <label className="flex items-start gap-3 cursor-pointer">
                                             <Checkbox
                                                 checked={formData.confirmed}
                                                 onCheckedChange={(checked) => setFormData({...formData, confirmed: checked})}
                                             />
-                                            <span className="text-sm text-slate-900 font-medium">
+                                            <span className="text-sm text-muted-foreground font-medium">
                                                 Ich versichere, dass ich die vorstehenden Angaben nach bestem Wissen und Gewissen gemacht habe. 
                                                 Ich verpflichte mich, alle Veränderungen unverzüglich meinem Arbeitgeber mitzuteilen.
                                             </span>
                                         </label>
                                     </div>
 
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                                        <p className="text-xs text-green-900">
+                                    <div className="bg-status-ok/15 border border-status-ok/25 rounded-lg p-3">
+                                        <p className="text-xs text-status-ok">
                                             <strong>Nach dem Absenden:</strong>
                                         </p>
-                                        <ol className="text-xs text-green-800 mt-2 space-y-1 list-decimal list-inside">
+                                        <ol className="text-xs text-status-ok mt-2 space-y-1 list-decimal list-inside">
                                             <li>Das PDF wird automatisch ausgefüllt und generiert</li>
                                             <li>Der Mitarbeiter wird im System angelegt</li>
                                             <li>Das PDF wird per E-Mail an den Steuerberater gesendet</li>
@@ -743,7 +743,7 @@ BarManager System
                                         </Button>
                                         <Button 
                                             type="submit" 
-                                            className="flex-1 bg-green-600 hover:bg-green-700"
+                                            className="flex-1 bg-status-ok/70 hover:bg-status-ok/70"
                                             disabled={!formData.confirmed}
                                         >
                                             Absenden & Anlegen
@@ -756,27 +756,27 @@ BarManager System
                         <div className="py-6 space-y-4">
                             <div className="flex items-center justify-center mb-4">
                                 {status === 'success' ? (
-                                    <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-                                        <CheckCircle2 className="w-8 h-8 text-green-600" />
+                                    <div className="w-16 h-16 rounded-full bg-status-ok/15 flex items-center justify-center">
+                                        <CheckCircle2 className="w-8 h-8 text-status-ok" />
                                     </div>
                                 ) : (
-                                    <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
                                 )}
                             </div>
 
                             <div className="text-center">
-                                <p className="text-lg font-semibold text-slate-900 mb-2">
+                                <p className="text-lg font-semibold text-muted-foreground mb-2">
                                     {getStatusText()}
                                 </p>
                                 <Progress value={progress} className="h-2" />
                             </div>
 
                             {status === 'success' && (
-                                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                    <p className="text-sm font-semibold text-green-900 mb-2">
+                                <div className="bg-status-ok/15 border border-status-ok/25 rounded-lg p-4">
+                                    <p className="text-sm font-semibold text-status-ok mb-2">
                                         Mitarbeiter erfolgreich angelegt:
                                     </p>
-                                    <p className="text-sm text-green-800">
+                                    <p className="text-sm text-status-ok">
                                         {formData.vorname} {formData.name}
                                     </p>
                                 </div>

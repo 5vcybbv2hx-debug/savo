@@ -34,9 +34,9 @@ function Toast({ message, type = 'error', onDismiss }) {
     }, [message]);
 
     const colors = {
-        error:   'bg-red-900/80 border-red-500/50 text-red-200',
-        success: 'bg-green-900/80 border-green-500/50 text-green-200',
-        info:    'bg-blue-900/80 border-blue-500/50 text-blue-200',
+        error:   'bg-status-danger/80 border-status-danger/50 text-status-danger/25',
+        success: 'bg-status-ok/80 border-status-ok/50 text-status-ok/25',
+        info:    'bg-primary/80 border-primary/50 text-primary/25',
     };
 
     return (
@@ -651,7 +651,7 @@ export default function Restock() {
                                             <SwipeRow
                                                 key={item.id}
                                                 onSwipeRight={() => toggleComplete(item)}
-                                                revealColorRight="bg-green-600"
+                                                revealColorRight="bg-status-ok/70"
                                                 revealIconRight={Check}
                                                 className={cn(
                                                     'rounded-xl',
@@ -694,7 +694,7 @@ export default function Restock() {
                                                         className={cn(
                                                             'w-12 h-12 rounded-full border-2 flex items-center justify-center shrink-0 transition-all active:scale-90',
                                                             item.is_completed
-                                                                ? 'border-green-500 bg-green-500'
+                                                                ? 'border-status-ok/70 bg-status-ok/70'
                                                                 : 'border-border hover:border-primary'
                                                         )}
                                                         aria-label={item.is_completed ? 'Wieder öffnen' : 'Als erledigt markieren'}

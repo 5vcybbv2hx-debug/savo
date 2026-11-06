@@ -251,8 +251,8 @@ export default function MenuReview() {
                                 <div className={cn(
                                     "rounded-xl border p-3 space-y-2",
                                     previewRating === 'bad'  && "bg-destructive/10 border-destructive/30",
-                                    previewRating === 'ok'   && "bg-amber-500/10 border-amber-500/30",
-                                    previewRating === 'good' && "bg-emerald-500/10 border-emerald-500/30",
+                                    previewRating === 'ok'   && "bg-status-warn/10 border-status-warn/30",
+                                    previewRating === 'good' && "bg-status-ok/10 border-status-ok/30",
                                     previewRating == null    && "bg-muted/40 border-border/60"
                                 )}>
                                     <div className="flex items-center justify-between text-xs">
@@ -272,8 +272,8 @@ export default function MenuReview() {
                                                 <span className={cn(
                                                     "text-base font-bold",
                                                     previewRating === 'bad'  && "text-destructive",
-                                                    previewRating === 'ok'   && "text-amber-500",
-                                                    previewRating === 'good' && "text-emerald-600 dark:text-emerald-400"
+                                                    previewRating === 'ok'   && "text-status-warn",
+                                                    previewRating === 'good' && "text-status-ok dark:text-status-ok"
                                                 )}>
                                                     {previewFoodCostPct.toFixed(1)}%
                                                 </span>
@@ -313,8 +313,8 @@ export default function MenuReview() {
                         <div className={cn(
                             "rounded-xl border p-3 flex items-center justify-between",
                             rating === 'bad'  && "bg-destructive/10 border-destructive/30",
-                            rating === 'ok'   && "bg-amber-500/10 border-amber-500/30",
-                            rating === 'good' && "bg-emerald-500/10 border-emerald-500/30",
+                            rating === 'ok'   && "bg-status-warn/10 border-status-warn/30",
+                            rating === 'good' && "bg-status-ok/10 border-status-ok/30",
                             rating == null    && "bg-muted/40 border-border/60"
                         )}>
                             <span className="text-xs text-muted-foreground">EK {effectivePurchasePrice.toFixed(2)} €</span>
@@ -322,8 +322,8 @@ export default function MenuReview() {
                                 <span className={cn(
                                     "text-sm font-bold flex items-center gap-1",
                                     rating === 'bad'  && "text-destructive",
-                                    rating === 'ok'   && "text-amber-500",
-                                    rating === 'good' && "text-emerald-600 dark:text-emerald-400"
+                                    rating === 'ok'   && "text-status-warn",
+                                    rating === 'good' && "text-status-ok dark:text-status-ok"
                                 )}>
                                     <TrendingUp className="w-3.5 h-3.5" />{foodCostPct.toFixed(1)}%
                                 </span>

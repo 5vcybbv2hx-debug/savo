@@ -163,7 +163,7 @@ BarManager System
             <Button
                 onClick={() => setOpen(true)}
                 variant="outline"
-                className="border-amber-600 text-amber-600 hover:bg-amber-50"
+                className="border-status-warn/70 text-status-warn hover:bg-status-warn/15"
             >
                 <Upload className="w-4 h-4 mr-2" />
                 Personalbogen hochladen
@@ -178,7 +178,7 @@ BarManager System
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-amber-600" />
+                            <FileText className="w-5 h-5 text-status-warn" />
                             Personalbogen digitalisieren
                         </DialogTitle>
                     </DialogHeader>
@@ -188,7 +188,7 @@ BarManager System
                             <>
                                 <div className="space-y-2">
                                     <Label>Personalbogen (PDF)</Label>
-                                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-amber-500 transition-colors">
+                                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-status-warn/70 transition-colors">
                                         <Input
                                             type="file"
                                             accept=".pdf"
@@ -198,8 +198,8 @@ BarManager System
                                             required
                                         />
                                         <label htmlFor="pdf-upload" className="cursor-pointer">
-                                            <Upload className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                                            <p className="text-sm text-slate-600">
+                                            <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                                            <p className="text-sm text-muted-foreground">
                                                 {file ? file.name : 'PDF auswählen oder hierher ziehen'}
                                             </p>
                                         </label>
@@ -209,7 +209,7 @@ BarManager System
                                 <div className="space-y-2">
                                     <Label>E-Mail Steuerberater</Label>
                                     <div className="flex gap-2">
-                                        <Mail className="w-5 h-5 text-slate-400 mt-2" />
+                                        <Mail className="w-5 h-5 text-muted-foreground mt-2" />
                                         <Input
                                             type="email"
                                             value={steuerberaterEmail}
@@ -220,11 +220,11 @@ BarManager System
                                     </div>
                                 </div>
 
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                    <p className="text-xs text-blue-900">
+                                <div className="bg-primary/15 border border-primary/25 rounded-lg p-3">
+                                    <p className="text-xs text-primary">
                                         <strong>Automatischer Ablauf:</strong>
                                     </p>
-                                    <ol className="text-xs text-blue-800 mt-2 space-y-1 list-decimal list-inside">
+                                    <ol className="text-xs text-primary mt-2 space-y-1 list-decimal list-inside">
                                         <li>PDF wird hochgeladen und analysiert</li>
                                         <li>Daten werden ausgelesen</li>
                                         <li>Mitarbeiter wird im System angelegt</li>
@@ -243,7 +243,7 @@ BarManager System
                                     </Button>
                                     <Button
                                         type="submit"
-                                        className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                        className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                                         disabled={!file || !steuerberaterEmail}
                                     >
                                         Verarbeiten
@@ -254,31 +254,31 @@ BarManager System
                             <div className="py-6 space-y-4">
                                 <div className="flex items-center justify-center mb-4">
                                     {status === 'success' ? (
-                                        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-                                            <CheckCircle2 className="w-8 h-8 text-green-600" />
+                                        <div className="w-16 h-16 rounded-full bg-status-ok/15 flex items-center justify-center">
+                                            <CheckCircle2 className="w-8 h-8 text-status-ok" />
                                         </div>
                                     ) : (
-                                        <Loader2 className="w-12 h-12 text-amber-600 animate-spin" />
+                                        <Loader2 className="w-12 h-12 text-status-warn animate-spin" />
                                     )}
                                 </div>
 
                                 <div className="text-center">
-                                    <p className="text-lg font-semibold text-slate-900 mb-2">
+                                    <p className="text-lg font-semibold text-muted-foreground mb-2">
                                         {getStatusText()}
                                     </p>
                                     <Progress value={progress} className="h-2" />
                                 </div>
 
                                 {extractedData && status === 'success' && (
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                                        <p className="text-sm font-semibold text-green-900 mb-2">
+                                    <div className="bg-status-ok/15 border border-status-ok/25 rounded-lg p-4">
+                                        <p className="text-sm font-semibold text-status-ok mb-2">
                                             Mitarbeiter erfolgreich angelegt:
                                         </p>
-                                        <p className="text-sm text-green-800">
+                                        <p className="text-sm text-status-ok">
                                             {extractedData.name}
                                         </p>
                                         {extractedData.employee_number && (
-                                            <p className="text-xs text-green-700 mt-1">
+                                            <p className="text-xs text-status-ok mt-1">
                                                 Mitarbeiternummer: {extractedData.employee_number}
                                             </p>
                                         )}

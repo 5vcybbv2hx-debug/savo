@@ -73,15 +73,15 @@ export default function TipCalculator({ open, onOpenChange, date, revenue, staff
                         />
                     </div>
 
-                    <Alert className="bg-purple-900/20 border-purple-800">
-                        <AlertCircle className="h-4 w-4 text-purple-400" />
-                        <AlertDescription className="text-purple-300">
+                    <Alert className="bg-primary/20 border-primary">
+                        <AlertCircle className="h-4 w-4 text-primary" />
+                        <AlertDescription className="text-primary">
                             <div className="font-semibold mb-2">Berechnung:</div>
                             <div className="text-sm space-y-1">
                                 <p>Umsatz: {revenue.toFixed(2)} €</p>
                                 <p>{tipPercentage}% Trinkgeld: <span className="font-bold">{calculation.totalTips.toFixed(2)} €</span></p>
                                 <p>Mitarbeiter: {staffCount}</p>
-                                <p className="border-t border-purple-700 pt-1 mt-1">
+                                <p className="border-t border-primary pt-1 mt-1">
                                     Pro Person: <span className="font-bold text-lg">{calculation.tipPerPerson.toFixed(2)} €</span>
                                 </p>
                             </div>
@@ -100,7 +100,7 @@ export default function TipCalculator({ open, onOpenChange, date, revenue, staff
                         <Button 
                             type="submit"
                             disabled={mutation.isPending}
-                            className="flex-1 bg-purple-600 hover:bg-purple-700"
+                            className="flex-1 bg-primary hover:bg-primary"
                         >
                             {mutation.isPending ? 'Wird gespeichert...' : 'Speichern'}
                         </Button>

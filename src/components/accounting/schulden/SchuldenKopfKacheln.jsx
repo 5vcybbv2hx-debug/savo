@@ -27,7 +27,7 @@ export default function SchuldenKopfKacheln({ posten }) {
                         className={cn(
                             'font-bold tabular-nums mt-1 leading-tight',
                             t.wide ? 'text-2xl' : 'text-lg',
-                            t.positive && 'text-emerald-600 dark:text-emerald-400'
+                            t.positive && 'text-status-ok dark:text-status-ok'
                         )}
                         style={t.accent ? { color: SAVO_BLUE } : undefined}
                     >

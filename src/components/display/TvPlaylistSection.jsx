@@ -70,13 +70,13 @@ const BACKGROUND_THEMES = [
 ];
 
 const TYPE_COLORS = {
-  announcement:  'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  event:         'bg-purple-500/10 text-purple-400 border-purple-500/30',
-  drink_special: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  image_only:    'bg-green-500/10 text-green-400 border-green-500/30',
-  countdown:     'bg-red-500/10 text-red-400 border-red-500/30',
-  qr_code:       'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-  tonight:       'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+  announcement:  'bg-primary/10 text-primary border-primary/30',
+  event:         'bg-primary/10 text-primary border-primary/30',
+  drink_special: 'bg-status-warn/10 text-status-warn border-status-warn/30',
+  image_only:    'bg-status-ok/10 text-status-ok border-status-ok/30',
+  countdown:     'bg-status-danger/10 text-status-danger border-status-danger/30',
+  qr_code:       'bg-primary/10 text-primary border-primary/30',
+  tonight:       'bg-primary/10 text-primary border-primary/30',
 };
 
 const EMPTY_DRINK = { name: '', price: '', emoji: '🍹' };
@@ -392,7 +392,7 @@ export default function TvPlaylistSection() {
                         Beschreibung — inklusive Kalender-Speichern und Getränkekarte.
                       </p>
                       {form.public_event && (
-                        <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5 mt-1.5 break-all">
+                        <p className="text-[11px] text-status-warn dark:text-status-warn bg-status-warn/10 border border-status-warn/20 rounded-lg px-2.5 py-1.5 mt-1.5 break-all">
                           🔗 {window.location.origin}/Event/{modal.data?.id || '… — erscheint nach dem Speichern'}
                         </p>
                       )}
@@ -595,7 +595,7 @@ export default function TvPlaylistSection() {
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 pt-2">
-            <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+            <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(MENU_URL)}&bgcolor=ffffff&color=111827&margin=2`}
                 alt="QR-Code Getränkekarte"
@@ -619,7 +619,7 @@ export default function TvPlaylistSection() {
                 className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                 title="Link kopieren"
               >
-                {qrCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {qrCopied ? <Check className="w-3.5 h-3.5 text-status-ok" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
               <a
                 href={MENU_URL}

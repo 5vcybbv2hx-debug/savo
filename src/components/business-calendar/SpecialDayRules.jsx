@@ -41,15 +41,15 @@ export default function SpecialDayRules({ rules = {}, onChange }) {
                 className={cn(
                     'w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all text-sm font-medium',
                     activeCount > 0
-                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                        ? 'bg-status-warn/10 border-status-warn/30 text-status-warn/25'
                         : 'bg-secondary/30 border-border text-muted-foreground hover:border-primary/30'
                 )}
             >
                 <span className="flex items-center gap-2">
-                    <Zap className={cn('w-4 h-4', activeCount > 0 ? 'text-amber-400' : '')} />
+                    <Zap className={cn('w-4 h-4', activeCount > 0 ? 'text-status-warn' : '')} />
                     Erweiterte Bedingungen
                     {activeCount > 0 && (
-                        <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        <span className="bg-status-warn/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                             {activeCount}
                         </span>
                     )}
@@ -72,8 +72,8 @@ export default function SpecialDayRules({ rules = {}, onChange }) {
                                 className={cn(
                                     'w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all',
                                     rules[opt.key]
-                                        ? 'bg-amber-500 border-amber-500'
-                                        : 'border-border group-hover:border-amber-500/50'
+                                        ? 'bg-status-warn/70 border-status-warn/70'
+                                        : 'border-border group-hover:border-status-warn/50'
                                 )}
                             >
                                 {rules[opt.key] && (
@@ -89,7 +89,7 @@ export default function SpecialDayRules({ rules = {}, onChange }) {
                     ))}
 
                     {rules.only_special_days && (
-                        <p className="text-[10px] text-amber-400 bg-amber-500/10 rounded-lg px-2 py-1.5 mt-2">
+                        <p className="text-[10px] text-status-warn bg-status-warn/10 rounded-lg px-2 py-1.5 mt-2">
                             ⚠ „Nur an Sondertagen" überschreibt die Wochentags-Auswahl
                         </p>
                     )}

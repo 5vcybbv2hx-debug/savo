@@ -212,61 +212,61 @@ export function applyThemePreset(preset) {
     // Replaces ALL hardcoded amber/orange/brand Tailwind classes app-wide
     injectStyle('brand-overrides', `
         /* ── Gradient utilities ── */
-        .from-amber-400, .from-amber-500, .from-amber-600,
-        .from-orange-500, .from-orange-600 {
+        .from-status-warn, .from-status-warn, .from-status-warn,
+        .from-status-warn, .from-status-warn {
             --tw-gradient-from: ${preset.from} !important;
         }
-        .via-amber-500, .via-amber-600, .via-orange-500, .via-orange-600 {
+        .via-status-warn, .via-status-warn, .via-status-warn, .via-status-warn {
             --tw-gradient-via: ${preset.via} !important;
         }
-        .to-amber-500, .to-amber-600, .to-orange-500, .to-orange-600 {
+        .to-status-warn, .to-status-warn, .to-status-warn, .to-status-warn {
             --tw-gradient-to: ${preset.via} !important;
         }
 
         /* ── Background colors ── */
-        .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-amber-700,
-        .bg-orange-500, .bg-orange-600 {
+        .bg-status-warn/70, .bg-status-warn/70, .bg-status-warn/70, .bg-status-warn/70,
+        .bg-status-warn/70, .bg-status-warn/70 {
             background-color: ${preset.from} !important;
         }
-        .bg-amber-500\/10, .bg-amber-500\/20 { background-color: ${preset.from}1a !important; }
-        .bg-amber-500\/5  { background-color: ${preset.from}0d !important; }
-        .bg-amber-600\/20 { background-color: ${preset.from}33 !important; }
-        .bg-amber-600\/10 { background-color: ${preset.from}1a !important; }
-        .bg-amber-900\/30, .bg-amber-900\/20 { background-color: ${preset.from}22 !important; }
-        .bg-orange-500\/10 { background-color: ${preset.via}1a !important; }
+        .bg-status-warn/70\/10, .bg-status-warn/70\/20 { background-color: ${preset.from}1a !important; }
+        .bg-status-warn/70\/5  { background-color: ${preset.from}0d !important; }
+        .bg-status-warn/70\/20 { background-color: ${preset.from}33 !important; }
+        .bg-status-warn/70\/10 { background-color: ${preset.from}1a !important; }
+        .bg-status-warn/70\/30, .bg-status-warn/70\/20 { background-color: ${preset.from}22 !important; }
+        .bg-status-warn/70\/10 { background-color: ${preset.via}1a !important; }
 
         /* ── Text colors ── */
-        .text-amber-400, .text-amber-500, .text-amber-600,
-        .text-orange-400, .text-orange-500 {
+        .text-status-warn, .text-status-warn, .text-status-warn,
+        .text-status-warn, .text-status-warn {
             color: ${preset.from} !important;
         }
-        .text-amber-300 { color: ${preset.from}cc !important; }
+        .text-status-warn/25 { color: ${preset.from}cc !important; }
 
         /* ── Border colors ── */
-        .border-amber-500, .border-amber-600, .border-amber-700,
-        .border-orange-500, .border-orange-600 {
+        .border-status-warn/70, .border-status-warn/70, .border-status-warn/70,
+        .border-status-warn/70, .border-status-warn/70 {
             border-color: ${preset.from} !important;
         }
-        .border-amber-500\/20 { border-color: ${preset.from}33 !important; }
-        .border-amber-500\/30 { border-color: ${preset.from}4d !important; }
-        .border-amber-600\/30 { border-color: ${preset.from}4d !important; }
-        .border-amber-700 { border-color: ${preset.from}99 !important; }
+        .border-status-warn/70\/20 { border-color: ${preset.from}33 !important; }
+        .border-status-warn/70\/30 { border-color: ${preset.from}4d !important; }
+        .border-status-warn/70\/30 { border-color: ${preset.from}4d !important; }
+        .border-status-warn/70 { border-color: ${preset.from}99 !important; }
 
         /* ── Hover backgrounds ── */
-        .hover\:bg-amber-600:hover, .hover\:bg-amber-700:hover {
+        .hover\:bg-status-warn/70:hover, .hover\:bg-status-warn/70:hover {
             background-color: ${preset.via} !important;
         }
-        .hover\:bg-amber-500\/10:hover { background-color: ${preset.from}1a !important; }
-        .hover\:border-amber-500:hover { border-color: ${preset.from} !important; }
-        .hover\:text-amber-300:hover, .hover\:text-amber-400:hover { color: ${preset.from} !important; }
+        .hover\:bg-status-warn/70\/10:hover { background-color: ${preset.from}1a !important; }
+        .hover\:border-status-warn/70:hover { border-color: ${preset.from} !important; }
+        .hover\:text-status-warn/25:hover, .hover\:text-status-warn:hover { color: ${preset.from} !important; }
 
         /* ── Gradient backgrounds ── */
-        .bg-gradient-to-r.from-amber-500,
-        .bg-gradient-to-br.from-amber-500 {
+        .bg-gradient-to-r.from-status-warn,
+        .bg-gradient-to-br.from-status-warn {
             background: linear-gradient(to right, ${preset.from}, ${preset.via}) !important;
             color: ${preset.fg} !important;
         }
-        .bg-gradient-to-r.from-amber-500.to-orange-500 {
+        .bg-gradient-to-r.from-status-warn.to-status-warn {
             background: linear-gradient(to right, ${preset.from}, ${preset.via}) !important;
         }
 
@@ -275,8 +275,8 @@ export function applyThemePreset(preset) {
         .shadow-amber-500\/40 { --tw-shadow-color: ${preset.from}66 !important; }
 
         /* ── Ring colors ── */
-        .ring-amber-500\/30 { --tw-ring-color: ${preset.from}4d !important; }
-        .ring-2.ring-inset.ring-amber-500\/30 { --tw-ring-color: ${preset.from}4d !important; }
+        .ring-status-warn/70\/30 { --tw-ring-color: ${preset.from}4d !important; }
+        .ring-2.ring-inset.ring-status-warn/70\/30 { --tw-ring-color: ${preset.from}4d !important; }
 
         /* ── Tabs: active state ── */
         [role="tab"][data-state="active"],
@@ -284,14 +284,14 @@ export function applyThemePreset(preset) {
             background-color: ${preset.from} !important;
             color: ${preset.fg} !important;
         }
-        .data-\[state\=active\]\:bg-amber-600[data-state="active"] {
+        .data-\[state\=active\]\:bg-status-warn/70[data-state="active"] {
             background-color: ${preset.from} !important;
             color: ${preset.fg} !important;
         }
 
         /* ── Buttons with brand bg ── */
-        .bg-amber-600 { background-color: ${preset.from} !important; color: ${preset.fg} !important; }
-        .bg-amber-600.hover\:bg-amber-700:hover { background-color: ${preset.via} !important; }
+        .bg-status-warn/70 { background-color: ${preset.from} !important; color: ${preset.fg} !important; }
+        .bg-status-warn/70.hover\:bg-status-warn/70:hover { background-color: ${preset.via} !important; }
 
         /* ── Primary button (uses --primary HSL) ── */
         .bg-primary { background: linear-gradient(135deg, ${preset.from}, ${preset.via}) !important; color: ${preset.fg} !important; }
@@ -318,16 +318,16 @@ export function applyThemePreset(preset) {
         ::-webkit-scrollbar-thumb:hover { background: ${preset.from} !important; }
 
         /* ── Progress bars ── */
-        .bg-amber-500, .bg-amber-600 { background-color: ${preset.from} !important; }
+        .bg-status-warn/70, .bg-status-warn/70 { background-color: ${preset.from} !important; }
 
         /* ── Dot indicators ── */
-        .bg-amber-500.rounded-full, .w-2.h-2.bg-amber-500 { background-color: ${preset.from} !important; }
+        .bg-status-warn/70.rounded-full, .w-2.h-2.bg-status-warn/70 { background-color: ${preset.from} !important; }
 
         /* ── Gradient cards / panels ── */
-        .from-amber-500\/10 { --tw-gradient-from: ${preset.from}1a !important; }
-        .to-orange-500\/10, .to-orange-500\/20 { --tw-gradient-to: ${preset.via}1a !important; }
-        .from-amber-900\/30 { --tw-gradient-from: ${preset.from}33 !important; }
-        .to-orange-900\/20 { --tw-gradient-to: ${preset.via}22 !important; }
+        .from-status-warn\/10 { --tw-gradient-from: ${preset.from}1a !important; }
+        .to-status-warn\/10, .to-status-warn\/20 { --tw-gradient-to: ${preset.via}1a !important; }
+        .from-status-warn\/30 { --tw-gradient-from: ${preset.from}33 !important; }
+        .to-status-warn\/20 { --tw-gradient-to: ${preset.via}22 !important; }
     `);
 }
 

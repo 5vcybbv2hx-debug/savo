@@ -38,10 +38,10 @@ import AdminTimeEditor from '@/components/time/AdminTimeEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const statusConfig = {
-    'entwurf':     { label: 'Entwurf',     color: 'bg-slate-500/15 text-muted-foreground/50 dark:text-muted-foreground', icon: FileText },
-    'eingereicht': { label: 'Eingereicht', color: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',                     icon: Clock },
-    'ausstehend':  { label: 'Ausstehend',  color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',                  icon: Clock },
-    'genehmigt':   { label: 'Genehmigt',   color: 'bg-green-500/15 text-green-600 dark:text-green-400',                  icon: CheckCircle2 },
+    'entwurf':     { label: 'Entwurf',     color: 'bg-surface text-muted-foreground/50 dark:text-muted-foreground', icon: FileText },
+    'eingereicht': { label: 'Eingereicht', color: 'bg-primary/15 text-primary dark:text-primary',                     icon: Clock },
+    'ausstehend':  { label: 'Ausstehend',  color: 'bg-status-warn/15 text-status-warn dark:text-status-warn',                  icon: Clock },
+    'genehmigt':   { label: 'Genehmigt',   color: 'bg-status-ok/15 text-status-ok dark:text-status-ok',                  icon: CheckCircle2 },
 };
 
 
@@ -583,8 +583,8 @@ export default function TimeTracking() {
                 )}
 
                 {!isLoadingEmployee && !currentEmployee && !permissions.isManager && (
-                    <Card className="p-4 bg-amber-500/10 border-amber-500/30 mb-6">
-                        <p className="text-sm text-amber-500">⚠️ Kein Mitarbeiterprofil gefunden. Bitte wende dich an einen Manager.</p>
+                    <Card className="p-4 bg-status-warn/10 border-status-warn/30 mb-6">
+                        <p className="text-sm text-status-warn">⚠️ Kein Mitarbeiterprofil gefunden. Bitte wende dich an einen Manager.</p>
                     </Card>
                 )}
 
@@ -602,9 +602,9 @@ export default function TimeTracking() {
                                 <p className="font-bold text-foreground text-base leading-tight truncate">{currentEmployee.name}</p>
                                 <p className="text-xs text-muted-foreground">{currentEmployee.role}</p>
                                 {activeClockEntry && (
-                                    <p className="text-xs text-emerald-500 mt-0.5 font-medium">
+                                    <p className="text-xs text-status-ok mt-0.5 font-medium">
                                         Seit {format(new Date(activeClockEntry.clock_in), 'HH:mm')} · {getWorkingDuration(activeClockEntry.clock_in)}
-                                        {activeClockEntry.status === 'on_break' && <span className="ml-2 text-amber-500">· Pause</span>}
+                                        {activeClockEntry.status === 'on_break' && <span className="ml-2 text-status-warn">· Pause</span>}
                                     </p>
                                 )}
                             </div>
@@ -616,7 +616,7 @@ export default function TimeTracking() {
                                 <button
                                     onClick={handleClockIn}
                                     disabled={clockInMutation.isPending}
-                                    className="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-white font-bold text-lg shadow-lg shadow-emerald-900/30 disabled:opacity-60"
+                                    className="w-full h-16 rounded-2xl bg-status-ok/70 hover:bg-status-ok/70 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-white font-bold text-lg shadow-lg shadow-emerald-900/30 disabled:opacity-60"
                                 >
                                     <LogIn className="w-6 h-6" />
                                     {clockInMutation.isPending ? 'Wird gespeichert...' : 'Einstempeln'}
@@ -625,7 +625,7 @@ export default function TimeTracking() {
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={handleStartBreak}
-                                        className="h-14 rounded-2xl bg-amber-600 hover:bg-amber-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-white font-bold"
+                                        className="h-14 rounded-2xl bg-status-warn/70 hover:bg-status-warn/70 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-white font-bold"
                                     >
                                         <Pause className="w-5 h-5" />
                                         Pause
@@ -633,7 +633,7 @@ export default function TimeTracking() {
                                     <button
                                         onClick={() => handleClockOut(activeClockEntry)}
                                         disabled={clockOutMutation.isPending}
-                                        className="h-14 rounded-2xl bg-red-600 hover:bg-red-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-white font-bold disabled:opacity-60"
+                                        className="h-14 rounded-2xl bg-status-danger/70 hover:bg-status-danger/70 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-white font-bold disabled:opacity-60"
                                     >
                                         <LogOut className="w-5 h-5" />
                                         {clockOutMutation.isPending ? '...' : 'Ausstempeln'}
@@ -646,7 +646,7 @@ export default function TimeTracking() {
                                         const openBreak = (activeClockEntry.breaks || []).find(b => b && b.start && !b.end);
                                         const breakStart = openBreak ? format(new Date(openBreak.start), 'HH:mm') : '--:--';
                                         return (
-                                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
+                                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-status-warn/15 border border-status-warn/30 text-status-warn dark:text-status-warn">
                                                 <Coffee className="w-4 h-4 shrink-0" />
                                                 <span className="text-sm font-medium">Pause läuft — seit {breakStart} Uhr</span>
                                             </div>
@@ -655,14 +655,14 @@ export default function TimeTracking() {
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
                                             onClick={handleEndBreak}
-                                            className="h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-white font-bold"
+                                            className="h-14 rounded-2xl bg-status-ok/70 hover:bg-status-ok/70 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-white font-bold"
                                         >
                                             <Play className="w-5 h-5" />
                                             Pause beenden
                                         </button>
                                         <button
                                             disabled
-                                            className="h-14 rounded-2xl bg-red-600/40 text-white/50 font-bold flex items-center justify-center gap-2 cursor-not-allowed"
+                                            className="h-14 rounded-2xl bg-status-danger/40 text-white/50 font-bold flex items-center justify-center gap-2 cursor-not-allowed"
                                         >
                                             <LogOut className="w-5 h-5" />
                                             Ausstempeln
@@ -706,7 +706,7 @@ export default function TimeTracking() {
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="w-2 h-2 rounded-full bg-status-ok/70 animate-pulse" />
                                 Aktive Stempelungen ({activeClockEntries.length})
                             </h3>
                             {permissions.isManager && clockEntries.some(e => e.status === 'clocked_in') && (
@@ -730,7 +730,7 @@ export default function TimeTracking() {
                                             seit {format(new Date(entry.clock_in), 'HH:mm')} · {getWorkingDuration(entry.clock_in)}
                                         </p>
                                     </div>
-                                    <Badge className={entry.status === 'on_break' ? 'bg-amber-500/15 text-amber-500 text-xs' : 'bg-emerald-500/15 text-emerald-500 text-xs'}>
+                                    <Badge className={entry.status === 'on_break' ? 'bg-status-warn/15 text-status-warn text-xs' : 'bg-status-ok/15 text-status-ok text-xs'}>
                                         {entry.status === 'on_break' ? 'Pause' : 'Aktiv'}
                                     </Badge>
                                 </Card>
@@ -765,7 +765,7 @@ export default function TimeTracking() {
                     <Card className="p-4 bg-secondary/40 border-border">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Monat</p>
                         <p className="text-2xl font-bold text-foreground">{myMonthHours.toFixed(1)}h</p>
-                        <p className="text-xs text-emerald-500 mt-0.5">{myApprovedHours.toFixed(1)}h genehmigt</p>
+                        <p className="text-xs text-status-ok mt-0.5">{myApprovedHours.toFixed(1)}h genehmigt</p>
                     </Card>
                     <Card className="p-4 bg-secondary/40 border-border">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Offen</p>
@@ -824,7 +824,7 @@ export default function TimeTracking() {
                             <Button
                                 onClick={() => { setSelectedEntry(null); setModalOpen(true); }}
                                 size="sm"
-                                className="bg-amber-600 hover:bg-amber-700 text-xs h-8"
+                                className="bg-status-warn/70 hover:bg-status-warn/70 text-xs h-8"
                             >
                                 <Plus className="w-3.5 h-3.5 mr-1" />
                                 Eintrag
@@ -897,7 +897,7 @@ export default function TimeTracking() {
                                         <Button
                                             onClick={() => handleApproveEmployee(employeeName)}
                                             size="sm"
-                                            className="bg-emerald-600 hover:bg-emerald-700 text-xs h-7"
+                                            className="bg-status-ok/70 hover:bg-status-ok/70 text-xs h-7"
                                         >
                                             <Check className="w-3 h-3 mr-1" />
                                             Alle ({pendingCount})
@@ -922,7 +922,7 @@ export default function TimeTracking() {
                                                                     {statusConfig[entry.status]?.label}
                                                                 </Badge>
                                                                 {entry.employee_confirmed && (
-                                                                    <Badge className="bg-blue-500/15 text-blue-500 text-[10px]">✓ Bestätigt</Badge>
+                                                                    <Badge className="bg-primary/15 text-primary text-[10px]">✓ Bestätigt</Badge>
                                                                 )}
                                                                 {entry.status === 'genehmigt' && (
                                                                     <Badge className="bg-secondary text-foreground/70 text-[10px]">🔒</Badge>
@@ -934,7 +934,7 @@ export default function TimeTracking() {
                                                                     {entry.end_time < entry.start_time && ' 🌙'}
                                                                 </span>
                                                                 {entry.break_minutes > 0 && <span>{entry.break_minutes} Min Pause (max. 45 Min mitbezahlt)</span>}
-                                                                <span className="font-semibold text-amber-400">{paidHoursOf(entry).toFixed(2)}h</span>
+                                                                <span className="font-semibold text-status-warn">{paidHoursOf(entry).toFixed(2)}h</span>
                                                             </div>
                                                             {entry.arbzg_warning && (
                                                                 <div className="mt-1.5 px-2 py-1 bg-destructive/10 border border-destructive/20 rounded text-[10px] text-destructive flex items-center gap-1">
@@ -955,7 +955,7 @@ export default function TimeTracking() {
                                                             {!entry.employee_confirmed && entry.employee_id === currentEmployee?.id && entry.status !== 'genehmigt' && (
                                                                 <button
                                                                     onClick={() => confirmEntryMutation.mutate(entry.id)}
-                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg text-blue-500 hover:bg-blue-500/10 transition-all min-h-[44px] min-w-[44px]"
+                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg text-primary hover:bg-primary/10 transition-all min-h-[44px] min-w-[44px]"
                                                                     title="Bestätigen"
                                                                 >
                                                                     <Check className="w-4 h-4" />
@@ -964,7 +964,7 @@ export default function TimeTracking() {
                                                             {permissions.isManager && entry.status !== 'genehmigt' && (entry.status === 'eingereicht' || entry.employee_confirmed) && (
                                                                 <button
                                                                     onClick={() => handleApprove(entry.id)}
-                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg text-emerald-500 hover:bg-emerald-500/10 transition-all min-h-[44px] min-w-[44px]"
+                                                                    className="w-8 h-8 flex items-center justify-center rounded-lg text-status-ok hover:bg-status-ok/10 transition-all min-h-[44px] min-w-[44px]"
                                                                     title="Genehmigen"
                                                                 >
                                                                     <CheckCircle2 className="w-4 h-4" />
@@ -1061,12 +1061,12 @@ export default function TimeTracking() {
                             <Separator />
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-muted rounded-xl p-4 text-center space-y-1">
-                                    <Clock3 className="w-5 h-5 mx-auto text-blue-500" />
+                                    <Clock3 className="w-5 h-5 mx-auto text-primary" />
                                     <p className="text-2xl font-bold text-foreground">{shiftSummary.paidHours}h</p>
                                     <p className="text-[11px] text-muted-foreground leading-tight">Gearbeitet (inkl. {shiftSummary.breakMinutes} Min Pause)</p>
                                 </div>
                                 <div className="bg-muted rounded-xl p-4 text-center space-y-1">
-                                    <Coffee className="w-5 h-5 mx-auto text-amber-500" />
+                                    <Coffee className="w-5 h-5 mx-auto text-status-warn" />
                                     <p className="text-2xl font-bold text-foreground">{shiftSummary.breakMinutes} Min</p>
                                     <p className="text-xs text-muted-foreground">
                                         {shiftSummary.actualBreakMinutes > 0 && shiftSummary.breakMinutes === shiftSummary.actualBreakMinutes
@@ -1075,9 +1075,9 @@ export default function TimeTracking() {
                                     </p>
                                 </div>
                                 {shiftSummary.earned && (
-                                    <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1 col-span-2">
-                                        <Euro className="w-5 h-5 mx-auto text-emerald-500" />
-                                        <p className="text-3xl font-bold text-emerald-500">{shiftSummary.earned} €</p>
+                                    <div className="bg-status-ok/10 rounded-xl p-4 text-center space-y-1 col-span-2">
+                                        <Euro className="w-5 h-5 mx-auto text-status-ok" />
+                                        <p className="text-3xl font-bold text-status-ok">{shiftSummary.earned} €</p>
                                         <p className="text-xs text-muted-foreground">{shiftSummary.paidHours} × {shiftSummary.hourlyRate} €/h (Pause bis 45 Min mitbezahlt)</p>
                                     </div>
                                 )}
@@ -1101,7 +1101,7 @@ export default function TimeTracking() {
                                 </div>
                             )}
                             {shiftSummary.arbzgWarning && (
-                                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-sm text-amber-500 flex items-start gap-2">
+                                <div className="bg-status-warn/10 border border-status-warn/30 rounded-xl p-3 text-sm text-status-warn flex items-start gap-2">
                                     <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                     {shiftSummary.arbzgWarning}
                                 </div>
@@ -1141,7 +1141,7 @@ export default function TimeTracking() {
                                             </p>
                                         </div>
                                         {e.earned ? (
-                                            <p className="text-lg font-bold text-emerald-500">{e.earned} €</p>
+                                            <p className="text-lg font-bold text-status-ok">{e.earned} €</p>
                                         ) : (
                                             <p className="text-xs text-muted-foreground">kein Stundensatz hinterlegt</p>
                                         )}
@@ -1149,9 +1149,9 @@ export default function TimeTracking() {
                                 ))}
                             </div>
                             <Separator />
-                            <div className="bg-emerald-500/10 rounded-xl p-4 text-center space-y-1">
-                                <Euro className="w-5 h-5 mx-auto text-emerald-500" />
-                                <p className="text-3xl font-bold text-emerald-500">{payoutSummary.total} €</p>
+                            <div className="bg-status-ok/10 rounded-xl p-4 text-center space-y-1">
+                                <Euro className="w-5 h-5 mx-auto text-status-ok" />
+                                <p className="text-3xl font-bold text-status-ok">{payoutSummary.total} €</p>
                                 <p className="text-xs text-muted-foreground">Gesamt auszuzahlen</p>
                             </div>
                             <Button className="w-full" onClick={() => setPayoutSummary(null)}>Schließen</Button>

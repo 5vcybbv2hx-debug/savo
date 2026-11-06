@@ -2,8 +2,8 @@ import { Minus, Plus, EyeOff, Camera, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function confidenceColor(value) {
-  if (value >= 0.75) return 'bg-emerald-500';
-  if (value >= 0.45) return 'bg-amber-500';
+  if (value >= 0.75) return 'bg-status-ok/70';
+  if (value >= 0.45) return 'bg-status-warn/70';
   return 'bg-destructive';
 }
 
@@ -16,7 +16,7 @@ export default function PhotoCountRow({ row, onChange }) {
     <div
       className={cn(
         'rounded-xl border p-3 space-y-2',
-        !seen || uncertain ? 'bg-amber-500/5 border-amber-500/30' : 'bg-muted/20 border-border/40'
+        !seen || uncertain ? 'bg-status-warn/5 border-status-warn/30' : 'bg-muted/20 border-border/40'
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -35,12 +35,12 @@ export default function PhotoCountRow({ row, onChange }) {
               </>
             ) : seen ? (
               <>
-                <AlertTriangle className="w-3 h-3 shrink-0 text-amber-500" />
+                <AlertTriangle className="w-3 h-3 shrink-0 text-status-warn" />
                 unsicher ({pct}%) — bitte manuell zählen
               </>
             ) : (
               <>
-                <EyeOff className="w-3 h-3 shrink-0 text-amber-500" />
+                <EyeOff className="w-3 h-3 shrink-0 text-status-warn" />
                 im Foto nicht gesehen — bitte manuell zählen
               </>
             )}
@@ -83,7 +83,7 @@ export default function PhotoCountRow({ row, onChange }) {
           }}
           className={cn(
             'flex-1 text-center font-bold text-xl h-12 rounded-xl border-2 bg-background focus:outline-none focus:border-primary',
-            row.count == null ? 'border-amber-500/50 placeholder:text-muted-foreground/50' : 'border-border'
+            row.count == null ? 'border-status-warn/50 placeholder:text-muted-foreground/50' : 'border-border'
           )}
         />
         <button

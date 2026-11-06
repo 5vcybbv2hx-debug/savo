@@ -60,7 +60,7 @@ export default function VoucherReceipt({ voucher, onClose, onPrint62 }) {
                 <div
                     id="voucher-receipt"
                     onClick={(e) => e.stopPropagation()}
-                    className="w-[302px] bg-white text-black rounded-lg shadow-2xl px-5 py-6"
+                    className="w-[302px] bg-card text-foreground rounded-lg shadow-2xl px-5 py-6"
                 >
                     <p className="receipt-bebas text-center text-[30px] leading-none tracking-[0.32em]">
                         SAVO

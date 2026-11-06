@@ -42,9 +42,9 @@ const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
 const fmtDate = (d) => d ? d.slice(0, 10).split('-').reverse().join('.') : '—';
 
 const STATUS_STYLES = {
-    'offen': 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    'teilweise_eingelöst': 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30',
-    'eingelöst': 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30',
+    'offen': 'bg-status-warn/15 text-status-warn dark:text-status-warn border-status-warn/30',
+    'teilweise_eingelöst': 'bg-status-warn/15 text-status-warn dark:text-status-warn border-status-warn/30',
+    'eingelöst': 'bg-status-ok/15 text-status-ok dark:text-status-ok border-status-ok/30',
     'ungültig': 'bg-muted text-muted-foreground border-border',
 };
 const STATUS_LABEL = {
@@ -251,12 +251,12 @@ export default function Vouchers() {
                 </Card>
                 <Card className="p-3.5">
                     <p className="text-[13.5px] font-medium text-foreground tracking-tight">Eingelöst gesamt</p>
-                    <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-1">{fmtEUR(kpis.redeemedTotal)}</p>
+                    <p className="text-lg font-bold text-status-ok dark:text-status-ok mt-1">{fmtEUR(kpis.redeemedTotal)}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">alle Einlösungen</p>
                 </Card>
-                <Card className="p-3.5 border-amber-500/30 bg-amber-500/5">
+                <Card className="p-3.5 border-status-warn/30 bg-status-warn/5">
                     <p className="text-[13.5px] font-medium text-status-warn tracking-tight">Verbindlichkeit</p>
-                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1">{fmtEUR(kpis.liability)}</p>
+                    <p className="text-lg font-bold text-status-warn dark:text-status-warn mt-1">{fmtEUR(kpis.liability)}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">offene Restwerte</p>
                 </Card>
             </div>
@@ -502,7 +502,7 @@ function RedeemModal({ voucher, currentUser, isPending, error, onClose, onSubmit
                 <DialogContent className="max-w-sm">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            <CheckCircle2 className="w-4 h-4 text-status-ok" />
                             Gutschein Nr. {voucher.voucher_number} eingelöst
                         </DialogTitle>
                     </DialogHeader>

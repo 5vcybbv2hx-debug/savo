@@ -313,9 +313,9 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
             <>
               <img src={preview} alt="Fach-Foto" className="w-full max-h-64 object-contain rounded-xl bg-muted/30" />
               {dimensions?.portrait && (
-                <div className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-2.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                <div className="flex items-start gap-2 rounded-xl border border-status-warn/40 bg-status-warn/10 p-2.5">
+                  <AlertTriangle className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+                  <p className="text-[11px] font-medium text-status-warn dark:text-status-warn">
                     Foto quer halten, Fach komplett im Bild — hochkant erkennt das Modell schlechter.
                   </p>
                 </div>
@@ -397,7 +397,7 @@ export default function PhotoCountSheet({ open, slot, assignments = [], capacity
                 In Rundgang übernehmen
               </button>
               {incomplete && (
-                <p className="text-[10px] text-amber-600 dark:text-amber-400 text-center mt-1.5">
+                <p className="text-[10px] text-status-warn dark:text-status-warn text-center mt-1.5">
                   Bitte alle Mengen bestätigen — nichts wird automatisch gebucht
                 </p>
               )}

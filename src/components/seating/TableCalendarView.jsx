@@ -16,9 +16,9 @@ import { cn } from '@/lib/utils';
 const DAYS_VISIBLE = 7;
 
 const STATUS_COLORS = {
-    vorgemerkt: 'bg-amber-500/80 border-amber-400 text-amber-50',
-    'bestätigt': 'bg-emerald-500/80 border-emerald-400 text-emerald-50',
-    storniert: 'bg-gray-400/50 border-gray-400 text-gray-300 line-through'
+    vorgemerkt: 'bg-status-warn/80 border-status-warn/70 text-status-warn/15',
+    'bestätigt': 'bg-status-ok/80 border-status-ok/70 text-status-ok/15',
+    storniert: 'bg-muted border-border text-muted-foreground line-through'
 };
 
 // Checks if a table is booked at a given date (same-day = conflict, simple model)
@@ -154,8 +154,8 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
                         <Label>Tisch</Label>
                         <Select value={form.table} onValueChange={v => setForm({ ...form, table: v })}>
                             <SelectTrigger className={cn(
-                                selectedTableAvailability === 'occupied' && 'border-red-400 focus:ring-red-400',
-                                selectedTableAvailability === 'free' && 'border-emerald-400 focus:ring-emerald-400'
+                                selectedTableAvailability === 'occupied' && 'border-status-danger/70 focus:ring-status-danger/70',
+                                selectedTableAvailability === 'free' && 'border-status-ok/70 focus:ring-status-ok/70'
                             )}>
                                 <SelectValue placeholder="Tisch wählen..." />
                             </SelectTrigger>
@@ -166,8 +166,8 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
                                         <SelectItem key={t.id} value={t.id}>
                                             <span className="flex items-center gap-2">
                                                 {t.table_number} ({t.capacity} Plätze)
-                                                {avail === 'free' && <span className="text-emerald-400 text-xs">● frei</span>}
-                                                {avail === 'occupied' && <span className="text-red-400 text-xs">● belegt</span>}
+                                                {avail === 'free' && <span className="text-status-ok text-xs">● frei</span>}
+                                                {avail === 'occupied' && <span className="text-status-danger text-xs">● belegt</span>}
                                             </span>
                                         </SelectItem>
                                     );
@@ -180,8 +180,8 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
                             <div className={cn(
                                 "flex items-center gap-2 text-xs px-3 py-2 rounded-lg border",
                                 selectedTableAvailability === 'free'
-                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                                    : 'bg-red-500/10 border-red-500/30 text-red-400'
+                                    ? 'bg-status-ok/10 border-status-ok/30 text-status-ok'
+                                    : 'bg-status-danger/10 border-status-danger/30 text-status-danger'
                             )}>
                                 {selectedTableAvailability === 'free'
                                     ? <><CheckCircle2 className="w-3.5 h-3.5" /> Tisch ist an diesem Tag verfügbar</>
@@ -194,7 +194,7 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
                     {/* Alternative tables */}
                     {alternativeTables.length > 0 && (
                         <div className="space-y-2">
-                            <Label className="text-amber-400 flex items-center gap-1.5">
+                            <Label className="text-status-warn flex items-center gap-1.5">
                                 <ArrowRight className="w-3.5 h-3.5" />
                                 Alternative verfügbare Tische
                             </Label>
@@ -204,7 +204,7 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
                                         key={t.id}
                                         type="button"
                                         onClick={() => setForm({ ...form, table: t.id })}
-                                        className="px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-colors"
+                                        className="px-3 py-1.5 rounded-lg border border-status-ok/40 bg-status-ok/10 text-status-ok text-xs font-medium hover:bg-status-ok/20 transition-colors"
                                     >
                                         {t.table_number} · {t.capacity} Plätze
                                     </button>
@@ -215,7 +215,7 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
 
                     {/* No alternatives available */}
                     {selectedTableAvailability === 'occupied' && alternativeTables.length === 0 && form.date && (
-                        <div className="text-xs px-3 py-2 rounded-lg border bg-red-500/10 border-red-500/30 text-red-400">
+                        <div className="text-xs px-3 py-2 rounded-lg border bg-status-danger/10 border-status-danger/30 text-status-danger">
                             Keine alternativen Tische mit ausreichender Kapazität verfügbar.
                         </div>
                     )}
@@ -245,7 +245,7 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="text-red-500 border-red-400 hover:bg-red-500/10"
+                                className="text-status-danger border-status-danger/70 hover:bg-status-danger/10"
                                 onClick={() => onDelete(reservation.id)}
                             >
                                 <X className="w-4 h-4" />
@@ -355,7 +355,7 @@ export default function TableCalendarView({ tables, reservations }) {
                                         </div>
                                         <div className="mt-1 h-1 rounded-full bg-border overflow-hidden">
                                             <div
-                                                className={cn("h-full rounded-full transition-all", rate > 80 ? 'bg-red-400' : rate > 50 ? 'bg-amber-400' : 'bg-emerald-400')}
+                                                className={cn("h-full rounded-full transition-all", rate > 80 ? 'bg-status-danger/70' : rate > 50 ? 'bg-status-warn/70' : 'bg-status-ok/70')}
                                                 style={{ width: `${rate}%` }}
                                             />
                                         </div>
@@ -427,14 +427,14 @@ export default function TableCalendarView({ tables, reservations }) {
 
             {/* Legend */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-amber-500/80 inline-block" /> Vorgemerkt</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-500/80 inline-block" /> Bestätigt</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-gray-400/50 inline-block" /> Storniert</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-status-warn/80 inline-block" /> Vorgemerkt</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-status-ok/80 inline-block" /> Bestätigt</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-muted inline-block" /> Storniert</span>
                 <span className="ml-auto flex items-center gap-2">
                     Auslastung:
-                    <span className="flex items-center gap-1"><span className="w-4 h-1.5 rounded bg-emerald-400 inline-block" /> &lt;50%</span>
-                    <span className="flex items-center gap-1"><span className="w-4 h-1.5 rounded bg-amber-400 inline-block" /> 50–80%</span>
-                    <span className="flex items-center gap-1"><span className="w-4 h-1.5 rounded bg-red-400 inline-block" /> &gt;80%</span>
+                    <span className="flex items-center gap-1"><span className="w-4 h-1.5 rounded bg-status-ok/70 inline-block" /> &lt;50%</span>
+                    <span className="flex items-center gap-1"><span className="w-4 h-1.5 rounded bg-status-warn/70 inline-block" /> 50–80%</span>
+                    <span className="flex items-center gap-1"><span className="w-4 h-1.5 rounded bg-status-danger/70 inline-block" /> &gt;80%</span>
                 </span>
             </div>
 

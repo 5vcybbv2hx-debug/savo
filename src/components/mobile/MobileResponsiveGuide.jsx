@@ -22,7 +22,7 @@ export default function MobileResponsiveGuide() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-4 border-l-4 border-l-blue-500">
             <div className="flex items-center gap-2 mb-2">
-              <Phone className="w-5 h-5 text-blue-500" />
+              <Phone className="w-5 h-5 text-primary" />
               <h3 className="font-bold text-foreground">Mobile</h3>
             </div>
             <p className="text-sm text-muted-foreground">&lt; 640px</p>
@@ -31,7 +31,7 @@ export default function MobileResponsiveGuide() {
 
           <Card className="p-4 border-l-4 border-l-amber-500">
             <div className="flex items-center gap-2 mb-2">
-              <Tablet className="w-5 h-5 text-amber-500" />
+              <Tablet className="w-5 h-5 text-status-warn" />
               <h3 className="font-bold text-foreground">Tablet (md)</h3>
             </div>
             <p className="text-sm text-muted-foreground">≥ 768px</p>
@@ -40,7 +40,7 @@ export default function MobileResponsiveGuide() {
 
           <Card className="p-4 border-l-4 border-l-green-500">
             <div className="flex items-center gap-2 mb-2">
-              <Monitor className="w-5 h-5 text-green-500" />
+              <Monitor className="w-5 h-5 text-status-ok" />
               <h3 className="font-bold text-foreground">Desktop (lg)</h3>
             </div>
             <p className="text-sm text-muted-foreground">≥ 1024px</p>
@@ -71,7 +71,7 @@ export default function MobileResponsiveGuide() {
           {MOBILE_CHECKLIST.map(section => (
             <Card key={section.category} className="p-4">
               <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-amber-500" />
+                <CheckCircle2 className="w-5 h-5 text-status-warn" />
                 {section.category}
               </h3>
               <ul className="space-y-2">
@@ -95,7 +95,7 @@ export default function MobileResponsiveGuide() {
         <div className="grid md:grid-cols-2 gap-4">
           {/* Bad */}
           <Card className="p-4 border-l-4 border-l-red-500">
-            <h3 className="font-bold text-red-500 mb-3 flex items-center gap-2">
+            <h3 className="font-bold text-status-danger mb-3 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" /> Falsch
             </h3>
             <div className="space-y-2 text-xs">
@@ -118,7 +118,7 @@ export default function MobileResponsiveGuide() {
 
           {/* Good */}
           <Card className="p-4 border-l-4 border-l-green-500">
-            <h3 className="font-bold text-green-500 mb-3 flex items-center gap-2">
+            <h3 className="font-bold text-status-ok mb-3 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" /> Richtig
             </h3>
             <div className="space-y-2 text-xs">
@@ -144,7 +144,7 @@ export default function MobileResponsiveGuide() {
       {/* Safe Area Insets */}
       <section className="space-y-4">
         <h2 className="text-2xl font-bold text-foreground">Safe Area Insets (Notches)</h2>
-        <Card className="p-4 bg-amber-500/5 border-amber-500/30">
+        <Card className="p-4 bg-status-warn/5 border-status-warn/30">
           <p className="text-sm text-muted-foreground mb-3">
             Für iPhone X+ mit Notch/Dynamic Island verwende Safe Area Insets:
           </p>

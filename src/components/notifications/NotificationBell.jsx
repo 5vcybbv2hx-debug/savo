@@ -20,15 +20,15 @@ import { getVisibleNotifications, sortByPriorityAndDate, DEFAULT_SETTINGS } from
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/lib/notificationUtils';
 
 const PRIORITY_COLORS = {
-    'kritisch': 'bg-red-500',
-    'wichtig': 'bg-amber-500',
-    'info': 'bg-blue-500'
+    'kritisch': 'bg-status-danger/70',
+    'wichtig': 'bg-status-warn/70',
+    'info': 'bg-primary/70'
 };
 
 const PRIORITY_BADGES = {
-    'kritisch': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    'wichtig': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    'info': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+    'kritisch': 'bg-status-danger/15 text-status-danger dark:bg-status-danger/30 dark:text-status-danger',
+    'wichtig': 'bg-status-warn/15 text-status-warn dark:bg-status-warn/30 dark:text-status-warn',
+    'info': 'bg-primary/15 text-primary dark:bg-primary/30 dark:text-primary'
 };
 
 export default function NotificationBell({ userEmail, userRole = 'user', employeeId }) {
@@ -118,7 +118,7 @@ export default function NotificationBell({ userEmail, userRole = 'user', employe
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="w-5 h-5 text-muted-foreground" />
                     {unreadCount > 0 && (
-                        <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-600 text-white text-xs">
+                        <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-status-danger/70 text-white text-xs">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </Badge>
                     )}

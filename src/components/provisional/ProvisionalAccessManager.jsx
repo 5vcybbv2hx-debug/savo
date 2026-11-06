@@ -15,10 +15,10 @@ import { cn } from '@/lib/utils';
 
 function getWindowStatus(access) {
     const today = format(new Date(), 'yyyy-MM-dd');
-    if (!access.is_active) return { label: 'Deaktiviert', color: 'bg-slate-500/20 text-slate-400' };
-    if (access.end_date < today) return { label: 'Abgelaufen', color: 'bg-slate-500/20 text-slate-400' };
-    if (access.start_date > today) return { label: 'Noch nicht aktiv', color: 'bg-blue-500/20 text-blue-400' };
-    return { label: 'Aktiv', color: 'bg-green-500/20 text-green-400' };
+    if (!access.is_active) return { label: 'Deaktiviert', color: 'bg-surface text-muted-foreground' };
+    if (access.end_date < today) return { label: 'Abgelaufen', color: 'bg-surface text-muted-foreground' };
+    if (access.start_date > today) return { label: 'Noch nicht aktiv', color: 'bg-primary/20 text-primary' };
+    return { label: 'Aktiv', color: 'bg-status-ok/20 text-status-ok' };
 }
 
 export default function ProvisionalAccessManager({ employees }) {
@@ -108,7 +108,7 @@ export default function ProvisionalAccessManager({ employees }) {
                     <h3 className="font-bold text-foreground">Vorläufige Selbsteinplanung</h3>
                     <p className="text-sm text-muted-foreground">Mitarbeiter-Zugänge verwalten · mehrere gleichzeitig möglich</p>
                 </div>
-                <Button onClick={openNew} className="bg-amber-600 hover:bg-amber-700 gap-2">
+                <Button onClick={openNew} className="bg-status-warn/70 hover:bg-status-warn/70 gap-2">
                     <Plus className="w-4 h-4" /> Zugang erteilen
                 </Button>
             </div>
@@ -125,7 +125,7 @@ export default function ProvisionalAccessManager({ employees }) {
                         return (
                             <Card key={access.id} className="p-4">
                                 <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 font-bold text-amber-400">
+                                    <div className="w-10 h-10 rounded-full bg-status-warn/20 flex items-center justify-center shrink-0 font-bold text-status-warn">
                                         {access.employee_name?.charAt(0)}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -141,14 +141,14 @@ export default function ProvisionalAccessManager({ employees }) {
                                     </div>
                                     <div className="flex gap-1 shrink-0">
                                         <button onClick={() => toggleMutation.mutate({ id: access.id, is_active: !access.is_active })}
-                                            className={cn("p-2 rounded-lg text-xs font-medium transition-all", access.is_active ? "bg-green-500/10 text-green-400 hover:bg-red-500/10 hover:text-red-400" : "bg-slate-500/10 text-slate-400 hover:bg-green-500/10 hover:text-green-400")}>
+                                            className={cn("p-2 rounded-lg text-xs font-medium transition-all", access.is_active ? "bg-status-ok/10 text-status-ok hover:bg-status-danger/10 hover:text-status-danger" : "bg-surface text-muted-foreground hover:bg-status-ok/10 hover:text-status-ok")}>
                                             {access.is_active ? '✓' : '○'}
                                         </button>
                                         <button onClick={() => openEdit(access)} className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-all">
                                             <Pencil className="w-4 h-4" />
                                         </button>
                                         <button onClick={() => { if (confirm('Zugang wirklich löschen?')) deleteMutation.mutate(access.id); }}
-                                            className="p-2 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-all">
+                                            className="p-2 rounded-lg hover:bg-status-danger/10 text-muted-foreground hover:text-status-danger transition-all">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -180,7 +180,7 @@ export default function ProvisionalAccessManager({ employees }) {
                                     <div className="flex items-center justify-between">
                                         <Label>Mitarbeiter ({selectedEmployees.length} ausgewählt)</Label>
                                         <div className="flex gap-2 text-xs">
-                                            <button type="button" onClick={selectAllEmployees} className="text-amber-500 hover:text-amber-400 font-medium">Alle</button>
+                                            <button type="button" onClick={selectAllEmployees} className="text-status-warn hover:text-status-warn font-medium">Alle</button>
                                             <span className="text-muted-foreground/40">·</span>
                                             <button type="button" onClick={deselectAllEmployees} className="text-muted-foreground hover:text-foreground">Keine</button>
                                         </div>
@@ -191,9 +191,9 @@ export default function ProvisionalAccessManager({ employees }) {
                                             return (
                                                 <button key={emp.id} type="button" onClick={() => toggleEmployee(emp.id)}
                                                     className={cn('w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-sm transition-all',
-                                                        checked ? 'bg-amber-500/15 text-foreground' : 'hover:bg-accent text-foreground')}>
+                                                        checked ? 'bg-status-warn/15 text-foreground' : 'hover:bg-accent text-foreground')}>
                                                     <span className={cn('w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all',
-                                                        checked ? 'bg-amber-500 border-amber-500' : 'border-border')}>
+                                                        checked ? 'bg-status-warn/70 border-status-warn/70' : 'border-border')}>
                                                         {checked && <span className="text-white text-xs font-bold">✓</span>}
                                                     </span>
                                                     <span className="font-medium truncate">{emp.name}</span>
@@ -224,7 +224,7 @@ export default function ProvisionalAccessManager({ employees }) {
                             <Button variant="outline" onClick={() => setModalOpen(false)} className="flex-1 h-12">Abbrechen</Button>
                             {editing ? (
                                 <Button onClick={() => saveMutation.mutate(form)} disabled={!form.employee_id || !form.start_date || !form.end_date}
-                                    className="flex-1 h-12 bg-amber-600 hover:bg-amber-700">
+                                    className="flex-1 h-12 bg-status-warn/70 hover:bg-status-warn/70">
                                     Speichern
                                 </Button>
                             ) : (
@@ -239,7 +239,7 @@ export default function ProvisionalAccessManager({ employees }) {
                                         });
                                     }}
                                     disabled={selectedEmployees.length === 0 || !form.start_date || !form.end_date || bulkSaveMutation.isPending}
-                                    className="flex-1 h-12 bg-amber-600 hover:bg-amber-700">
+                                    className="flex-1 h-12 bg-status-warn/70 hover:bg-status-warn/70">
                                     {bulkSaveMutation.isPending ? 'Wird erstellt…' : `Zugang für ${selectedEmployees.length} ${selectedEmployees.length === 1 ? 'Mitarbeiter' : 'Mitarbeiter'} erteilen`}
                                 </Button>
                             )}

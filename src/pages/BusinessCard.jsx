@@ -42,7 +42,7 @@ export default function BusinessCardPage() {
                 <div className="mb-6 flex items-start justify-between">
                     <div>
                         <h1 className="page-title flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-amber-500" />
+                            <Building2 className="w-5 h-5 text-status-warn" />
                             Digitale Visitenkarte
                         </h1>
                         <p className="page-subtitle">

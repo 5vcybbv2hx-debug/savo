@@ -234,10 +234,10 @@ export default function ExportRunner({ config, onBack }) {
                 </Button>
                 <h2 className="text-lg font-bold text-foreground">Export ausführen</h2>
                 <Badge className={cn('ml-auto', {
-                    'bg-blue-500/20 text-blue-400 border-blue-500/30': phase === 'ready',
-                    'bg-amber-500/20 text-amber-400 border-amber-500/30': phase === 'running',
-                    'bg-green-500/20 text-green-400 border-green-500/30': phase === 'done',
-                    'bg-red-500/20 text-red-400 border-red-500/30': phase === 'error',
+                    'bg-primary/20 text-primary border-primary/30': phase === 'ready',
+                    'bg-status-warn/20 text-status-warn border-status-warn/30': phase === 'running',
+                    'bg-status-ok/20 text-status-ok border-status-ok/30': phase === 'done',
+                    'bg-status-danger/20 text-status-danger border-status-danger/30': phase === 'error',
                 })}>
                     {phase === 'ready' && 'Bereit'}
                     {phase === 'running' && 'Läuft…'}
@@ -274,15 +274,15 @@ export default function ExportRunner({ config, onBack }) {
                         </div>
                         <div className="w-full bg-secondary rounded-full h-2">
                             <div
-                                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                className="bg-primary/70 h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${progressPct}%` }}
                             />
                         </div>
                         {summary && (
                             <div className="flex items-center gap-4 mt-3 text-sm">
-                                <span className="text-green-400">✓ {summary.totalRecords.toLocaleString()} Datensätze</span>
+                                <span className="text-status-ok">✓ {summary.totalRecords.toLocaleString()} Datensätze</span>
                                 {summary.errors > 0 && (
-                                    <span className="text-red-400">⚠ {summary.errors} Fehler</span>
+                                    <span className="text-status-danger">⚠ {summary.errors} Fehler</span>
                                 )}
                             </div>
                         )}
@@ -298,11 +298,11 @@ export default function ExportRunner({ config, onBack }) {
                         <div className="space-y-1 max-h-64 overflow-y-auto">
                             {progress.map((p, i) => (
                                 <div key={i} className="flex items-center gap-2 text-xs py-0.5">
-                                    {p.status === 'loading' && <Loader2 className="w-3 h-3 text-blue-400 animate-spin shrink-0" />}
-                                    {p.status === 'ok' && <CheckCircle2 className="w-3 h-3 text-green-400 shrink-0" />}
-                                    {p.status === 'error' && <AlertTriangle className="w-3 h-3 text-red-400 shrink-0" />}
+                                    {p.status === 'loading' && <Loader2 className="w-3 h-3 text-primary animate-spin shrink-0" />}
+                                    {p.status === 'ok' && <CheckCircle2 className="w-3 h-3 text-status-ok shrink-0" />}
+                                    {p.status === 'error' && <AlertTriangle className="w-3 h-3 text-status-danger shrink-0" />}
                                     {p.status === 'skipped' && <div className="w-3 h-3 rounded-full bg-muted-foreground/30 shrink-0" />}
-                                    <span className={cn('flex-1', p.status === 'error' ? 'text-red-300' : 'text-foreground')}>{p.label}</span>
+                                    <span className={cn('flex-1', p.status === 'error' ? 'text-status-danger/25' : 'text-foreground')}>{p.label}</span>
                                     {p.count != null && <span className="text-muted-foreground">{p.count}</span>}
                                     {p.status === 'skipped' && <span className="text-muted-foreground">—</span>}
                                 </div>
@@ -315,7 +315,7 @@ export default function ExportRunner({ config, onBack }) {
             {/* Actions */}
             <div className="flex gap-3">
                 {phase === 'ready' && (
-                    <Button onClick={runExport} className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                    <Button onClick={runExport} className="flex-1 h-11 bg-primary/70 hover:bg-primary/70 text-white gap-2">
                         <Loader2 className="w-4 h-4" />
                         Export starten ({totalEntities} Entitäten)
                     </Button>
@@ -324,14 +324,14 @@ export default function ExportRunner({ config, onBack }) {
                     <Button
                         onClick={() => { cancelRef.current = true; setPhase('done'); }}
                         variant="outline"
-                        className="flex-1 h-11 border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        className="flex-1 h-11 border-status-danger/30 text-status-danger hover:bg-status-danger/10"
                     >
                         Abbrechen
                     </Button>
                 )}
                 {phase === 'done' && (
                     <>
-                        <Button onClick={doDownload} className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white gap-2">
+                        <Button onClick={doDownload} className="flex-1 h-11 bg-status-ok/70 hover:bg-status-ok/70 text-white gap-2">
                             <Download className="w-4 h-4" />
                             Herunterladen ({config.format.toUpperCase()})
                         </Button>

@@ -428,7 +428,7 @@ export default function StorageLabelPrint({ open, onClose, location }) {
             <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-base">
-                        <QrCode className="w-5 h-5 text-amber-500" />
+                        <QrCode className="w-5 h-5 text-status-warn" />
                         Etikett drucken
                     </DialogTitle>
                 </DialogHeader>
@@ -442,7 +442,7 @@ export default function StorageLabelPrint({ open, onClose, location }) {
                                 onClick={() => setConfigKey(key)}
                                 className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-all ${
                                     configKey === key
-                                        ? 'bg-amber-500 text-slate-900 border-amber-500'
+                                        ? 'bg-status-warn/70 text-muted-foreground border-status-warn/70'
                                         : 'border-border text-muted-foreground hover:bg-accent'
                                 }`}
                             >
@@ -457,7 +457,7 @@ export default function StorageLabelPrint({ open, onClose, location }) {
                             onClick={() => setOutputFormat('png')}
                             className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
                                 outputFormat === 'png'
-                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    ? 'bg-primary/70 text-white border-primary/70'
                                     : 'border-border text-muted-foreground hover:bg-accent'
                             }`}
                         >
@@ -468,7 +468,7 @@ export default function StorageLabelPrint({ open, onClose, location }) {
                             onClick={() => setOutputFormat('pdf')}
                             className={`flex-1 py-2 px-3 rounded-lg border text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${
                                 outputFormat === 'pdf'
-                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    ? 'bg-primary/70 text-white border-primary/70'
                                     : 'border-border text-muted-foreground hover:bg-accent'
                             }`}
                         >
@@ -478,7 +478,7 @@ export default function StorageLabelPrint({ open, onClose, location }) {
                     </div>
 
                     {/* Preview */}
-                    <div className="bg-gray-100 rounded-xl p-4 flex justify-center items-center min-h-[80px] overflow-auto">
+                    <div className="bg-card rounded-xl p-4 flex justify-center items-center min-h-[80px] overflow-auto">
                         {qrPng ? (
                             <LabelPreview location={location} qrDataUrl={qrPng} configKey={configKey} />
                         ) : (
@@ -499,7 +499,7 @@ export default function StorageLabelPrint({ open, onClose, location }) {
                         <Button
                             onClick={outputFormat === 'png' ? handleDownloadPNG : handleDownloadPDF}
                             disabled={!qrPng || loading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                            className="w-full bg-primary/70 hover:bg-primary/70 text-white gap-2"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                             {outputFormat === 'png' ? 'Als PNG herunterladen (300 DPI)' : 'Als PDF herunterladen'}
@@ -516,7 +516,7 @@ export default function StorageLabelPrint({ open, onClose, location }) {
                             <Button
                                 onClick={handlePrint}
                                 disabled={!qrPng || loading}
-                                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white gap-2"
+                                className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-2"
                             >
                                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
                                 Drucken

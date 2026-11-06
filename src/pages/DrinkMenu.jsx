@@ -266,7 +266,7 @@ export default function DrinkMenuPage() {
                         {/* EINE primäre Aktion: Getränk hinzufügen */}
                         {canEdit && (
                             <Button size="sm" onClick={openNew}
-                                className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                                className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                                 <Plus className="w-4 h-4" />
                                 <span className="hidden sm:inline">Getränk</span>
                                 <span className="sm:hidden">Neu</span>
@@ -282,7 +282,7 @@ export default function DrinkMenuPage() {
                             className={cn(
                                 'shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
                                 selectedCategory === cat
-                                    ? 'bg-amber-500 border-amber-500 text-white'
+                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                     : 'border-border text-muted-foreground bg-card hover:text-foreground'
                             )}>
                             {cat === "all" ? "Alle" : cat}
@@ -321,7 +321,7 @@ export default function DrinkMenuPage() {
                         </p>
                         {canEdit && !searchTerm && (
                             <Button size="sm" onClick={openNew}
-                                className="bg-amber-600 hover:bg-amber-700 text-white">
+                                className="bg-status-warn/70 hover:bg-status-warn/70 text-white">
                                 <Plus className="w-4 h-4 mr-1.5" />Neues Getränk
                             </Button>
                         )}
@@ -371,7 +371,7 @@ export default function DrinkMenuPage() {
                                                         </p>
                                                         <div className="flex items-center gap-1.5 shrink-0">
                                                             {item.price != null && (
-                                                                <span className="text-sm font-bold text-amber-500 whitespace-nowrap">
+                                                                <span className="text-sm font-bold text-status-warn whitespace-nowrap">
                                                                     {parseFloat(item.price).toFixed(2)} €
                                                                 </span>
                                                             )}
@@ -439,19 +439,19 @@ export default function DrinkMenuPage() {
                                                             </span>
                                                         )}
                                                         {item.is_seasonal && (
-                                                            <span className="text-[10px] text-green-400/80">
+                                                            <span className="text-[10px] text-status-ok/80">
                                                                 saisonal
                                                             </span>
                                                         )}
                                                         {item.is_special && (
-                                                            <span className="text-[10px] text-amber-400/80">
+                                                            <span className="text-[10px] text-status-warn/80">
                                                                 special
                                                             </span>
                                                         )}
 
                                                         {/* Low-Stock Warnung */}
                                                         {isLowStock && (
-                                                            <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+                                                            <span className="text-[10px] text-status-warn flex items-center gap-0.5">
                                                                 <AlertTriangle className="w-3 h-3" />
                                                                 niedrig
                                                             </span>
@@ -476,11 +476,11 @@ export default function DrinkMenuPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {usedAllergens.length > 0 && (
                                 <div>
-                                    <p className="text-[10px] font-bold text-red-400 uppercase tracking-wide mb-1.5">Allergene</p>
+                                    <p className="text-[10px] font-bold text-status-danger uppercase tracking-wide mb-1.5">Allergene</p>
                                     <div className="space-y-0.5">
                                         {usedAllergens.map((a, i) => (
                                             <p key={a} className="text-xs text-muted-foreground">
-                                                <span className="text-red-400 font-mono font-bold mr-1.5">
+                                                <span className="text-status-danger font-mono font-bold mr-1.5">
                                                     {String.fromCharCode(65 + i)}
                                                 </span>
                                                 {a}
@@ -491,11 +491,11 @@ export default function DrinkMenuPage() {
                             )}
                             {usedAdditives.length > 0 && (
                                 <div>
-                                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wide mb-1.5">Zusatzstoffe</p>
+                                    <p className="text-[10px] font-bold text-primary uppercase tracking-wide mb-1.5">Zusatzstoffe</p>
                                     <div className="space-y-0.5">
                                         {usedAdditives.map((d, i) => (
                                             <p key={d} className="text-xs text-muted-foreground">
-                                                <span className="text-blue-400 font-mono font-bold mr-1.5">{i + 1}</span>
+                                                <span className="text-primary font-mono font-bold mr-1.5">{i + 1}</span>
                                                 {d}
                                             </p>
                                         ))}
@@ -567,12 +567,12 @@ export default function DrinkMenuPage() {
                 <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <QrCode className="w-4 h-4 text-amber-500" />
+                            <QrCode className="w-4 h-4 text-status-warn" />
                             Gäste-Link · Getränkekarte
                         </DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col items-center gap-4 pt-2">
-                        <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                        <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
                             <img
                                 src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(MENU_URL)}&bgcolor=ffffff&color=111827&margin=2`}
                                 alt="QR-Code"
@@ -592,7 +592,7 @@ export default function DrinkMenuPage() {
                                 className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                                 title="Link kopieren"
                             >
-                                {menuQRCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                {menuQRCopied ? <Check className="w-3.5 h-3.5 text-status-ok" /> : <Copy className="w-3.5 h-3.5" />}
                             </button>
                             <a href={MENU_URL} target="_blank" rel="noopener noreferrer"
                                 className="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"

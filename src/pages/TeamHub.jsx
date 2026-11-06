@@ -19,7 +19,7 @@ function StatBadge({ count, variant = 'default' }) {
     return (
         <span className={cn(
             'ml-auto text-xs font-bold px-2 py-0.5 rounded-full',
-            variant === 'warning' ? 'bg-orange-500/20 text-orange-400' :
+            variant === 'warning' ? 'bg-status-warn/20 text-status-warn' :
             variant === 'danger'  ? 'bg-destructive/20 text-destructive' :
                                     'bg-primary/20 text-primary'
         )}>

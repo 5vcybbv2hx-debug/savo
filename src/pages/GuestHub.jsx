@@ -230,7 +230,7 @@ export default function GuestHub() {
                             )}
                             {permissions.canEditReservations && (
                                 <Button onClick={() => { setSelectedRes(null); setResModalOpen(true); }}
-                                    className="h-9 gap-1 text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                                    className="h-9 gap-1 text-sm font-semibold bg-gradient-to-r from-status-warn to-status-warn hover:from-status-warn hover:to-status-warn">
                                     <Plus className="w-4 h-4" />
                                     <span className="hidden sm:inline">Neu</span>
                                 </Button>
@@ -267,10 +267,10 @@ export default function GuestHub() {
 
                     {/* ── KPI-Zeile ──────────────────────────────────────────── */}
                     <div className="flex flex-wrap items-center gap-2 text-xs">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-semibold">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-status-warn/10 border border-status-warn/20 text-status-warn font-semibold">
                             <Users className="w-3.5 h-3.5" />{kpi.guests} Gäste
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 font-semibold">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-status-warn/10 border border-status-warn/20 text-status-warn font-semibold">
                             {kpi.offen} offen
                         </span>
                     </div>

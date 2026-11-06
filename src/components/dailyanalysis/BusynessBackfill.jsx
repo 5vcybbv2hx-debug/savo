@@ -15,11 +15,11 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const BUSYNESS_LEVELS = [
-    { level: 1, label: 'Ruhig', color: 'bg-blue-500/15 text-blue-400 border-blue-500/40', emoji: '😴', desc: 'Kaum Gäste, lange Pausen' },
-    { level: 2, label: 'Entspannt', color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/40', emoji: '🙂', desc: 'Locker, normaler Tagesablauf' },
-    { level: 3, label: 'Normal', color: 'bg-amber-500/15 text-amber-400 border-amber-500/40', emoji: '😐', desc: 'Üblicher Betrieb' },
-    { level: 4, label: 'Lebhaft', color: 'bg-orange-500/15 text-orange-400 border-orange-500/40', emoji: '💪', desc: 'Viel los, alle an den Start' },
-    { level: 5, label: 'Stark', color: 'bg-red-500/15 text-red-400 border-red-500/40', emoji: '🔥', desc: 'Grenzbereich, Spitzenlast' },
+    { level: 1, label: 'Ruhig', color: 'bg-primary/15 text-primary border-primary/40', emoji: '😴', desc: 'Kaum Gäste, lange Pausen' },
+    { level: 2, label: 'Entspannt', color: 'bg-primary/15 text-primary border-primary/40', emoji: '🙂', desc: 'Locker, normaler Tagesablauf' },
+    { level: 3, label: 'Normal', color: 'bg-status-warn/15 text-status-warn border-status-warn/40', emoji: '😐', desc: 'Üblicher Betrieb' },
+    { level: 4, label: 'Lebhaft', color: 'bg-status-warn/15 text-status-warn border-status-warn/40', emoji: '💪', desc: 'Viel los, alle an den Start' },
+    { level: 5, label: 'Stark', color: 'bg-status-danger/15 text-status-danger border-status-danger/40', emoji: '🔥', desc: 'Grenzbereich, Spitzenlast' },
 ];
 
 const DAY_NAMES = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
@@ -106,7 +106,7 @@ export default function BusynessBackfill({ onClose }) {
             <div className="fixed inset-0 z-50 flex items-center justify-center">
                 <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
                 <Card className="relative z-10 bg-card border-border p-6 text-center max-w-sm">
-                    <Check className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+                    <Check className="w-10 h-10 text-status-ok mx-auto mb-3" />
                     <p className="text-sm font-semibold text-foreground">Alles bewertet!</p>
                     <p className="text-xs text-muted-foreground mt-1">
                         {totalRated} Tage mit Betriebsamkeit erfasst.
@@ -141,7 +141,7 @@ export default function BusynessBackfill({ onClose }) {
                         <span className="text-[10px] text-muted-foreground">
                             {currentIndex + 1} von {totalUnrated}
                         </span>
-                        <span className="text-[10px] text-emerald-400">
+                        <span className="text-[10px] text-status-ok">
                             {totalRated} bereits erfasst
                         </span>
                     </div>
@@ -176,7 +176,7 @@ export default function BusynessBackfill({ onClose }) {
                                 </div>
                             )}
                             {current.weather_precipitation > 0 && (
-                                <span className="text-[10px] text-blue-400">
+                                <span className="text-[10px] text-primary">
                                     {current.weather_precipitation.toFixed(1)}mm Regen
                                 </span>
                             )}

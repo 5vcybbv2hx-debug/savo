@@ -115,8 +115,8 @@ Berücksichtige typische Allergene: Gluten, Krebstiere, Eier, Fisch, Erdnüsse, 
                             onClick={() => toggle(allergen)}
                             className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
                                 isSelected
-                                    ? 'bg-amber-500/20 border-amber-500/60 text-amber-300'
-                                    : 'bg-transparent border-border/70 text-muted-foreground hover:border-slate-400 hover:text-foreground/75'
+                                    ? 'bg-status-warn/20 border-status-warn/60 text-status-warn/25'
+                                    : 'bg-transparent border-border/70 text-muted-foreground hover:border-border hover:text-foreground/75'
                             }`}
                         >
                             {isSelected && <span className="mr-1">✓</span>}
@@ -130,7 +130,7 @@ Berücksichtige typische Allergene: Gluten, Krebstiere, Eier, Fisch, Erdnüsse, 
             {customSelected.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {customSelected.map(a => (
-                        <Badge key={a} className="bg-blue-500/20 text-blue-300 border-blue-500/40 gap-1">
+                        <Badge key={a} className="bg-primary/20 text-primary/25 border-primary/40 gap-1">
                             {a}
                             <button type="button" onClick={() => remove(a)}>
                                 <X className="w-3 h-3" />

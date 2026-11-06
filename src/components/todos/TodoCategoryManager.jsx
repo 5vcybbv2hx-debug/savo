@@ -124,7 +124,7 @@ export default function TodoCategoryManager({ open, onClose }) {
                         <Button
                             onClick={handleAdd}
                             size="icon"
-                            className="shrink-0 bg-amber-500 hover:bg-amber-600 text-slate-900"
+                            className="shrink-0 bg-status-warn/70 hover:bg-status-warn/70 text-muted-foreground"
                             disabled={createMutation.isPending}
                         >
                             {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
@@ -160,7 +160,7 @@ export default function TodoCategoryManager({ open, onClose }) {
                                                 <div>
                                                     <span className="text-sm text-foreground">{cat.name}</span>
                                                     {openCount > 0 && (
-                                                        <span className="ml-2 text-[10px] text-amber-400">{openCount} offen</span>
+                                                        <span className="ml-2 text-[10px] text-status-warn">{openCount} offen</span>
                                                     )}
                                                 </div>
                                                 <Button
@@ -175,7 +175,7 @@ export default function TodoCategoryManager({ open, onClose }) {
                                                         }
                                                     }}
                                                     disabled={deleteMutation.isPending || deleteTodoCategoryMutation.isPending}
-                                                    className="h-7 w-7 text-red-400 hover:text-red-300"
+                                                    className="h-7 w-7 text-status-danger hover:text-status-danger/25"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </Button>

@@ -120,7 +120,7 @@ export default function MobileTeamCalendarView({
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                        <CalendarIcon className="w-5 h-5 text-amber-400" />
+                        <CalendarIcon className="w-5 h-5 text-status-warn" />
                         {format(currentDate, 'MMMM yyyy', { locale: de })}
                     </h2>
                     <div className="flex gap-1">
@@ -178,9 +178,9 @@ export default function MobileTeamCalendarView({
                                     "text-xs md:text-sm font-medium",
                                     isCurrentMonth ? "bg-background" : "bg-background/50",
                                     isWeekendDay && "bg-card/50",
-                                    isToday && "ring-inset ring-2 ring-amber-500",
-                                    isSelected && "ring-inset ring-2 ring-blue-500 bg-card",
-                                    isToday && !isSelected ? "text-amber-400" : isCurrentMonth ? "text-foreground" : "text-foreground0"
+                                    isToday && "ring-inset ring-2 ring-status-warn/70",
+                                    isSelected && "ring-inset ring-2 ring-primary/70 bg-card",
+                                    isToday && !isSelected ? "text-status-warn" : isCurrentMonth ? "text-foreground" : "text-foreground0"
                                 )}
                             >
                                 <div>{format(day, 'd')}</div>
@@ -210,11 +210,11 @@ export default function MobileTeamCalendarView({
                         <span className="text-muted-foreground">Schicht</span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded bg-purple-600"></div>
+                        <div className="w-2 h-2 rounded bg-primary"></div>
                         <span className="text-muted-foreground">Urlaub</span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded bg-red-600"></div>
+                        <div className="w-2 h-2 rounded bg-status-danger/70"></div>
                         <span className="text-muted-foreground">Feiertag</span>
                     </div>
                 </div>
@@ -253,7 +253,7 @@ export default function MobileTeamCalendarView({
                                     }}
                                     className={cn(
                                         'w-full p-4 rounded-lg text-left transition-all active:scale-95 hover:opacity-90',
-                                        event.type === 'warteliste' && 'border border-dashed border-amber-500/70'
+                                        event.type === 'warteliste' && 'border border-dashed border-status-warn/70'
                                     )}
                                     style={event.type === 'warteliste'
                                         ? { backgroundColor: 'rgba(245, 158, 11, 0.08)' }

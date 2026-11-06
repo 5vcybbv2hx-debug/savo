@@ -129,17 +129,17 @@ function PackagingOptionRow({ opt, idx, unitLabel, isDefault, isCheapest, onUpda
                         <span className="text-[9px] bg-primary/20 text-primary px-1 py-0.5 rounded font-medium">Standard</span>
                     )}
                     {isCheapest && !isDefault && (
-                        <span className="text-[9px] bg-green-500/20 text-green-400 px-1 py-0.5 rounded font-medium">günstigster/Stück</span>
+                        <span className="text-[9px] bg-status-ok/20 text-status-ok px-1 py-0.5 rounded font-medium">günstigster/Stück</span>
                     )}
                     {isCheapest && isDefault && (
-                        <span className="text-[9px] bg-green-500/20 text-green-400 px-1 py-0.5 rounded font-medium">günstigster/Stück</span>
+                        <span className="text-[9px] bg-status-ok/20 text-status-ok px-1 py-0.5 rounded font-medium">günstigster/Stück</span>
                     )}
                 </div>
 
                 {/* Preise kompakt */}
                 <div className="text-right shrink-0">
                     {unitPrice !== null && (
-                        <p className={cn('text-xs font-bold tabular-nums', isCheapest ? 'text-green-400' : 'text-foreground')}>
+                        <p className={cn('text-xs font-bold tabular-nums', isCheapest ? 'text-status-ok' : 'text-foreground')}>
                             {unitPrice.toFixed(4).replace(/\.?0+$/, '').replace(/(\.\d{2})\d+/, '$1')} €/{unitLabel}
                         </p>
                     )}
@@ -208,7 +208,7 @@ function PackagingOptionRow({ opt, idx, unitLabel, isDefault, isCheapest, onUpda
                     {unitPrice !== null && opt.packaging_type !== 'Stück' && (
                         <div className={cn(
                             'flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs',
-                            isCheapest ? 'bg-green-500/10 text-green-400' : 'bg-muted/50 text-muted-foreground'
+                            isCheapest ? 'bg-status-ok/10 text-status-ok' : 'bg-muted/50 text-muted-foreground'
                         )}>
                             <Calculator className="w-3 h-3 shrink-0" />
                             <span>
@@ -405,7 +405,7 @@ export default function SupplierDetailsEditor({ value = [], onChange, availableS
                                 </div>
                                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                     {opts.length === 0 && (
-                                        <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
+                                        <span className="text-[10px] text-status-warn flex items-center gap-0.5">
                                             <AlertCircle className="w-2.5 h-2.5" /> Noch keine Gebinde
                                         </span>
                                     )}
@@ -416,7 +416,7 @@ export default function SupplierDetailsEditor({ value = [], onChange, availableS
                                             <span key={o.id} className={cn(
                                                 'text-[10px] px-1.5 py-0.5 rounded-md border tabular-nums',
                                                 o.is_default ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-muted border-border text-muted-foreground',
-                                                isCheap && 'border-green-500/40 text-green-400 bg-green-500/10'
+                                                isCheap && 'border-status-ok/40 text-status-ok bg-status-ok/10'
                                             )}>
                                                 {optionLabel(o)}
                                                 {up !== null && ` · ${up.toFixed(2)} €/${unitLabel}`}
@@ -515,7 +515,7 @@ export default function SupplierDetailsEditor({ value = [], onChange, availableS
                                 {/* Preisvergleich Hinweis */}
                                 {opts.length > 1 && (
                                     <p className="text-[10px] text-muted-foreground px-1 flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
+                                        <span className="w-1.5 h-1.5 rounded-full bg-status-ok/70 shrink-0" />
                                         ★ = Standard-Gebinde für Bestellungen · ✓ = günstigster Preis pro {unitLabel}
                                     </p>
                                 )}
@@ -527,8 +527,8 @@ export default function SupplierDetailsEditor({ value = [], onChange, availableS
 
             {/* Lieferanten-übergreifender Preisvergleich */}
             {value.length > 1 && value.some(s => (s.packaging_options || []).length > 0) && (
-                <div className="border border-green-500/20 bg-green-500/5 rounded-lg px-3 py-2">
-                    <p className="text-[11px] text-green-400 flex items-center gap-1.5">
+                <div className="border border-status-ok/20 bg-status-ok/5 rounded-lg px-3 py-2">
+                    <p className="text-[11px] text-status-ok flex items-center gap-1.5">
                         <Calculator className="w-3.5 h-3.5 shrink-0" />
                         Günstigster Preis über alle Lieferanten: <strong>{globalCheapest?.toFixed(4).replace(/\.?0+$/, '').replace(/(\.\d{2})\d+/, '$1')} € pro {unitLabel}</strong>
                     </p>

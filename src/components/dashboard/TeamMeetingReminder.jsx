@@ -39,15 +39,15 @@ export default function TeamMeetingReminder() {
     };
 
     const getReminderColor = () => {
-        if (daysUntilMeeting === 0) return 'bg-red-900/30 border-red-700';
-        if (daysUntilMeeting <= 2) return 'bg-orange-900/30 border-orange-700';
-        return 'bg-yellow-900/30 border-yellow-700';
+        if (daysUntilMeeting === 0) return 'bg-status-danger/30 border-status-danger/70';
+        if (daysUntilMeeting <= 2) return 'bg-status-warn/30 border-status-warn/70';
+        return 'bg-status-warn/30 border-status-warn/70';
     };
 
     const getReminderTextColor = () => {
-        if (daysUntilMeeting === 0) return 'text-red-300';
-        if (daysUntilMeeting <= 2) return 'text-orange-300';
-        return 'text-yellow-300';
+        if (daysUntilMeeting === 0) return 'text-status-danger/25';
+        if (daysUntilMeeting <= 2) return 'text-status-warn/25';
+        return 'text-status-warn/25';
     };
 
     return (
@@ -65,15 +65,15 @@ export default function TeamMeetingReminder() {
                         {currentSchedule.location && ` im ${currentSchedule.location}`}
                     </p>
                     
-                    <div className="bg-slate-900/50 rounded-lg p-3 mb-3">
-                        <p className="text-xs text-slate-300 font-mono whitespace-pre-wrap">
+                    <div className="bg-surface rounded-lg p-3 mb-3">
+                        <p className="text-xs text-muted-foreground font-mono whitespace-pre-wrap">
                             {whatsappMessage}
                         </p>
                     </div>
 
                     <Button
                         onClick={handleWhatsAppShare}
-                        className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                        className="bg-status-ok/70 hover:bg-status-ok/70 text-white gap-2"
                         size="sm"
                     >
                         <MessageCircle className="w-4 h-4" />

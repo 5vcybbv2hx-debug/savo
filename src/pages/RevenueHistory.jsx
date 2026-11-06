@@ -423,11 +423,11 @@ export default function RevenueHistory() {
                 <div className="flex items-center gap-2 mb-3">
                     <p className="text-sm font-semibold">Datenlücken</p>
                     {derived.missingMonths.length === 0 ? (
-                        <span className="flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400 font-medium">
+                        <span className="flex items-center gap-1 text-[11px] text-status-ok dark:text-status-ok font-medium">
                             <CheckCircle2 className="w-3.5 h-3.5" /> keine Lücken
                         </span>
                     ) : (
-                        <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                        <span className="flex items-center gap-1 text-[11px] text-status-warn dark:text-status-warn font-medium">
                             <AlertTriangle className="w-3.5 h-3.5" />
                             {derived.missingMonths.length} Monat{derived.missingMonths.length > 1 ? 'e' : ''} ohne Daten
                         </span>
@@ -447,7 +447,7 @@ export default function RevenueHistory() {
                         <div className="flex flex-wrap gap-1.5">
                             {derived.missingMonths.map(m => (
                                 <span key={`${m.year}-${m.month}`}
-                                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400">
+                                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-status-warn/10 border border-status-warn/25 text-status-warn dark:text-status-warn">
                                     {m.label}
                                 </span>
                             ))}

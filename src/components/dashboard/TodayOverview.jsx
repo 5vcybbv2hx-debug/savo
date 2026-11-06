@@ -12,7 +12,7 @@ export default function TodayOverview({ shifts = [], events = [], reservations =
         return (
             <Card className="p-6 bg-card border-border">
                 <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-green-500" />
+                    <Calendar className="w-5 h-5 text-status-ok" />
                     Heute • {format(new Date(), 'EEEE, d. MMMM', { locale: de })}
                 </h3>
                 <p className="text-sm text-muted-foreground/70 italic text-center py-4">Nichts geplant für heute</p>
@@ -33,7 +33,7 @@ export default function TodayOverview({ shifts = [], events = [], reservations =
     return (
         <Card className="p-6 bg-card border-border">
             <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-green-500" />
+                <Calendar className="w-5 h-5 text-status-ok" />
                 Heute • {format(new Date(), 'EEEE, d. MMMM', { locale: de })}
             </h3>
             
@@ -67,7 +67,7 @@ export default function TodayOverview({ shifts = [], events = [], reservations =
                     <div className="space-y-2">
                         {eventsToShow.map((event, idx) => (
                             <div key={event.id} className="flex items-start gap-2 text-sm animate-stagger" style={{ '--delay': `${idx * 35}ms` }}>
-                                <AlertCircle className="w-4 h-4 text-pink-500 mt-0.5" />
+                                <AlertCircle className="w-4 h-4 text-primary mt-0.5" />
                                 <div className="flex-1">
                                     <p className="text-foreground/80 font-medium truncate">{event.title}</p>
                                     {event.expected_guests && <p className="text-xs text-muted-foreground/70">{event.expected_guests} Gäste</p>}
@@ -83,7 +83,7 @@ export default function TodayOverview({ shifts = [], events = [], reservations =
                     <div className="space-y-2">
                         {reservationsToShow.map((res, idx) => (
                             <div key={res.id} className="flex items-start gap-2 text-sm animate-stagger" style={{ '--delay': `${idx * 35}ms` }}>
-                                <CalendarCheck className="w-4 h-4 text-blue-500 mt-0.5" />
+                                <CalendarCheck className="w-4 h-4 text-primary mt-0.5" />
                                 <div className="flex-1">
                                     <p className="text-foreground/80 truncate">{res.customer_name}</p>
                                     <p className="text-xs text-muted-foreground/70">{res.time} • {res.guests} Gäste</p>

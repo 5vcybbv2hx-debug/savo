@@ -46,7 +46,7 @@ export default function BackupManager() {
             <Button
                 onClick={() => setModalOpen(true)}
                 variant="outline"
-                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="border-primary/70 text-primary hover:bg-primary/15"
             >
                 <Database className="w-4 h-4 mr-2" />
                 Backup erstellen
@@ -56,13 +56,13 @@ export default function BackupManager() {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Database className="w-5 h-5 text-blue-600" />
+                            <Database className="w-5 h-5 text-primary" />
                             Backup-Manager
                         </DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">
-                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                        <div className="p-4 bg-primary/15 border border-primary/25 rounded-lg text-sm text-primary">
                             <p className="font-medium mb-2">ℹ️ Vollständiges Backup</p>
                             <p className="text-xs">
                                 Erstellt ein komplettes Backup aller App-Daten als JSON-Datei. 
@@ -72,14 +72,14 @@ export default function BackupManager() {
                         </div>
 
                         {status === 'success' && (
-                            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                            <div className="flex items-center gap-2 p-3 bg-status-ok/15 border border-status-ok/25 rounded-lg text-status-ok">
                                 <CheckCircle className="w-5 h-5" />
                                 <span className="text-sm font-medium">Backup erfolgreich erstellt!</span>
                             </div>
                         )}
 
                         {status === 'error' && (
-                            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                            <div className="flex items-center gap-2 p-3 bg-status-danger/15 border border-status-danger/25 rounded-lg text-status-danger">
                                 <AlertCircle className="w-5 h-5" />
                                 <span className="text-sm font-medium">Fehler beim Erstellen des Backups</span>
                             </div>
@@ -96,7 +96,7 @@ export default function BackupManager() {
                             </Button>
                             <Button
                                 onClick={createBackup}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                className="flex-1 bg-primary/70 hover:bg-primary/70"
                                 disabled={isCreating}
                             >
                                 {isCreating ? (

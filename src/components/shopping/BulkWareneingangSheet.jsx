@@ -46,7 +46,7 @@ export default function BulkWareneingangSheet({ open, items, onClose, onConfirm 
             <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Truck className="w-5 h-5 text-amber-500" />
+                        <Truck className="w-5 h-5 text-status-warn" />
                         Wareneingang ({items.length} Artikel)
                     </DialogTitle>
                 </DialogHeader>
@@ -110,7 +110,7 @@ export default function BulkWareneingangSheet({ open, items, onClose, onConfirm 
                                             {diff !== 0 && (
                                                 <span className={cn(
                                                     'text-[10px] font-medium pb-2 shrink-0',
-                                                    diff < 0 ? 'text-destructive' : 'text-blue-400'
+                                                    diff < 0 ? 'text-destructive' : 'text-primary'
                                                 )}>
                                                     {diff < 0 ? `${Math.abs(diff).toFixed(1)} fehlt` : `+${diff.toFixed(1)}`}
                                                 </span>
@@ -130,7 +130,7 @@ export default function BulkWareneingangSheet({ open, items, onClose, onConfirm 
                     <Button
                         onClick={handleConfirm}
                         disabled={checkedItems.length === 0}
-                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white">
+                        className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white">
                         <Check className="w-4 h-4 mr-1.5" />
                         {checkedItems.length} quittieren
                     </Button>

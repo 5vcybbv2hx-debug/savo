@@ -51,7 +51,7 @@ export default function ExportHistory() {
                     size="sm"
                     variant="ghost"
                     onClick={clearHistory}
-                    className="text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 gap-1"
+                    className="text-xs text-status-danger hover:text-status-danger/25 hover:bg-status-danger/20 gap-1"
                 >
                     <Trash2 className="w-3 h-3" /> Verlauf löschen
                 </Button>
@@ -63,15 +63,15 @@ export default function ExportHistory() {
                     return (
                         <Card key={i} className="bg-card border-border">
                             <CardContent className="p-4 flex items-start gap-3">
-                                <div className="w-9 h-9 rounded-lg bg-blue-600/20 flex items-center justify-center shrink-0 mt-0.5">
-                                    <Icon className="w-4 h-4 text-blue-400" />
+                                <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                                    <Icon className="w-4 h-4 text-primary" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
                                         <p className="text-sm font-semibold text-foreground capitalize">{h.type}-Export</p>
-                                        <Badge className="text-[10px] bg-blue-500/20 text-blue-400 border-blue-500/30 uppercase">{h.format}</Badge>
+                                        <Badge className="text-[10px] bg-primary/20 text-primary border-primary/30 uppercase">{h.format}</Badge>
                                         {h.errors > 0 && (
-                                            <Badge className="text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">
+                                            <Badge className="text-[10px] bg-status-warn/20 text-status-warn border-status-warn/30">
                                                 {h.errors} Fehler
                                             </Badge>
                                         )}
@@ -83,8 +83,8 @@ export default function ExportHistory() {
                                     </p>
                                 </div>
                                 <Badge className={cn('text-[10px] shrink-0', h.errors > 0
-                                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                                    : 'bg-green-500/20 text-green-400 border-green-500/30'
+                                    ? 'bg-status-warn/20 text-status-warn border-status-warn/30'
+                                    : 'bg-status-ok/20 text-status-ok border-status-ok/30'
                                 )}>
                                     {h.errors > 0 ? 'Mit Warnungen' : 'Erfolgreich'}
                                 </Badge>

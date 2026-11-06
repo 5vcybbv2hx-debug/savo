@@ -95,9 +95,9 @@ export default function ArticleModalWithScanning({
             </div>
 
             {/* Barcode / QR Codes */}
-            <Card className="p-4 bg-blue-50/5 border-blue-500/20">
+            <Card className="p-4 bg-primary/5 border-primary/20">
               <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                <Camera className="w-4 h-4 text-blue-500" />
+                <Camera className="w-4 h-4 text-primary" />
                 Codes scannen
               </h3>
 
@@ -107,7 +107,7 @@ export default function ArticleModalWithScanning({
                   <div className="flex items-center justify-between mb-2">
                     <Label className="text-xs font-medium">Barcode / EAN</Label>
                     {scanSuccess === 'barcode' && (
-                      <span className="text-xs text-green-600 flex items-center gap-1">
+                      <span className="text-xs text-status-ok flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         Gescannt
                       </span>
@@ -152,7 +152,7 @@ export default function ArticleModalWithScanning({
                   <div className="flex items-center justify-between mb-2">
                     <Label className="text-xs font-medium">QR-Code (optional)</Label>
                     {scanSuccess === 'qr_code' && (
-                      <span className="text-xs text-green-600 flex items-center gap-1">
+                      <span className="text-xs text-status-ok flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         Gescannt
                       </span>
@@ -240,7 +240,7 @@ export default function ArticleModalWithScanning({
             <Button
               onClick={handleSubmit}
               disabled={isSaving || !formData.name}
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              className="flex-1 bg-status-ok/70 hover:bg-status-ok/70"
             >
               {isSaving ? 'Speichert…' : 'Speichern'}
             </Button>

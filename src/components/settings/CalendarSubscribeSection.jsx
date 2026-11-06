@@ -26,9 +26,9 @@ function getCalendarFunctionUrl(queryString) {
 }
 
 const INSTRUCTIONS = [
-    { icon: Calendar, name: 'Google Calendar', steps: 'Andere Kalender → Per URL hinzufügen → Link einfügen', color: 'text-blue-400' },
-    { icon: Apple, name: 'Apple Calendar', steps: 'Ablage → Kalenderabo → Link einfügen', color: 'text-gray-300' },
-    { icon: Mail, name: 'Outlook', steps: 'Kalender hinzufügen → Aus Internet → Link einfügen', color: 'text-cyan-400' },
+    { icon: Calendar, name: 'Google Calendar', steps: 'Andere Kalender → Per URL hinzufügen → Link einfügen', color: 'text-primary' },
+    { icon: Apple, name: 'Apple Calendar', steps: 'Ablage → Kalenderabo → Link einfügen', color: 'text-muted-foreground' },
+    { icon: Mail, name: 'Outlook', steps: 'Kalender hinzufügen → Aus Internet → Link einfügen', color: 'text-primary' },
 ];
 
 export default function CalendarSubscribeSection() {
@@ -187,9 +187,9 @@ Einmal neu einrichten, danach läuft alles automatisch – deine Schichten aktua
                 ))}
             </div>
 
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-600 dark:text-amber-400">
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-status-warn/10 border border-status-warn/30">
+                <ShieldAlert className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+                <p className="text-xs text-status-warn dark:text-status-warn">
                     Der Link ist personalisiert und zeigt nur deine eigenen Schichten. Teile ihn nicht mit anderen.
                 </p>
             </div>
@@ -227,7 +227,7 @@ Einmal neu einrichten, danach läuft alles automatisch – deine Schichten aktua
                 <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-green-400" />
+                            <Users className="w-4 h-4 text-status-ok" />
                             WhatsApp an Team ({teamEmployees.length})
                         </DialogTitle>
                     </DialogHeader>
@@ -250,7 +250,7 @@ Einmal neu einrichten, danach läuft alles automatisch – deine Schichten aktua
                                     href={emp.waLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500/15 text-green-400 border border-green-500/30 text-xs font-medium hover:bg-green-500/25 transition-all min-h-[44px] flex items-center"
+                                    className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-status-ok/15 text-status-ok border border-status-ok/30 text-xs font-medium hover:bg-status-ok/25 transition-all min-h-[44px] flex items-center"
                                 >
                                     <ExternalLink className="w-3.5 h-3.5" />
                                     Senden

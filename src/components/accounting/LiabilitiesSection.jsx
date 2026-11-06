@@ -30,19 +30,19 @@ import { cn } from '@/lib/utils';
 const fmt = n => (n ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const STATUS_CFG = {
-    offen:        { label: 'Offen',        color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/20',   dot: 'bg-blue-400',   icon: Clock         },
-    teilbezahlt:  { label: 'Teilbezahlt',  color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20',  dot: 'bg-amber-400',  icon: AlertTriangle  },
-    ratenzahlung: { label: 'Ratenzahlung', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', dot: 'bg-purple-400', icon: ListChecks     },
-    ueberfaellig: { label: 'Überfällig',   color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/20',    dot: 'bg-red-500',    icon: AlertTriangle  },
-    bezahlt:      { label: 'Bezahlt',      color: 'text-green-400',  bg: 'bg-green-500/10',  border: 'border-green-500/20',  dot: 'bg-green-400',  icon: CheckCircle2   },
+    offen:        { label: 'Offen',        color: 'text-primary',   bg: 'bg-primary/10',   border: 'border-primary/20',   dot: 'bg-primary/70',   icon: Clock         },
+    teilbezahlt:  { label: 'Teilbezahlt',  color: 'text-status-warn',  bg: 'bg-status-warn/10',  border: 'border-status-warn/20',  dot: 'bg-status-warn/70',  icon: AlertTriangle  },
+    ratenzahlung: { label: 'Ratenzahlung', color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20', dot: 'bg-primary', icon: ListChecks     },
+    ueberfaellig: { label: 'Überfällig',   color: 'text-status-danger',    bg: 'bg-status-danger/10',    border: 'border-status-danger/20',    dot: 'bg-status-danger/70',    icon: AlertTriangle  },
+    bezahlt:      { label: 'Bezahlt',      color: 'text-status-ok',  bg: 'bg-status-ok/10',  border: 'border-status-ok/20',  dot: 'bg-status-ok/70',  icon: CheckCircle2   },
     gestundet:    { label: 'Gestundet',    color: 'text-muted-foreground', bg: 'bg-secondary/50', border: 'border-border', dot: 'bg-muted-foreground', icon: Clock },
 };
 
 const PRIORITY_CFG = {
     niedrig:  { label: 'Niedrig',  color: 'text-muted-foreground' },
-    mittel:   { label: 'Mittel',   color: 'text-amber-400'        },
-    hoch:     { label: 'Hoch',     color: 'text-orange-400'       },
-    kritisch: { label: 'Kritisch', color: 'text-red-400'          },
+    mittel:   { label: 'Mittel',   color: 'text-status-warn'        },
+    hoch:     { label: 'Hoch',     color: 'text-status-warn'       },
+    kritisch: { label: 'Kritisch', color: 'text-status-danger'          },
 };
 
 const CATEGORIES   = ['Lieferant', 'Finanzamt', 'Sozialversicherung', 'Bank/Darlehen', 'Leasing', 'Sonstiges'];
@@ -313,7 +313,7 @@ function LiabilityCard({ liability, payments, onEdit, onPay }) {
                 <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-foreground truncate">{liability.title}</p>
                     {liability.dunning_level > 0 && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20 shrink-0">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-status-danger/15 text-status-danger border border-status-danger/20 shrink-0">
                             M{liability.dunning_level}
                         </span>
                     )}
@@ -324,8 +324,8 @@ function LiabilityCard({ liability, payments, onEdit, onPay }) {
                     )}
                     {liability.due_date && liability.status !== 'bezahlt' && (
                         <p className={cn('text-[11px] font-medium',
-                            isOverdue ? 'text-red-400' :
-                            daysUntilDue <= 7 ? 'text-amber-400' : 'text-muted-foreground'
+                            isOverdue ? 'text-status-danger' :
+                            daysUntilDue <= 7 ? 'text-status-warn' : 'text-muted-foreground'
                         )}>
                             {liability.creditor_name && '·'} {isOverdue
                                 ? `${Math.abs(daysUntilDue)}d überfällig`
@@ -351,7 +351,7 @@ function LiabilityCard({ liability, payments, onEdit, onPay }) {
                 )}
 
                 {liability.payment_plan_enabled && liability.installment_amount && (
-                    <p className="text-[11px] text-purple-400 mt-1">
+                    <p className="text-[11px] text-primary mt-1">
                         Rate: {fmt(liability.installment_amount)} € / {liability.installment_interval}
                         {liability.next_payment_date && ` · nächste: ${format(new Date(liability.next_payment_date), 'dd.MM.', { locale: de })}`}
                     </p>
@@ -365,7 +365,7 @@ function LiabilityCard({ liability, payments, onEdit, onPay }) {
                 )}
                 {liability.status !== 'bezahlt' && (
                     <button onClick={e => { e.stopPropagation(); onPay(); }}
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/20 hover:bg-green-500/25 transition-all min-h-[22px] whitespace-nowrap">
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-status-ok/15 text-status-ok border border-status-ok/20 hover:bg-status-ok/25 transition-all min-h-[22px] whitespace-nowrap">
                         Zahlung ✓
                     </button>
                 )}
@@ -591,7 +591,7 @@ export default function LiabilitiesSection({ onTotalsChange }) {
                         {searchOpen ? <X className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                     </button>
                     <Button onClick={() => { setForm(EMPTY_FORM); setModalOpen(true); }}
-                        className="h-9 bg-red-600 hover:bg-red-700 text-white gap-1.5">
+                        className="h-9 bg-status-danger/70 hover:bg-status-danger/70 text-white gap-1.5">
                         <Plus className="w-4 h-4" /> Neu
                     </Button>
                 </div>
@@ -612,8 +612,8 @@ export default function LiabilitiesSection({ onTotalsChange }) {
                             'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                             statusFilter === f.key
                                 ? f.key === 'ueberfaellig'
-                                    ? 'bg-red-600 border-red-600 text-white'
-                                    : 'bg-amber-600 border-amber-600 text-white'
+                                    ? 'bg-status-danger/70 border-status-danger/70 text-white'
+                                    : 'bg-status-warn/70 border-status-warn/70 text-white'
                                 : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                         )}>
                         {f.label}
@@ -658,7 +658,7 @@ export default function LiabilitiesSection({ onTotalsChange }) {
                         <Button variant="outline" onClick={() => setModalOpen(false)}>Abbrechen</Button>
                         <Button onClick={handleCreate}
                             disabled={createMutation.isPending}
-                            className="bg-red-600 hover:bg-red-700 text-white flex-1">
+                            className="bg-status-danger/70 hover:bg-status-danger/70 text-white flex-1">
                             {createMutation.isPending ? 'Speichert…' : 'Erfassen'}
                         </Button>
                     </DialogFooter>
@@ -682,7 +682,7 @@ export default function LiabilitiesSection({ onTotalsChange }) {
                         </Button>
                         <Button onClick={handleUpdate}
                             disabled={updateMutation.isPending}
-                            className="bg-red-600 hover:bg-red-700 text-white flex-1 h-9">
+                            className="bg-status-danger/70 hover:bg-status-danger/70 text-white flex-1 h-9">
                             {updateMutation.isPending ? 'Speichert…' : 'Speichern'}
                         </Button>
                     </DialogFooter>
@@ -748,7 +748,7 @@ export default function LiabilitiesSection({ onTotalsChange }) {
                         <Button variant="outline" onClick={() => setPayOpen(false)}>Abbrechen</Button>
                         <Button onClick={handlePay}
                             disabled={paymentMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700 text-white flex-1">
+                            className="bg-status-ok/70 hover:bg-status-ok/70 text-white flex-1">
                             <CreditCard className="w-4 h-4 mr-1.5" />
                             {paymentMutation.isPending ? 'Verbucht…' : 'Zahlung verbuchen'}
                         </Button>

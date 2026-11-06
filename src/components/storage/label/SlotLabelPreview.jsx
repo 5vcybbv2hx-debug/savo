@@ -8,7 +8,7 @@ export default function SlotLabelPreview({ code, name, path, qrUrl }) {
 
     return (
         <div
-            className="bg-white text-zinc-900"
+            className="bg-card text-muted-foreground"
             style={{
                 width: '62mm',
                 height: '30mm',

@@ -54,11 +54,11 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
     const date = parseISO(revenue.date);
 
     const rows = [
-        { label: 'Gesamtumsatz', key: 'revenue', value: revenue.revenue, color: 'text-green-400', icon: DollarSign, required: true },
-        { label: 'Umsatz Bar', key: 'revenue_cash', value: revenue.revenue_cash, color: 'text-yellow-400', icon: Banknote },
-        { label: 'Umsatz EC', key: 'revenue_ec', value: revenue.revenue_ec, color: 'text-blue-400', icon: CreditCard },
+        { label: 'Gesamtumsatz', key: 'revenue', value: revenue.revenue, color: 'text-status-ok', icon: DollarSign, required: true },
+        { label: 'Umsatz Bar', key: 'revenue_cash', value: revenue.revenue_cash, color: 'text-status-warn', icon: Banknote },
+        { label: 'Umsatz EC', key: 'revenue_ec', value: revenue.revenue_ec, color: 'text-primary', icon: CreditCard },
         { label: 'Umsatzsteuer', key: 'vat', value: revenue.vat, color: 'text-muted-foreground', icon: Receipt },
-        { label: 'Eigenbedarf', key: 'own_consumption', value: revenue.own_consumption, color: 'text-orange-400', icon: ShoppingBag },
+        { label: 'Eigenbedarf', key: 'own_consumption', value: revenue.own_consumption, color: 'text-status-warn', icon: ShoppingBag },
     ];
 
     return (
@@ -92,7 +92,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                                 <Button
                                     size="sm"
                                     onClick={() => updateMutation.mutate()}
-                                    className="bg-amber-600 hover:bg-amber-700"
+                                    className="bg-status-warn/70 hover:bg-status-warn/70"
                                     disabled={updateMutation.isPending}
                                 >
                                     <Check className="w-3.5 h-3.5 mr-1" /> {updateMutation.isPending ? 'Speichern...' : 'Speichern'}
@@ -169,7 +169,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                             </h3>
                             <div className="flex justify-between">
                                 <span className="text-foreground/75 text-sm">Personalkosten</span>
-                                <span className="text-amber-400 font-semibold">{laborCost.toFixed(2)} €</span>
+                                <span className="text-status-warn font-semibold">{laborCost.toFixed(2)} €</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-foreground/75 text-sm">Mitarbeiter</span>
@@ -178,7 +178,7 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                             {revenue.revenue > 0 && laborCost > 0 && (
                                 <div className="flex justify-between">
                                     <span className="text-foreground/75 text-sm">Personalkostenquote</span>
-                                    <Badge className="bg-amber-900/40 text-amber-400 border-amber-700">
+                                    <Badge className="bg-status-warn/40 text-status-warn border-status-warn/70">
                                         {((laborCost / revenue.revenue) * 100).toFixed(1)} %
                                     </Badge>
                                 </div>
@@ -193,11 +193,11 @@ export default function DayDetailModal({ open, onOpenChange, revenue, tipDistrib
                                 </h3>
                                 <div className="flex justify-between">
                                     <span className="text-foreground/75 text-sm">Gesamt</span>
-                                    <span className="text-purple-400 font-semibold">{tipDistribution.total_tips.toFixed(2)} €</span>
+                                    <span className="text-primary font-semibold">{tipDistribution.total_tips.toFixed(2)} €</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-foreground/75 text-sm">Pro Person</span>
-                                    <span className="text-purple-400 font-semibold">{tipDistribution.tip_per_person.toFixed(2)} €</span>
+                                    <span className="text-primary font-semibold">{tipDistribution.tip_per_person.toFixed(2)} €</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-foreground/75 text-sm">Quote</span>

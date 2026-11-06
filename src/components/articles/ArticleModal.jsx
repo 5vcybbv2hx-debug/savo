@@ -330,14 +330,14 @@ export default function ArticleModal({ open, onClose, article, onSave, onNavigat
                                 <label className="relative shrink-0 cursor-pointer group">
                                     <div className={cn(
                                         'w-16 h-16 rounded-xl border-2 border-dashed border-border overflow-hidden flex items-center justify-center bg-secondary/30',
-                                        'hover:border-amber-500/50 transition-colors'
+                                        'hover:border-status-warn/50 transition-colors'
                                     )}>
                                         {formData.image_url ? (
                                             <img src={formData.image_url} alt="" className="w-full h-full object-cover" />
                                         ) : uploading ? (
-                                            <div className="w-5 h-5 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                                            <div className="w-5 h-5 border-2 border-status-warn/30 border-t-amber-500 rounded-full animate-spin" />
                                         ) : (
-                                            <ImageIcon className="w-5 h-5 text-muted-foreground group-hover:text-amber-500 transition-colors" />
+                                            <ImageIcon className="w-5 h-5 text-muted-foreground group-hover:text-status-warn transition-colors" />
                                         )}
                                     </div>
                                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
@@ -588,7 +588,7 @@ export default function ArticleModal({ open, onClose, article, onSave, onNavigat
                                     <Label className="text-xs text-muted-foreground">Allergene</Label>
                                     <button type="button" onClick={detectAllergens}
                                         disabled={detectingAllergens}
-                                        className="flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50">
+                                        className="flex items-center gap-1 text-[10px] text-status-warn hover:text-status-warn/25 transition-colors disabled:opacity-50">
                                         <Sparkles className="w-3 h-3" />
                                         {detectingAllergens ? 'Erkenne…' : 'KI erkennen'}
                                     </button>
@@ -638,7 +638,7 @@ export default function ArticleModal({ open, onClose, article, onSave, onNavigat
                                 Abbrechen
                             </Button>
                             <Button type="submit" disabled={saving}
-                                className="flex-1 h-10 bg-amber-600 hover:bg-amber-700 text-white">
+                                className="flex-1 h-10 bg-status-warn/70 hover:bg-status-warn/70 text-white">
                                 {saving ? 'Speichern…' : 'Speichern'}
                             </Button>
                         </div>

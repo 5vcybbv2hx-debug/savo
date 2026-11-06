@@ -244,7 +244,7 @@ ${articlesToPrint.map(article => {
             <Button
                 onClick={() => setOpen(true)}
                 variant="outline"
-                className="border-blue-600 text-foreground bg-blue-600 hover:bg-blue-700"
+                className="border-primary/70 text-foreground bg-primary/70 hover:bg-primary/70"
             >
                 <Printer className="w-4 h-4 mr-2" />
                 Etiketten drucken
@@ -257,8 +257,8 @@ ${articlesToPrint.map(article => {
                     </DialogHeader>
 
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-blue-900/20 rounded-lg border border-blue-700">
-                            <div className="text-sm text-blue-300">
+                        <div className="flex items-center justify-between p-3 bg-primary/20 rounded-lg border border-primary/70">
+                            <div className="text-sm text-primary/25">
                                 <p className="font-semibold mb-1">Brother QL-800 Tipp:</p>
                                 <p>• Format: 62mm Endlos-Etikettenrolle</p>
                                 <p>• Im Druckdialog: "Tatsächliche Größe" wählen</p>
@@ -298,7 +298,7 @@ ${articlesToPrint.map(article => {
                                     className={cn(
                                         "p-3 rounded-lg cursor-pointer transition-all border-2",
                                         selectedArticles.includes(article.id)
-                                            ? "bg-blue-900/30 border-blue-500"
+                                            ? "bg-primary/30 border-primary/70"
                                             : "bg-background border-border hover:border-border/70"
                                     )}
                                 >
@@ -306,7 +306,7 @@ ${articlesToPrint.map(article => {
                                         <div className={cn(
                                             "w-5 h-5 rounded border-2 flex items-center justify-center",
                                             selectedArticles.includes(article.id)
-                                                ? "bg-blue-600 border-blue-600"
+                                                ? "bg-primary/70 border-primary/70"
                                                 : "border-border/70"
                                         )}>
                                             {selectedArticles.includes(article.id) && (
@@ -338,7 +338,7 @@ ${articlesToPrint.map(article => {
                             <Button
                                 onClick={handlePDFExport}
                                 disabled={selectedArticles.length === 0}
-                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                className="flex-1 bg-status-ok/70 hover:bg-status-ok/70"
                             >
                                 <FileDown className="w-4 h-4 mr-2" />
                                 PDF
@@ -346,7 +346,7 @@ ${articlesToPrint.map(article => {
                             <Button
                                 onClick={handlePrint}
                                 disabled={selectedArticles.length === 0}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                className="flex-1 bg-primary/70 hover:bg-primary/70"
                             >
                                 <Printer className="w-4 h-4 mr-2" />
                                 Drucken

@@ -28,21 +28,21 @@ export const ABGEBAUTE_STATUS = ['bezahlt', 'erledigt'];
 export const STATUS_META = {
     offen:    { label: 'Offen',    className: 'border' },
     geplant:  { label: 'Geplant',  className: 'border border-border bg-muted text-muted-foreground' },
-    bezahlt:  { label: 'Bezahlt',  className: 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-    erledigt: { label: 'Erledigt', className: 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+    bezahlt:  { label: 'Bezahlt',  className: 'border border-status-ok/30 bg-status-ok/10 text-status-ok dark:text-status-ok' },
+    erledigt: { label: 'Erledigt', className: 'border border-status-ok/30 bg-status-ok/10 text-status-ok dark:text-status-ok' },
     info:     { label: 'Info',     className: 'border border-border bg-muted text-muted-foreground' },
 };
 
 export const FAHRPLAN_STATUS_META = {
     aktiv:    { label: 'Aktiv',    style: { color: SAVO_BLUE, borderColor: SAVO_BLUE, backgroundColor: 'rgba(0,153,219,0.10)' } },
     geplant:  { label: 'Geplant',  className: 'border border-border bg-muted text-muted-foreground' },
-    erledigt: { label: 'Erledigt', className: 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+    erledigt: { label: 'Erledigt', className: 'border border-status-ok/30 bg-status-ok/10 text-status-ok dark:text-status-ok' },
 };
 
 export const PRIORITAET_META = {
-    kritisch: { label: 'Kritisch', className: 'border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400',    dot: 'bg-red-500'    },
-    hoch:     { label: 'Hoch',     className: 'border border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400', dot: 'bg-orange-500' },
-    mittel:   { label: 'Mittel',   className: 'border border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400', dot: 'bg-yellow-500' },
+    kritisch: { label: 'Kritisch', className: 'border border-status-danger/30 bg-status-danger/10 text-status-danger dark:text-status-danger',    dot: 'bg-status-danger/70'    },
+    hoch:     { label: 'Hoch',     className: 'border border-status-warn/30 bg-status-warn/10 text-status-warn dark:text-status-warn', dot: 'bg-status-warn/70' },
+    mittel:   { label: 'Mittel',   className: 'border border-status-warn/30 bg-status-warn/10 text-status-warn dark:text-status-warn', dot: 'bg-status-warn/70' },
     niedrig:  { label: 'Niedrig',  className: 'border border-border bg-muted text-muted-foreground',                   dot: 'bg-muted-foreground' },
 };
 

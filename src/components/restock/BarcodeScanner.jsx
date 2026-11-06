@@ -267,7 +267,7 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
                 {/* Header */}
                 <DialogHeader className="flex-row items-center justify-between px-5 py-4 border-b border-border/50 shrink-0 space-y-0">
                     <DialogTitle className="flex items-center gap-2 text-base font-bold">
-                        <Camera className="w-5 h-5 text-amber-500" />
+                        <Camera className="w-5 h-5 text-status-warn" />
                         {dialogTitle}
                     </DialogTitle>
                     <button
@@ -298,7 +298,7 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
                             onClick={toggleTorch}
                             className={`absolute top-3 right-3 z-10 flex items-center gap-1.5 h-10 px-3 rounded-xl border text-xs font-semibold backdrop-blur transition-colors ${
                                 torchOn
-                                    ? 'bg-amber-500 text-black border-amber-300'
+                                    ? 'bg-status-warn/70 text-foreground border-status-warn/25'
                                     : 'bg-black/60 text-white border-white/25'
                             }`}
                         >
@@ -310,7 +310,7 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
                     {/* Loading overlay */}
                     {scanStatus === 'loading' && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 gap-3">
-                            <div className="w-10 h-10 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                            <div className="w-10 h-10 border-4 border-status-warn/30 border-t-amber-500 rounded-full animate-spin" />
                             <p className="text-white text-sm font-medium">Kamera wird gestartet…</p>
                         </div>
                     )}
@@ -318,12 +318,12 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
                     {/* Error / denied overlay */}
                     {(scanStatus === 'error' || scanStatus === 'denied') && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 gap-4 px-6 text-center">
-                            <AlertCircle className="w-12 h-12 text-red-400" />
+                            <AlertCircle className="w-12 h-12 text-status-danger" />
                             <p className="text-white text-sm leading-relaxed">{errorMsg}</p>
                             {scanStatus === 'error' && (
                                 <Button
                                     onClick={handleRetry}
-                                    className="gap-2 bg-amber-500 hover:bg-amber-600 text-black font-semibold h-11 px-6 rounded-xl"
+                                    className="gap-2 bg-status-warn/70 hover:bg-status-warn/70 text-foreground font-semibold h-11 px-6 rounded-xl"
                                 >
                                     <RefreshCw className="w-4 h-4" />
                                     Erneut versuchen
@@ -358,7 +358,7 @@ export default function BarcodeScanner({ onScan, open, onClose, onError, title, 
                                     placeholder={manualPlaceholder}
                                     className="flex-1 h-11 rounded-xl"
                                 />
-                                <Button type="submit" className="h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-semibold px-5">OK</Button>
+                                <Button type="submit" className="h-11 rounded-xl bg-status-warn/70 hover:bg-status-warn/70 text-foreground font-semibold px-5">OK</Button>
                                 <Button type="button" variant="outline" className="h-11 w-11 rounded-xl p-0" onClick={() => setShowManual(false)}>
                                     <X className="w-4 h-4" />
                                 </Button>

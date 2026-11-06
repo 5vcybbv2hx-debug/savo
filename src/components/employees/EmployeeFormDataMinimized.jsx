@@ -164,7 +164,7 @@ export default function EmployeeFormDataMinimized({ employee = {}, onSave, isLoa
 
         {Object.entries(FORM_SECTIONS).map(([sectionKey, section]) => (
           <TabsContent key={sectionKey} value={sectionKey} className="space-y-6 mt-6">
-            <Card className={section.sensitive ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20' : ''}>
+            <Card className={section.sensitive ? 'border-status-warn/25 dark:border-status-warn/70 bg-status-warn/15 dark:bg-status-warn/20' : ''}>
               <CardHeader>
                 <CardTitle className="text-lg">{section.title}</CardTitle>
                 <CardDescription>{section.description}</CardDescription>
@@ -182,7 +182,7 @@ export default function EmployeeFormDataMinimized({ employee = {}, onSave, isLoa
                       <OptionalFieldNotice />
                     )}
                     {field.hint && (
-                      <div className="text-xs text-amber-600 dark:text-amber-400 italic">
+                      <div className="text-xs text-status-warn dark:text-status-warn italic">
                         ℹ️ {field.hint}
                       </div>
                     )}

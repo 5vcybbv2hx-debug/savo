@@ -84,10 +84,10 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
 
     if (done) {
         return (
-            <Card className="border-green-500/40 bg-green-500/8">
+            <Card className="border-status-ok/40 bg-status-ok/8">
                 <CardContent className="p-3 flex items-center gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
-                    <p className="text-sm text-green-300 font-medium">Alle offenen Schichtstarts wurden eingestempelt.</p>
+                    <CheckCircle2 className="w-4 h-4 text-status-ok shrink-0" />
+                    <p className="text-sm text-status-ok/25 font-medium">Alle offenen Schichtstarts wurden eingestempelt.</p>
                     <button onClick={() => setDone(false)} className="ml-auto text-muted-foreground hover:text-foreground">
                         <X className="w-4 h-4" />
                     </button>
@@ -99,9 +99,9 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
     return (
         <>
             {/* Alarm-Eintrag im Panel */}
-            <div className="flex items-center gap-3 rounded-xl border border-orange-500/40 bg-orange-500/8 px-4 py-3 min-h-[56px]">
-                <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse shrink-0" />
-                <UserCheck className="w-4 h-4 text-orange-400 shrink-0" />
+            <div className="flex items-center gap-3 rounded-xl border border-status-warn/40 bg-status-warn/8 px-4 py-3 min-h-[56px]">
+                <span className="w-2 h-2 rounded-full bg-status-warn/70 animate-pulse shrink-0" />
+                <UserCheck className="w-4 h-4 text-status-warn shrink-0" />
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground leading-tight">
                         {missingEmployees.length} offene Schichtstarts
@@ -113,7 +113,7 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
                 <Button
                     size="sm"
                     onClick={() => setOpen(true)}
-                    className="h-9 min-w-[72px] bg-orange-600 hover:bg-orange-700 text-white text-xs shrink-0"
+                    className="h-9 min-w-[72px] bg-status-warn/70 hover:bg-status-warn/70 text-white text-xs shrink-0"
                 >
                     Einstempeln
                 </Button>
@@ -129,8 +129,8 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
                     <div className="relative z-10 w-full sm:max-w-md bg-card border border-border rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
                         {/* Header */}
                         <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-                            <div className="w-9 h-9 rounded-xl bg-orange-600/20 flex items-center justify-center shrink-0">
-                                <UserCheck className="w-5 h-5 text-orange-400" />
+                            <div className="w-9 h-9 rounded-xl bg-status-warn/20 flex items-center justify-center shrink-0">
+                                <UserCheck className="w-5 h-5 text-status-warn" />
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-base font-bold text-foreground">Offene Schichtstarts einstempeln</h3>
@@ -142,9 +142,9 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
                         </div>
 
                         {/* Warning */}
-                        <div className="mx-5 mt-4 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                            <p className="text-xs text-amber-300">
+                        <div className="mx-5 mt-4 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-status-warn/10 border border-status-warn/30">
+                            <AlertTriangle className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+                            <p className="text-xs text-status-warn/25">
                                 Diese Aktion stempelt {missingEmployees.length} Mitarbeiter ein. Die Aktion wird mit deinem Namen protokolliert und ist nicht automatisch rückgängig zu machen.
                             </p>
                         </div>
@@ -207,7 +207,7 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
                                                     <p className="text-xs text-muted-foreground">{shift.start_time}–{shift.end_time}</p>
                                                 )}
                                             </div>
-                                            <UserCheck className="w-4 h-4 text-orange-400 shrink-0" />
+                                            <UserCheck className="w-4 h-4 text-status-warn shrink-0" />
                                         </div>
                                     );
                                 })}
@@ -226,7 +226,7 @@ export default function BulkClockInPanel({ todayShifts, employees, isManager, cu
                             <Button
                                 onClick={handleConfirm}
                                 disabled={bulkClockInMutation.isPending}
-                                className="flex-1 h-11 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold gap-2"
+                                className="flex-1 h-11 bg-status-warn/70 hover:bg-status-warn/70 text-white text-sm font-semibold gap-2"
                             >
                                 {bulkClockInMutation.isPending ? (
                                     <><Loader2 className="w-4 h-4 animate-spin" />Stempelt...</>

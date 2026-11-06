@@ -109,15 +109,15 @@ async function nextNumber(records, field, prefix) {
 function StatusBadge({ status }) {
     const styles = {
         'Entwurf': 'bg-secondary text-muted-foreground border-border',
-        'Gesendet': 'bg-blue-500/10 text-blue-500 border-blue-500/30',
-        'Bestätigt': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30',
+        'Gesendet': 'bg-primary/10 text-primary border-primary/30',
+        'Bestätigt': 'bg-status-ok/10 text-status-ok border-status-ok/30',
         'Abgelehnt': 'bg-destructive/10 text-destructive border-destructive/30',
         'Rechnung erstellt': 'bg-primary/10 text-primary border-primary/30',
-        'bezahlt': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30',
-        'offen': 'bg-amber-500/10 text-amber-500 border-amber-500/30',
+        'bezahlt': 'bg-status-ok/10 text-status-ok border-status-ok/30',
+        'offen': 'bg-status-warn/10 text-status-warn border-status-warn/30',
         'überfällig': 'bg-destructive/10 text-destructive border-destructive/30',
         'Storniert': 'bg-destructive/10 text-muted-foreground border-border/50 line-through',
-        'teilbezahlt': 'bg-amber-500/10 text-amber-500 border-amber-500/30',
+        'teilbezahlt': 'bg-status-warn/10 text-status-warn border-status-warn/30',
     };
     return (
         <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap', styles[status] || styles['Entwurf'])}>
@@ -563,7 +563,7 @@ export default function ExternalBusiness() {
                     </Button>
                 )}
                 {r.payment_status !== 'bezahlt' && r.doc_status === 'Gesendet' && (
-                    <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 text-emerald-600 hover:text-emerald-500 border-emerald-500/30" onClick={() => updateInvoice.mutate({ id: r.id, data: { payment_status: 'bezahlt', paid_date: today(), paid_amount: r.amount_gross } })}>
+                    <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1 text-status-ok hover:text-status-ok border-status-ok/30" onClick={() => updateInvoice.mutate({ id: r.id, data: { payment_status: 'bezahlt', paid_date: today(), paid_amount: r.amount_gross } })}>
                         <CheckCircle2 className="w-3 h-3" /> Bezahlt
                     </Button>
                 )}
@@ -684,7 +684,7 @@ export default function ExternalBusiness() {
                                                 {recipient}{dateVal ? ` · ${format(parseISO(dateVal), 'dd.MM.yyyy', { locale: de })}` : ''}
                                             </p>
                                             {r.category === CAT_WKZ && (
-                                                <span className="inline-block mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">WKZ</span>
+                                                <span className="inline-block mt-1 text-[10px] font-medium text-status-warn dark:text-status-warn">WKZ</span>
                                             )}
                                         </div>
                                         <div className="text-right shrink-0">
@@ -1063,7 +1063,7 @@ export default function ExternalBusiness() {
                                         </div>
                                         <div className="flex justify-between text-[11px]">
                                             <span className="text-muted-foreground">Deckungsbeitrag</span>
-                                            <span className={totals.db >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}>
+                                            <span className={totals.db >= 0 ? 'text-status-ok dark:text-status-ok' : 'text-destructive'}>
                                                 {eur(totals.db)} &euro; ({(totals.marge * 100).toFixed(1)}%)
                                             </span>
                                         </div>

@@ -58,7 +58,7 @@ export function SwipeableCard({
                 <div className={cn(
                     "absolute left-0 top-0 h-full flex items-center px-6 transition-opacity",
                     offset > 50 ? "opacity-100" : "opacity-0",
-                    onComplete ? "bg-green-500" : "bg-blue-500"
+                    onComplete ? "bg-status-ok/70" : "bg-primary/70"
                 )}>
                     {onComplete ? (
                         <>
@@ -77,7 +77,7 @@ export function SwipeableCard({
             {/* Right action (delete) */}
             {onDelete && (
                 <div className={cn(
-                    "absolute right-0 top-0 h-full flex items-center px-6 bg-red-500 transition-opacity",
+                    "absolute right-0 top-0 h-full flex items-center px-6 bg-status-danger/70 transition-opacity",
                     offset < -50 ? "opacity-100" : "opacity-0"
                 )}>
                     <Trash2 className="w-5 h-5 text-white mr-2" />

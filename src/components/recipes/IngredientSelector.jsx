@@ -101,7 +101,7 @@ export default function IngredientSelector({ ingredients, onChange, articles, co
                                     </button>
 
                                     {cost > 0 && !compact && (
-                                        <p className="text-xs font-semibold text-emerald-500 whitespace-nowrap">{cost.toFixed(2)} €</p>
+                                        <p className="text-xs font-semibold text-status-ok whitespace-nowrap">{cost.toFixed(2)} €</p>
                                     )}
                                     <Input
                                         type="number"
@@ -132,9 +132,9 @@ export default function IngredientSelector({ ingredients, onChange, articles, co
                         );
                     })}
                     {totalCost > 0 && !compact && (
-                        <div className="flex items-center justify-between px-2.5 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                            <span className="text-xs font-semibold text-emerald-500">Gesamt EK:</span>
-                            <span className="text-sm font-bold text-emerald-500">{totalCost.toFixed(2)} €</span>
+                        <div className="flex items-center justify-between px-2.5 py-2 bg-status-ok/10 border border-status-ok/20 rounded-lg">
+                            <span className="text-xs font-semibold text-status-ok">Gesamt EK:</span>
+                            <span className="text-sm font-bold text-status-ok">{totalCost.toFixed(2)} €</span>
                         </div>
                     )}
                 </div>

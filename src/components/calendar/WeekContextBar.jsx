@@ -135,7 +135,7 @@ export default function WeekContextBar({ weekStart, shifts = [], employees, isMa
                             className={cn(
                                 'flex-shrink-0 flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg border transition-all min-w-[52px]',
                                 chip.closedLabel
-                                    ? 'border-pink-500/40 bg-pink-500/10'
+                                    ? 'border-primary/40 bg-primary/10'
                                     : chip.isToday
                                         ? 'border-primary/40 bg-primary/10'
                                         : 'border-border bg-card hover:bg-accent/30'
@@ -147,8 +147,8 @@ export default function WeekContextBar({ weekStart, shifts = [], employees, isMa
                             {WIcon && (
                                 <WIcon className={cn(
                                     'w-4 h-4',
-                                    chip.weather.code === 0 ? 'text-amber-400' :
-                                    chip.weather.precip > 0 ? 'text-blue-400' :
+                                    chip.weather.code === 0 ? 'text-status-warn' :
+                                    chip.weather.precip > 0 ? 'text-primary' :
                                     'text-muted-foreground'
                                 )} />
                             )}
@@ -158,7 +158,7 @@ export default function WeekContextBar({ weekStart, shifts = [], employees, isMa
                                 </span>
                             )}
                             {chip.closedLabel ? (
-                                <span className="text-[10px] font-bold leading-none text-pink-400">
+                                <span className="text-[10px] font-bold leading-none text-primary">
                                     {chip.closedLabel === 'Betriebsferien' ? 'Ferien' : 'zu'}
                                 </span>
                             ) : (

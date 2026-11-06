@@ -14,10 +14,10 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 const STATUS_CONFIG = {
-    ausstehend: { label: 'Ausstehend', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-    bestätigt: { label: 'Bestätigt', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-    abgelehnt: { label: 'Abgelehnt', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
-    warteliste: { label: 'Warteliste', color: 'bg-amber-500/15 text-amber-300 border-dashed border-amber-500/50' },
+    ausstehend: { label: 'Ausstehend', color: 'bg-status-warn/20 text-status-warn border-status-warn/30' },
+    bestätigt: { label: 'Bestätigt', color: 'bg-status-ok/20 text-status-ok border-status-ok/30' },
+    abgelehnt: { label: 'Abgelehnt', color: 'bg-status-danger/20 text-status-danger border-status-danger/30' },
+    warteliste: { label: 'Warteliste', color: 'bg-status-warn/15 text-status-warn/25 border-dashed border-status-warn/50' },
 };
 
 const SHIFT_TYPES = ['Frühschicht', 'Spätschicht', 'Aufmachen', 'Sonderschicht'];
@@ -91,16 +91,16 @@ export default function ProvisionalShiftEntry({ employee, access }) {
     return (
         <div className="space-y-4">
             {/* Info Banner */}
-            <Card className="p-4 border-amber-500/30 bg-amber-500/5">
+            <Card className="p-4 border-status-warn/30 bg-status-warn/5">
                 <div className="flex gap-3">
-                    <Info className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <Info className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
                     <div>
-                        <p className="font-semibold text-amber-300 text-sm">Vorläufige Selbsteinplanung</p>
+                        <p className="font-semibold text-status-warn/25 text-sm">Vorläufige Selbsteinplanung</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                             Du kannst Wunschschichten eintragen. Diese werden vom Manager geprüft und bestätigt.
                         </p>
                         {access.note && (
-                            <p className="text-xs text-amber-400/80 mt-1 italic">📋 {access.note}</p>
+                            <p className="text-xs text-status-warn/80 mt-1 italic">📋 {access.note}</p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
                             Zeitfenster: {format(parseISO(access.start_date), 'dd.MM.yyyy')} – {format(parseISO(access.end_date), 'dd.MM.yyyy')}
@@ -113,7 +113,7 @@ export default function ProvisionalShiftEntry({ employee, access }) {
             <div className="flex items-center justify-between">
                 <h3 className="font-bold text-foreground">Meine Wunschschichten</h3>
                 {windowActive && (
-                    <Button onClick={openNew} className="bg-amber-600 hover:bg-amber-700 gap-2 h-11">
+                    <Button onClick={openNew} className="bg-status-warn/70 hover:bg-status-warn/70 gap-2 h-11">
                         <Plus className="w-4 h-4" /> Eintragen
                     </Button>
                 )}
@@ -136,7 +136,7 @@ export default function ProvisionalShiftEntry({ employee, access }) {
                         const sc = STATUS_CONFIG[req.status] || STATUS_CONFIG.ausstehend;
                         const canEdit = (req.status === 'ausstehend' || req.status === 'warteliste') && windowActive;
                         return (
-                            <Card key={req.id} className={cn('p-4', req.status === 'bestätigt' && 'border-green-500/30', req.status === 'abgelehnt' && 'border-red-500/30 opacity-70')}>
+                            <Card key={req.id} className={cn('p-4', req.status === 'bestätigt' && 'border-status-ok/30', req.status === 'abgelehnt' && 'border-status-danger/30 opacity-70')}>
                                 <div className="flex items-start gap-3">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -152,7 +152,7 @@ export default function ProvisionalShiftEntry({ employee, access }) {
                                         </div>
                                         {req.comment && <p className="text-xs text-muted-foreground mt-1 italic">"{req.comment}"</p>}
                                         {req.manager_note && (
-                                            <p className="text-xs mt-1 text-amber-400/80">Manager: {req.manager_note}</p>
+                                            <p className="text-xs mt-1 text-status-warn/80">Manager: {req.manager_note}</p>
                                         )}
                                     </div>
                                     {canEdit && (
@@ -161,7 +161,7 @@ export default function ProvisionalShiftEntry({ employee, access }) {
                                                 <Pencil className="w-4 h-4" />
                                             </button>
                                             <button onClick={() => { if (confirm('Eintrag löschen?')) deleteMutation.mutate(req.id); }}
-                                                className="p-2 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-400 transition-all">
+                                                className="p-2 rounded-lg hover:bg-status-danger/10 text-muted-foreground hover:text-status-danger transition-all">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -177,7 +177,7 @@ export default function ProvisionalShiftEntry({ employee, access }) {
                 <Card className="p-8 text-center">
                     <CalendarDays className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-40" />
                     <p className="text-muted-foreground text-sm">Noch keine Wunschschichten eingetragen</p>
-                    <Button onClick={openNew} className="mt-4 bg-amber-600 hover:bg-amber-700 gap-2">
+                    <Button onClick={openNew} className="mt-4 bg-status-warn/70 hover:bg-status-warn/70 gap-2">
                         <Plus className="w-4 h-4" /> Jetzt eintragen
                     </Button>
                 </Card>
@@ -219,7 +219,7 @@ export default function ProvisionalShiftEntry({ employee, access }) {
                                     <button key={t} type="button"
                                         onClick={() => setForm(f => ({ ...f, shift_type: f.shift_type === t ? '' : t }))}
                                         className={cn('px-3 py-2.5 rounded-xl border text-sm transition-all',
-                                            form.shift_type === t ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 font-semibold' : 'border-border text-muted-foreground')}>
+                                            form.shift_type === t ? 'bg-status-warn/20 border-status-warn/50 text-status-warn/25 font-semibold' : 'border-border text-muted-foreground')}>
                                         {t}
                                     </button>
                                 ))}
@@ -233,7 +233,7 @@ export default function ProvisionalShiftEntry({ employee, access }) {
                         <div className="flex gap-2 pt-1">
                             <Button variant="outline" onClick={() => setModalOpen(false)} className="flex-1 h-12">Abbrechen</Button>
                             <Button onClick={() => saveMutation.mutate(form)} disabled={!form.date || !form.start_time || !form.end_time}
-                                className="flex-1 h-12 bg-amber-600 hover:bg-amber-700">
+                                className="flex-1 h-12 bg-status-warn/70 hover:bg-status-warn/70">
                                 {editing ? 'Speichern' : 'Eintragen'}
                             </Button>
                         </div>

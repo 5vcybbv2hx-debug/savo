@@ -24,14 +24,14 @@ import { getUserDisplayName } from '@/lib/userDisplayName';
 
 // ── Farb-Palette für Kategorien ───────────────────────────────────────────────
 const COLOR_OPTIONS = [
-    { key: 'blue',   label: 'Blau',   ring: 'ring-blue-500',   bg: 'bg-blue-500/15',   text: 'text-blue-400',   border: 'border-blue-500/30' },
-    { key: 'amber',  label: 'Amber',  ring: 'ring-amber-500',  bg: 'bg-amber-500/15',  text: 'text-amber-400',  border: 'border-amber-500/30' },
-    { key: 'cyan',   label: 'Cyan',   ring: 'ring-cyan-500',   bg: 'bg-cyan-500/15',   text: 'text-cyan-400',   border: 'border-cyan-500/30' },
-    { key: 'orange', label: 'Orange', ring: 'ring-orange-500', bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/30' },
-    { key: 'stone',  label: 'Stone',  ring: 'ring-stone-500',  bg: 'bg-stone-500/15',  text: 'text-stone-400',  border: 'border-stone-500/30' },
-    { key: 'purple', label: 'Lila',   ring: 'ring-purple-500', bg: 'bg-purple-500/15', text: 'text-purple-400', border: 'border-purple-500/30' },
-    { key: 'green',  label: 'Grün',   ring: 'ring-green-500',  bg: 'bg-green-500/15',  text: 'text-green-400',  border: 'border-green-500/30' },
-    { key: 'rose',   label: 'Rosa',   ring: 'ring-rose-500',   bg: 'bg-rose-500/15',   text: 'text-rose-400',   border: 'border-rose-500/30' },
+    { key: 'blue',   label: 'Blau',   ring: 'ring-primary/70',   bg: 'bg-primary/15',   text: 'text-primary',   border: 'border-primary/30' },
+    { key: 'amber',  label: 'Amber',  ring: 'ring-status-warn/70',  bg: 'bg-status-warn/15',  text: 'text-status-warn',  border: 'border-status-warn/30' },
+    { key: 'cyan',   label: 'Cyan',   ring: 'ring-primary',   bg: 'bg-primary/15',   text: 'text-primary',   border: 'border-primary/30' },
+    { key: 'orange', label: 'Orange', ring: 'ring-status-warn/70', bg: 'bg-status-warn/15', text: 'text-status-warn', border: 'border-status-warn/30' },
+    { key: 'stone',  label: 'Stone',  ring: 'border-border',  bg: 'bg-surface',  text: 'text-muted-foreground',  border: 'border-border' },
+    { key: 'purple', label: 'Lila',   ring: 'ring-primary', bg: 'bg-primary/15', text: 'text-primary', border: 'border-primary/30' },
+    { key: 'green',  label: 'Grün',   ring: 'ring-status-ok/70',  bg: 'bg-status-ok/15',  text: 'text-status-ok',  border: 'border-status-ok/30' },
+    { key: 'rose',   label: 'Rosa',   ring: 'ring-primary',   bg: 'bg-primary/15',   text: 'text-primary',   border: 'border-primary/30' },
 ];
 
 function getColorCfg(colorKey) {
@@ -95,7 +95,7 @@ function InstructionLightbox({ lightbox, onClose, onNavigate }) {
                     </button>
                     <div className="flex gap-1.5">
                         {images.length <= 8 && images.map((_, i) => (
-                            <span key={i} className={cn('w-1.5 h-1.5 rounded-full transition-all', i === index ? 'bg-amber-500 scale-125' : 'bg-white/30')} />
+                            <span key={i} className={cn('w-1.5 h-1.5 rounded-full transition-all', i === index ? 'bg-status-warn/70 scale-125' : 'bg-white/30')} />
                         ))}
                     </div>
                     <button
@@ -193,7 +193,7 @@ function TaskEditModal({ task, categories, onSave, onClose }) {
                     <Button
                         onClick={() => canSave && onSave({ title: title.trim(), description: description.trim(), instructions: instructions.trim(), category })}
                         disabled={!canSave}
-                        className="flex-1 h-11 bg-amber-600 hover:bg-amber-700 text-white"
+                        className="flex-1 h-11 bg-status-warn/70 hover:bg-status-warn/70 text-white"
                     >
                         <Save className="w-4 h-4 mr-1.5" />
                         Speichern
@@ -264,7 +264,7 @@ function CategoryEditModal({ category, onSave, onClose }) {
                     <Button
                         onClick={() => name.trim() && onSave({ name: name.trim(), icon, color })}
                         disabled={!name.trim()}
-                        className="flex-1 h-11 bg-amber-600 hover:bg-amber-700 text-white"
+                        className="flex-1 h-11 bg-status-warn/70 hover:bg-status-warn/70 text-white"
                     >
                         <Save className="w-4 h-4 mr-1.5" />Speichern
                     </Button>
@@ -488,7 +488,7 @@ export default function Onboarding() {
                             className={cn(
                                 'flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all min-h-[36px]',
                                 editMode
-                                    ? 'bg-amber-500 border-amber-500 text-white'
+                                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                     : 'border-border text-muted-foreground hover:text-foreground'
                             )}
                         >
@@ -506,7 +506,7 @@ export default function Onboarding() {
                             onClick={() => setEmployeePickerOpen(o => !o)}
                             className="w-full flex items-center gap-3 px-4 py-3.5 min-h-[56px] hover:bg-secondary/30 transition-colors"
                         >
-                            <Users className="w-4 h-4 text-amber-500 shrink-0" />
+                            <Users className="w-4 h-4 text-status-warn shrink-0" />
                             <div className="flex-1 text-left">
                                 <p className="text-sm font-semibold text-foreground">
                                     {selectedEmployee
@@ -537,14 +537,14 @@ export default function Onboarding() {
                                                 className={cn(
                                                     'flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium border transition-all min-h-[40px]',
                                                     isSelected
-                                                        ? 'bg-amber-500 text-slate-900 border-amber-500'
-                                                        : 'bg-secondary/40 border-border text-muted-foreground hover:border-amber-500/50 hover:text-foreground'
+                                                        ? 'bg-status-warn/70 text-muted-foreground border-status-warn/70'
+                                                        : 'bg-secondary/40 border-border text-muted-foreground hover:border-status-warn/50 hover:text-foreground'
                                                 )}
                                             >
                                                 {emp.name}
                                                 <span className={cn(
                                                     'text-xs px-1.5 py-0.5 rounded-full font-bold',
-                                                    isSelected ? 'bg-black/20 text-slate-900' : empPct === 100 ? 'bg-green-500/20 text-green-400' : 'bg-secondary text-muted-foreground'
+                                                    isSelected ? 'bg-black/20 text-muted-foreground' : empPct === 100 ? 'bg-status-ok/20 text-status-ok' : 'bg-secondary text-muted-foreground'
                                                 )}>
                                                     {empPct}%
                                                 </span>
@@ -559,7 +559,7 @@ export default function Onboarding() {
                                                 resetMutation.mutate(selectedEmployee);
                                             }
                                         }}
-                                        className="mt-3 flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition-colors"
+                                        className="mt-3 flex items-center gap-1.5 text-xs text-status-danger hover:text-status-danger/25 transition-colors"
                                     >
                                         <RotateCcw className="w-3 h-3" />
                                         Fortschritt zurücksetzen
@@ -596,12 +596,12 @@ export default function Onboarding() {
                         </div>
                         <div className="w-full h-3 bg-secondary rounded-full overflow-hidden">
                             <div
-                                className={cn('h-full rounded-full transition-all duration-700', pct === 100 ? 'bg-gradient-to-r from-green-500 to-emerald-400' : 'bg-gradient-to-r from-amber-500 to-orange-500')}
+                                className={cn('h-full rounded-full transition-all duration-700', pct === 100 ? 'bg-gradient-to-r from-status-ok to-status-ok' : 'bg-gradient-to-r from-status-warn to-status-warn')}
                                 style={{ width: `${pct}%` }}
                             />
                         </div>
                         {pct === 100 && (
-                            <div className="flex items-center gap-2 mt-3 text-green-400 text-sm font-semibold">
+                            <div className="flex items-center gap-2 mt-3 text-status-ok text-sm font-semibold">
                                 <Trophy className="w-4 h-4" />
                                 Einlernliste vollständig abgeschlossen! 🎉
                             </div>
@@ -622,7 +622,7 @@ export default function Onboarding() {
                             const isOpen   = openCategories.has(cat.name);
 
                             return (
-                                <div key={cat.name} className={cn('rounded-2xl border overflow-hidden bg-card transition-all', allDone ? 'border-green-500/40' : colorCfg.border)}>
+                                <div key={cat.name} className={cn('rounded-2xl border overflow-hidden bg-card transition-all', allDone ? 'border-status-ok/40' : colorCfg.border)}>
 
                                     {/* Kategorie-Header */}
                                     <div className="flex items-center">
@@ -631,17 +631,17 @@ export default function Onboarding() {
                                             className="flex-1 flex items-center gap-3 px-4 py-4 text-left hover:bg-secondary/20 transition-colors min-h-[60px]"
                                         >
                                             {/* Icon */}
-                                            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg border', allDone ? 'bg-green-500/20 border-green-500/40' : colorCfg.bg + ' ' + colorCfg.border)}>
-                                                {allDone ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <span>{cat.icon}</span>}
+                                            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg border', allDone ? 'bg-status-ok/20 border-status-ok/40' : colorCfg.bg + ' ' + colorCfg.border)}>
+                                                {allDone ? <CheckCircle2 className="w-5 h-5 text-status-ok" /> : <span>{cat.icon}</span>}
                                             </div>
 
                                             {/* Name + Progress */}
                                             <div className="flex-1 min-w-0">
-                                                <p className={cn('font-semibold text-sm', allDone ? 'text-green-400' : 'text-foreground')}>{cat.name}</p>
+                                                <p className={cn('font-semibold text-sm', allDone ? 'text-status-ok' : 'text-foreground')}>{cat.name}</p>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
                                                         <div
-                                                            className={cn('h-full rounded-full transition-all', allDone ? 'bg-green-500' : colorCfg.text.replace('text-', 'bg-'))}
+                                                            className={cn('h-full rounded-full transition-all', allDone ? 'bg-status-ok/70' : colorCfg.text.replace('text-', 'bg-'))}
                                                             style={{ width: total > 0 ? `${(done / total) * 100}%` : '0%' }}
                                                         />
                                                     </div>
@@ -656,7 +656,7 @@ export default function Onboarding() {
                                         {editMode && (
                                             <button
                                                 onClick={() => setCategoryModal({ ...cat, isExisting: true })}
-                                                className="px-3 py-4 text-muted-foreground hover:text-amber-500 transition-colors min-h-[60px]"
+                                                className="px-3 py-4 text-muted-foreground hover:text-status-warn transition-colors min-h-[60px]"
                                                 title="Kategorie bearbeiten"
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
@@ -677,7 +677,7 @@ export default function Onboarding() {
                                                 const hasInstructions = (task.instructions && task.instructions.trim().length > 0) || hasImages;
 
                                                 return (
-                                                    <div key={task.id} className={cn('transition-colors', completed ? 'bg-green-500/5' : '')}>
+                                                    <div key={task.id} className={cn('transition-colors', completed ? 'bg-status-ok/5' : '')}>
                                                         <div className="flex items-start gap-3 px-4 py-3.5">
                                                             {/* Checkbox — nur wenn kein Edit-Mode */}
                                                             {!editMode && (
@@ -692,7 +692,7 @@ export default function Onboarding() {
                                                                     })}
                                                                     className={cn(
                                                                         'mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all min-w-[24px]',
-                                                                        completed ? 'bg-green-500 border-green-500' : 'border-border hover:border-green-400'
+                                                                        completed ? 'bg-status-ok/70 border-status-ok/70' : 'border-border hover:border-status-ok/70'
                                                                     )}
                                                                 >
                                                                     {completed && <Check className="w-3.5 h-3.5 text-white" />}
@@ -735,11 +735,11 @@ export default function Onboarding() {
                                                                     {editMode && (
                                                                         <div className="flex items-center gap-1 shrink-0">
                                                                             <button onClick={() => setTaskModal({ task })}
-                                                                                className="p-1.5 rounded-lg text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-all">
+                                                                                className="p-1.5 rounded-lg text-muted-foreground hover:text-status-warn hover:bg-status-warn/10 transition-all">
                                                                                 <Pencil className="w-3.5 h-3.5" />
                                                                             </button>
                                                                             <button onClick={() => setDeleteConfirm(task.id)}
-                                                                                className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all">
+                                                                                className="p-1.5 rounded-lg text-muted-foreground hover:text-status-danger hover:bg-status-danger/10 transition-all">
                                                                                 <Trash2 className="w-3.5 h-3.5" />
                                                                             </button>
                                                                         </div>
@@ -752,7 +752,7 @@ export default function Onboarding() {
                                                                         onClick={() => toggleInstructions(task.id)}
                                                                         className={cn(
                                                                             'mt-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
-                                                                            showInstructions ? 'text-amber-500' : 'text-muted-foreground hover:text-amber-500'
+                                                                            showInstructions ? 'text-status-warn' : 'text-muted-foreground hover:text-status-warn'
                                                                         )}
                                                                     >
                                                                         <BookOpen className="w-3.5 h-3.5" />
@@ -777,7 +777,7 @@ export default function Onboarding() {
                                                                                             <img
                                                                                                 src={url}
                                                                                                 alt={`Seite ${imgIdx + 1}`}
-                                                                                                className="h-44 w-auto rounded-xl border border-amber-500/30 object-contain bg-secondary/40 shadow-sm group-hover:border-amber-500/60 transition-colors"
+                                                                                                className="h-44 w-auto rounded-xl border border-status-warn/30 object-contain bg-secondary/40 shadow-sm group-hover:border-status-warn/60 transition-colors"
                                                                                                 loading="lazy"
                                                                                             />
                                                                                             <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/60 text-[10px] font-bold text-white">
@@ -793,7 +793,7 @@ export default function Onboarding() {
                                                                         )}
                                                                         {/* Text-Anleitung */}
                                                                         {task.instructions && task.instructions.trim().length > 0 && (
-                                                                            <div className="px-3 py-3 rounded-xl bg-amber-500/8 border border-amber-500/20 text-xs text-foreground leading-relaxed whitespace-pre-wrap">
+                                                                            <div className="px-3 py-3 rounded-xl bg-status-warn/8 border border-status-warn/20 text-xs text-foreground leading-relaxed whitespace-pre-wrap">
                                                                                 {task.instructions}
                                                                             </div>
                                                                         )}
@@ -809,7 +809,7 @@ export default function Onboarding() {
 
                                                                 {/* Abgehakt-Info */}
                                                                 {completed && taskProgress && !editMode && (
-                                                                    <p className="mt-1.5 text-[10px] text-green-500/70">
+                                                                    <p className="mt-1.5 text-[10px] text-status-ok/70">
                                                                         ✓ {formatDate(taskProgress.completed_at)}
                                                                         {taskProgress.completed_by ? ` · ${taskProgress.completed_by}` : ''}
                                                                     </p>
@@ -824,7 +824,7 @@ export default function Onboarding() {
                                             {editMode && (
                                                 <button
                                                     onClick={() => setTaskModal({ task: null, defaultCategory: cat.name })}
-                                                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground hover:text-amber-500 hover:bg-amber-500/5 transition-colors"
+                                                    className="w-full flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground hover:text-status-warn hover:bg-status-warn/5 transition-colors"
                                                 >
                                                     <Plus className="w-4 h-4" />
                                                     Aufgabe hinzufügen
@@ -840,7 +840,7 @@ export default function Onboarding() {
                         {editMode && (
                             <button
                                 onClick={() => setCategoryModal({})}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl border-2 border-dashed border-border text-sm text-muted-foreground hover:border-amber-500/50 hover:text-amber-500 transition-all min-h-[52px]"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl border-2 border-dashed border-border text-sm text-muted-foreground hover:border-status-warn/50 hover:text-status-warn transition-all min-h-[52px]"
                             >
                                 <Plus className="w-4 h-4" />
                                 Neue Kategorie erstellen
@@ -900,7 +900,7 @@ export default function Onboarding() {
                         <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => { deleteTaskMutation.mutate(deleteConfirm); setDeleteConfirm(null); }}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                            className="bg-status-danger/70 hover:bg-status-danger/70 text-white"
                         >Entfernen</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

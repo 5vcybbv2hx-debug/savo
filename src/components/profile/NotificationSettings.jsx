@@ -151,8 +151,8 @@ export default function NotificationSettings() {
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20">
-                            <Settings className="w-6 h-6 text-amber-500" />
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-status-warn/20 to-status-warn/20">
+                            <Settings className="w-6 h-6 text-status-warn" />
                         </div>
                         <div>
                             <h1 className="page-title">Benachrichtigungen</h1>
@@ -184,7 +184,7 @@ export default function NotificationSettings() {
                         <Card className="p-6 border-border">
                             <div className="mb-4">
                                 <h2 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2">
-                                    <Bell className="w-5 h-5 text-amber-500" />
+                                    <Bell className="w-5 h-5 text-status-warn" />
                                     Kategorien
                                 </h2>
                                 <p className="text-sm text-muted-foreground">
@@ -208,8 +208,8 @@ export default function NotificationSettings() {
                                 ))}
                             </div>
 
-                            <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                <p className="text-xs sm:text-sm text-blue-200">
+                            <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                                <p className="text-xs sm:text-sm text-primary/25">
                                     ℹ️ Aktiviert: <strong>{enabledCategoriesCount}/{totalCategories}</strong> Kategorien
                                 </p>
                             </div>
@@ -271,10 +271,10 @@ export default function NotificationSettings() {
                         </Card>
 
                         {/* Info Box */}
-                        <Card className="p-4 bg-amber-500/10 border border-amber-500/20">
+                        <Card className="p-4 bg-status-warn/10 border border-status-warn/20">
                             <div className="flex gap-3">
                                 <span className="text-lg">💡</span>
-                                <div className="text-sm text-amber-200">
+                                <div className="text-sm text-status-warn/25">
                                     <p className="font-semibold mb-1">Kritische Benachrichtigungen</p>
                                     <p>
                                         Benachrichtigungen mit "Kritisch" Priorität können nicht ausgeblendet werden und werden dir immer angezeigt.
@@ -288,7 +288,7 @@ export default function NotificationSettings() {
                             <Button
                                 onClick={handleSave}
                                 disabled={saveMutation.isPending}
-                                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                                className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                             >
                                 <Save className="w-4 h-4 mr-2" />
                                 {saveMutation.isPending ? 'Wird gespeichert...' : 'Speichern'}

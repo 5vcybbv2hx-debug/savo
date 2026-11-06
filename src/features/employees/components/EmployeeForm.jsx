@@ -55,8 +55,8 @@ export default function EmployeeForm({ defaultValues, onSubmit, onCancel, isPend
                                 onClick={() => toggleSkill(skill)}
                                 className={`px-3 py-1 rounded-full text-xs border transition-colors ${
                                     skills.includes(skill)
-                                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                                        : 'border-border text-muted-foreground hover:border-amber-500/30'
+                                        ? 'bg-status-warn/20 border-status-warn/50 text-status-warn/25'
+                                        : 'border-border text-muted-foreground hover:border-status-warn/30'
                                 }`}
                             >
                                 {skill}

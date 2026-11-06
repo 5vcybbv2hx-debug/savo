@@ -18,13 +18,13 @@ const SLIDE_TYPES = [
 ];
 
 const TYPE_COLORS = {
-  announcement:  'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  event:         'bg-purple-500/10 text-purple-400 border-purple-500/30',
-  drink_special: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  image_only:    'bg-green-500/10 text-green-400 border-green-500/30',
-  countdown:     'bg-red-500/10 text-red-400 border-red-500/30',
-  qr_code:       'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-  tonight:       'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+  announcement:  'bg-primary/10 text-primary border-primary/30',
+  event:         'bg-primary/10 text-primary border-primary/30',
+  drink_special: 'bg-status-warn/10 text-status-warn border-status-warn/30',
+  image_only:    'bg-status-ok/10 text-status-ok border-status-ok/30',
+  countdown:     'bg-status-danger/10 text-status-danger border-status-danger/30',
+  qr_code:       'bg-primary/10 text-primary border-primary/30',
+  tonight:       'bg-primary/10 text-primary border-primary/30',
 };
 
 const isEventSlide = (s) => typeof s.cta_text === 'string' && s.cta_text.startsWith('event:');

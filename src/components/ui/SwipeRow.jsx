@@ -20,7 +20,7 @@ const SWIPE_ALT_THRESHOLD = 190;
  *  - revealIcon:    lucide icon component shown in the primary reveal
  *  - revealColorAlt: bg class when past the alt threshold (defaults to revealColor)
  *  - revealIconAlt:  icon shown when past the alt threshold (defaults to revealIcon)
- *  - revealColorRight: bg class for the right-swipe reveal (default 'bg-green-600')
+ *  - revealColorRight: bg class for the right-swipe reveal (default 'bg-status-ok/70')
  *  - revealIconRight:  icon shown in the right-swipe reveal
  *  - className:      classes on the outer clipping container
  *  - contentClassName: classes on the inner moving content div
@@ -35,7 +35,7 @@ export default function SwipeRow({
     revealIcon: RevealIcon,
     revealColorAlt,
     revealIconAlt: RevealIconAlt,
-    revealColorRight = 'bg-green-600',
+    revealColorRight = 'bg-status-ok/70',
     revealIconRight: RevealIconRight,
     className,
     contentClassName,

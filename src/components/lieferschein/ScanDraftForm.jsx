@@ -7,9 +7,9 @@ import ReviewTable from './ReviewTable';
 import ReturnSection from './ReturnSection';
 
 const DOC_TYPES = {
-  lieferschein: { label: 'Lieferschein', className: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
-  leergut: { label: 'Leergut / Rückgabe', className: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
-  rechnung: { label: 'Rechnung', className: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  lieferschein: { label: 'Lieferschein', className: 'bg-status-ok/15 text-status-ok dark:text-status-ok' },
+  leergut: { label: 'Leergut / Rückgabe', className: 'bg-status-warn/15 text-status-warn dark:text-status-warn' },
+  rechnung: { label: 'Rechnung', className: 'bg-primary/15 text-primary dark:text-primary' },
   unbekannt: { label: 'Typ unklar', className: 'bg-muted text-muted-foreground' },
 };
 
@@ -93,9 +93,9 @@ export default function ScanDraftForm({
         )}
 
         {draft.missing_pages?.length > 0 && (
-          <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+          <div className="flex items-start gap-2 rounded-xl border border-status-warn/30 bg-status-warn/10 p-2.5">
+            <AlertTriangle className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+            <p className="text-xs font-medium text-status-warn dark:text-status-warn">
               {draft.missing_pages.map((page) => `Seite ${page} nicht erkannt`).join(' · ')}
               {' '}– bitte Positionen manuell ergänzen oder Seite neu aufnehmen.
             </p>
@@ -104,7 +104,7 @@ export default function ScanDraftForm({
       </div>
 
       {draft.document_type === 'leergut' && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+        <div className="rounded-xl border border-status-warn/30 bg-status-warn/10 p-2.5 text-xs font-medium text-status-warn dark:text-status-warn">
           Auf diesem Beleg ist nur Leergut/Rückgabe erkannt – es wird kein Wareneingang gebucht.
         </div>
       )}

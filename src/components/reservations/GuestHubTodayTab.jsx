@@ -11,11 +11,11 @@ import { cn } from '@/lib/utils';
 import { getTableDisplayName } from '@/components/tables/TableNameDisplay';
 
 const STATUS_DOT = {
-    'vorgemerkt': 'bg-blue-400',
-    'bestätigt':  'bg-green-400',
-    'erschienen': 'bg-emerald-500',
-    'no-show':    'bg-red-400',
-    'storniert':  'bg-slate-400',
+    'vorgemerkt': 'bg-primary/70',
+    'bestätigt':  'bg-status-ok/70',
+    'erschienen': 'bg-status-ok/70',
+    'no-show':    'bg-status-danger/70',
+    'storniert':  'bg-muted',
 };
 
 export default function GuestHubTodayTab({
@@ -37,9 +37,9 @@ export default function GuestHubTodayTab({
             {/* Stats — 3 Kacheln */}
             <div className="grid grid-cols-3 gap-2">
                 {[
-                    { label: 'Frei', count: stats.free, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
-                    { label: 'Reserviert', count: stats.reserved, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
-                    { label: 'Heute', count: todayReservations.length, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+                    { label: 'Frei', count: stats.free, color: 'text-status-ok', bg: 'bg-status-ok/10 border-status-ok/20' },
+                    { label: 'Reserviert', count: stats.reserved, color: 'text-status-danger', bg: 'bg-status-danger/10 border-status-danger/20' },
+                    { label: 'Heute', count: todayReservations.length, color: 'text-status-warn', bg: 'bg-status-warn/10 border-status-warn/20' },
                 ].map(({ label, count, color, bg }) => (
                     <div key={label} className={cn('rounded-xl border p-3 text-center', bg)}>
                         <p className={cn('text-2xl font-bold tabular-nums', color)}>{count}</p>
@@ -51,8 +51,8 @@ export default function GuestHubTodayTab({
             {/* Nächste Reservierung — Hero-Banner */}
             {nextRes && (
                 <button onClick={() => onEditReservation(nextRes)}
-                    className="w-full text-left rounded-2xl border border-amber-500/30 bg-amber-500/8 p-4 hover:bg-amber-500/12 transition-colors">
-                    <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    className="w-full text-left rounded-2xl border border-status-warn/30 bg-status-warn/8 p-4 hover:bg-status-warn/12 transition-colors">
+                    <p className="text-xs font-semibold text-status-warn uppercase tracking-wider mb-2 flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5" />Als nächstes
                     </p>
                     <div className="flex items-center justify-between gap-3">
@@ -60,31 +60,31 @@ export default function GuestHubTodayTab({
                             <p className="font-bold text-foreground text-lg leading-tight">{nextRes.customer_name}</p>
                             <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                                 <span className="flex items-center gap-1">
-                                    <Clock className="w-3.5 h-3.5 text-amber-400" />{nextRes.time} Uhr
+                                    <Clock className="w-3.5 h-3.5 text-status-warn" />{nextRes.time} Uhr
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <Users className="w-3.5 h-3.5 text-amber-400" />{nextRes.guests} {nextRes.guests === 1 ? 'Person' : 'Personen'}
+                                    <Users className="w-3.5 h-3.5 text-status-warn" />{nextRes.guests} {nextRes.guests === 1 ? 'Person' : 'Personen'}
                                 </span>
                                 {nextRes.table && (() => {
                                     const t = tables.find(t => t.id === nextRes.table || t.table_number === nextRes.table);
                                     return t ? (
                                         <span className="flex items-center gap-1">
-                                            <MapPin className="w-3.5 h-3.5 text-amber-400" />{getTableDisplayName(t)}
+                                            <MapPin className="w-3.5 h-3.5 text-status-warn" />{getTableDisplayName(t)}
                                         </span>
                                     ) : null;
                                 })()}
                             </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-amber-400 shrink-0" />
+                        <ChevronRight className="w-5 h-5 text-status-warn shrink-0" />
                     </div>
                 </button>
             )}
 
             {/* Tisch ohne Zuweisung */}
             {todayReservations.filter(r => !r.table).length > 0 && (
-                <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-400">
+                <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-status-warn/10 border border-status-warn/20">
+                    <AlertCircle className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+                    <p className="text-xs text-status-warn">
                         <strong>{todayReservations.filter(r => !r.table).length}</strong> Reservierung(en) ohne Tischzuweisung
                     </p>
                 </div>
@@ -98,7 +98,7 @@ export default function GuestHubTodayTab({
                     <p className="text-sm text-muted-foreground mt-1 mb-5">Noch ruhig heute.</p>
                     {permissions.canEditReservations && (
                         <Button onClick={onAddReservation}
-                            className="bg-amber-600 hover:bg-amber-700 gap-2">
+                            className="bg-status-warn/70 hover:bg-status-warn/70 gap-2">
                             <Plus className="w-4 h-4" />Reservierung anlegen
                         </Button>
                     )}
@@ -128,7 +128,7 @@ export default function GuestHubTodayTab({
                                         onClick={() => onEditReservation(res)}
                                         className={cn(
                                             'w-full flex items-center gap-3 pl-10 pr-4 py-3 rounded-xl text-left transition-all relative min-h-[56px]',
-                                            isNext ? 'bg-amber-500/10 border border-amber-500/25' :
+                                            isNext ? 'bg-status-warn/10 border border-status-warn/25' :
                                             isPast ? 'opacity-45 hover:opacity-70' :
                                             'hover:bg-accent/50'
                                         )}>
@@ -142,7 +142,7 @@ export default function GuestHubTodayTab({
                                         {/* Zeit */}
                                         <span className={cn(
                                             'text-sm font-bold tabular-nums shrink-0 w-11',
-                                            isNext ? 'text-amber-400' : isPast ? 'text-muted-foreground' : 'text-foreground'
+                                            isNext ? 'text-status-warn' : isPast ? 'text-muted-foreground' : 'text-foreground'
                                         )}>
                                             {res.time}
                                         </span>
@@ -165,7 +165,7 @@ export default function GuestHubTodayTab({
                                                     </span>
                                                 )}
                                                 {!res.table && (
-                                                    <span className="text-amber-400">kein Tisch</span>
+                                                    <span className="text-status-warn">kein Tisch</span>
                                                 )}
                                             </div>
                                         </div>
@@ -182,7 +182,7 @@ export default function GuestHubTodayTab({
             {/* FAB — neue Reservierung */}
             {permissions.canEditReservations && todayReservations.length > 0 && (
                 <Button onClick={onAddReservation}
-                    className="w-full bg-amber-600 hover:bg-amber-700 gap-2 h-11">
+                    className="w-full bg-status-warn/70 hover:bg-status-warn/70 gap-2 h-11">
                     <Plus className="w-4 h-4" />Neue Reservierung
                 </Button>
             )}

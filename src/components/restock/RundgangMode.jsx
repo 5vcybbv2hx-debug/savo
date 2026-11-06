@@ -340,7 +340,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
     if (isInitialLoading) {
         return (
             <div className="flex flex-col items-center justify-center gap-3 py-20">
-                <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-status-warn/30 border-t-amber-500 rounded-full animate-spin" />
                 <p className="text-sm text-muted-foreground">Lade Lagerplätze…</p>
             </div>
         );
@@ -387,7 +387,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                     </span>
                     <div className="flex items-center gap-2 shrink-0">
                         {allDone && (
-                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            <span className="text-xs font-bold text-status-ok dark:text-status-ok">
                                 ✓ Alles erledigt!
                             </span>
                         )}
@@ -400,7 +400,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                 </div>
                 <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                        className="h-full bg-status-ok/70 rounded-full transition-all duration-500"
                         style={{ width: overallProgress.total > 0 ? `${(overallProgress.done / overallProgress.total) * 100}%` : '0%' }}
                     />
                 </div>
@@ -428,12 +428,12 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                             className="w-full flex items-center gap-2.5 px-1 py-2"
                             onClick={() => setExpandedAreas(prev => ({ ...prev, [area.id]: !isExpanded }))}
                         >
-                            <div className="w-6 h-6 rounded-md bg-amber-500/15 flex items-center justify-center shrink-0">
-                                <Layers className="w-3.5 h-3.5 text-amber-500" />
+                            <div className="w-6 h-6 rounded-md bg-status-warn/15 flex items-center justify-center shrink-0">
+                                <Layers className="w-3.5 h-3.5 text-status-warn" />
                             </div>
                             <span className="text-sm font-semibold text-foreground flex-1 text-left">{area.name}</span>
                             {areaAllDone && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                <CheckCircle2 className="w-4 h-4 text-status-ok shrink-0" />
                             )}
                             <span className="text-[10px] text-muted-foreground">{areaDone}/{areaTotal}</span>
                             {isExpanded
@@ -470,7 +470,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                     </p>
                                                 </div>
                                                 {furAllDone && (
-                                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                                    <CheckCircle2 className="w-4 h-4 text-status-ok shrink-0" />
                                                 )}
                                             </div>
 
@@ -501,7 +501,7 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                                                     className={cn(
                                                                         'flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all active:scale-95',
                                                                         done
-                                                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                                                                            ? 'bg-status-ok/10 border-status-ok/30 text-status-ok dark:text-status-ok'
                                                                             : 'bg-card border-border hover:border-primary/50 hover:bg-primary/5 text-foreground'
                                                                     )}
                                                                 >
@@ -569,10 +569,10 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                                 const needed = hasMin ? Math.max(0, a.min_stock - val) : null;
                                 const ratio = hasMin ? val / a.min_stock : 1;
 
-                                let needColor = 'text-emerald-600 dark:text-emerald-400';
+                                let needColor = 'text-status-ok dark:text-status-ok';
                                 if (hasMin) {
                                     if (ratio < 0.5) needColor = 'text-destructive';
-                                    else if (ratio < 1) needColor = 'text-amber-600 dark:text-amber-400';
+                                    else if (ratio < 1) needColor = 'text-status-warn dark:text-status-warn';
                                 }
 
                                 return (

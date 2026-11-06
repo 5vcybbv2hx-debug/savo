@@ -16,10 +16,10 @@ import { haptics } from "@/components/utils/haptics";
 import { getUserDisplayName } from '@/lib/userDisplayName';
 
 const PRIORITIES = [
-    { value: 'niedrig', label: 'Niedrig', color: 'bg-slate-500' },
-    { value: 'mittel',  label: 'Mittel',  color: 'bg-blue-500' },
-    { value: 'hoch',    label: 'Hoch',    color: 'bg-orange-500' },
-    { value: 'dringend',label: 'Dringend',color: 'bg-red-500' },
+    { value: 'niedrig', label: 'Niedrig', color: 'bg-surface' },
+    { value: 'mittel',  label: 'Mittel',  color: 'bg-primary/70' },
+    { value: 'hoch',    label: 'Hoch',    color: 'bg-status-warn/70' },
+    { value: 'dringend',label: 'Dringend',color: 'bg-status-danger/70' },
 ];
 
 const STATUSES = [
@@ -29,10 +29,10 @@ const STATUSES = [
 ];
 
 const priorityAccent = {
-    niedrig: 'bg-slate-500',
-    mittel:  'bg-blue-500',
-    hoch:    'bg-orange-500',
-    dringend:'bg-red-500',
+    niedrig: 'bg-surface',
+    mittel:  'bg-primary/70',
+    hoch:    'bg-status-warn/70',
+    dringend:'bg-status-danger/70',
 };
 
 const quickDates = [
@@ -306,7 +306,7 @@ export default function TodoModal({ open, onClose, todo, employees, onSave, curr
                                             className={cn(
                                                 "px-3 py-2.5 rounded-xl border text-sm transition-all active:scale-95",
                                                 selected
-                                                    ? "bg-amber-500/20 border-amber-500/50 text-amber-300 font-semibold"
+                                                    ? "bg-status-warn/20 border-status-warn/50 text-status-warn/25 font-semibold"
                                                     : "border-border text-muted-foreground"
                                             )}
                                         >
@@ -355,7 +355,7 @@ export default function TodoModal({ open, onClose, todo, employees, onSave, curr
                                         </button>
                                         <span className={cn("text-xs flex-1", subtask.done ? "line-through text-muted-foreground" : "text-foreground")}>{subtask.title}</span>
                                         <button type="button" onClick={() => removeSubtask(subtask.id)}
-                                            className="text-muted-foreground hover:text-red-400 transition-colors">
+                                            className="text-muted-foreground hover:text-status-danger transition-colors">
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
@@ -382,7 +382,7 @@ export default function TodoModal({ open, onClose, todo, employees, onSave, curr
                     <Button type="button" variant="outline" onClick={onClose} className="h-12 text-base">
                         Abbrechen
                     </Button>
-                    <Button type="button" onClick={handleSubmit} className="h-12 text-base bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 font-semibold">
+                    <Button type="button" onClick={handleSubmit} className="h-12 text-base bg-gradient-to-r from-status-warn to-status-warn hover:from-status-warn hover:to-status-warn text-muted-foreground font-semibold">
                         {todo ? 'Speichern' : 'Hinzufügen'}
                     </Button>
                 </MobileModalFooter>

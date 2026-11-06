@@ -88,7 +88,7 @@ function DayCard({ day, isSelected, onClick, onDelete }) {
             onClick={onClick}
             className={cn(
                 'cursor-pointer border transition-all active:scale-[0.99]',
-                isSelected ? 'border-amber-500/60 bg-amber-500/5' : 'border-border bg-card hover:border-border/80',
+                isSelected ? 'border-status-warn/60 bg-status-warn/5' : 'border-border bg-card hover:border-border/80',
             )}
         >
             <CardContent className="px-3 py-3 space-y-2">
@@ -104,17 +104,17 @@ function DayCard({ day, isSelected, onClick, onDelete }) {
                     </div>
                     <div className="flex flex-wrap gap-1 justify-end">
                         {day.hasPDF && (
-                            <Badge className="bg-blue-500/15 text-blue-400 text-[10px] px-1.5 py-0.5 h-auto">
+                            <Badge className="bg-primary/15 text-primary text-[10px] px-1.5 py-0.5 h-auto">
                                 <FileText className="w-3 h-3 mr-0.5" />PDF
                             </Badge>
                         )}
                         {day.hasWarning && (
-                            <Badge className="bg-red-500/15 text-red-400 text-[10px] px-1.5 py-0.5 h-auto">
+                            <Badge className="bg-status-danger/15 text-status-danger text-[10px] px-1.5 py-0.5 h-auto">
                                 ⚠ {day.ratio?.toFixed(0)}%
                             </Badge>
                         )}
                         {day.tips > 0 && (
-                            <Badge className="bg-purple-500/15 text-purple-400 text-[10px] px-1.5 py-0.5 h-auto">
+                            <Badge className="bg-primary/15 text-primary text-[10px] px-1.5 py-0.5 h-auto">
                                 <Gift className="w-3 h-3 mr-0.5" />{day.tips.toFixed(0)} €
                             </Badge>
                         )}
@@ -125,19 +125,19 @@ function DayCard({ day, isSelected, onClick, onDelete }) {
                 <div className="grid grid-cols-3 gap-2">
                     <div className="text-center">
                         <p className="text-[10px] text-muted-foreground">Umsatz</p>
-                        <p className="text-sm font-bold text-green-400">
+                        <p className="text-sm font-bold text-status-ok">
                             {day.revenue > 0 ? `${day.revenue.toFixed(0)} €` : '–'}
                         </p>
                     </div>
                     <div className="text-center">
                         <p className="text-[10px] text-muted-foreground">Personal</p>
-                        <p className={cn('text-sm font-bold', day.hasWarning ? 'text-red-400' : 'text-amber-400')}>
+                        <p className={cn('text-sm font-bold', day.hasWarning ? 'text-status-danger' : 'text-status-warn')}>
                             {day.laborCost > 0 ? `${day.laborCost.toFixed(0)} €` : '–'}
                         </p>
                     </div>
                     <div className="text-center">
                         <p className="text-[10px] text-muted-foreground">Ergebnis</p>
-                        <p className={cn('text-sm font-bold', net !== null ? (net >= 0 ? 'text-green-400' : 'text-red-400') : 'text-muted-foreground')}>
+                        <p className={cn('text-sm font-bold', net !== null ? (net >= 0 ? 'text-status-ok' : 'text-status-danger') : 'text-muted-foreground')}>
                             {net !== null ? `${net.toFixed(0)} €` : '–'}
                         </p>
                     </div>
@@ -155,7 +155,7 @@ function DayCard({ day, isSelected, onClick, onDelete }) {
                     <div className="border-t border-border/40 pt-1.5 flex justify-end">
                         <button
                             onClick={(e) => { e.stopPropagation(); onDelete(day); }}
-                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-400 transition-colors px-1 py-0.5 rounded"
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-status-danger transition-colors px-1 py-0.5 rounded"
                         >
                             <Trash2 className="w-3 h-3" />
                             Löschen
@@ -175,7 +175,7 @@ function Chip({ label, active, onClick }) {
             className={cn(
                 'px-3 py-1.5 rounded-full text-xs font-medium border transition-all min-h-[36px]',
                 active
-                    ? 'bg-amber-600 border-amber-600 text-white'
+                    ? 'bg-status-warn/70 border-status-warn/70 text-white'
                     : 'bg-secondary/40 border-border text-muted-foreground hover:text-foreground',
             )}
         >
@@ -262,7 +262,7 @@ export default function DailyRevenueList({ revenues, timeEntries, tipDistributio
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Datum, Notiz suchen…"
-                            className="w-full h-11 pl-9 pr-9 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                            className="w-full h-11 pl-9 pr-9 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-status-warn/50"
                         />
                         {search && (
                             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -275,7 +275,7 @@ export default function DailyRevenueList({ revenues, timeEntries, tipDistributio
                         className={cn(
                             'h-11 w-11 flex items-center justify-center rounded-xl border transition-colors',
                             activeFilterCount > 0
-                                ? 'bg-amber-600 border-amber-600 text-white'
+                                ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                 : 'bg-card border-border text-muted-foreground hover:text-foreground',
                         )}
                     >
@@ -353,8 +353,8 @@ export default function DailyRevenueList({ revenues, timeEntries, tipDistributio
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
                     <div className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center">
-                                <Trash2 className="w-5 h-5 text-red-400" />
+                            <div className="w-10 h-10 rounded-full bg-status-danger/15 flex items-center justify-center">
+                                <Trash2 className="w-5 h-5 text-status-danger" />
                             </div>
                             <div>
                                 <p className="font-semibold text-foreground">Eintrag löschen?</p>
@@ -375,7 +375,7 @@ export default function DailyRevenueList({ revenues, timeEntries, tipDistributio
                             </button>
                             <button
                                 onClick={() => { onDelete(confirmDelete); setConfirmDelete(null); }}
-                                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors"
+                                className="flex-1 py-2.5 rounded-xl bg-status-danger/70 hover:bg-status-danger/70 text-white text-sm font-medium transition-colors"
                             >
                                 Löschen
                             </button>

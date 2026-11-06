@@ -44,9 +44,9 @@ import SheetMenu from '@/components/ui/SheetMenu';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const ROLE_COLORS = {
     'Aushilfe': 'bg-muted/80 text-muted-foreground border border-border',
-    'Vollzeit':  'bg-blue-500/15 text-blue-400 border border-blue-500/30',
-    'Manager':   'bg-purple-500/15 text-purple-400 border border-purple-500/30',
-    'Teilzeit':  'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30',
+    'Vollzeit':  'bg-primary/15 text-primary border border-primary/30',
+    'Manager':   'bg-primary/15 text-primary border border-primary/30',
+    'Teilzeit':  'bg-primary/15 text-primary border border-primary/30',
 };
 
 function getVacationStatus(vacations, employeeId) {
@@ -197,7 +197,7 @@ export default function Employees() {
                         {companyInfo?.whatsapp_group_link && (
                             <a href={companyInfo.whatsapp_group_link}
                                 target="_blank" rel="noopener noreferrer"
-                                className="w-9 h-9 flex items-center justify-center rounded-lg bg-green-500/15 border border-green-500/30 text-green-400 hover:bg-green-500/25 transition-all"
+                                className="w-9 h-9 flex items-center justify-center rounded-lg bg-status-ok/15 border border-status-ok/30 text-status-ok hover:bg-status-ok/25 transition-all"
                                 title="Team-WhatsApp-Gruppe">
                                 <MessageCircle className="w-4 h-4" />
                             </a>
@@ -254,7 +254,7 @@ export default function Employees() {
                         {permissions.isManager && (
                             <Button
                                 onClick={() => navigate('/EmployeeProfile/new')}
-                                className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                                className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                                 <Plus className="w-4 h-4" />
                                 <span className="hidden sm:inline">Neu</span>
                             </Button>
@@ -279,7 +279,7 @@ export default function Employees() {
                                 className={cn(
                                     'px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-all',
                                     skillFilter.includes(s)
-                                        ? 'bg-amber-600 border-amber-600 text-white'
+                                        ? 'bg-status-warn/70 border-status-warn/70 text-white'
                                         : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                                 )}>
                                 {s}
@@ -296,10 +296,10 @@ export default function Employees() {
 
                 {/* ── Alert: fehlende E-Mails ──────────────────────────────── */}
                 {permissions.isManager && missingEmail.length > 0 && (
-                    <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-amber-500/8 border border-amber-500/25">
-                        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-status-warn/8 border border-status-warn/25">
+                        <AlertCircle className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
                         <div>
-                            <p className="text-sm font-semibold text-amber-400">
+                            <p className="text-sm font-semibold text-status-warn">
                                 {missingEmail.length} Mitarbeiter ohne E-Mail
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -341,7 +341,7 @@ export default function Employees() {
                                     <div className="relative shrink-0">
                                         <EmployeeAvatar employee={emp} size="sm" />
                                         {onVacation && (
-                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center border border-background" title="Im Urlaub">
+                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-primary/70 flex items-center justify-center border border-background" title="Im Urlaub">
                                                 <Palmtree className="w-2.5 h-2.5 text-white" />
                                             </div>
                                         )}
@@ -352,7 +352,7 @@ export default function Employees() {
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                             <p className="text-sm font-semibold text-foreground truncate">{emp.name}</p>
                                             {isOwn && (
-                                                <span className="text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded px-1.5 py-0.5 font-bold shrink-0">
+                                                <span className="text-[10px] bg-status-warn/15 text-status-warn border border-status-warn/30 rounded px-1.5 py-0.5 font-bold shrink-0">
                                                     Ich
                                                 </span>
                                             )}
@@ -365,7 +365,7 @@ export default function Employees() {
                                                 <span key={s} className="text-[10px] text-muted-foreground">· {s}</span>
                                             ))}
                                             {onVacation && (
-                                                <span className="text-[10px] text-blue-400 font-medium">
+                                                <span className="text-[10px] text-primary font-medium">
                                                     · Urlaub bis {format(parseISO(onVacation.end_date), 'dd.MM.', { locale: de })}
                                                 </span>
                                             )}
@@ -396,7 +396,7 @@ export default function Employees() {
                                             <button
                                                 onClick={e => { e.stopPropagation(); handleInvite(emp); }}
                                                 disabled={inviting === emp.id}
-                                                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10 transition-all min-h-[44px] min-w-[44px]"
+                                                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-status-warn hover:bg-status-warn/10 transition-all min-h-[44px] min-w-[44px]"
                                                 title="App-Einladung senden">
                                                 {inviting === emp.id
                                                     ? <Clock className="w-3.5 h-3.5 animate-pulse" />
@@ -416,7 +416,7 @@ export default function Employees() {
                                                 <a href={`https://wa.me/${emp.phone.replace(/\D/g, '')}`}
                                                     target="_blank" rel="noopener noreferrer"
                                                     onClick={e => e.stopPropagation()}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-all min-h-[44px] min-w-[44px]"
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-status-ok/15 text-status-ok hover:bg-status-ok/25 transition-all min-h-[44px] min-w-[44px]"
                                                     title="WhatsApp">
                                                     <MessageCircle className="w-3.5 h-3.5" />
                                                 </a>

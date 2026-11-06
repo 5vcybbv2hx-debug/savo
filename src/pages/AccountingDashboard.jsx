@@ -181,10 +181,10 @@ export default function AccountingDashboard() {
 
     // ── Schnellzugriff ────────────────────────────────────────────────────────
     const QUICK_LINKS = [
-        { label: 'Belege',          icon: Receipt,      href: '/AccountingReceipts',   color: 'text-blue-400',   bg: 'bg-blue-500/10'   },
-        { label: 'Kassenbuch',      icon: BookOpen,     href: '/AccountingCashbook',   color: 'text-amber-400',  bg: 'bg-amber-500/10'  },
-        { label: 'Offene Posten',   icon: TrendingDown, href: '/AccountingPayables',   color: 'text-red-400',    bg: 'bg-red-500/10'    },
-        { label: 'Export',          icon: Download,     href: '/AccountingExport',     color: 'text-purple-400', bg: 'bg-purple-500/10' },
+        { label: 'Belege',          icon: Receipt,      href: '/AccountingReceipts',   color: 'text-primary',   bg: 'bg-primary/10'   },
+        { label: 'Kassenbuch',      icon: BookOpen,     href: '/AccountingCashbook',   color: 'text-status-warn',  bg: 'bg-status-warn/10'  },
+        { label: 'Offene Posten',   icon: TrendingDown, href: '/AccountingPayables',   color: 'text-status-danger',    bg: 'bg-status-danger/10'    },
+        { label: 'Export',          icon: Download,     href: '/AccountingExport',     color: 'text-primary', bg: 'bg-primary/10' },
     ];
 
     return (
@@ -219,27 +219,27 @@ export default function AccountingDashboard() {
                 <Card className={cn(
                     'p-5 border-2 transition-all',
                     stats.rohgewinn >= 0
-                        ? 'bg-green-500/5 border-green-500/30'
-                        : 'bg-red-500/5 border-red-500/30'
+                        ? 'bg-status-ok/5 border-status-ok/30'
+                        : 'bg-status-danger/5 border-status-danger/30'
                 )}>
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
                         Rohgewinn {monthLabel}
                     </p>
                     <p className={cn(
                         'text-4xl font-bold tabular-nums tracking-tight',
-                        stats.rohgewinn >= 0 ? 'text-green-400' : 'text-red-400'
+                        stats.rohgewinn >= 0 ? 'text-status-ok' : 'text-status-danger'
                     )}>
                         {stats.rohgewinn >= 0 ? '+' : ''}{fmt(stats.rohgewinn)} €
                     </p>
                     <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/40">
                         <div className="flex items-center gap-1.5">
-                            <div className="w-2 h-2 rounded-full bg-green-400" />
+                            <div className="w-2 h-2 rounded-full bg-status-ok/70" />
                             <span className="text-xs text-muted-foreground">
                                 Einnahmen <span className="font-semibold text-foreground">{fmt(stats.totalRevenue)} €</span>
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            <div className="w-2 h-2 rounded-full bg-red-400" />
+                            <div className="w-2 h-2 rounded-full bg-status-danger/70" />
                             <span className="text-xs text-muted-foreground">
                                 Ausgaben <span className="font-semibold text-foreground">{fmt(stats.totalExpenses)} €</span>
                             </span>
@@ -258,8 +258,8 @@ export default function AccountingDashboard() {
                                 <div className={cn(
                                     'flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all hover:opacity-80',
                                     a.type === 'error'
-                                        ? 'bg-red-500/8 border-red-500/25 text-red-400'
-                                        : 'bg-amber-500/8 border-amber-500/25 text-amber-400'
+                                        ? 'bg-status-danger/8 border-status-danger/25 text-status-danger'
+                                        : 'bg-status-warn/8 border-status-warn/25 text-status-warn'
                                 )}>
                                     <AlertTriangle className="w-4 h-4 shrink-0" />
                                     <p className="text-xs font-semibold flex-1">{a.label}</p>
@@ -269,7 +269,7 @@ export default function AccountingDashboard() {
                         ))}
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-green-500/8 border border-green-500/20 text-green-400">
+                    <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-status-ok/8 border border-status-ok/20 text-status-ok">
                         <CheckCircle2 className="w-4 h-4 shrink-0" />
                         <p className="text-xs font-semibold">Alles erledigt — keine offenen Punkte</p>
                     </div>
@@ -300,11 +300,11 @@ export default function AccountingDashboard() {
                 {/* ── Weitere Bereiche — kompakt ───────────────────────────── */}
                 <div className="space-y-1">
                     {[
-                        { label: 'Außenaufträge',     icon: ReceiptText, href: '/ExternalBusiness',        color: 'text-indigo-400' },
-                        { label: 'Fixkosten',         icon: RefreshCw,   href: '/AccountingFixedCosts',    color: 'text-orange-400' },
-                        { label: 'Tagesabschluss',    icon: ArrowDownUp, href: '/DailyAnalysis',           color: 'text-cyan-400'   },
-                        { label: 'Umsatz-Historie', icon: TrendingUp, href: '/RevenueHistory', color: 'text-emerald-400' },
-                        { label: 'Gutscheine',      icon: Ticket,      href: '/Vouchers',         color: 'text-amber-400'   },
+                        { label: 'Außenaufträge',     icon: ReceiptText, href: '/ExternalBusiness',        color: 'text-primary' },
+                        { label: 'Fixkosten',         icon: RefreshCw,   href: '/AccountingFixedCosts',    color: 'text-status-warn' },
+                        { label: 'Tagesabschluss',    icon: ArrowDownUp, href: '/DailyAnalysis',           color: 'text-primary'   },
+                        { label: 'Umsatz-Historie', icon: TrendingUp, href: '/RevenueHistory', color: 'text-status-ok' },
+                        { label: 'Gutscheine',      icon: Ticket,      href: '/Vouchers',         color: 'text-status-warn'   },
                     ].map(item => (
                         <Link key={item.href} to={item.href}>
                             <div className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-border/40 bg-card hover:border-border hover:bg-accent/10 transition-all cursor-pointer group">

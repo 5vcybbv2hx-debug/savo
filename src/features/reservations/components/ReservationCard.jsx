@@ -47,13 +47,13 @@ export default function ReservationCard({ reservation, onConfirm, onCancel, onDe
                     <div className="flex gap-2 pt-1">
                         {onConfirm && status === 'vorgemerkt' && (
                             <Button size="sm" onClick={() => onConfirm(reservation.id)} disabled={isUpdating}
-                                className="flex-1 gap-1 bg-green-600 hover:bg-green-700 text-white text-xs">
+                                className="flex-1 gap-1 bg-status-ok/70 hover:bg-status-ok/70 text-white text-xs">
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Bestätigen
                             </Button>
                         )}
                         {onCancel && status !== 'storniert' && (
                             <Button size="sm" variant="outline" onClick={() => onCancel(reservation.id)} disabled={isUpdating}
-                                className="flex-1 gap-1 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10">
+                                className="flex-1 gap-1 text-xs border-status-danger/30 text-status-danger hover:bg-status-danger/10">
                                 <XCircle className="w-3.5 h-3.5" /> Stornieren
                             </Button>
                         )}

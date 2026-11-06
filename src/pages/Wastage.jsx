@@ -203,7 +203,7 @@ export default function Wastage() {
                                 { label: 'Notizen', field: 'notes' },
                             ]}
                             variant="outline"
-                            className="border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+                            className="border-status-ok/70 text-status-ok hover:bg-status-ok/70 hover:text-white"
                         />
                     </div>
 
@@ -218,7 +218,7 @@ export default function Wastage() {
                                 </div>
                             </Card>
                         ))}
-                        <Card className="p-4 border bg-amber-500/10 border-amber-500/20 col-span-2 sm:col-span-1">
+                        <Card className="p-4 border bg-status-warn/10 border-status-warn/20 col-span-2 sm:col-span-1">
                             <div className="text-center">
                                 <div className="text-2xl mb-1">📊</div>
                                 <div className="text-2xl font-bold text-foreground">{monthlyTotal.toFixed(1)}</div>
@@ -365,7 +365,7 @@ export default function Wastage() {
                             </Button>
                             <Button
                                 type="submit"
-                                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white min-h-[44px]"
+                                className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white min-h-[44px]"
                                 disabled={!selectedArticle || createMutation.isPending}
                             >
                                 <Plus className="w-4 h-4 mr-2" />
@@ -409,7 +409,7 @@ export default function Wastage() {
                             .sort(([a], [b]) => b.localeCompare(a))
                             .map(([date, items]) => (
                                 <div key={date}>
-                                    <h3 className="text-sm font-semibold text-amber-500 mb-3">
+                                    <h3 className="text-sm font-semibold text-status-warn mb-3">
                                         {format(new Date(date + 'T12:00:00'), 'dd.MM.yyyy')}
                                     </h3>
                                     <div className="space-y-2">
@@ -435,7 +435,7 @@ export default function Wastage() {
                                                                 </Badge>
                                                             </div>
                                                             <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                                                                <span className="font-semibold text-amber-500">
+                                                                <span className="font-semibold text-status-warn">
                                                                     {item.quantity} {item.unit || 'Stück'}
                                                                 </span>
                                                                 <span>•</span>

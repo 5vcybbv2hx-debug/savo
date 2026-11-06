@@ -42,8 +42,8 @@ const MIN_SCORE = 60;
 
 // ─── Level config ─────────────────────────────────────────────────────────────
 const LEVEL = {
-    kritisch: { border: 'border-red-500/50', bg: 'bg-red-500/10', dot: 'bg-red-500', text: 'text-red-400', badge: 'bg-red-500/20 text-red-300 border-red-500/30', label: 'KRITISCH' },
-    hoch:     { border: 'border-amber-500/40', bg: 'bg-amber-500/10', dot: 'bg-amber-400', text: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30', label: 'HOCH' },
+    kritisch: { border: 'border-status-danger/50', bg: 'bg-status-danger/10', dot: 'bg-status-danger/70', text: 'text-status-danger', badge: 'bg-status-danger/20 text-status-danger/25 border-status-danger/30', label: 'KRITISCH' },
+    hoch:     { border: 'border-status-warn/40', bg: 'bg-status-warn/10', dot: 'bg-status-warn/70', text: 'text-status-warn', badge: 'bg-status-warn/20 text-status-warn/25 border-status-warn/30', label: 'HOCH' },
     normal:   { border: 'border-border', bg: 'bg-card', dot: 'bg-muted-foreground', text: 'text-muted-foreground', badge: 'bg-secondary text-muted-foreground border-border', label: 'INFO' },
 };
 
@@ -86,7 +86,7 @@ function ApproveButton({ entryId }) {
             size="sm"
             onClick={() => approveMutation.mutate(entryId)}
             disabled={approveMutation.isPending}
-            className="h-10 min-w-[72px] bg-green-600 hover:bg-green-700 text-white text-xs gap-1 shrink-0"
+            className="h-10 min-w-[72px] bg-status-ok/70 hover:bg-status-ok/70 text-white text-xs gap-1 shrink-0"
         >
             <Check className="w-3.5 h-3.5" />OK
         </Button>
@@ -152,7 +152,7 @@ function EditDeleteButtons({ entry, employees }) {
                 variant="ghost"
                 onClick={handleDelete}
                 disabled={deleteMutation.isPending}
-                className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                className="h-8 w-8 p-0 text-status-danger hover:text-status-danger/25 hover:bg-status-danger/10"
             >
                 <Trash2 className="w-3.5 h-3.5" />
             </Button>
@@ -180,8 +180,8 @@ function TimeItems({ entries, employees }) {
                 'flex items-center gap-3 rounded-xl border px-4 py-3 min-h-[56px]',
                 LEVEL.kritisch.border, LEVEL.kritisch.bg
             )}>
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-sm shadow-red-500/50 shrink-0" />
-                <Clock className="w-4 h-4 text-red-400 shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-status-danger/70 animate-pulse shadow-sm shadow-red-500/50 shrink-0" />
+                <Clock className="w-4 h-4 text-status-danger shrink-0" />
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{e.employee_name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -284,11 +284,11 @@ function noteItems(notes) {
                 render: (
                     <div key={`note-${n.id}`} className={cn(
                         'rounded-xl border px-4 py-3 min-h-[56px]',
-                        prio === 'kritisch' ? 'border-red-500/40 bg-red-500/5' : 'border-amber-500/30 bg-amber-500/5'
+                        prio === 'kritisch' ? 'border-status-danger/40 bg-status-danger/5' : 'border-status-warn/30 bg-status-warn/5'
                     )}>
                         <div className="flex items-start gap-2">
-                            {n.is_pinned && <Pin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />}
-                            {n.priority === 'dringend' && <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />}
+                            {n.is_pinned && <Pin className="w-3.5 h-3.5 text-status-warn shrink-0 mt-0.5" />}
+                            {n.priority === 'dringend' && <AlertTriangle className="w-3.5 h-3.5 text-status-danger shrink-0 mt-0.5" />}
                             <div className="flex-1 min-w-0">
                                 {n.title && <p className="text-xs font-bold text-foreground mb-0.5">{n.title}</p>}
                                 <p className="text-sm text-foreground/90 line-clamp-2">{n.message}</p>
@@ -349,10 +349,10 @@ export default function AlarmPanel({ pendingTimeEntries, maintenanceTasks, today
         return (
             <section className="animate-fade-in">
                 <SectionHeader criticalCount={0} total={0} />
-                <Card className="border-green-500/30 bg-green-500/5">
+                <Card className="border-status-ok/30 bg-status-ok/5">
                     <CardContent className="p-4 flex items-center gap-3">
                         <span className="status-dot status-dot-green shrink-0" />
-                        <p className="text-sm text-green-400 font-medium">Alles in Ordnung – kein Handlungsbedarf</p>
+                        <p className="text-sm text-status-ok font-medium">Alles in Ordnung – kein Handlungsbedarf</p>
                     </CardContent>
                 </Card>
             </section>
@@ -398,16 +398,16 @@ export default function AlarmPanel({ pendingTimeEntries, maintenanceTasks, today
 function SectionHeader({ criticalCount, total }) {
     return (
         <div className="flex items-center gap-2 mb-3">
-            <ShieldAlert className={cn('w-4 h-4', criticalCount > 0 ? 'text-red-400' : 'text-muted-foreground')} />
+            <ShieldAlert className={cn('w-4 h-4', criticalCount > 0 ? 'text-status-danger' : 'text-muted-foreground')} />
             <h3 className="text-sm font-bold text-foreground uppercase tracking-wide flex-1">Alarm-Panel</h3>
             {criticalCount > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-xs font-semibold text-red-400 animate-pop">
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-danger/15 border border-status-danger/30 text-xs font-semibold text-status-danger animate-pop">
                     <span className="status-dot status-dot-red animate-pulse-dot" />
                     {criticalCount} kritisch
                 </span>
             )}
             {total > 0 && criticalCount === 0 && (
-                <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">{total} offen</Badge>
+                <Badge className="bg-status-warn/20 text-status-warn/25 border-status-warn/30 text-xs">{total} offen</Badge>
             )}
         </div>
     );

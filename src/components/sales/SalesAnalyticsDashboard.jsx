@@ -304,10 +304,10 @@ export default function SalesAnalyticsDashboard() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 border-amber-800/30">
+                <Card className="bg-gradient-to-br from-status-warn/20 to-status-warn/20 border-status-warn/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-amber-400">Gesamtumsatz</CardTitle>
-                        <DollarSign className="w-4 h-4 text-amber-500" />
+                        <CardTitle className="text-sm font-medium text-status-warn">Gesamtumsatz</CardTitle>
+                        <DollarSign className="w-4 h-4 text-status-warn" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-foreground">{kpis.totalRevenue.toFixed(2)} €</div>
@@ -315,10 +315,10 @@ export default function SalesAnalyticsDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-blue-900/20 to-indigo-900/20 border-blue-800/30">
+                <Card className="bg-gradient-to-br from-primary/20 to-primary/20 border-primary/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-blue-400">Transaktionen</CardTitle>
-                        <ShoppingCart className="w-4 h-4 text-blue-500" />
+                        <CardTitle className="text-sm font-medium text-primary">Transaktionen</CardTitle>
+                        <ShoppingCart className="w-4 h-4 text-primary" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-foreground">{kpis.totalTransactions}</div>
@@ -326,10 +326,10 @@ export default function SalesAnalyticsDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-800/30">
+                <Card className="bg-gradient-to-br from-status-ok/20 to-status-ok/20 border-status-ok/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-green-400">Ø Bonwert</CardTitle>
-                        <TrendingUp className="w-4 h-4 text-green-500" />
+                        <CardTitle className="text-sm font-medium text-status-ok">Ø Bonwert</CardTitle>
+                        <TrendingUp className="w-4 h-4 text-status-ok" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-foreground">{kpis.avgTransaction.toFixed(2)} €</div>
@@ -337,10 +337,10 @@ export default function SalesAnalyticsDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-purple-800/30">
+                <Card className="bg-gradient-to-br from-primary/20 to-primary/20 border-primary/30">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-purple-400">Top Artikel</CardTitle>
-                        <Award className="w-4 h-4 text-purple-500" />
+                        <CardTitle className="text-sm font-medium text-primary">Top Artikel</CardTitle>
+                        <Award className="w-4 h-4 text-primary" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-foreground">{topSellers.length}</div>
@@ -352,12 +352,12 @@ export default function SalesAnalyticsDashboard() {
             {/* Charts */}
             <Tabs defaultValue="trend" className="space-y-4">
                 <TabsList className="bg-card border border-border flex-wrap h-auto">
-                    <TabsTrigger value="trend" className="data-[state=active]:bg-amber-600">Umsatztrend</TabsTrigger>
-                    <TabsTrigger value="topsellers" className="data-[state=active]:bg-amber-600">Top-Seller</TabsTrigger>
-                    <TabsTrigger value="categories" className="data-[state=active]:bg-amber-600">Kategorien</TabsTrigger>
-                    <TabsTrigger value="payment" className="data-[state=active]:bg-amber-600">Zahlungsarten</TabsTrigger>
-                    <TabsTrigger value="heatmap" className="data-[state=active]:bg-amber-600">Zeitanalyse</TabsTrigger>
-                    <TabsTrigger value="scatter" className="data-[state=active]:bg-amber-600">Preis-Menge</TabsTrigger>
+                    <TabsTrigger value="trend" className="data-[state=active]:bg-status-warn/70">Umsatztrend</TabsTrigger>
+                    <TabsTrigger value="topsellers" className="data-[state=active]:bg-status-warn/70">Top-Seller</TabsTrigger>
+                    <TabsTrigger value="categories" className="data-[state=active]:bg-status-warn/70">Kategorien</TabsTrigger>
+                    <TabsTrigger value="payment" className="data-[state=active]:bg-status-warn/70">Zahlungsarten</TabsTrigger>
+                    <TabsTrigger value="heatmap" className="data-[state=active]:bg-status-warn/70">Zeitanalyse</TabsTrigger>
+                    <TabsTrigger value="scatter" className="data-[state=active]:bg-status-warn/70">Preis-Menge</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="trend">
@@ -411,7 +411,7 @@ export default function SalesAnalyticsDashboard() {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => setDrilldownItem(null)}
-                                        className="text-amber-500"
+                                        className="text-status-warn"
                                     >
                                         <X className="w-4 h-4 mr-2" />
                                         Zurück zur Übersicht
@@ -427,7 +427,7 @@ export default function SalesAnalyticsDashboard() {
                                         <div className="grid grid-cols-3 gap-4 text-sm">
                                             <div>
                                                 <p className="text-muted-foreground">Gesamtumsatz</p>
-                                                <p className="text-xl font-bold text-amber-500">{drilldownItem.revenue.toFixed(2)} €</p>
+                                                <p className="text-xl font-bold text-status-warn">{drilldownItem.revenue.toFixed(2)} €</p>
                                             </div>
                                             <div>
                                                 <p className="text-muted-foreground">Verkaufte Menge</p>

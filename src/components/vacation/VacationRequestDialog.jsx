@@ -145,7 +145,7 @@ export default function VacationRequestDialog({
                                             <button
                                                 type="button"
                                                 onClick={() => setPeriods((prev) => prev.filter((_, i) => i !== index))}
-                                                className="text-red-400 hover:text-red-300"
+                                                className="text-status-danger hover:text-status-danger/25"
                                                 aria-label="Zeitraum entfernen"
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -210,7 +210,7 @@ export default function VacationRequestDialog({
                             {remainingAfter !== null && (
                                 <div className="flex items-baseline justify-between">
                                     <span className="text-xs text-muted-foreground">Rest danach</span>
-                                    <span className={`text-sm font-semibold tabular-nums ${remainingAfter < 0 ? 'text-red-400' : 'text-foreground'}`}>
+                                    <span className={`text-sm font-semibold tabular-nums ${remainingAfter < 0 ? 'text-status-danger' : 'text-foreground'}`}>
                                         {fmt(remainingAfter)} Tage
                                     </span>
                                 </div>
@@ -227,8 +227,8 @@ export default function VacationRequestDialog({
                     )}
 
                     {overLimit && (
-                        <div className="rounded-lg border border-orange-600/40 bg-orange-500/10 p-3 space-y-2">
-                            <div className="flex items-start gap-2 text-xs text-orange-300">
+                        <div className="rounded-lg border border-status-warn/40 bg-status-warn/10 p-3 space-y-2">
+                            <div className="flex items-start gap-2 text-xs text-status-warn/25">
                                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                                 <span>
                                     Resturlaub reicht nicht: {fmt(requestedDays)} Tage beantragt,

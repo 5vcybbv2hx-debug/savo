@@ -131,7 +131,7 @@ export default function MaintenanceModal({ task, open, onClose }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border/50 shrink-0">
                     <DialogTitle className="flex items-center gap-2 text-base font-bold">
-                        <Wrench className="w-5 h-5 text-amber-500" />
+                        <Wrench className="w-5 h-5 text-status-warn" />
                         {task ? 'Wartung bearbeiten' : 'Neue Wartung'}
                     </DialogTitle>
                     <button

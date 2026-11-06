@@ -32,7 +32,7 @@ export default function QuickStockUpdate({ open, onClose, article, onUpdate }) {
                 </DialogHeader>
 
                 <div className="space-y-4 mt-4">
-                    <div className="p-3 bg-slate-50 rounded-lg">
+                    <div className="p-3 bg-card rounded-lg">
                         <p className="font-medium text-foreground">{article.name}</p>
                         <p className="text-sm text-muted-foreground mt-1">
                             Aktuell: {article.current_stock || 0} {article.unit}
@@ -95,7 +95,7 @@ export default function QuickStockUpdate({ open, onClose, article, onUpdate }) {
                             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
                                 Abbrechen
                             </Button>
-                            <Button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700">
+                            <Button type="submit" className="flex-1 bg-status-warn/70 hover:bg-status-warn/70">
                                 Aktualisieren
                             </Button>
                         </div>

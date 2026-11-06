@@ -21,7 +21,7 @@ export default function MobileHeader({
             {title}
           </h1>
           {badge && (
-            <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 font-semibold">
+            <span className="text-xs px-2 py-1 rounded-full bg-status-warn/20 text-status-warn font-semibold">
               {badge}
             </span>
           )}

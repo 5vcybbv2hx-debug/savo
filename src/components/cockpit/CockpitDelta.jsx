@@ -12,7 +12,7 @@ export default function CockpitDelta({ pct }) {
     return (
         <span className={cn(
             'inline-flex items-center gap-0.5 font-semibold',
-            up ? 'text-emerald-600' : 'text-red-600'
+            up ? 'text-status-ok' : 'text-status-danger'
         )}>
             <Icon className="w-3.5 h-3.5" />
             {`${sign}${pct.toFixed(1).replace('.', ',')} %`}

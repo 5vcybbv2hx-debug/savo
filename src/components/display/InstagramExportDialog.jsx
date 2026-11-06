@@ -392,9 +392,9 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
             {/* Methoden-Indikator */}
             <div className="flex items-center gap-2 text-xs">
               {recorder.availableMethod === 'hd' ? (
-                <span className="flex items-center gap-1.5 text-green-500"><span className="w-2 h-2 rounded-full bg-green-500" /> HD-Aufnahme (30 fps)</span>
+                <span className="flex items-center gap-1.5 text-status-ok"><span className="w-2 h-2 rounded-full bg-status-ok/70" /> HD-Aufnahme (30 fps)</span>
               ) : recorder.availableMethod === 'fallback' ? (
-                <span className="flex items-center gap-1.5 text-amber-500"><span className="w-2 h-2 rounded-full bg-amber-500" /> Vereinfachte Aufnahme (niedrigere Bildrate)</span>
+                <span className="flex items-center gap-1.5 text-status-warn"><span className="w-2 h-2 rounded-full bg-status-warn/70" /> Vereinfachte Aufnahme (niedrigere Bildrate)</span>
               ) : (
                 <span className="flex items-center gap-1.5 text-muted-foreground"><span className="w-2 h-2 rounded-full bg-muted-foreground" /> Nicht unterstützt</span>
               )}
@@ -414,9 +414,9 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
             {!showPreHint && recorder.availableMethod === 'none' ? (
               /* Browser nicht unterstützt */
               <div className="space-y-3">
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex gap-2">
-                  <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                <div className="rounded-xl border border-status-warn/30 bg-status-warn/5 p-3 flex gap-2">
+                  <Info className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+                  <p className="text-xs text-status-warn dark:text-status-warn leading-relaxed">
                     Videoaufnahme geht am besten am Computer (Chrome/Edge). Alternativ das Bild herunterladen.
                   </p>
                 </div>
@@ -501,9 +501,9 @@ export default function InstagramExportDialog({ open, onOpenChange, slide }) {
               </button>
               {kiExpanded && (
                 <div className="mt-3 space-y-2.5">
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 flex gap-2">
-                    <Info className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-relaxed">
+                  <div className="rounded-lg border border-status-warn/30 bg-status-warn/5 p-2.5 flex gap-2">
+                    <Info className="w-3.5 h-3.5 text-status-warn shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-status-warn dark:text-status-warn leading-relaxed">
                       KI-Videos können Texte verändern. Für verlässliche Infos das Bild oder die TV-Slide-Videoaufnahme nutzen.
                     </p>
                   </div>

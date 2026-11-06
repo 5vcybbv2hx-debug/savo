@@ -10,9 +10,9 @@ import { cn } from '@/lib/utils';
 import { getTableDisplayName } from '@/components/tables/TableNameDisplay';
 
 const STATUS_BADGE = {
-    'bestätigt':  'bg-green-500/15 text-green-400 border-green-500/30',
-    'vorgemerkt': 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-    'erschienen': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+    'bestätigt':  'bg-status-ok/15 text-status-ok border-status-ok/30',
+    'vorgemerkt': 'bg-status-warn/15 text-status-warn border-status-warn/30',
+    'erschienen': 'bg-primary/15 text-primary border-primary/30',
     'no-show':    'bg-muted text-muted-foreground border-border',
     'storniert':  'bg-muted text-muted-foreground border-border',
 };

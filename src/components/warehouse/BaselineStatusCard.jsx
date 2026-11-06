@@ -39,7 +39,7 @@ export default function BaselineStatusCard({ slots = [], assignments = [] }) {
         <span className="text-sm font-semibold text-foreground flex-1">Fächer ohne Basis</span>
         <span className={cn(
           'text-[10px] font-bold px-1.5 py-0.5 rounded-md tabular-nums',
-          without.length > 0 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+          without.length > 0 ? 'bg-status-warn/15 text-status-warn dark:text-status-warn' : 'bg-status-ok/15 text-status-ok dark:text-status-ok'
         )}>
           {without.length}
         </span>

@@ -27,7 +27,7 @@ export default function PrivacyShortDialog({ open, onAccept, onDecline, isLoadin
             Diese App verarbeitet personenbezogene Daten (z. B. Mitarbeiterdaten, Arbeitszeiten und Dokumente), um den Betrieb zu organisieren.
           </DialogDescription>
 
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
             <p className="text-xs text-muted-foreground">
               Bitte bestätige, dass du die Datenschutzerklärung gelesen hast.
             </p>

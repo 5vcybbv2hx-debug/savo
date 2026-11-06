@@ -116,7 +116,7 @@ export default function DocumentsPage() {
             {/* ── HEADER ───────────────────────────────────────────────────── */}
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="w-5 h-5 text-amber-400 shrink-0" />
+                    <FileText className="w-5 h-5 text-status-warn shrink-0" />
                     <h1 className="page-title">Dokumente</h1>
                     <Badge className="bg-secondary text-muted-foreground text-xs hidden sm:flex">
                         {activeCount} aktiv
@@ -127,7 +127,7 @@ export default function DocumentsPage() {
                         <Button
                             size="sm"
                             onClick={() => setShowUploader(true)}
-                            className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white min-h-[36px]"
+                            className="gap-1.5 bg-status-warn/70 hover:bg-status-warn/70 text-white min-h-[36px]"
                         >
                             <Upload className="w-3.5 h-3.5" />
                             <span className="hidden sm:inline">Hochladen</span>
@@ -162,7 +162,7 @@ export default function DocumentsPage() {
                         </button>
                     )}
                     {soonDocs.length > 0 && (
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border bg-amber-500/10 border-amber-500/20 text-amber-400">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border bg-status-warn/10 border-status-warn/20 text-status-warn">
                             <Clock className="w-3.5 h-3.5 shrink-0" />
                             {soonDocs.length} läuft in &lt;30 Tagen ab
                         </div>
@@ -297,7 +297,7 @@ export default function DocumentsPage() {
                     {Object.entries(groupedDocuments).map(([category, docs]) => (
                         <div key={category}>
                             <div className="flex items-center gap-2 mb-3">
-                                <FolderOpen className="w-4 h-4 text-amber-400" />
+                                <FolderOpen className="w-4 h-4 text-status-warn" />
                                 <h2 className="text-sm font-semibold text-foreground">{category}</h2>
                                 <Badge className="bg-secondary text-muted-foreground text-xs">{docs.length}</Badge>
                             </div>

@@ -130,11 +130,11 @@ export default function ShiftSwapApprovalCard() {
     return (
         <Card className="p-5 bg-card border-border">
             <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                    <RepeatIcon className="w-4 h-4 text-amber-400" />
+                <div className="w-8 h-8 rounded-lg bg-status-warn/20 flex items-center justify-center">
+                    <RepeatIcon className="w-4 h-4 text-status-warn" />
                 </div>
                 <h2 className="font-bold text-foreground">Schichttausch-Anfragen</h2>
-                <Badge className="bg-red-500/20 text-red-400 border border-red-500/30 ml-auto">
+                <Badge className="bg-status-danger/20 text-status-danger border border-status-danger/30 ml-auto">
                     {pendingRequests.length} ausstehend
                 </Badge>
             </div>
@@ -156,7 +156,7 @@ export default function ShiftSwapApprovalCard() {
                                     <p className="text-xs text-muted-foreground italic mt-0.5">„{request.reason}"</p>
                                 )}
                                 {request.status === 'angenommen' && (
-                                    <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] mt-1">
+                                    <Badge className="bg-primary/20 text-primary border border-primary/30 text-[10px] mt-1">
                                         Akzeptiert – wartet auf Bestätigung
                                     </Badge>
                                 )}
@@ -171,7 +171,7 @@ export default function ShiftSwapApprovalCard() {
                                         variant="outline"
                                         onClick={() => rejectMutation.mutate({ requestId: request.id, request })}
                                         disabled={rejectMutation.isPending}
-                                        className="flex-1 border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                                        className="flex-1 border-status-danger/30 text-status-danger hover:bg-status-danger/10 text-xs"
                                     >
                                         <X className="w-3 h-3 mr-1" />
                                         Ablehnen
@@ -186,7 +186,7 @@ export default function ShiftSwapApprovalCard() {
                                             request
                                         })}
                                         disabled={approveMutation.isPending}
-                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs"
+                                        className="flex-1 bg-status-ok/70 hover:bg-status-ok/70 text-white text-xs"
                                     >
                                         <Check className="w-3 h-3 mr-1" />
                                         {request.is_mutual_swap
@@ -206,7 +206,7 @@ export default function ShiftSwapApprovalCard() {
                                                 size="sm"
                                                 variant="outline"
                                                 onClick={() => rejectMutation.mutate({ requestId: request.id, request })}
-                                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                                                className="border-status-danger/30 text-status-danger hover:bg-status-danger/10 text-xs"
                                             >
                                                 <X className="w-3 h-3 mr-1" />
                                                 Ablehnen
@@ -223,7 +223,7 @@ export default function ShiftSwapApprovalCard() {
                                                             size="sm"
                                                             variant="outline"
                                                             onClick={() => rejectMutation.mutate({ requestId: request.id, request })}
-                                                            className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs h-7 px-2"
+                                                            className="border-status-danger/30 text-status-danger hover:bg-status-danger/10 text-xs h-7 px-2"
                                                         >
                                                             <X className="w-3 h-3" />
                                                         </Button>
@@ -236,7 +236,7 @@ export default function ShiftSwapApprovalCard() {
                                                                 newEmployeeName: bid.bidding_employee_name,
                                                                 request
                                                             })}
-                                                            className="bg-green-600 hover:bg-green-700 text-white text-xs h-7 px-2"
+                                                            className="bg-status-ok/70 hover:bg-status-ok/70 text-white text-xs h-7 px-2"
                                                         >
                                                             <Check className="w-3 h-3 mr-1" />
                                                             Auswählen

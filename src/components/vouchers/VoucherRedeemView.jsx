@@ -28,9 +28,9 @@ const fmtEUR = (n) => (n ?? 0).toLocaleString('de-DE', {
 const fmtDate = (d) => d ? d.slice(0, 10).split('-').reverse().join('.') : '—';
 
 const STATUS_STYLES = {
-    'offen': 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
-    'teilweise_eingelöst': 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30',
-    'eingelöst': 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30',
+    'offen': 'bg-status-warn/15 text-status-warn dark:text-status-warn border-status-warn/30',
+    'teilweise_eingelöst': 'bg-status-warn/15 text-status-warn dark:text-status-warn border-status-warn/30',
+    'eingelöst': 'bg-status-ok/15 text-status-ok dark:text-status-ok border-status-ok/30',
     'ungültig': 'bg-muted text-muted-foreground border-border',
 };
 const STATUS_LABEL = {
@@ -112,7 +112,7 @@ export default function VoucherRedeemView({ vouchers = [], redemptions = [], cur
         return (
             <div className="p-4 md:p-6 max-w-md mx-auto space-y-4">
                 <Card className="p-6 text-center space-y-3">
-                    <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto" />
+                    <CheckCircle2 className="w-14 h-14 text-status-ok mx-auto" />
                     <h1 className="text-xl font-bold text-foreground">Eingelöst</h1>
                     <p className="text-xs text-muted-foreground">
                         Fertig! Rest der Rechnung ist beglichen. Neuer Gutschein-Restwert:{' '}

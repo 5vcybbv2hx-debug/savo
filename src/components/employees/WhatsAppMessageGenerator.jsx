@@ -148,7 +148,7 @@ Regeln:
             <DialogTrigger asChild>
                 <Button
                     variant="outline"
-                    className="gap-2 border-green-500/40 text-green-400 hover:bg-green-500/10"
+                    className="gap-2 border-status-ok/40 text-status-ok hover:bg-status-ok/10"
                 >
                     <MessageCircle className="w-4 h-4" />
                     Nachricht erstellen
@@ -158,7 +158,7 @@ Regeln:
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <MessageCircle className="w-5 h-5 text-green-400" />
+                        <MessageCircle className="w-5 h-5 text-status-ok" />
                         WhatsApp-Nachricht Generator
                     </DialogTitle>
                 </DialogHeader>
@@ -179,7 +179,7 @@ Regeln:
                                     className={cn(
                                         'p-2.5 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1',
                                         mode === id
-                                            ? 'border-green-500/60 bg-green-500/10 text-green-400'
+                                            ? 'border-status-ok/60 bg-status-ok/10 text-status-ok'
                                             : 'border-border bg-card text-muted-foreground hover:bg-accent/30'
                                     )}
                                 >
@@ -217,12 +217,12 @@ Regeln:
                                                 onClick={() => { toggleEmployee(emp.id); if (mode === 'single') setShowEmployeeList(false); }}
                                                 className={cn(
                                                     'w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-all hover:bg-accent/30',
-                                                    selected ? 'bg-green-500/10 text-green-400' : 'text-foreground'
+                                                    selected ? 'bg-status-ok/10 text-status-ok' : 'text-foreground'
                                                 )}
                                             >
                                                 <div className={cn(
                                                     'w-5 h-5 rounded border flex items-center justify-center shrink-0',
-                                                    selected ? 'bg-green-500 border-green-500' : 'border-border'
+                                                    selected ? 'bg-status-ok/70 border-status-ok/70' : 'border-border'
                                                 )}>
                                                     {selected && <Check className="w-3 h-3 text-white" />}
                                                 </div>
@@ -251,7 +251,7 @@ Regeln:
                                     className={cn(
                                         'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
                                         tone === t
-                                            ? 'border-amber-500/60 bg-amber-500/15 text-amber-400'
+                                            ? 'border-status-warn/60 bg-status-warn/15 text-status-warn'
                                             : 'border-border text-muted-foreground hover:bg-accent/30'
                                     )}
                                 >
@@ -286,7 +286,7 @@ Regeln:
                     <Button
                         onClick={handleGenerate}
                         disabled={!canGenerate || isLoading}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                        className="w-full bg-gradient-to-r from-status-ok to-status-ok hover:from-status-ok hover:to-status-ok text-white"
                     >
                         {isLoading ? (
                             <><Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -346,7 +346,7 @@ function MessageCard({ message, employee, onCopy, onOpen, onRegenerate, isLoadin
                     <span className="text-sm font-medium text-foreground">{employee.name}</span>
                 </div>
             )}
-            <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20">
+            <div className="p-4 rounded-xl bg-status-ok/5 border border-status-ok/20">
                 <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                     {message}
                 </p>
@@ -360,14 +360,14 @@ function MessageCard({ message, employee, onCopy, onOpen, onRegenerate, isLoadin
                 <Button
                     variant="outline"
                     onClick={onCopy}
-                    className={cn('flex-1 text-xs transition-all', copied ? 'border-green-500/40 text-green-400' : 'border-blue-500/30 text-blue-400 hover:bg-blue-500/10')}
+                    className={cn('flex-1 text-xs transition-all', copied ? 'border-status-ok/40 text-status-ok' : 'border-primary/30 text-primary hover:bg-primary/10')}
                 >
                     {copied ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
                     {copied ? 'Kopiert!' : 'Kopieren'}
                 </Button>
                 <Button
                     onClick={onOpen}
-                    className="flex-1 text-xs bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                    className="flex-1 text-xs bg-gradient-to-r from-status-ok to-status-ok hover:from-status-ok hover:to-status-ok text-white"
                 >
                     <ExternalLink className="w-3 h-3 mr-1" />
                     {employee ? 'Senden' : 'Zur Gruppe'}

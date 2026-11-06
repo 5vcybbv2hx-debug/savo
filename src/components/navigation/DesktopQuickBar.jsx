@@ -81,12 +81,12 @@ export default function DesktopQuickBar() {
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all relative',
                         dailyClosingDone
                             ? 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
-                            : 'text-amber-400 hover:bg-amber-500/10'
+                            : 'text-status-warn hover:bg-status-warn/10'
                     )}
                 >
                     <BarChart3 className="w-3.5 h-3.5 shrink-0" />
                     {!dailyClosingDone && (
-                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 animate-pulse-dot" />
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-status-warn/70 animate-pulse-dot" />
                     )}
                 </Link>
             )}

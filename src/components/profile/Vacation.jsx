@@ -19,15 +19,15 @@ import { LoadingState, ListSkeleton, ErrorState } from '@/components/ui/StateDis
 import { getVacationBalances, isVacationEligible, loadOpeningHours } from '@/lib/vacationBalance';
 
 const statusConfig = {
-    'beantragt': { label: 'Beantragt', color: 'bg-blue-100 text-blue-700', icon: Clock },
-    'genehmigt': { label: 'Genehmigt', color: 'bg-green-100 text-green-700', icon: Check },
-    'abgelehnt': { label: 'Abgelehnt', color: 'bg-red-100 text-red-700', icon: X }
+    'beantragt': { label: 'Beantragt', color: 'bg-primary/15 text-primary', icon: Clock },
+    'genehmigt': { label: 'Genehmigt', color: 'bg-status-ok/15 text-status-ok', icon: Check },
+    'abgelehnt': { label: 'Abgelehnt', color: 'bg-status-danger/15 text-status-danger', icon: X }
 };
 
 const typeColors = {
-    'Urlaub': 'bg-amber-100 text-amber-700',
-    'Krankheit': 'bg-red-100 text-red-700',
-    'Sonderurlaub': 'bg-purple-100 text-purple-700'
+    'Urlaub': 'bg-status-warn/15 text-status-warn',
+    'Krankheit': 'bg-status-danger/15 text-status-danger',
+    'Sonderurlaub': 'bg-primary text-primary'
 };
 
 export default function Vacation() {
@@ -280,7 +280,7 @@ export default function Vacation() {
                                             <span className="text-muted-foreground">Verfügbar:</span>
                                             <span className={cn(
                                                 "font-semibold",
-                                                stats.remaining < 5 ? "text-orange-400" : "text-green-400"
+                                                stats.remaining < 5 ? "text-status-warn" : "text-status-ok"
                                             )}>
                                                 {stats.remaining} Tage
                                             </span>
@@ -324,7 +324,7 @@ export default function Vacation() {
                                                             {format(parseISO(request.end_date), 'dd.MM.yyyy', { locale: de })}
                                                         </span>
                                                     </div>
-                                                    <span className="font-semibold text-amber-400">
+                                                    <span className="font-semibold text-status-warn">
                                                         {request.days_count} Tage
                                                     </span>
                                                 </div>
@@ -343,7 +343,7 @@ export default function Vacation() {
                                                         <Button
                                                             onClick={() => handleApprove(request)}
                                                             size="sm"
-                                                            className="bg-green-600 hover:bg-green-700"
+                                                            className="bg-status-ok/70 hover:bg-status-ok/70"
                                                         >
                                                             <Check className="w-4 h-4 mr-1" />
                                                             Genehmigen
@@ -352,7 +352,7 @@ export default function Vacation() {
                                                             onClick={() => handleReject(request)}
                                                             size="sm"
                                                             variant="outline"
-                                                            className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                                                            className="border-status-danger/70 text-status-danger hover:bg-status-danger/70 hover:text-white"
                                                         >
                                                             <X className="w-4 h-4 mr-1" />
                                                             Ablehnen
@@ -369,7 +369,7 @@ export default function Vacation() {
                                                         }}
                                                         size="sm"
                                                         variant="outline"
-                                                        className="border-orange-600 text-orange-400 hover:bg-orange-600 hover:text-white"
+                                                        className="border-status-warn/70 text-status-warn hover:bg-status-warn/70 hover:text-white"
                                                     >
                                                         <X className="w-4 h-4 mr-1" />
                                                         Zurückziehen

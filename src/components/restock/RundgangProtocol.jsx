@@ -13,8 +13,8 @@ import { ClipboardList, ChevronDown } from 'lucide-react';
 const DAYS = 14;
 
 const STATUS = {
-    done: { label: 'abgeschlossen', className: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-    running: { label: 'gestartet, nicht abgeschlossen', className: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+    done: { label: 'abgeschlossen', className: 'bg-status-ok/10 text-status-ok dark:text-status-ok' },
+    running: { label: 'gestartet, nicht abgeschlossen', className: 'bg-status-warn/10 text-status-warn dark:text-status-warn' },
     missing: { label: 'nicht gestartet', className: 'bg-muted text-muted-foreground/60' },
 };
 

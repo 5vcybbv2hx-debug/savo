@@ -105,7 +105,7 @@ export default function CleaningChecklist() {
             {/* Header */}
             <div className={cn(
                 'sticky top-0 z-10 border-b border-border/50 backdrop-blur-xl px-4 py-4',
-                allDone ? 'bg-green-500/10' : 'bg-card/95'
+                allDone ? 'bg-status-ok/10' : 'bg-card/95'
             )}>
                 <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
                     <div>
@@ -115,7 +115,7 @@ export default function CleaningChecklist() {
                         </p>
                     </div>
                     {allDone ? (
-                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30 border gap-1">
+                        <Badge className="bg-status-ok/20 text-status-ok border-status-ok/30 border gap-1">
                             <CheckCheck className="w-3.5 h-3.5" />
                             Fertig!
                         </Badge>
@@ -123,7 +123,7 @@ export default function CleaningChecklist() {
                         <Button
                             size="sm"
                             onClick={markAllDone}
-                            className="bg-amber-600 hover:bg-amber-700 gap-1"
+                            className="bg-status-warn/70 hover:bg-status-warn/70 gap-1"
                         >
                             <CheckCheck className="w-4 h-4" />
                             Alle erledigt
@@ -136,7 +136,7 @@ export default function CleaningChecklist() {
                     <div className="max-w-lg mx-auto mt-3">
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
                             <div
-                                className={cn('h-full rounded-full transition-all duration-500', allDone ? 'bg-green-500' : 'bg-amber-500')}
+                                className={cn('h-full rounded-full transition-all duration-500', allDone ? 'bg-status-ok/70' : 'bg-status-warn/70')}
                                 style={{ width: `${(doneTasks.length / tasks.length) * 100}%` }}
                             />
                         </div>
@@ -165,7 +165,7 @@ export default function CleaningChecklist() {
                         key={task.id}
                         onClick={() => toggleTask(task)}
                         disabled={updateMutation.isPending}
-                        className="w-full flex items-start gap-4 p-4 rounded-xl bg-card border border-border hover:border-amber-500/40 active:scale-[0.98] transition-all text-left"
+                        className="w-full flex items-start gap-4 p-4 rounded-xl bg-card border border-border hover:border-status-warn/40 active:scale-[0.98] transition-all text-left"
                     >
                         <Circle className="w-6 h-6 text-muted-foreground mt-0.5 shrink-0" />
                         <div className="flex-1">
@@ -186,9 +186,9 @@ export default function CleaningChecklist() {
                                 key={task.id}
                                 onClick={() => toggleTask(task)}
                                 disabled={updateMutation.isPending}
-                                className="w-full flex items-start gap-4 p-4 rounded-xl bg-green-500/5 border border-green-500/20 hover:border-green-500/40 active:scale-[0.98] transition-all text-left opacity-70"
+                                className="w-full flex items-start gap-4 p-4 rounded-xl bg-status-ok/5 border border-status-ok/20 hover:border-status-ok/40 active:scale-[0.98] transition-all text-left opacity-70"
                             >
-                                <CheckCircle2 className="w-6 h-6 text-green-500 mt-0.5 shrink-0" />
+                                <CheckCircle2 className="w-6 h-6 text-status-ok mt-0.5 shrink-0" />
                                 <div className="flex-1">
                                     <p className="font-medium text-foreground line-through">{task.title}</p>
                                     {task.completed_by && (

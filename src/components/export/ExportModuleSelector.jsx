@@ -9,22 +9,22 @@ import {
 } from 'lucide-react';
 
 const MODULES = [
-    { id: 'employees', label: 'Mitarbeiter', icon: Users, color: 'bg-blue-600', entities: ['Employee', 'EmployeeDocument'] },
-    { id: 'shifts', label: 'Schichten', icon: Calendar, color: 'bg-purple-600', entities: ['Shift', 'ShiftType', 'ShiftSwapRequest', 'ShiftSwapBid'] },
-    { id: 'timetracking', label: 'Zeiterfassung', icon: Clock, color: 'bg-teal-600', entities: ['TimeEntry', 'ClockEntry'] },
-    { id: 'vacation', label: 'Urlaub & Abwesenheit', icon: Plane, color: 'bg-sky-600', entities: ['VacationRequest'] },
-    { id: 'articles', label: 'Artikel & Lager', icon: Package, color: 'bg-amber-600', entities: ['Article', 'ArticleCategory', 'StorageItem', 'StorageLocation', 'StorageAssignment'] },
-    { id: 'suppliers', label: 'Lieferanten', icon: Truck, color: 'bg-orange-600', entities: ['Supplier'] },
-    { id: 'recipes', label: 'Rezepte & Kalkulation', icon: FlaskConical, color: 'bg-pink-600', entities: ['Recipe', 'MenuItem'] },
-    { id: 'tasks', label: 'Aufgaben & Checklisten', icon: ClipboardList, color: 'bg-green-600', entities: ['TodoItem', 'TodoCategory', 'RestockItem', 'ShoppingList'] },
-    { id: 'cleaning', label: 'Reinigung', icon: Sparkles, color: 'bg-cyan-600', entities: ['CleaningTask', 'CleaningArea', 'CleaningReport'] },
-    { id: 'reservations', label: 'Reservierungen', icon: CalendarCheck, color: 'bg-indigo-600', entities: ['Reservation', 'Table', 'Room'] },
-    { id: 'inventory', label: 'Inventur & Schwund', icon: BookOpen, color: 'bg-rose-600', entities: ['InventorySession', 'Wastage'] },
-    { id: 'reports', label: 'Reports & Umsätze', icon: BarChart2, color: 'bg-yellow-600', entities: ['DailyRevenue', 'SalesReport', 'SalesDataItem'] },
-    { id: 'documents', label: 'Dokumente', icon: FileText, color: 'bg-slate-600', entities: ['Document'] },
-    { id: 'events', label: 'Events', icon: Tag, color: 'bg-violet-600', entities: ['Event', 'EventIdea'] },
-    { id: 'settings', label: 'Einstellungen & Rollen', icon: Settings2, color: 'bg-gray-600', entities: ['CompanyInfo', 'NotificationSettings'] },
-    { id: 'wastage', label: 'Schwund & Vorlagen', icon: Trash2, color: 'bg-red-600', entities: ['Wastage', 'WastageTemplate'] },
+    { id: 'employees', label: 'Mitarbeiter', icon: Users, color: 'bg-primary/70', entities: ['Employee', 'EmployeeDocument'] },
+    { id: 'shifts', label: 'Schichten', icon: Calendar, color: 'bg-primary', entities: ['Shift', 'ShiftType', 'ShiftSwapRequest', 'ShiftSwapBid'] },
+    { id: 'timetracking', label: 'Zeiterfassung', icon: Clock, color: 'bg-primary', entities: ['TimeEntry', 'ClockEntry'] },
+    { id: 'vacation', label: 'Urlaub & Abwesenheit', icon: Plane, color: 'bg-primary', entities: ['VacationRequest'] },
+    { id: 'articles', label: 'Artikel & Lager', icon: Package, color: 'bg-status-warn/70', entities: ['Article', 'ArticleCategory', 'StorageItem', 'StorageLocation', 'StorageAssignment'] },
+    { id: 'suppliers', label: 'Lieferanten', icon: Truck, color: 'bg-status-warn/70', entities: ['Supplier'] },
+    { id: 'recipes', label: 'Rezepte & Kalkulation', icon: FlaskConical, color: 'bg-primary', entities: ['Recipe', 'MenuItem'] },
+    { id: 'tasks', label: 'Aufgaben & Checklisten', icon: ClipboardList, color: 'bg-status-ok/70', entities: ['TodoItem', 'TodoCategory', 'RestockItem', 'ShoppingList'] },
+    { id: 'cleaning', label: 'Reinigung', icon: Sparkles, color: 'bg-primary', entities: ['CleaningTask', 'CleaningArea', 'CleaningReport'] },
+    { id: 'reservations', label: 'Reservierungen', icon: CalendarCheck, color: 'bg-primary', entities: ['Reservation', 'Table', 'Room'] },
+    { id: 'inventory', label: 'Inventur & Schwund', icon: BookOpen, color: 'bg-primary', entities: ['InventorySession', 'Wastage'] },
+    { id: 'reports', label: 'Reports & Umsätze', icon: BarChart2, color: 'bg-status-warn/70', entities: ['DailyRevenue', 'SalesReport', 'SalesDataItem'] },
+    { id: 'documents', label: 'Dokumente', icon: FileText, color: 'bg-surface', entities: ['Document'] },
+    { id: 'events', label: 'Events', icon: Tag, color: 'bg-primary', entities: ['Event', 'EventIdea'] },
+    { id: 'settings', label: 'Einstellungen & Rollen', icon: Settings2, color: 'bg-surface', entities: ['CompanyInfo', 'NotificationSettings'] },
+    { id: 'wastage', label: 'Schwund & Vorlagen', icon: Trash2, color: 'bg-status-danger/70', entities: ['Wastage', 'WastageTemplate'] },
 ];
 
 export default function ExportModuleSelector({ selected, onChange, onStartExport }) {
@@ -76,7 +76,7 @@ export default function ExportModuleSelector({ selected, onChange, onStartExport
             {selected.length > 0 && (
                 <Button
                     onClick={onStartExport}
-                    className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                    className="w-full h-11 bg-primary/70 hover:bg-primary/70 text-white gap-2"
                 >
                     <Download className="w-4 h-4" />
                     {selected.length} Module exportieren

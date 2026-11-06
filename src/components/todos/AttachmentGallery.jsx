@@ -29,7 +29,7 @@ export default function AttachmentGallery({ attachments = [], onDelete = null, r
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1 opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100">
                                 <button
                                     onClick={() => setPreviewUrl(att.url)}
-                                    className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-slate-900 transition-all"
+                                    className="p-1.5 rounded-lg bg-white/80 hover:bg-card text-muted-foreground transition-all"
                                     title="Ansehen"
                                 >
                                     <Eye className="w-4 h-4" />
@@ -37,7 +37,7 @@ export default function AttachmentGallery({ attachments = [], onDelete = null, r
                                 {!readOnly && (
                                     <button
                                         onClick={() => onDelete(att.id)}
-                                        className="p-1.5 rounded-lg bg-red-500/80 hover:bg-red-600 text-white transition-all"
+                                        className="p-1.5 rounded-lg bg-status-danger/80 hover:bg-status-danger/70 text-white transition-all"
                                         title="Löschen"
                                     >
                                         <X className="w-4 h-4" />

@@ -50,7 +50,7 @@ export default function DeliveryHistory({ notes = [], isLoading }) {
               </div>
               <span className={cn(
                 'shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase',
-                note.status === 'gebucht' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-muted text-muted-foreground'
+                note.status === 'gebucht' ? 'bg-status-ok/15 text-status-ok' : 'bg-muted text-muted-foreground'
               )}>
                 {note.status === 'gebucht' ? 'Gebucht' : 'Entwurf'}
               </span>
@@ -98,7 +98,7 @@ export default function DeliveryHistory({ notes = [], isLoading }) {
                     )}
                   </div>
                   {!p.booked && (
-                    <span className="shrink-0 text-[10px] font-bold uppercase text-amber-500">nicht gebucht</span>
+                    <span className="shrink-0 text-[10px] font-bold uppercase text-status-warn">nicht gebucht</span>
                   )}
                 </div>
                 <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground num">

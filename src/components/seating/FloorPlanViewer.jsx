@@ -5,13 +5,13 @@ export default function FloorPlanViewer({ floorPlanUrl, tablePositions, selected
     const [hoveredTable, setHoveredTable] = useState(null);
 
     const getTableColor = (tableId, isSelected, isHovered) => {
-        if (isSelected) return 'bg-amber-500 text-white ring-2 ring-offset-2 ring-amber-500';
-        if (isHovered) return 'bg-blue-600 text-white';
-        return 'bg-blue-500 text-white';
+        if (isSelected) return 'bg-status-warn/70 text-white ring-2 ring-offset-2 ring-status-warn/70';
+        if (isHovered) return 'bg-primary/70 text-white';
+        return 'bg-primary/70 text-white';
     };
 
     return (
-        <div className="relative bg-slate-100 border-2 border-border rounded-lg overflow-hidden" style={{ height: '500px' }}>
+        <div className="relative bg-card border-2 border-border rounded-lg overflow-hidden" style={{ height: '500px' }}>
             {floorPlanUrl && (
                 <img
                     src={floorPlanUrl}

@@ -151,8 +151,8 @@ export default function TaskManager({ task, areas }) {
                                             }}
                                             className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
                                                 selected
-                                                    ? 'bg-amber-500 text-black border-amber-500'
-                                                    : 'bg-card text-muted-foreground border-border hover:border-amber-500/50'
+                                                    ? 'bg-status-warn/70 text-foreground border-status-warn/70'
+                                                    : 'bg-card text-muted-foreground border-border hover:border-status-warn/50'
                                             }`}
                                         >
                                             {day.slice(0, 2)}
@@ -173,7 +173,7 @@ export default function TaskManager({ task, areas }) {
                                 <Button 
                                     type="button" 
                                     variant="outline"
-                                    className={task.is_active === false ? "text-green-600 hover:text-green-700 hover:bg-green-50" : "text-orange-600 hover:text-orange-700 hover:bg-orange-50"}
+                                    className={task.is_active === false ? "text-status-ok hover:text-status-ok hover:bg-status-ok/15" : "text-status-warn hover:text-status-warn hover:bg-status-warn/15"}
                                     onClick={handleToggleActive}
                                 >
                                     {task.is_active === false ? (
@@ -191,7 +191,7 @@ export default function TaskManager({ task, areas }) {
                                 <Button 
                                     type="button" 
                                     variant="outline"
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    className="text-status-danger hover:text-status-danger hover:bg-status-danger/15"
                                     onClick={handleDelete}
                                 >
                                     <Trash2 className="w-4 h-4 mr-2" />
@@ -202,7 +202,7 @@ export default function TaskManager({ task, areas }) {
                                 <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="flex-1">
                                     Abbrechen
                                 </Button>
-                                <Button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700">
+                                <Button type="submit" className="flex-1 bg-status-warn/70 hover:bg-status-warn/70">
                                     Speichern
                                 </Button>
                             </div>

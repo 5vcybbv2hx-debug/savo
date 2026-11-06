@@ -108,7 +108,7 @@ export default function ShiftBottomSheet({ shift, open, onClose, onEdit, onDelet
                     <div className="flex gap-3 px-4 pb-6">
                         <button
                             onClick={() => { haptics.light(); onDelete(shift.id); }}
-                            className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors font-medium text-sm"
+                            className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl border border-status-danger/40 text-status-danger hover:bg-status-danger/10 transition-colors font-medium text-sm"
                         >
                             <Trash2 className="w-4 h-4" />
                             Löschen

@@ -30,7 +30,7 @@ export default function TableList({ tables, reservations, getTableReservation, o
                                                 <h3 className="text-lg font-semibold text-foreground">
                                                     Tisch {table.table_number}
                                                 </h3>
-                                                <Badge className={reservation ? "bg-amber-500/30 text-amber-700 border-amber-500" : "bg-green-500/30 text-green-700 border-green-500"}>
+                                                <Badge className={reservation ? "bg-status-warn/30 text-status-warn border-status-warn/70" : "bg-status-ok/30 text-status-ok border-status-ok/70"}>
                                                     {reservation ? 'Reserviert' : 'Frei'}
                                                 </Badge>
                                             </div>
@@ -43,7 +43,7 @@ export default function TableList({ tables, reservations, getTableReservation, o
                                                 </div>
                                             )}
                                             {reservation && (
-                                                <div className="text-sm text-amber-600 mt-2">
+                                                <div className="text-sm text-status-warn mt-2">
                                                     Gast: {reservation.customer_name} • {reservation.guests} Personen • {reservation.time} Uhr
                                                 </div>
                                             )}

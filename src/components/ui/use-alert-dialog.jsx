@@ -45,7 +45,7 @@ export function useAlertDialog() {
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={config.onConfirm}
-            className={config.variant === 'destructive' ? 'bg-red-600 hover:bg-red-700' : ''}
+            className={config.variant === 'destructive' ? 'bg-status-danger/70 hover:bg-status-danger/70' : ''}
           >
             {config.action}
           </AlertDialogAction>

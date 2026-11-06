@@ -101,15 +101,15 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {pendingTimeEntries.length > 0 && (
                         <Link to={createPageUrl('TimeManagement')}>
-                            <Card className="bg-amber-900/20 border-amber-800/30 hover:bg-amber-900/30 transition-colors">
+                            <Card className="bg-status-warn/20 border-status-warn/30 hover:bg-status-warn/30 transition-colors">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <Clock className="w-8 h-8 text-amber-400" />
+                                        <Clock className="w-8 h-8 text-status-warn" />
                                         <div className="flex-1">
                                             <p className="text-sm font-medium text-foreground">Zeiterfassungen</p>
-                                            <p className="text-xs text-amber-300">{pendingTimeEntries.length} zu genehmigen</p>
+                                            <p className="text-xs text-status-warn/25">{pendingTimeEntries.length} zu genehmigen</p>
                                         </div>
-                                        <ArrowRight className="w-5 h-5 text-amber-400" />
+                                        <ArrowRight className="w-5 h-5 text-status-warn" />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -117,15 +117,15 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                     )}
                     {pendingVacationRequests.length > 0 && (
                         <Link to={createPageUrl('MyArea') + '?tab=urlaub'}>
-                            <Card className="bg-blue-900/20 border-blue-800/30 hover:bg-blue-900/30 transition-colors">
+                            <Card className="bg-primary/20 border-primary/30 hover:bg-primary/30 transition-colors">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <Calendar className="w-8 h-8 text-blue-400" />
+                                        <Calendar className="w-8 h-8 text-primary" />
                                         <div className="flex-1">
                                             <p className="text-sm font-medium text-foreground">Urlaubsanträge</p>
-                                            <p className="text-xs text-blue-300">{pendingVacationRequests.length} ausstehend</p>
+                                            <p className="text-xs text-primary/25">{pendingVacationRequests.length} ausstehend</p>
                                         </div>
-                                        <ArrowRight className="w-5 h-5 text-blue-400" />
+                                        <ArrowRight className="w-5 h-5 text-primary" />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -133,15 +133,15 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                     )}
                     {lowStockArticles.length > 0 && (
                         <Link to={createPageUrl('Warehouse')}>
-                            <Card className="bg-red-900/20 border-red-800/30 hover:bg-red-900/30 transition-colors">
+                            <Card className="bg-status-danger/20 border-status-danger/30 hover:bg-status-danger/30 transition-colors">
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <AlertTriangle className="w-8 h-8 text-red-400" />
+                                        <AlertTriangle className="w-8 h-8 text-status-danger" />
                                         <div className="flex-1">
                                             <p className="text-sm font-medium text-foreground">Lager niedrig</p>
-                                            <p className="text-xs text-red-300">{lowStockArticles.length} Artikel</p>
+                                            <p className="text-xs text-status-danger/25">{lowStockArticles.length} Artikel</p>
                                         </div>
-                                        <ArrowRight className="w-5 h-5 text-red-400" />
+                                        <ArrowRight className="w-5 h-5 text-status-danger" />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -149,19 +149,19 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                     )}
                     {maintenanceAlert > 0 && (
                         <Link to={createPageUrl('Maintenance')}>
-                            <Card className={urgentMaintenance.length > 0 ? "bg-red-900/20 border-red-800/30 hover:bg-red-900/30 transition-colors" : "bg-yellow-900/20 border-yellow-800/30 hover:bg-yellow-900/30 transition-colors"}>
+                            <Card className={urgentMaintenance.length > 0 ? "bg-status-danger/20 border-status-danger/30 hover:bg-status-danger/30 transition-colors" : "bg-status-warn/20 border-status-warn/30 hover:bg-status-warn/30 transition-colors"}>
                                 <CardContent className="p-4">
                                     <div className="flex items-center gap-3">
-                                        <Wrench className={`w-8 h-8 ${urgentMaintenance.length > 0 ? 'text-red-400' : 'text-yellow-400'}`} />
+                                        <Wrench className={`w-8 h-8 ${urgentMaintenance.length > 0 ? 'text-status-danger' : 'text-status-warn'}`} />
                                         <div className="flex-1">
                                             <p className="text-sm font-medium text-foreground">Wartung</p>
-                                            <p className={`text-xs ${urgentMaintenance.length > 0 ? 'text-red-300' : 'text-yellow-300'}`}>
+                                            <p className={`text-xs ${urgentMaintenance.length > 0 ? 'text-status-danger/25' : 'text-status-warn/25'}`}>
                                                 {urgentMaintenance.length > 0 && `${urgentMaintenance.length} überfällig`}
                                                 {urgentMaintenance.length > 0 && soonMaintenance.length > 0 && ' · '}
                                                 {soonMaintenance.length > 0 && `${soonMaintenance.length} bald fällig`}
                                             </p>
                                         </div>
-                                        <ArrowRight className={`w-5 h-5 ${urgentMaintenance.length > 0 ? 'text-red-400' : 'text-yellow-400'}`} />
+                                        <ArrowRight className={`w-5 h-5 ${urgentMaintenance.length > 0 ? 'text-status-danger' : 'text-status-warn'}`} />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -172,7 +172,7 @@ export default function ManagerDashboard({ onSwitchToEmployee, currentEmployee, 
                 {/* Zeiterfassung genehmigen */}
                 <div>
                     <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-amber-500" />
+                        <Clock className="w-5 h-5 text-status-warn" />
                         Zeiterfassung genehmigen
                     </h2>
                     <TimeApprovalPanel />

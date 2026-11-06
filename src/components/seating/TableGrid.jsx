@@ -35,8 +35,8 @@ export default function TableGrid({ tables, reservations, getTableReservation, o
                                     className={cn(
                                         shapeClasses,
                                         reservation
-                                            ? "bg-amber-500/20 border-amber-500 hover:bg-amber-500/30"
-                                            : "bg-green-500/20 border-green-500 hover:bg-green-500/30"
+                                            ? "bg-status-warn/20 border-status-warn/70 hover:bg-status-warn/30"
+                                            : "bg-status-ok/20 border-status-ok/70 hover:bg-status-ok/30"
                                     )}
                                 >
                                     <div className="text-center">
@@ -52,7 +52,7 @@ export default function TableGrid({ tables, reservations, getTableReservation, o
                                             {table.capacity} Plätze
                                         </div>
                                         {reservation && (
-                                            <div className="text-xs text-amber-600 mt-2 font-semibold">
+                                            <div className="text-xs text-status-warn mt-2 font-semibold">
                                                 Reserviert
                                             </div>
                                         )}

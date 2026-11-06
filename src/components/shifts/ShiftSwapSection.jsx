@@ -238,35 +238,35 @@ export default function ShiftSwapSection({ myShifts = [] }) {
     const getStatusBadge = (status) => {
         if (status === 'ausstehend' || status === 'offen' || status === 'in_prüfung') {
             return (
-                <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <Badge className="bg-status-warn/20 text-status-warn border border-status-warn/30">
                     <Clock className="w-3 h-3 mr-1" />
                     {status === 'offen' ? 'Offen' : status === 'in_prüfung' ? 'In Prüfung' : 'Ausstehend'}
                 </Badge>
             );
         } else if (status === 'angenommen') {
             return (
-                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                <Badge className="bg-primary/20 text-primary border border-primary/30">
                     <Clock className="w-3 h-3 mr-1" />
                     Akzeptiert – wartet auf Bestätigung
                 </Badge>
             );
         } else if (status === 'genehmigt' || status === 'abgeschlossen') {
             return (
-                <Badge className="bg-green-500/20 text-green-400 border border-green-500/30">
+                <Badge className="bg-status-ok/20 text-status-ok border border-status-ok/30">
                     <Check className="w-3 h-3 mr-1" />
                     {status === 'abgeschlossen' ? 'Abgeschlossen' : 'Genehmigt'}
                 </Badge>
             );
         } else if (status === 'storniert' || status === 'abgelaufen') {
             return (
-                <Badge className="bg-slate-500/20 text-slate-400 border border-slate-500/30">
+                <Badge className="bg-surface text-muted-foreground border border-border">
                     <X className="w-3 h-3 mr-1" />
                     {status === 'storniert' ? 'Storniert' : 'Abgelaufen'}
                 </Badge>
             );
         } else {
             return (
-                <Badge className="bg-red-500/20 text-red-400 border border-red-500/30">
+                <Badge className="bg-status-danger/20 text-status-danger border border-status-danger/30">
                     <X className="w-3 h-3 mr-1" />
                     Abgelehnt
                 </Badge>
@@ -316,8 +316,8 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                 className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-card hover:bg-accent/20 transition-all"
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                        <RepeatIcon className="w-4 h-4 text-amber-500" />
+                    <div className="w-9 h-9 rounded-lg bg-status-warn/10 flex items-center justify-center shrink-0">
+                        <RepeatIcon className="w-4 h-4 text-status-warn" />
                     </div>
                     <div className="text-left">
                         <p className="text-sm font-semibold text-foreground">Tauschanfragen</p>
@@ -329,10 +329,10 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                 </div>
                 <div className="flex items-center gap-2">
                     {myOpenCount > 0 && (
-                        <Badge className="bg-amber-500 text-slate-900 text-xs px-1.5 py-0">{myOpenCount}</Badge>
+                        <Badge className="bg-status-warn/70 text-muted-foreground text-xs px-1.5 py-0">{myOpenCount}</Badge>
                     )}
                     {permissions.isManager && managerOpenCount > 0 && (
-                        <Badge className="bg-red-500 text-white text-xs px-1.5 py-0">{managerOpenCount}</Badge>
+                        <Badge className="bg-status-danger/70 text-white text-xs px-1.5 py-0">{managerOpenCount}</Badge>
                     )}
                     {expanded
                         ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
@@ -350,14 +350,14 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                             <div className="flex gap-2">
                                 <Button
                                     onClick={() => setMarketplaceOpen(true)}
-                                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white gap-2 flex-1"
+                                    className="bg-gradient-to-r from-status-ok to-status-ok hover:from-status-ok hover:to-status-ok text-white gap-2 flex-1"
                                 >
                                     <Users className="w-4 h-4" />
                                     Marketplace
                                 </Button>
                                 <Button
                                     onClick={() => setDirectSwapOpen(true)}
-                                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white gap-2 flex-1"
+                                    className="bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white gap-2 flex-1"
                                 >
                                     <RepeatIcon className="w-4 h-4" />
                                     Direkt tauschen
@@ -374,7 +374,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                         {myRequests.map(request => {
                                             const isRequester = request.requesting_employee_id === currentEmployee?.id;
                                             return (
-                                                <Card key={request.id} className="p-4 bg-card border-border hover:border-amber-500/30 transition-all">
+                                                <Card key={request.id} className="p-4 bg-card border-border hover:border-status-warn/30 transition-all">
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -412,7 +412,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                                                 variant="outline"
                                                                 size="sm"
                                                                 onClick={() => handleWithdraw(request)}
-                                                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 shrink-0"
+                                                                className="border-status-danger/30 text-status-danger hover:bg-status-danger/10 shrink-0"
                                                             >
                                                                 <X className="w-4 h-4 mr-1.5" />
                                                                 Zurückziehen
@@ -440,7 +440,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                     </p>
                                     <div className="space-y-2">
                                         {pendingRequests.map(request => (
-                                            <Card key={request.id} className="p-4 bg-card border-border hover:border-amber-500/30 transition-all border-l-4 border-l-amber-500">
+                                            <Card key={request.id} className="p-4 bg-card border-border hover:border-status-warn/30 transition-all border-l-4 border-l-amber-500">
                                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -481,7 +481,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                                                     <p className="text-xs text-muted-foreground font-medium">Reaktionen ({sortedBids.length}):</p>
                                                                     {groupedBids.annehmen.length > 0 && (
                                                                         <div>
-                                                                            <p className="text-xs font-medium text-green-400 mb-1 flex items-center gap-1">
+                                                                            <p className="text-xs font-medium text-status-ok mb-1 flex items-center gap-1">
                                                                                 <Check className="w-3 h-3" />
                                                                                 Möchte übernehmen ({groupedBids.annehmen.length})
                                                                             </p>
@@ -490,12 +490,12 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                                                                     <div key={bid.id} className="flex items-center justify-between gap-2">
                                                                                         <span className="text-sm text-foreground">
                                                                                             {bid.bidding_employee_name}
-                                                                                            {idx === 0 && <span className="ml-2 text-green-400 font-medium">⭐ Erste</span>}
+                                                                                            {idx === 0 && <span className="ml-2 text-status-ok font-medium">⭐ Erste</span>}
                                                                                         </span>
                                                                                         <Button
                                                                                             size="sm"
                                                                                             onClick={() => handleApprove(request, bid.bidding_employee_id, bid.bidding_employee_name)}
-                                                                                            className="bg-green-600 hover:bg-green-700 text-white text-xs h-6 px-2"
+                                                                                            className="bg-status-ok/70 hover:bg-status-ok/70 text-white text-xs h-6 px-2"
                                                                                         >
                                                                                             <Check className="w-3 h-3 mr-1" />
                                                                                             Auswählen
@@ -507,7 +507,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                                                     )}
                                                                     {groupedBids.unter_umständen.length > 0 && (
                                                                         <div>
-                                                                            <p className="text-xs font-medium text-yellow-400 mb-1">Vielleicht interessiert ({groupedBids.unter_umständen.length})</p>
+                                                                            <p className="text-xs font-medium text-status-warn mb-1">Vielleicht interessiert ({groupedBids.unter_umständen.length})</p>
                                                                             <div className="space-y-1 ml-3">
                                                                                 {groupedBids.unter_umständen.map(bid => (
                                                                                     <div key={bid.id} className="text-xs text-foreground flex items-center justify-between">
@@ -520,7 +520,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                                                     )}
                                                                     {groupedBids.ablehnen.length > 0 && (
                                                                         <div>
-                                                                            <p className="text-xs font-medium text-red-400 mb-1">Kein Interesse ({groupedBids.ablehnen.length})</p>
+                                                                            <p className="text-xs font-medium text-status-danger mb-1">Kein Interesse ({groupedBids.ablehnen.length})</p>
                                                                             <div className="space-y-1 ml-3">
                                                                                 {groupedBids.ablehnen.map(bid => (
                                                                                     <div key={bid.id} className="text-xs text-foreground flex items-center justify-between">
@@ -541,7 +541,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => handleReject(request)}
-                                                            className="flex-1 sm:flex-none border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                                            className="flex-1 sm:flex-none border-status-danger/30 text-status-danger hover:bg-status-danger/10"
                                                         >
                                                             <X className="w-4 h-4 mr-1.5" />
                                                             Ablehnen
@@ -550,7 +550,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                                             <Button
                                                                 size="sm"
                                                                 onClick={() => handleApprove(request)}
-                                                                className="flex-1 sm:flex-none bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                                                                className="flex-1 sm:flex-none bg-gradient-to-r from-status-ok to-status-ok hover:from-status-ok hover:to-status-ok text-white"
                                                             >
                                                                 <Check className="w-4 h-4 mr-1.5" />
                                                                 {request.is_mutual_swap
@@ -571,7 +571,7 @@ export default function ShiftSwapSection({ myShifts = [] }) {
                                                                         request
                                                                     });
                                                                 }}
-                                                                className="flex-1 sm:flex-none border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                                                                className="flex-1 sm:flex-none border-primary/30 text-primary hover:bg-primary/10"
                                                             >
                                                                 <User className="w-4 h-4 mr-1.5" />
                                                                 Selbst übernehmen

@@ -57,7 +57,7 @@ export default function MonthlyReportExport({ isVisible }) {
         <>
             <Button
                 onClick={() => setOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-primary hover:bg-primary"
             >
                 <FileText className="w-4 h-4 mr-2" />
                 Monatsbericht erstellen
@@ -70,8 +70,8 @@ export default function MonthlyReportExport({ isVisible }) {
                     </DialogHeader>
 
                     <div className="space-y-4 mt-4">
-                        <Card className="p-4 bg-blue-50 border-blue-200">
-                            <p className="text-sm text-blue-800">
+                        <Card className="p-4 bg-primary/15 border-primary/25">
+                            <p className="text-sm text-primary">
                                 📊 Der Bericht enthält alle Zeiteinträge des Monats mit Stundensätzen, 
                                 Gesamtstunden und Lohnkosten pro Mitarbeiter - perfekt für das Lohnbüro.
                             </p>
@@ -113,7 +113,7 @@ export default function MonthlyReportExport({ isVisible }) {
                             <Button
                                 onClick={() => handleExport('pdf')}
                                 disabled={loading}
-                                className="flex-1 bg-red-500 hover:bg-red-600"
+                                className="flex-1 bg-status-danger/70 hover:bg-status-danger/70"
                             >
                                 {loading ? (
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -125,7 +125,7 @@ export default function MonthlyReportExport({ isVisible }) {
                             <Button
                                 onClick={() => handleExport('csv')}
                                 disabled={loading}
-                                className="flex-1 bg-green-500 hover:bg-green-600"
+                                className="flex-1 bg-status-ok/70 hover:bg-status-ok/70"
                             >
                                 {loading ? (
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

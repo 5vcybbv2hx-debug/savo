@@ -155,7 +155,7 @@ export default function ContainerSelect({ areaId = '', value, onChange, classNam
                 type="button"
                 onClick={handleCreate}
                 disabled={!newContainerName.trim() || createMutation.isPending || !area}
-                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+                className="flex-1 bg-status-warn/70 hover:bg-status-warn/70 text-white"
               >
                 {createMutation.isPending ? 'Wird erstellt...' : 'Erstellen'}
               </Button>

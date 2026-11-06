@@ -95,7 +95,7 @@ export default function CalendarExport({ shifts, reservations }) {
         <Button
             onClick={handleExport}
             disabled={!hasEvents}
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-status-ok/70 hover:bg-status-ok/70"
         >
             <Download className="w-4 h-4 mr-2" />
             Kalender exportieren (.ics)

@@ -63,11 +63,11 @@ export default function ReportDetailsModal({ report, open, onClose }) {
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700">
+            <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto bg-surface border-border">
                 <DialogHeader>
                     <DialogTitle className="text-white flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <FileText className="w-6 h-6 text-amber-500" />
+                            <FileText className="w-6 h-6 text-status-warn" />
                             {report.report_type} - {new Date(report.report_date).toLocaleDateString('de-DE')}
                         </div>
                         {!isEditing && (
@@ -75,7 +75,7 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                 onClick={handleEdit}
                                 variant="outline"
                                 size="sm"
-                                className="border-amber-600 text-amber-500 hover:bg-amber-600 hover:text-white"
+                                className="border-status-warn/70 text-status-warn hover:bg-status-warn/70 hover:text-white"
                             >
                                 <Edit2 className="w-4 h-4 mr-2" />
                                 Bearbeiten
@@ -87,20 +87,20 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Left: PDF Viewer */}
                     <div className="space-y-4">
-                        <Card className="p-4 bg-slate-800 border-slate-700">
+                        <Card className="p-4 bg-surface border-border">
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-white font-semibold">Original PDF</h3>
                                 <Button
                                     onClick={() => window.open(report.file_url, '_blank')}
                                     variant="outline"
                                     size="sm"
-                                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                                    className="border-border text-muted-foreground hover:bg-surface"
                                 >
                                     <ExternalLink className="w-4 h-4 mr-2" />
                                     In neuem Tab öffnen
                                 </Button>
                             </div>
-                            <div className="bg-slate-950 rounded-lg overflow-hidden" style={{ height: '600px' }}>
+                            <div className="bg-surface rounded-lg overflow-hidden" style={{ height: '600px' }}>
                                 <iframe
                                     src={report.file_url}
                                     className="w-full h-full"
@@ -113,51 +113,51 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                     {/* Right: Analysis */}
                     <div className="space-y-6">
                     {/* Confidence Score */}
-                    <Card className="p-4 bg-slate-800 border-slate-700">
+                    <Card className="p-4 bg-surface border-border">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 {isLowConfidence ? (
-                                    <AlertCircle className="w-5 h-5 text-yellow-500" />
+                                    <AlertCircle className="w-5 h-5 text-status-warn" />
                                 ) : (
-                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                    <CheckCircle2 className="w-5 h-5 text-status-ok" />
                                 )}
                                 <span className="text-white font-medium">Datenqualität</span>
                             </div>
-                            <Badge className={isLowConfidence ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}>
+                            <Badge className={isLowConfidence ? 'bg-status-warn/15 text-status-warn' : 'bg-status-ok/15 text-status-ok'}>
                                 {confidenceScore}% Genauigkeit
                             </Badge>
                         </div>
                         {isLowConfidence && (
-                            <p className="text-sm text-yellow-300 mt-2">
+                            <p className="text-sm text-status-warn/25 mt-2">
                                 ⚠️ Niedrige Erkennungsgenauigkeit - bitte manuell überprüfen
                             </p>
                         )}
                     </Card>
 
                     {/* Summary */}
-                    <Card className="p-4 bg-slate-800 border-slate-700">
+                    <Card className="p-4 bg-surface border-border">
                         <h3 className="text-white font-semibold mb-3">Zusammenfassung</h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                                <p className="text-xs text-slate-400">Gesamtumsatz</p>
+                                <p className="text-xs text-muted-foreground">Gesamtumsatz</p>
                                 <p className="text-lg font-bold text-white">
                                     {(data.total_revenue || report.total_revenue || 0).toFixed(2)} €
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Transaktionen</p>
+                                <p className="text-xs text-muted-foreground">Transaktionen</p>
                                 <p className="text-lg font-bold text-white">
                                     {data.total_transactions || report.total_transactions || 0}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Ø Bonwert</p>
+                                <p className="text-xs text-muted-foreground">Ø Bonwert</p>
                                 <p className="text-lg font-bold text-white">
                                     {report.average_transaction?.toFixed(2) || 0} €
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Datum</p>
+                                <p className="text-xs text-muted-foreground">Datum</p>
                                 <p className="text-lg font-bold text-white">
                                     {data.date || new Date(report.report_date).toLocaleDateString('de-DE')}
                                 </p>
@@ -167,10 +167,10 @@ export default function ReportDetailsModal({ report, open, onClose }) {
 
                         {/* Payment Methods */}
                         {data.payment_methods && (
-                            <Card className="p-4 bg-slate-800 border-slate-700">
+                            <Card className="p-4 bg-surface border-border">
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-white font-semibold flex items-center gap-2">
-                                        <CreditCard className="w-5 h-5 text-amber-500" />
+                                        <CreditCard className="w-5 h-5 text-status-warn" />
                                         Zahlungsarten
                                     </h3>
                                     {isEditing && (
@@ -179,7 +179,7 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                                 onClick={handleSave}
                                                 disabled={isSaving}
                                                 size="sm"
-                                                className="bg-green-600 hover:bg-green-700"
+                                                className="bg-status-ok/70 hover:bg-status-ok/70"
                                             >
                                                 <Save className="w-4 h-4 mr-1" />
                                                 Speichern
@@ -188,7 +188,7 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                                 onClick={handleCancel}
                                                 size="sm"
                                                 variant="outline"
-                                                className="border-slate-600"
+                                                className="border-border"
                                             >
                                                 <X className="w-4 h-4 mr-1" />
                                                 Abbrechen
@@ -198,10 +198,10 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                 </div>
                                 <div className="space-y-3">
                                     {/* Bargeld */}
-                                    <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                                    <div className="p-3 rounded-lg bg-surface border border-border">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <Banknote className="w-4 h-4 text-green-400" />
-                                            <span className="text-sm text-slate-400">Bargeld</span>
+                                            <Banknote className="w-4 h-4 text-status-ok" />
+                                            <span className="text-sm text-muted-foreground">Bargeld</span>
                                         </div>
                                         {isEditing ? (
                                             <Input
@@ -209,7 +209,7 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                                 step="0.01"
                                                 value={paymentMethods.cash || 0}
                                                 onChange={(e) => updatePayment('cash', e.target.value)}
-                                                className="bg-slate-800 border-slate-600 text-white"
+                                                className="bg-surface border-border text-white"
                                             />
                                         ) : (
                                             <p className="text-lg font-bold text-white">
@@ -219,10 +219,10 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                     </div>
 
                                     {/* EC-Karte */}
-                                    <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                                    <div className="p-3 rounded-lg bg-surface border border-border">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <CreditCard className="w-4 h-4 text-purple-400" />
-                                            <span className="text-sm text-slate-400">EC-Karte</span>
+                                            <CreditCard className="w-4 h-4 text-primary" />
+                                            <span className="text-sm text-muted-foreground">EC-Karte</span>
                                         </div>
                                         {isEditing ? (
                                             <Input
@@ -230,7 +230,7 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                                 step="0.01"
                                                 value={paymentMethods.ec || 0}
                                                 onChange={(e) => updatePayment('ec', e.target.value)}
-                                                className="bg-slate-800 border-slate-600 text-white"
+                                                className="bg-surface border-border text-white"
                                             />
                                         ) : (
                                             <p className="text-lg font-bold text-white">
@@ -240,10 +240,10 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                     </div>
 
                                     {/* Gutschein */}
-                                    <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                                    <div className="p-3 rounded-lg bg-surface border border-border">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <FileText className="w-4 h-4 text-amber-400" />
-                                            <span className="text-sm text-slate-400">Gutschein</span>
+                                            <FileText className="w-4 h-4 text-status-warn" />
+                                            <span className="text-sm text-muted-foreground">Gutschein</span>
                                         </div>
                                         {isEditing ? (
                                             <Input
@@ -251,7 +251,7 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                                 step="0.01"
                                                 value={paymentMethods.voucher || 0}
                                                 onChange={(e) => updatePayment('voucher', e.target.value)}
-                                                className="bg-slate-800 border-slate-600 text-white"
+                                                className="bg-surface border-border text-white"
                                             />
                                         ) : (
                                             <p className="text-lg font-bold text-white">
@@ -261,9 +261,9 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                     </div>
 
                                     {/* Sonstiges */}
-                                    <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-700">
+                                    <div className="p-3 rounded-lg bg-surface border border-border">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-sm text-slate-400">Sonstiges</span>
+                                            <span className="text-sm text-muted-foreground">Sonstiges</span>
                                         </div>
                                         {isEditing ? (
                                             <Input
@@ -271,7 +271,7 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                                 step="0.01"
                                                 value={paymentMethods.other || 0}
                                                 onChange={(e) => updatePayment('other', e.target.value)}
-                                                className="bg-slate-800 border-slate-600 text-white"
+                                                className="bg-surface border-border text-white"
                                             />
                                         ) : (
                                             <p className="text-lg font-bold text-white">
@@ -281,9 +281,9 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                                     </div>
 
                                     {/* Summe */}
-                                    <div className="p-3 rounded-lg bg-amber-900/20 border border-amber-800/30">
+                                    <div className="p-3 rounded-lg bg-status-warn/20 border border-status-warn/30">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-semibold text-amber-400">Gesamt</span>
+                                            <span className="text-sm font-semibold text-status-warn">Gesamt</span>
                                             <p className="text-lg font-bold text-white">
                                                 {Object.values(paymentMethods).reduce((sum, val) => sum + (val || 0), 0).toFixed(2)} €
                                             </p>
@@ -295,23 +295,23 @@ export default function ReportDetailsModal({ report, open, onClose }) {
 
                     {/* Items */}
                     {data.items && data.items.length > 0 && (
-                        <Card className="p-4 bg-slate-800 border-slate-700">
+                        <Card className="p-4 bg-surface border-border">
                             <h3 className="text-white font-semibold mb-3">Verkaufte Artikel</h3>
                             <div className="space-y-2">
                                 {data.items.map((item, idx) => (
                                     <div
                                         key={idx}
-                                        className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700"
+                                        className="flex items-center justify-between p-3 rounded-lg bg-surface border border-border"
                                     >
                                         <div>
                                             <p className="text-white font-medium">{item.name}</p>
                                             {item.category && (
-                                                <p className="text-xs text-slate-400">{item.category}</p>
+                                                <p className="text-xs text-muted-foreground">{item.category}</p>
                                             )}
                                         </div>
                                         <div className="text-right">
                                             <p className="text-white font-medium">{item.revenue?.toFixed(2)} €</p>
-                                            <p className="text-xs text-slate-400">{item.quantity}x</p>
+                                            <p className="text-xs text-muted-foreground">{item.quantity}x</p>
                                         </div>
                                     </div>
                                 ))}
@@ -320,9 +320,9 @@ export default function ReportDetailsModal({ report, open, onClose }) {
                     )}
 
                         {/* Raw Data (für Debugging) */}
-                        <Card className="p-4 bg-slate-800 border-slate-700">
+                        <Card className="p-4 bg-surface border-border">
                             <h3 className="text-white font-semibold mb-3">Rohdaten (JSON)</h3>
-                            <pre className="text-xs text-slate-300 bg-slate-900 p-3 rounded overflow-x-auto max-h-40">
+                            <pre className="text-xs text-muted-foreground bg-surface p-3 rounded overflow-x-auto max-h-40">
                                 {JSON.stringify(data, null, 2)}
                             </pre>
                         </Card>

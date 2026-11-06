@@ -137,7 +137,7 @@ export default function MonthlyStaffingCheck({ open: extOpen, onOpenChange: extO
                                                         {emp.name}
                                                     </p>
                                                     {emp.shiftCount >= 2 ? (
-                                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                                        <CheckCircle2 className="w-4 h-4 text-status-ok" />
                                                     ) : (
                                                         <AlertTriangle className="w-4 h-4 text-destructive" />
                                                     )}

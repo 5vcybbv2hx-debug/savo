@@ -110,10 +110,10 @@ export default function DocumentUploader({ onClose, onSuccess }) {
 
     return (
         <Dialog open onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl bg-slate-800 border-slate-700 text-white">
+            <DialogContent className="max-w-2xl bg-surface border-border text-white">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Upload className="w-5 h-5 text-amber-500" />
+                        <Upload className="w-5 h-5 text-status-warn" />
                         Dokument hochladen
                     </DialogTitle>
                 </DialogHeader>
@@ -121,14 +121,14 @@ export default function DocumentUploader({ onClose, onSuccess }) {
                 <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
                     {/* File Upload */}
                     <div>
-                        <Label className="text-slate-300">Datei auswählen *</Label>
+                        <Label className="text-muted-foreground">Datei auswählen *</Label>
                         <Input
                             type="file"
                             onChange={handleFileSelect}
-                            className="bg-slate-900 border-slate-600 text-white"
+                            className="bg-surface border-border text-white"
                         />
                         {selectedFile && (
-                            <p className="text-sm text-slate-400 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
                             </p>
                         )}
@@ -136,32 +136,32 @@ export default function DocumentUploader({ onClose, onSuccess }) {
 
                     {/* Name */}
                     <div>
-                        <Label className="text-slate-300">Dokumentenname *</Label>
+                        <Label className="text-muted-foreground">Dokumentenname *</Label>
                         <Input
                             value={formData.name}
                             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                             placeholder="z.B. Arbeitsvertrag Max Mustermann"
-                            className="bg-slate-900 border-slate-600 text-white"
+                            className="bg-surface border-border text-white"
                         />
                     </div>
 
                     {/* Description */}
                     <div>
-                        <Label className="text-slate-300">Beschreibung</Label>
+                        <Label className="text-muted-foreground">Beschreibung</Label>
                         <Textarea
                             value={formData.description}
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             placeholder="Zusätzliche Informationen..."
-                            className="bg-slate-900 border-slate-600 text-white"
+                            className="bg-surface border-border text-white"
                             rows={3}
                         />
                     </div>
 
                     {/* Category */}
                     <div>
-                        <Label className="text-slate-300">Kategorie</Label>
+                        <Label className="text-muted-foreground">Kategorie</Label>
                         <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-                            <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
+                            <SelectTrigger className="bg-surface border-border text-white">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -177,7 +177,7 @@ export default function DocumentUploader({ onClose, onSuccess }) {
                     {/* Entity Link */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label className="text-slate-300">Verknüpfen mit</Label>
+                            <Label className="text-muted-foreground">Verknüpfen mit</Label>
                             <Select 
                                 value={formData.linked_entity_type} 
                                 onValueChange={(value) => setFormData(prev => ({ 
@@ -187,7 +187,7 @@ export default function DocumentUploader({ onClose, onSuccess }) {
                                     linked_entity_name: ''
                                 }))}
                             >
-                                <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
+                                <SelectTrigger className="bg-surface border-border text-white">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -201,7 +201,7 @@ export default function DocumentUploader({ onClose, onSuccess }) {
 
                         {formData.linked_entity_type !== 'Keine' && (
                             <div>
-                                <Label className="text-slate-300">Auswählen</Label>
+                                <Label className="text-muted-foreground">Auswählen</Label>
                                 <Select 
                                     value={formData.linked_entity_id}
                                     onValueChange={(value) => {
@@ -213,7 +213,7 @@ export default function DocumentUploader({ onClose, onSuccess }) {
                                         }));
                                     }}
                                 >
-                                    <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
+                                    <SelectTrigger className="bg-surface border-border text-white">
                                         <SelectValue placeholder="Wählen..." />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -230,40 +230,40 @@ export default function DocumentUploader({ onClose, onSuccess }) {
 
                     {/* Tags */}
                     <div>
-                        <Label className="text-slate-300">Tags (kommagetrennt)</Label>
+                        <Label className="text-muted-foreground">Tags (kommagetrennt)</Label>
                         <Input
                             value={formData.tags}
                             onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
                             placeholder="wichtig, dringend, vertraulich"
-                            className="bg-slate-900 border-slate-600 text-white"
+                            className="bg-surface border-border text-white"
                         />
                     </div>
 
                     {/* Expiry Date */}
                     <div>
-                        <Label className="text-slate-300">Ablaufdatum (optional)</Label>
+                        <Label className="text-muted-foreground">Ablaufdatum (optional)</Label>
                         <Input
                             type="date"
                             value={formData.expiry_date}
                             onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
-                            className="bg-slate-900 border-slate-600 text-white"
+                            className="bg-surface border-border text-white"
                         />
                     </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+                <div className="flex justify-end gap-3 pt-4 border-t border-border">
                     <Button
                         variant="outline"
                         onClick={onClose}
-                        className="border-slate-600 text-slate-300"
+                        className="border-border text-muted-foreground"
                     >
                         Abbrechen
                     </Button>
                     <Button
                         onClick={handleUpload}
                         disabled={uploading || !selectedFile}
-                        className="bg-amber-600 hover:bg-amber-700"
+                        className="bg-status-warn/70 hover:bg-status-warn/70"
                     >
                         {uploading ? 'Lädt hoch...' : 'Hochladen'}
                     </Button>

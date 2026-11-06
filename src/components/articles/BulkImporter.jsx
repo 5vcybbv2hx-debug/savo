@@ -115,7 +115,7 @@ export default function BulkImporter() {
             <Button 
                 onClick={() => setOpen(true)}
                 variant="outline"
-                className="border-blue-600 text-foreground bg-blue-600 hover:bg-blue-700"
+                className="border-primary/70 text-foreground bg-primary/70 hover:bg-primary/70"
             >
                 <Upload className="w-4 h-4 mr-2" />
                 Import
@@ -131,7 +131,7 @@ export default function BulkImporter() {
                     </DialogHeader>
 
                     <div className="space-y-4 mt-4">
-                        <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
+                        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                             <input
                                 type="file"
                                 accept=".csv,.xlsx,.xls,.json"
@@ -168,7 +168,7 @@ export default function BulkImporter() {
 
                         {status && (
                             <div className={`p-3 rounded-lg flex items-center gap-2 ${
-                                status.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                status.type === 'success' ? 'bg-status-ok/15 text-status-ok' : 'bg-status-danger/15 text-status-danger'
                             }`}>
                                 {status.type === 'success' ? 
                                     <CheckCircle2 className="w-5 h-5" /> : 
@@ -178,9 +178,9 @@ export default function BulkImporter() {
                             </div>
                         )}
 
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <p className="text-xs text-blue-900 font-medium mb-1">💡 Hinweis:</p>
-                            <ul className="text-xs text-blue-800 space-y-1">
+                        <div className="bg-primary/15 border border-primary/25 rounded-lg p-3">
+                            <p className="text-xs text-primary font-medium mb-1">💡 Hinweis:</p>
+                            <ul className="text-xs text-primary space-y-1">
                                 <li>• Artikel ohne Barcode erhalten automatisch einen generierten Code</li>
                                 <li>• Spalten: barcode, name, category, suppliers, purchase_price, etc.</li>
                                 <li>• Bei Duplikaten wird der vorhandene Artikel übersprungen</li>
@@ -191,7 +191,7 @@ export default function BulkImporter() {
                             <Button 
                                 onClick={handleImport}
                                 disabled={!file || importMutation.isPending}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                                className="flex-1 bg-primary/70 hover:bg-primary/70"
                             >
                                 {importMutation.isPending ? (
                                     <>

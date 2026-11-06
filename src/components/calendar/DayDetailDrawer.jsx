@@ -60,7 +60,7 @@ export default function DayDetailDrawer({
                     {wishAvailable && (
                         <button
                             onClick={onWish}
-                            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-900 text-sm font-semibold transition-colors"
+                            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-status-warn/70 hover:bg-status-warn/70 text-muted-foreground text-sm font-semibold transition-colors"
                         >
                             <PenLine className="w-4 h-4" />
                             Wunsch eintragen
@@ -77,7 +77,7 @@ export default function DayDetailDrawer({
                             <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">Feiertag</p>
                             <div className="space-y-2">
                                 {dayHolidays.map(h => (
-                                    <div key={h.id} className="flex items-center gap-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                                    <div key={h.id} className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20">
                                         <span className="text-lg">🎉</span>
                                         <span className="font-semibold text-foreground">{h.name}</span>
                                     </div>
@@ -96,7 +96,7 @@ export default function DayDetailDrawer({
                                 {dayShifts.map(s => {
                                     const emp = employees.find(e => e.id === s.employee_id);
                                     return (
-                                        <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                        <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-status-warn/10 border border-status-warn/20">
                                             <div
                                                 className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
                                                 style={{ backgroundColor: emp?.color || '#64748b' }}
@@ -127,7 +127,7 @@ export default function DayDetailDrawer({
                                 {dayVacations.map(v => {
                                     const emp = employees.find(e => e.id === v.employee_id);
                                     return (
-                                        <div key={v.id} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                        <div key={v.id} className="flex items-center gap-3 p-3 rounded-xl bg-status-ok/10 border border-status-ok/20">
                                             <div
                                                 className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
                                                 style={{ backgroundColor: emp?.color || '#64748b' }}
@@ -151,7 +151,7 @@ export default function DayDetailDrawer({
                             <p className="text-[13.5px] font-medium text-foreground tracking-tight mb-2">Wartung</p>
                             <div className="space-y-2">
                                 {dayMaintenance.map(t => (
-                                    <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                    <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20">
                                         <span className="text-lg">🔧</span>
                                         <span className="font-semibold text-foreground">{t.equipment_name || t.title}</span>
                                     </div>
@@ -168,7 +168,7 @@ export default function DayDetailDrawer({
                             </p>
                             <div className="space-y-2">
                                 {dayBirthdays.map(emp => (
-                                    <div key={`birthday-${emp.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                                    <div key={`birthday-${emp.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20">
                                         <div
                                             className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
                                             style={{ backgroundColor: emp.color || '#64748b' }}
@@ -194,7 +194,7 @@ export default function DayDetailDrawer({
                             </p>
                             <div className="space-y-2">
                                 {dayReservations.map(r => (
-                                    <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl bg-pink-500/10 border border-pink-500/20">
+                                    <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20">
                                         <span className="text-lg">📅</span>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-foreground truncate">{r.customer_name}</p>

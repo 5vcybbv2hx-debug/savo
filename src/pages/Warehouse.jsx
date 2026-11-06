@@ -24,7 +24,7 @@ function StatBadge({ count, variant = 'default' }) {
     return (
         <span className={cn(
             'ml-auto text-xs font-bold px-2 py-0.5 rounded-full',
-            variant === 'warning' ? 'bg-orange-500/20 text-orange-400' :
+            variant === 'warning' ? 'bg-status-warn/20 text-status-warn' :
             variant === 'danger'  ? 'bg-destructive/20 text-destructive' :
                                     'bg-primary/20 text-primary'
         )}>
@@ -185,14 +185,14 @@ export default function Warehouse() {
             {activeTab === 'bereiche' && (
                 <>
                     {lowStockCount > 0 && (
-                        <div className="flex items-center gap-3 p-3 mb-5 rounded-xl border border-orange-500/30 bg-orange-500/5">
-                            <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
-                            <p className="text-sm text-orange-400 font-medium">
+                        <div className="flex items-center gap-3 p-3 mb-5 rounded-xl border border-status-warn/30 bg-status-warn/5">
+                            <AlertTriangle className="w-4 h-4 text-status-warn shrink-0" />
+                            <p className="text-sm text-status-warn font-medium">
                                 {lowStockCount} Artikel unter Mindestbestand
                             </p>
                             <button
                                 onClick={() => navigate(createPageUrl('Articles'))}
-                                className="ml-auto text-xs text-orange-400 underline underline-offset-2"
+                                className="ml-auto text-xs text-status-warn underline underline-offset-2"
                             >
                                 Ansehen
                             </button>

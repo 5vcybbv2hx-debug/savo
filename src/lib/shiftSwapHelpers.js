@@ -130,16 +130,16 @@ export function getStatusLabel(status) {
  */
 export function getStatusColor(status) {
   const colors = {
-    annehmen:         'text-green-400 bg-green-500/15 border-green-500/30',
-    ausstehend:       'text-amber-400 bg-amber-500/15 border-amber-500/30',
-    unter_umständen:  'text-yellow-400 bg-yellow-500/15 border-yellow-500/30',
-    ablehnen:         'text-red-400 bg-red-500/15 border-red-500/30',
-    akzeptiert:       'text-green-400 bg-green-500/15 border-green-500/30',
-    abgelehnt:        'text-red-400 bg-red-500/15 border-red-500/30',
-    offen:            'text-blue-400 bg-blue-500/15 border-blue-500/30',
-    genehmigt:        'text-green-400 bg-green-500/15 border-green-500/30',
-    storniert:        'text-slate-400 bg-slate-500/15 border-slate-500/30',
-    abgeschlossen:    'text-slate-400 bg-slate-500/15 border-slate-500/30',
+    annehmen:         'text-status-ok bg-status-ok/15 border-status-ok/30',
+    ausstehend:       'text-status-warn bg-status-warn/15 border-status-warn/30',
+    unter_umständen:  'text-status-warn bg-status-warn/15 border-status-warn/30',
+    ablehnen:         'text-status-danger bg-status-danger/15 border-status-danger/30',
+    akzeptiert:       'text-status-ok bg-status-ok/15 border-status-ok/30',
+    abgelehnt:        'text-status-danger bg-status-danger/15 border-status-danger/30',
+    offen:            'text-primary bg-primary/15 border-primary/30',
+    genehmigt:        'text-status-ok bg-status-ok/15 border-status-ok/30',
+    storniert:        'text-muted-foreground bg-surface border-border',
+    abgeschlossen:    'text-muted-foreground bg-surface border-border',
   };
   return colors[status] || 'text-muted-foreground bg-muted border-border';
 }

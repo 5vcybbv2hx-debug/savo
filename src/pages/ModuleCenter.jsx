@@ -34,7 +34,7 @@ const MODULE_REGISTRY = [
         name: 'Mitarbeiter',
         description: 'Mitarbeiterverwaltung, Personalbogen, Dokumente',
         icon: Users,
-        color: 'bg-blue-600',
+        color: 'bg-primary/70',
         category: 'kern',
         page: 'Employees',
         required: true,
@@ -47,7 +47,7 @@ const MODULE_REGISTRY = [
         name: 'Schichtplanung',
         description: 'Schichtplan, Teamkalender, Schichttausch, Analyse',
         icon: Calendar,
-        color: 'bg-purple-600',
+        color: 'bg-primary',
         category: 'planung',
         page: 'Calendar',
         requires: ['mitarbeiter'],
@@ -59,7 +59,7 @@ const MODULE_REGISTRY = [
         name: 'Zeiterfassung',
         description: 'Stempeluhr, Zeiteinträge, ArbZG-Prüfung',
         icon: Clock,
-        color: 'bg-indigo-600',
+        color: 'bg-primary',
         category: 'planung',
         page: 'TimeManagement',
         requires: ['mitarbeiter'],
@@ -70,7 +70,7 @@ const MODULE_REGISTRY = [
         name: 'Urlaub & Abwesenheit',
         description: 'Urlaubsanträge, Abwesenheitsverwaltung',
         icon: Calendar,
-        color: 'bg-sky-600',
+        color: 'bg-primary',
         category: 'planung',
         page: 'MyArea?tab=urlaub',
         requires: ['mitarbeiter'],
@@ -82,7 +82,7 @@ const MODULE_REGISTRY = [
         name: 'Reservierungen & Tische',
         description: 'Gästereservierungen, Tischplan, Räume, Warteliste',
         icon: MapPin,
-        color: 'bg-green-600',
+        color: 'bg-status-ok/70',
         category: 'gast',
         page: 'GuestHub',
     },
@@ -91,7 +91,7 @@ const MODULE_REGISTRY = [
         name: 'Events',
         description: 'Veranstaltungsplanung, Eventideen, Eventvorbereitungen',
         icon: Star,
-        color: 'bg-pink-600',
+        color: 'bg-primary',
         category: 'gast',
         page: 'Events',
     },
@@ -100,7 +100,7 @@ const MODULE_REGISTRY = [
         name: 'Digitale Visitenkarte',
         description: 'Digitale Visitenkarte mit QR-Code für Gäste',
         icon: QrCode,
-        color: 'bg-teal-600',
+        color: 'bg-primary',
         category: 'gast',
         page: 'BusinessCard',
     },
@@ -111,7 +111,7 @@ const MODULE_REGISTRY = [
         name: 'Aufgaben & To-Dos',
         description: 'Aufgabenverwaltung, Kategorien, Fälligkeiten',
         icon: CheckSquare,
-        color: 'bg-orange-600',
+        color: 'bg-status-warn/70',
         category: 'betrieb',
         page: 'Todos',
     },
@@ -120,7 +120,7 @@ const MODULE_REGISTRY = [
         name: 'Reinigung & Hygiene',
         description: 'Putzlisten, Bereiche, Checklisten',
         icon: Brush,
-        color: 'bg-teal-600',
+        color: 'bg-primary',
         category: 'betrieb',
         page: 'Cleaning',
         subpages: ['CleaningChecklist'],
@@ -130,7 +130,7 @@ const MODULE_REGISTRY = [
         name: 'Wartung & Instandhaltung',
         description: 'Wartungsaufgaben, Reparaturen, Kontakte, Kalender',
         icon: Wrench,
-        color: 'bg-slate-600',
+        color: 'bg-surface',
         category: 'betrieb',
         page: 'Maintenance',
     },
@@ -139,7 +139,7 @@ const MODULE_REGISTRY = [
         name: 'Stationsplan',
         description: 'Stationen zuweisen, Mitarbeiter einplanen',
         icon: MapPin,
-        color: 'bg-fuchsia-600',
+        color: 'bg-primary',
         category: 'betrieb',
         page: 'Stationsplan',
         requires: ['mitarbeiter'],
@@ -151,7 +151,7 @@ const MODULE_REGISTRY = [
         name: 'Artikel & Lager',
         description: 'Artikelverwaltung, Bestand, Inventur, Lagerverwaltung',
         icon: Package,
-        color: 'bg-zinc-600',
+        color: 'bg-surface',
         category: 'lager',
         page: 'Articles',
         dependents: ['rezepte', 'kalkulation', 'auffuellen', 'menu', 'lieferanten'],
@@ -162,7 +162,7 @@ const MODULE_REGISTRY = [
         name: 'Auffüllen & Restock',
         description: 'Keller-Auffüllliste, Bestandsänderungen',
         icon: RefreshCw,
-        color: 'bg-amber-600',
+        color: 'bg-status-warn/70',
         category: 'lager',
         page: 'Warehouse?tab=keller',
         requires: ['artikel'],
@@ -172,7 +172,7 @@ const MODULE_REGISTRY = [
         name: 'Einkaufsliste',
         description: 'Einkauf, Bestellungen, Lieferantenanfragen',
         icon: ShoppingCart,
-        color: 'bg-yellow-600',
+        color: 'bg-status-warn/70',
         category: 'lager',
         page: 'Shopping',
     },
@@ -181,7 +181,7 @@ const MODULE_REGISTRY = [
         name: 'Kontakte & Partner',
         description: 'Lieferanten, Steuerberater, Dienstleister',
         icon: Package,
-        color: 'bg-stone-600',
+        color: 'bg-surface',
         category: 'lager',
         page: 'Suppliers',
     },
@@ -192,7 +192,7 @@ const MODULE_REGISTRY = [
         name: 'Rezepte',
         description: 'Rezeptverwaltung, Zutaten, Allergene, Produktionsmengen',
         icon: BookOpen,
-        color: 'bg-rose-600',
+        color: 'bg-primary',
         category: 'karte',
         page: 'Recipes',
         requires: ['artikel'],
@@ -202,7 +202,7 @@ const MODULE_REGISTRY = [
         name: 'Getränkekarte',
         description: 'Digitale Speisekarte, Public Menu, QR-Code',
         icon: Wine,
-        color: 'bg-red-700',
+        color: 'bg-status-danger/70',
         category: 'karte',
         page: 'DrinkMenu',
         requires: ['artikel'],
@@ -212,7 +212,7 @@ const MODULE_REGISTRY = [
         name: 'Preiskalkulation',
         description: 'Getränkekalkulation, Marge, Deckungsbeitrag',
         icon: TrendingUp,
-        color: 'bg-emerald-600',
+        color: 'bg-status-ok/70',
         category: 'karte',
         page: 'PriceCalculator',
         requires: ['artikel'],
@@ -225,7 +225,7 @@ const MODULE_REGISTRY = [
         name: 'Berichte & Analytik',
         description: 'Tagesabschluss, Umsatzanalyse, Lohnberichte, DATEV',
         icon: BarChart2,
-        color: 'bg-violet-600',
+        color: 'bg-primary',
         category: 'analytics',
         page: 'DailyAnalysis',
         sensitive: true,
@@ -238,7 +238,7 @@ const MODULE_REGISTRY = [
         name: 'Buchhaltung',
         description: 'Kassenbuch, Belege, Debitoren/Kreditoren, DATEV-Export',
         icon: Euro,
-        color: 'bg-emerald-700',
+        color: 'bg-status-ok/70',
         category: 'verwaltung',
         page: 'AccountingDashboard',
         sensitive: true,
@@ -249,7 +249,7 @@ const MODULE_REGISTRY = [
         name: 'Dokumente',
         description: 'Dokumentenarchiv, Kategorien, Verträge, Anhänge',
         icon: FileText,
-        color: 'bg-cyan-700',
+        color: 'bg-primary',
         category: 'verwaltung',
         page: 'Documents',
     },
@@ -258,7 +258,7 @@ const MODULE_REGISTRY = [
         name: 'Einarbeitung',
         description: 'Onboarding-Checklisten, Aufgaben, Fortschritt',
         icon: Users,
-        color: 'bg-lime-600',
+        color: 'bg-status-ok/70',
         category: 'verwaltung',
         page: 'Onboarding',
         requires: ['mitarbeiter'],
@@ -359,12 +359,12 @@ function ModuleRow({ module, isEnabled, onToggle, allModules, isSaving, isEnable
                         {module.name}
                     </span>
                     {module.required && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
                             Pflicht
                         </span>
                     )}
                     {module.sensitive && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium flex items-center gap-0.5">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-status-danger/20 text-status-danger font-medium flex items-center gap-0.5">
                             <Lock className="w-2.5 h-2.5" />Admin
                         </span>
                     )}
@@ -373,13 +373,13 @@ function ModuleRow({ module, isEnabled, onToggle, allModules, isSaving, isEnable
 
                 {/* Warnungen inline */}
                 {isEnabled && activeDeps.length > 0 && (
-                    <p className="text-[10px] text-amber-400 mt-0.5 flex items-center gap-1">
+                    <p className="text-[10px] text-status-warn mt-0.5 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3 shrink-0" />
                         Benötigt von: {activeDeps.map(d => d.name).join(', ')}
                     </p>
                 )}
                 {isEnabled && missingReqs.length > 0 && (
-                    <p className="text-[10px] text-red-400 mt-0.5 flex items-center gap-1">
+                    <p className="text-[10px] text-status-danger mt-0.5 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3 shrink-0" />
                         Benötigt: {missingReqs.map(r => r.name).join(', ')}
                     </p>
@@ -395,7 +395,7 @@ function ModuleRow({ module, isEnabled, onToggle, allModules, isSaving, isEnable
                     checked={isEnabled}
                     onCheckedChange={onToggle}
                     disabled={module.required || (!canDisable && isEnabled) || isSaving}
-                    className="data-[state=checked]:bg-amber-500"
+                    className="data-[state=checked]:bg-status-warn/70"
                 />
             </div>
         </div>
@@ -456,8 +456,8 @@ export default function ModuleCenter() {
                 <div className="px-5 pt-4 pb-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
-                                <Zap className="w-5 h-5 text-amber-500" />
+                            <div className="w-10 h-10 rounded-xl bg-status-warn/15 flex items-center justify-center">
+                                <Zap className="w-5 h-5 text-status-warn" />
                             </div>
                             <div>
                                 <h1 className="page-title">Modulcenter</h1>
@@ -467,7 +467,7 @@ export default function ModuleCenter() {
 
                         {/* Aktiv-Counter */}
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-card border border-border">
-                            <CheckCircle2 className="w-4 h-4 text-amber-500" />
+                            <CheckCircle2 className="w-4 h-4 text-status-warn" />
                             <span className="text-sm font-bold text-foreground">{totalActive}</span>
                             <span className="text-xs text-muted-foreground">/ {total} aktiv</span>
                         </div>
@@ -476,7 +476,7 @@ export default function ModuleCenter() {
                     {/* Progress Bar */}
                     <div className="mt-3 h-1.5 bg-secondary rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                            className="h-full bg-status-warn/70 rounded-full transition-all duration-500"
                             style={{ width: `${(totalActive / total) * 100}%` }}
                         />
                     </div>
@@ -504,7 +504,7 @@ export default function ModuleCenter() {
                                     className={cn(
                                         'flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border',
                                         selectedCategory === cat
-                                            ? 'bg-amber-500 border-amber-500 text-white shadow-sm'
+                                            ? 'bg-status-warn/70 border-status-warn/70 text-white shadow-sm'
                                             : 'bg-card border-border text-muted-foreground hover:text-foreground'
                                     )}
                                 >

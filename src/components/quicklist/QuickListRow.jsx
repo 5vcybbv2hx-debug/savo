@@ -67,7 +67,7 @@ export default function QuickListRow({ item, onToggle, onUpdate, onDelete }) {
                 onSwipeRight={() => onToggle(item)}
                 revealColor="bg-destructive"
                 revealIcon={Trash2}
-                revealColorRight="bg-green-600"
+                revealColorRight="bg-status-ok/70"
                 revealIconRight={Check}
                 className="rounded-xl"
                 contentClassName={cn(
@@ -81,8 +81,8 @@ export default function QuickListRow({ item, onToggle, onUpdate, onDelete }) {
                     className={cn(
                         'w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all active:scale-90',
                         item.is_completed
-                            ? 'bg-green-600 border-green-600'
-                            : 'border-border/70 hover:border-green-500'
+                            ? 'bg-status-ok/70 border-status-ok/70'
+                            : 'border-border/70 hover:border-status-ok/70'
                     )}
                 >
                     {item.is_completed && <Check className="w-4 h-4 text-white" />}
@@ -137,7 +137,7 @@ export default function QuickListRow({ item, onToggle, onUpdate, onDelete }) {
                             </>
                         )}
                         {item._offline && (
-                            <span className="flex items-center gap-0.5 text-yellow-500">
+                            <span className="flex items-center gap-0.5 text-status-warn">
                                 <Zap className="w-3 h-3" /> offline
                             </span>
                         )}

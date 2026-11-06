@@ -7,11 +7,11 @@ export default function BookingResult({ result, onReset }) {
 
   return (
     <div className="space-y-3">
-      <div className={hasErrors ? 'rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4' : 'rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4'}>
+      <div className={hasErrors ? 'rounded-2xl border border-status-warn/30 bg-status-warn/10 p-4' : 'rounded-2xl border border-status-ok/30 bg-status-ok/10 p-4'}>
         <div className="flex items-start gap-2">
           {hasErrors
-            ? <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-            : <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />}
+            ? <AlertTriangle className="w-5 h-5 text-status-warn shrink-0 mt-0.5" />
+            : <CheckCircle2 className="w-5 h-5 text-status-ok shrink-0 mt-0.5" />}
           <div className="min-w-0">
             <p className="text-sm font-bold text-foreground">
               {hasErrors ? 'Teilweise gebucht' : 'Wareneingang gebucht'}
@@ -29,12 +29,12 @@ export default function BookingResult({ result, onReset }) {
           </div>
           {result.counts.leergut > 0 && (
             <div className="rounded-xl border border-border bg-card p-3 text-center">
-              <p className="text-lg font-bold text-amber-500 num">{result.counts.leergut}</p>
+              <p className="text-lg font-bold text-status-warn num">{result.counts.leergut}</p>
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Leergut (nicht gebucht)</p>
             </div>
           )}
           <div className="rounded-xl border border-border bg-card p-3 text-center">
-            <p className="text-lg font-bold text-emerald-500 num">{result.counts.withPrice ?? 0}</p>
+            <p className="text-lg font-bold text-status-ok num">{result.counts.withPrice ?? 0}</p>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">mit Preis übernommen</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-3 text-center">
@@ -53,7 +53,7 @@ export default function BookingResult({ result, onReset }) {
               return (
                 <div key={i} className="flex items-center justify-between gap-2 text-sm">
                   <span className="truncate text-foreground">{c.article_name}</span>
-                  <span className={up ? 'inline-flex items-center gap-1 text-destructive num' : 'inline-flex items-center gap-1 text-emerald-500 num'}>
+                  <span className={up ? 'inline-flex items-center gap-1 text-destructive num' : 'inline-flex items-center gap-1 text-status-ok num'}>
                     {up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                     {Number(c.old_price).toFixed(2)} → {Number(c.new_price).toFixed(2)} €
                   </span>
@@ -65,8 +65,8 @@ export default function BookingResult({ result, onReset }) {
       )}
 
       {result.unbooked?.length > 0 && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-amber-600 mb-2">Nicht gebucht – kein Artikel zugeordnet</p>
+        <div className="rounded-xl border border-status-warn/30 bg-status-warn/5 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-status-warn mb-2">Nicht gebucht – kein Artikel zugeordnet</p>
           <ul className="space-y-1">
             {result.unbooked.map((u, i) => (
               <li key={i} className="text-sm text-foreground">• {u.name}</li>

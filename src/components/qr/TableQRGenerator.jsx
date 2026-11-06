@@ -105,7 +105,7 @@ export default function TableQRGenerator() {
                     <Button 
                         onClick={downloadAll}
                         disabled={isGenerating}
-                        className="flex-1 bg-amber-500 hover:bg-amber-600"
+                        className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                     >
                         <Download className="w-4 h-4 mr-2" />
                         {isGenerating ? 'Generiere...' : `Alle ${tableCount} QR-Codes als ZIP`}

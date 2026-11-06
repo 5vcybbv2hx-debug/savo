@@ -131,7 +131,7 @@ export default function TimeEntryModal({ open, onClose, entry, currentEmployee, 
                             <Input
                                 value={formData.employee_name}
                                 disabled
-                                className="bg-slate-100"
+                                className="bg-card"
                             />
                         </div>
                     )}
@@ -144,7 +144,7 @@ export default function TimeEntryModal({ open, onClose, entry, currentEmployee, 
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                             required
                         />
-                        <p className="text-xs text-slate-500">Bei Nachtschichten: Datum des Schichtbeginns</p>
+                        <p className="text-xs text-muted-foreground">Bei Nachtschichten: Datum des Schichtbeginns</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -187,18 +187,18 @@ export default function TimeEntryModal({ open, onClose, entry, currentEmployee, 
                             min="0"
                         />
                         {formData.break_minutes > 0 && (
-                            <p className="text-xs text-amber-600">
+                            <p className="text-xs text-status-warn">
                                 ⚖️ Gesetzliche Pause automatisch eingetragen ({formData.break_minutes} Min.) – vollständig bezahlt. Manuell anpassbar.
                             </p>
                         )}
                     </div>
 
                     {totalHours > 0 && (
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <p className="text-sm font-semibold text-amber-900">
+                        <div className="p-3 bg-status-warn/15 border border-status-warn/25 rounded-lg">
+                            <p className="text-sm font-semibold text-status-warn">
                                 Gesamtzeit: {(totalHours + Math.min(Number(formData.break_minutes) || 0, 45) / 60).toFixed(2)}h bezahlt ({totalHours.toFixed(2)}h Netto)
                                 {formData.start_time && formData.end_time && formData.end_time < formData.start_time && (
-                                    <span className="ml-2 text-xs text-amber-700">🌙 Nachtschicht (endet am Folgetag)</span>
+                                    <span className="ml-2 text-xs text-status-warn">🌙 Nachtschicht (endet am Folgetag)</span>
                                 )}
                             </p>
                         </div>
@@ -232,7 +232,7 @@ export default function TimeEntryModal({ open, onClose, entry, currentEmployee, 
                         <Button type="button" variant="outline" onClick={onClose} className="flex-1">
                             Abbrechen
                         </Button>
-                        <Button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700">
+                        <Button type="submit" className="flex-1 bg-status-warn/70 hover:bg-status-warn/70">
                             Speichern
                         </Button>
                     </div>

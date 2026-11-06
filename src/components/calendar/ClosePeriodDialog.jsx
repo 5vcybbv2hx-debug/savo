@@ -83,7 +83,7 @@ export default function ClosePeriodDialog({ open, onOpenChange, existingDays = [
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Palmtree className="w-4 h-4 text-pink-400" />
+                        <Palmtree className="w-4 h-4 text-primary" />
                         Zeitraum schließen
                     </DialogTitle>
                     <DialogDescription>
@@ -113,7 +113,7 @@ export default function ClosePeriodDialog({ open, onOpenChange, existingDays = [
                                     className={cn(
                                         'px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left min-h-[44px]',
                                         reason === r
-                                            ? 'bg-pink-700 text-white shadow-md'
+                                            ? 'bg-primary text-white shadow-md'
                                             : 'bg-secondary/40 text-muted-foreground hover:bg-secondary/60'
                                     )}>
                                     {r}
@@ -141,8 +141,8 @@ export default function ClosePeriodDialog({ open, onOpenChange, existingDays = [
                     </div>
 
                     {/* Vorschau */}
-                    <div className="flex items-start gap-2 p-3 rounded-xl bg-pink-500/10 border border-pink-500/25">
-                        <Lock className="w-4 h-4 text-pink-400 shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2 p-3 rounded-xl bg-primary/10 border border-primary/25">
+                        <Lock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <div className="text-sm text-foreground">
                             {days.length === 0 ? (
                                 <p className="text-destructive">Bitte gültigen Zeitraum wählen.</p>
@@ -160,7 +160,7 @@ export default function ClosePeriodDialog({ open, onOpenChange, existingDays = [
                     </div>
 
                     <Button onClick={handleSave} disabled={saving || days.length === 0}
-                        className="w-full bg-pink-700 hover:bg-pink-800 text-white min-h-[48px] font-semibold">
+                        className="w-full bg-primary hover:bg-primary text-white min-h-[48px] font-semibold">
                         {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Palmtree className="w-4 h-4 mr-2" />}
                         {saving ? 'Speichern…' : `${days.length} ${days.length === 1 ? 'Tag' : 'Tage'} schließen`}
                     </Button>

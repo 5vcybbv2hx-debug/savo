@@ -12,13 +12,13 @@ export default function ScanCodeBadge({ barcode, qrCode, className }) {
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
       {barcode && (
-        <Badge variant="secondary" className="text-xs gap-1 bg-blue-600/20 text-blue-400 border-blue-500/30">
+        <Badge variant="secondary" className="text-xs gap-1 bg-primary/20 text-primary border-primary/30">
           <Barcode className="w-3 h-3" />
           EAN
         </Badge>
       )}
       {qrCode && (
-        <Badge variant="secondary" className="text-xs gap-1 bg-purple-600/20 text-purple-400 border-purple-500/30">
+        <Badge variant="secondary" className="text-xs gap-1 bg-primary/20 text-primary border-primary/30">
           <QrCode className="w-3 h-3" />
           QR
         </Badge>

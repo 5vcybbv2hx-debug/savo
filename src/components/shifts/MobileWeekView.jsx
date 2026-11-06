@@ -25,7 +25,7 @@ function ShiftSkeleton() {
     return (
         <div className="animate-pulse space-y-1.5 p-1">
             {[1, 2].map(i => (
-                <div key={i} className="h-12 rounded-lg bg-slate-700/60" />
+                <div key={i} className="h-12 rounded-lg bg-surface" />
             ))}
         </div>
     );
@@ -70,7 +70,7 @@ function SwipeableShiftCard({ shift, onOpen, onDelete, canEdit }) {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                         <AlertDialogAction
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-status-danger/70 hover:bg-status-danger/70"
                             onClick={() => onDelete(shift.id)}
                         >
                             Löschen
@@ -81,7 +81,7 @@ function SwipeableShiftCard({ shift, onOpen, onDelete, canEdit }) {
 
             <div className="relative overflow-hidden rounded-lg">
                 {/* Delete hint behind card */}
-                <div className="absolute inset-y-0 right-0 flex items-center justify-center w-20 bg-red-600 rounded-lg">
+                <div className="absolute inset-y-0 right-0 flex items-center justify-center w-20 bg-status-danger/70 rounded-lg">
                     <Trash2 className="w-4 h-4 text-white" />
                 </div>
                 {/* Card */}
@@ -250,17 +250,17 @@ export default function MobileWeekView({ shifts = [], employees = [], isLoading,
                             {/* Day header */}
                             <div className={cn(
                                 'flex flex-col items-center py-1.5 border-b border-border sticky top-[48px] z-10 bg-card',
-                                isToday && 'bg-amber-500/10'
+                                isToday && 'bg-status-warn/10'
                             )}>
                                 <span className={cn(
                                     'text-[10px] font-semibold uppercase tracking-wide',
-                                    isToday ? 'text-amber-400' : 'text-muted-foreground'
+                                    isToday ? 'text-status-warn' : 'text-muted-foreground'
                                 )}>
                                     {WEEKDAYS[idx]}
                                 </span>
                                 <div className={cn(
                                     'w-7 h-7 rounded-full flex items-center justify-center mt-0.5',
-                                    isToday && 'bg-amber-500'
+                                    isToday && 'bg-status-warn/70'
                                 )}>
                                     <span className={cn(
                                         'text-sm font-bold',
@@ -270,7 +270,7 @@ export default function MobileWeekView({ shifts = [], employees = [], isLoading,
                                     </span>
                                 </div>
                                 {holidayName && (
-                                    <div className="w-full bg-red-600/80 text-white text-[8px] text-center truncate px-0.5 py-0.5 mt-0.5">
+                                    <div className="w-full bg-status-danger/80 text-white text-[8px] text-center truncate px-0.5 py-0.5 mt-0.5">
                                         {holidayName.slice(0, 6)}
                                     </div>
                                 )}

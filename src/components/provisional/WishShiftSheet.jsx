@@ -154,7 +154,7 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                                 blocked
                                     ? 'opacity-60 cursor-not-allowed border-border bg-secondary/30'
                                     : full
-                                        ? 'border-dashed border-amber-500/60 bg-amber-500/5 hover:bg-amber-500/10 active:scale-[0.99]'
+                                        ? 'border-dashed border-status-warn/60 bg-status-warn/5 hover:bg-status-warn/10 active:scale-[0.99]'
                                         : 'border-border bg-secondary/40 hover:bg-secondary active:scale-[0.99]'
                             )}
                         >
@@ -162,17 +162,17 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                             <span className="shrink-0 text-right space-y-1">
                                 <span className="flex items-center justify-end gap-2">
                                     {ownActive && (
-                                        <span className="flex items-center gap-1 text-xs text-emerald-500">
+                                        <span className="flex items-center gap-1 text-xs text-status-ok">
                                             <Check className="w-3 h-3" /> eingetragen
                                         </span>
                                     )}
                                     {ownWaitPosition !== null && (
-                                        <span className="flex items-center gap-1 text-xs text-amber-400">
+                                        <span className="flex items-center gap-1 text-xs text-status-warn">
                                             <Hourglass className="w-3 h-3" /> Warteliste, Platz {ownWaitPosition}
                                         </span>
                                     )}
                                     {!ownActive && ownWaitPosition === null && full && (
-                                        <span className="text-xs font-semibold text-amber-400">Auf die Warteliste</span>
+                                        <span className="text-xs font-semibold text-status-warn">Auf die Warteliste</span>
                                     )}
                                     <span className="text-sm text-muted-foreground font-mono">
                                         {displayTime(type.start_time)} – {displayTime(type.end_time)}
@@ -181,11 +181,11 @@ export default function WishShiftSheet({ open, onOpenChange, date, employee, acc
                                 <span className="flex items-center justify-end gap-2">
                                     <span className="text-xs text-muted-foreground">{taken} von {capacity}</span>
                                     <span className="block w-16 h-[3px] rounded-full bg-border overflow-hidden">
-                                        <span className="block h-full bg-amber-500" style={{ width: `${pct}%` }} />
+                                        <span className="block h-full bg-status-warn/70" style={{ width: `${pct}%` }} />
                                     </span>
                                 </span>
                                 {usage.waitlist.length > 0 && (
-                                    <span className="block text-[11px] text-amber-400/80">
+                                    <span className="block text-[11px] text-status-warn/80">
                                         {usage.waitlist.length} auf der Warteliste
                                     </span>
                                 )}

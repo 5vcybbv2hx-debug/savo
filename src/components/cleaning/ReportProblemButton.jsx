@@ -46,7 +46,7 @@ export default function ReportProblemButton({ task, userName }) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setOpen(true)}
-                className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                className="text-status-warn hover:text-status-warn hover:bg-status-warn/15"
             >
                 <AlertTriangle className="w-4 h-4 mr-1" />
                 Problem melden
@@ -56,13 +56,13 @@ export default function ReportProblemButton({ task, userName }) {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-orange-500" />
+                            <AlertTriangle className="w-5 h-5 text-status-warn" />
                             Problem melden
                         </DialogTitle>
                     </DialogHeader>
 
                     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                        <div className="p-3 bg-secondary/50 rounded-lg border border-slate-200">
+                        <div className="p-3 bg-secondary/50 rounded-lg border border-border">
                             <p className="text-sm font-medium text-foreground">{task.title}</p>
                             <p className="text-xs text-muted-foreground mt-1">Bereich: {task.area}</p>
                         </div>
@@ -94,8 +94,8 @@ export default function ReportProblemButton({ task, userName }) {
                             </Select>
                         </div>
 
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <p className="text-xs text-blue-900">
+                        <div className="bg-primary/15 border border-primary/25 rounded-lg p-3">
+                            <p className="text-xs text-primary">
                                 💡 Das Problem wird automatisch als Aufgabe in der Todo-Liste angelegt (Kategorie: Reparatur)
                             </p>
                         </div>
@@ -112,7 +112,7 @@ export default function ReportProblemButton({ task, userName }) {
                             </Button>
                             <Button 
                                 type="submit" 
-                                className="flex-1 bg-orange-600 hover:bg-orange-700"
+                                className="flex-1 bg-status-warn/70 hover:bg-status-warn/70"
                                 disabled={createTodoMutation.isPending}
                             >
                                 {createTodoMutation.isPending ? (

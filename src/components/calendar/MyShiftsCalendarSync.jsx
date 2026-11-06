@@ -53,8 +53,8 @@ export default function MyShiftsCalendarSync({ employeeId, existingToken }) {
     if (!calToken) {
         return (
             <div className="flex flex-col items-center gap-4 py-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-amber-500" />
+                <div className="w-12 h-12 rounded-2xl bg-status-warn/10 flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-status-warn" />
                 </div>
                 <div>
                     <p className="text-sm font-semibold text-foreground">Schichten im Kalender</p>
@@ -64,7 +64,7 @@ export default function MyShiftsCalendarSync({ employeeId, existingToken }) {
                     </p>
                 </div>
                 <Button onClick={generateToken} disabled={loading}
-                    className="bg-amber-600 hover:bg-amber-700 text-white">
+                    className="bg-status-warn/70 hover:bg-status-warn/70 text-white">
                     {loading
                         ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Erstelle…</>
                         : <><Calendar className="w-4 h-4 mr-2" />Link erstellen</>
@@ -89,7 +89,7 @@ export default function MyShiftsCalendarSync({ employeeId, existingToken }) {
                     />
                     <Button onClick={copyToClipboard} variant="outline" size="icon" className="shrink-0">
                         {copied
-                            ? <Check className="w-4 h-4 text-green-500" />
+                            ? <Check className="w-4 h-4 text-status-ok" />
                             : <Copy className="w-4 h-4" />
                         }
                     </Button>
@@ -100,7 +100,7 @@ export default function MyShiftsCalendarSync({ employeeId, existingToken }) {
             {webcalUrl && (
                 <a
                     href={webcalUrl}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold transition-colors min-h-[44px]"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-status-warn/70 hover:bg-status-warn/70 text-white text-sm font-semibold transition-colors min-h-[44px]"
                 >
                     <Smartphone className="w-4 h-4" />
                     Kalender direkt abonnieren
@@ -108,8 +108,8 @@ export default function MyShiftsCalendarSync({ employeeId, existingToken }) {
             )}
 
             {/* Info-Badge */}
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/8 border border-amber-500/20">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-status-warn/8 border border-status-warn/20">
+                <AlertCircle className="w-3.5 h-3.5 text-status-warn shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground">
                     Link ist <strong className="text-foreground">dauerhaft gültig</strong> — kein erneuter Login nötig.
                     iPhone synchronisiert automatisch alle 15 Minuten.
@@ -158,9 +158,9 @@ export default function MyShiftsCalendarSync({ employeeId, existingToken }) {
             {/* Neuen Link generieren */}
             <div className="pt-2 border-t border-border space-y-2">
                 {calendarUrl?.startsWith('http://') && (
-                    <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
-                        <p className="text-xs text-red-400 font-medium">
+                    <div className="flex items-start gap-2 p-2.5 rounded-lg bg-status-danger/10 border border-status-danger/30">
+                        <AlertCircle className="w-3.5 h-3.5 text-status-danger shrink-0 mt-0.5" />
+                        <p className="text-xs text-status-danger font-medium">
                             Dein Link ist veraltet (http://) — bitte neuen Link generieren!
                         </p>
                     </div>

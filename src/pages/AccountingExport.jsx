@@ -309,7 +309,7 @@ export default function AccountingExport() {
                 {(hasErrors || hasWarnings) && (
                     <div className="space-y-2">
                         {checks.missingAmount.length > 0 && (
-                            <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-red-500/8 border border-red-500/25 text-red-400">
+                            <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-status-danger/8 border border-status-danger/25 text-status-danger">
                                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                                 <p className="text-xs font-semibold">
                                     {checks.missingAmount.length} Beleg{checks.missingAmount.length > 1 ? 'e' : ''} ohne Betrag — bitte vor dem Export ergänzen
@@ -317,7 +317,7 @@ export default function AccountingExport() {
                             </div>
                         )}
                         {checks.missingImage.length > 0 && (
-                            <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-amber-500/8 border border-amber-500/25 text-amber-400">
+                            <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-status-warn/8 border border-status-warn/25 text-status-warn">
                                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                                 <p className="text-xs font-semibold">
                                     {checks.missingImage.length} Beleg{checks.missingImage.length > 1 ? 'e' : ''} ohne Bild — wird trotzdem exportiert, aber kein ZIP-Anhang
@@ -325,7 +325,7 @@ export default function AccountingExport() {
                             </div>
                         )}
                         {checks.missingCat.length > 0 && (
-                            <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-amber-500/8 border border-amber-500/25 text-amber-400">
+                            <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl bg-status-warn/8 border border-status-warn/25 text-status-warn">
                                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                                 <p className="text-xs font-semibold">
                                     {checks.missingCat.length} Beleg{checks.missingCat.length > 1 ? 'e' : ''} ohne Kategorie — Sachkonto wird als 4990 (Sonstiges) exportiert
@@ -342,8 +342,8 @@ export default function AccountingExport() {
                     </p>
 
                     <div className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-border/50 bg-card">
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                            <FileText className="w-4 h-4 text-blue-400" />
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <FileText className="w-4 h-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-foreground">Buchungsstapel (CSV)</p>
@@ -352,14 +352,14 @@ export default function AccountingExport() {
                             </p>
                         </div>
                         {totalEntries > 0
-                            ? <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                            ? <CheckCircle2 className="w-4 h-4 text-status-ok shrink-0" />
                             : <span className="text-xs text-muted-foreground shrink-0">leer</span>
                         }
                     </div>
 
                     <div className="flex items-center gap-3 px-3.5 py-3 rounded-xl border border-border/50 bg-card">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                            <Archive className="w-4 h-4 text-amber-400" />
+                        <div className="w-8 h-8 rounded-lg bg-status-warn/10 flex items-center justify-center shrink-0">
+                            <Archive className="w-4 h-4 text-status-warn" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-foreground">Belegbilder (ZIP)</p>
@@ -371,7 +371,7 @@ export default function AccountingExport() {
                             </p>
                         </div>
                         {withImage > 0
-                            ? <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                            ? <CheckCircle2 className="w-4 h-4 text-status-ok shrink-0" />
                             : <Receipt className="w-4 h-4 text-muted-foreground/40 shrink-0" />
                         }
                     </div>
@@ -414,7 +414,7 @@ export default function AccountingExport() {
                 <Button
                     onClick={handleExport}
                     disabled={exporting || totalEntries === 0 || hasErrors}
-                    className="w-full h-12 bg-amber-600 hover:bg-amber-700 text-white font-bold text-base gap-2 disabled:opacity-50">
+                    className="w-full h-12 bg-status-warn/70 hover:bg-status-warn/70 text-white font-bold text-base gap-2 disabled:opacity-50">
                     {exporting ? (
                         <>
                             <Package className="w-5 h-5 animate-pulse" />
@@ -429,7 +429,7 @@ export default function AccountingExport() {
                 </Button>
 
                 {hasErrors && (
-                    <p className="text-center text-xs text-red-400">
+                    <p className="text-center text-xs text-status-danger">
                         Bitte erst Belege ohne Betrag korrigieren
                     </p>
                 )}

@@ -103,8 +103,8 @@ export default function MonthNavigator({ value, onChange }) {
                                     onClick={() => !isFuture && selectMonth(i)}
                                     disabled={isFuture}
                                     className={`h-9 rounded-xl text-xs font-medium transition-all
-                                        ${isSelected ? 'bg-blue-600 text-foreground' : ''}
-                                        ${!isSelected && isToday ? 'border border-blue-500/50 text-blue-400' : ''}
+                                        ${isSelected ? 'bg-primary/70 text-foreground' : ''}
+                                        ${!isSelected && isToday ? 'border border-primary/50 text-primary' : ''}
                                         ${!isSelected && !isToday && !isFuture ? 'hover:bg-accent text-foreground' : ''}
                                         ${isFuture ? 'opacity-25 cursor-not-allowed text-muted-foreground' : ''}
                                     `}
@@ -119,7 +119,7 @@ export default function MonthNavigator({ value, onChange }) {
                     {!isCurrentMonth && (
                         <button
                             onClick={() => { onChange(format(new Date(), 'yyyy-MM')); setOpen(false); }}
-                            className="w-full mt-2 py-1.5 rounded-xl text-xs font-medium text-blue-400 hover:bg-blue-500/10 transition-colors"
+                            className="w-full mt-2 py-1.5 rounded-xl text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
                         >
                             → Aktueller Monat
                         </button>

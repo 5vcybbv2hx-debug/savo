@@ -10,23 +10,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Plus, Trash2, CheckCircle2, Lightbulb, Edit } from 'lucide-react';
 
 const statusColors = {
-    'Idee': 'bg-blue-100 text-blue-700',
-    'geplant': 'bg-amber-100 text-amber-700',
+    'Idee': 'bg-primary/15 text-primary',
+    'geplant': 'bg-status-warn/15 text-status-warn',
     'verworfen': 'bg-secondary/50 text-foreground',
-    'umgesetzt': 'bg-green-100 text-green-700'
+    'umgesetzt': 'bg-status-ok/15 text-status-ok'
 };
 
 const priorityColors = {
     'niedrig': 'text-muted-foreground',
-    'mittel': 'text-amber-400',
-    'hoch': 'text-orange-400',
-    'sehr_hoch': 'text-red-400'
+    'mittel': 'text-status-warn',
+    'hoch': 'text-status-warn',
+    'sehr_hoch': 'text-status-danger'
 };
 
 const effortColors = {
-    'niedrig': 'bg-green-500/20 text-green-300 border-green-500/30',
-    'mittel': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    'hoch': 'bg-red-500/20 text-red-300 border-red-500/30'
+    'niedrig': 'bg-status-ok/20 text-status-ok/25 border-status-ok/30',
+    'mittel': 'bg-status-warn/20 text-status-warn/25 border-status-warn/30',
+    'hoch': 'bg-status-danger/20 text-status-danger/25 border-status-danger/30'
 };
 
 export default function EventIdeas({ 
@@ -107,7 +107,7 @@ export default function EventIdeas({
                     />
                     <Button
                         onClick={() => openModal()}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-foreground text-xs h-10"
+                        className="bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-foreground text-xs h-10"
                     >
                         <Plus className="w-4 h-4 mr-1" />
                         <span className="hidden sm:inline">Neue Idee</span>
@@ -124,7 +124,7 @@ export default function EventIdeas({
                             className={cn(
                                 'px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
                                 statusFilter === status
-                                    ? 'bg-blue-500 text-foreground border-blue-500'
+                                    ? 'bg-primary/70 text-foreground border-primary/70'
                                     : 'bg-card text-foreground/75 border-border hover:border-border/70'
                             )}
                         >
@@ -187,7 +187,7 @@ export default function EventIdeas({
                                         size="sm"
                                         variant="ghost"
                                         onClick={() => onConvertToEvent(idea)}
-                                        className="flex-1 text-green-400 hover:text-green-300 hover:bg-green-500/10 text-xs"
+                                        className="flex-1 text-status-ok hover:text-status-ok/25 hover:bg-status-ok/10 text-xs"
                                     >
                                         <CheckCircle2 className="w-3 h-3 mr-1" />
                                         Umwandeln
@@ -197,7 +197,7 @@ export default function EventIdeas({
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => openModal(idea)}
-                                    className="flex-1 text-foreground/75 hover:text-amber-400 hover:bg-amber-500/10 text-xs"
+                                    className="flex-1 text-foreground/75 hover:text-status-warn hover:bg-status-warn/10 text-xs"
                                 >
                                     <Edit className="w-3 h-3 mr-1" />
                                     <span className="hidden sm:inline">Bearbeiten</span>
@@ -207,7 +207,7 @@ export default function EventIdeas({
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => onDelete(idea.id)}
-                                    className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs"
+                                    className="flex-1 text-status-danger hover:text-status-danger/25 hover:bg-status-danger/10 text-xs"
                                 >
                                     <Trash2 className="w-3 h-3" />
                                 </Button>
@@ -335,7 +335,7 @@ export default function EventIdeas({
                             <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="flex-1 border-border text-foreground/75 hover:bg-card">
                                 Abbrechen
                             </Button>
-                            <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-foreground">
+                            <Button type="submit" className="flex-1 bg-primary/70 hover:bg-primary/70 text-foreground">
                                 {selectedIdea ? 'Speichern' : 'Hinzufügen'}
                             </Button>
                         </div>

@@ -96,23 +96,23 @@ export default function InsightsPanel({
         good: {
             label: 'Alles stabil',
             icon: CheckCircle2,
-            color: 'from-green-500/20 to-green-600/20',
-            border: 'border-green-500/40',
-            badge: 'bg-green-500/20 text-green-400',
+            color: 'from-status-ok/20 to-status-ok/20',
+            border: 'border-status-ok/40',
+            badge: 'bg-status-ok/20 text-status-ok',
         },
         warning: {
             label: 'Auffälligkeiten',
             icon: AlertCircle,
-            color: 'from-amber-500/20 to-amber-600/20',
-            border: 'border-amber-500/40',
-            badge: 'bg-amber-500/20 text-amber-400',
+            color: 'from-status-warn/20 to-status-warn/20',
+            border: 'border-status-warn/40',
+            badge: 'bg-status-warn/20 text-status-warn',
         },
         critical: {
             label: 'Probleme vorhanden',
             icon: AlertTriangle,
-            color: 'from-red-500/20 to-red-600/20',
-            border: 'border-red-500/40',
-            badge: 'bg-red-500/20 text-red-400',
+            color: 'from-status-danger/20 to-status-danger/20',
+            border: 'border-status-danger/40',
+            badge: 'bg-status-danger/20 text-status-danger',
         },
     };
 
@@ -144,9 +144,9 @@ export default function InsightsPanel({
                                     key={idx}
                                     className={cn(
                                         'py-2 px-3',
-                                        issue.type === 'critical' && 'bg-red-900/20 border-red-700',
-                                        issue.type === 'warning' && 'bg-amber-900/20 border-amber-700',
-                                        issue.type === 'info' && 'bg-blue-900/20 border-blue-700',
+                                        issue.type === 'critical' && 'bg-status-danger/20 border-status-danger/70',
+                                        issue.type === 'warning' && 'bg-status-warn/20 border-status-warn/70',
+                                        issue.type === 'info' && 'bg-primary/20 border-primary/70',
                                     )}
                                 >
                                     <IconComponent className="w-3.5 h-3.5 mt-0.5" />
@@ -167,7 +167,7 @@ export default function InsightsPanel({
 
                 {/* Good status message */}
                 {insights.status === 'good' && (
-                    <div className="flex items-center gap-2 text-xs text-green-300 bg-green-900/20 rounded-lg p-2">
+                    <div className="flex items-center gap-2 text-xs text-status-ok/25 bg-status-ok/20 rounded-lg p-2">
                         <TrendingUp className="w-3.5 h-3.5 shrink-0" />
                         <span>Der Tag läuft stabil. Gute Zusammensetzung und Profitabilität.</span>
                     </div>

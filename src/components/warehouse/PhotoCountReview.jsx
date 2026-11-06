@@ -66,7 +66,7 @@ export default function PhotoCountReview({
                 key={row.assignmentId}
                 className={cn(
                   'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] max-w-full',
-                  row.count == null ? 'border-amber-500/40 bg-amber-500/10' : 'border-border/60 bg-card'
+                  row.count == null ? 'border-status-warn/40 bg-status-warn/10' : 'border-border/60 bg-card'
                 )}
               >
                 <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[9px] font-bold flex items-center justify-center shrink-0">
@@ -83,7 +83,7 @@ export default function PhotoCountReview({
 
           <div className="flex items-center justify-between gap-2">
             {orderConfirmed ? (
-              <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <p className="text-[11px] font-semibold text-status-ok dark:text-status-ok flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                 Reihenfolge bestätigt · {format(new Date(orderConfirmed), 'dd.MM.yyyy')}
               </p>
@@ -112,10 +112,10 @@ export default function PhotoCountReview({
       )}
 
       {(lowQuality || hasUncertain) && (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+        <div className="rounded-xl border border-status-warn/40 bg-status-warn/10 p-3 space-y-2">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="w-4 h-4 text-status-warn shrink-0 mt-0.5" />
+            <p className="text-xs font-semibold text-status-warn dark:text-status-warn">
               {lowQuality
                 ? 'Foto-Qualität schlecht — keine Mengen vorausgefüllt'
                 : 'Einzelne Segmente unsicher — Mengen bitte prüfen'}
@@ -124,7 +124,7 @@ export default function PhotoCountReview({
           {onManual && (
             <button
               onClick={onManual}
-              className="w-full h-10 rounded-lg border border-amber-500/40 bg-card text-xs font-bold text-foreground flex items-center justify-center gap-1.5 active:scale-[0.98]"
+              className="w-full h-10 rounded-lg border border-status-warn/40 bg-card text-xs font-bold text-foreground flex items-center justify-center gap-1.5 active:scale-[0.98]"
             >
               <PencilLine className="w-3.5 h-3.5" /> Manuell zählen (ohne Vorschlag)
             </button>

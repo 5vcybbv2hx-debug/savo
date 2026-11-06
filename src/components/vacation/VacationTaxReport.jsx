@@ -92,8 +92,8 @@ export default function VacationTaxReport({ vacationRequests, employees, selecte
 
     if (reportRows.length === 0) {
         return (
-            <Card className="p-6 bg-slate-800 border-slate-700">
-                <p className="text-slate-400 text-sm text-center">
+            <Card className="p-6 bg-surface border-border">
+                <p className="text-muted-foreground text-sm text-center">
                     Keine genehmigten Urlaubsanträge von Vollzeitmitarbeitern in {selectedYear}.
                 </p>
             </Card>
@@ -103,17 +103,17 @@ export default function VacationTaxReport({ vacationRequests, employees, selecte
     return (
         <div className="space-y-4">
             {/* Zusammenfassung */}
-            <Card className="p-5 bg-slate-800 border-slate-700">
+            <Card className="p-5 bg-surface border-border">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-amber-400" />
+                        <FileText className="w-4 h-4 text-status-warn" />
                         <h3 className="font-semibold text-white">Zusammenfassung Vollzeitmitarbeiter {selectedYear}</h3>
                     </div>
                     <Button
                         size="sm"
                         variant="outline"
                         onClick={() => exportCSV(reportRows, selectedYear)}
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                        className="border-border text-muted-foreground hover:bg-surface"
                     >
                         <Download className="w-4 h-4 mr-1" />
                         CSV Export
@@ -122,19 +122,19 @@ export default function VacationTaxReport({ vacationRequests, employees, selecte
 
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {summary.map(emp => (
-                        <div key={emp.name} className="p-3 bg-slate-900 rounded-lg border border-slate-700">
+                        <div key={emp.name} className="p-3 bg-surface rounded-lg border border-border">
                             <p className="font-semibold text-white text-sm mb-2">{emp.name}</p>
-                            <div className="flex justify-between text-xs text-slate-400">
+                            <div className="flex justify-between text-xs text-muted-foreground">
                                 <span>Genehm. Urlaubstage (Öffnungstage):</span>
-                                <span className="font-bold text-amber-400">{emp.usedOpenDays}</span>
+                                <span className="font-bold text-status-warn">{emp.usedOpenDays}</span>
                             </div>
-                            <div className="flex justify-between text-xs text-slate-400 mt-1">
+                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                 <span>Anspruch gesamt:</span>
                                 <span className="text-white">{emp.total} Tage</span>
                             </div>
-                            <div className="flex justify-between text-xs text-slate-400 mt-1">
+                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                 <span>Verbleibend:</span>
-                                <span className={emp.total - emp.usedOpenDays < 5 ? 'text-orange-400 font-semibold' : 'text-green-400 font-semibold'}>
+                                <span className={emp.total - emp.usedOpenDays < 5 ? 'text-status-warn font-semibold' : 'text-status-ok font-semibold'}>
                                     {emp.total - emp.usedOpenDays} Tage
                                 </span>
                             </div>
@@ -144,53 +144,53 @@ export default function VacationTaxReport({ vacationRequests, employees, selecte
             </Card>
 
             {/* Detailtabelle */}
-            <Card className="p-5 bg-slate-800 border-slate-700">
+            <Card className="p-5 bg-surface border-border">
                 <h3 className="font-semibold text-white mb-4 text-sm">
                     Detailauflistung (für Steuerberater)
                 </h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="border-b border-slate-700">
-                                <th className="text-left py-2 px-3 text-slate-400 font-medium">Mitarbeiter</th>
-                                <th className="text-left py-2 px-3 text-slate-400 font-medium">Art</th>
-                                <th className="text-left py-2 px-3 text-slate-400 font-medium">Von</th>
-                                <th className="text-left py-2 px-3 text-slate-400 font-medium">Bis</th>
-                                <th className="text-right py-2 px-3 text-slate-400 font-medium">Öffnungstage</th>
-                                <th className="text-left py-2 px-3 text-slate-400 font-medium">Genehmigt von</th>
+                            <tr className="border-b border-border">
+                                <th className="text-left py-2 px-3 text-muted-foreground font-medium">Mitarbeiter</th>
+                                <th className="text-left py-2 px-3 text-muted-foreground font-medium">Art</th>
+                                <th className="text-left py-2 px-3 text-muted-foreground font-medium">Von</th>
+                                <th className="text-left py-2 px-3 text-muted-foreground font-medium">Bis</th>
+                                <th className="text-right py-2 px-3 text-muted-foreground font-medium">Öffnungstage</th>
+                                <th className="text-left py-2 px-3 text-muted-foreground font-medium">Genehmigt von</th>
                             </tr>
                         </thead>
                         <tbody>
                             {reportRows.map((row, idx) => (
-                                <tr key={idx} className="border-b border-slate-700/50 hover:bg-slate-700/30">
+                                <tr key={idx} className="border-b border-border hover:bg-surface">
                                     <td className="py-2 px-3 text-white font-medium">{row.employee_name}</td>
                                     <td className="py-2 px-3">
                                         <Badge className={
-                                            row.type === 'Urlaub' ? 'bg-amber-100 text-amber-700' :
-                                            row.type === 'Krankheit' ? 'bg-red-100 text-red-700' :
-                                            'bg-purple-100 text-purple-700'
+                                            row.type === 'Urlaub' ? 'bg-status-warn/15 text-status-warn' :
+                                            row.type === 'Krankheit' ? 'bg-status-danger/15 text-status-danger' :
+                                            'bg-primary text-primary'
                                         }>
                                             {row.type}
                                         </Badge>
                                     </td>
-                                    <td className="py-2 px-3 text-slate-300">
+                                    <td className="py-2 px-3 text-muted-foreground">
                                         {format(parseISO(row.start_date), 'dd.MM.yyyy')}
                                     </td>
-                                    <td className="py-2 px-3 text-slate-300">
+                                    <td className="py-2 px-3 text-muted-foreground">
                                         {format(parseISO(row.end_date), 'dd.MM.yyyy')}
                                     </td>
-                                    <td className="py-2 px-3 text-right font-bold text-amber-400">
+                                    <td className="py-2 px-3 text-right font-bold text-status-warn">
                                         {row.opening_days}
                                     </td>
-                                    <td className="py-2 px-3 text-slate-400 text-xs">
+                                    <td className="py-2 px-3 text-muted-foreground text-xs">
                                         {row.approved_by || '-'}
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                         <tfoot>
-                            <tr className="border-t-2 border-slate-600">
-                                <td colSpan={4} className="py-2 px-3 text-slate-400 font-semibold text-right">Gesamt:</td>
+                            <tr className="border-t-2 border-border">
+                                <td colSpan={4} className="py-2 px-3 text-muted-foreground font-semibold text-right">Gesamt:</td>
                                 <td className="py-2 px-3 text-right font-bold text-white">
                                     {reportRows.reduce((s, r) => s + r.opening_days, 0)} Tage
                                 </td>
@@ -199,7 +199,7 @@ export default function VacationTaxReport({ vacationRequests, employees, selecte
                         </tfoot>
                     </table>
                 </div>
-                <p className="text-xs text-slate-500 mt-3">
+                <p className="text-xs text-muted-foreground mt-3">
                     * Öffnungstage = Montag bis Samstag (Sonntage ausgeschlossen)
                 </p>
             </Card>

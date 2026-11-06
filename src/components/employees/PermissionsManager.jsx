@@ -258,12 +258,12 @@ function SubSection({ sub, perms, permissions, employeeRole, onToggle, searchQue
                         className={cn(
                             'flex items-center justify-between px-3 py-3 rounded-xl min-h-[52px] transition-colors',
                             effective ? 'bg-secondary/60' : 'bg-transparent',
-                            isOverridden && 'ring-1 ring-inset ring-amber-500/40'
+                            isOverridden && 'ring-1 ring-inset ring-status-warn/40'
                         )}
                     >
                         <div className="flex items-center gap-2 flex-1 min-w-0 mr-3">
                             {isSensitive && (
-                                <Lock className="w-3 h-3 text-red-400 shrink-0" />
+                                <Lock className="w-3 h-3 text-status-danger shrink-0" />
                             )}
                             <span className={cn(
                                 'text-sm leading-tight',
@@ -272,7 +272,7 @@ function SubSection({ sub, perms, permissions, employeeRole, onToggle, searchQue
                                 {perm.label}
                             </span>
                             {isOverridden && (
-                                <Badge className="text-[9px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-300 border-amber-500/30 shrink-0">
+                                <Badge className="text-[9px] px-1.5 py-0 h-4 bg-status-warn/20 text-status-warn/25 border-status-warn/30 shrink-0">
                                     individuell
                                 </Badge>
                             )}
@@ -290,7 +290,7 @@ function SubSection({ sub, perms, permissions, employeeRole, onToggle, searchQue
                             <Switch
                                 checked={effective}
                                 onCheckedChange={(val) => onToggle(perm.key, val)}
-                                className={cn(isSensitive && effective && 'data-[state=checked]:bg-red-600')}
+                                className={cn(isSensitive && effective && 'data-[state=checked]:bg-status-danger/70')}
                             />
                         </div>
                     </div>
@@ -403,12 +403,12 @@ export default function PermissionsManager({ employee, onSave }) {
                     setPermissions(employee?.permissions || {});
                     setOpen(true);
                 }}
-                className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10 gap-2"
+                className="border-primary/40 text-primary hover:bg-primary/10 gap-2"
             >
                 <Shield className="w-4 h-4" />
                 Berechtigungen
                 {overrideCount > 0 && (
-                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] px-1.5">
+                    <Badge className="bg-status-warn/20 text-status-warn/25 border-status-warn/30 text-[10px] px-1.5">
                         {overrideCount}
                     </Badge>
                 )}
@@ -426,8 +426,8 @@ export default function PermissionsManager({ employee, onSave }) {
 
                 {/* Header */}
                 <div className="flex items-center gap-3 px-4 py-4 border-b border-border shrink-0">
-                    <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center shrink-0">
-                        <Shield className="w-5 h-5 text-blue-400" />
+                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                        <Shield className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-base font-bold text-foreground truncate">Berechtigungen</h2>
@@ -439,10 +439,10 @@ export default function PermissionsManager({ employee, onSave }) {
                 </div>
 
                 {/* Info banner */}
-                <div className="mx-4 mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 shrink-0">
-                    <AlertTriangle className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-300">
-                        Individuelle Overrides überschreiben den Rollen-Standard. <span className="text-amber-300">Amber</span> = individuell gesetzt. <Lock className="w-2.5 h-2.5 inline text-red-400" /> = sensibles Recht.
+                <div className="mx-4 mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-primary/10 border border-primary/20 shrink-0">
+                    <AlertTriangle className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <p className="text-xs text-primary/25">
+                        Individuelle Overrides überschreiben den Rollen-Standard. <span className="text-status-warn/25">Amber</span> = individuell gesetzt. <Lock className="w-2.5 h-2.5 inline text-status-danger" /> = sensibles Recht.
                     </p>
                 </div>
 
@@ -469,13 +469,13 @@ export default function PermissionsManager({ employee, onSave }) {
                 <div className="flex items-center gap-3 px-4 py-2 shrink-0">
                     <p className="text-xs text-muted-foreground flex-1">
                         {overrideCount > 0
-                            ? <><span className="text-amber-400 font-medium">{overrideCount} individuelle Overrides</span> aktiv</>
+                            ? <><span className="text-status-warn font-medium">{overrideCount} individuelle Overrides</span> aktiv</>
                             : 'Keine individuellen Overrides — Rollen-Standard gilt'}
                     </p>
                     {overrideCount > 0 && (
                         <button
                             onClick={handleReset}
-                            className="text-xs text-muted-foreground hover:text-red-400 flex items-center gap-1 min-h-[44px]"
+                            className="text-xs text-muted-foreground hover:text-status-danger flex items-center gap-1 min-h-[44px]"
                         >
                             <RotateCcw className="w-3 h-3" />Alle zurücksetzen
                         </button>
@@ -505,7 +505,7 @@ export default function PermissionsManager({ employee, onSave }) {
                     <Button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-2"
+                        className="flex-1 h-12 bg-primary/70 hover:bg-primary/70 text-white font-semibold gap-2"
                     >
                         <Check className="w-4 h-4" />
                         Speichern

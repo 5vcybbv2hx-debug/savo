@@ -208,8 +208,8 @@ export default function AtlasExport({ base44 }) {
 
           {/* Warnungen */}
           {preview.warnings && preview.warnings.length > 0 && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-500">
+            <div className="rounded-lg border border-status-warn/30 bg-status-warn/5 p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-status-warn dark:text-status-warn">
                 <AlertTriangle className="w-4 h-4" />
                 {preview.warnings.length} Warnung(en) erkannt
               </div>

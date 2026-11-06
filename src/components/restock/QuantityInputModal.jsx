@@ -90,8 +90,8 @@ export default function QuantityInputModal({ open, onClose, onConfirm, articleNa
                 style={{ maxHeight: '95dvh' }}
             >
                 {/* Header */}
-                <div className="bg-amber-500/10 border-b border-amber-500/20 px-5 py-4">
-                    <p className="text-[11px] font-semibold text-amber-500 uppercase tracking-widest">
+                <div className="bg-status-warn/10 border-b border-status-warn/20 px-5 py-4">
+                    <p className="text-[11px] font-semibold text-status-warn uppercase tracking-widest">
                         {existingQuantity != null ? 'Menge ändern' : 'Menge eingeben'}
                     </p>
                     <p className="font-semibold text-foreground text-base mt-1 truncate">{articleName}</p>
@@ -112,14 +112,14 @@ export default function QuantityInputModal({ open, onClose, onConfirm, articleNa
                         <div className="flex flex-col gap-1.5">
                             <button
                                 onClick={() => adjust(1)}
-                                className="w-11 h-11 rounded-xl bg-green-500/20 text-green-400 flex items-center justify-center active:scale-90 transition-transform"
+                                className="w-11 h-11 rounded-xl bg-status-ok/20 text-status-ok flex items-center justify-center active:scale-90 transition-transform"
                             >
                                 <Plus className="w-5 h-5" />
                             </button>
                             <button
                                 onClick={() => adjust(-1)}
                                 disabled={value <= 1 && display !== ''}
-                                className="w-11 h-11 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center active:scale-90 transition-transform disabled:opacity-25"
+                                className="w-11 h-11 rounded-xl bg-status-danger/20 text-status-danger flex items-center justify-center active:scale-90 transition-transform disabled:opacity-25"
                             >
                                 <Minus className="w-5 h-5" />
                             </button>
@@ -135,8 +135,8 @@ export default function QuantityInputModal({ open, onClose, onConfirm, articleNa
                                 className={cn(
                                     'h-11 rounded-xl border text-sm font-bold transition-all active:scale-90',
                                     value === q && display !== ''
-                                        ? 'bg-amber-500 text-slate-900 border-amber-500 shadow-sm shadow-amber-500/30'
-                                        : 'border-border/60 text-muted-foreground hover:text-foreground bg-card hover:border-amber-500/40'
+                                        ? 'bg-status-warn/70 text-muted-foreground border-status-warn/70 shadow-sm shadow-amber-500/30'
+                                        : 'border-border/60 text-muted-foreground hover:text-foreground bg-card hover:border-status-warn/40'
                                 )}
                             >
                                 {q}×
@@ -172,7 +172,7 @@ export default function QuantityInputModal({ open, onClose, onConfirm, articleNa
                             ref={confirmRef}
                             onClick={handleConfirm}
                             disabled={value < 1}
-                            className="h-14 rounded-xl bg-amber-500 text-slate-900 text-xl font-bold active:scale-90 transition-all disabled:opacity-30 flex items-center justify-center shadow-sm shadow-amber-500/20"
+                            className="h-14 rounded-xl bg-status-warn/70 text-muted-foreground text-xl font-bold active:scale-90 transition-all disabled:opacity-30 flex items-center justify-center shadow-sm shadow-amber-500/20"
                         >
                             <Check className="w-6 h-6" strokeWidth={2.5} />
                         </button>

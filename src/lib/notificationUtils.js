@@ -143,10 +143,10 @@ export const CATEGORY_LABELS = {
 };
 
 export const CATEGORY_COLORS = {
-  'schicht': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  'aufgabe': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  'wartung': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  'reservierung': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  'system': 'bg-slate-100 text-slate-700 dark:bg-slate-800/30 dark:text-slate-400',
-  'admin': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+  'schicht': 'bg-primary/15 text-primary dark:bg-primary/30 dark:text-primary',
+  'aufgabe': 'bg-status-warn/15 text-status-warn dark:bg-status-warn/30 dark:text-status-warn',
+  'wartung': 'bg-status-danger/15 text-status-danger dark:bg-status-danger/30 dark:text-status-danger',
+  'reservierung': 'bg-status-ok/15 text-status-ok dark:bg-status-ok/30 dark:text-status-ok',
+  'system': 'bg-card text-muted-foreground dark:bg-surface dark:text-muted-foreground',
+  'admin': 'bg-primary text-primary dark:bg-primary/30 dark:text-primary'
 };

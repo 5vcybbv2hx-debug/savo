@@ -22,10 +22,10 @@ const STEPS = ['scribe', 'notes', 'ai', 'approve'];
 
 const TOPIC_STATUSES = [
     { value: 'offen',         label: 'Offen',          emoji: '⬜', color: 'border-border text-muted-foreground bg-secondary/50' },
-    { value: 'beschlossen',   label: 'Beschlossen',    emoji: '✅', color: 'border-green-500/40 text-green-400 bg-green-500/10' },
-    { value: 'zu_klaeren',    label: 'Zu klären',      emoji: '🔄', color: 'border-blue-500/40 text-blue-400 bg-blue-500/10' },
+    { value: 'beschlossen',   label: 'Beschlossen',    emoji: '✅', color: 'border-status-ok/40 text-status-ok bg-status-ok/10' },
+    { value: 'zu_klaeren',    label: 'Zu klären',      emoji: '🔄', color: 'border-primary/40 text-primary bg-primary/10' },
     { value: 'keine_einigung',label: 'Keine Einigung', emoji: '❌', color: 'border-destructive/40 text-destructive bg-destructive/10' },
-    { value: 'vertagt',       label: 'Vertagt',        emoji: '⏭️', color: 'border-orange-500/40 text-orange-400 bg-orange-500/10' },
+    { value: 'vertagt',       label: 'Vertagt',        emoji: '⏭️', color: 'border-status-warn/40 text-status-warn bg-status-warn/10' },
 ];
 
 // ── Schritt-Indikator ──────────────────────────────────────────────────────────
@@ -46,7 +46,7 @@ function StepIndicator({ step }) {
                         <div className="flex flex-col items-center gap-1">
                             <div className={cn(
                                 'w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all',
-                                i < currentIdx  ? 'bg-green-500 border-green-500 text-white' :
+                                i < currentIdx  ? 'bg-status-ok/70 border-status-ok/70 text-white' :
                                 i === currentIdx ? 'bg-primary border-primary text-primary-foreground' :
                                                    'border-border text-muted-foreground bg-background'
                             )}>
@@ -60,7 +60,7 @@ function StepIndicator({ step }) {
                         {i < steps.length - 1 && (
                             <div className={cn(
                                 'flex-1 h-0.5 mb-3.5 mx-1 transition-all',
-                                i < currentIdx ? 'bg-green-500' : 'bg-border'
+                                i < currentIdx ? 'bg-status-ok/70' : 'bg-border'
                             )} />
                         )}
                     </React.Fragment>
@@ -141,7 +141,7 @@ function SaveIndicator({ saving, lastSaved }) {
         </span>
     );
     if (lastSaved) return (
-        <span className="text-xs text-green-500 flex items-center gap-1">
+        <span className="text-xs text-status-ok flex items-center gap-1">
             <CheckCircle className="w-3 h-3" /> Gespeichert
         </span>
     );
@@ -368,7 +368,7 @@ export default function MeetingProtocolModal({
             <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <ClipboardList className="w-5 h-5 text-amber-400" />
+                        <ClipboardList className="w-5 h-5 text-status-warn" />
                         Sitzungsprotokoll
                     </DialogTitle>
                 </DialogHeader>
@@ -407,7 +407,7 @@ export default function MeetingProtocolModal({
 
                         {selectedScribe && (
                             <>
-                                <Card className="bg-amber-500/5 border-amber-500/30">
+                                <Card className="bg-status-warn/5 border-status-warn/30">
                                     <CardContent className="p-3 flex items-center gap-3">
                                         <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
                                             style={{ backgroundColor: selectedScribe.color || '#f59e0b' }}>
@@ -417,7 +417,7 @@ export default function MeetingProtocolModal({
                                             <p className="font-semibold text-foreground">{selectedScribe.name}</p>
                                             <p className="text-xs text-muted-foreground">{selectedScribe.role}</p>
                                         </div>
-                                        <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+                                        <Badge className="bg-status-warn/20 text-status-warn border border-status-warn/30 shrink-0">
                                             Protokollant
                                         </Badge>
                                     </CardContent>
@@ -459,7 +459,7 @@ export default function MeetingProtocolModal({
                                         AGENDA-PUNKTE ({openTopics.length})
                                     </Label>
                                     {beschlossenCount > 0 && (
-                                        <span className="text-xs text-green-500 font-medium">
+                                        <span className="text-xs text-status-ok font-medium">
                                             ✓ {beschlossenCount} beschlossen
                                         </span>
                                     )}
@@ -588,7 +588,7 @@ export default function MeetingProtocolModal({
                         )}
 
                         {/* Hinweis was passiert bei Freigabe */}
-                        <div className="rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3 text-xs text-green-400 space-y-1">
+                        <div className="rounded-xl bg-status-ok/10 border border-status-ok/20 px-4 py-3 text-xs text-status-ok space-y-1">
                             <p className="font-semibold">Bei Freigabe passiert Folgendes:</p>
                             <p>✓ Protokoll wird für das Team sichtbar</p>
                             <p>✓ {openTopics.length} Agenda-Punkte werden als besprochen markiert</p>
@@ -602,7 +602,7 @@ export default function MeetingProtocolModal({
                             <Button
                                 onClick={() => approveMutation.mutate()}
                                 disabled={approveMutation.isPending || !aiSummary}
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-2"
+                                className="flex-1 bg-status-ok/70 hover:bg-status-ok/70 text-white gap-2"
                             >
                                 {approveMutation.isPending
                                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Wird freigegeben…</>

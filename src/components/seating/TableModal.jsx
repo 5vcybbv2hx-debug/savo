@@ -107,9 +107,9 @@ export default function TableModal({ table, open, onClose, reservation }) {
                         )}
 
                         {reservation && (
-                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-4">
-                                <p className="text-sm font-semibold text-amber-700 mb-2">Heutige Reservierung</p>
-                                <p className="text-sm text-amber-600">
+                            <div className="bg-status-warn/10 border border-status-warn/30 rounded-lg p-4 mt-4">
+                                <p className="text-sm font-semibold text-status-warn mb-2">Heutige Reservierung</p>
+                                <p className="text-sm text-status-warn">
                                     <strong>{reservation.customer_name}</strong> • {reservation.guests} Personen<br/>
                                     {reservation.time} Uhr
                                 </p>

@@ -12,7 +12,7 @@ export default function RundgangCompleteButton({ isCompleted, completedAt, onCom
 
     if (isCompleted) {
         return (
-            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1 rounded-md bg-status-ok/10 px-2 py-1 text-[10px] font-semibold text-status-ok dark:text-status-ok">
                 <Check className="w-3 h-3" />
                 Abgeschlossen{completedAt ? ` · ${format(new Date(completedAt), 'HH:mm')}` : ''}
             </span>

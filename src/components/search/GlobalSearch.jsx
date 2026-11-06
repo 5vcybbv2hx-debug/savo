@@ -219,7 +219,7 @@ export default function GlobalSearch({ open, onClose }) {
                                         <button key={a.id} ref={el => resultsRef.current[idx] = el}
                                             onClick={() => handleNavigate(createPageUrl('Warehouse'))}
                                             className={cn('w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left', focused ? 'bg-accent' : 'hover:bg-accent/60')}>
-                                            <Package className="w-4 h-4 text-blue-500 shrink-0" />
+                                            <Package className="w-4 h-4 text-primary shrink-0" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-sm truncate">{a.name}</p>
                                                 {(() => {
@@ -228,7 +228,7 @@ export default function GlobalSearch({ open, onClose }) {
                                                     const shown = aAssignments.slice(0, 2).map(a => a.slot_full_name).filter(Boolean);
                                                     const extra = aAssignments.length - 2;
                                                     return (
-                                                        <p className="flex items-center gap-1 text-xs text-blue-400 font-semibold mt-0.5">
+                                                        <p className="flex items-center gap-1 text-xs text-primary font-semibold mt-0.5">
                                                             <MapPin className="w-3 h-3 shrink-0" />
                                                             {shown.join(' · ')}{extra > 0 ? ` +${extra}` : ''}
                                                         </p>
@@ -246,7 +246,7 @@ export default function GlobalSearch({ open, onClose }) {
                                         <button key={m.id} ref={el => resultsRef.current[idx] = el}
                                             onClick={() => handleNavigate(createPageUrl('DrinkMenu'))}
                                             className={cn('w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left', focused ? 'bg-accent' : 'hover:bg-accent/60')}>
-                                            <Wine className="w-4 h-4 text-amber-500 shrink-0" />
+                                            <Wine className="w-4 h-4 text-status-warn shrink-0" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-sm truncate">{m.name}</p>
                                                 <p className="text-xs text-muted-foreground">{m.category}</p>
@@ -260,7 +260,7 @@ export default function GlobalSearch({ open, onClose }) {
                                         <button key={r.id} ref={el => resultsRef.current[idx] = el}
                                             onClick={() => handleNavigate(createPageUrl('Recipes'))}
                                             className={cn('w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left', focused ? 'bg-accent' : 'hover:bg-accent/60')}>
-                                            <BookOpen className="w-4 h-4 text-pink-500 shrink-0" />
+                                            <BookOpen className="w-4 h-4 text-primary shrink-0" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-sm truncate">{r.name}</p>
                                                 <p className="text-xs text-muted-foreground">{r.category}</p>
@@ -273,7 +273,7 @@ export default function GlobalSearch({ open, onClose }) {
                                         <button key={e.id} ref={el => resultsRef.current[idx] = el}
                                             onClick={() => handleNavigate(createPageUrl('Employees'))}
                                             className={cn('w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left', focused ? 'bg-accent' : 'hover:bg-accent/60')}>
-                                            <Users className="w-4 h-4 text-green-500 shrink-0" />
+                                            <Users className="w-4 h-4 text-status-ok shrink-0" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-sm truncate">{e.name}</p>
                                                 <p className="text-xs text-muted-foreground">{e.role}</p>
@@ -286,7 +286,7 @@ export default function GlobalSearch({ open, onClose }) {
                                         <button key={t.id} ref={el => resultsRef.current[idx] = el}
                                             onClick={() => handleNavigate(createPageUrl('Todos'))}
                                             className={cn('w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left', focused ? 'bg-accent' : 'hover:bg-accent/60')}>
-                                            <CheckSquare className="w-4 h-4 text-orange-500 shrink-0" />
+                                            <CheckSquare className="w-4 h-4 text-status-warn shrink-0" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-sm truncate">{t.title}</p>
                                                 {t.description && <p className="text-xs text-muted-foreground truncate">{t.description}</p>}

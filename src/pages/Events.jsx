@@ -25,17 +25,17 @@ import TvPlaylistSection from '@/components/display/TvPlaylistSection';
 import BusinessCalendar from '@/components/calendar/BusinessCalendar';
 
 const eventTypeColors = {
-    'Party': 'bg-purple-100 text-purple-700 border-purple-200',
-    'Livemusik': 'bg-pink-100 text-pink-700 border-pink-200',
-    'DJ-Night': 'bg-blue-100 text-blue-700 border-blue-200',
-    'Special Event': 'bg-amber-100 text-amber-700 border-amber-200',
-    'Private Feier': 'bg-green-100 text-green-700 border-green-200',
+    'Party': 'bg-primary text-primary border-primary',
+    'Livemusik': 'bg-primary text-primary border-primary',
+    'DJ-Night': 'bg-primary/15 text-primary border-primary/25',
+    'Special Event': 'bg-status-warn/15 text-status-warn border-status-warn/25',
+    'Private Feier': 'bg-status-ok/15 text-status-ok border-status-ok/25',
     'Sonstiges': 'bg-muted text-foreground border-border'
 };
 
 const statusColors = {
-    'Bestätigt': 'bg-green-100 text-green-700',
-    'Abgesagt': 'bg-red-100 text-red-700'
+    'Bestätigt': 'bg-status-ok/15 text-status-ok',
+    'Abgesagt': 'bg-status-danger/15 text-status-danger'
 };
 
 const formatDateWithDay = (dateStr) => {
@@ -371,7 +371,7 @@ export default function Events() {
                         <Button 
                             size="sm"
                             onClick={() => openModal()}
-                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 shadow-lg shadow-amber-500/20 text-xs h-9"
+                            className="bg-gradient-to-r from-status-warn to-status-warn hover:from-status-warn hover:to-status-warn text-muted-foreground shadow-lg shadow-amber-500/20 text-xs h-9"
                         >
                             <Plus className="w-4 h-4 mr-1" />
                             <span>Event</span>
@@ -465,7 +465,7 @@ export default function Events() {
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                                <CalendarIcon className="w-5 h-5 text-amber-400" />
+                                                <CalendarIcon className="w-5 h-5 text-status-warn" />
                                                 <h3 className="font-semibold text-foreground text-lg">{event.title}</h3>
                                                 <Badge className={eventTypeColors[event.event_type]}>
                                                     {event.event_type}
@@ -514,7 +514,7 @@ export default function Events() {
                                                     e.stopPropagation();
                                                     openModal(event);
                                                 }}
-                                                className="h-8 w-8 text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10"
+                                                className="h-8 w-8 text-muted-foreground hover:text-status-warn hover:bg-status-warn/10"
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </Button>
@@ -525,7 +525,7 @@ export default function Events() {
                                                     e.stopPropagation();
                                                     handleDelete(event.id);
                                                 }}
-                                                className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                                className="h-8 w-8 text-status-danger hover:text-status-danger/25 hover:bg-status-danger/10"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </Button>
@@ -806,7 +806,7 @@ export default function Events() {
                                 <Button 
                                     type="submit" 
                                     disabled={createMutation.isPending || updateMutation.isPending}
-                                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-900 shadow-lg shadow-amber-500/20 disabled:opacity-60">
+                                    className="flex-1 bg-gradient-to-r from-status-warn to-status-warn hover:from-status-warn hover:to-status-warn text-muted-foreground shadow-lg shadow-amber-500/20 disabled:opacity-60">
                                     {(createMutation.isPending || updateMutation.isPending) ? 'Speichern...' : (selectedEvent ? 'Speichern' : 'Hinzufügen')}
                                 </Button>
                             </div>
@@ -830,7 +830,7 @@ export default function Events() {
                                 </Button>
                                 <Button
                                     onClick={confirmDialog.onConfirm}
-                                    className={`flex-1 ${confirmDialog.type === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'} text-white`}
+                                    className={`flex-1 ${confirmDialog.type === 'delete' ? 'bg-status-danger/70 hover:bg-status-danger/70' : 'bg-status-warn/70 hover:bg-status-warn/70'} text-white`}
                                 >
                                     {confirmDialog.type === 'delete' ? 'Löschen' : 'Absagen'}
                                 </Button>

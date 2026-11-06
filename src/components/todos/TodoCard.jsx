@@ -16,16 +16,16 @@ import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const priorityConfig = {
-    niedrig:  { stripe: 'bg-slate-400',  label: 'Niedrig',  cardBg: '' },
-    mittel:   { stripe: 'bg-blue-500',   label: 'Mittel',   cardBg: '' },
-    hoch:     { stripe: 'bg-orange-500', label: 'Hoch',     cardBg: 'bg-orange-500/5 border-orange-500/20' },
-    dringend: { stripe: 'bg-red-500',    label: 'Dringend', cardBg: 'bg-red-500/8 border-red-500/25' },
+    niedrig:  { stripe: 'bg-muted',  label: 'Niedrig',  cardBg: '' },
+    mittel:   { stripe: 'bg-primary/70',   label: 'Mittel',   cardBg: '' },
+    hoch:     { stripe: 'bg-status-warn/70', label: 'Hoch',     cardBg: 'bg-status-warn/5 border-status-warn/20' },
+    dringend: { stripe: 'bg-status-danger/70',    label: 'Dringend', cardBg: 'bg-status-danger/8 border-status-danger/25' },
 };
 
 const statusCycle = { offen: 'erledigt', erledigt: 'offen', in_bearbeitung: 'erledigt' }; // in_bearbeitung → erledigt als Migration
 const statusConfig = {
-    offen:          { icon: Circle,      color: 'text-slate-400',  label: 'Offen' },
-    erledigt:       { icon: CheckCircle, color: 'text-green-500',  label: 'Erledigt' },
+    offen:          { icon: Circle,      color: 'text-muted-foreground',  label: 'Offen' },
+    erledigt:       { icon: CheckCircle, color: 'text-status-ok',  label: 'Erledigt' },
 };
 
 function formatDueDate(dateStr) {
@@ -46,7 +46,7 @@ export default function TodoCard({
     const isCompleted  = todo.status === 'erledigt';
     const pCfg        = priorityConfig[todo.priority] || priorityConfig.mittel;
     const StatusIcon  = statusConfig[todo.status]?.icon || Circle;
-    const statusColor = statusConfig[todo.status]?.color || 'text-slate-400';
+    const statusColor = statusConfig[todo.status]?.color || 'text-muted-foreground';
 
     const isOverdue = todo.due_date &&
         isPast(new Date(todo.due_date)) &&
@@ -112,7 +112,7 @@ export default function TodoCard({
                                 )}>
                                     {todo.title}
                                     {todo.priority === 'dringend' && !isCompleted && (
-                                        <span className="ml-1 text-red-400 font-bold">!</span>
+                                        <span className="ml-1 text-status-danger font-bold">!</span>
                                     )}
                                 </h4>
                                 {!isCompleted && todo.description && (
@@ -159,10 +159,10 @@ export default function TodoCard({
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuLabel className="text-xs text-muted-foreground">Status</DropdownMenuLabel>
                                                     <DropdownMenuItem onClick={() => onStatusChange(todo, 'offen')}>
-                                                       <Circle className="w-4 h-4 mr-2 text-slate-400" />Offen
+                                                       <Circle className="w-4 h-4 mr-2 text-muted-foreground" />Offen
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => onStatusChange(todo, 'erledigt')}>
-                                                        <CheckCircle className="w-4 h-4 mr-2 text-green-500" />Erledigt
+                                                        <CheckCircle className="w-4 h-4 mr-2 text-status-ok" />Erledigt
                                                     </DropdownMenuItem>
                                                 </>
                                             )}
@@ -173,10 +173,10 @@ export default function TodoCard({
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuLabel className="text-xs text-muted-foreground">Priorität</DropdownMenuLabel>
                                                     {[
-                                                        { p: 'dringend', dot: 'bg-red-500' },
-                                                        { p: 'hoch',     dot: 'bg-orange-500' },
-                                                        { p: 'mittel',   dot: 'bg-blue-500' },
-                                                        { p: 'niedrig',  dot: 'bg-slate-400' },
+                                                        { p: 'dringend', dot: 'bg-status-danger/70' },
+                                                        { p: 'hoch',     dot: 'bg-status-warn/70' },
+                                                        { p: 'mittel',   dot: 'bg-primary/70' },
+                                                        { p: 'niedrig',  dot: 'bg-muted' },
                                                     ].map(({ p, dot }) => (
                                                         <DropdownMenuItem key={p}
                                                             onClick={() => onQuickUpdate(todo, { priority: p })}
@@ -200,7 +200,7 @@ export default function TodoCard({
                                                     )}
                                                     {onDelete && (
                                                         <DropdownMenuItem onClick={() => onDelete(todo.id)}
-                                                            className="text-red-400 focus:text-red-400 focus:bg-red-500/10">
+                                                            className="text-status-danger focus:text-status-danger focus:bg-status-danger/10">
                                                             <Trash2 className="w-4 h-4 mr-2" />Löschen
                                                         </DropdownMenuItem>
                                                     )}
@@ -221,8 +221,8 @@ export default function TodoCard({
                             )}
                             {todo.due_date && (
                                 <span className={cn('flex items-center gap-1 text-xs',
-                                    isOverdue  ? 'text-red-400 font-semibold' :
-                                    isDueToday ? 'text-amber-400 font-semibold' :
+                                    isOverdue  ? 'text-status-danger font-semibold' :
+                                    isDueToday ? 'text-status-warn font-semibold' :
                                     'text-muted-foreground')}>
                                     <Calendar className="w-3 h-3" />
                                     {isOverdue ? 'Überfällig · ' : ''}{formatDueDate(todo.due_date)}
@@ -266,9 +266,9 @@ export default function TodoCard({
                                         )}>
                                         <div className={cn(
                                             'w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0',
-                                            sub.done ? 'bg-green-500/20 border-green-500/50' : 'border-border'
+                                            sub.done ? 'bg-status-ok/20 border-status-ok/50' : 'border-border'
                                         )}>
-                                            {sub.done && <Check className="w-2.5 h-2.5 text-green-500" />}
+                                            {sub.done && <Check className="w-2.5 h-2.5 text-status-ok" />}
                                         </div>
                                         {sub.title}
                                     </button>

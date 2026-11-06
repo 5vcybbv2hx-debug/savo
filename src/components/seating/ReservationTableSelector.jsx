@@ -95,14 +95,14 @@ export default function ReservationTableSelector({ open, onClose, roomName, gues
                             </div>
 
                             {/* Kapazität Info */}
-                            <div className="text-sm space-y-1 bg-slate-100 p-3 rounded">
+                            <div className="text-sm space-y-1 bg-card p-3 rounded">
                                 <div className="flex justify-between">
                                     <span>Anfrage:</span>
                                     <span className="font-medium">{guestCount} Personen</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span>Kapazität (min-max):</span>
-                                    <span className={isValid ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                                    <span className={isValid ? 'text-status-ok font-medium' : 'text-status-danger font-medium'}>
                                         {minCapacity} - {totalCapacity + selectedTables.reduce((sum, t) => sum + (t.tolerance || 0), 0)}
                                     </span>
                                 </div>

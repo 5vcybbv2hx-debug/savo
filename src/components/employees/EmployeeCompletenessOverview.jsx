@@ -39,17 +39,17 @@ export default function EmployeeCompletenessOverview() {
   };
 
   const getColorClass = (completion) => {
-    if (completion === 100) return 'text-green-600 dark:text-green-400';
-    if (completion >= 75) return 'text-amber-600 dark:text-amber-400';
-    if (completion >= 50) return 'text-orange-600 dark:text-orange-400';
-    return 'text-red-600 dark:text-red-400';
+    if (completion === 100) return 'text-status-ok dark:text-status-ok';
+    if (completion >= 75) return 'text-status-warn dark:text-status-warn';
+    if (completion >= 50) return 'text-status-warn dark:text-status-warn';
+    return 'text-status-danger dark:text-status-danger';
   };
 
   const getBgColorClass = (completion) => {
-    if (completion === 100) return 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800';
-    if (completion >= 75) return 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800';
-    if (completion >= 50) return 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800';
-    return 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800';
+    if (completion === 100) return 'bg-status-ok/15 dark:bg-status-ok/20 border-status-ok/25 dark:border-status-ok/70';
+    if (completion >= 75) return 'bg-status-warn/15 dark:bg-status-warn/20 border-status-warn/25 dark:border-status-warn/70';
+    if (completion >= 50) return 'bg-status-warn/15 dark:bg-status-warn/20 border-status-warn/25 dark:border-status-warn/70';
+    return 'bg-status-danger/15 dark:bg-status-danger/20 border-status-danger/25 dark:border-status-danger/70';
   };
 
   return (
@@ -64,19 +64,19 @@ export default function EmployeeCompletenessOverview() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+        <Card className="bg-status-ok/15 dark:bg-status-ok/20 border-status-ok/25 dark:border-status-ok/70">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.complete}</p>
-              <p className="text-sm text-green-600 dark:text-green-400 mt-1">Vollständig</p>
+              <p className="text-3xl font-bold text-status-ok dark:text-status-ok">{stats.complete}</p>
+              <p className="text-sm text-status-ok dark:text-status-ok mt-1">Vollständig</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800">
+        <Card className="bg-status-warn/15 dark:bg-status-warn/20 border-status-warn/25 dark:border-status-warn/70">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{stats.incomplete}</p>
-              <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">Unvollständig</p>
+              <p className="text-3xl font-bold text-status-warn dark:text-status-warn">{stats.incomplete}</p>
+              <p className="text-sm text-status-warn dark:text-status-warn mt-1">Unvollständig</p>
             </div>
           </CardContent>
         </Card>
@@ -100,11 +100,11 @@ export default function EmployeeCompletenessOverview() {
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="all">Alle ({employees.length})</TabsTrigger>
                 <TabsTrigger value="complete">
-                  <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                  <CheckCircle2 className="w-4 h-4 mr-2 text-status-ok" />
                   Vollständig ({stats.complete})
                 </TabsTrigger>
                 <TabsTrigger value="incomplete">
-                  <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
+                  <AlertCircle className="w-4 h-4 mr-2 text-status-warn" />
                   Unvollständig ({stats.incomplete})
                 </TabsTrigger>
               </TabsList>
@@ -115,7 +115,7 @@ export default function EmployeeCompletenessOverview() {
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <div className="w-8 h-8 border-4 border-slate-200 dark:border-slate-700 border-t-slate-800 dark:border-t-slate-300 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-4 border-border dark:border-border border-t-slate-800 dark:border-t-slate-300 rounded-full animate-spin" />
             </div>
           ) : filteredEmployees.length === 0 ? (
             <div className="text-center py-8">
@@ -144,7 +144,7 @@ export default function EmployeeCompletenessOverview() {
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-semibold text-foreground truncate">{employee.name}</h3>
                           {status.status === 'complete' ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                            <CheckCircle2 className="w-5 h-5 text-status-ok shrink-0" />
                           ) : (
                             <AlertCircle className={cn('w-5 h-5 shrink-0', getColorClass(completion))} />
                           )}

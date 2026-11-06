@@ -44,11 +44,11 @@ const DEFAULT_STANDARD_CATEGORIES = ['Cocktail', 'Shot', 'Longdrink', 'Mocktail'
 const DEFAULT_SLUSHY_CATEGORIES = ['Vodka', 'Rum', 'Gin', 'Whiskey', 'Likör', 'Alkoholfrei', 'Sonstiges'];
 
 const CATEGORY_COLORS = {
-    'Cocktail':             'bg-pink-500/12 text-pink-400 border-pink-500/25',
-    'Shot':                 'bg-orange-500/12 text-orange-400 border-orange-500/25',
-    'Longdrink':            'bg-blue-500/12 text-blue-400 border-blue-500/25',
-    'Mocktail':             'bg-green-500/12 text-green-400 border-green-500/25',
-    'Moonshiner-Cocktails': 'bg-amber-500/12 text-amber-400 border-amber-500/25',
+    'Cocktail':             'bg-primary/12 text-primary border-primary/25',
+    'Shot':                 'bg-status-warn/12 text-status-warn border-status-warn/25',
+    'Longdrink':            'bg-primary/12 text-primary border-primary/25',
+    'Mocktail':             'bg-status-ok/12 text-status-ok border-status-ok/25',
+    'Moonshiner-Cocktails': 'bg-status-warn/12 text-status-warn border-status-warn/25',
     'Sonstiges':            'bg-secondary text-muted-foreground border-border',
 };
 
@@ -147,7 +147,7 @@ function RecipeDetailDialog({ recipe, articles, permissions, open, onClose, onEd
                                     className={cn(
                                         'px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
                                         activeVariant === null
-                                            ? 'bg-blue-500 border-blue-500 text-white'
+                                            ? 'bg-primary/70 border-primary/70 text-white'
                                             : 'border-border text-muted-foreground bg-card hover:text-foreground'
                                     )}>
                                     Nur Basis
@@ -158,7 +158,7 @@ function RecipeDetailDialog({ recipe, articles, permissions, open, onClose, onEd
                                         className={cn(
                                             'px-3 py-1.5 rounded-full text-xs font-semibold border transition-all',
                                             activeVariant === i
-                                                ? 'bg-blue-500 border-blue-500 text-white'
+                                                ? 'bg-primary/70 border-primary/70 text-white'
                                                 : 'border-border text-muted-foreground bg-card hover:text-foreground'
                                         )}>
                                         {v.name || `Variante ${i + 1}`}
@@ -197,13 +197,13 @@ function RecipeDetailDialog({ recipe, articles, permissions, open, onClose, onEd
                                     return (
                                         <div key={idx} className="flex items-center justify-between text-sm">
                                             <span className="text-foreground">
-                                                <span className="font-semibold text-amber-500">
+                                                <span className="font-semibold text-status-warn">
                                                     {ing.amount}{ing.unit || 'ml'}
                                                 </span>
                                                 {' '}{ing.article_name}
                                             </span>
                                             {permissions.isManager && cost > 0 && (
-                                                <span className="text-xs text-green-400 font-medium ml-2 shrink-0">
+                                                <span className="text-xs text-status-ok font-medium ml-2 shrink-0">
                                                     {cost.toFixed(2)} €
                                                 </span>
                                             )}
@@ -217,7 +217,7 @@ function RecipeDetailDialog({ recipe, articles, permissions, open, onClose, onEd
                                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                                         <CreditCard className="w-3 h-3" />EK gesamt
                                     </span>
-                                    <span className="text-sm font-bold text-green-400">{totalCost.toFixed(2)} €</span>
+                                    <span className="text-sm font-bold text-status-ok">{totalCost.toFixed(2)} €</span>
                                 </div>
                             )}
                         </div>
@@ -237,8 +237,8 @@ function RecipeDetailDialog({ recipe, articles, permissions, open, onClose, onEd
 
                     {/* Notizen */}
                     {recipe.notes && (
-                        <div className="bg-amber-500/8 border border-amber-500/20 rounded-xl p-3">
-                            <p className="text-xs font-bold text-amber-400 mb-1 flex items-center gap-1">
+                        <div className="bg-status-warn/8 border border-status-warn/20 rounded-xl p-3">
+                            <p className="text-xs font-bold text-status-warn mb-1 flex items-center gap-1">
                                 <StickyNote className="w-3 h-3" />Notiz
                             </p>
                             <p className="text-xs text-muted-foreground leading-relaxed">{recipe.notes}</p>
@@ -262,12 +262,12 @@ function RecipeDetailDialog({ recipe, articles, permissions, open, onClose, onEd
                                     + (variantName ? '&variant=' + encodeURIComponent(variantName) : '');
                                 navigate(url);
                             }}
-                            className="border-blue-500/30 text-blue-500 hover:bg-blue-500/10"
+                            className="border-primary/30 text-primary hover:bg-primary/10"
                         >
                             <Wine className="w-3.5 h-3.5 mr-1.5" />Zur Getränkekarte
                         </Button>
                         <Button size="sm" onClick={() => { onClose(); onEdit(recipe); }}
-                            className="bg-amber-600 hover:bg-amber-700 text-white flex-1">
+                            className="bg-status-warn/70 hover:bg-status-warn/70 text-white flex-1">
                             <Edit className="w-3.5 h-3.5 mr-1.5" />Bearbeiten
                         </Button>
                     </DialogFooter>
@@ -288,7 +288,7 @@ function RecipeCard({ recipe, articles, permissions, onSelect, isSelected, onCli
             className={cn(
                 'group relative border rounded-xl p-3.5 cursor-pointer transition-all bg-card',
                 isSelected
-                    ? 'border-amber-500 bg-amber-500/5'
+                    ? 'border-status-warn/70 bg-status-warn/5'
                     : 'border-border/60 hover:border-border'
             )}
             onClick={onClick}
@@ -300,7 +300,7 @@ function RecipeCard({ recipe, articles, permissions, onSelect, isSelected, onCli
                     className={cn(
                         'absolute top-3 right-3 w-5 h-5 rounded border-2 flex items-center justify-center transition-all',
                         isSelected
-                            ? 'bg-amber-500 border-amber-500'
+                            ? 'bg-status-warn/70 border-status-warn/70'
                             : 'border-border opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100 bg-card'
                     )}>
                     {isSelected && <CheckSquare className="w-3 h-3 text-white" />}
@@ -328,14 +328,14 @@ function RecipeCard({ recipe, articles, permissions, onSelect, isSelected, onCli
                 {ingCount > 0 && <span>{ingCount} Zutat{ingCount !== 1 ? 'en' : ''}</span>}
                 {recipe.glass_type && <span>· {recipe.glass_type}</span>}
                 {permissions.isManager && totalCost > 0 && (
-                    <span className="text-green-400 font-medium">· {totalCost.toFixed(2)} €</span>
+                    <span className="text-status-ok font-medium">· {totalCost.toFixed(2)} €</span>
                 )}
             </div>
 
             {/* Notiz-Vorschau */}
             {recipe.notes && (
-                <div className="mt-2.5 flex items-start gap-1.5 bg-amber-500/8 border border-amber-500/20 rounded-lg p-2">
-                    <StickyNote className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
+                <div className="mt-2.5 flex items-start gap-1.5 bg-status-warn/8 border border-status-warn/20 rounded-lg p-2">
+                    <StickyNote className="w-3 h-3 text-status-warn shrink-0 mt-0.5" />
                     <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">{recipe.notes}</p>
                 </div>
             )}
@@ -825,7 +825,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
                             {/* + Neu */}
                             <Button size="sm" onClick={() => openModal()}
-                                className="h-9 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+                                className="h-9 bg-status-warn/70 hover:bg-status-warn/70 text-white gap-1.5">
                                 <Plus className="w-4 h-4" />
                                 <span className="hidden sm:inline">Neues Rezept</span>
                             </Button>
@@ -846,7 +846,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                     <button onClick={() => { setActiveTab('slushy'); setCategoryFilter('alle'); }}
                         className={cn(
                             'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all',
-                            activeTab === 'slushy' ? 'bg-cyan-500/15 text-cyan-400 shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                            activeTab === 'slushy' ? 'bg-primary/15 text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
                         )}>
                         <Snowflake className="w-4 h-4" />
                         Slushy <span className="opacity-60 text-xs">({slushyRecipes.length})</span>
@@ -879,13 +879,13 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                 <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
                     <button onClick={() => setCategoryFilter('alle')}
                         className={cn('shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
-                            categoryFilter === 'alle' ? 'bg-amber-500 border-amber-500 text-white' : 'border-border text-muted-foreground bg-card hover:text-foreground')}>
+                            categoryFilter === 'alle' ? 'bg-status-warn/70 border-status-warn/70 text-white' : 'border-border text-muted-foreground bg-card hover:text-foreground')}>
                         Alle
                     </button>
                     {activeCategories.map(cat => (
                         <button key={cat} onClick={() => setCategoryFilter(cat)}
                             className={cn('shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all',
-                                categoryFilter === cat ? 'bg-amber-500 border-amber-500 text-white' : 'border-border text-muted-foreground bg-card hover:text-foreground')}>
+                                categoryFilter === cat ? 'bg-status-warn/70 border-status-warn/70 text-white' : 'border-border text-muted-foreground bg-card hover:text-foreground')}>
                             {cat}
                             <span className="opacity-50 ml-1">
                                 {(activeTab === 'slushy' ? slushyRecipes : standardRecipes).filter(r => r.category === cat).length}
@@ -896,9 +896,9 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
 
                 {/* ── Multi-Select Banner ─────────────────────────────────── */}
                 {selectedRecipes.size > 0 && (
-                    <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+                    <div className="flex items-center justify-between bg-status-warn/10 border border-status-warn/30 rounded-xl p-3">
                         <div className="flex items-center gap-2.5">
-                            <CheckSquare className="w-4 h-4 text-amber-500" />
+                            <CheckSquare className="w-4 h-4 text-status-warn" />
                             <div>
                                 <p className="text-sm font-semibold text-foreground">
                                     {selectedRecipes.size} Rezept{selectedRecipes.size !== 1 ? 'e' : ''} ausgewählt
@@ -911,7 +911,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                 Abbrechen
                             </Button>
                             <Button size="sm" onClick={generateShoppingList}
-                                className="h-8 bg-amber-600 hover:bg-amber-700 text-white">
+                                className="h-8 bg-status-warn/70 hover:bg-status-warn/70 text-white">
                                 <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />Einkaufsliste
                             </Button>
                         </div>
@@ -929,7 +929,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                 : 'Erstes Rezept anlegen'}
                         </p>
                         {permissions.isManager && !searchQuery && !ingredientFilter && categoryFilter === 'alle' && (
-                            <Button size="sm" onClick={() => openModal()} className="mt-4 bg-amber-600 hover:bg-amber-700 text-white">
+                            <Button size="sm" onClick={() => openModal()} className="mt-4 bg-status-warn/70 hover:bg-status-warn/70 text-white">
                                 <Plus className="w-4 h-4 mr-1.5" />Neues Rezept
                             </Button>
                         )}
@@ -1078,7 +1078,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                 <Button type="button" variant="outline" size="sm"
                                     onClick={suggestIngredients}
                                     disabled={suggestingIngredients || !formData.name}
-                                    className="h-7 text-xs gap-1.5 border-amber-500/40 text-amber-500 hover:bg-amber-500/10">
+                                    className="h-7 text-xs gap-1.5 border-status-warn/40 text-status-warn hover:bg-status-warn/10">
                                     <Sparkles className="w-3 h-3" />
                                     {suggestingIngredients ? 'Lädt…' : 'KI-Vorschlag'}
                                 </Button>
@@ -1234,7 +1234,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                     </label>
                                     <label className="flex-1 cursor-pointer">
                                         <div className={cn(
-                                            'flex items-center justify-center gap-1.5 h-9 rounded-lg border border-amber-500/30 text-xs font-medium text-amber-500 hover:bg-amber-500/10 transition-all',
+                                            'flex items-center justify-center gap-1.5 h-9 rounded-lg border border-status-warn/30 text-xs font-medium text-status-warn hover:bg-status-warn/10 transition-all',
                                             uploadingImage && 'opacity-50 pointer-events-none'
                                         )}>
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -1261,7 +1261,7 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                         )}
                         <Button onClick={handleSave}
                             disabled={createMutation.isPending || updateMutation.isPending || !formData.name?.trim()}
-                            className="bg-amber-600 hover:bg-amber-700 text-white min-w-24">
+                            className="bg-status-warn/70 hover:bg-status-warn/70 text-white min-w-24">
                             {(createMutation.isPending || updateMutation.isPending)
                                 ? 'Speichert…' : selectedRecipe ? 'Speichern' : 'Erstellen'}
                         </Button>
@@ -1327,9 +1327,9 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                             <p className="text-[12px] font-medium text-muted-foreground mb-2">Slushies</p>
                             <div className="flex flex-wrap gap-2">
                                 {slushyCategories.map(cat => (
-                                    <span key={cat} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-blue-500/10 text-blue-400 border-blue-500/25">
+                                    <span key={cat} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border bg-primary/10 text-primary border-primary/25">
                                         {cat}
-                                        <span className="text-blue-400/60">
+                                        <span className="text-primary/60">
                                             ({recipes.filter(r => r.category === cat && r.recipe_type === 'slushy').length})
                                         </span>
                                         {!DEFAULT_SLUSHY_CATEGORIES.includes(cat) && (
@@ -1360,13 +1360,13 @@ Antworte mit JSON: {"name":"...","category":"Cocktail","servings":1,"ingredients
                                     type="button"
                                     onClick={() => addCategory('standard')}
                                     disabled={!newCatInput.trim()}
-                                    className="h-9 px-3 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-semibold disabled:opacity-40 hover:bg-amber-500/30 transition-colors"
+                                    className="h-9 px-3 rounded-lg bg-status-warn/20 border border-status-warn/40 text-status-warn text-xs font-semibold disabled:opacity-40 hover:bg-status-warn/30 transition-colors"
                                 >+ Standard</button>
                                 <button
                                     type="button"
                                     onClick={() => addCategory('slushy')}
                                     disabled={!newCatInput.trim()}
-                                    className="h-9 px-3 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 text-xs font-semibold disabled:opacity-40 hover:bg-blue-500/30 transition-colors"
+                                    className="h-9 px-3 rounded-lg bg-primary/20 border border-primary/40 text-primary text-xs font-semibold disabled:opacity-40 hover:bg-primary/30 transition-colors"
                                 >+ Slushy</button>
                             </div>
                             <p className="text-xs text-muted-foreground">Standard-Kategorien können nicht gelöscht werden. Eigene Kategorien (mit ✕) schon.</p>

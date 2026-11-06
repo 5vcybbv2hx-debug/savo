@@ -146,7 +146,7 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
       <DialogContent className="w-full max-w-2xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ArrowRightLeft className="w-5 h-5 text-blue-600" />
+            <ArrowRightLeft className="w-5 h-5 text-primary" />
             Direkter Schichttausch
           </DialogTitle>
           <DialogDescription>
@@ -182,8 +182,8 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
               </SelectContent>
             </Select>
             {selectedMyShift && (
-              <Card className="mt-2 p-3 bg-blue-500/10 border border-blue-500/20">
-                <p className="text-sm font-medium text-blue-400">
+              <Card className="mt-2 p-3 bg-primary/10 border border-primary/20">
+                <p className="text-sm font-medium text-primary">
                   {format(parseISO(selectedMyShift.date), 'EEEE, d. MMMM yyyy', { locale: de })}
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -250,8 +250,8 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
                 </SelectContent>
               </Select>
               {selectedOtherShift && (
-                <Card className="mt-2 p-3 bg-green-500/10 border border-green-500/20">
-                  <p className="text-sm font-medium text-green-400">
+                <Card className="mt-2 p-3 bg-status-ok/10 border border-status-ok/20">
+                  <p className="text-sm font-medium text-status-ok">
                     {format(parseISO(selectedOtherShift.date), 'EEEE, d. MMMM yyyy', { locale: de })}
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -264,25 +264,25 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
 
           {/* Vorschau & Validierung */}
           {swapPreview && (
-            <Card className="p-4 border-l-4 border-l-amber-500 bg-amber-500/5">
+            <Card className="p-4 border-l-4 border-l-amber-500 bg-status-warn/5">
               <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
+                <Check className="w-4 h-4 text-status-ok" />
                 Tauschabwicklung
               </h3>
               <div className="space-y-2 text-sm">
                 <p className="text-foreground">
-                  Du gibst auf: <span className="font-medium text-blue-400">{format(parseISO(selectedMyShift.date), 'dd.MM.', { locale: de })} {selectedMyShift.start_time}</span>
+                  Du gibst auf: <span className="font-medium text-primary">{format(parseISO(selectedMyShift.date), 'dd.MM.', { locale: de })} {selectedMyShift.start_time}</span>
                 </p>
                 <p className="text-foreground">
-                  Du bekommst: <span className="font-medium text-green-400">{format(parseISO(selectedOtherShift.date), 'dd.MM.', { locale: de })} {selectedOtherShift.start_time}</span>
+                  Du bekommst: <span className="font-medium text-status-ok">{format(parseISO(selectedOtherShift.date), 'dd.MM.', { locale: de })} {selectedOtherShift.start_time}</span>
                 </p>
                 <p className="text-muted-foreground mt-2">
                   {selectedEmployee.name} bekommt deine Schicht, du bekommst {selectedEmployee.name}s Schicht.
                 </p>
               </div>
-              <Alert className="mt-3 border-amber-500/30 bg-amber-500/10">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <AlertDescription className="text-xs text-amber-300">
+              <Alert className="mt-3 border-status-warn/30 bg-status-warn/10">
+                <AlertTriangle className="w-4 h-4 text-status-warn" />
+                <AlertDescription className="text-xs text-status-warn/25">
                   Der Tausch wird erst wirksam, sobald {selectedEmployee.name} in der Inbox zustimmt.
                 </AlertDescription>
               </Alert>
@@ -300,7 +300,7 @@ export default function DirectSwapModal({ open, onOpenChange, myShifts = [] }) {
           <Button
             onClick={() => directSwapMutation.mutate()}
             disabled={!swapPreview || directSwapMutation.isPending}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+            className="bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white"
           >
             {directSwapMutation.isPending ? (
               <>

@@ -57,8 +57,8 @@ function ChipToggle({ label, selected, onClick, disabled }) {
                 'px-3 py-1.5 rounded-full text-xs font-medium border transition-all touch-manipulation',
                 disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer',
                 selected
-                    ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                    : 'bg-secondary border-border text-muted-foreground' + (disabled ? '' : ' hover:border-amber-500/30 hover:text-foreground')
+                    ? 'bg-status-warn/20 border-status-warn/50 text-status-warn/25'
+                    : 'bg-secondary border-border text-muted-foreground' + (disabled ? '' : ' hover:border-status-warn/30 hover:text-foreground')
             )}
         >
             {label}

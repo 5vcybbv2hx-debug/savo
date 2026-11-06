@@ -94,7 +94,7 @@ export default function SketchCanvas({ open, onClose, onSketchAdded, isLoading }
                         onTouchStart={startDrawing}
                         onTouchMove={draw}
                         onTouchEnd={stopDrawing}
-                        className="flex-1 rounded-xl border-2 border-border bg-white cursor-crosshair touch-none"
+                        className="flex-1 rounded-xl border-2 border-border bg-card cursor-crosshair touch-none"
                     />
                 </div>
 
@@ -121,7 +121,7 @@ export default function SketchCanvas({ open, onClose, onSketchAdded, isLoading }
                         <Button
                             onClick={saveSketch}
                             disabled={saving || isLoading}
-                            className="h-10 rounded-lg gap-1.5 bg-green-600 hover:bg-green-700"
+                            className="h-10 rounded-lg gap-1.5 bg-status-ok/70 hover:bg-status-ok/70"
                         >
                             {saving ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
