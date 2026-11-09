@@ -1,0 +1,97 @@
+{
+  "name": "MonatsabschlussBuchhaltung",
+  "type": "object",
+  "properties": {
+    "month": {
+      "type": "string",
+      "description": "Monat im Format YYYY-MM"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "offen",
+        "in_arbeit",
+        "pruefung",
+        "fertig",
+        "versendet"
+      ],
+      "enumColors": [
+        "gray",
+        "yellow",
+        "blue",
+        "green",
+        "purple"
+      ],
+      "default": "offen",
+      "description": "Bearbeitungsstand des Monatsabschlusses"
+    },
+    "faellig_am": {
+      "type": "string",
+      "format": "date",
+      "description": "F\u00e4lligkeit f\u00fcr den Steuerberater \u2014 Standard: 10. des Folgemonats"
+    },
+    "besitzer": {
+      "type": "string",
+      "description": "Employee-Name der Person, die aktuell dran ist"
+    },
+    "check_kasse": {
+      "type": "boolean",
+      "default": false,
+      "description": "Kasse gepr\u00fcft (wird automatisch gesetzt, wenn alle erwarteten Tage gebucht sind)"
+    },
+    "check_belege": {
+      "type": "boolean",
+      "default": false,
+      "description": "Belege gepr\u00fcft"
+    },
+    "check_bank": {
+      "type": "boolean",
+      "default": false,
+      "description": "Bankverkehr gepr\u00fcft"
+    },
+    "check_lohn": {
+      "type": "boolean",
+      "default": false,
+      "description": "Lohn gepr\u00fcft"
+    },
+    "check_sonderposten": {
+      "type": "boolean",
+      "default": false,
+      "description": "Sonderposten gepr\u00fcft"
+    },
+    "auto_kasse_tage": {
+      "type": "number",
+      "description": "Von der App berechnet: Anzahl Tage mit Tagesabschluss im Monat"
+    },
+    "auto_kasse_erwartet": {
+      "type": "number",
+      "description": "Von der App berechnet: erwartete Buchungstage im Monat (ohne Montage, nur bis heute)"
+    },
+    "luecken": {
+      "type": "string",
+      "description": "Was fehlt \u2014 Klartext, mehrzeilig"
+    },
+    "paket_url": {
+      "type": "string",
+      "description": "Ablage des gebauten Pakets"
+    },
+    "paket_gebaut_am": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum, an dem das Paket gebaut wurde"
+    },
+    "versendet_am": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum des Versands an den Steuerberater"
+    },
+    "notizen": {
+      "type": "string",
+      "description": "Notizen"
+    }
+  },
+  "required": [
+    "month",
+    "status"
+  ]
+}

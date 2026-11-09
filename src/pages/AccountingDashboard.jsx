@@ -18,6 +18,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CockpitView from '@/components/cockpit/CockpitView';
 import SchuldenFahrplanTab from '@/components/accounting/schulden/SchuldenFahrplanTab';
+import SteuerberaterTab from '@/components/accounting/steuerberater/SteuerberaterTab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,11 +40,17 @@ export default function AccountingDashboard() {
     const [searchParams, setSearchParams] = useSearchParams();
     // „Schulden & Fahrplan" sind sensible Finanzdaten — ausschließlich App-Rolle 'Admin'.
     const canViewSchulden = permissions.isAdmin;
+    // Monatsabschluss für den Steuerberater — nur Manager und Admin.
+    const canViewSteuerberater = permissions.isManager;
     const requestedTab = searchParams.get('tab');
     // Direkt-URL absichern: ohne Berechtigung fällt der Tab auf die Übersicht zurück.
     const tab = requestedTab === 'cockpit'
         ? 'cockpit'
-        : (requestedTab === 'schulden' && canViewSchulden ? 'schulden' : 'uebersicht');
+        : (requestedTab === 'schulden' && canViewSchulden
+            ? 'schulden'
+            : (requestedTab === 'steuerberater' && canViewSteuerberater ? 'steuerberater' : 'uebersicht'));
+    const tabCount = 2 + (canViewSchulden ? 1 : 0) + (canViewSteuerberater ? 1 : 0);
+    const tabTriggerClass = tabCount >= 4 ? 'px-1.5 text-xs' : undefined;
     const setTab = (next) => setSearchParams(next === 'uebersicht' ? {} : { tab: next }, { replace: true });
     const now         = new Date();
     const monthStart  = startOfMonth(now);
@@ -207,10 +214,18 @@ export default function AccountingDashboard() {
 
                 {/* ── Bereiche des Moduls: Übersicht · Cockpit ─────────────── */}
                 <Tabs value={tab} onValueChange={setTab}>
-                    <TabsList className={cn('grid w-full', canViewSchulden ? 'grid-cols-3' : 'grid-cols-2')}>
-                        <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
-                        <TabsTrigger value="cockpit">Cockpit</TabsTrigger>
-                        {canViewSchulden && <TabsTrigger value="schulden">Schulden &amp; Fahrplan</TabsTrigger>}
+                    <TabsList className={cn(
+                        'grid w-full',
+                        tabCount >= 4 ? 'grid-cols-4' : tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'
+                    )}>
+                        <TabsTrigger value="uebersicht" className={tabTriggerClass}>Übersicht</TabsTrigger>
+                        <TabsTrigger value="cockpit" className={tabTriggerClass}>Cockpit</TabsTrigger>
+                        {canViewSchulden && (
+                            <TabsTrigger value="schulden" className={tabTriggerClass}>Schulden &amp; Fahrplan</TabsTrigger>
+                        )}
+                        {canViewSteuerberater && (
+                            <TabsTrigger value="steuerberater" className={tabTriggerClass}>Steuerberater</TabsTrigger>
+                        )}
                     </TabsList>
 
                     <TabsContent value="uebersicht" className="mt-5 space-y-5">
@@ -325,6 +340,12 @@ export default function AccountingDashboard() {
                     {canViewSchulden && (
                         <TabsContent value="schulden" className="mt-5">
                             <SchuldenFahrplanTab />
+                        </TabsContent>
+                    )}
+
+                    {canViewSteuerberater && (
+                        <TabsContent value="steuerberater" className="mt-5">
+                            <SteuerberaterTab />
                         </TabsContent>
                     )}
                 </Tabs>
