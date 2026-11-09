@@ -100,6 +100,19 @@ export default function EmployeeProfile() {
 
   const set = (key, val) => { setForm(f => ({ ...f, [key]: val })); setDirty(true); };
 
+
+  // ── Zugriffsschutz Personaldaten (Backend-Function, fehloffen) ──────────
+  const { data: accessCheck } = useQuery({
+    queryKey: ['employee-access', id],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('checkEmployeeAccess', { employeeId: id, action: 'view' });
+      return res?.data ?? { allowed: true };
+    },
+    enabled: !!id && !isNew,
+    retry: 0,
+    staleTime: 60000,
+  });
+
   // ── Data ─────────────────────────────────────────────────────────────────
   const { data: employee, isLoading } = useQuery({
     queryKey: ['employee', id],
@@ -221,6 +234,20 @@ export default function EmployeeProfile() {
       category: 'Einkauf', priority: 'mittel', status: 'offen',
     }).then(() => toast.success('Bestellung zur Aufgabenliste hinzugefügt!'));
   };
+
+  // ── Zugriff verweigert (nur wenn das Backend klar Nein sagt) ────────────
+  if (!isNew && accessCheck && accessCheck.allowed === false) return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="max-w-sm text-center space-y-3">
+        <Shield className="w-8 h-8 text-status-warn mx-auto" />
+        <p className="text-foreground font-medium">Kein Zugriff auf diese Personaldaten</p>
+        <p className="text-[12px] text-muted-foreground">
+          Nur die Person selbst, Manager und Admins dürfen diesen Datensatz öffnen.
+        </p>
+        <Button variant="outline" onClick={() => navigate(-1)}>Zurück</Button>
+      </div>
+    </div>
+  );
 
   // ── Loading / error states ─────────────────────────────────────────────
   if (isLoading) return (

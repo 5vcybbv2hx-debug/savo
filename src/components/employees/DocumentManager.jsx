@@ -61,6 +61,13 @@ export default function DocumentManager({ employeeId, employeeName, canEdit = tr
       });
     },
     onSuccess: () => {
+      base44.functions.invoke('logAccessAction', {
+        action: 'upload_document',
+        resource_type: 'EmployeeDocument',
+        resource_id: employeeId,
+        status: 'success',
+        notes: 'Dokument hochgeladen',
+      }).catch(() => {});
       toast.success('Dokument hochgeladen');
       queryClient.invalidateQueries({ queryKey: ['employeeDocuments', employeeId] });
       setDocumentType('');
@@ -76,6 +83,13 @@ export default function DocumentManager({ employeeId, employeeName, canEdit = tr
   const deleteMutation = useMutation({
     mutationFn: (docId) => base44.entities.EmployeeDocument.delete(docId),
     onSuccess: () => {
+      base44.functions.invoke('logAccessAction', {
+        action: 'delete_document',
+        resource_type: 'EmployeeDocument',
+        resource_id: employeeId,
+        status: 'success',
+        notes: 'Dokument gelöscht',
+      }).catch(() => {});
       toast.success('Dokument gelöscht');
       queryClient.invalidateQueries({ queryKey: ['employeeDocuments', employeeId] });
     },
@@ -228,12 +242,12 @@ export default function DocumentManager({ employeeId, employeeName, canEdit = tr
                     <button
                       onClick={async () => {
                         try {
-                          // Use secure document access function
-                          const response = await base44.functions.invoke('getSecureDocument', {
+                          const response = await base44.functions.invoke('secureDocumentDownload', {
                             documentId: doc.id
                           });
-                          if (response.data.access_granted) {
-                            window.open(doc.file_url, '_blank');
+                          const url = response?.data?.signed_url;
+                          if (url) {
+                            window.open(url, '_blank');
                           } else {
                             toast.error('Zugriff verweigert');
                           }

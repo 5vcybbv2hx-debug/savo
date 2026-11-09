@@ -21,9 +21,9 @@ const ComplianceChecklist = () => {
     {
       category: '🟡 Teilweise (Server-Side nötig)',
       items: [
-        { name: 'Row-Level Security (RLS) für Employee', status: 'partial', note: 'Backend: checkEmployeeAccess.js' },
-        { name: 'RLS für EmployeeDocument', status: 'partial', note: 'Backend: secureDocumentDownload.js' },
-        { name: 'Audit-Logging Integration', status: 'partial', note: 'Backend: logAccessAction.js' },
+        { name: 'Row-Level Security (RLS) für Employee', status: 'done', note: 'checkEmployeeAccess ist in EmployeeProfile verdrahtet (fehloffen)' },
+        { name: 'RLS für EmployeeDocument', status: 'done', note: 'secureDocumentDownload liefert Signatur-URL, prüft Eigentümer/Manager' },
+        { name: 'Audit-Logging Integration', status: 'done', note: 'Dokument ansehen/hochladen/löschen schreibt in AccessLog' },
         { name: 'Document Access Control', status: 'partial', note: 'Signatur + Rate-Limiting' },
       ]
     },
