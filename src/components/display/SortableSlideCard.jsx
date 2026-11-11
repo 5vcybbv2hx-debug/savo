@@ -58,6 +58,11 @@ export default function SortableSlideCard({ slide, onToggle, onEdit, onDelete, o
               <Badge className={cn('text-[10px] h-4 px-1.5 border', TYPE_COLORS[slide.slide_type])}>
                 {SLIDE_TYPES.find(t => t.value === slide.slide_type)?.label.replace(/^.+? /, '') || slide.slide_type}
               </Badge>
+              {eventSynced && slide.manual_override && (
+                <Badge className="text-[10px] h-4 px-1.5 border border-status-warn/30 bg-status-warn/10 text-status-warn">
+                  Eigene Fassung
+                </Badge>
+              )}
               {eventSynced && (
                 <Badge className="text-[10px] h-4 px-1.5 border border-primary/30 bg-primary/10 text-primary flex items-center gap-0.5">
                   <RefreshCw className="w-2.5 h-2.5" />
@@ -78,11 +83,9 @@ export default function SortableSlideCard({ slide, onToggle, onEdit, onDelete, o
             <Button size="icon" variant="ghost" className="h-8 w-8" title="Instagram-Export" onClick={() => onExport(slide)}>
               <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
             </Button>
-            {!eventSynced && (
-              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(slide)} title="Bearbeiten">
-                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
-            )}
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(slide)} title="Bearbeiten">
+              <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onDelete(slide)} title="Löschen">
               <Trash2 className="w-3.5 h-3.5 text-destructive" />
             </Button>

@@ -85,7 +85,7 @@ const EMPTY_FORM = {
   image_url: '', accent_color: 'amber', background_theme: 'auto', cta_text: '', event_date: '',
   event_end_date: '', event_time: '', event_end_time: '', location: '',
   price_info: '', is_active: true, sort_order: 1, public_event: false,
-  show_from: '', show_until: '', duration_seconds: 8,
+  show_from: '', show_until: '', duration_seconds: 8, manual_override: false,
   drinks: [{ ...EMPTY_DRINK }],
 };
 
@@ -543,6 +543,20 @@ export default function TvPlaylistSection() {
                   </div>
                 </div>
               </div>
+
+              {/* Event-Sync-Schutz — nur bei aus Events erzeugten Slides */}
+              {modal.data && isEventSlide(modal.data) && (
+                <div className="flex items-start justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Eigene Fassung schützen</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Ohne Schutz überschreibt das Event diesen Slide beim nächsten Speichern.
+                      Mit Schutz bleiben deine Texte, das Event liefert nur noch das Datum.
+                    </p>
+                  </div>
+                  <Switch checked={!!form.manual_override} onCheckedChange={v => f('manual_override', v)} className="mt-0.5 shrink-0" />
+                </div>
+              )}
 
               {/* Aktiv */}
               <div className="flex items-center justify-between rounded-xl border border-border/60 p-3">

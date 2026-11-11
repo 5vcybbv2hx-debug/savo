@@ -77,6 +77,10 @@
       "type": "string",
       "description": "Uhrzeit (z.B. '20:00')"
     },
+    "manual_override": {
+      "type": "boolean",
+      "description": "Manuell bearbeitet: Event-Sync überschreibt Texte nicht mehr"
+    },
     "public_event": {
       "type": "boolean",
       "default": false,

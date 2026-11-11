@@ -151,7 +151,16 @@ export default function Events() {
                 sort_order:       existingSlide ? existingSlide.sort_order : maxOrder + 10,
             };
             if (existingSlide) {
-                await base44.entities.DisplaySlide.update(existingSlide.id, payload);
+                // Eigene Fassung: Event liefert nur noch Datum und Sichtbarkeitsfenster,
+                // die Texte bleiben wie vom Nutzer bearbeitet.
+                if (existingSlide.manual_override) {
+                    await base44.entities.DisplaySlide.update(existingSlide.id, {
+                        event_date: payload.event_date,
+                        event_end_date: payload.event_end_date,
+                    });
+                } else {
+                    await base44.entities.DisplaySlide.update(existingSlide.id, payload);
+                }
             } else {
                 await base44.entities.DisplaySlide.create(payload);
             }
