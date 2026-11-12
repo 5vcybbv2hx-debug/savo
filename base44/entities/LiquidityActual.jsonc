@@ -1,0 +1,130 @@
+{
+  "name": "LiquidityActual",
+  "type": "object",
+  "properties": {
+    "year": {
+      "type": "number",
+      "description": "ISO-Jahr der Kalenderwoche"
+    },
+    "week": {
+      "type": "number",
+      "description": "ISO-Kalenderwoche"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "umsatz",
+        "karte",
+        "bar",
+        "fixkosten",
+        "personal",
+        "sv",
+        "ust",
+        "ruecklage",
+        "tilgung"
+      ],
+      "enumColors": [
+        "blue",
+        "blue",
+        "green",
+        "yellow",
+        "yellow",
+        "yellow",
+        "red",
+        "purple",
+        "red"
+      ],
+      "description": "Kategorie der Ist-Buchung"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Betrag in Euro (Einnahmen positiv, Ausgaben positiv als Kostenbetrag)"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "kontoauszug",
+        "kassenbericht",
+        "manuell"
+      ],
+      "enumColors": [
+        "blue",
+        "green",
+        "gray"
+      ],
+      "default": "manuell",
+      "description": "Herkunft der Ist-Buchung"
+    },
+    "document_ref": {
+      "type": "string",
+      "description": "Beleg-/Buchungsreferenz (z. B. Verwendungszweck)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen"
+    }
+  },
+  "required": [
+    "year",
+    "week",
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    }
+  }
+}

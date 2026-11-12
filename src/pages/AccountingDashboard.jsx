@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CockpitView from '@/components/cockpit/CockpitView';
 import SchuldenFahrplanTab from '@/components/accounting/schulden/SchuldenFahrplanTab';
 import SteuerberaterTab from '@/components/accounting/steuerberater/SteuerberaterTab';
+import LiquiditaetTab from '@/components/accounting/liquiditaet/LiquiditaetTab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,14 +43,18 @@ export default function AccountingDashboard() {
     const canViewSchulden = permissions.isAdmin;
     // Monatsabschluss für den Steuerberater — nur Manager und Admin.
     const canViewSteuerberater = permissions.isManager;
+    // Liquiditäts- und Tilgungsplan — nur Manager und Admin.
+    const canViewLiquiditaet = permissions.isManager;
     const requestedTab = searchParams.get('tab');
     // Direkt-URL absichern: ohne Berechtigung fällt der Tab auf die Übersicht zurück.
     const tab = requestedTab === 'cockpit'
         ? 'cockpit'
         : (requestedTab === 'schulden' && canViewSchulden
             ? 'schulden'
-            : (requestedTab === 'steuerberater' && canViewSteuerberater ? 'steuerberater' : 'uebersicht'));
-    const tabCount = 2 + (canViewSchulden ? 1 : 0) + (canViewSteuerberater ? 1 : 0);
+            : (requestedTab === 'steuerberater' && canViewSteuerberater
+                ? 'steuerberater'
+                : (requestedTab === 'liquiditaet' && canViewLiquiditaet ? 'liquiditaet' : 'uebersicht')));
+    const tabCount = 2 + (canViewSchulden ? 1 : 0) + (canViewSteuerberater ? 1 : 0) + (canViewLiquiditaet ? 1 : 0);
     const tabTriggerClass = tabCount >= 4 ? 'px-1.5 text-xs' : undefined;
     const setTab = (next) => setSearchParams(next === 'uebersicht' ? {} : { tab: next }, { replace: true });
     const now         = new Date();
@@ -216,7 +221,7 @@ export default function AccountingDashboard() {
                 <Tabs value={tab} onValueChange={setTab}>
                     <TabsList className={cn(
                         'grid w-full',
-                        tabCount >= 4 ? 'grid-cols-4' : tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'
+                        tabCount >= 5 ? 'grid-cols-5' : tabCount === 4 ? 'grid-cols-4' : tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'
                     )}>
                         <TabsTrigger value="uebersicht" className={tabTriggerClass}>Übersicht</TabsTrigger>
                         <TabsTrigger value="cockpit" className={tabTriggerClass}>Cockpit</TabsTrigger>
@@ -225,6 +230,9 @@ export default function AccountingDashboard() {
                         )}
                         {canViewSteuerberater && (
                             <TabsTrigger value="steuerberater" className={tabTriggerClass}>Steuerberater</TabsTrigger>
+                        )}
+                        {canViewLiquiditaet && (
+                            <TabsTrigger value="liquiditaet" className={tabTriggerClass}>Liquidität</TabsTrigger>
                         )}
                     </TabsList>
 
@@ -346,6 +354,12 @@ export default function AccountingDashboard() {
                     {canViewSteuerberater && (
                         <TabsContent value="steuerberater" className="mt-5">
                             <SteuerberaterTab />
+                        </TabsContent>
+                    )}
+
+                    {canViewLiquiditaet && (
+                        <TabsContent value="liquiditaet" className="mt-5">
+                            <LiquiditaetTab />
                         </TabsContent>
                     )}
                 </Tabs>

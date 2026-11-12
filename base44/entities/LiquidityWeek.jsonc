@@ -1,0 +1,185 @@
+{
+  "name": "LiquidityWeek",
+  "type": "object",
+  "properties": {
+    "year": {
+      "type": "number",
+      "description": "ISO-Jahr der Kalenderwoche"
+    },
+    "week": {
+      "type": "number",
+      "description": "ISO-Kalenderwoche"
+    },
+    "week_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Montag der Woche (YYYY-MM-DD)"
+    },
+    "week_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Sonntag der Woche (YYYY-MM-DD)"
+    },
+    "revenue_plan": {
+      "type": "number",
+      "description": "Geplanter Umsatz der Woche (Vorjahr gleiche KW \u00d7 Trend)"
+    },
+    "inflow_card": {
+      "type": "number",
+      "description": "Kartengutschrift: 55 % des Umsatzes minus 1,5 % Geb\u00fchr"
+    },
+    "inflow_cash": {
+      "type": "number",
+      "description": "Bareinzahlung: 12,5 % des Umsatzes"
+    },
+    "cost_fixed": {
+      "type": "number",
+      "description": "Fixkosten der Woche (Pacht 10., Mieten + Strom Monatsanfang)"
+    },
+    "cost_staff": {
+      "type": "number",
+      "description": "Personal der Woche (Vorwoche aus TimeEntry + feste Zahlungen)"
+    },
+    "cost_sv": {
+      "type": "number",
+      "description": "Sozialversicherung (1.725 \u20ac am 15.)"
+    },
+    "cost_vat": {
+      "type": "number",
+      "description": "Umsatzsteuer-Voranmeldung (10. des Folgemonats)"
+    },
+    "reserve_vat": {
+      "type": "number",
+      "description": "R\u00fccklage Umsatzsteuer (Spiegel des USt-Betrags)"
+    },
+    "reserve_tax": {
+      "type": "number",
+      "description": "R\u00fccklage Einkommensteuer: 10 % des Wochen\u00fcberschusses"
+    },
+    "reserve_aok": {
+      "type": "number",
+      "description": "R\u00fccklage AOK (Spiegel des SV-Betrags)"
+    },
+    "debt_rate": {
+      "type": "number",
+      "description": "Summe der Tilgungsraten der Woche"
+    },
+    "debt_payments": {
+      "type": "array",
+      "description": "Einzelne Tilgungen der Woche",
+      "items": {
+        "type": "object",
+        "properties": {
+          "glaeubiger": {
+            "type": "string"
+          },
+          "betrag": {
+            "type": "number"
+          },
+          "rechnung": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "balance_end": {
+      "type": "number",
+      "description": "Saldo der Woche (Einnahmen \u2212 alle Ausgaben)"
+    },
+    "balance_cum": {
+      "type": "number",
+      "description": "Kumulierter Kontostand inkl. Startbestand"
+    },
+    "opening_balance": {
+      "type": "number",
+      "description": "Startbestand, mit dem die Planung beginnt"
+    },
+    "traffic_light": {
+      "type": "string",
+      "enum": [
+        "gruen",
+        "gelb",
+        "rot"
+      ],
+      "enumColors": [
+        "green",
+        "yellow",
+        "red"
+      ],
+      "default": "gruen",
+      "description": "rot wenn kumuliert < 0, gelb wenn < 2.000 \u20ac"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen zur Woche"
+    },
+    "is_locked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Woche gesperrt \u2014 wird nicht mehr automatisch fortgeschrieben"
+    }
+  },
+  "required": [
+    "year",
+    "week",
+    "week_start"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    }
+  }
+}

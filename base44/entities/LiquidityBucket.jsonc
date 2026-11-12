@@ -1,0 +1,102 @@
+{
+  "name": "LiquidityBucket",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "enum": [
+        "USt",
+        "Einkommensteuer",
+        "AOK",
+        "BGN",
+        "Sonstiges"
+      ],
+      "enumColors": [
+        "blue",
+        "purple",
+        "yellow",
+        "green",
+        "gray"
+      ],
+      "description": "R\u00fccklagen-Topf"
+    },
+    "target_balance": {
+      "type": "number",
+      "description": "Zielbestand des Topfs in Euro"
+    },
+    "current_balance": {
+      "type": "number",
+      "description": "Aktueller Bestand des Topfs in Euro"
+    },
+    "weekly_rate": {
+      "type": "number",
+      "description": "W\u00f6chentliche Zuf\u00fchrung in Euro"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Topf aktiv"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "user"
+          }
+        }
+      ]
+    }
+  }
+}
