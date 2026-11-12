@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
 import {
-    ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Legend,
+    ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { euro } from '@/lib/liquidityPlan';
+import { ACCENT, GRID } from './tokens';
 
-export default function LiquiditaetsChart({ rows, actualByWeek }) {
+const TICK = { fontSize: 10, fill: 'hsl(var(--muted-foreground))' };
+
+export default function LiquiditaetsChart({ rows, actualByWeek, stand }) {
     const hasActual = Object.keys(actualByWeek || {}).length > 0;
 
     const data = useMemo(() => {
@@ -26,35 +29,90 @@ export default function LiquiditaetsChart({ rows, actualByWeek }) {
 
     return (
         <Card className="p-4">
-            <p className="text-[13px] font-medium text-foreground tracking-tight mb-3">
-                Kumulierte Liquidität
-            </p>
-            <div className="h-[240px] -ml-2">
+            <div className="flex items-baseline justify-between gap-3">
+                <p className="text-[13.5px] font-medium leading-snug tracking-tight text-foreground">Kumulierte Liquidität</p>
+                <p className="text-[11.5px] tabular-nums text-muted-foreground">Stand {stand}</p>
+            </div>
+
+            <div className="-ml-3 mt-3 h-[230px]">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                        <XAxis dataKey="label" tick={{ fontSize: 10 }} tickLine={false} axisLine={false}
-                            tickFormatter={(v) => `KW${v}`} interval="preserveStartEnd" />
-                        <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} width={52}
-                            tickFormatter={(v) => (Math.abs(v) >= 1000 ? `${Math.round(v / 1000)}k` : v)} />
+                    <ComposedChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
+                        <defs>
+                            <linearGradient id="liqArea" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={ACCENT} stopOpacity={0.1} />
+                                <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid vertical={false} stroke={GRID} />
+                        <XAxis
+                            dataKey="label"
+                            tick={TICK}
+                            tickLine={false}
+                            axisLine={{ stroke: GRID }}
+                            tickFormatter={(v) => `KW${v}`}
+                            interval="preserveStartEnd"
+                            minTickGap={16}
+                        />
+                        <YAxis
+                            tick={TICK}
+                            tickLine={false}
+                            axisLine={false}
+                            width={44}
+                            tickFormatter={(v) => (v === 0 ? '0' : `${Math.round(v / 1000)}k`)}
+                        />
                         <Tooltip
-                            contentStyle={{ fontSize: 12, borderRadius: 12, border: '1px solid hsl(var(--border))' }}
+                            cursor={{ stroke: GRID }}
+                            contentStyle={{
+                                background: 'hsl(var(--card))',
+                                border: '1px solid rgba(255,255,255,0.085)',
+                                borderRadius: 12,
+                                fontSize: 11.5,
+                                padding: '8px 10px',
+                            }}
+                            labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: 2 }}
+                            itemStyle={{ color: 'hsl(var(--foreground))' }}
                             formatter={(value, name) => [euro(value), name === 'soll' ? 'Soll' : 'Ist']}
                             labelFormatter={(label) => `KW ${label}`}
                         />
-                        <ReferenceLine y={0} stroke="hsl(var(--status-danger))" strokeDasharray="4 3" />
-                        <Legend wrapperStyle={{ fontSize: 11 }} formatter={(value) => (value === 'soll' ? 'Soll (Plan)' : 'Ist (gebucht)')} />
-                        <Line type="monotone" dataKey="soll" stroke="#0099db" strokeWidth={2} dot={false} />
+                        <ReferenceLine y={0} stroke="#E2574C" strokeOpacity={0.55} strokeDasharray="4 4" />
+                        <Area
+                            type="monotone"
+                            dataKey="soll"
+                            stroke="none"
+                            fill="url(#liqArea)"
+                            tooltipType="none"
+                            isAnimationActive={false}
+                        />
+                        <Line type="monotone" dataKey="soll" stroke={ACCENT} strokeWidth={2.4} dot={false} isAnimationActive={false} />
                         {hasActual && (
-                            <Line type="monotone" dataKey="ist" stroke="hsl(var(--muted-foreground))" strokeWidth={2}
-                                strokeDasharray="5 4" dot={false} connectNulls={false} />
+                            <Line
+                                type="monotone"
+                                dataKey="ist"
+                                stroke="hsl(var(--muted-foreground))"
+                                strokeWidth={2}
+                                strokeDasharray="5 4"
+                                dot={false}
+                                connectNulls={false}
+                                isAnimationActive={false}
+                            />
                         )}
-                    </LineChart>
+                    </ComposedChart>
                 </ResponsiveContainer>
             </div>
-            <p className="text-[10.5px] text-muted-foreground mt-1">
-                Soll durchgezogen · Ist gestrichelt. Nulllinie rot.
-            </p>
+
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10.5px] text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                    <span className="h-[2.5px] w-5 rounded-full" style={{ backgroundColor: ACCENT }} />Soll
+                </span>
+                {hasActual && (
+                    <span className="flex items-center gap-1.5">
+                        <span className="w-5 border-t-2 border-dashed border-muted-foreground" />Ist
+                    </span>
+                )}
+                <span className="flex items-center gap-1.5">
+                    <span className="w-5 border-t-2 border-dashed" style={{ borderColor: 'rgba(226,87,76,0.55)' }} />Nulllinie
+                </span>
+            </div>
         </Card>
     );
 }

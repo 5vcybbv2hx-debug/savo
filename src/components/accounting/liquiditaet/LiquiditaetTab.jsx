@@ -1,16 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subMonths } from 'date-fns';
+import { RefreshCw, TrendingUp } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { STALE } from '@/lib/queryUtils';
-import { buildPlan, planKpis, euro } from '@/lib/liquidityPlan';
+import { buildPlan, planKpis } from '@/lib/liquidityPlan';
 import LiquiditaetsKpi from './LiquiditaetsKpi';
 import LiquiditaetsChart from './LiquiditaetsChart';
+import LiquiditaetsSkeleton from './LiquiditaetsSkeleton';
 import WochenTabelle from './WochenTabelle';
+import RuecklagenKarten from './RuecklagenKarten';
 
 const WEEK_KEY = ['liquidity-weeks'];
+const LIQ_PREFIXES = ['liquidity-weeks', 'liq-'];
 const NUMBER_FIELDS = [
     'revenue_plan', 'inflow_card', 'inflow_cash', 'cost_fixed', 'cost_staff', 'cost_sv', 'cost_vat',
     'reserve_vat', 'reserve_tax', 'reserve_aok', 'debt_rate', 'balance_end', 'balance_cum', 'opening_balance',
@@ -36,9 +41,10 @@ export default function LiquiditaetTab() {
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const [expandedKey, setExpandedKey] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
     const now = new Date();
 
-    const { data: storedWeeks } = useQuery({
+    const { data: storedWeeks, isLoading: loadingWeeks } = useQuery({
         queryKey: WEEK_KEY,
         queryFn: async () => {
             const page = await base44.entities.LiquidityWeek.filter({}, { sort: 'week_start', limit: 100 });
@@ -47,7 +53,7 @@ export default function LiquiditaetTab() {
         staleTime: STALE.FAST,
     });
 
-    const { data: revenues } = useQuery({
+    const { data: revenues, isLoading: loadingRevenues } = useQuery({
         queryKey: ['liq-revenues'],
         queryFn: () => fetchAll(base44.entities.DailyRevenue, { date: { $gte: '2024-10-01' } }),
         staleTime: STALE.MEDIUM,
@@ -178,43 +184,75 @@ export default function LiquiditaetTab() {
         queryClient.invalidateQueries({ queryKey: WEEK_KEY });
     };
 
+    const refresh = async () => {
+        setRefreshing(true);
+        await queryClient.invalidateQueries({
+            predicate: (q) => LIQ_PREFIXES.some((p) => String(q.queryKey[0]).startsWith(p)),
+        });
+        setRefreshing(false);
+    };
+
     const first = rows[0];
     const last = rows[rows.length - 1];
+    const stand = format(new Date(), 'HH:mm');
+    const loading = loadingWeeks || loadingRevenues;
 
-    return (
-        <div className="space-y-3">
-            <div className="flex items-baseline justify-between gap-2">
-                <p className="text-[13.5px] font-medium text-foreground tracking-tight">Liquiditätsplan</p>
-                <p className="text-[10.5px] text-muted-foreground">
-                    {first ? `KW ${first.week}/${first.year}` : ''} – {last ? `KW ${last.week}/${last.year}` : ''} · Soll
+    const header = (
+        <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+                <p className="page-title">Liquidität</p>
+                <p className="page-subtitle">
+                    {first
+                        ? `Soll-Plan KW ${first.week}/${first.year} – KW ${last.week}/${last.year} · Ist aus Kontoauszug und Kassenbericht`
+                        : 'Soll-Plan, Rücklagen und Tilgungen'}
                 </p>
             </div>
+            <Button className="h-9 shrink-0 gap-1.5 rounded-xl" onClick={refresh} disabled={refreshing}>
+                <RefreshCw className={refreshing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+                Aktualisieren
+            </Button>
+        </div>
+    );
 
-            <LiquiditaetsKpi kpis={kpis} />
+    if (loading) {
+        return (
+            <div>
+                {header}
+                <LiquiditaetsSkeleton />
+            </div>
+        );
+    }
 
-            <LiquiditaetsChart rows={rows} actualByWeek={actualByWeek} />
+    if (rows.length === 0) {
+        return (
+            <div>
+                {header}
+                <Card className="empty-state">
+                    <TrendingUp className="empty-state-icon" strokeWidth={1.4} />
+                    <p className="text-[13px] text-muted-foreground">Für einen Plan fehlen noch Umsätze und Zeiteinträge.</p>
+                    <Button className="h-9 rounded-xl" onClick={refresh}>Plan berechnen</Button>
+                </Card>
+            </div>
+        );
+    }
 
-            <WochenTabelle
-                rows={rows}
-                expandedKey={expandedKey}
-                onToggle={(key) => setExpandedKey((prev) => (prev === key ? null : key))}
-                onToggleLock={toggleLock}
-            />
+    return (
+        <div>
+            {header}
+            <div className="space-y-4">
+                <LiquiditaetsKpi kpis={kpis} />
 
-            <Card className="p-4">
-                <p className="text-[13px] font-medium text-foreground tracking-tight mb-2.5">Rücklagen-Töpfe</p>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-                    {(buckets || []).map((b) => (
-                        <div key={b.id} className="rounded-xl border border-border/60 px-3 py-2">
-                            <p className="text-[11px] font-medium text-muted-foreground truncate">{b.name}</p>
-                            <p className="text-[13px] font-semibold tabular-nums text-foreground">{euro(b.current_balance || 0)}</p>
-                            <p className="text-[10px] text-muted-foreground tabular-nums">
-                                Ziel {euro(b.target_balance || 0)}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </Card>
+                <LiquiditaetsChart rows={rows} actualByWeek={actualByWeek} stand={stand} />
+
+                <WochenTabelle
+                    rows={rows}
+                    expandedKey={expandedKey}
+                    onToggle={(key) => setExpandedKey((prev) => (prev === key ? null : key))}
+                    onToggleLock={toggleLock}
+                />
+
+                <RuecklagenKarten buckets={buckets} stand={stand} />
+            </div>
         </div>
     );
 }

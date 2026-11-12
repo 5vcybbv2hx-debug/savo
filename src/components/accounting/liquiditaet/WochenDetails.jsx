@@ -4,23 +4,34 @@ import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { euro, parseDate, dmy } from '@/lib/liquidityPlan';
 import { cn } from '@/lib/utils';
+import { toneFor } from './tokens';
 
-function Row({ label, date, amount, tone, sub }) {
+function Row({ label, date, amount, sub }) {
     if (!amount) return null;
     return (
-        <div className="flex items-baseline gap-2 py-1 border-b border-border/40 last:border-0">
+        <div className="flex items-baseline gap-2 border-b border-border/40 py-1 last:border-0">
             <div className="min-w-0 flex-1">
-                <p className="text-[12px] text-foreground truncate">{label}</p>
-                {sub && <p className="text-[10.5px] text-muted-foreground truncate">{sub}</p>}
+                <p className="truncate text-[12px] text-foreground">{label}</p>
+                {sub && <p className="truncate text-[10.5px] text-muted-foreground">{sub}</p>}
             </div>
-            {date && <span className="text-[10.5px] text-muted-foreground tabular-nums shrink-0">{date}</span>}
-            <span
-                className={cn(
-                    'text-[12px] font-medium tabular-nums shrink-0 w-24 text-right',
-                    tone === 'in' ? 'text-status-ok' : 'text-foreground'
-                )}
-            >
-                {tone === 'in' ? '+' : '−'} {euro(amount)}
+            {date && <span className="shrink-0 text-[10.5px] tabular-nums text-muted-foreground">{date}</span>}
+            <span className="w-24 shrink-0 text-right text-[12px] font-medium tabular-nums text-foreground">
+                − {euro(amount)}
+            </span>
+        </div>
+    );
+}
+
+function InRow({ label, amount, sub }) {
+    if (!amount) return null;
+    return (
+        <div className="flex items-baseline gap-2 border-b border-border/40 py-1 last:border-0">
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-[12px] text-foreground">{label}</p>
+                {sub && <p className="truncate text-[10.5px] text-muted-foreground">{sub}</p>}
+            </div>
+            <span className="w-24 shrink-0 text-right text-[12px] font-medium tabular-nums text-foreground">
+                + {euro(amount)}
             </span>
         </div>
     );
@@ -30,8 +41,8 @@ function Group({ title, children }) {
     const hasChild = React.Children.toArray(children).some(Boolean);
     if (!hasChild) return null;
     return (
-        <div className="space-y-0">
-            <p className="text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground pt-2.5 pb-1">{title}</p>
+        <div>
+            <p className="pb-1 pt-2.5 text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{title}</p>
             {children}
         </div>
     );
@@ -49,10 +60,10 @@ export default function WochenDetails({ row, onToggleLock }) {
     const vatDay = duty(10);
 
     return (
-        <div className="bg-surface/60 rounded-xl px-3 py-1">
+        <div className="rounded-xl bg-surface/60 px-3 py-1">
             <Group title="Einnahmen">
-                <Row label="Kartengutschrift (55 % − 1,5 %)" amount={row.inflow_card} tone="in" sub={`Basis Umsatz ${euro(row.revenue_plan)}`} />
-                <Row label="Bareinzahlung (12,5 %)" amount={row.inflow_cash} tone="in" />
+                <InRow label="Kartengutschrift (55 % − 1,5 %)" amount={row.inflow_card} sub={`Basis Umsatz ${euro(row.revenue_plan)}`} />
+                <InRow label="Bareinzahlung (12,5 %)" amount={row.inflow_cash} />
             </Group>
 
             <Group title="Ausgaben">
@@ -80,23 +91,24 @@ export default function WochenDetails({ row, onToggleLock }) {
                 ))}
             </Group>
 
-            <div className="flex items-center justify-between pt-2.5 mt-1 border-t border-border">
-                <span className="text-[11px] font-semibold text-muted-foreground">Saldo der Woche</span>
-                <span className={cn('text-[12.5px] font-semibold tabular-nums', row.balance_end >= 0 ? 'text-status-ok' : 'text-status-danger')}>
+            <div className="mt-1 flex items-center justify-between border-t border-border pt-2.5">
+                <span className="text-[11px] font-medium text-muted-foreground">Saldo der Woche</span>
+                <span className={cn('text-[12.5px] font-semibold tabular-nums', toneFor(row.balance_end))}>
                     {euro(row.balance_end)}
                 </span>
             </div>
             <div className="flex items-center justify-between pb-2">
-                <span className="text-[11px] font-semibold text-muted-foreground">Kumuliert</span>
-                <span className={cn('text-[12.5px] font-semibold tabular-nums', row.balance_cum >= 0 ? 'text-foreground' : 'text-status-danger')}>
+                <span className="text-[11px] font-medium text-muted-foreground">Kumuliert</span>
+                <span className={cn('text-[12.5px] font-semibold tabular-nums', toneFor(row.balance_cum))}>
                     {euro(row.balance_cum)}
                 </span>
             </div>
+
             {onToggleLock && row.id && (
                 <div className="pb-2.5">
-                    <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px] gap-1.5" onClick={() => onToggleLock(row)}>
-                        <Lock className="w-3 h-3" />
-                        {row.is_locked ? 'Woche entsperren' : 'Woche sperren (nicht mehr fortschreiben)'}
+                    <Button size="sm" variant="ghost" className="h-8 gap-1.5 px-2 text-[11px]" onClick={() => onToggleLock(row)}>
+                        <Lock className="h-3 w-3" />
+                        {row.is_locked ? 'Woche entsperren' : 'Woche sperren'}
                     </Button>
                 </div>
             )}
