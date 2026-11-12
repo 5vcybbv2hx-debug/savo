@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils'
 import { transferKellerToTheke, reduceCurrentStock, restoreCurrentStock } from '@/lib/stockSync';
 import { buildOrderRows, restockItemKey, hasOpenOrderRow, toShoppingPayload } from '@/lib/restockOrderRows';
+import { loadRestockItemsForToday } from '@/lib/restockCarryover';
 import { useErrorHandler } from '@/components/error/ErrorHandler';
 import { queueMutation, syncMutations } from '@/components/utils/offlineSync';
 import { format } from 'date-fns';
@@ -109,7 +110,7 @@ export default function Restock() {
     // ── Queries ───────────────────────────────────────────────────────────────
     const { data: restockItems = [] } = useQuery({
         queryKey: ['restock-items'],
-        queryFn: () => base44.entities.RestockItem.list('-created_date', 200),
+        queryFn: () => loadRestockItemsForToday(200),
         staleTime: STALE.MEDIUM,
     });
 
@@ -610,7 +611,7 @@ export default function Restock() {
                 <div>
                     <div className="flex items-center justify-between mb-3">
                         <h2 className="text-base font-semibold text-foreground">
-                            Heutige Auffüllliste
+                            Auffüllliste
                         </h2>
 
                         {completedCount > 0 && (

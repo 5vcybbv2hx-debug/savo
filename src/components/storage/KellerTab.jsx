@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { format } from 'date-fns';
 import { Inbox, Minus, Plus, Square, AlertTriangle } from 'lucide-react';
+import { loadRestockItemsForToday } from '@/lib/restockCarryover';
 import { cn } from '@/lib/utils';
 import { sendPushNotification } from '@/lib/pushService';
 import { transferKellerToTheke, reduceCurrentStock } from '@/lib/stockSync';
@@ -18,12 +19,11 @@ import { haptics } from '@/components/utils/haptics';
 export default function KellerTab({ badgeCount }) {
     const queryClient = useQueryClient();
     const [kellerQtys, setKellerQtys] = useState({});
-    const today = format(new Date(), 'yyyy-MM-dd');
 
-    // Auffüll-Items heute
+    // Auffüll-Items (offene Positionen der letzten Liste bleiben sichtbar)
     const { data: restockItems = [] } = useQuery({
         queryKey: ['restock-open'],
-        queryFn: () => base44.entities.RestockItem.filter({ date: today }, '-created_date', 200),
+        queryFn: () => loadRestockItemsForToday(200),
         staleTime: STALE.SHORT,
     });
 
