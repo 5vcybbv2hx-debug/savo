@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { RES_KEYS } from '@/features/reservations/hooks/useReservations';
 import { Switch } from "@/components/ui/switch";
 import { haptics } from "@/components/utils/haptics";
+import GuestCountInput from '@/components/reservations/GuestCountInput';
 import { cn } from '@/lib/utils';
 
 // Hilfsfunktion: Zeitüberschneidung ±2h
@@ -150,7 +151,9 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                 recurring_end_date: ''
             });
         }
-    }, [reservation, open, defaultDate]);
+        // Nur bei echtem Wechsel der Reservierung / Öffnen zurücksetzen —
+        // nicht bei jedem Re-Render (das hat Eingaben wie die Personenanzahl überschrieben).
+    }, [reservation?.id, open, defaultDate]);
 
     const toggleTable = (tableNumber) => {
         setFormData(prev => {
@@ -252,12 +255,12 @@ export default function ReservationModal({ open, onClose, reservation, onSave, o
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Personen</Label>
-                        <Input
-                            type="number"
-                            min="1"
+                        <Label htmlFor="reservation-guests">Personen</Label>
+                        <GuestCountInput
+                            id="reservation-guests"
                             value={formData.guests}
-                            onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) || 1 })}
+                            onChange={(guests) => setFormData(prev => ({ ...prev, guests }))}
+                            disabled={isBlocked}
                         />
                     </div>
 

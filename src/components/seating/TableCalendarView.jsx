@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import GuestCountInput from '@/components/reservations/GuestCountInput';
 import { cn } from '@/lib/utils';
 
 const DAYS_VISIBLE = 7;
@@ -69,7 +70,8 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
                 status: 'vorgemerkt'
             });
         }
-    }, [reservation, prefillDate, prefillTable, open]);
+        // Nur echte Wechsel zurücksetzen, nicht jeden Re-Render
+    }, [reservation?.id, prefillDate, prefillTable, open]);
 
     // Real-time availability
     const selectedTableAvailability = useMemo(() =>
@@ -118,13 +120,11 @@ function QuickReservationForm({ open, onClose, onSave, onDelete, reservation, pr
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Personen *</Label>
-                            <Input
-                                type="number"
-                                min="1"
+                            <Label htmlFor="seating-guests">Personen *</Label>
+                            <GuestCountInput
+                                id="seating-guests"
                                 value={form.guests}
-                                onChange={e => setForm({ ...form, guests: parseInt(e.target.value) })}
-                                required
+                                onChange={guests => setForm(prev => ({ ...prev, guests }))}
                             />
                         </div>
                     </div>

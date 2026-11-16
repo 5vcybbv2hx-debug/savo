@@ -6,6 +6,7 @@ import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import GuestCountInput from '@/components/reservations/GuestCountInput';
 import { cn } from '@/lib/utils';
 import {
     X, Calendar, Clock, Users, CheckCircle2, Phone, Pencil,
@@ -313,14 +314,13 @@ export default function QuickReservationSheet({ table, reservations, tables, onC
                                     className="w-full h-12 px-3 rounded-xl border border-input bg-transparent text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
                             </div>
                             <div>
-                                <label className="text-xs font-medium text-muted-foreground mb-1 block">Personen</label>
-                                <div className="flex items-center gap-2 h-12">
-                                    <button onClick={() => setForm(f => ({ ...f, guests: Math.max(1, f.guests - 1) }))}
-                                        className="w-10 h-10 rounded-xl border border-input text-foreground text-xl flex items-center justify-center hover:bg-accent shrink-0">−</button>
-                                    <span className="text-xl font-bold text-foreground w-6 text-center">{form.guests}</span>
-                                    <button onClick={() => setForm(f => ({ ...f, guests: Math.min(20, f.guests + 1) }))}
-                                        className="w-10 h-10 rounded-xl border border-input text-foreground text-xl flex items-center justify-center hover:bg-accent shrink-0">+</button>
-                                </div>
+                                <label htmlFor="sheet-guests" className="text-xs font-medium text-muted-foreground mb-1 block">Personen</label>
+                                <GuestCountInput
+                                    id="sheet-guests"
+                                    value={form.guests}
+                                    onChange={(guests) => setForm(f => ({ ...f, guests }))}
+                                    showUnit={false}
+                                />
                             </div>
                         </div>
 

@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
 <html lang="de">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reservierung - ${esc(barName)}</title>
-<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #f1f5f9; min-height: 100vh; } .header { background: rgba(30,41,59,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(148,163,184,0.1); padding: 1.5rem; } .logo-section { max-width: 800px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; } .logo { width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; } h1 { font-size: 1.75rem; } .subtitle { color: #94a3b8; font-size: 0.875rem; } .content { max-width: 800px; margin: 3rem auto; padding: 0 1rem; } .card { background: rgba(30,41,59,0.95); backdrop-filter: blur(12px); border: 1px solid rgba(148,163,184,0.1); border-radius: 1rem; padding: 2rem; } .form-group { margin-bottom: 1.5rem; } label { display: block; margin-bottom: 0.5rem; font-weight: 500; } input, textarea { width: 100%; padding: 0.75rem; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2); border-radius: 0.5rem; color: #f1f5f9; font-family: inherit; } input:focus, textarea:focus { outline: none; border-color: #f59e0b; } textarea { min-height: 100px; resize: vertical; } .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; } .button { width: 100%; padding: 1rem; background: linear-gradient(90deg, #f59e0b 0%, #ea580c 100%); color: #1e293b; border: none; border-radius: 0.75rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; } .button:hover { transform: translateY(-2px); } .required { color: #ef4444; } .footer { background: rgba(30,41,59,0.95); border-top: 1px solid rgba(148,163,184,0.1); padding: 2rem 1rem; margin-top: 3rem; text-align: center; color: #94a3b8; }</style>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #f1f5f9; min-height: 100vh; } .header { background: rgba(30,41,59,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(148,163,184,0.1); padding: 1.5rem; } .logo-section { max-width: 800px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; } .logo { width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; } h1 { font-size: 1.75rem; } .subtitle { color: #94a3b8; font-size: 0.875rem; } .content { max-width: 800px; margin: 3rem auto; padding: 0 1rem; } .card { background: rgba(30,41,59,0.95); backdrop-filter: blur(12px); border: 1px solid rgba(148,163,184,0.1); border-radius: 1rem; padding: 2rem; } .form-group { margin-bottom: 1.5rem; } label { display: block; margin-bottom: 0.5rem; font-weight: 500; } input, textarea { width: 100%; padding: 0.75rem; background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2); border-radius: 0.5rem; color: #f1f5f9; font-family: inherit; } input:focus, textarea:focus { outline: none; border-color: #f59e0b; } textarea { min-height: 100px; resize: vertical; } .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; } .button { width: 100%; padding: 1rem; background: linear-gradient(90deg, #f59e0b 0%, #ea580c 100%); color: #1e293b; border: none; border-radius: 0.75rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; } .button:hover { transform: translateY(-2px); } .required { color: #ef4444; } .footer { background: rgba(30,41,59,0.95); border-top: 1px solid rgba(148,163,184,0.1); padding: 2rem 1rem; margin-top: 3rem; text-align: center; color: #94a3b8; } .guest-stepper { display: flex; align-items: center; gap: 0.5rem; } .guest-stepper input { width: 4.5rem; flex: 0 0 auto; text-align: center; font-size: 1.125rem; font-weight: 600; } .stepper-btn { width: 44px; height: 44px; flex: 0 0 44px; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem; border: 1px solid rgba(148,163,184,0.2); background: rgba(148,163,184,0.1); color: #f1f5f9; font-size: 1.25rem; line-height: 1; cursor: pointer; touch-action: manipulation; } .stepper-btn:active { background: rgba(148,163,184,0.25); }</style>
 </head>
 <body>
     <header class="header">
@@ -110,7 +110,13 @@ Deno.serve(async (req) => {
                 <div class="form-row">
                     <div class="form-group"><label>Datum <span class="required">*</span></label><input type="date" name="date" required min="${minDate}"></div>
                     <div class="form-group"><label>Uhrzeit <span class="required">*</span></label><input type="time" name="time" required></div>
-                    <div class="form-group"><label>Personen <span class="required">*</span></label><input type="number" name="guests" required min="1" max="20" value="2"></div>
+                    <div class="form-group"><label for="guests">Personen <span class="required">*</span></label>
+                        <div class="guest-stepper">
+                            <button type="button" class="stepper-btn" aria-label="Personen verringern" onclick="stepGuests(-1)">&minus;</button>
+                            <input type="number" id="guests" name="guests" required min="1" max="50" value="2" inputmode="numeric" onblur="normalizeGuests()">
+                            <button type="button" class="stepper-btn" aria-label="Personen erhöhen" onclick="stepGuests(1)">+</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group"><label>Besondere Wünsche</label><textarea name="notes" placeholder="z.B. Allergien, Kinderstuhl..." maxlength="500"></textarea></div>
                 <button type="submit" class="button" id="submitBtn">Jetzt reservieren</button>
@@ -123,6 +129,19 @@ Deno.serve(async (req) => {
         <p style="margin-top:0.5rem">${companyInfo.phone ? `Tel: ${esc(companyInfo.phone)}` : ''}${companyInfo.phone && companyInfo.email ? ' • ' : ''}${companyInfo.email ? `E-Mail: ${esc(companyInfo.email)}` : ''}</p>
         <p style="margin-top:1rem;font-size:0.875rem">© 2026 ${esc(barName)}</p>
     </footer>
+    <script>
+        function stepGuests(delta) {
+            var el = document.getElementById('guests');
+            var current = parseInt(el.value, 10);
+            if (isNaN(current)) current = 1;
+            el.value = Math.min(50, Math.max(1, current + delta));
+        }
+        function normalizeGuests() {
+            var el = document.getElementById('guests');
+            var current = parseInt(el.value, 10);
+            el.value = isNaN(current) ? 1 : Math.min(50, Math.max(1, current));
+        }
+    </script>
 </body>
 </html>`;
 

@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Users, Phone, Mail, MessageSquare } from 'lucide-react';
+import GuestCountInput from '@/components/reservations/GuestCountInput';
 import { base44 } from '@/api/base44Client';
 
 export default function ReservationForm({ onSuccess }) {
@@ -135,21 +136,15 @@ export default function ReservationForm({ onSuccess }) {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="guests">Personen *</Label>
-                            <div className="relative">
-                                <Users className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                                <Input
-                                    id="guests"
-                                    name="guests"
-                                    type="number"
-                                    min="1"
-                                    max="20"
-                                    value={formData.guests}
-                                    onChange={handleChange}
-                                    required
-                                    className="pl-10"
-                                />
-                            </div>
+                            <Label htmlFor="guests" className="flex items-center gap-1.5">
+                                <Users className="w-4 h-4 text-muted-foreground" />Personen *
+                            </Label>
+                            <GuestCountInput
+                                id="guests"
+                                value={formData.guests}
+                                onChange={(guests) => setFormData(prev => ({ ...prev, guests }))}
+                                showUnit={false}
+                            />
                         </div>
                     </div>
 
