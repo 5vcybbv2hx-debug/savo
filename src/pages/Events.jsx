@@ -146,6 +146,9 @@ export default function Events() {
                 price_info:       event.entry_fee ? `Eintritt: ${event.entry_fee} €` : 'Eintritt frei',
                 cta_text:         `event:${eventId}`,
                 is_active:        event.status !== 'Abgesagt',
+                // Reine Info-Slides: Events gehen automatisch auf die Website,
+                // abgesagte nicht.
+                public_event:     event.status !== 'Abgesagt',
                 show_from,
                 show_until,
                 sort_order:       existingSlide ? existingSlide.sort_order : maxOrder + 10,
