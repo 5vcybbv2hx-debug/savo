@@ -95,13 +95,13 @@ export const PERMISSION_MATRIX = {
     canEditEventIdeas:           { roles: [M.MANAGER],                                       terminal: false },
 
     // ── Lager & Artikel ───────────────────────────────────────────────────────
-    canViewWarehouse:            { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER],              terminal: false },
+    canViewWarehouse:            { roles: [M.MANAGER, M.VOLLZEIT, M.BARKEEPER, M.AUSHILFE],  terminal: false },
     canCreateArticles:           { roles: [M.MANAGER, M.BARKEEPER],                          terminal: false },
     canEditArticles:             { roles: [M.MANAGER, M.BARKEEPER],                          terminal: false },
     canDeleteArticles:           { roles: [M.MANAGER],                                       terminal: false },
     canChangeArticlePrices:      { roles: [M.MANAGER],      sensitive: true,                 terminal: false },
     canViewPriceHistory:         { roles: [M.MANAGER, M.BARKEEPER],                          terminal: false },
-    canViewInventory:            { roles: [M.MANAGER, M.BARKEEPER],                          terminal: false },
+    canViewInventory:            { roles: [M.MANAGER, M.BARKEEPER, M.AUSHILFE],              terminal: false },
     canEditInventory:            { roles: [M.MANAGER, M.BARKEEPER],                          terminal: false },
 
     // ── Lieferanten & Hersteller ──────────────────────────────────────────────
