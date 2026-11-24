@@ -21,10 +21,23 @@ export default function VacationRequestDialog({
     onOpenChange,
     balance,
     openingHours,
+    selectedYear = null,
     onSubmit,
     isSubmitting = false,
     multiPeriod = true,
 }) {
+    const yearMin = selectedYear ? `${selectedYear}-01-01` : undefined;
+    const yearMax = selectedYear ? `${selectedYear}-12-31` : undefined;
+
+    // Datum außerhalb des gewählten Jahres (z. B. Tippfehler im Jahr)
+    const wrongYear = (period) => {
+        if (!selectedYear) return null;
+        const years = [period.start_date, period.end_date]
+            .map(d => (d ? Number(String(d).slice(0, 4)) : null))
+            .filter(y => y && y !== selectedYear);
+        return years[0] ?? null;
+    };
+
     const [type, setType] = useState('Urlaub');
     const [notes, setNotes] = useState('');
     const [periods, setPeriods] = useState([emptyPeriod()]);
@@ -159,6 +172,8 @@ export default function VacationRequestDialog({
                                                 type="date"
                                                 value={period.start_date}
                                                 onChange={(e) => setDates(index, { start_date: e.target.value })}
+                                                min={yearMin}
+                                                max={yearMax}
                                                 required
                                                 className="mt-1"
                                             />
@@ -169,11 +184,19 @@ export default function VacationRequestDialog({
                                                 type="date"
                                                 value={period.end_date}
                                                 onChange={(e) => setDates(index, { end_date: e.target.value })}
+                                                min={yearMin}
+                                                max={yearMax}
                                                 required
                                                 className="mt-1"
                                             />
                                         </div>
                                     </div>
+
+                                    {wrongYear(period) && (
+                                        <p className="text-[11px] text-status-warn">
+                                            Liegt in {wrongYear(period)}, bitte Jahr oben umstellen
+                                        </p>
+                                    )}
 
                                     <div className="flex items-end gap-2">
                                         <div className="flex-1">
