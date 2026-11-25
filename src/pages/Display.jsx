@@ -18,7 +18,7 @@ import { ACCENTS, DEFAULT_ACCENT, resolveAccent, accentGlowText, accentGlowFilte
 export { ACCENTS };
 
 // Slide-Typ → Default-Dauer in Sekunden
-const TYPE_DURATION = { announcement: 10, event: 14, drink_special: 12, countdown: 16 };
+const TYPE_DURATION = { announcement: 10, event: 14, drink_special: 12, countdown: 16, poster: 12 };
 
 // ── CSS Keyframes ─────────────────────────────────────────────────────────────
 export const KEYFRAMES = `
@@ -1178,6 +1178,43 @@ export function SlideTonight({ slide, accent, theme }) {
   );
 }
 
+// ── Bild / Poster ─────────────────────────────────────────────────────────────
+// Typen, die ein hinterlegtes Bild formatfüllend zeigen (Template-Text entfällt).
+export const IMAGE_SLIDE_TYPES = ['poster', 'image_only', 'announcement', 'event', 'drink_special'];
+
+// Poster-Modus: eigener Bild-Typ (immer) oder einer der Template-Typen MIT Bild.
+export function isPosterSlide(slide) {
+  if (!slide) return false;
+  if (slide.slide_type === 'poster' || slide.slide_type === 'image_only') return true;
+  return !!slide.image_url && IMAGE_SLIDE_TYPES.includes(slide.slide_type);
+}
+
+export function SlidePoster({ slide }) {
+  if (!slide.image_url) {
+    return (
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#050508' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="m21 15-5-5L5 21" />
+          </svg>
+          <span style={{ fontSize: '1.6rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '0.04em' }}>Kein Bild hinterlegt</span>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: '#050508' }}>
+      <img
+        src={slide.image_url}
+        alt={slide.title || 'Bild'}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', animation: 'fadeInScale 0.8s both' }}
+      />
+    </div>
+  );
+}
+
 // ── Nächster Slide Preview ────────────────────────────────────────────────────
 function NextSlidePreview({ slide, visible }) {
   if (!slide) return null;
@@ -1332,6 +1369,7 @@ export default function Display() {
     : detectTheme(slide.title, slide.subtitle);
 
   const dur = slide.duration_seconds || TYPE_DURATION[slide.slide_type] || 10;
+  const posterMode = isPosterSlide(slide);
 
   return (
     <div style={{ background: '#050508', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', fontFamily: '"Jost","Century Gothic",sans-serif', color: '#fff' }}
@@ -1343,8 +1381,8 @@ export default function Display() {
       {/* Safe-Zone Stage — skaliert gegen Overscan, transformOrigin center */}
       <div style={{ position: 'absolute', inset: 0, transform: `scale(${safeScale})`, transformOrigin: 'center center', transition: 'transform 0.3s ease' }}>
 
-      {/* Logo oben links */}
-      {companyLogo && (
+      {/* Logo oben links — nicht auf Bild-Slides */}
+      {companyLogo && !posterMode && (
         <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 30, padding: 'clamp(16px, 2.5vh, 32px) clamp(24px, 2.5vw, 48px)', display: 'flex', alignItems: 'center' }}>
           <img
             src={companyLogo}
@@ -1363,16 +1401,22 @@ export default function Display() {
         transform: phase === 'out' ? 'scale(0.97)' : phase === 'in' ? 'scale(1.03)' : 'scale(1)',
         transition: phase === 'out' ? 'opacity 0.6s ease, transform 0.6s ease' : 'opacity 0.7s ease, transform 0.7s ease',
       }}>
-        {slide.slide_type === 'announcement'  && <SlideAnnouncement  slide={slide} accent={accent} theme={theme} />}
-        {slide.slide_type === 'event'         && <SlideEvent         slide={slide} accent={accent} theme={theme} showBrand={false} />}
-        {slide.slide_type === 'drink_special' && <SlideDrinkSpecial  slide={slide} accent={accent} theme={theme} />}
-        {slide.slide_type === 'countdown'     && <SlideCountdown     slide={slide} accent={accent} theme={theme} />}
-        {slide.slide_type === 'qr_code'       && <SlideQRCode        slide={slide} accent={accent} theme={theme} />}
-        {slide.slide_type === 'tonight'       && <SlideTonight       slide={slide} accent={accent} theme={theme} />}
+        {posterMode ? (
+          <SlidePoster slide={slide} />
+        ) : (
+          <>
+            {slide.slide_type === 'announcement'  && <SlideAnnouncement  slide={slide} accent={accent} theme={theme} />}
+            {slide.slide_type === 'event'         && <SlideEvent         slide={slide} accent={accent} theme={theme} showBrand={false} />}
+            {slide.slide_type === 'drink_special' && <SlideDrinkSpecial  slide={slide} accent={accent} theme={theme} />}
+            {slide.slide_type === 'countdown'     && <SlideCountdown     slide={slide} accent={accent} theme={theme} />}
+            {slide.slide_type === 'qr_code'       && <SlideQRCode        slide={slide} accent={accent} theme={theme} />}
+            {slide.slide_type === 'tonight'       && <SlideTonight       slide={slide} accent={accent} theme={theme} />}
+          </>
+        )}
       </div>
 
-      {/* Nächster Slide Preview */}
-      <NextSlidePreview slide={slides.length > 1 ? slides[(currentIdx + 1) % slides.length] : null} visible={showNextPreview} />
+      {/* Nächster Slide Preview — auf Bild-Slides ausgeblendet */}
+      <NextSlidePreview slide={slides.length > 1 ? slides[(currentIdx + 1) % slides.length] : null} visible={showNextPreview && !posterMode} />
       {/* Dots + Progress */}
       {slides.length > 1 && <DotNav slides={slides} currentIdx={currentIdx} />}
       <ProgressBar duration={dur} color={accent.bg} resetKey={currentIdx} />

@@ -20,14 +20,15 @@
         "announcement",
         "event",
         "drink_special",
+        "poster",
         "image_only",
         "countdown"
       ],
-      "description": "Slide-Typ bestimmt das Layout"
+      "description": "Slide-Typ bestimmt das Layout. 'poster' zeigt ausschlie\u00dflich image_url formatf\u00fcllend; announcement/event/drink_special zeigen bei gesetztem image_url ebenfalls nur das Bild."
     },
     "image_url": {
       "type": "string",
-      "description": "Bild-URL (optional)"
+      "description": "Bild-URL (optional) \u2014 wird bei poster formatf\u00fcllend gezeigt"
     },
     "accent_color": {
       "type": "string",
@@ -79,20 +80,20 @@
     },
     "manual_override": {
       "type": "boolean",
-      "description": "Manuell bearbeitet: Event-Sync überschreibt Texte nicht mehr"
+      "description": "Manuell bearbeitet: Event-Sync \u00fcberschreibt Texte nicht mehr"
     },
     "public_event": {
       "type": "boolean",
       "default": false,
-      "description": "Öffentliche Event-Detailseite (/Event/:id) + QR-Code auf dem Display aktiviert. Nur dann ist die Slide öffentlich abrufbar (Function getPublicEvent prüft dieses Flag)."
+      "description": "\u00d6ffentliche Event-Detailseite (/Event/:id) + QR-Code auf dem Display aktiviert. Nur dann ist die Slide \u00f6ffentlich abrufbar (Function getPublicEvent pr\u00fcft dieses Flag)."
     },
     "location": {
       "type": "string",
-      "description": "Veranstaltungsort (wird auf Slide + öffentlicher Event-Seite angezeigt)"
+      "description": "Veranstaltungsort (wird auf Slide + \u00f6ffentlicher Event-Seite angezeigt)"
     },
     "event_end_date": {
       "type": "string",
-      "description": "Optionales Enddatum bei mehrtägigen Events"
+      "description": "Optionales Enddatum bei mehrt\u00e4gigen Events"
     },
     "event_end_time": {
       "type": "string",

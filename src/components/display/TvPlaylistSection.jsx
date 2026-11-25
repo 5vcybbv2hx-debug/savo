@@ -9,7 +9,7 @@
  * "🔄 Aus Events synchronisiert" gekennzeichnet und sind NICHT über
  * den Slide-Editor bearbeitbar (nur aktivieren/deaktivieren, Reihenfolge, löschen).
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import SortableSlideCard from '@/components/display/SortableSlideCard';
@@ -26,7 +26,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, GripVertical, QrCode, Copy, Check, Share2, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, Monitor, ExternalLink, Eye, EyeOff, Tv, AlertTriangle, GripVertical, QrCode, Copy, Check, Share2, RefreshCw, Upload, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermissions } from '@/components/auth/usePermissions';
 import PermissionDenied from '@/components/auth/PermissionDenied';
@@ -41,7 +41,7 @@ const SLIDE_TYPES = [
   { value: 'announcement',  label: '📢 Ankündigung',      desc: 'Allgemeine Mitteilung' },
   { value: 'event',         label: '🎉 Event',             desc: 'Veranstaltung mit Datum & Ort' },
   { value: 'drink_special', label: '🍹 Drink Special',     desc: 'Bis zu 4 Getränke mit Preisen' },
-  { value: 'image_only',    label: '🖼️ Nur Bild',          desc: 'Bild im Vollformat' },
+  { value: 'poster',        label: '🖼️ Bild / Poster',     desc: 'Bild formatfüllend, ohne Text' },
   { value: 'countdown',     label: '⏳ Countdown',          desc: 'Countdown zu einem Event' },
   { value: 'qr_code',       label: '📱 QR-Code',           desc: 'QR-Code mit Text' },
   { value: 'tonight',       label: '🌙 Tonight',           desc: 'Heutige Veranstaltung' },
@@ -73,6 +73,7 @@ const TYPE_COLORS = {
   announcement:  'bg-primary/10 text-primary border-primary/30',
   event:         'bg-primary/10 text-primary border-primary/30',
   drink_special: 'bg-status-warn/10 text-status-warn border-status-warn/30',
+  poster:        'bg-status-ok/10 text-status-ok border-status-ok/30',
   image_only:    'bg-status-ok/10 text-status-ok border-status-ok/30',
   countdown:     'bg-status-danger/10 text-status-danger border-status-danger/30',
   qr_code:       'bg-primary/10 text-primary border-primary/30',
@@ -103,6 +104,8 @@ export default function TvPlaylistSection() {
   const [showQR, setShowQR]             = useState(false);
   const [qrCopied, setQrCopied]         = useState(false);
   const [igExport, setIgExport]         = useState(null);
+  const [uploading, setUploading]       = useState(false);
+  const fileInputRef = useRef(null);
 
   // ── DnD Sensors (Touch + Mouse)
   const sensors = useSensors(
@@ -223,6 +226,23 @@ export default function TvPlaylistSection() {
   };
 
   const f = (key, val) => setForm(p => ({ ...p, [key]: val }));
+
+  // Bild hochladen → Ergebnis-URL direkt ins Feld schreiben
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadPublicFile({ file });
+      f('image_url', file_url);
+      toast.success('Bild hochgeladen');
+    } catch {
+      toast.error('Bild-Upload fehlgeschlagen');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const orderConflict = slides.some(s => {
     if (modal.data?.id && s.id === modal.data.id) return false;
@@ -439,13 +459,35 @@ export default function TvPlaylistSection() {
                 </div>
               )}
 
-              {/* Bild URL */}
-              {form.slide_type !== 'drink_special' && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Bild-URL (optional)</Label>
-                  <Input value={form.image_url} onChange={e => f('image_url', e.target.value)} placeholder="https://..." className="h-9 text-sm" />
+              {/* Bild — für alle Slide-Typen */}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Bild (URL oder Upload)</Label>
+                <div className="flex gap-2">
+                  <Input value={form.image_url} onChange={e => f('image_url', e.target.value)} placeholder="https://..." className="h-9 text-sm flex-1" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 text-xs shrink-0"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading
+                      ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Lädt…</>
+                      : <><Upload className="w-3.5 h-3.5 mr-1" /> Bild hochladen</>}
+                  </Button>
                 </div>
-              )}
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                {form.image_url && (
+                  <div className="rounded-lg overflow-hidden border border-border/60 bg-muted/40" style={{ aspectRatio: '16/9' }}>
+                    <img src={form.image_url} alt="Bildvorschau" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                {['announcement', 'event', 'drink_special'].includes(form.slide_type) && form.image_url && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Mit Bild wird nur das Bild gezeigt — Titel, Getränke und Texte entfallen.
+                  </p>
+                )}
+              </div>
 
               {/* Body text — nur bei announcement */}
               {form.slide_type === 'announcement' && (
@@ -668,6 +710,20 @@ function SlidePreview({ form }) {
   const drinks = form.slide_type === 'drink_special'
     ? (Array.isArray(form.drinks) ? form.drinks.filter(d => d.name) : [])
     : [];
+
+  // Bild-Slide: eigener Bild-Typ oder Template-Typ mit hinterlegtem Bild
+  const posterMode = ['poster', 'image_only'].includes(form.slide_type)
+    || (!!form.image_url && ['announcement', 'event', 'drink_special'].includes(form.slide_type));
+
+  if (posterMode) {
+    return (
+      <div className="rounded-xl overflow-hidden border border-border/60 flex items-center justify-center" style={{ aspectRatio: '16/9', background: '#0a0a0a' }}>
+        {form.image_url
+          ? <img src={form.image_url} alt="Vorschau" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          : <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem' }}>Kein Bild hinterlegt</span>}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl overflow-hidden border border-border/60" style={{ aspectRatio: '16/9', background: '#0a0a0a', position: 'relative' }}>
