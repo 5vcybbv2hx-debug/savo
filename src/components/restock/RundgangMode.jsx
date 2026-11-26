@@ -127,9 +127,12 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
             map[s.furniture_id].push(s);
         });
         Object.values(map).forEach(arr =>
+            // Rundgang-Reihenfolge (Vorgabe Pierre): erst eine Spalte von oben
+            // nach unten, dann ein Fach weiter nach rechts.
             arr.sort((a, b) =>
-                ((a.grid_row ?? 0) - (b.grid_row ?? 0)) ||
-                ((a.grid_col ?? 0) - (b.grid_col ?? 0)) ||
+                // Fächer ohne Rasterkoordinaten kommen ans Ende, nicht nach vorn.
+                ((a.grid_col ?? 999) - (b.grid_col ?? 999)) ||
+                ((a.grid_row ?? 999) - (b.grid_row ?? 999)) ||
                 ((a.sort_order ?? 0) - (b.sort_order ?? 0)) ||
                 (a.name || '').localeCompare(b.name || '')
             )
