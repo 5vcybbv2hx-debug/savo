@@ -80,6 +80,7 @@ export const PAGE_PERMISSIONS = {
     Maintenance:             'canViewSettings',
     ModuleCenter:            'canViewSettings',
     DataQuality:             'isManager',
+    Incidents:               'isManager',
     DataExport:              'canViewSettings',
     Onboarding:              'canViewOnboarding',
     AuditLog:                'canViewAuditLog',

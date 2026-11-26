@@ -11,10 +11,12 @@ import Calendar from './pages/Calendar';
 import Cleaning from './pages/Cleaning';
 import DailyAnalysis from './pages/DailyAnalysis';
 import Dashboard from './pages/Dashboard';
+import DataQuality from './pages/DataQuality';
 import Documents from './pages/Documents';
 import DrinkMenu from './pages/DrinkMenu';
 import Employees from './pages/Employees';
 import Events from './pages/Events';
+import Incidents from './pages/Incidents';
 import Maintenance from './pages/Maintenance';
 import MyArea from './pages/MyArea';
 import MyShifts from './pages/MyShifts';
@@ -59,10 +61,12 @@ const CORE_PAGES = {
     "Cleaning": Cleaning,
     "DailyAnalysis": DailyAnalysis,
     "Dashboard": Dashboard,
+    "DataQuality": DataQuality,
     "Documents": Documents,
     "DrinkMenu": DrinkMenu,
     "Employees": Employees,
     "Events": Events,
+    "Incidents": Incidents,
     "Maintenance": Maintenance,
     "MyArea": MyArea,
     "MyShifts": MyShifts,
