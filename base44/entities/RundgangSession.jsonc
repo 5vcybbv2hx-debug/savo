@@ -51,6 +51,13 @@
       },
       "description": "Bereiche, in denen F\u00e4cher bearbeitet wurden"
     },
+    "counted_slots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs der heute gez\u00e4hlten F\u00e4cher"
+    },
     "notes": {
       "type": "string",
       "description": "Notizen"

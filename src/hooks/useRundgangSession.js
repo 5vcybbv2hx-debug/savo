@@ -35,6 +35,7 @@ export function useRundgangSession(slotsTotal = 0) {
                 slots_total: slotsTotal,
                 slots_changed: 0,
                 areas_touched: [],
+                counted_slots: [],
                 notes: '',
             });
         },
@@ -53,7 +54,12 @@ export function useRundgangSession(slotsTotal = 0) {
     const statsRef = useRef(null);          // { changed, areas } — lokal fortgeschrieben
 
     useEffect(() => {
-        if (session && !statsRef.current) {
+        if (!session) return;
+        // Merkliste lebt in der Session selbst: nach Neuladen wird nicht doppelt gezählt.
+        if (Array.isArray(session.counted_slots) && session.counted_slots.length) {
+            countedRef.current = new Set(session.counted_slots);
+        }
+        if (!statsRef.current) {
             statsRef.current = {
                 changed: session.slots_changed ?? 0,
                 areas: session.areas_touched ?? [],
@@ -65,15 +71,18 @@ export function useRundgangSession(slotsTotal = 0) {
         if (!session?.id || !slotId || countedRef.current.has(slotId)) return;
         countedRef.current.add(slotId);
 
+        const counted = Array.from(countedRef.current);
         const stats = statsRef.current || { changed: 0, areas: [] };
-        stats.changed += 1;
         if (areaName && !stats.areas.includes(areaName)) stats.areas = [...stats.areas, areaName];
+        // Zähler wird aus der Liste abgeleitet, nicht hochaddiert.
+        stats.changed = counted.length;
         statsRef.current = stats;
 
         // Protokoll ist additiv — ein Fehler hier darf das Speichern der IST-Menge nie blockieren
         try {
             await base44.entities.RundgangSession.update(session.id, {
-                slots_changed: stats.changed,
+                counted_slots: counted,
+                slots_changed: counted.length,
                 areas_touched: stats.areas,
             });
             qc.invalidateQueries({ queryKey: QK.rundgangSessionToday(today) });
