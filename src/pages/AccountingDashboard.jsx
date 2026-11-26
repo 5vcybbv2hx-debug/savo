@@ -199,6 +199,7 @@ export default function AccountingDashboard() {
         { label: 'Export',          icon: Download,     href: '/AccountingExport',     color: 'text-primary', bg: 'bg-primary/10' },
         { label: 'Fixkosten',       icon: Euro,         href: '/AccountingFixedCosts', color: 'text-primary', bg: 'bg-primary/10' },
         { label: 'Bankkonten',      icon: Banknote,     href: '/AccountingBank',       color: 'text-primary', bg: 'bg-primary/10' },
+        { label: 'Außenaufträge',   icon: Receipt,      href: '/ExternalBusiness',     color: 'text-primary', bg: 'bg-primary/10' },
     ];
 
     return (

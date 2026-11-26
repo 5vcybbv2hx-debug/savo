@@ -34,9 +34,6 @@ export const additionalPages = [
     // (Warehouse?tab=keller). Die separate Tages-Auffüllliste ist kein eigener Einstieg mehr.
     { page: 'Warehouse?tab=keller', name: 'Auffüllen', icon: Package, permission: 'canViewRestock' },
 
-    // Buchhaltung
-    { page: 'ExternalBusiness',    name: 'Außenaufträge',     icon: Receipt,     permission: 'canViewAccounting' },
-
     // Einstellungen & Mehr
     { page: 'ModuleCenter',     name: 'Modulcenter',      icon: LayoutGrid,   permission: 'canViewSettings' },
 ];
