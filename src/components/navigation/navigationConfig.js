@@ -39,8 +39,6 @@ export const additionalPages = [
 
     // Einstellungen & Mehr
     { page: 'ModuleCenter',     name: 'Modulcenter',      icon: LayoutGrid,   permission: 'canViewSettings' },
-    { page: 'DataQuality',      name: 'Datenqualität',    icon: Database,     permission: 'isManager' },
-    { page: 'Incidents',        name: 'Vorfälle',          icon: Siren,        permission: 'isManager' },
 ];
 
 // Seiten ohne eigenen Drawer-Eintrag (über TeamHub/BetriebHub/Sidebar erreichbar),

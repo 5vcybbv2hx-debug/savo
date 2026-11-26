@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import {
     Package, RefreshCw, ShoppingCart, ShoppingBasket, Layers,
     Building2, TrendingDown, ClipboardCheck, AlertTriangle, FileScan,
-    PackageCheck, Square, Inbox, CheckCircle2, AlertTriangle as AlertTriangleIcon, Minus, Plus
+    PackageCheck, Square, Inbox, CheckCircle2, AlertTriangle as AlertTriangleIcon, Minus, Plus, Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import PageHeader from '@/components/ui/PageHeader';
@@ -295,6 +295,14 @@ export default function Warehouse() {
                                 label="Inventur"
                                 description="Monatliche Zählung · Bestandskontrolle"
                                 page="Inventory"
+                            />
+                        )}
+                        {permissions.isManager && (
+                            <NavCard
+                                icon={Database}
+                                label="Datenqualität"
+                                description="Lücken im Artikelstamm: Preise, Kategorien, Lieferanten"
+                                page="DataQuality"
                             />
                         )}
                     </div>
