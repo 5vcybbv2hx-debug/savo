@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import {
     BookOpen, Receipt, TrendingDown, Download, TrendingUp,
     RefreshCw, AlertTriangle, CheckCircle2, ChevronRight,
-    Euro, ArrowDownUp, ReceiptText, Ticket
+    Euro, Banknote, ArrowDownUp, ReceiptText, Ticket
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, isAfter, subMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -197,6 +197,8 @@ export default function AccountingDashboard() {
         { label: 'Kassenbuch',      icon: BookOpen,     href: '/AccountingCashbook',   color: 'text-status-warn',  bg: 'bg-status-warn/10'  },
         { label: 'Offene Posten',   icon: TrendingDown, href: '/AccountingPayables',   color: 'text-status-danger',    bg: 'bg-status-danger/10'    },
         { label: 'Export',          icon: Download,     href: '/AccountingExport',     color: 'text-primary', bg: 'bg-primary/10' },
+        { label: 'Fixkosten',       icon: Euro,         href: '/AccountingFixedCosts', color: 'text-primary', bg: 'bg-primary/10' },
+        { label: 'Bankkonten',      icon: Banknote,     href: '/AccountingBank',       color: 'text-primary', bg: 'bg-primary/10' },
     ];
 
     return (

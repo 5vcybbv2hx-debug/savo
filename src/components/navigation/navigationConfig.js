@@ -48,12 +48,6 @@ export const additionalPages = [
 
     // Buchhaltung
     { page: 'ExternalBusiness',    name: 'Außenaufträge',     icon: Receipt,     permission: 'canViewAccounting' },
-    { page: 'AccountingCashbook',    name: 'Kassenbuch',        icon: BookCopy,   permission: 'canViewAccountingCashbook' },
-    { page: 'AccountingReceipts',    name: 'Belege',            icon: Receipt,    permission: 'canViewAccountingReceipts' },
-    { page: 'AccountingPayables',    name: 'Offene Posten',     icon: Scale,      permission: 'canViewAccountingCreditors' },
-    { page: 'AccountingExport',      name: 'Export',            icon: FileText,   permission: 'canExportAccounting' },
-    { page: 'AccountingFixedCosts',  name: 'Fixkosten',         icon: Euro,       permission: 'canViewAccounting' },
-    { page: 'AccountingBank',        name: 'Bankkonten',        icon: Banknote,   permission: 'canViewAccounting' },
     { page: 'DailyAnalysis',         name: 'Tagesanalyse',      icon: BarChart3,  permission: 'canViewAnalytics' },
     { page: 'RevenueHistory',        name: 'Umsatz-Historie',   icon: TrendingUp, permission: 'isManager' },
     { page: 'StaffingAnalysis',     name: 'Personalplanung',   icon: Target,      permission: 'isManager' },
