@@ -26,7 +26,7 @@ import {
     Users, Calendar, LogIn, LogOut, Wrench, TrendingDown,
     ShoppingCart, FileText, Package, RefreshCw, AlertTriangle,
     ChevronRight, ChevronDown, ChevronUp, Timer, ShoppingBasket, Pause, Play, Coffee,
-    Euro, Clock3, BarChart3, Ticket, QrCode
+    Euro, Clock3, BarChart3, Ticket, QrCode, TrendingUp, Target
 } from 'lucide-react';
 import { format, differenceInMinutes } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -513,6 +513,31 @@ function TodayTab({ currentUser, currentEmployee, permissions, employees, todayE
                                         </CardContent>
                                     </Card>
                                 </Link>
+                            )}
+
+                            {/* Auswertungen — nur für Manager */}
+                            {isManager && (
+                                <div>
+                                    <p className="text-[12px] font-medium text-muted-foreground mb-2 px-1">Auswertungen</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { page: 'RevenueHistory', icon: TrendingUp, label: 'Umsatz-Historie', sub: 'Umsätze im Verlauf' },
+                                            { page: 'StaffingAnalysis', icon: Target, label: 'Personalplanung', sub: 'Personalquote & Bedarf' },
+                                        ].map(item => (
+                                            <Link key={item.page} to={createPageUrl(item.page)}>
+                                                <Card className="border bg-card border-border/50 card-pressable transition-colors h-full">
+                                                    <CardContent className="p-3">
+                                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-primary/10 text-primary">
+                                                            <item.icon className="w-4 h-4" />
+                                                        </div>
+                                                        <p className="text-sm font-semibold text-foreground mt-2 truncate">{item.label}</p>
+                                                        <p className="text-xs text-muted-foreground truncate">{item.sub}</p>
+                                                    </CardContent>
+                                                </Card>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
 
                             {/* Waren & Lager — kompakte Einzeiler */}

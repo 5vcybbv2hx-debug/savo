@@ -40,9 +40,6 @@ export const additionalPages = [
 
     // Buchhaltung
     { page: 'ExternalBusiness',    name: 'Außenaufträge',     icon: Receipt,     permission: 'canViewAccounting' },
-    { page: 'DailyAnalysis',         name: 'Tagesanalyse',      icon: BarChart3,  permission: 'canViewAnalytics' },
-    { page: 'RevenueHistory',        name: 'Umsatz-Historie',   icon: TrendingUp, permission: 'isManager' },
-    { page: 'StaffingAnalysis',     name: 'Personalplanung',   icon: Target,      permission: 'isManager' },
 
     // Team
     { page: 'Stationsplan',   name: 'Stationsplan',    icon: LayoutGrid,    permission: 'canViewShifts' },
