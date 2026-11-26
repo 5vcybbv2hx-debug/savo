@@ -307,7 +307,11 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         // Weiter zum nächsten offenen Fach (falls gewünscht und verfügbar)
         if (advanceToNext) {
             const currentIdx = flatSlots.findIndex(s => s.id === slot.id);
-            const nextSlot = flatSlots.slice(currentIdx + 1).find(s => !isSlotDone(s.id));
+            // Erst nach vorne suchen, dann von vorn weiter: sonst bleiben Fächer,
+            // die vor dem aktuellen liegen (Sprung aus dem Raster), unbesucht.
+            const isOpen = (s) => s.id !== slot.id && !isSlotDone(s.id);
+            const nextSlot = flatSlots.slice(currentIdx + 1).find(isOpen)
+                || flatSlots.slice(0, Math.max(currentIdx, 0)).find(isOpen);
             if (nextSlot) {
                 const nextAssignments = assignmentsBySlot[nextSlot.id] || [];
                 setIstPopover({ slot: nextSlot, assignments: nextAssignments });
@@ -322,8 +326,14 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
                 setRestockedValues(rvals);
                 showToast('Bestand gespeichert ✓ → nächstes Fach', 'success');
             } else {
+                const offen = Math.max(0, overallProgress.total - overallProgress.done);
                 setIstPopover(null);
-                showToast('Bestand gespeichert ✓ — Rundgang komplett!', 'success');
+                showToast(
+                    offen > 0
+                        ? `Bestand gespeichert ✓ — ${offen} ${offen === 1 ? 'Fach' : 'Fächer'} noch offen`
+                        : 'Bestand gespeichert ✓ — Rundgang komplett!',
+                    'success'
+                );
             }
         } else {
             setIstPopover(null);
