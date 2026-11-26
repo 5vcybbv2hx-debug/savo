@@ -17,6 +17,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { sendPushNotification } from '@/lib/pushService';
 import { transferKellerToTheke, reduceCurrentStock } from '@/lib/stockSync';
 import KellerTab from '@/components/storage/KellerTab';
+import WarehouseQuickLinks from '@/components/warehouse/WarehouseQuickLinks';
 import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
 
 function StatBadge({ count, variant = 'default' }) {
@@ -180,6 +181,9 @@ export default function Warehouse() {
                     </button>
                 )}
             </div>
+
+            {/* Schnellzugriff Waren & Lager — nur im Bereiche-Tab */}
+            {activeTab === 'bereiche' && <WarehouseQuickLinks />}
 
             {/* ── Bereiche-Tab ── */}
             {activeTab === 'bereiche' && (

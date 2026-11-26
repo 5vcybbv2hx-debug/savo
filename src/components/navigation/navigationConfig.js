@@ -33,14 +33,6 @@ export const additionalPages = [
     // Waren & Lager — "Auffüllen" führt direkt in die eine Keller-Auffüllliste
     // (Warehouse?tab=keller). Die separate Tages-Auffüllliste ist kein eigener Einstieg mehr.
     { page: 'Warehouse?tab=keller', name: 'Auffüllen', icon: Package, permission: 'canViewRestock' },
-    { page: 'Shopping',   name: 'Bestellung',   icon: ShoppingCart,  permission: 'canViewShopping' },
-    { page: 'QuickList',  name: 'Einkaufsliste', icon: ListChecks,   permission: 'canViewShopping' },
-    { page: 'Articles',   name: 'Artikel',      icon: Boxes,         permission: 'canViewWarehouse' },
-    { page: 'LieferscheinScanner', name: 'Lieferschein-Scanner', icon: Truck, permission: 'canViewWarehouse' },
-    { page: 'Storage',    name: 'Lagerplätze',  icon: Warehouse,     permission: 'canViewWarehouse' },
-    { page: 'Inventory',  name: 'Inventur',     icon: ClipboardList, permission: 'canViewInventory' },
-    { page: 'Suppliers',  name: 'Lieferanten',  icon: Truck,         permission: 'canViewSuppliers' },
-    { page: 'Wastage',    name: 'Schwund',       icon: Trash2,        permission: 'canViewWastage' },
 
     // Karte & Rezepte
     { page: 'Recipes',         name: 'Rezepte',       icon: BookOpen,   permission: 'canViewRecipes' },
