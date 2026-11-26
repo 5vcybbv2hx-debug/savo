@@ -34,20 +34,10 @@ export const additionalPages = [
     // (Warehouse?tab=keller). Die separate Tages-Auffüllliste ist kein eigener Einstieg mehr.
     { page: 'Warehouse?tab=keller', name: 'Auffüllen', icon: Package, permission: 'canViewRestock' },
 
-    // Karte & Rezepte
-    { page: 'Recipes',         name: 'Rezepte',       icon: BookOpen,   permission: 'canViewRecipes' },
-    { page: 'PriceCalculator', name: 'Schnellkalkulation',  icon: Calculator, permission: 'canViewPriceCalculator' },
-
     // Buchhaltung
     { page: 'ExternalBusiness',    name: 'Außenaufträge',     icon: Receipt,     permission: 'canViewAccounting' },
 
-    // Team
-    { page: 'Stationsplan',   name: 'Stationsplan',    icon: LayoutGrid,    permission: 'canViewShifts' },
-    { page: 'Onboarding',       name: 'Onboarding',       icon: HelpCircle,   permission: 'canViewOnboarding' },
-
     // Einstellungen & Mehr
-    { page: 'Documents',        name: 'Dokumente',       icon: FileText,     permission: 'canViewSettings' },
-    { page: 'BusinessCard',     name: 'Visitenkarte',     icon: CreditCard,   permission: 'canViewDashboard' },
     { page: 'ModuleCenter',     name: 'Modulcenter',      icon: LayoutGrid,   permission: 'canViewSettings' },
     { page: 'DataQuality',      name: 'Datenqualität',    icon: Database,     permission: 'isManager' },
     { page: 'Incidents',        name: 'Vorfälle',          icon: Siren,        permission: 'isManager' },

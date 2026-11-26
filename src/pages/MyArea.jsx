@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Umbrella, RepeatIcon, QrCode, Bell, Scale, Settings } from 'lucide-react';
+import { Card } from "@/components/ui/card";
+import { User, Umbrella, RepeatIcon, QrCode, Bell, Scale, Settings, FileText, ChevronRight } from 'lucide-react';
 import { usePermissions } from '@/components/auth/usePermissions';
 
 // Import existing page components
@@ -174,6 +175,20 @@ export default function MyAreaPage() {
 
                     <TabsContent value="settings" className="space-y-0">
                         <PushStatusLine />
+                        {permissions.canViewSettings && (
+                            <Link to="/Documents" className="block mb-4">
+                                <Card className="p-4 bg-card border-border flex items-center gap-3 card-pressable">
+                                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                                        <FileText className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-foreground">Dokumente</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">Verträge, Nachweise &amp; Ablagen</p>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto shrink-0" />
+                                </Card>
+                            </Link>
+                        )}
                         <SettingsTabContent />
                     </TabsContent>
                 </Tabs>

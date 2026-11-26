@@ -10,7 +10,7 @@ import {
     Plus, Wine, Search, Eye, EyeOff, Link2,
     ExternalLink, Copy, Share2, Info, BookOpen,
     MoreVertical, Printer, ChevronDown, AlertTriangle,
-    QrCode, Check, Download
+    QrCode, Check, Download, Calculator
 } from "lucide-react";
 import { ALLERGENS, ADDITIVES } from '../components/menu/AllergenSelector';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -253,6 +253,14 @@ export default function DrinkMenuPage() {
                                             Rezepte
                                         </a>
                                     </DropdownMenuItem>
+                                    {permissions.canViewPriceCalculator && (
+                                        <DropdownMenuItem asChild>
+                                            <a href="/PriceCalculator" className="flex items-center gap-2 cursor-pointer">
+                                                <Calculator className="w-4 h-4" />
+                                                Schnellkalkulation
+                                            </a>
+                                        </DropdownMenuItem>
+                                    )}
                                     {permissions.isAdmin && (
                                         <DropdownMenuItem onClick={() => setSpecialsOpen(true)}>
                                             <Wine className="w-4 h-4 mr-2" />
