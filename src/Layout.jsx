@@ -8,7 +8,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { haptics } from '@/components/utils/haptics';
 import { toast } from 'sonner';
 import { ArrowLeft, LogOut, Search, Settings, PanelLeftClose, PanelLeftOpen, Pin, PinOff } from 'lucide-react';
-import { mainNavigation, additionalPages, allPages } from '@/components/navigation/navigationConfig';
+import { mainNavigation, additionalPages, tabPages, allPages } from '@/components/navigation/navigationConfig';
 import { sidebarPages } from '@/components/navigation/sidebarConfig';
 // Kurzbeschreibungen der Hub-Bereiche für den mobilen Mehr-Drawer
 const HUB_DESCRIPTIONS = {
@@ -160,7 +160,7 @@ export default function Layout({ children, currentPageName }) {
             setCurrentUser(cachedUser);
             if (cachedUser?.email) {
                 const updateNav = () => {
-                    const allNavPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages);
+                    const allNavPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages, tabPages);
                     const allowed = allNavPages.map(p => p.page);
                     const top = getTopPages(cachedUser.email, 4, allowed);
                     if (top.length >= 2) {
@@ -175,7 +175,7 @@ export default function Layout({ children, currentPageName }) {
                 queryClient.setQueryData(['user'], user);
                 if (user?.email) {
                     const updateNav = () => {
-                        const allNavPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages);
+                        const allNavPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages, tabPages);
                         const allowed = allNavPages.map(p => p.page);
                         const top = getTopPages(user.email, 4, allowed);
                         if (top.length >= 2) {
@@ -232,7 +232,7 @@ export default function Layout({ children, currentPageName }) {
     const isRootPage = primaryPages.includes(currentPageName);
 
     // Build current mobile nav items for tab navigation hook
-    const allNavPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages);
+    const allNavPages = mainNavigation.flatMap(a => a.pages).concat(additionalPages, tabPages);
 
     // Role-based default bottom tabs
     const getRoleDefaultTabs = () => {
