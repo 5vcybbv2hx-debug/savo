@@ -104,7 +104,7 @@ export default function PermissionsNew() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [advancedMode, setAdvancedMode] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [expandedCats, setExpandedCats] = useState({});
   const [localPermissions, setLocalPermissions] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
@@ -151,7 +151,7 @@ export default function PermissionsNew() {
     setSelectedEmployee(emp);
     setLocalPermissions(emp.permissions || {});
     setHasChanges(false);
-    setAdvancedMode(false);
+    setDetailOpen(false);
     setSheetOpen(true);
   };
 
@@ -178,7 +178,7 @@ export default function PermissionsNew() {
     if (role) {
       setLocalPermissions({ ...role.permissions });
       setHasChanges(true);
-      toast.success(`Rolle "${role.displayName}" angewendet`);
+      toast.success(`Rolle ${role.displayName} angewendet — bitte speichern`);
     }
   };
 
@@ -214,6 +214,45 @@ export default function PermissionsNew() {
   };
 
   const toggleCat = (cat) => setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
+
+  // ── Erkannte Rolle + Preset-Vergleich ───────────────────────────────────────
+  // Nur die Keys aus der Registry zählen — Legacy-can-Keys bleiben unangetastet.
+  const registryKeyLabels = useMemo(() => {
+    const map = {};
+    Object.values(PERMISSION_REGISTRY).forEach(page => {
+      Object.values(page.sections || {}).forEach(s => {
+        map[s.key] = { label: s.displayName, page: page.displayName };
+      });
+    });
+    return map;
+  }, []);
+
+  const detectedRoleKey = useMemo(
+    () => Object.entries(STANDARD_ROLES).find(([, r]) => r.displayName === detectedRoleName(localPermissions))?.[0] || null,
+    [localPermissions]
+  );
+
+  const deviations = useMemo(() => {
+    if (!detectedRoleKey) return [];
+    const preset = STANDARD_ROLES[detectedRoleKey].permissions || {};
+    const keys = new Set([...Object.keys(preset), ...Object.keys(registryKeyLabels)]);
+    return Array.from(keys)
+      .filter(k => registryKeyLabels[k])
+      .map(k => {
+        const presetLevel = preset[k] || 'none';
+        const currentLevel = localPermissions[k] || 'none';
+        return { key: k, preset: presetLevel, current: currentLevel, ...registryKeyLabels[k] };
+      })
+      .filter(d => d.preset !== d.current);
+  }, [detectedRoleKey, localPermissions, registryKeyLabels]);
+
+  const handleResetDeviation = (d) => {
+    const newPerms = { ...localPermissions };
+    if (!d.preset || d.preset === 'none') delete newPerms[d.key];
+    else newPerms[d.key] = d.preset;
+    setLocalPermissions(newPerms);
+    setHasChanges(true);
+  };
 
   // ──── Kategorien aus Registry ─────────────────────────────────────────────────
   const categories = useMemo(() => {
