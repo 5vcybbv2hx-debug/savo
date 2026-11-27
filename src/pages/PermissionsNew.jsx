@@ -3,6 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PERMISSION_REGISTRY, STANDARD_ROLES, PERMISSION_LEVELS } from '@/lib/permissionRegistry';
 import { PERMISSION_MATRIX, EMPLOYEE_ROLES } from '@/components/auth/roleConfig';
+import PermToggle from '@/components/permissions/PermToggle';
+import RolePresetEditor from '@/components/permissions/RolePresetEditor';
+import { normalizePresetPermissions } from '@/components/permissions/rolePresetUtils';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -54,48 +57,6 @@ function AccessBadge({ level }) {
   );
 }
 
-// ── Toggle-Buttons für einen Permission-Key ───────────────────────────────────
-function PermToggle({ permKey, value, onChange, actions }) {
-  const levels = ['none', ...(actions || ['view', 'edit'])];
-  return (
-    <div className="flex gap-1">
-      {levels.includes('none') && (
-        <button
-          onClick={() => onChange(permKey, 'none')}
-          className={cn(
-            'px-2 py-1 rounded text-[10px] font-medium transition-all min-h-[28px]',
-            (!value || value === 'none')
-              ? 'bg-muted text-muted-foreground ring-1 ring-border'
-              : 'text-muted-foreground hover:bg-muted/60'
-          )}
-        >–</button>
-      )}
-      {levels.includes('view') && (
-        <button
-          onClick={() => onChange(permKey, 'view')}
-          className={cn(
-            'px-2 py-1 rounded text-[10px] font-medium transition-all min-h-[28px]',
-            value === 'view'
-              ? 'bg-primary/20 text-primary ring-1 ring-primary/40'
-              : 'text-muted-foreground hover:bg-muted/60'
-          )}
-        >Lesen</button>
-      )}
-      {levels.includes('edit') && (
-        <button
-          onClick={() => onChange(permKey, 'edit')}
-          className={cn(
-            'px-2 py-1 rounded text-[10px] font-medium transition-all min-h-[28px]',
-            value === 'edit'
-              ? 'bg-status-ok/20 text-status-ok ring-1 ring-status-ok/40'
-              : 'text-muted-foreground hover:bg-muted/60'
-          )}
-        >Voll</button>
-      )}
-    </div>
-  );
-}
-
 export default function PermissionsNew() {
   const permissions = usePermissions();
   const queryClient = useQueryClient();
@@ -108,11 +69,25 @@ export default function PermissionsNew() {
   const [expandedCats, setExpandedCats] = useState({});
   const [localPermissions, setLocalPermissions] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [presetEditorOpen, setPresetEditorOpen] = useState(false);
 
   // ──── Queries ────────────────────────────────────────────────────────────────
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
     queryFn: () => base44.entities.Employee.filter({ is_active: true }),
+  });
+
+  // Rollen-Vorlagen aus RolePreset — solange die Entity leer ist, gelten
+  // weiterhin die eingebauten Vorlagen aus STANDARD_ROLES.
+  const { data: rolePresets = [] } = useQuery({
+    queryKey: ['role-presets'],
+    queryFn: async () => {
+      const result = await base44.entities.RolePreset.filter(
+        { is_active: true },
+        { sort: 'sort_order', limit: 100 }
+      );
+      return Array.isArray(result) ? result : (result?.items || []);
+    },
   });
 
   useEffect(() => {
@@ -173,13 +148,29 @@ export default function PermissionsNew() {
     setHasChanges(false);
   };
 
-  const handleApplyRole = (roleKey) => {
-    const role = STANDARD_ROLES[roleKey];
-    if (role) {
-      setLocalPermissions({ ...role.permissions });
-      setHasChanges(true);
-      toast.success(`Rolle ${role.displayName} angewendet — bitte speichern`);
+  // Rollen-Reihe: Vorlagen aus RolePreset, sonst STANDARD_ROLES als Fallback
+  const presetButtons = useMemo(() => {
+    if (rolePresets.length > 0) {
+      return rolePresets.map(p => ({
+        id: p.id,
+        displayName: p.display_name,
+        description: p.description,
+        permissions: normalizePresetPermissions(p.permissions),
+      }));
     }
+    return Object.entries(STANDARD_ROLES).map(([key, role]) => ({
+      id: key,
+      displayName: role.displayName,
+      description: role.description,
+      permissions: role.permissions || {},
+    }));
+  }, [rolePresets]);
+
+  // Anwenden ändert ausschließlich die Rechte des Mitarbeiters, nie seine Rolle.
+  const handleApplyPreset = (preset) => {
+    setLocalPermissions({ ...preset.permissions });
+    setHasChanges(true);
+    toast.success(`Vorlage ${preset.displayName} angewendet — bitte speichern`);
   };
 
   const handleCopyFrom = (sourceId) => {
@@ -423,23 +414,31 @@ export default function PermissionsNew() {
 
                 {/* ── Rollen-Schnellauswahl ──────────────────────────────── */}
                 <div className="px-4 py-4 border-b border-border">
-                  <p className="text-[12px] font-medium text-muted-foreground mb-2">
-                    Rolle anwenden
-                  </p>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-[12px] font-medium text-muted-foreground">
+                      Rolle anwenden
+                    </p>
+                    <button
+                      onClick={() => setPresetEditorOpen(true)}
+                      className="text-[11px] font-semibold text-primary hover:opacity-80 transition-opacity"
+                    >
+                      Vorlagen bearbeiten
+                    </button>
+                  </div>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(STANDARD_ROLES).map(([key, role]) => (
+                    {presetButtons.map(preset => (
                       <button
-                        key={key}
-                        onClick={() => handleApplyRole(key)}
-                        title={role.description}
+                        key={preset.id}
+                        onClick={() => handleApplyPreset(preset)}
+                        title={preset.description}
                         className={cn(
                           'px-3 py-2 rounded-lg border text-xs font-semibold transition-all min-h-[40px]',
-                          detectedRole === role.displayName
+                          detectedRole === preset.displayName
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-border bg-secondary/40 text-foreground hover:bg-secondary'
                         )}
                       >
-                        {role.displayName}
+                        {preset.displayName}
                       </button>
                     ))}
                   </div>
@@ -601,6 +600,13 @@ export default function PermissionsNew() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* ── Vorlagen-Bearbeitung (nur Manager) ───────────────────────────── */}
+      <RolePresetEditor
+        open={presetEditorOpen}
+        onOpenChange={setPresetEditorOpen}
+        presets={rolePresets}
+      />
     </div>
   );
 }
