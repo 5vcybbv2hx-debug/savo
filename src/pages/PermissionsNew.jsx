@@ -227,10 +227,10 @@ export default function PermissionsNew() {
     return map;
   }, []);
 
-  const detectedRoleKey = useMemo(
-    () => Object.entries(STANDARD_ROLES).find(([, r]) => r.displayName === detectedRoleName(localPermissions))?.[0] || null,
-    [localPermissions]
-  );
+  const detectedRoleKey = useMemo(() => {
+    const name = detectRole(localPermissions);
+    return Object.entries(STANDARD_ROLES).find(([, r]) => r.displayName === name)?.[0] || null;
+  }, [localPermissions]);
 
   const deviations = useMemo(() => {
     if (!detectedRoleKey) return [];
@@ -377,8 +377,7 @@ export default function PermissionsNew() {
                       {selectedEmployee.name}
                     </SheetTitle>
                     <p className="text-xs text-muted-foreground">
-                      {selectedEmployee.role} · {activeSummary.active}/{activeSummary.total} Bereiche aktiv
-                      {detectedRole && ` · ${detectedRole}`}
+                      Rolle: {detectedRole || selectedEmployee.role} · {activeSummary.active} von {activeSummary.total} aktiv
                     </p>
                   </div>
                 </div>
@@ -424,25 +423,23 @@ export default function PermissionsNew() {
 
                 {/* ── Rollen-Schnellauswahl ──────────────────────────────── */}
                 <div className="px-4 py-4 border-b border-border">
-                  <p className="text-[12px] font-medium text-muted-foregroundr mb-3">
+                  <p className="text-[12px] font-medium text-muted-foreground mb-2">
                     Rolle anwenden
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {Object.entries(STANDARD_ROLES).map(([key, role]) => (
                       <button
                         key={key}
                         onClick={() => handleApplyRole(key)}
+                        title={role.description}
                         className={cn(
-                          'text-left px-3 py-2.5 rounded-lg border transition-all min-h-[44px]',
+                          'px-3 py-2 rounded-lg border text-xs font-semibold transition-all min-h-[40px]',
                           detectedRole === role.displayName
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-border bg-secondary/40 text-foreground hover:bg-secondary'
                         )}
                       >
-                        <div className="text-xs font-semibold">{role.displayName}</div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
-                          {role.description}
-                        </div>
+                        {role.displayName}
                       </button>
                     ))}
                   </div>
@@ -466,28 +463,57 @@ export default function PermissionsNew() {
                   </div>
                 </div>
 
-                {/* ── Erweiterte Einstellungen Toggle ───────────────────── */}
+                {/* ── Abweichungen vom Rollenstandard ───────────────────── */}
+                <div className="px-4 py-3 border-b border-border">
+                  <p className="text-[12px] font-medium text-muted-foreground mb-2">
+                    Abweichungen vom Rollenstandard
+                  </p>
+                  {!detectedRoleKey ? (
+                    <p className="text-xs text-muted-foreground">
+                      Kein Rollenstandard erkannt — Rechte sind individuell gesetzt.
+                    </p>
+                  ) : deviations.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Keine Abweichungen — alles auf Rollenstandard
+                    </p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {deviations.map(d => (
+                        <div key={d.key} className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs text-foreground truncate">{d.label}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{d.page}</p>
+                          </div>
+                          <AccessBadge level={d.current} />
+                          <button
+                            onClick={() => handleResetDeviation(d)}
+                            className="shrink-0 text-[10px] font-semibold px-2 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors min-h-[28px]"
+                          >
+                            Zurücksetzen
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Alle Rechte im Detail (eingeklappt) ───────────────── */}
                 <div className="px-4 py-3 border-b border-border">
                   <button
-                    onClick={() => setAdvancedMode(!advancedMode)}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setDetailOpen(v => !v)}
+                    className="w-full flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <SlidersHorizontal className="w-4 h-4" />
-                    <span>Granulare Einstellungen</span>
-                    {advancedMode
-                      ? <ChevronUp className="w-3.5 h-3.5 ml-1" />
-                      : <ChevronDown className="w-3.5 h-3.5 ml-1" />
+                    <span>Alle Rechte im Detail</span>
+                    {detailOpen
+                      ? <ChevronUp className="w-3.5 h-3.5 ml-auto" />
+                      : <ChevronDown className="w-3.5 h-3.5 ml-auto" />
                     }
-                    {advancedMode && (
-                      <span className="ml-auto text-[10px] bg-status-warn/15 text-status-warn px-1.5 py-0.5 rounded">
-                        Erweitert
-                      </span>
-                    )}
                   </button>
                 </div>
 
                 {/* ── Granulare Permission-Sektionen ────────────────────── */}
-                {advancedMode && (
+                {detailOpen && (
                   <div className="px-4 py-3 space-y-2">
                     {Object.entries(categories).map(([cat, pages]) => {
                       const isOpen = expandedCats[cat];
