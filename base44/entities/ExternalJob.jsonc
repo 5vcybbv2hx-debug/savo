@@ -82,6 +82,18 @@
     "notes": {
       "type": "string",
       "description": "Allgemeine Notizen zum Einsatz"
+    },
+    "offer_id": {
+      "type": "string",
+      "description": "ID des verkn\u00fcpften Angebots (Offer). Leer = noch kein Angebot."
+    },
+    "invoice_id": {
+      "type": "string",
+      "description": "ID der aus dem Angebot erzeugten Rechnung (DebitorInvoice)"
+    },
+    "offer_status": {
+      "type": "string",
+      "description": "Status des verkn\u00fcpften Angebots: Entwurf, Gesendet, Bestaetigt, Abgelehnt, Rechnung erstellt oder storniert"
     }
   },
   "required": [

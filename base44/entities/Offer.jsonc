@@ -81,6 +81,10 @@
       "type": "string",
       "description": "Optionaler Bezug zu einem Event"
     },
+    "external_job_id": {
+      "type": "string",
+      "description": "ID des verkn\u00fcpften Au\u00dfeneinsatzes (ExternalJob). Leer = kein Bezug."
+    },
     "positions": {
       "type": "array",
       "items": {

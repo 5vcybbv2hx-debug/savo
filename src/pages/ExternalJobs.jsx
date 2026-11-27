@@ -1,12 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { STALE } from '@/lib/queryUtils';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, ArrowLeft, CalendarDays } from 'lucide-react';
+import { Plus, ArrowLeft, CalendarDays, FileText } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { toast } from 'sonner';
+import { CAT_EVENT } from '@/lib/invoicePdf';
+import { nextOfferNumber, offerBadge } from '@/lib/externalVorgang';
 import JobDetail from '@/components/external-jobs/JobDetail';
 import JobCreate from '@/components/external-jobs/JobCreate';
 
@@ -40,6 +43,8 @@ export default function ExternalJobs() {
     const jobId = params.get('id');
     const isNew = params.get('new') === '1';
     const [filter, setFilter] = useState('alle');
+    const [busyId, setBusyId] = useState(null);
+    const queryClient = useQueryClient();
 
     const { data: jobs = [], isLoading } = useQuery({
         queryKey: ['external-jobs'],
@@ -50,6 +55,44 @@ export default function ExternalJobs() {
     const filtered = useMemo(() =>
         filter === 'alle' ? jobs : jobs.filter(j => (j.status || 'anfrage') === filter),
         [jobs, filter]);
+
+    // Angebot aus dem Einsatz anlegen — Fehler blockieren den Einsatz nie.
+    const createOffer = async (job) => {
+        setBusyId(job.id);
+        try {
+            const offers = await base44.entities.Offer.list('-offer_date', 500);
+            const gross = job.pricing_model === 'pauschal' && job.fixed_price != null ? Number(job.fixed_price) : 0;
+            const offer = await base44.entities.Offer.create({
+                offer_number: nextOfferNumber(offers),
+                offer_date: format(new Date(), 'yyyy-MM-dd'),
+                category: CAT_EVENT,
+                customer_name: job.customer_name || '',
+                service_date: job.event_date || '',
+                service_date_type: 'Einzel',
+                description: job.event_name || '',
+                notes: job.notes || '',
+                amount_net: gross,
+                tax_rate: 19,
+                tax_amount: 0,
+                amount_gross: gross,
+                external_job_id: job.id,
+                status: 'Entwurf',
+            });
+            await base44.entities.ExternalJob.update(job.id, {
+                offer_id: offer.id,
+                offer_number: offer.offer_number,
+                offer_status: 'Entwurf',
+            });
+            await queryClient.invalidateQueries({ queryKey: ['external-jobs'] });
+            toast.success(`Angebot ${offer.offer_number} angelegt`, {
+                action: { label: 'Zur Buchhaltung', onClick: () => navigate('/ExternalBusiness') },
+            });
+        } catch (e) {
+            toast.error('Angebot konnte nicht angelegt werden: ' + e.message);
+        } finally {
+            setBusyId(null);
+        }
+    };
 
     if (isNew) return <JobCreate />;
     if (jobId) {
@@ -104,11 +147,16 @@ export default function ExternalJobs() {
                 </div>
             ) : (
                 <div className="space-y-2">
-                    {filtered.map(j => (
-                        <button
+                    {filtered.map(j => {
+                        const badge = offerBadge(j);
+                        return (
+                        <div
                             key={j.id}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => setParams({ id: j.id })}
-                            className="w-full text-left p-4 rounded-xl border bg-card border-border/50 hover:border-border active:scale-[0.99] transition-all space-y-1.5"
+                            onKeyDown={(e) => { if (e.key === 'Enter') setParams({ id: j.id }); }}
+                            className="w-full text-left p-4 rounded-xl border bg-card border-border/50 hover:border-border active:scale-[0.99] transition-all space-y-1.5 cursor-pointer"
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
@@ -127,12 +175,29 @@ export default function ExternalJobs() {
                                 <span className="text-[10px] text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full">
                                     {PRICING_LABELS[j.pricing_model] || j.pricing_model}
                                 </span>
+                                <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap', badge.className)}>
+                                    {badge.label}
+                                </span>
                                 {j.fixed_price != null && j.pricing_model === 'pauschal' && (
                                     <span className="text-[11px] font-semibold text-foreground ml-auto">{j.fixed_price.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €</span>
                                 )}
                             </div>
-                        </button>
-                    ))}
+                            {!j.offer_id && j.status !== 'storniert' && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={busyId === j.id}
+                                    onClick={(e) => { e.stopPropagation(); createOffer(j); }}
+                                    className="h-8 text-[11px] gap-1.5 w-full"
+                                >
+                                    <FileText className="w-3 h-3" />
+                                    {busyId === j.id ? 'Angebot wird erstellt…' : 'Angebot erstellen'}
+                                </Button>
+                            )}
+                        </div>
+                        );
+                    })}
                 </div>
             )}
         </div>

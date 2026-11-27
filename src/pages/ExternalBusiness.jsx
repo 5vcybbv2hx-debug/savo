@@ -35,6 +35,7 @@ import {
     CAT_EVENT, CAT_WKZ, CAT_GUTSCHEIN, DEFAULT_ACCOUNT,
     eur, today, emptyPosition, downloadPdf,
 } from '@/lib/invoicePdf';
+import { syncJobFromOffer, clearJobOfferLink } from '@/lib/externalVorgang';
 
 // Kategorien, Helfer (eur/today/emptyPosition) und die PDF-Erzeugung kommen
 // aus @/lib/invoicePdf.
@@ -216,6 +217,12 @@ export default function ExternalBusiness() {
         queryFn: () => base44.entities.BankAccount.list(),
         staleTime: STALE.LONG,
     });
+    // Außeneinsätze für die optionale Verknüpfung Angebot ↔ Einsatz
+    const { data: externalJobs = [] } = useQuery({
+        queryKey: ['external-jobs'],
+        queryFn: () => base44.entities.ExternalJob.list('-event_date', 300),
+        staleTime: STALE.MEDIUM,
+    });
 
     // ── Kennzahlen ──────────────────────────────────────────────────────────
     const openInvoices = useMemo(() =>
@@ -230,6 +237,7 @@ export default function ExternalBusiness() {
     const invalidate = () => {
         queryClient.invalidateQueries({ queryKey: ['external-invoices'] });
         queryClient.invalidateQueries({ queryKey: ['external-offers'] });
+        queryClient.invalidateQueries({ queryKey: ['external-jobs'] });
     };
 
     const saveInvoice = useMutation({
@@ -240,9 +248,14 @@ export default function ExternalBusiness() {
         onError: (e) => toast.error('Speichern fehlgeschlagen: ' + e.message),
     });
     const saveOffer = useMutation({
-        mutationFn: ({ id, data }) => id
-            ? base44.entities.Offer.update(id, data)
-            : base44.entities.Offer.create(data),
+        mutationFn: async ({ id, data }) => {
+            const saved = id
+                ? await base44.entities.Offer.update(id, data)
+                : await base44.entities.Offer.create(data);
+            // Verknüpften Außeneinsatz nachziehen (Fehler blockieren das Speichern nicht)
+            await syncJobFromOffer({ ...data, ...saved, id: saved?.id || id });
+            return saved;
+        },
         onSuccess: () => { invalidate(); setEditing(null); setRecord(null); toast.success('Angebot gespeichert'); },
         onError: (e) => toast.error('Speichern fehlgeschlagen: ' + e.message),
     });
@@ -251,7 +264,13 @@ export default function ExternalBusiness() {
         onSuccess: () => { invalidate(); toast.success('Aktualisiert'); },
     });
     const updateOffer = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.Offer.update(id, data),
+        mutationFn: async ({ id, data }) => {
+            const saved = await base44.entities.Offer.update(id, data);
+            // Storniert (Abgelehnt) → Einsatz löst die Verknüpfung, sonst Status nachziehen
+            if (data.status === 'Abgelehnt') await clearJobOfferLink({ ...saved, id });
+            else if (data.status) await syncJobFromOffer({ ...saved, id });
+            return saved;
+        },
         onSuccess: () => { invalidate(); toast.success('Aktualisiert'); },
     });
 
@@ -271,6 +290,7 @@ export default function ExternalBusiness() {
             supplier_name: '',
             supplier_id: '',
             linked_event_id: '',
+            external_job_id: '',
             positions: [emptyPosition()],
             tax_rate: 19,
             description: '',
@@ -398,6 +418,7 @@ export default function ExternalBusiness() {
                 service_date: record.service_date || record.offer_date,
                 service_date_type: record.service_date_type || 'Einzel',
                 service_date_end: record.service_date_type === 'Zeitraum' ? (record.service_date_end || '') : '',
+                external_job_id: record.external_job_id || '',
             });
             if (!record.id) data.offer_number = await nextNumber(offers, 'offer_number', 'AN');
             saveOffer.mutate({ id: record.id, data });
@@ -482,6 +503,17 @@ export default function ExternalBusiness() {
                 db_marge_total: net > 0 ? db / net : 0,
                 positions: confirmedPositions,
             });
+            // Kette schließen: Einsatz kennt jetzt seine Rechnung
+            if (offer.external_job_id) {
+                try {
+                    await base44.entities.ExternalJob.update(offer.external_job_id, {
+                        invoice_id: invoice.id,
+                        offer_status: 'Rechnung erstellt',
+                    });
+                } catch {
+                    // Verknüpfung ist Beiwerk — Rechnung bleibt bestehen
+                }
+            }
             return invoice;
         },
         onSuccess: (inv) => {
@@ -808,6 +840,34 @@ export default function ExternalBusiness() {
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {/* Außeneinsatz-Bezug (nur Angebote, optional) */}
+                            {editing === 'offer' && (
+                                <div className="space-y-1.5">
+                                    <Label>Außeneinsatz (optional)</Label>
+                                    <Select
+                                        value={record.external_job_id || 'none'}
+                                        onValueChange={(v) => setField('external_job_id', v === 'none' ? '' : v)}
+                                    >
+                                        <SelectTrigger><SelectValue placeholder="Ohne Außeneinsatz" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Ohne Außeneinsatz</SelectItem>
+                                            {externalJobs
+                                                .filter(j => !j.offer_id || j.id === record.external_job_id)
+                                                .map(j => (
+                                                    <SelectItem key={j.id} value={j.id}>
+                                                        {j.customer_name || 'Ohne Kunden'}
+                                                        {j.event_name ? ` · ${j.event_name}` : ''}
+                                                        {j.event_date ? ` (${format(parseISO(j.event_date), 'dd.MM.yyyy')})` : ''}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {externalJobs.filter(j => !j.offer_id || j.id === record.external_job_id).length === 0 && (
+                                        <p className="text-[11px] text-muted-foreground">Alle Außeneinsätze haben bereits ein Angebot.</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Positionen — Kalkulation fuer Angebote, einfach fuer Rechnungen */}
                             {editing === 'offer' ? (
