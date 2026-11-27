@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { STALE } from '@/lib/queryUtils';
@@ -228,6 +228,19 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
         showToast('Rundgang abgeschlossen ✓', 'success');
     };
 
+    const allDone = overallProgress.done >= overallProgress.total && overallProgress.total > 0;
+
+    // ── Automatischer Abschluss: genau einmal pro Tag, sobald alles gezählt ist ─
+    // Der Ref verhindert eine Schleife, wenn die Query nach dem Schreiben neu lädt.
+    const autoCompletedRef = useRef(false);
+    useEffect(() => {
+        if (!allDone || !session || session.is_completed === true || autoCompletedRef.current) return;
+        autoCompletedRef.current = true;
+        completeSession()
+            .then(() => showToast('Rundgang abgeschlossen ✓', 'success'))
+            .catch(() => { autoCompletedRef.current = false; });
+    }, [allDone, session?.id, session?.is_completed]);
+
     // ── IST speichern: RestockItem erstellen/updaten + Stock sync ──────────────
     const handleSaveIst = async (advanceToNext = false) => {
         if (!istPopover || isSaving) return;
@@ -375,8 +388,6 @@ export default function RundgangMode({ restockItems, articles, createMutation, u
             </div>
         );
     }
-
-    const allDone = overallProgress.done >= overallProgress.total && overallProgress.total > 0;
 
     return (
         <div className="space-y-4 pb-32">
